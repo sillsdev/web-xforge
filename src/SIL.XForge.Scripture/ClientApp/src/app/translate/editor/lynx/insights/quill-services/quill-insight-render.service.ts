@@ -7,6 +7,7 @@ import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { getLeadingInsight, getMostNestedInsight } from '../lynx-insight-util';
+import { LynxInsightBlot } from './blots/lynx-insight-blot';
 
 const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
@@ -90,7 +91,7 @@ export class QuillInsightRenderService extends InsightRenderService {
         // Scroll to the first occurring active insight in the editor
         editor.setSelection(leadingInsight.range.index, 'api');
 
-        const overlayAnchor: HTMLElement | null = this.getElementAtIndex(editor, overlayAnchorInsight.range.index + 1);
+        const overlayAnchor: HTMLElement | null = this.getInsightElements(editor, overlayAnchorInsight)[0];
 
         if (overlayAnchor != null) {
           const ref: LynxInsightOverlayRef | undefined = this.overlayService.open(overlayAnchor, insights, editor.root);
@@ -124,19 +125,18 @@ export class QuillInsightRenderService extends InsightRenderService {
     // Set class on active insights to pull them above the editor dim overlay
     if (editorAttention && insights != null) {
       for (const insight of insights) {
-        const element: HTMLElement | null = this.getElementAtIndex(editor, insight.range.index);
-        element?.classList.add(this.activeInsightClass);
+        // An insight may be split across multiple elements, so apply the class to all elements with the insight id
+        for (const element of this.getInsightElements(editor, insight)) {
+          element.classList.add(this.activeInsightClass);
+        }
       }
     }
   }
 
-  private getElementAtIndex(editor: Quill, index: number): HTMLElement | null {
-    const [leaf] = editor.getLeaf(index + 1);
-
-    if (leaf == null) {
-      return null;
-    }
-
-    return leaf.domNode.nodeType === Node.TEXT_NODE ? leaf.parent.domNode : leaf;
+  /**
+   * Get all elements in the editor that contain the `[data-insight-id]` of the specified insight.
+   */
+  private getInsightElements(editor: Quill, insight: LynxInsight): NodeListOf<HTMLElement> {
+    return editor.root.querySelectorAll(`[data-${LynxInsightBlot.idAttributeName}="${insight.id}"]`);
   }
 }

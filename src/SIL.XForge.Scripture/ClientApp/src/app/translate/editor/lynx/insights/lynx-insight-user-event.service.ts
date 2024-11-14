@@ -12,7 +12,7 @@ export class LynxInsightUserEventService {
   readonly insightSelector = `.${LynxInsightBlot.superClassName}`;
   readonly overlaySelector = '.lynx-insight-overlay-panel';
 
-  private readonly dataIdProp = LynxInsightBlot.idAttributeName;
+  private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
 
   constructor(private readonly insightState: LynxInsightStateService) {
     console.log('LynxInsightUserEventService initialized');
@@ -68,7 +68,7 @@ export class LynxInsightUserEventService {
       let currentEl: HTMLElement | null | undefined = el;
 
       while (currentEl != null) {
-        const id = currentEl.dataset[this.dataIdProp];
+        const id = currentEl.dataset.insightId;
 
         if (id != null) {
           ids.push(id);
