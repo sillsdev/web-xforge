@@ -3,12 +3,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { ProgressService, TextProgress } from '../progress-service/progress.service';
 import { BookMultiSelectComponent } from './book-multi-select.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedProgressService = mock(ProgressService);
+const mockedI18nService = mock(I18nService);
 
 describe('BookMultiSelectComponent', () => {
   let component: BookMultiSelectComponent;
@@ -19,7 +21,10 @@ describe('BookMultiSelectComponent', () => {
 
   configureTestingModule(() => ({
     imports: [MatChipsModule, TestTranslocoModule],
-    providers: [{ provide: ProgressService, useMock: mockedProgressService }]
+    providers: [
+      { provide: ProgressService, useMock: mockedProgressService },
+      { provide: I18nService, useMock: mockedI18nService }
+    ]
   }));
 
   beforeEach(() => {
@@ -36,6 +41,7 @@ describe('BookMultiSelectComponent', () => {
       { text: { bookNum: 67 }, percentage: 80 } as TextProgress,
       { text: { bookNum: 70 }, percentage: 100 } as TextProgress
     ]);
+    when(mockedI18nService.localeCode).thenReturn('en');
 
     fixture = TestBed.createComponent(BookMultiSelectComponent);
     component = fixture.componentInstance;
