@@ -103,6 +103,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   jobSubscription?: Subscription;
   zipSubscription?: Subscription;
   isOnline = true;
+  showDraftStarted = false;
 
   currentPage: 'initial' | 'steps' = 'initial';
 
@@ -469,7 +470,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   isDraftQueued(job?: BuildDto): boolean {
-    return [BuildStates.Queued, BuildStates.Pending].includes(job?.state as BuildStates);
+    return [BuildStates.Queued, BuildStates.Pending].includes(job?.state as BuildStates) || this.showDraftStarted;
   }
 
   isDraftActive(job?: BuildDto): boolean {
@@ -497,6 +498,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   startBuild(buildConfig: BuildConfig): void {
+    this.showDraftStarted = true;
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
       this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig).pipe(
@@ -521,7 +523,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           return of(undefined);
         })
       ),
-      (job?: BuildDto) => (this.draftJob = job)
+      (job?: BuildDto) => {
+        this.draftJob = job;
+        this.showDraftStarted = false;
+      }
     );
   }
 

@@ -269,9 +269,9 @@
             }
           }
           @if (isPreviewSupported) {
-            @if (draftJob != null) {
+            @if (draftJob != null || showDraftStarted) {
               @if (isDraftQueued(draftJob)) {
-                <section>
+                <section class="draft-queued">
                   <h3>{{ t("draft_queued_header") }}</h3>
                   @if (!hasDraftQueueDepth(draftJob)) {
                     <p>{{ t("draft_queued_detail") }}</p>

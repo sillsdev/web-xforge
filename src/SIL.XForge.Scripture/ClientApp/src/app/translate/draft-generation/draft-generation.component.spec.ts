@@ -10,7 +10,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, EMPTY, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -79,8 +79,9 @@ describe('DraftGenerationComponent', () => {
 
   class TestEnvironment {
     readonly testOnlineStatusService: TestOnlineStatusService;
-    component!: DraftGenerationComponent;
-    fixture!: ComponentFixture<DraftGenerationComponent>;
+    readonly buildStarted$: Subject<BuildDto> = new Subject<BuildDto>();
+    component: DraftGenerationComponent;
+    fixture: ComponentFixture<DraftGenerationComponent>;
 
     constructor(preInit?: () => void) {
       this.setup();
@@ -155,6 +156,7 @@ describe('DraftGenerationComponent', () => {
 
       mockI18nService.getLanguageDisplayName.and.returnValue('English');
       mockPreTranslationSignupUrlService.generateSignupUrl.and.returnValue(Promise.resolve(''));
+      mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(this.buildStarted$);
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
@@ -230,6 +232,14 @@ describe('DraftGenerationComponent', () => {
 
     get preGenerationStepper(): HTMLElement | null {
       return (this.fixture.nativeElement as HTMLElement).querySelector('app-draft-generation-steps');
+    }
+
+    get draftQueuedSection(): HTMLElement | null {
+      return this.fixture.nativeElement.querySelector('.draft-queued');
+    }
+
+    get draftCompleteSection(): HTMLElement | null {
+      return this.fixture.nativeElement.querySelector('.draft-complete');
     }
 
     getElementByTestId(testId: string): HTMLElement | null {
@@ -1742,9 +1752,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('startBuild', () => {
     it('should start the draft build', () => {
-      let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(of(buildDto));
-      });
+      let env = new TestEnvironment();
 
       env.component.startBuild({
         trainingBooks: [],
@@ -1753,6 +1761,7 @@ describe('DraftGenerationComponent', () => {
         fastTraining: false,
         projectId: projectId
       });
+      env.buildStarted$.next(buildDto);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
         trainingBooks: [],
@@ -1760,14 +1769,41 @@ describe('DraftGenerationComponent', () => {
         translationBooks: [],
         fastTraining: false
       });
+      expect(env.draftQueuedSection).not.toBeNull();
+      expect(env.draftCompleteSection).not.toBeNull();
+    });
+
+    it('should start the draft build for the first draft', () => {
+      let env = new TestEnvironment(() => {
+        mockDraftGenerationService.getBuildProgress.and.returnValue(of(undefined));
+        mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(undefined));
+      });
+      expect(env.draftQueuedSection).toBeNull();
+
+      env.component.startBuild({
+        trainingBooks: [],
+        trainingDataFiles: [],
+        translationBooks: [],
+        fastTraining: false,
+        projectId: projectId
+      });
+      env.fixture.detectChanges();
+      expect(env.draftQueuedSection).not.toBeNull();
+      expect(env.draftCompleteSection).toBeNull();
+      env.buildStarted$.next(buildDto);
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
+        projectId: projectId,
+        trainingBooks: [],
+        trainingDataFiles: [],
+        translationBooks: [],
+        fastTraining: false
+      });
+      expect(env.draftQueuedSection).not.toBeNull();
+      expect(env.draftCompleteSection).toBeNull();
     });
 
     it('should not attempt "cancel dialog" close for queued build', () => {
-      let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
-          of({ ...buildDto, state: BuildStates.Queued })
-        );
-      });
+      let env = new TestEnvironment();
 
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
@@ -1779,6 +1815,7 @@ describe('DraftGenerationComponent', () => {
         fastTraining: false,
         projectId: projectId
       });
+      env.buildStarted$.next({ ...buildDto, state: BuildStates.Queued });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
         trainingBooks: [],
@@ -1791,11 +1828,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should not attempt "cancel dialog" close for pending build', () => {
-      let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
-          of({ ...buildDto, state: BuildStates.Pending })
-        );
-      });
+      let env = new TestEnvironment();
 
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
@@ -1807,6 +1840,7 @@ describe('DraftGenerationComponent', () => {
         fastTraining: false,
         projectId: projectId
       });
+      env.buildStarted$.next({ ...buildDto, state: BuildStates.Pending });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
         trainingBooks: [],
@@ -1819,11 +1853,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should not attempt "cancel dialog" close for active build', () => {
-      let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
-          of({ ...buildDto, state: BuildStates.Active })
-        );
-      });
+      let env = new TestEnvironment();
 
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
@@ -1835,6 +1865,7 @@ describe('DraftGenerationComponent', () => {
         fastTraining: false,
         projectId: projectId
       });
+      env.buildStarted$.next({ ...buildDto, state: BuildStates.Active });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
         trainingBooks: [],
@@ -1847,11 +1878,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should attempt "cancel dialog" close for cancelled build', () => {
-      let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
-          of({ ...buildDto, state: BuildStates.Canceled })
-        );
-      });
+      let env = new TestEnvironment();
 
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       when(mockDialogRef.getState()).thenReturn(MatDialogState.OPEN);
@@ -1864,6 +1891,7 @@ describe('DraftGenerationComponent', () => {
         fastTraining: false,
         projectId: projectId
       });
+      env.buildStarted$.next({ ...buildDto, state: BuildStates.Canceled });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
         trainingBooks: [],
