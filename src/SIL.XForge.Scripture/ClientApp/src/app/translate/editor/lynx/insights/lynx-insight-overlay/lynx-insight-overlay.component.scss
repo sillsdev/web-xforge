@@ -8,22 +8,44 @@ $dismissActionColor: $applyActionColor;
 $borderRadius: 0.2em;
 
 :host {
-  max-width: 320px;
+  max-width: 340px;
   border-radius: $borderRadius;
   overflow: hidden;
 }
 
 .main-section.focused,
 .more-info-section {
-  padding: 0.6em 0.7em;
+  padding: 0.7em 0.8em 0.4em;
 }
 
 .main-section {
   background-color: $mainSectionBGColor;
 
   // When prompt is for single insight, or insight is selected from multi-picker
-  &.focused > * {
-    animation: fade-in 0.3s;
+  &.focused {
+    > * {
+      animation: fade-in 0.3s;
+    }
+
+    // Color notch beside insight code header text
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0.5em;
+      height: 1.4em;
+      width: 0.5em;
+      border-start-end-radius: 0.2em;
+      border-end-end-radius: 0.2em;
+      inset-inline-start: 0;
+    }
+
+    @each $type in insights.$insightTypes {
+      &.#{$type} {
+        &::before {
+          background-color: insights.insight-color($type);
+        }
+      }
+    }
   }
 
   // When prompt is for multiple insights, and one is not yet focused
