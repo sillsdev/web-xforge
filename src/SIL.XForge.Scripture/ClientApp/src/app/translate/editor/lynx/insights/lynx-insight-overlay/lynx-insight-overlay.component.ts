@@ -67,7 +67,7 @@ export class LynxInsightOverlayComponent {
       throw new Error('No focused insight');
     }
 
-    this.overlayService.close(this.focusedInsight.id);
+    this.overlayService.close();
   }
 
   dismissInsight(insight: LynxInsight): void {
