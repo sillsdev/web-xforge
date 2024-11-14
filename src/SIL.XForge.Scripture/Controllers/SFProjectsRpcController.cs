@@ -60,8 +60,7 @@ public class SFProjectsRpcController(
                     { "method", "Create" },
                     { "ParatextId", settings?.ParatextId },
                     { "SourceParatextId", settings?.SourceParatextId },
-                    { "CheckingEnabled", settings?.CheckingEnabled.ToString() },
-                    { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled.ToString() },
+                    { "CheckingEnabled", settings?.CheckingEnabled.ToString() }
                 }
             );
             throw;
