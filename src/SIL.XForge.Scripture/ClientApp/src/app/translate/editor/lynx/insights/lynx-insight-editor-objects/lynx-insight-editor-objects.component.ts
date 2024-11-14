@@ -37,7 +37,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
         tap(() => {
           // When editor becomes ready, close all action overlays,
           // including those for insights from other books/chapters
-          this.overlayService.closeAll();
+          this.overlayService.close();
         }),
         switchMap(() =>
           merge(
