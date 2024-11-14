@@ -47,7 +47,8 @@
     "deuterocanon": "Deuterokanonische Bücher",
     "loading_message": "Loading available books...",
     "new_testament": "Neues Testament",
-    "old_testament": "Altes Testament"
+    "old_testament": "Altes Testament",
+    "book_progress": "{{ percent }} translated"
   },
   "checking": {
     "add_question": "Frage hinzufügen"
@@ -155,6 +156,14 @@
     "project_has_text_in_chapters": "{{ bookName }} im {{ projectName }} hat Text in {{ numChapters }} Kapiteln",
     "select_alternate_project": "Wähle das Projekt, dem Du den Entwurf hinzufügen möchtest"
   },
+  "draft_apply_progress-dialog": {
+    "add_draft_to_book": "Adding draft to {{ bookName }}",
+    "close": "Schliessen",
+    "failed_to_apply_chapters": "Failed to apply chapters",
+    "go_to_chapter": "Go to the chapter to try again.",
+    "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}",
+    "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
+  },
   "draft_generation": {
     "back_translation_requirement": "Rückübersetzungsentwürfe können nur in den etwa 200 [link:supportedLanguagesUrl] unterstützten Sprachen[/link] erstellt werden.",
     "cancel_generation_button": "Abbrechen",
@@ -241,8 +250,6 @@
   "draft_preview_books": {
     "add_to_project": "Zum Projekt hinzufügen",
     "add_to_different_project": "Einem anderen Projekt hinzufügen",
-    "draft_successfully_applied": "Der Entwurf für {{ bookName }} wurde erfolgreich auf Dein Projekt angewandt.",
-    "one_or_more_drafts_failed": "Entwürfe eines oder mehrerer Kapitel konnten nicht angewandt werden. Sieh Dir die Kapitel im Buch an, um zu sehen, welche Kapitel Entwürfe hat, die erfolgreich angewandt wurden.",
     "no_books_have_drafts": "Es gibt keine Bücher mit Entwürfen.",
     "no_permission_to_edit_book": "Du hast keine Schreibberechtigung für dieses Buch. Kontaktiere Deinen Projektadministrator, um die Berechtigung zu erhalten.",
     "readd_to_project": "Wieder zum Projekt hinzufügen"

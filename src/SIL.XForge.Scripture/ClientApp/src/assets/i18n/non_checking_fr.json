@@ -47,7 +47,8 @@
     "deuterocanon": "Deutérocanoniques",
     "loading_message": "Chargement des livres disponibles...",
     "new_testament": "Nouveau Testament",
-    "old_testament": "Ancien Testament"
+    "old_testament": "Ancien Testament",
+    "book_progress": "{{ percent }} traduit"
   },
   "checking": {
     "add_question": "Ajouter une question"
@@ -155,6 +156,14 @@
     "project_has_text_in_chapters": "{{ bookName }} dans {{ projectName }} a du texte dans les chapitres {{ numChapters }}",
     "select_alternate_project": "Sélectionnez le projet auquel vous souhaitez ajouter le brouillon"
   },
+  "draft_apply_progress-dialog": {
+    "add_draft_to_book": "Ajout du brouillon à {{ bookName }}",
+    "close": "Fermer",
+    "failed_to_apply_chapters": "Impossible d'appliquer les chapitres",
+    "go_to_chapter": "Allez au chapitre pour réessayer.",
+    "some_chapters_not_applied": "Les brouillons d'un ou plusieurs chapitres n'ont pas pu être appliqués à {{ bookName }}",
+    "successfully_applied_all_chapters": "Application réussie de tous les chapitres sur {{ bookName }}"
+  },
   "draft_generation": {
     "back_translation_requirement": "Les ébauches de retraduction ne peuvent être générés que dans les quelque 200 [link:supportedLanguagesUrl]langues prises en charge[/link].",
     "cancel_generation_button": "Annuler",
@@ -241,8 +250,6 @@
   "draft_preview_books": {
     "add_to_project": "Ajouter au Projet",
     "add_to_different_project": "Ajouter à un autre projet",
-    "draft_successfully_applied": "Le brouillon pour {{ bookName }} a été appliqué avec succès à votre projet.",
-    "one_or_more_drafts_failed": "Les brouillons d'un ou plusieurs chapitres n'ont pas pu être appliqués. Voir les chapitres du livre pour voir quels chapitres avaient été appliqués avec succès.",
     "no_books_have_drafts": " Aucun livre n'a de brouillons.",
     "no_permission_to_edit_book": "Vous n'avez pas la permission d'écrire dans ce livre. Contactez l'administrateur du projet pour obtenir la permission.",
     "readd_to_project": "Rajouter au projet"
