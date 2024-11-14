@@ -10,7 +10,7 @@ import { LynxInsightStateService } from '../lynx-insight-state.service';
 
 interface LynxInsightFlattened extends LynxInsight {
   description: string;
-  moreInfo: string;
+  moreInfo?: string;
 }
 
 @Component({
@@ -81,7 +81,7 @@ export class LynxInsightOverlayComponent {
     return {
       ...insight,
       description: insightCode?.description ?? '',
-      moreInfo: insightCode?.moreInfo ?? ''
+      moreInfo: insightCode?.moreInfo
     };
   }
 
