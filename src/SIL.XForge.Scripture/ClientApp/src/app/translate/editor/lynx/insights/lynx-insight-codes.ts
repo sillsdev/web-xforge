@@ -26,7 +26,12 @@ const codes = new Map<string, LynxInsightCode>([
   ['2001', { code: '2001', description: 'Crazy parens!' }],
   ['2011', { code: '2011', description: 'I warned you!' }],
   ['2002', { code: '2002', description: 'No such thing as "Information".' }],
-  ['3001', { code: '3001', description: 'Better to ask forgiveness.' }]
+  ['3001', { code: '3001', description: 'Better to ask forgiveness.' }],
+  ['2005', { code: '2005', description: 'Some warning text.' }],
+  ['1005', { code: '1005', description: 'Some notice text.' }],
+  ['1006', { code: '1006', description: 'Some notice text.' }],
+  ['3006', { code: '3006', description: 'Some error text.' }],
+  ['1011', { code: '1011', description: 'Some notice text.' }]
 ]);
 
 export const EDITOR_INSIGHT_CODES = new InjectionToken<Map<string, LynxInsightCode>>('EDITOR_INSIGHT_CODES', {
