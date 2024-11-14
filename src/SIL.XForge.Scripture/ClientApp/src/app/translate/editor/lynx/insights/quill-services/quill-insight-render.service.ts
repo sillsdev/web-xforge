@@ -80,7 +80,7 @@ export class QuillInsightRenderService extends InsightRenderService {
   }
 
   renderActionOverlay(insights: LynxInsight[], editor: Quill, actionOverlayActive: boolean): void {
-    this.overlayService.closeAll();
+    this.overlayService.close();
     let editorAttention = false;
 
     if (actionOverlayActive) {

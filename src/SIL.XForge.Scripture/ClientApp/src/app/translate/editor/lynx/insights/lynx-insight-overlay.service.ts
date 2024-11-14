@@ -21,7 +21,7 @@ export interface LynxInsightOverlayRef {
   providedIn: 'root'
 })
 export class LynxInsightOverlayService {
-  private openRefs = new Map<string, LynxInsightOverlayRef>();
+  private openRef?: LynxInsightOverlayRef;
   private scrollableContainer?: CdkScrollable;
 
   constructor(
@@ -39,14 +39,16 @@ export class LynxInsightOverlayService {
       return undefined;
     }
 
+    // Close any existing overlay
+    this.close();
+
     this.registerScrollable(scrollContainerEl);
 
     const overlayRef: LynxInsightOverlayRef = this.createOverlayRef(origin);
     const componentRef = overlayRef.ref.attach(new ComponentPortal(LynxInsightOverlayComponent));
-    const key = insights[0].id;
 
     componentRef.instance.insights = insights;
-    componentRef.instance.insightDismiss.pipe(take(1)).subscribe(() => this.close(key));
+    componentRef.instance.insightDismiss.pipe(take(1)).subscribe(() => this.close());
 
     // Update overlay position when insight is focused (as in choosing from multi-insight)
     componentRef.instance.insightFocus
@@ -56,27 +58,17 @@ export class LynxInsightOverlayService {
       )
       .subscribe(() => overlayRef.ref.updatePosition());
 
-    this.openRefs.set(key, overlayRef);
+    this.openRef = overlayRef;
 
     return overlayRef;
   }
 
-  close(insightId: string): void {
-    if (this.openRefs.size > 0) {
-      const overlayRef: LynxInsightOverlayRef | undefined = this.openRefs.get(insightId);
-
-      if (overlayRef != null) {
-        overlayRef.ref.dispose();
-        overlayRef.closed$.next();
-        overlayRef.closed$.complete();
-        this.openRefs.delete(insightId);
-      }
-    }
-  }
-
-  closeAll(): void {
-    for (const insightId of this.openRefs.keys()) {
-      this.close(insightId);
+  close(): void {
+    if (this.openRef != null) {
+      this.openRef.ref.dispose();
+      this.openRef.closed$.next();
+      this.openRef.closed$.complete();
+      this.openRef = undefined;
     }
   }
 
