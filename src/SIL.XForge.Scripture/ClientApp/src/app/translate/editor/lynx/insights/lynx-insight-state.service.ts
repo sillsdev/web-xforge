@@ -493,57 +493,6 @@ export class LynxInsightStateService {
     this.updateDisplayState(displayStateChanges);
   }
 
-  // /**
-  //  * Updates the display state for an insight.  If `isExclusive` is true, clears those flags from all other insights
-  //  * where it is set in the specified changes.
-  //  * @param id The id of the insight to update.
-  //  * @param displayStateChanges The changes to apply to the display state.
-  //  * @param isExclusive Whether or not to clear the given display state flags from all other insights.
-  //  */
-  // updateDisplayState(id: string, displayStateChanges: Partial<LynxInsightDisplayState>, isExclusive?: boolean): void;
-  // updateDisplayState(ids: string[], displayStateChanges: Partial<LynxInsightDisplayState>, isExclusive?: boolean): void;
-  // updateDisplayState(
-  //   idOrIds: string | string[],
-  //   displayStateChanges: Partial<LynxInsightDisplayState>,
-  //   isExclusive = true
-  // ): void {
-  //   let ids: Set<string> | undefined;
-  //   let id: string | undefined;
-
-  //   if (Array.isArray(idOrIds)) {
-  //     ids = new Set(idOrIds);
-  //   } else {
-  //     id = idOrIds;
-  //   }
-
-  //   this.rawInsightSource$.next(
-  //     this.rawInsightSource$.value.map(insight => {
-  //       const isInsightToUpdate = ids != null ? ids.has(insight.id) : insight.id === id;
-
-  //       if (isInsightToUpdate) {
-  //         return { ...insight, displayState: { ...insight.displayState, ...displayStateChanges } };
-  //       } else {
-  //         if (isExclusive) {
-  //           const itemChanges: Partial<LynxInsightDisplayState> = {};
-  //           let changed = false;
-
-  //           // Unset the flag on insight item if the flag is included in the display changes on the given insight
-  //           for (const key of Object.keys(displayStateChanges)) {
-  //             itemChanges[key] = false;
-  //             changed = true;
-  //           }
-
-  //           if (changed) {
-  //             return { ...insight, displayState: { ...insight.displayState, ...itemChanges } };
-  //           }
-  //         }
-
-  //         return insight;
-  //       }
-  //     })
-  //   );
-  // }
-
   clearDisplayState(): void {
     this.displayStateSource$.next({ activeInsightIds: [], cursorActiveInsightIds: [] });
   }
@@ -598,7 +547,7 @@ export class LynxInsightStateService {
   private init(): void {
     const stateLoaded$ = new BehaviorSubject<boolean>(false);
 
-    // Load stored state from  project user config
+    // Load stored state from project user config
     this.activatedProjectUserConfig.projectUserConfig$.pipe(filterNullish(), take(1)).subscribe(puc => {
       const persistedUserState: LynxInsightUserData | undefined = puc?.lynxInsightState;
 
