@@ -218,7 +218,6 @@
     "save_answer": "Speichern",
     "select_verses": "Verse wählen",
     "show_more_unread": "{{ count }} weitere ungelesene Antworten anzeigen",
-    "tooltip_attach": "Bibeltext hinzufügen",
     "tooltip_status_export": "In Paratext exportieren, falls in den Einstellungen ausgewählt",
     "tooltip_status_resolve": "Antwort als erledigt markieren",
     "your_answer": "Deine Antwort"
@@ -263,11 +262,12 @@
     "record_audio": "Audio aufnehmen",
     "stop_recording": "Aufnahme stoppen"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "Abbrechen",
-    "comment_cannot_be_blank": "Vor dem Speichern Kommentar erfassen",
-    "save_comment": "Kommentar speichern",
-    "your_comment": "Dein Kommentar"
+    "save": "Speichern",
+    "your_answer": "Deine Antwort",
+    "your_comment": "Your comment"
   },
   "checking_comments": {
     "add_a_comment": "Kommentar hinzufügen",

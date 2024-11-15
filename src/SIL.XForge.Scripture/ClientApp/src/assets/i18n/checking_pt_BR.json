@@ -218,7 +218,6 @@
     "save_answer": "Salvar Resposta",
     "select_verses": "Selecionar versículos",
     "show_more_unread": "Exibir {{ count }} mais respostas não lidas",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Sua resposta"
@@ -263,11 +262,12 @@
     "record_audio": "Record Audio",
     "stop_recording": "Parar gravação"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "Cancelar",
-    "comment_cannot_be_blank": "Você precisa digitar seu comentário antes de salvar",
-    "save_comment": "Salvar comentário",
-    "your_comment": "Seu comentário"
+    "save": "Salvar Resposta",
+    "your_answer": "Sua resposta",
+    "your_comment": "Your comment"
   },
   "checking_comments": {
     "add_a_comment": "Adicionar um comentário",

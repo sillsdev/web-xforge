@@ -218,7 +218,6 @@
     "save_answer": "जवाफ सेभ गर्नुहोस्",
     "select_verses": "पदहरू चयन",
     "show_more_unread": "थप {{ count }} नपढिएका जवाफहरू देखाउनुहोस्",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "यदि सेटिङहरूमा कन्‍फिगर गरिएको छ भने प्‍याराटेक्‍स्‍टमा निर्यात गर्नुहोस्\n",
     "tooltip_status_resolve": "समाधान भएको भनेर जवाफलाई अंकित गर्नुहोस्",
     "your_answer": "तपाइँकाे जवाफ"
@@ -263,11 +262,12 @@
     "record_audio": "Record Audio",
     "stop_recording": "रिकर्डिङ्ग रोक्नुहोस्"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "रद्द गर्नुहोस्",
-    "comment_cannot_be_blank": "तपाईंले सेभ गर्नु अघि आफ्नो टिप्पणी प्रविष्ट गर्नु आवश्यक छ",
-    "save_comment": "टिप्पणी सेभ गर्नुहोस्",
-    "your_comment": "तपाईंको टिप्पणी"
+    "save": "जवाफ सेभ गर्नुहोस्",
+    "your_answer": "तपाइँकाे जवाफ",
+    "your_comment": "Your comment"
   },
   "checking_comments": {
     "add_a_comment": "टिप्पणी थप्नुहोस्",

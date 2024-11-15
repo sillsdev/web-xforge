@@ -218,7 +218,6 @@
     "save_answer": "Cavabınızı saxlamaq",
     "select_verses": "Ayələri seçmək",
     "show_more_unread": "Oxunmamış başqa cavabları {{ count }} göstərmək",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Sizin cavabınız"
@@ -263,11 +262,12 @@
     "record_audio": "Record Audio",
     "stop_recording": "Səs yazmanı dayandırmaq"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "Ləğv etmək",
-    "comment_cannot_be_blank": "Yaddaşda saxlamazdan qabaq rəyinizi buraya daxil edin",
-    "save_comment": "Rəyinizi yaddaşda saxlayın. ",
-    "your_comment": "Sizin rəyiniz"
+    "save": "Cavabınızı saxlamaq",
+    "your_answer": "Sizin cavabınız",
+    "your_comment": "Your comment"
   },
   "checking_comments": {
     "add_a_comment": "Rəyinizi əlavə edin",

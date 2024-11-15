@@ -218,7 +218,6 @@
     "save_answer": "Сохранить ответ",
     "select_verses": "Выбрать стихи",
     "show_more_unread": "Показать ещё {{ count }} непрочитанных ответов",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Ваш ответ"
@@ -263,11 +262,12 @@
     "record_audio": "Record Audio",
     "stop_recording": "Остановить запись"
   },
-  "checking_comment_form": {
-    "cancel": "Отмена",
-    "comment_cannot_be_blank": "Необходимо ввести текст комментария перед сохранением",
-    "save_comment": "Сохранить комментарий",
-    "your_comment": "Ваш комментарий"
+  "checking_input_form": {
+    "attach": "Attach Scripture",
+    "cancel": "Отменить",
+    "save": "Сохранить ответ",
+    "your_answer": "Ваш ответ",
+    "your_comment": "Your comment"
   },
   "checking_comments": {
     "add_a_comment": "Добавить комментарий",
