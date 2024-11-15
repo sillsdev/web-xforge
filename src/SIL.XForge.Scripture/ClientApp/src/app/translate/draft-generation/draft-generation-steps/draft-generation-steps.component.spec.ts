@@ -227,12 +227,15 @@ describe('DraftGenerationStepsComponent', () => {
       component.selectedTrainingDataIds = trainingDataFiles;
 
       spyOn(component.done, 'emit');
-
+      expect(component.isStepsCompleted).toBe(false);
       // Advance to the next step when at last step should emit books result
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
+      const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
+      expect(generateDraftButton['disabled']).toBe(false);
       component.tryAdvanceStep();
+      fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
         translationBooks,
@@ -240,6 +243,8 @@ describe('DraftGenerationStepsComponent', () => {
         trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book)),
         fastTraining: false
       } as DraftGenerationStepsResult);
+      expect(component.isStepsCompleted).toBe(true);
+      expect(generateDraftButton['disabled']).toBe(true);
     });
 
     it('should emit the correct selected books when bookSelect is called', fakeAsync(() => {
@@ -325,7 +330,10 @@ describe('DraftGenerationStepsComponent', () => {
 
       // Click next on the final step to generate the draft
       fixture.detectChanges();
+      const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
+      expect(generateDraftButton['disabled']).toBe(false);
       component.tryAdvanceStep();
+      fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingBooks,
@@ -333,6 +341,7 @@ describe('DraftGenerationStepsComponent', () => {
         translationBooks,
         fastTraining: true
       } as DraftGenerationStepsResult);
+      expect(generateDraftButton['disabled']).toBe(true);
     });
   });
 

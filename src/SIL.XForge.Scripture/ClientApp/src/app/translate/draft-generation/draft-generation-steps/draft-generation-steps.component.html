@@ -115,9 +115,18 @@
         }
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
-          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+          <button
+            mat-flat-button
+            (click)="tryAdvanceStep()"
+            color="primary"
+            class="advance-button"
+            [disabled]="isStepsCompleted"
+          >
             {{ featureFlags.allowFastTraining.enabled || trainingDataFilesAvailable ? t("next") : t("generate_draft") }}
           </button>
+          @if (isStepsCompleted) {
+            <mat-spinner diameter="24"></mat-spinner>
+          }
         </div>
       </mat-step>
       @if (trainingDataFilesAvailable) {
@@ -134,9 +143,18 @@
           ></app-training-data-multi-select>
           <div class="button-strip">
             <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
-            <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+            <button
+              mat-flat-button
+              (click)="tryAdvanceStep()"
+              color="primary"
+              class="advance-button"
+              [disabled]="isStepsCompleted"
+            >
               {{ featureFlags.allowFastTraining.enabled ? t("next") : t("generate_draft") }}
             </button>
+            @if (isStepsCompleted) {
+              <mat-spinner diameter="24"></mat-spinner>
+            }
           </div>
         </mat-step>
       }
@@ -154,9 +172,18 @@
           }
           <div class="button-strip">
             <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
-            <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+            <button
+              mat-flat-button
+              (click)="tryAdvanceStep()"
+              color="primary"
+              class="advance-button"
+              [disabled]="isStepsCompleted"
+            >
               {{ t("generate_draft") }}
             </button>
+            @if (isStepsCompleted) {
+              <mat-spinner diameter="24"></mat-spinner>
+            }
           </div>
         </mat-step>
       }
