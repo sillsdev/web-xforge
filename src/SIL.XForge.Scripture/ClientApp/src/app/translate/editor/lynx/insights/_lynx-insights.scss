@@ -48,25 +48,6 @@ $insightTypes: 'info', 'warning', 'error';
     // Darken the background color on hover of insight
     background-color: hsl($color-h, $color-s, $bg-color-l - 4%);
   }
-
-  // TODO: figure out cursor-active state?
-  // &.cursor-active {
-  //   // background-color: hsl(var($color-h), var($color-s), $bg-color-l - 10);
-  //   background-color: hsla(var($color-h), var($color-s), var($color-s), 0.8);
-  // }
-
-  // // TODO: use lightbulb at rail instead of next to text?
-  // &.prompt-active {
-  //   &::after {
-  //     // color: rgb(var($color));
-  //     // color: #fecc3b;
-  //     // background-color: rgba(255, 255, 255, 0.9);
-
-  //     // Invert the colors of the underlined range
-  //     color: $bgColor;
-  //     background-color: $decorationColor;
-  //   }
-  // }
 }
 
 .lynx-insight {
@@ -87,49 +68,26 @@ $insightTypes: 'info', 'warning', 'error';
   &.warning {
     @include insight-styles('warning');
     text-underline-offset: 4px;
-
-    .info {
-      background-color: transparent;
-    }
   }
 
   &.error {
     @include insight-styles('error');
     text-underline-offset: 2px;
-
-    .warning {
-      background-color: transparent;
-    }
-
-    .info {
-      background-color: transparent;
-    }
   }
+}
 
-  &:hover {
-  }
-
-  // &.prompt-active {
-  //   &::after {
-  //     // Show overlaid mat 'warning' icon to the right
-  //     content: '\e79a';
-  //     // content: '\e002';
-  //     font-family: 'Material Icons';
-  //     position: absolute;
-  //     inset-inline-start: calc(100% - 1px);
-  //     top: 0;
-  //     bottom: 0;
-  //     border-radius: 2px;
-  //     text-align: center;
-  //     font-size: inherit;
-  //     padding: 0 3px;
-  //     z-index: 1;
-  //     cursor: pointer;
-  //   }
-  // }
-
-  &.action-overlay-active {
-  }
+// Insights should let more severe insights show through,
+// unless the child element is 'action-overlay-active' and the parent is not.
+:is(.warning, .error) .info:not(.action-overlay-active),
+:is(.warning, .error).action-overlay-active .info {
+  background-color: transparent;
+}
+.error .warning:not(.action-overlay-active),
+.error.action-overlay-active .warning {
+  background-color: transparent;
+}
+.lynx-insight.action-overlay-active .lynx-insight:not(.action-overlay-active) {
+  background-color: transparent;
 }
 
 // Dim all but the insight whose action overlay is open
