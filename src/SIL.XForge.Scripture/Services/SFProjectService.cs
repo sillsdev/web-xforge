@@ -105,10 +105,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             Name = ptProject.Name,
             ShortName = ptProject.ShortName,
             WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
-            TranslateConfig = new TranslateConfig
-            {
-                TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled,
-            },
+            TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false, },
             CheckingConfig = new CheckingConfig
             {
                 CheckingEnabled = settings.CheckingEnabled,
@@ -120,7 +117,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new ForbiddenException();
 
         string projectId = ObjectId.GenerateNewId().ToString();
-        bool trainEngine = false;
         await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
         {
             if (
@@ -151,20 +147,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
                 await projectDoc.SubmitJson0OpAsync(op => UpdateSetting(op, p => p.TranslateConfig.Source, source));
             }
-
-            if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
-            {
-                await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, false, CancellationToken.None);
-                trainEngine = true;
-            }
         }
 
         await _syncService.SyncAsync(
             new SyncConfig
             {
                 ProjectId = projectId,
-                TrainEngine = trainEngine,
+                TrainEngine = false,
                 UserId = curUserId,
             }
         );

@@ -2773,12 +2773,7 @@ public class SFProjectServiceTests
         // SUT
         string sfProjectId = await env.Service.CreateProjectAsync(
             User01,
-            new SFProjectCreateSettings()
-            {
-                ParatextId = "ptProject123",
-                SourceParatextId = "resource_project",
-                TranslationSuggestionsEnabled = true,
-            }
+            new SFProjectCreateSettings() { ParatextId = "ptProject123", SourceParatextId = "resource_project" }
         );
         Assert.That(env.ContainsProject(sfProjectId), Is.True);
         Assert.That(
@@ -2955,12 +2950,7 @@ public class SFProjectServiceTests
         // SUT
         string sfProjectId = await env.Service.CreateProjectAsync(
             User03,
-            new SFProjectCreateSettings()
-            {
-                ParatextId = targetProjectPTId,
-                SourceParatextId = sourceProjectPTId,
-                TranslationSuggestionsEnabled = true,
-            }
+            new SFProjectCreateSettings() { ParatextId = targetProjectPTId, SourceParatextId = sourceProjectPTId }
         );
 
         SFProject project = env.GetProject(sfProjectId);
@@ -2977,7 +2967,7 @@ public class SFProjectServiceTests
         // permissions on them.
         await env
             .SyncService.Received()
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == sfProjectId && s.TrainEngine && s.UserId == User03));
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == sfProjectId && !s.TrainEngine && s.UserId == User03));
 
         // Don't check that permissions were added to the target project, because we mock the Sync functionality.
         // But we can show that source resource permissions were set:

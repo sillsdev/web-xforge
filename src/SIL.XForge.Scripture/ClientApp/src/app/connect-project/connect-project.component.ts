@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ErrorHandler, OnInit } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { AuthService } from 'xforge-common/auth.service';
@@ -19,7 +19,6 @@ import { compareProjectsForSorting, projectLabel } from '../shared/utils';
 interface ConnectProjectFormValues {
   settings: {
     checking: boolean;
-    translationSuggestions: boolean;
     sourceParatextId: string;
   };
 }
@@ -31,16 +30,15 @@ interface ConnectProjectFormValues {
 })
 export class ConnectProjectComponent extends DataLoadingComponent implements OnInit {
   static readonly errorAlreadyConnectedKey: string = 'error-already-connected';
-  readonly connectProjectForm = new UntypedFormGroup({
-    settings: new UntypedFormGroup({
-      translationSuggestions: new UntypedFormControl(false),
-      sourceParatextId: new UntypedFormControl(undefined),
-      checking: new UntypedFormControl(true)
+  readonly connectProjectForm = new FormGroup({
+    settings: new FormGroup({
+      sourceParatextId: new FormControl(undefined),
+      checking: new FormControl(true)
     })
   });
   resources?: SelectableProject[];
   showResourcesLoadingFailedMessage = false;
-  state: 'connecting' | 'input' | 'login' | 'offline' = 'input';
+  state: 'connecting' | 'input' | 'offline' = 'input';
   projectDoc?: SFProjectDoc;
 
   projectLabel = projectLabel;
@@ -94,8 +92,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.projectsFromParatext ?? [];
   }
 
-  get settings(): UntypedFormGroup {
-    return this.connectProjectForm.controls.settings as UntypedFormGroup;
+  get settings(): FormGroup {
+    return this.connectProjectForm.controls.settings as FormGroup;
   }
 
   get ptProjectId(): string {
@@ -112,16 +110,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     if (this.ptProjectId === '') {
       this.router.navigate(['/projects']);
     }
-
-    this.subscribe(this.settings.controls.sourceParatextId.valueChanges, (value: boolean) => {
-      const translationSuggestions = this.settings.controls.translationSuggestions;
-      if (value) {
-        translationSuggestions.enable();
-      } else {
-        translationSuggestions.reset();
-        translationSuggestions.disable();
-      }
-    });
 
     this.subscribe(this.onlineStatusService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
@@ -150,7 +138,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     const settings: SFProjectCreateSettings = {
       paratextId: this.ptProjectId,
       checkingEnabled: values.settings.checking,
-      translationSuggestionsEnabled: values.settings.translationSuggestions ?? false,
       sourceParatextId: values.settings.sourceParatextId
     };
 
@@ -182,15 +169,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.loadingStarted();
 
     try {
-      const projects: ParatextProject[] | undefined = await this.paratextService.getProjects();
-
-      if (projects == null) {
-        this.state = 'login';
-      } else {
-        this.projectsFromParatext = projects.sort(compareProjectsForSorting);
-        // do not wait for resources to load
-        this.fetchResources();
-      }
+      const projects: ParatextProject[] | undefined = (await this.paratextService.getProjects()) ?? [];
+      this.projectsFromParatext = projects.sort(compareProjectsForSorting);
+      // do not wait for resources to load
+      this.fetchResources();
     } catch (error: any) {
       if (error instanceof HttpErrorResponse && error.status === 401) {
         this.authService.requestParatextCredentialUpdate(() => this.router.navigate(['/projects']));

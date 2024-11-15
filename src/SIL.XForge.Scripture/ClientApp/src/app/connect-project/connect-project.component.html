@@ -5,15 +5,6 @@
   }
   <div class="content">
     @switch (state) {
-      @case ("login") {
-        <div class="paratext-login-container">
-          <div>{{ t("you_must_be_logged_in_to_paratext") }}</div>
-          <button mat-flat-button id="paratext-login-button" type="button" (click)="logInWithParatext()">
-            <mat-icon><img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" /></mat-icon>
-            {{ t("log_in_with_paratext") }}
-          </button>
-        </div>
-      }
       @case ("connecting") {
         <mat-card class="progress-container card-outline">
           <mat-card-content>
@@ -34,7 +25,6 @@
               <mat-card-subtitle>{{ t("you_can_change_later") }}</mat-card-subtitle>
               <mat-card-content class="card-content">
                 <p>{{ t("select_project_or_resource") }}</p>
-                <p>{{ t("translation_suggestions_require_source_text") }}</p>
                 <app-project-select
                   formControlName="sourceParatextId"
                   [placeholder]="t('source_text_placeholder')"
@@ -45,17 +35,6 @@
                 ></app-project-select>
                 @if (showResourcesLoadingFailedMessage) {
                   <mat-error>{{ t("error_fetching_resources") }}</mat-error>
-                }
-                @if (isBasedOnProjectSet) {
-                  <div>
-                    <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
-                      {{ t("enable_translation_suggestions") }}
-                    </mat-checkbox>
-                    <p
-                      class="helper-text"
-                      [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-                    ></p>
-                  </div>
                 }
               </mat-card-content>
               <mat-divider></mat-divider>
