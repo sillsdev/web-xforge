@@ -218,7 +218,6 @@
     "save_answer": "حفظ الإجابة",
     "select_verses": "اختر الآيات الكتابية",
     "show_more_unread": "إظهار {{ count }} أسئلة لم يُجَب عنها",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "إجابتك"
@@ -263,10 +262,11 @@
     "record_audio": "Record Audio",
     "stop_recording": "إيقاف التسجيل"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "إلغاء",
-    "comment_cannot_be_blank": "عليك أن تكتب تعليقك قبل الحفظ",
-    "save_comment": "حفظ التعليق",
+    "save": "حفظ الإجابة",
+    "your_answer": "إجابتك",
     "your_comment": "تعليقك"
   },
   "checking_comments": {

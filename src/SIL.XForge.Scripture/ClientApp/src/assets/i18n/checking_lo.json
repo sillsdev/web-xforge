@@ -218,7 +218,6 @@
     "save_answer": "ບັນທຶກຄຳຕອບ",
     "select_verses": "ເລືອກຂໍ້",
     "show_more_unread": "Show {{ count }} more unread answers",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "ຄໍາ​ຕອບ​ຂອງ​ເຈົ້າ"
@@ -263,10 +262,11 @@
     "record_audio": "Record Audio",
     "stop_recording": "ຢຸດບັນທຶກ"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "ຍົກເລີກ",
-    "comment_cannot_be_blank": "You need to enter your comment before saving",
-    "save_comment": "ບັນທຶກຂໍ້ຄວາມ",
+    "save": "ບັນທຶກຄຳຕອບ",
+    "your_answer": "ຄໍາ​ຕອບ​ຂອງ​ເຈົ້າ",
     "your_comment": "ຂໍ້ຄວາມເຈົ້າ"
   },
   "checking_comments": {

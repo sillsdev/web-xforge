@@ -218,7 +218,6 @@
     "save_answer": "Simpan Jawaban",
     "select_verses": "Pilih ayat-ayat",
     "show_more_unread": "tampilkan {{ count }} lebih banyak jawaban yang belum dibaca",
-    "tooltip_attach": "Melampirkan Alkitab",
     "tooltip_status_export": "Ekspor ke Paratext jika dikonfigurasi di Pengaturan",
     "tooltip_status_resolve": "Tandai jawaban sebagai terselesaikan",
     "your_answer": "Jawaban Anda"
@@ -263,10 +262,11 @@
     "record_audio": "Rekam Audio",
     "stop_recording": "Hentikan Perekaman"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "Batal",
-    "comment_cannot_be_blank": "Anda perlu mengisi komentar sebelum menyimpannya",
-    "save_comment": "Simpan komentar",
+    "save": "Simpan Jawaban",
+    "your_answer": "Jawaban Anda",
     "your_comment": "Komentar Anda"
   },
   "checking_comments": {

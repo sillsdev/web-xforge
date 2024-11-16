@@ -218,7 +218,6 @@
     "save_answer": "Salvează răspunsul",
     "select_verses": "Selectare versete",
     "show_more_unread": "Arată încă {{ count }} răspuns(uri) necitit(e)",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Răspunsul dvs."
@@ -263,10 +262,11 @@
     "record_audio": "Record Audio",
     "stop_recording": "Oprește înregistrarea"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "Renunță",
-    "comment_cannot_be_blank": "Scrieți un comentariu înainte de a-l salva",
-    "save_comment": "Salvează comentariul",
+    "save": "Salvează răspunsul",
+    "your_answer": "Răspunsul dvs.",
     "your_comment": "Comentariul dvs"
   },
   "checking_comments": {
