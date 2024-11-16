@@ -218,7 +218,6 @@
     "save_answer": "保存答案",
     "select_verses": "选择文本",
     "show_more_unread": "显示{{ count }} 个未读答案",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "你的答案"
@@ -263,10 +262,11 @@
     "record_audio": "Record Audio",
     "stop_recording": "停止录音"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "取消",
-    "comment_cannot_be_blank": "您需要先输入评论，然后再保存",
-    "save_comment": "保存评论",
+    "save": "保存答案",
+    "your_answer": "你的答案",
     "your_comment": "你的评论"
   },
   "checking_comments": {

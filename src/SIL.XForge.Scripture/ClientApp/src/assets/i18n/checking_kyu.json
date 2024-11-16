@@ -218,7 +218,6 @@
     "save_answer": "ꤙꤢꤩ꤬ꤘꤝꤥ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ",
     "select_verses": "ꤗꤟꤢꤩ꤬ꤗꤢ ꤜꤤ꤬ꤏꤢ꤭ꤏꤢꤧ꤭ꤗꤟꤢ꤭",
     "show_more_unread": "ꤙꤢꤩ꤬ꤜꤟꤌꤣ꤭  {{ count }} ꤕꤟꤥ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ꤘꤣ ꤟꤣꤟꤤꤒꤥ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ "
@@ -263,10 +262,11 @@
     "record_audio": "Record Audio",
     "stop_recording": "ꤥ꤬ꤊꤟꤌꤣ ꤊꤛꤢ꤭ ꤕꤟꤢꤦꤍꤟꤥ"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
+    "attach": "Attach Scripture",
     "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
-    "comment_cannot_be_blank": "ꤙꤤ ꤔꤟꤢꤧ꤬ ꤙꤢꤩ꤬ꤘꤝꤥ ꤟꤤꤒꤥ꤬ ꤔꤌꤣ꤬ ꤔꤟꤢꤧ꤬ ꤒꤥ꤭ ꤚꤢ꤭ꤔꤟꤌꤣ꤭ꤚꤟꤢꤩ ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤒꤢ꤬ꤔꤟꤢꤩ꤬",
-    "save_comment": "ꤙꤢꤩ꤬ꤘꤝꤥ ꤒꤟꤢꤧ꤬ꤒꤢ꤬ꤔꤟꤢꤩ",
+    "save": "ꤙꤢꤩ꤬ꤘꤝꤥ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ",
+    "your_answer": "ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ",
     "your_comment": "ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤒꤢ꤬ꤔꤟꤢꤩ꤬"
   },
   "checking_comments": {
