@@ -11,7 +11,7 @@
       - "vars/os_defaults.yml"
   vars:
     node_version: 18.20.2
-    mongodb_version: 6.0
+    mongodb_version: 7.0
     repo_path: "{{playbook_dir}}/.."
   pre_tasks:
     - name: "Add .NET Core | add key"
@@ -19,22 +19,19 @@
         # key id BC528686B50D79E339D3721CEB3E94ADBE1229CF
         url: https://packages.microsoft.com/keys/microsoft.asc
         dest: /etc/apt/trusted.gpg.d/microsoft.asc
-      when: base_distribution == 'ubuntu'
     - name: "Add .NET Core | add source"
       apt_repository:
-        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-{{base_distribution_release}}-prod {{base_distribution_release}} main"
+        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-{{base_distribution_release}}-{{base_distribution_release}}-prod {{base_distribution_release}} main"
         state: present
-      when: base_distribution == 'ubuntu'
     - name: add mongodb-server-{{mongodb_version}} apt key
       get_url:
         url: https://pgp.mongodb.com/server-{{mongodb_version}}.asc
         dest: /etc/apt/trusted.gpg.d/mongodb-server-{{mongodb_version}}.asc
     - name: add Mongo {{mongodb_version}} repository
       apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/mongodb-server-{{mongodb_version}}.asc] https://repo.mongodb.org/apt/ubuntu {{base_distribution_release}}/mongodb-org/{{mongodb_version}} multiverse"
+        repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/mongodb-server-{{mongodb_version}}.asc] https://repo.mongodb.org/apt/{{base_distribution_release}} {{base_distribution_release}}/mongodb-org/{{mongodb_version}} {{ 'multiverse' if base_distribution == 'ubuntu' else 'main' }}"
         filename: mongodb-org
         update_cache: yes
-      when: base_distribution == 'ubuntu'
   tasks:
     - name: install packages
       apt:
