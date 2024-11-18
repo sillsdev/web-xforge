@@ -368,6 +368,13 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
 
     protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
 
+    /// <summary>
+    /// Gets the project document.
+    /// </summary>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="conn">The connection.</param>
+    /// <returns>The loaded project document.</returns>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     protected async Task<IDocument<TModel>> GetProjectDocAsync(string projectId, IConnection conn)
     {
         IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);

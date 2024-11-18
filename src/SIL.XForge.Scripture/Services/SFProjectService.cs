@@ -43,6 +43,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private readonly ISecurityService _securityService;
     private readonly IStringLocalizer<SharedResource> _localizer;
     private readonly ITransceleratorService _transceleratorService;
+    private readonly ISFProjectRights _projectRights;
 
     public SFProjectService(
         IRealtimeService realtimeService,
@@ -60,7 +61,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IRepository<TranslateMetrics> translateMetrics,
         IStringLocalizer<SharedResource> localizer,
         ITransceleratorService transceleratorService,
-        IBackgroundJobClient backgroundJobClient
+        IBackgroundJobClient backgroundJobClient,
+        ISFProjectRights projectRights
     )
         : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
     {
@@ -75,6 +77,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _localizer = localizer;
         _transceleratorService = transceleratorService;
         _backgroundJobClient = backgroundJobClient;
+        _projectRights = projectRights;
     }
 
     protected override string ProjectAdminRole => SFProjectRole.Administrator;
@@ -963,19 +966,18 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
-    public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
+    public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestionsAsync(
+        string curUserId,
+        string projectId
+    )
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-        if (!projectDoc.IsLoaded)
-            throw new DataNotFoundException("The project does not exist.");
-        // TODO Checking whether the permissions contains a particular string is not a very robust way to check
-        // permissions. A rights service needs to be created in C# land.
-        if (
-            !IsProjectAdmin(projectDoc.Data, curUserId)
-            && !projectDoc.Data.UserPermissions[curUserId].Contains("questions.create")
-        )
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!_projectRights.HasRight(projectDoc.Data, curUserId, SFProjectDomain.Questions, Operation.Create))
+        {
             throw new ForbiddenException();
+        }
+
         return _transceleratorService.Questions(projectDoc.Data.ParatextId);
     }
 
@@ -991,12 +993,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public async Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
         await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, null);
     }
 
@@ -1022,15 +1019,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     )
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(userId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-        if (
-            !IsProjectAdmin(projectDoc.Data, userId)
-            && !projectDoc.Data.UserPermissions[userId].Contains("text_audio.create")
-        )
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!_projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.TextAudio, Operation.Create))
         {
             throw new ForbiddenException();
         }
@@ -1078,15 +1068,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public async Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(userId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-        if (
-            !IsProjectAdmin(projectDoc.Data, userId)
-            && !projectDoc.Data.UserPermissions[userId].Contains("text_audio.delete")
-        )
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!_projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.TextAudio, Operation.Delete))
         {
             throw new ForbiddenException();
         }
@@ -1807,34 +1790,36 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
     }
 
-    // TODO: User similar role checking system to node backend/frontend
-    private static string[] GetAvailableRoles(SFProject project, bool isProjectAdmin) =>
+    private string[] GetAvailableRoles(SFProject project, bool isProjectAdmin) =>
         new Dictionary<string, bool>
         {
             {
                 SFProjectRole.CommunityChecker,
                 project.CheckingConfig.CheckingEnabled
-                    && (
-                        isProjectAdmin
-                        || (
-                            project.RolePermissions.ContainsKey(SFProjectRole.CommunityChecker)
-                            && project.RolePermissions[SFProjectRole.CommunityChecker].Contains("user_invites.create")
-                        )
+                    && _projectRights.RoleHasRight(
+                        project,
+                        role: isProjectAdmin ? SFProjectRole.Administrator : SFProjectRole.CommunityChecker,
+                        SFProjectDomain.UserInvites,
+                        Operation.Create
                     )
             },
             {
                 SFProjectRole.Viewer,
-                (
-                    project.RolePermissions.ContainsKey(SFProjectRole.Viewer)
-                    && project.RolePermissions[SFProjectRole.Viewer].Contains("user_invites.create")
-                ) || isProjectAdmin
+                _projectRights.RoleHasRight(
+                    project,
+                    role: isProjectAdmin ? SFProjectRole.Administrator : SFProjectRole.Viewer,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
             },
             {
                 SFProjectRole.Commenter,
-                (
-                    project.RolePermissions.ContainsKey(SFProjectRole.Commenter)
-                    && project.RolePermissions[SFProjectRole.Commenter].Contains("user_invites.create")
-                ) || isProjectAdmin
+                _projectRights.RoleHasRight(
+                    project,
+                    role: isProjectAdmin ? SFProjectRole.Administrator : SFProjectRole.Commenter,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
             },
         }
             .Where(entry => entry.Value)
