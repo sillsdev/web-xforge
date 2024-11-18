@@ -4,7 +4,7 @@ import { LynxInsightDisplayState } from './lynx-insight';
 import { LynxInsightStateService } from './lynx-insight-state.service';
 import { LynxInsightBlot } from './quill-services/blots/lynx-insight-blot';
 
-type EventType = 'click' | 'mouseover' | 'mouseout';
+type EventType = 'click' | 'mouseover';
 
 @Injectable({
   providedIn: 'root'
@@ -25,6 +25,7 @@ export class LynxInsightUserEventService {
 
   private addEventListeners(): void {
     this.addEventListener('click');
+    this.addEventListener('mouseover');
   }
 
   private addEventListener(eventType: EventType): void {
@@ -36,13 +37,16 @@ export class LynxInsightUserEventService {
 
     switch (eventType) {
       case 'click':
-        this.handleClick(target, event);
+        this.handleClick(target);
+        break;
+      case 'mouseover':
+        this.handleMouseOver(target);
         break;
     }
   }
 
-  private handleClick(target: HTMLElement, event: MouseEvent): void {
-    console.log('Click', target, event);
+  private handleClick(target: HTMLElement): void {
+    console.log('Click', target);
     const ids: string[] = this.getInsightIds(target);
 
     if (ids.length === 0) {
@@ -62,6 +66,20 @@ export class LynxInsightUserEventService {
     this.insightState.updateDisplayState(displayStateChanges);
   }
 
+  private handleMouseOver(target: HTMLElement): void {
+    // Clear any 'hover-insight' classes if the target is not an insight element
+    if (!target.matches('.' + LynxInsightBlot.superClassName)) {
+      this.insightState.updateDisplayState({ cursorActiveInsightIds: [] });
+      return;
+    }
+
+    console.log('MouseOver', target);
+    const ids: string[] = this.getInsightIds(target);
+
+    // Set 'hover-insight' class on the affected insight elements (clear others)
+    this.insightState.updateDisplayState({ cursorActiveInsightIds: ids });
+  }
+
   /**
    * Get all insight ids from the element and its parents that match the lynx insight selector.
    */
@@ -72,7 +90,7 @@ export class LynxInsightUserEventService {
       let currentEl: HTMLElement | null | undefined = el;
 
       while (currentEl != null) {
-        const id = currentEl.dataset.insightId;
+        const id = currentEl.dataset[this.dataIdProp];
 
         if (id != null) {
           ids.push(id);
