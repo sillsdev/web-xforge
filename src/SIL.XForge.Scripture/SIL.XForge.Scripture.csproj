@@ -54,6 +54,11 @@
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\RealtimeServer\scriptureforge\rightsByRole.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\SIL.XForge\SIL.XForge.csproj" />
   </ItemGroup>
   <ItemGroup>
