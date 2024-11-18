@@ -737,7 +737,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            return Ok(await projectService.TransceleratorQuestions(UserId, projectId));
+            return Ok(await projectService.TransceleratorQuestionsAsync(UserId, projectId));
         }
         catch (ForbiddenException)
         {

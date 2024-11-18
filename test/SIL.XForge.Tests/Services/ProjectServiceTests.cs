@@ -22,7 +22,7 @@ public class ProjectServiceTests
     private const string User02 = "user02";
     private const string User03 = "user03";
     private const string SiteId = "xf";
-    private static readonly string[] Permissions = ["questions.create", "questions.edit"];
+    private static readonly string[] Permissions = ["generic.permission", "another.permission"];
 
     [Test]
     public async Task SaveAudioAsync_NonMp3File_AudioConverted()

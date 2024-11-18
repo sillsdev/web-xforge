@@ -42,7 +42,7 @@ public interface ISFProjectService : IProjectService
     Task<string> JoinWithShareKeyAsync(string curUserId, string shareKey);
     Task<IReadOnlyList<InviteeStatus>> InvitedUsersAsync(string curUserId, string projectId);
     bool IsSourceProject(string projectId);
-    Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
+    Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestionsAsync(string curUserId, string projectId);
     Task UpdatePermissionsAsync(
         string curUserId,
         IDocument<SFProject> projectDoc,
