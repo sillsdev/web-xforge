@@ -18,6 +18,7 @@ export class QuillInsightRenderService extends InsightRenderService {
   readonly prefix = 'lynx-insight';
   readonly editorAttentionClass = `${this.prefix}-attention`;
   readonly activeInsightClass = `action-overlay-active`;
+  readonly cursorActiveClass = `cursor-active`;
 
   constructor(private readonly overlayService: LynxInsightOverlayService) {
     super();
@@ -91,7 +92,7 @@ export class QuillInsightRenderService extends InsightRenderService {
         // Scroll to the first occurring active insight in the editor
         editor.setSelection(leadingInsight.range.index, 'api');
 
-        const overlayAnchor: HTMLElement | null = this.getInsightElements(editor, overlayAnchorInsight)[0];
+        const overlayAnchor: HTMLElement | null = this.getInsightElements(editor, overlayAnchorInsight.id)[0];
 
         if (overlayAnchor != null) {
           const ref: LynxInsightOverlayRef | undefined = this.overlayService.open(overlayAnchor, insights, editor.root);
@@ -107,6 +108,19 @@ export class QuillInsightRenderService extends InsightRenderService {
     }
 
     this.setEditorAttention(editorAttention, editor, insights);
+  }
+
+  renderCursorActiveState(activeCursorInsightIds: string[], editor: Quill): void {
+    // Clear previously set classes
+    editor.root.querySelectorAll(`.${this.cursorActiveClass}`).forEach(element => {
+      element.classList.remove(this.cursorActiveClass);
+    });
+
+    for (const insightId of activeCursorInsightIds) {
+      for (const insightEl of this.getInsightElements(editor, insightId)) {
+        insightEl.classList.add(this.cursorActiveClass);
+      }
+    }
   }
 
   private setEditorAttention(editorAttention: boolean, editor: Quill, insights?: LynxInsight[]): void {
@@ -126,7 +140,7 @@ export class QuillInsightRenderService extends InsightRenderService {
     if (editorAttention && insights != null) {
       for (const insight of insights) {
         // An insight may be split across multiple elements, so apply the class to all elements with the insight id
-        for (const element of this.getInsightElements(editor, insight)) {
+        for (const element of this.getInsightElements(editor, insight.id)) {
           element.classList.add(this.activeInsightClass);
         }
       }
@@ -136,7 +150,7 @@ export class QuillInsightRenderService extends InsightRenderService {
   /**
    * Get all elements in the editor that contain the `[data-insight-id]` of the specified insight.
    */
-  private getInsightElements(editor: Quill, insight: LynxInsight): NodeListOf<HTMLElement> {
-    return editor.root.querySelectorAll(`[data-${LynxInsightBlot.idAttributeName}="${insight.id}"]`);
+  private getInsightElements(editor: Quill, insightId: string): NodeListOf<HTMLElement> {
+    return editor.root.querySelectorAll(`[data-${LynxInsightBlot.idAttributeName}="${insightId}"]`);
   }
 }

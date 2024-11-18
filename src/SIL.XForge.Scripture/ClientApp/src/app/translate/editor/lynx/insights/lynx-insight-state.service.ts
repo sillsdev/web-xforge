@@ -429,7 +429,10 @@ export class LynxInsightStateService {
   private readonly insightPanelVisibleSource$ = new BehaviorSubject<boolean>(false);
   readonly insightPanelVisible$ = this.insightPanelVisibleSource$.pipe(distinctUntilChanged());
 
-  private readonly displayStateSource$ = new BehaviorSubject<LynxInsightDisplayState>({ activeInsightIds: [] });
+  private readonly displayStateSource$ = new BehaviorSubject<LynxInsightDisplayState>({
+    activeInsightIds: [],
+    cursorActiveInsightIds: []
+  });
   readonly displayState$: Observable<LynxInsightDisplayState> = this.displayStateSource$.pipe(
     distinctUntilChanged(isEqual),
     shareReplay(1),
@@ -542,7 +545,7 @@ export class LynxInsightStateService {
   // }
 
   clearDisplayState(): void {
-    this.displayStateSource$.next({ activeInsightIds: [] });
+    this.displayStateSource$.next({ activeInsightIds: [], cursorActiveInsightIds: [] });
   }
 
   togglePanelVisibility(): void {
