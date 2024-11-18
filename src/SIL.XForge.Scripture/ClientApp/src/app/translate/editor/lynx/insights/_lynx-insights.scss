@@ -44,7 +44,9 @@ $insightTypes: 'info', 'warning', 'error';
   text-decoration-thickness: 1.2px;
   background-color: $bgColor;
 
-  &:hover {
+  // Use instead of ':hover', as insights can be represented by multiple elements when
+  // there are partially overlapping insight ranges.
+  &.cursor-active {
     // Darken the background color on hover of insight
     background-color: hsl($color-h, $color-s, $bg-color-l - 4%);
   }

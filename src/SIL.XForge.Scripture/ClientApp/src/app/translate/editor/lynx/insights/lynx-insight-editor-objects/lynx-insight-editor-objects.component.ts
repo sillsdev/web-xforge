@@ -2,8 +2,8 @@ import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from 'lodash-es';
 import Quill from 'quill';
-import { filter, map, merge, switchMap, tap } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
+import { filter, merge, switchMap, tap } from 'rxjs';
+import { pairwise } from 'rxjs/operators';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
@@ -45,15 +45,25 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
             this.insightState.filteredChapterInsights$.pipe(
               tap(insights => this.insightRenderService.render(insights, this.editor))
             ),
-            // Check display state to render action overlay
+            // Check display state to render action overlay or cursor active state
             this.insightState.displayState$.pipe(
-              map(displayState => ({
-                activeInsights: displayState.activeInsightIds.map(id => this.insightState.getInsight(id)),
-                actionOverlayActive: displayState.actionOverlayActive
-              })),
-              distinctUntilChanged(isEqual),
-              tap(({ activeInsights, actionOverlayActive }) => {
-                this.insightRenderService.renderActionOverlay(activeInsights, this.editor, actionOverlayActive);
+              pairwise(),
+              tap(([prev, curr]) => {
+                const activeInsightsChanged: boolean = !isEqual(prev.activeInsightIds, curr.activeInsightIds);
+                const actionOverlayActiveChanged: boolean = prev.actionOverlayActive !== curr.actionOverlayActive;
+                const cursorActiveInsightIdsChanged: boolean = !isEqual(
+                  prev.cursorActiveInsightIds,
+                  curr.cursorActiveInsightIds
+                );
+
+                if (activeInsightsChanged || actionOverlayActiveChanged) {
+                  const activeInsights = curr.activeInsightIds.map(id => this.insightState.getInsight(id));
+                  this.insightRenderService.renderActionOverlay(activeInsights, this.editor, curr.actionOverlayActive);
+                }
+
+                if (cursorActiveInsightIdsChanged) {
+                  this.insightRenderService.renderCursorActiveState(curr.cursorActiveInsightIds, this.editor);
+                }
               })
             )
           )

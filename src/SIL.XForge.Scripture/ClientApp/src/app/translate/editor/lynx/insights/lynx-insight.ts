@@ -12,10 +12,12 @@ export interface LynxInsightRange {
 
 // Interface whose props are all boolean or undefined
 export interface LynxInsightDisplayState {
+  /** State on click. */
   activeInsightIds: string[];
   promptActive?: boolean;
   actionOverlayActive?: boolean;
-  // cursorActive?: boolean;
+  /** State on hover or keyboard caret over. */
+  cursorActiveInsightIds: string[];
 }
 
 // TODO: include something like TextDocId?
