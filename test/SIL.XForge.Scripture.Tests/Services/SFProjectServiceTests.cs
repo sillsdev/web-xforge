@@ -584,12 +584,13 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-        await env.Service.SetRoleProjectPermissionsAsync(
-            User02,
-            Project02,
-            SFProjectRole.CommunityChecker,
-            permissions: []
-        );
+        env.ProjectRights.RoleHasRight(
+                project: Arg.Is<SFProject>(p => p.Id == Project02),
+                role: SFProjectRole.CommunityChecker,
+                SFProjectDomain.UserInvites,
+                Operation.Create
+            )
+            .Returns(false);
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing02"));
     }
 
@@ -599,12 +600,13 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-        await env.Service.SetRoleProjectPermissionsAsync(
-            User02,
-            Project02,
-            SFProjectRole.CommunityChecker,
-            permissions: []
-        );
+        env.ProjectRights.RoleHasRight(
+                project: Arg.Is<SFProject>(p => p.Id == Project02),
+                role: SFProjectRole.CommunityChecker,
+                SFProjectDomain.UserInvites,
+                Operation.Create
+            )
+            .Returns(false);
         Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "reusableLinkFromAdmin"));
     }
 
@@ -3913,6 +3915,25 @@ public class SFProjectServiceTests
         );
     }
 
+    [Test]
+    public void TransceleratorQuestionsAsync_Forbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.TransceleratorQuestionsAsync(User02, Project01));
+    }
+
+    [Test]
+    public async Task TransceleratorQuestionsAsync_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.TransceleratorQuestionsAsync(User01, Project01);
+        env.TransceleratorService.Received().Questions(Arg.Any<string>());
+    }
+
     private class TestEnvironment
     {
         public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);
@@ -4053,12 +4074,21 @@ public class SFProjectServiceTests
                             },
                             RolePermissions =
                             {
-                                { SFProjectRole.Viewer, ["user_invites.create"] },
-                                { SFProjectRole.Translator, ["user_invites.create"] }, // TODO: remove?
+                                {
+                                    SFProjectRole.Viewer,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                                },
                             },
                             UserPermissions = new Dictionary<string, string[]>
                             {
-                                { User03, ["text_audio.create", "text_audio.delete"] },
+                                {
+                                    User03,
+
+                                    [
+                                        SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Create),
+                                        SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Delete),
+                                    ]
+                                },
                                 { User05, [] },
                             },
                             Texts =
@@ -4109,7 +4139,13 @@ public class SFProjectServiceTests
                             ShortName = "P02",
                             ParatextId = "paratext_" + Project02,
                             CheckingConfig = new CheckingConfig { CheckingEnabled = true },
-                            RolePermissions = { { SFProjectRole.CommunityChecker, ["user_invites.create"] } },
+                            RolePermissions =
+                            {
+                                {
+                                    SFProjectRole.CommunityChecker,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                                }
+                            },
                             UserRoles =
                             {
                                 { User02, SFProjectRole.Administrator },
@@ -4133,7 +4169,13 @@ public class SFProjectServiceTests
                                     Name = "Source Only Project",
                                 },
                             },
-                            RolePermissions = { { SFProjectRole.CommunityChecker, ["user_invites.create"] } },
+                            RolePermissions =
+                            {
+                                {
+                                    SFProjectRole.CommunityChecker,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                                }
+                            },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.Administrator },
@@ -4150,7 +4192,13 @@ public class SFProjectServiceTests
                                 TranslationSuggestionsEnabled = true,
                                 Source = new TranslateSource { ProjectRef = "Invalid_Source", ParatextId = "P04" },
                             },
-                            RolePermissions = { { SFProjectRole.Viewer, ["user_invites.create"] } },
+                            RolePermissions =
+                            {
+                                {
+                                    SFProjectRole.Viewer,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                                }
+                            },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.CommunityChecker },
@@ -4226,7 +4274,13 @@ public class SFProjectServiceTests
                             Name = "project06",
                             ParatextId = "paratext_" + Project06,
                             CheckingConfig = new CheckingConfig { CheckingEnabled = false },
-                            RolePermissions = { { SFProjectRole.CommunityChecker, ["user_invites.create"] } },
+                            RolePermissions =
+                            {
+                                {
+                                    SFProjectRole.CommunityChecker,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                                }
+                            },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.CommunityChecker },
@@ -4629,8 +4683,75 @@ public class SFProjectServiceTests
             Localizer = new StringLocalizer<SharedResource>(factory);
             SecurityService = Substitute.For<ISecurityService>();
             SecurityService.GenerateKey().Returns("1234abc");
-            var transceleratorService = Substitute.For<ITransceleratorService>();
+            TransceleratorService = Substitute.For<ITransceleratorService>();
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
+
+            // These project rights correspond to the permissions in the projects above
+            ProjectRights = Substitute.For<ISFProjectRights>();
+            ProjectRights
+                .RoleHasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01 || p.Id == Project04),
+                    role: SFProjectRole.Viewer,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .RoleHasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project02 || p.Id == Project03 || p.Id == Project06),
+                    role: SFProjectRole.CommunityChecker,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .RoleHasRight(
+                    project: Arg.Any<SFProject>(),
+                    role: SFProjectRole.Administrator,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User01,
+                    SFProjectDomain.Questions,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User03,
+                    SFProjectDomain.TextAudio,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User01,
+                    SFProjectDomain.TextAudio,
+                    Operation.Delete
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User01,
+                    SFProjectDomain.TextAudio,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User03,
+                    SFProjectDomain.TextAudio,
+                    Operation.Delete
+                )
+                .Returns(true);
 
             ParatextService
                 .IsResource(Arg.Any<string>())
@@ -4653,8 +4774,9 @@ public class SFProjectServiceTests
                 UserSecrets,
                 translateMetrics,
                 Localizer,
-                transceleratorService,
-                BackgroundJobClient
+                TransceleratorService,
+                BackgroundJobClient,
+                ProjectRights
             );
         }
 
@@ -4670,7 +4792,9 @@ public class SFProjectServiceTests
         public IParatextService ParatextService { get; }
         public IStringLocalizer<SharedResource> Localizer { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
+        public ITransceleratorService TransceleratorService { get; set; }
         public IBackgroundJobClient BackgroundJobClient { get; }
+        public ISFProjectRights ProjectRights { get; }
 
         public SFProject GetProject(string id) => RealtimeService.GetRepository<SFProject>().Get(id);
 

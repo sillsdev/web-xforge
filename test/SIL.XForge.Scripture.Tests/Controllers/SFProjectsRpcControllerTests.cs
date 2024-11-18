@@ -24,7 +24,11 @@ public class SFProjectsRpcControllerTests
     private const string Role01 = "role01";
     private const string User01 = "user01";
     private const string User02 = "user02";
-    private static readonly string[] Permissions = ["questions.create", "questions.edit"];
+    private static readonly string[] Permissions =
+    [
+        SFProjectRights.JoinRight(SFProjectDomain.Questions, Operation.Create),
+        SFProjectRights.JoinRight(SFProjectDomain.Questions, Operation.Edit)
+    ];
     private static readonly string[] Roles = [SystemRole.User];
 
     // Constants for Invite
@@ -721,6 +725,55 @@ public class SFProjectsRpcControllerTests
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Sync(Project01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task TransceleratorQuestions_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.TransceleratorQuestionsAsync(User01, Project01).Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.TransceleratorQuestions(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task TransceleratorQuestions_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.TransceleratorQuestionsAsync(User01, Project01)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.TransceleratorQuestions(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task TransceleratorQuestions_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.TransceleratorQuestions(Project01);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().TransceleratorQuestionsAsync(User01, Project01);
+    }
+
+    [Test]
+    public void TransceleratorQuestions_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.TransceleratorQuestionsAsync(User01, Project01).Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.TransceleratorQuestions(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
