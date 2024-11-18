@@ -57,6 +57,8 @@ interface NoteDisplayInfo {
   reattachedText?: string;
 }
 
+type SaveOption = 'save' | 'resolve';
+
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
 // TODO: Refactor to have a Biblical Term Note Dialog subclass (will require spec.ts refactoring too)
@@ -67,7 +69,7 @@ interface NoteDisplayInfo {
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
   notesToDisplay: NoteDisplayInfo[] = [];
-  _saveOption: 'save' | 'resolve' = 'save';
+  _saveOption: SaveOption = 'save';
   noteDialogForm: FormGroup = new FormGroup({ comment: new FormControl('', Validators.required) });
 
   private biblicalTermDoc?: BiblicalTermDoc;
@@ -198,7 +200,7 @@ export class NoteDialogComponent implements OnInit {
     );
   }
 
-  set saveOption(option: 'save' | 'resolve') {
+  set saveOption(option: SaveOption) {
     if (option === 'resolve') {
       this.noteDialogForm.controls.comment.clearValidators();
     } else {
@@ -208,7 +210,7 @@ export class NoteDialogComponent implements OnInit {
     this._saveOption = option;
   }
 
-  get saveOption(): 'save' | 'resolve' {
+  get saveOption(): SaveOption {
     return this._saveOption;
   }
 
