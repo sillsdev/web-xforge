@@ -79,7 +79,7 @@ describe('DraftGenerationComponent', () => {
 
   class TestEnvironment {
     readonly testOnlineStatusService: TestOnlineStatusService;
-    readonly startedOrActiveBuild$: Subject<BuildDto> = new Subject<BuildDto>();
+    readonly startedOrActiveBuild$ = new Subject<BuildDto>();
     component!: DraftGenerationComponent;
     fixture!: ComponentFixture<DraftGenerationComponent>;
 
