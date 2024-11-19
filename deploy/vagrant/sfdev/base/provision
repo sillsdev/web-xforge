@@ -314,6 +314,7 @@ cd "$(mktemp -d)"
 curl --silent --location --fail --show-error \
   https://packages.microsoft.com/keys/microsoft.asc |
   gpg --dearmor > microsoft.gpg
+sha512sum --check <<< '467cb24244b845d46257ae17af70ead505cc4d9064d4ab0c65dc528170e5faa8d3cb948160036e05ccb574922f0a481d8ddf086c9a278506854c924d6beada5a  microsoft.gpg'
 sudo install --owner root --group root --mode 644 \
   microsoft.gpg /etc/apt/trusted.gpg.d/
 sudo tee /etc/apt/sources.list.d/vscode.list >/dev/null <<< \
@@ -498,7 +499,7 @@ perl -pi -e '/Icon/ and s#.*#Icon=/snap/gitkraken/current/usr/share/gitkraken/gi
 # ------------------------------------
 
 # Paratext
-sudo snap install paratext --edge
+sudo snap install paratext --beta
 sudo snap install paratextlite
 
 BASEDIR="${HOME}"
