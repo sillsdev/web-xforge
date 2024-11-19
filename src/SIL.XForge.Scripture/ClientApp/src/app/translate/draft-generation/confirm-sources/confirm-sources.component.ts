@@ -29,9 +29,11 @@ export class ConfirmSourcesComponent {
     const project = activatedProjectService.projectDoc!.data!;
     this.trainingTargets.push(project);
 
+    const draftConfig = project.translateConfig.draftConfig;
+
     let trainingSource: TranslateSource | undefined;
-    if (project.translateConfig.draftConfig.alternateTrainingSourceEnabled) {
-      trainingSource = project.translateConfig.draftConfig.alternateTrainingSource;
+    if (draftConfig.alternateTrainingSourceEnabled && draftConfig.alternateTrainingSource != null) {
+      trainingSource = draftConfig.alternateTrainingSource;
     } else {
       trainingSource = project.translateConfig.source;
     }
@@ -40,13 +42,13 @@ export class ConfirmSourcesComponent {
       this.trainingSources.push(trainingSource);
     }
 
-    if (project.translateConfig.draftConfig.additionalTrainingSourceEnabled) {
-      this.trainingSources.push(project.translateConfig.draftConfig.additionalTrainingSource!);
+    if (draftConfig.additionalTrainingSourceEnabled && draftConfig.additionalTrainingSource != null) {
+      this.trainingSources.push(draftConfig.additionalTrainingSource!);
     }
 
     let draftingSource: TranslateSource | undefined;
-    if (project.translateConfig.draftConfig.alternateSourceEnabled) {
-      draftingSource = project.translateConfig.draftConfig.alternateSource;
+    if (draftConfig.alternateSourceEnabled && draftConfig.alternateSource != null) {
+      draftingSource = draftConfig.alternateSource;
     } else {
       draftingSource = project.translateConfig.source;
     }
