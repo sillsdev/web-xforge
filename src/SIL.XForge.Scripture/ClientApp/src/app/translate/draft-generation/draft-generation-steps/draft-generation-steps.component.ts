@@ -83,6 +83,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   expandUnusableTranslateBooks = false;
   expandUnusableTrainingBooks = false;
+  isStepsCompleted = false;
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataSub?: Subscription;
@@ -246,6 +247,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     if (this.stepper.selected !== this.stepper.steps.last) {
       this.stepper.next();
     } else {
+      this.isStepsCompleted = true;
       this.done.emit({
         trainingBooks: this.userSelectedTrainingBooks,
         trainingDataFiles: this.selectedTrainingDataIds,

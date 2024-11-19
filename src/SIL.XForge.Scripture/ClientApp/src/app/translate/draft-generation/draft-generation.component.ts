@@ -439,7 +439,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
-    this.currentPage = 'initial';
     this.startBuild({
       projectId: this.activatedProject.projectId!,
       trainingBooks: result.trainingBooks,
@@ -501,6 +500,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.jobSubscription = this.subscribe(
       this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig).pipe(
         tap((job?: BuildDto) => {
+          this.currentPage = 'initial';
           // Handle automatic closing of dialog if job finishes while cancel dialog is open
           if (!this.canCancel(job)) {
             if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
