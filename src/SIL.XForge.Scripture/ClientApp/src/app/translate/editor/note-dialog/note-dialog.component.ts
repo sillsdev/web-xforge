@@ -1,4 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
@@ -56,6 +57,8 @@ interface NoteDisplayInfo {
   reattachedText?: string;
 }
 
+type SaveOption = 'save' | 'resolve';
+
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
 // TODO: Refactor to have a Biblical Term Note Dialog subclass (will require spec.ts refactoring too)
@@ -65,9 +68,9 @@ interface NoteDisplayInfo {
 })
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
-  currentNoteContent: string = '';
   notesToDisplay: NoteDisplayInfo[] = [];
-  saveOption: 'save' | 'resolve' = 'save';
+  _saveOption: SaveOption = 'save';
+  noteDialogForm: FormGroup = new FormGroup({ comment: new FormControl('', Validators.required) });
 
   private biblicalTermDoc?: BiblicalTermDoc;
   private isAssignedToOtherUser: boolean = false;
@@ -197,6 +200,24 @@ export class NoteDialogComponent implements OnInit {
     );
   }
 
+  set saveOption(option: SaveOption) {
+    if (option === 'resolve') {
+      this.noteDialogForm.controls.comment.clearValidators();
+    } else {
+      this.noteDialogForm.controls.comment.setValidators(Validators.required);
+    }
+    this.noteDialogForm.updateValueAndValidity();
+    this._saveOption = option;
+  }
+
+  get saveOption(): SaveOption {
+    return this._saveOption;
+  }
+
+  get currentNoteContent(): string {
+    return this.noteDialogForm.controls.comment.value ?? '';
+  }
+
   private get defaultNoteTagId(): number | undefined {
     return this.projectProfileDoc?.data?.translateConfig.defaultNoteTagId;
   }
@@ -233,7 +254,7 @@ export class NoteDialogComponent implements OnInit {
 
   editNote(note: Note): void {
     this.noteIdBeingEdited = note.dataId;
-    this.currentNoteContent = XmlUtils.decodeFromXml(note.content ?? '');
+    this.noteDialogForm.controls.comment.setValue(XmlUtils.decodeFromXml(note.content ?? ''));
     this.notesToDisplay.pop();
   }
 
@@ -311,12 +332,13 @@ export class NoteDialogComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.saveOption === 'resolve') {
+    if (this._saveOption === 'resolve') {
       return this.resolve();
     }
 
-    if (this.currentNoteContent.trim().length === 0) {
-      return this.close();
+    if (!this.noteDialogForm.valid) {
+      this.noteDialogForm.markAllAsTouched();
+      return;
     }
 
     this.dialogRef.close({
