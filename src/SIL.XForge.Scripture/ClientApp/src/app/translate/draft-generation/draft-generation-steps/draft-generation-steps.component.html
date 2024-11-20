@@ -231,7 +231,7 @@
         </ng-template>
         <h1 class="mat-headline-4">{{ t("confirm") }}</h1>
 
-        <h2>Training the language model</h2>
+        <h2>{{ t("confirm_training_title") }}</h2>
         <mat-card class="confirm-section mat-elevation-z2">
           <span class="explanation">{{ t("confirm_training") }}</span>
           <table mat-table class="confirm-training" [dataSource]="selectedTrainingBooksCollapsed()">
@@ -267,7 +267,10 @@
         </mat-card>
 
         <h2>
-          Drafting from <strong>{{ trainingSources[0].shortName }}</strong>
+          <transloco
+            key="draft_generation_steps.confirm_translate_title"
+            [params]="{ firstTrainingSource }"
+          ></transloco>
         </h2>
         <mat-card class="confirm-section mat-elevation-z2">
           <span class="explanation">{{ t("confirm_translate") }}</span>
