@@ -9,7 +9,7 @@
     var webAuth = new Auth0Client({
         client_id: '@ViewData["ClientId"]',
         domain: '@ViewData["Domain"]',
-        redirect_uri: window.location.origin + '/callback',
+        redirect_uri: window.location.origin + '/callback/auth0',
         scope: 'openid profile email @ViewData["Scope"]',
         audience: '@ViewData["Audience"]',
         cacheLocation: 'localstorage',
