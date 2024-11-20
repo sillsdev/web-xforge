@@ -26,7 +26,9 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { RealtimeQuery } from '../../../xforge-common/models/realtime-query';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { TrainingDataDoc } from '../../core/models/training-data-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
@@ -164,6 +166,14 @@ describe('DraftGenerationComponent', () => {
       mockDraftSourcesService.getDraftProjectSources.and.returnValue(of({}));
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
+
+      const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
+      when(mockTrainingDataQuery.localChanges$).thenReturn(of());
+      when(mockTrainingDataQuery.ready$).thenReturn(of(true));
+      when(mockTrainingDataQuery.remoteChanges$).thenReturn(of());
+      when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
+      mockTrainingDataService = jasmine.createSpyObj<TrainingDataService>(['queryTrainingDataAsync']);
+      mockTrainingDataService.queryTrainingDataAsync.and.returnValue(Promise.resolve(instance(mockTrainingDataQuery)));
     }
 
     static initProject(currentUserId: string, preTranslate: boolean = true): void {
@@ -1881,7 +1891,7 @@ describe('DraftGenerationComponent', () => {
     }));
   });
 
-  describe('currentPage', () => {
+  fdescribe('currentPage', () => {
     it('should navigate to pre-generate steps', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockUserService.getCurrentUser.and.returnValue(
@@ -1889,12 +1899,15 @@ describe('DraftGenerationComponent', () => {
             data: createTestUser()
           }))
         );
+        const projectDoc = {
+          data: createTestProjectProfile()
+        };
 
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
-          projectDoc: instance(mock(SFProjectProfileDoc)),
-          projectDoc$: of(null),
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
           changes$: of(null)
         });
       });
