@@ -751,6 +751,8 @@ public class MachineApiService(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRange,
                 buildConfig.TranslationScriptureRange
             );
+            if (!projectDoc.Data.TranslateConfig.PreTranslate)
+                op.Set(p => p.TranslateConfig.PreTranslate, true);
         });
 
         // Sync the source and target before running the build

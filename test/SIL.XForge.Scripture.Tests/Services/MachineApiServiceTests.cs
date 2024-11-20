@@ -1823,13 +1823,12 @@ public class MachineApiServiceTests
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
-        Assert.AreEqual(0, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks.Count);
-        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Count);
-        Assert.AreEqual(
-            1,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.First()
-        );
-        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Last());
+        SFProject project = env.Projects.Get(Project01);
+        Assert.IsTrue(project.TranslateConfig.PreTranslate);
+        Assert.AreEqual(0, project.TranslateConfig.DraftConfig.LastSelectedTrainingBooks.Count);
+        Assert.AreEqual(2, project.TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Count);
+        Assert.AreEqual(1, project.TranslateConfig.DraftConfig.LastSelectedTranslationBooks.First());
+        Assert.AreEqual(2, project.TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Last());
     }
 
     [Test]

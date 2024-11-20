@@ -202,12 +202,6 @@ public class MachineProjectService(
                 }
             );
 
-            // If the pre-translate flag is not set, set it now for the front-end UI
-            if (preTranslate && !projectDoc.Data.TranslateConfig.PreTranslate)
-            {
-                await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.TranslateConfig.PreTranslate, true));
-            }
-
             // Create the Serval project, and get the translation engine id
             translationEngineId = await CreateServalProjectAsync(projectDoc.Data, preTranslate, cancellationToken);
         }
