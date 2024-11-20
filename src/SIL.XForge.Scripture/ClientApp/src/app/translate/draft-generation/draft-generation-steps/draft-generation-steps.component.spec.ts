@@ -20,7 +20,12 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { TrainingDataService } from '../training-data/training-data.service';
-import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
+import {
+  Book,
+  DraftGenerationStepsComponent,
+  DraftGenerationStepsResult,
+  TrainingBook
+} from './draft-generation-steps.component';
 
 describe('DraftGenerationStepsComponent', () => {
   let component: DraftGenerationStepsComponent;
@@ -41,7 +46,7 @@ describe('DraftGenerationStepsComponent', () => {
       texts: [{ bookNum: 2 }, { bookNum: 1 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 100 }],
       writingSystem: { tag: 'eng' },
       translateConfig: {
-        source: { projectRef: 'test' }
+        source: { projectRef: 'test', writingSystem: { tag: 'eng' } }
       }
     })
   } as SFProjectProfileDoc;
@@ -218,9 +223,9 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('should emit the correct selected books when done', () => {
-      const trainingBooks = [2, 3];
+      const trainingBooks: TrainingBook[] = [{ number: 2 } as any, { number: 3 } as any];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [1, 2];
+      const translationBooks: Book[] = [{ number: 1 } as any];
 
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
@@ -232,15 +237,17 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
       expect(generateDraftButton['disabled']).toBe(false);
       component.tryAdvanceStep();
       fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
-        translationBooks,
+        translationBooks: translationBooks.map(b => b.number),
         trainingDataFiles,
-        trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book)),
+        trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book)).map(b => b.number),
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
@@ -280,7 +287,7 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should update training books when a step changes', fakeAsync(() => {
-      component.userSelectedTranslateBooks = [3, 4]; //complete the first step
+      component.userSelectedTranslateBooks = [{} as any]; //complete the first step
       fixture.detectChanges();
       spyOn(component, 'updateTrainingBooks');
 
@@ -308,9 +315,9 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should emit the fast training value if checked', () => {
-      const trainingBooks = [1, 2];
+      const trainingBooks: TrainingBook[] = [{ number: 2 } as any, { number: 3 } as any];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [3, 4];
+      const translationBooks: Book[] = [{ number: 1 } as any];
 
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
@@ -319,6 +326,8 @@ describe('DraftGenerationStepsComponent', () => {
       spyOn(component.done, 'emit');
 
       // Advance to the next step, until the last step which will allow selection of the checkbox
+      fixture.detectChanges();
+      component.tryAdvanceStep();
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
@@ -336,9 +345,9 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
-        trainingBooks,
+        trainingBooks: trainingBooks.map(b => b.number),
         trainingDataFiles,
-        translationBooks,
+        translationBooks: translationBooks.map(b => b.number),
         fastTraining: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
