@@ -24,7 +24,12 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { TrainingDataService } from '../training-data/training-data.service';
-import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
+import {
+  Book,
+  DraftGenerationStepsComponent,
+  DraftGenerationStepsResult,
+  TrainingBook
+} from './draft-generation-steps.component';
 
 describe('DraftGenerationStepsComponent', () => {
   let component: DraftGenerationStepsComponent;
@@ -331,9 +336,9 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('should emit the correct selected books when done', () => {
-      const trainingBooks = [2, 3];
+      const trainingBooks: TrainingBook[] = [{ number: 2 } as any, { number: 3 } as any];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [1, 2];
+      const translationBooks: Book[] = [{ number: 1 } as any];
 
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
@@ -347,7 +352,7 @@ describe('DraftGenerationStepsComponent', () => {
 
       clickConfirmLanguages(fixture);
       const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
-      test[2].nativeElement.click(); //click the last step
+      test[3].nativeElement.click(); //click the last step
       fixture.detectChanges();
 
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
@@ -356,7 +361,9 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
+        translationBooks: translationBooks.map(b => b.number),
         trainingDataFiles,
+        trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book)).map(b => b.number),
         trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'LEV' }],
         translationScriptureRange: 'GEN;EXO',
         fastTraining: false
@@ -422,13 +429,13 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should update training books when a step changes', fakeAsync(() => {
-      component.userSelectedTranslateBooks = [3, 4]; //complete the first step
+      component.userSelectedTranslateBooks = [{} as any]; //complete the first step
       fixture.detectChanges();
       spyOn(component, 'updateTrainingBooks');
 
       clickConfirmLanguages(fixture);
-      const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
-      test[2].nativeElement.click(); //click the next step
+      const steps = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      steps[2].nativeElement.click(); //click the next step
       fixture.detectChanges();
 
       expect(component.updateTrainingBooks).toHaveBeenCalledTimes(1);
@@ -646,9 +653,9 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should emit the fast training value if checked', () => {
-      const trainingBooks = [1, 2];
+      const trainingBooks: TrainingBook[] = [{ number: 2 } as any, { number: 3 } as any];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [3, 4];
+      const translationBooks: Book[] = [{ number: 1 } as any];
 
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
@@ -663,6 +670,7 @@ describe('DraftGenerationStepsComponent', () => {
       const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
       test[3].nativeElement.click(); //click the next step
       fixture.detectChanges();
+      component.tryAdvanceStep();
 
       // Tick the checkbox
       const fastTrainingCheckbox = fixture.nativeElement.querySelector('mat-checkbox.fast-training input');
@@ -676,9 +684,11 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
+        trainingBooks: trainingBooks.map(b => b.number),
         trainingDataFiles,
         trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
         translationScriptureRange: 'LEV;NUM',
+        translationBooks: translationBooks.map(b => b.number),
         fastTraining: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
