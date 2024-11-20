@@ -347,7 +347,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     );
     this.userSelectedTrainingBooks = selectedBooks.map((bookNum: number) => ({
       number: bookNum,
-      name: Canon.bookNumberToEnglishName(bookNum),
+      name: this.i18n.localizeBook(bookNum),
       source: this.trainingSources[0].shortName,
       target: this.trainingTargets[0].shortName
     }));
@@ -393,7 +393,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   onTranslateBookSelect(selectedBooks: number[]): void {
     this.userSelectedTranslateBooks = selectedBooks.map((bookNum: number) => ({
       number: bookNum,
-      name: Canon.bookNumberToEnglishName(bookNum)
+      name: this.i18n.localizeBook(bookNum)
     }));
     this.clearErrorMessage();
   }
@@ -448,7 +448,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   selectedTranslateBooks(): string {
-    return this.userSelectedTranslateBooks.map(b => b.name).join(', ');
+    return this.i18n.enumerateList(this.userSelectedTranslateBooks.map(b => this.i18n.localizeBook(b.number)));
   }
 
   /**
@@ -477,6 +477,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     this.userSelectedAdditionalSourceTrainingBooks = this.selectableAdditionalSourceTrainingBooks.filter(b =>
       this.userSelectedAdditionalSourceTrainingBooks.includes(b)
     );
+  }
+
+  get firstTrainingSource(): string {
+    return this.trainingSources[0].shortName;
   }
 
   bookNames(books: number[]): string {
@@ -510,7 +514,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     this.initialSelectedTranslateBooks = intersection.length > 0 ? intersection : [];
     this.userSelectedTranslateBooks = this.initialSelectedTranslateBooks.map((bookNum: number) => ({
       number: bookNum,
-      name: Canon.bookNumberToEnglishName(bookNum)
+      name: this.i18n.localizeBook(bookNum)
     }));
   }
 
@@ -537,7 +541,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     this.userSelectedTrainingBooks = this.initialSelectedTrainingBooks.map((bookNum: number) => ({
       number: bookNum,
-      name: Canon.bookNumberToEnglishName(bookNum),
+      name: this.i18n.localizeBook(bookNum),
       source: this.trainingSources[0].shortName,
       target: this.trainingTargets[0].shortName
     }));
