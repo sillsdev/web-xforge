@@ -1,0 +1,55 @@
+name: Update Localizations
+
+on:
+  push:
+    branches:
+      - feature/crowdin-update-script
+  schedule:
+    - cron: "0 0 * * *" # Runs at 00:00 UTC every day
+  workflow_dispatch:
+
+jobs:
+  update-localizations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.SF_PUSH_KEY }}
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run update_from_crowdin.mts
+        run: scripts/update_from_crowdin.mts
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_API_KEY: ${{ secrets.CROWDIN_API_KEY }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Check for changes and commit
+        id: commit
+        run: |
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m 'Update all translation files from Crowdin'
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push changes and create PR
+        if: steps.commit.outputs.has_changes == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push -f origin HEAD:i18n/update
+          gh pr create --title "Update all translation files from Crowdin" --body "Automated update of files by GitHub action" --head i18n/update --base master
