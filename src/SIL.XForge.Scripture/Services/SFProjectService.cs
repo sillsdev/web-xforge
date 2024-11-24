@@ -1443,6 +1443,22 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
+    /// <summary>
+    /// Sets the permissions for the specified role in the project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="role">The role.</param>
+    /// <param name="permissions">
+    /// The array of permissions. The strings are in the format <c>domain.operation</c>.
+    /// </param>
+    /// <returns>The asynchronous task.</returns>
+    /// <exception cref="ForbiddenException">
+    /// The user does not have permission to set the permissions for the role.
+    /// </exception>
+    /// <remarks>
+    /// The current user must be an administrator and have permissions they are granting.
+    /// </remarks>
     public async Task SetRoleProjectPermissionsAsync(
         string curUserId,
         string projectId,
@@ -1452,7 +1468,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+
+        // Only administrators can grant permissions to a role
         if (!IsProjectAdmin(projectDoc.Data, curUserId))
+            throw new ForbiddenException();
+
+        // An administrator cannot grant greater permissions than they already have
+        if (!_projectRights.HasPermissions(projectDoc.Data, curUserId, permissions))
             throw new ForbiddenException();
 
         if (permissions.Length == 0)
@@ -1465,6 +1487,22 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
     }
 
+    /// <summary>
+    /// Sets the permissions for the specified user in the project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="permissions">
+    /// The array of permissions. The strings are in the format <c>domain.operation</c>.
+    /// </param>
+    /// <returns>The asynchronous task.</returns>
+    /// <exception cref="ForbiddenException">
+    /// The user does not have permission to set the permissions for the role.
+    /// </exception>
+    /// <remarks>
+    /// The current user must be an administrator and have permissions they are granting.
+    /// </remarks>
     public async Task SetUserProjectPermissionsAsync(
         string curUserId,
         string projectId,
@@ -1474,7 +1512,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+
+        // Only administrators can grant permissions to a user
         if (!IsProjectAdmin(projectDoc.Data, curUserId))
+            throw new ForbiddenException();
+
+        // An administrator cannot grant greater permissions than they already have
+        if (!_projectRights.HasPermissions(projectDoc.Data, curUserId, permissions))
             throw new ForbiddenException();
 
         if (permissions.Length == 0)

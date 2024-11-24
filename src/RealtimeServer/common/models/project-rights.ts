@@ -15,6 +15,9 @@ export enum Operation {
 // See https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html
 export type ProjectRight = [domain: string, operation: `${Operation}`];
 
+/**
+ * NOTE: When updating this class, be sure to update SFProjectRights in C#.
+ */
 export class ProjectRights {
   private readonly rights = new Map<string, string[]>();
 
