@@ -48,6 +48,8 @@ public class SFProjectServiceTests
     private const string LinkExpiredUser = "linkexpireduser";
     private const string SiteId = "xf";
     private const string PTProjectIdNotYetInSF = "paratext_notYetInSF";
+    private const string Role01 = "role01";
+    private static readonly string[] Permissions = ["generic.permission", "another.permission"];
 
     [Test]
     public async Task InviteAsync_ProjectAdminSharingDisabled_UserInvited()
@@ -579,7 +581,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
+    public void JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
@@ -595,7 +597,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task JoinWithShareKeyAsync_LinkFromAdmin_SharingDisabledAndUserNotOnProject_Success()
+    public void JoinWithShareKeyAsync_LinkFromAdmin_SharingDisabledAndUserNotOnProject_Success()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
@@ -3934,6 +3936,80 @@ public class SFProjectServiceTests
         env.TransceleratorService.Received().Questions(Arg.Any<string>());
     }
 
+    [Test]
+    public async Task SetRoleProjectPermissionsAsync_AdminHasPermission()
+    {
+        var env = new TestEnvironment();
+        Project project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.RolePermissions.Count, "setup");
+
+        // Admin can give a role question permission
+        await env.Service.SetRoleProjectPermissionsAsync(User01, Project05, Role01, Permissions);
+        project = env.GetProject(Project05);
+        Assert.AreEqual(1, project.RolePermissions.Count);
+        project.RolePermissions.TryGetValue(Role01, out string[] value);
+        Assert.AreEqual(Permissions, value);
+
+        // Admin can revoke permission, which removes the key value pair from the RolePermissions property
+        await env.Service.SetRoleProjectPermissionsAsync(User01, Project05, Role01, []);
+        project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.RolePermissions.Count);
+    }
+
+    [Test]
+    public void SetRoleProjectPermissionsAsync_NonAdminDoesNotHavePermission()
+    {
+        var env = new TestEnvironment();
+        Project project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.RolePermissions.Count, "setup");
+
+        // Translator user cannot give permissions to a tole
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetRoleProjectPermissionsAsync(User02, Project05, Role01, Permissions)
+        );
+
+        // Permissions are not updated
+        project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.RolePermissions.Count);
+    }
+
+    [Test]
+    public async Task SetUserProjectPermissionsAsync_AdminHasPermission()
+    {
+        var env = new TestEnvironment();
+        Project project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.UserPermissions.Count, "setup");
+
+        // Admin can give user question permission
+        await env.Service.SetUserProjectPermissionsAsync(User01, Project05, User02, Permissions);
+        project = env.GetProject(Project05);
+        Assert.AreEqual(1, project.UserPermissions.Count);
+        project.UserPermissions.TryGetValue(User02, out string[] value);
+        Assert.AreEqual(Permissions, value);
+
+        // Admin can revoke permission, which removes the key value pair from the UserPermissions property
+        await env.Service.SetUserProjectPermissionsAsync(User01, Project05, User02, []);
+        project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.UserPermissions.Count);
+    }
+
+    [Test]
+    public void SetUserProjectPermissionsAsync_NonAdminDoesNotHavePermission()
+    {
+        var env = new TestEnvironment();
+        Project project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.UserPermissions.Count, "setup");
+
+        // Translator user cannot give permission to self
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetUserProjectPermissionsAsync(User02, Project05, User02, Permissions)
+        );
+
+        // Permissions are not updated
+        project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.UserPermissions.Count);
+    }
+
     private class TestEnvironment
     {
         public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);
@@ -4144,7 +4220,7 @@ public class SFProjectServiceTests
                                 {
                                     SFProjectRole.CommunityChecker,
                                     [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
-                                }
+                                },
                             },
                             UserRoles =
                             {
@@ -4174,7 +4250,7 @@ public class SFProjectServiceTests
                                 {
                                     SFProjectRole.CommunityChecker,
                                     [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
-                                }
+                                },
                             },
                             UserRoles =
                             {
@@ -4197,7 +4273,7 @@ public class SFProjectServiceTests
                                 {
                                     SFProjectRole.Viewer,
                                     [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
-                                }
+                                },
                             },
                             UserRoles =
                             {
@@ -4279,7 +4355,7 @@ public class SFProjectServiceTests
                                 {
                                     SFProjectRole.CommunityChecker,
                                     [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
-                                }
+                                },
                             },
                             UserRoles =
                             {

@@ -63,4 +63,6 @@ public interface ISFProjectService : IProjectService
     Task SetServalConfigAsync(string curUserId, string[] systemRoles, string projectId, string? servalConfig);
     Task SetDraftAppliedAsync(string userId, string projectId, int book, int chapter, bool draftApplied);
     Task SetIsValidAsync(string userId, string projectId, int book, int chapter, bool draftApplied);
+    Task SetRoleProjectPermissionsAsync(string curUserId, string projectId, string role, string[] permissions);
+    Task SetUserProjectPermissionsAsync(string curUserId, string projectId, string userId, string[] permissions);
 }
