@@ -316,6 +316,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     public async Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings)
     {
+        // Throw an exception if obsolete settings are specified
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (settings.CheckingShareEnabled is not null)
+            throw new ForbiddenException();
+        if (settings.TranslateShareEnabled is not null)
+            throw new ForbiddenException();
+#pragma warning restore CS0618 // Type or member is obsolete
+
+        // Connect to the realtime server
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
