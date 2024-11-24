@@ -14,6 +14,4 @@ public interface IProjectService
     Task DeleteAudioAsync(string curUserId, string projectId, string ownerId, string dataId);
     Task SetSyncDisabledAsync(string curUserId, string[] systemRoles, string projectId, bool isDisabled);
     Task RemoveUserFromAllProjectsAsync(string curUserId, string projectUserId);
-    Task SetRoleProjectPermissionsAsync(string curUserId, string projectId, string role, string[] permissions);
-    Task SetUserProjectPermissionsAsync(string curUserId, string projectId, string userId, string[] permissions);
 }
