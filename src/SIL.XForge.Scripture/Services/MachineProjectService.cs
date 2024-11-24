@@ -157,13 +157,16 @@ public class MachineProjectService(
         {
             // This will occur if the project is deleted while the job is running
             string message =
-                $"Build DataNotFoundException occurred for project {buildConfig.ProjectId} running in background job.";
+                $"Build DataNotFoundException occurred for project {buildConfig.ProjectId.Sanitize()}"
+                + " running in background job.";
             logger.LogWarning(e, message);
         }
         catch (Exception e)
         {
             // Log the error and report to bugsnag
-            string message = $"Build exception occurred for project {buildConfig.ProjectId} running in background job.";
+            string message =
+                $"Build exception occurred for project {buildConfig.ProjectId.Sanitize()}"
+                + " running in background job.";
             logger.LogError(e, message);
             exceptionHandler.ReportException(e);
 
@@ -268,7 +271,7 @@ public class MachineProjectService(
         string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate);
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
-            logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
+            logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId.Sanitize()}");
             return;
         }
 
@@ -320,7 +323,9 @@ public class MachineProjectService(
             catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
             {
                 // If the file was already deleted, just log a message
-                string message = $"Corpus {corpusId} in project {sfProjectId} was missing or already deleted.";
+                string message =
+                    $"Corpus {corpusId.Sanitize()} in project {sfProjectId.Sanitize()}"
+                    + " was missing or already deleted.";
                 logger.LogInformation(e, message);
             }
         }
@@ -335,7 +340,9 @@ public class MachineProjectService(
             catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
             {
                 // If the file was already deleted, just log a message
-                string message = $"File {fileId} in project {sfProjectId} was missing or already deleted.";
+                string message =
+                    $"File {fileId.Sanitize()} in project {sfProjectId.Sanitize()}"
+                    + " was missing or already deleted.";
                 logger.LogInformation(e, message);
             }
         }
@@ -349,7 +356,8 @@ public class MachineProjectService(
         {
             // If the file was already deleted, just log a message
             string message =
-                $"Translation Engine {translationEngineId} in project {sfProjectId} was missing or already deleted.";
+                $"Translation Engine {translationEngineId.Sanitize()} in project {sfProjectId.Sanitize()}"
+                + " was missing or already deleted.";
             logger.LogInformation(e, message);
         }
 
@@ -825,7 +833,8 @@ public class MachineProjectService(
             {
                 // If the file was already deleted, just log a message
                 string message =
-                    $"Corpus {servalCorpusFile.CorpusId} in project {projectId} was missing or already deleted.";
+                    $"Corpus {servalCorpusFile.CorpusId.Sanitize()} in project {projectId.Sanitize()}"
+                    + " was missing or already deleted.";
                 logger.LogInformation(e, message);
             }
 
@@ -837,7 +846,8 @@ public class MachineProjectService(
             {
                 // If the file was already deleted, just log a message
                 string message =
-                    $"File {servalCorpusFile.FileId} in project {projectId} was missing or already deleted.";
+                    $"File {servalCorpusFile.FileId.Sanitize()} in project {projectId.Sanitize()}"
+                    + " was missing or already deleted.";
                 logger.LogInformation(e, message);
             }
         }
@@ -1297,7 +1307,7 @@ public class MachineProjectService(
         string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate);
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
-            logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
+            logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId.Sanitize()}");
             return;
         }
 
@@ -1324,15 +1334,15 @@ public class MachineProjectService(
                 if (e.StatusCode == StatusCodes.Status404NotFound)
                 {
                     message =
-                        $"Translation Engine {translationEngineId} for project {sfProjectId}"
+                        $"Translation Engine {translationEngineId.Sanitize()} for project {sfProjectId.Sanitize()}"
                         + " was missing or already deleted.";
                     logger.LogInformation(message);
                 }
                 else
                 {
                     message =
-                        $"Ignored exception while deleting translation engine {translationEngineId}"
-                        + $" for project {sfProjectId}.";
+                        $"Ignored exception while deleting translation engine {translationEngineId.Sanitize()}"
+                        + " for project {sfProjectId.Sanitize()}.";
                     logger.LogError(e, message);
                 }
             }
