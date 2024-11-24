@@ -9,6 +9,9 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
 
+/// <summary>
+/// An implementation of the TypeScript RealtimeServer/SFProjectRights in C#.
+/// </summary>
 public class SFProjectRights : ISFProjectRights
 {
     internal static readonly string Filename = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "rightsByRole.json");
@@ -24,7 +27,48 @@ public class SFProjectRights : ISFProjectRights
         }
     }
 
+    /// <summary>
+    /// Joins a right into the format used in <see cref="Project.UserPermissions"/> and <see cref="Project.UserRoles"/>.
+    /// </summary>
+    /// <param name="domain">The domain from <see cref="SFProjectDomain"/>.</param>
+    /// <param name="operation">The domain from <see cref="Operation"/>.</param>
+    /// <returns>A string in the format <paramref name="domain"/>.<paramref name="operation"/>.</returns>
     public static string JoinRight(string domain, string operation) => domain + '.' + operation;
+
+    /// <summary>
+    /// Determines if a user has the specified permissions.
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="permissions">
+    /// The array of permissions. The strings are in the format <c>domain.operation</c>.
+    /// </param>
+    /// <returns><c>true</c> if the user has the specified permissions; otherwise, <c>false</c>.</returns>
+    /// <remarks>
+    /// This does not check whether the user is an administrator. You should do that before calling this function.
+    /// Specifying an empty array of permissions will always return true.
+    /// </remarks>
+    public bool HasPermissions(Project project, string? userId, string[] permissions)
+    {
+        foreach (string permission in permissions)
+        {
+            // Ensure that permission is in the valid format, and that the user has that right in the project
+            if (
+                permission.Split('.') is [{ } projectDomain, { } operation]
+                && HasRight(project, userId, projectDomain, operation)
+            )
+            {
+                // If this permission was valid, check the next permission
+                continue;
+            }
+
+            // The permission was in an invalid format, or the user did not have the permission
+            return false;
+        }
+
+        // All permissions were valid, or there were no permissions specified
+        return true;
+    }
 
     /// <summary>
     /// Determines if a user has the specified right for the specific project.
@@ -32,7 +76,7 @@ public class SFProjectRights : ISFProjectRights
     /// <param name="project">The project.</param>
     /// <param name="userId">The user identifier.</param>
     /// <param name="projectDomain">The project domain. A constant from <see cref="SFProjectDomain"/>.</param>
-    /// <param name="operation">The operation. A constant from <see cref="Operation"/>.</param>\
+    /// <param name="operation">The operation. A constant from <see cref="Operation"/>.</param>
     /// <param name="data">(optional) The data object the operation is to be performed on.</param>
     /// <returns><c>true</c> if the role generally has the right to do something; otherwise, <c>false</c>.</returns>
     public bool HasRight(
