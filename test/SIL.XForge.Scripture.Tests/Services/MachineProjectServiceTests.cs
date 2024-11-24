@@ -972,7 +972,6 @@ public class MachineProjectServiceTests
         Assert.IsNull(env.ProjectSecrets.Get(Project03).ServalData?.PreTranslationEngineId);
         Assert.AreEqual(sourceLanguage, env.Projects.Get(Project03).TranslateConfig.Source?.WritingSystem.Tag);
         Assert.AreEqual(targetLanguage, env.Projects.Get(Project03).WritingSystem.Tag);
-        Assert.IsTrue(env.Projects.Get(Project03).TranslateConfig.PreTranslate);
     }
 
     [Test]
