@@ -2660,6 +2660,42 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void UpdateSettingsAsync_CheckingShareEnabled_Forbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+#pragma warning disable CS0618 // Type or member is obsolete
+        Assert.ThrowsAsync<ForbiddenException>(
+            () =>
+                env.Service.UpdateSettingsAsync(
+                    User01,
+                    Project01,
+                    new SFProjectSettings { CheckingShareEnabled = true }
+                )
+        );
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    [Test]
+    public void UpdateSettingsAsync_TranslateShareEnabled_Forbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+#pragma warning disable CS0618 // Type or member is obsolete
+        Assert.ThrowsAsync<ForbiddenException>(
+            () =>
+                env.Service.UpdateSettingsAsync(
+                    User01,
+                    Project01,
+                    new SFProjectSettings { TranslateShareEnabled = true }
+                )
+        );
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    [Test]
     public async Task DeleteProjectAsync_Success()
     {
         var env = new TestEnvironment();
