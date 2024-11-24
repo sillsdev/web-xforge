@@ -1443,6 +1443,50 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
+    public async Task SetRoleProjectPermissionsAsync(
+        string curUserId,
+        string projectId,
+        string role,
+        string[] permissions
+    )
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!IsProjectAdmin(projectDoc.Data, curUserId))
+            throw new ForbiddenException();
+
+        if (permissions.Length == 0)
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.RolePermissions[role]));
+        }
+        else
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.RolePermissions[role], permissions));
+        }
+    }
+
+    public async Task SetUserProjectPermissionsAsync(
+        string curUserId,
+        string projectId,
+        string userId,
+        string[] permissions
+    )
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!IsProjectAdmin(projectDoc.Data, curUserId))
+            throw new ForbiddenException();
+
+        if (permissions.Length == 0)
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserPermissions[userId]));
+        }
+        else
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserPermissions[userId], permissions));
+        }
+    }
+
     protected override async Task RemoveUserFromProjectAsync(
         IConnection conn,
         IDocument<SFProject> projectDoc,
