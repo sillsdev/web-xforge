@@ -49,7 +49,11 @@ public class SFProjectServiceTests
     private const string SiteId = "xf";
     private const string PTProjectIdNotYetInSF = "paratext_notYetInSF";
     private const string Role01 = "role01";
-    private static readonly string[] Permissions = ["generic.permission", "another.permission"];
+    private static readonly string[] Permissions =
+    [
+        SFProjectRights.JoinRight(SFProjectDomain.Answers, Operation.Create),
+        SFProjectRights.JoinRight(SFProjectDomain.AnswerComments, Operation.Create),
+    ];
 
     [Test]
     public async Task InviteAsync_ProjectAdminSharingDisabled_UserInvited()
@@ -3937,6 +3941,18 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void SetRoleProjectPermissionsAsync_AdminCannotGrantPermissionsTheyDoNotHave()
+    {
+        var env = new TestEnvironment();
+        env.ProjectRights.HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05), User01, Permissions).Returns(false);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetRoleProjectPermissionsAsync(User01, Project05, Role01, Permissions)
+        );
+    }
+
+    [Test]
     public async Task SetRoleProjectPermissionsAsync_AdminHasPermission()
     {
         var env = new TestEnvironment();
@@ -3963,7 +3979,7 @@ public class SFProjectServiceTests
         Project project = env.GetProject(Project05);
         Assert.AreEqual(0, project.RolePermissions.Count, "setup");
 
-        // Translator user cannot give permissions to a tole
+        // SUT
         Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.SetRoleProjectPermissionsAsync(User02, Project05, Role01, Permissions)
         );
@@ -3971,6 +3987,18 @@ public class SFProjectServiceTests
         // Permissions are not updated
         project = env.GetProject(Project05);
         Assert.AreEqual(0, project.RolePermissions.Count);
+    }
+
+    [Test]
+    public void SetUserProjectPermissionsAsync_AdminCannotGrantPermissionsTheyDoNotHave()
+    {
+        var env = new TestEnvironment();
+        env.ProjectRights.HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05), User01, Permissions).Returns(false);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetUserProjectPermissionsAsync(User01, Project05, User02, Permissions)
+        );
     }
 
     [Test]
@@ -4000,7 +4028,7 @@ public class SFProjectServiceTests
         Project project = env.GetProject(Project05);
         Assert.AreEqual(0, project.UserPermissions.Count, "setup");
 
-        // Translator user cannot give permission to self
+        // SUT
         Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.SetUserProjectPermissionsAsync(User02, Project05, User02, Permissions)
         );
@@ -4764,6 +4792,12 @@ public class SFProjectServiceTests
 
             // These project rights correspond to the permissions in the projects above
             ProjectRights = Substitute.For<ISFProjectRights>();
+            ProjectRights
+                .HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05 || p.Id == Project03), User01, Permissions)
+                .Returns(true);
+            ProjectRights
+                .HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05 || p.Id == Project03), User01, permissions: [])
+                .Returns(true);
             ProjectRights
                 .RoleHasRight(
                     project: Arg.Is<SFProject>(p => p.Id == Project01 || p.Id == Project04),
