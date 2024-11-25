@@ -8,7 +8,11 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { TranslocoModule } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
-import { defaultTranslocoMarkupTranspilers, provideTranslationMarkupTranspiler } from 'ngx-transloco-markup';
+import {
+  defaultTranslocoMarkupTranspilers,
+  provideTranslationMarkupTranspiler,
+  TranslocoMarkupModule
+} from 'ngx-transloco-markup';
 import { translocoMarkupRouterLinkRenderer } from 'ngx-transloco-markup-router-link';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
@@ -72,6 +76,7 @@ import { UsersModule } from './users/users.module';
     UICommonModule.forRoot(),
     XForgeCommonModule,
     TranslocoModule,
+    TranslocoMarkupModule,
     AppRoutingModule,
     SharedModule,
     AvatarComponent,

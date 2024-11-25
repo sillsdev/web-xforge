@@ -47,14 +47,18 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   additionalTrainingSourceParatextId = new FormControl<string | undefined>(undefined);
   additionalTrainingData = new FormControl(false);
   servalConfig = new FormControl<string | undefined>(undefined);
-  translateShareEnabled = new FormControl(false);
   checkingEnabled = new FormControl(false);
   usersSeeEachOthersResponses = new FormControl(false);
-  checkingShareEnabled = new FormControl(false);
   checkingAnswerExport = new FormControl<CheckingAnswerExport | undefined>(undefined);
   hideCommunityCheckingText = new FormControl(false);
+  translatorsShareEnabled = new FormControl(false);
+  communityCheckersShareEnabled = new FormControl(false);
+  commentersShareEnabled = new FormControl(false);
+  viewersShareEnabled = new FormControl(false);
 
+  // Expose enums to the template
   CheckingAnswerExport = CheckingAnswerExport;
+  SFProjectRole = SFProjectRole;
 
   form = new FormGroup({
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
@@ -68,12 +72,14 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     additionalTrainingSourceParatextId: this.additionalTrainingSourceParatextId,
     additionalTrainingData: this.additionalTrainingData,
     servalConfig: this.servalConfig,
-    translateShareEnabled: this.translateShareEnabled,
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
-    checkingShareEnabled: this.checkingShareEnabled,
     checkingAnswerExport: this.checkingAnswerExport,
-    hideCommunityCheckingText: this.hideCommunityCheckingText
+    hideCommunityCheckingText: this.hideCommunityCheckingText,
+    translatorsShareEnabled: this.translatorsShareEnabled,
+    communityCheckersShareEnabled: this.communityCheckersShareEnabled,
+    commentersShareEnabled: this.commentersShareEnabled,
+    viewersShareEnabled: this.viewersShareEnabled
   });
 
   isActiveSourceProject: boolean = false;
@@ -113,10 +119,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get synchronizeWarning(): TextAroundTemplate | undefined {
     return this.i18n.translateTextAroundTemplateTags('settings.will_not_delete_paratext_project');
-  }
-
-  get shareDescription(): TextAroundTemplate | undefined {
-    return this.i18n.translateTextAroundTemplateTags('settings.invite_others');
   }
 
   get isBasedOnProjectSet(): boolean {
@@ -421,6 +423,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     }
 
     this.updateCheckingConfig(newValue);
+
+    // Update the sharing settings
+    this.updateSharingSetting(newValue, 'translatorsShareEnabled', SFProjectRole.ParatextTranslator);
+    this.updateSharingSetting(newValue, 'communityCheckersShareEnabled', SFProjectRole.CommunityChecker);
+    this.updateSharingSetting(newValue, 'commentersShareEnabled', SFProjectRole.Commenter);
+    this.updateSharingSetting(newValue, 'viewersShareEnabled', SFProjectRole.Viewer);
   }
 
   private settingChanged(
@@ -450,12 +458,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.settingChanged(newValue, 'usersSeeEachOthersResponses')) {
       this.updateSetting(newValue, 'usersSeeEachOthersResponses');
     }
-    if (this.settingChanged(newValue, 'translateShareEnabled')) {
-      this.updateSetting(newValue, 'translateShareEnabled');
-    }
-    if (this.settingChanged(newValue, 'checkingShareEnabled')) {
-      this.updateSetting(newValue, 'checkingShareEnabled');
-    }
     if (
       newValue.checkingAnswerExport != null &&
       newValue.checkingAnswerExport !== this.previousFormValues.checkingAnswerExport
@@ -464,6 +466,28 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     }
     if (this.settingChanged(newValue, 'hideCommunityCheckingText')) {
       this.updateSetting(newValue, 'hideCommunityCheckingText');
+    }
+  }
+
+  private updateSharingSetting(
+    newValue: SFProjectSettings,
+    setting: keyof SFProjectSettings,
+    role: SFProjectRole
+  ): void {
+    if (this.settingChanged(newValue, setting)) {
+      const right = SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create);
+      const permissions = new Set(this.projectDoc.data.rolePermissions[role] ?? []);
+      if (newValue[setting] === true) {
+        permissions.add(right);
+      } else {
+        permissions.delete(right);
+      }
+
+      this.checkUpdateStatus(
+        setting,
+        this.projectService.onlineSetRoleProjectPermissions(this.projectDoc.id, role, Array.from(permissions))
+      );
+      this.previousFormValues = this.form.value;
     }
   }
 
@@ -492,17 +516,25 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         this.projectDoc.data.translateConfig.draftConfig?.additionalTrainingSource?.paratextId,
       additionalTrainingData: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingData,
       servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
-      translateShareEnabled:
-        this.projectDoc.data.rolePermissions[SFProjectRole.Viewer]?.includes(
-          SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
-        ) === true,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
-      checkingShareEnabled:
+      hideCommunityCheckingText: this.projectDoc.data.checkingConfig.hideCommunityCheckingText,
+      translatorsShareEnabled:
+        this.projectDoc.data.rolePermissions[SFProjectRole.ParatextTranslator]?.includes(
+          SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
+        ) === true,
+      communityCheckersShareEnabled:
         this.projectDoc.data.rolePermissions[SFProjectRole.CommunityChecker]?.includes(
           SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
         ) === true,
-      hideCommunityCheckingText: this.projectDoc.data.checkingConfig.hideCommunityCheckingText,
+      commentersShareEnabled:
+        this.projectDoc.data.rolePermissions[SFProjectRole.Commenter]?.includes(
+          SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
+        ) === true,
+      viewersShareEnabled:
+        this.projectDoc.data.rolePermissions[SFProjectRole.Viewer]?.includes(
+          SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
+        ) === true,
       checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.All
     };
     this.form.reset(this.previousFormValues);
@@ -536,12 +568,14 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('additionalTrainingSourceParatextId', ElementState.InSync);
     this.controlStates.set('additionalTrainingData', ElementState.InSync);
     this.controlStates.set('servalConfig', ElementState.InSync);
-    this.controlStates.set('translateShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
     this.controlStates.set('hideCommunityCheckingText', ElementState.InSync);
-    this.controlStates.set('checkingShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingAnswerExport', ElementState.InSync);
+    this.controlStates.set('translatorsShareEnabled', ElementState.InSync);
+    this.controlStates.set('communityCheckersShareEnabled', ElementState.InSync);
+    this.controlStates.set('commentersShareEnabled', ElementState.InSync);
+    this.controlStates.set('viewersShareEnabled', ElementState.InSync);
   }
 
   private updateNonSelectableProjects(): void {
