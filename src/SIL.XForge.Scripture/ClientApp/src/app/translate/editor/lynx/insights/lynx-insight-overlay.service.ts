@@ -15,6 +15,7 @@ import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight
 export interface LynxInsightOverlayRef {
   ref: OverlayRef;
   closed$: Subject<void>;
+  hoverMultiInsight$: Subject<LynxInsight | null>;
 }
 
 @Injectable({
@@ -49,6 +50,9 @@ export class LynxInsightOverlayService {
 
     componentRef.instance.insights = insights;
     componentRef.instance.insightDismiss.pipe(take(1)).subscribe(() => this.close());
+    componentRef.instance.insightHover
+      .pipe(takeUntil(overlayRef.closed$))
+      .subscribe(insight => this.openRef?.hoverMultiInsight$.next(insight));
 
     // Update overlay position when insight is focused (as in choosing from multi-insight)
     componentRef.instance.insightFocus
@@ -78,7 +82,8 @@ export class LynxInsightOverlayService {
   private createOverlayRef(origin: HTMLElement): LynxInsightOverlayRef {
     return {
       ref: this.overlay.create(this.getConfig(origin)),
-      closed$: new Subject<void>()
+      closed$: new Subject<void>(),
+      hoverMultiInsight$: new Subject<LynxInsight>()
     };
   }
 
