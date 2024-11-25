@@ -36,8 +36,14 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Emits when insight is dismissed by user. */
   @Output() insightDismiss = new EventEmitter<LynxInsight>();
+
+  /** Emits when overlay goes to single insight mode. */
   @Output() insightFocus = new EventEmitter<LynxInsight>();
+
+  /** Emits hovered insight when overlay displays multi-insight selection list. Emits `null` when hover ceases. */
+  @Output() insightHover = new EventEmitter<LynxInsight | null>();
 
   focusedInsight?: LynxInsightFlattened;
   menuActions: LynxInsightAction[] = [];
@@ -83,6 +89,13 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
     this.focusedInsight = insight;
     this.fetchInsightActions(insight);
     this.insightFocus.emit(insight);
+  }
+
+  /**
+   * Highlight the specified insight.  Brings lower severity insights to the front.  `null` means hover ceased.
+   */
+  highlightInsight(insight: LynxInsight | null): void {
+    this.insightHover.emit(insight);
   }
 
   selectAction(action: LynxInsightAction): void {
