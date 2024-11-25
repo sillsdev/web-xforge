@@ -43,7 +43,13 @@
   <div class="main-section list">
     <h1>Select for details</h1>
     @for (insight of insightsFlattened; track insight) {
-      <div class="insight-item" [class]="insight.type" (click)="focusInsight(insight)">
+      <div
+        class="insight-item"
+        [class]="insight.type"
+        (click)="focusInsight(insight)"
+        (mouseover)="highlightInsight(insight)"
+        (mouseout)="highlightInsight(null)"
+      >
         <mat-icon class="bulb-icon">lightbulb</mat-icon>
         <h1>
           <span class="description">{{ insight.description }}</span>

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import Quill, { DeltaStatic, StringMap } from 'quill';
 import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { DeltaOperation } from 'rich-text';
-import { take } from 'rxjs';
+import { take, takeUntil } from 'rxjs';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
@@ -100,6 +100,9 @@ export class QuillInsightRenderService extends InsightRenderService {
           // Clear editor attention when overlay is closed
           if (ref != null) {
             ref.closed$.pipe(take(1)).subscribe(() => this.setEditorAttention(false, editor));
+            ref.hoverMultiInsight$
+              .pipe(takeUntil(ref.closed$))
+              .subscribe(insight => this.setEditorAttention(true, editor, insight != null ? [insight] : insights));
           }
 
           editorAttention = true;
@@ -139,11 +142,15 @@ export class QuillInsightRenderService extends InsightRenderService {
     // Set class on active insights to pull them above the editor dim overlay
     if (editorAttention && insights != null) {
       for (const insight of insights) {
-        // An insight may be split across multiple elements, so apply the class to all elements with the insight id
-        for (const element of this.getInsightElements(editor, insight.id)) {
-          element.classList.add(this.activeInsightClass);
-        }
+        this.addActiveInsightClass(editor, insight.id);
       }
+    }
+  }
+
+  private addActiveInsightClass(editor: Quill, insightId: string): void {
+    // An insight may be split across multiple elements, so apply the class to all elements with the insight id
+    for (const element of this.getInsightElements(editor, insightId)) {
+      element.classList.add(this.activeInsightClass);
     }
   }
 
