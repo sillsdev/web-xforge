@@ -427,6 +427,10 @@ public class SFProjectsRpcController(
                 )
             );
         }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
         catch (DataNotFoundException dnfe)
         {
             return NotFoundError(dnfe.Message);
@@ -440,7 +444,7 @@ public class SFProjectsRpcController(
                     { "projectId", projectId },
                     { "role", role },
                     { "shareLinkType", shareLinkType },
-                    { "daysBeforeExpiration", daysBeforeExpiration.ToString() }
+                    { "daysBeforeExpiration", daysBeforeExpiration.ToString() },
                 }
             );
             throw;
