@@ -7,21 +7,22 @@
         {{ t("generate_forward_translation_drafts_header") }}
       </h1>
     }
-
-    @if (featureFlags.updatedLearningRateForServal.enabled) {
-      <app-notice type="primary" mode="fill-dark" icon="bolt">
-        @for (i of learningRateNotice | async; track i) {
-          <!-- prettier-ignore -->
-          @if (i.id == null) {{{ i.text }}}
-          <!-- prettier-ignore -->
-          @else if (i.id === 1) {{{ adjustedLearningRateDraftDurationHours | l10nNumber }}}
-          <!-- prettier-ignore -->
-          @else if (i.id === 3) {{{ legacyDraftDurationHours | l10nNumber }}}
-          @else if (i.id === 5) {
-            <a href="mailto:{{ issueEmail }}" target="_blank">{{ i.text }}</a>
+    @if (draftEnabled) {
+      @if (featureFlags.updatedLearningRateForServal.enabled) {
+        <app-notice type="primary" mode="fill-dark" icon="bolt" data-test-id="drafting-rate-notice">
+          @for (i of learningRateNotice | async; track i) {
+            <!-- prettier-ignore -->
+            @if (i.id == null) {{{ i.text }}}
+            <!-- prettier-ignore -->
+            @else if (i.id === 1) {{{ adjustedLearningRateDraftDurationHours | l10nNumber }}}
+            <!-- prettier-ignore -->
+            @else if (i.id === 3) {{{ legacyDraftDurationHours | l10nNumber }}}
+            @else if (i.id === 5) {
+              <a href="mailto:{{ issueEmail }}" target="_blank">{{ i.text }}</a>
+            }
           }
-        }
-      </app-notice>
+        </app-notice>
+      }
     }
 
     <section>
@@ -89,7 +90,7 @@
       }
 
       <!-- Only show warnings if target language is supported -->
-      @if (isTargetLanguageSupported) {
+      @if (draftEnabled && isTargetLanguageSupported) {
         @if (!isSourceProjectSet) {
           <app-notice type="warning" icon="warning" data-test-id="warning-source-text-missing">
             @if (isProjectAdmin) {
@@ -201,7 +202,7 @@
       }
 
       <!-- Only show sync related messages if approved or a back translation and a build is not underway -->
-      @if ((this.isBackTranslationMode || this.isPreTranslationApproved) && !isDraftInProgress(draftJob)) {
+      @if (draftEnabled && !isDraftInProgress(draftJob)) {
         @if (!lastSyncSuccessful) {
           <app-notice type="warning" icon="warning" data-test-id="warning-last-sync-failed">
             <transloco key="draft_generation.info_alert_last_sync_failed"></transloco>
@@ -215,7 +216,7 @@
         <p class="offline-text">{{ t("offline_message") }}</p>
       </section>
     } @else {
-      @if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
+      @if (!draftEnabled) {
         <section data-test-id="approval-needed">
           <a [href]="signupFormUrl" mat-flat-button color="primary" target="_blank" rel="noopener noreferrer">
             {{ t("sign_up_for_drafting") }}
