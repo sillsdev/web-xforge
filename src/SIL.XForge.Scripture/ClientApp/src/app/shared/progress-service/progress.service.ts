@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Subscription, asyncScheduler, merge, tap, throttleTime } from 'rxjs';
+import { Subscription, asyncScheduler, merge, startWith, tap, throttleTime } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -55,6 +55,7 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
 
     this.subscribe(
       this.activatedProject.changes$.pipe(
+        startWith(this.activatedProject.projectDoc),
         filterNullish(),
         tap(async project => {
           this.initialize(project.id);
@@ -90,14 +91,17 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
       await this.calculateProgress();
     }
 
-    const chapterObservables = [];
+    const chapterDocPromises: Promise<TextDoc>[] = [];
     for (const book of this._projectDoc.data!.texts) {
       for (const chapter of book.chapters) {
         const textDocId = new TextDocId(this._projectDoc.id, book.bookNum, chapter.number, 'target');
-        const chapterText: TextDoc = await this.projectService.getText(textDocId);
-        chapterObservables.push(chapterText.changes$);
+        chapterDocPromises.push(this.projectService.getText(textDocId));
       }
     }
+
+    const chapterDocs = await Promise.all(chapterDocPromises);
+
+    const chapterObservables = chapterDocs.map(p => p.changes$);
 
     this._allChaptersChangeSub?.unsubscribe();
     this._allChaptersChangeSub = merge(...chapterObservables, this.onlineStatusService.online)

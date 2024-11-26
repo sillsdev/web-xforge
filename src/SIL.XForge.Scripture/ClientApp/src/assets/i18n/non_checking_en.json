@@ -45,6 +45,7 @@
   },
   "book_select": {
     "deuterocanon": "Deuterocanon",
+    "loading_message": "Loading available books...",
     "new_testament": "New Testament",
     "old_testament": "Old Testament"
   },

@@ -29,6 +29,8 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
   @Input() readonly: boolean = false;
   @Output() bookSelect = new EventEmitter<number[]>();
 
+  protected loaded = false;
+
   bookOptions: BookOption[] = [];
 
   booksOT: number[] = [];
@@ -57,13 +59,14 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
     const selectedSet = new Set<number>(this.selectedBooks);
 
     await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
+    this.loaded = true;
     const progress = this.progressService.texts;
 
     this.bookOptions = this.availableBooks.map((bookNum: number) => ({
       bookNum,
       bookId: Canon.bookNumberToId(bookNum),
       selected: selectedSet.has(bookNum),
-      progressPercentage: progress.find(p => p.text.bookNum === bookNum)!.percentage
+      progressPercentage: progress.find(p => p.text.bookNum === bookNum)?.percentage ?? 0
     }));
 
     this.booksOT = this.selectedBooks.filter(n => Canon.isBookOT(n));
