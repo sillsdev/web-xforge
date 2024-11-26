@@ -634,7 +634,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     )
     {
         SFProject project = await GetProjectAsync(projectId);
-        if (!CanUserShareRole(curUserId, project, role))
+        if (!CanUserShareRole(curUserId, project, role, out string userRole))
             throw new ForbiddenException();
 
         if (
@@ -647,9 +647,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
         SiteOptions siteOptions = SiteOptions.Value;
 
-        bool isProjectAdmin = IsProjectAdmin(project, curUserId);
-        string[] availableRoles = GetAvailableRoles(project, isProjectAdmin);
-
+        string[] availableRoles = GetAvailableRoles(project, userRole);
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
@@ -674,7 +672,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         ExpirationTime = expTime,
                         ProjectRole = role,
                         ShareLinkType = ShareLinkType.Recipient,
-                        CreatedByAdmin = isProjectAdmin
+                        CreatedByRole = userRole,
                     }
                 )
         );
@@ -723,11 +721,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     )
     {
         SFProject project = await GetProjectAsync(projectId);
-        if (!CanUserShareRole(curUserId, project, role))
+        if (!CanUserShareRole(curUserId, project, role, out string userRole))
             throw new ForbiddenException();
 
-        bool isProjectAdmin = IsProjectAdmin(project, curUserId);
-        string[] availableRoles = GetAvailableRoles(project, isProjectAdmin);
+        string[] availableRoles = GetAvailableRoles(project, userRole);
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
@@ -745,7 +742,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         ProjectRole = role,
                         ShareLinkType = shareLinkType,
                         ExpirationTime = DateTime.UtcNow.AddDays(daysBeforeExpiration),
-                        CreatedByAdmin = isProjectAdmin,
+                        CreatedByRole = userRole,
                     }
                 )
         );
@@ -810,9 +807,16 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string? email)
     {
         SFProject project = await GetProjectAsync(projectId);
-        string[] availableRoles = GetAvailableRoles(project, isProjectAdmin: false);
+        if (!project.UserRoles.TryGetValue(curUserId, out string userRole))
+        {
+            throw new ForbiddenException();
+        }
+
+        string[] availableRoles = GetAvailableRoles(project, userRole);
         bool sharingEnabled =
-            availableRoles.Contains(SFProjectRole.Viewer) || availableRoles.Contains(SFProjectRole.CommunityChecker);
+            availableRoles.Contains(SFProjectRole.CommunityChecker)
+            || availableRoles.Contains(SFProjectRole.Commenter)
+            || availableRoles.Contains(SFProjectRole.Viewer);
         if (!IsProjectAdmin(project, curUserId) && !(IsOnProject(project, curUserId) && sharingEnabled))
             throw new ForbiddenException();
 
@@ -920,11 +924,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             throw new DataNotFoundException("role_not_found");
         }
+
         // If the key is expired
         if (projectSecretShareKey.ExpirationTime < DateTime.UtcNow)
         {
             throw new DataNotFoundException("key_expired");
         }
+
         // If the desired role is community checker but community checking is disabled
         if (
             projectSecretShareKey.ProjectRole == SFProjectRole.CommunityChecker
@@ -933,10 +939,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             throw new DataNotFoundException("role_not_found");
         }
+
         // If the link was sent by a non-admin and an admin has since disabled non-admin sharing
-        if (!projectSecretShareKey.CreatedByAdmin)
+        if (projectSecretShareKey.CreatedByRole != SFProjectRole.Administrator)
         {
-            string[] availableRoles = GetAvailableRoles(project, isProjectAdmin: false);
+            string[] availableRoles = GetAvailableRoles(project, projectSecretShareKey.CreatedByRole);
             if (!availableRoles.Contains(projectSecretShareKey.ProjectRole))
             {
                 throw new DataNotFoundException("role_not_found");
@@ -1804,31 +1811,79 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             .ToArray();
     }
 
-    /// <summary> Determines if a user on a project has the right to share a specific role. </summary>
-    private bool CanUserShareRole(string userId, SFProject project, string role)
+    /// <summary>
+    /// Determines if a user on a project has the right to share a specific role.
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="project">The project.</param>
+    /// <param name="role">The role.</param>
+    /// <param name="userRole">The role of the user identifier by <paramref name="userId"/>.</param>
+    /// <returns><c>true</c> if the user can share the specified role; otherwise, <c>false</c>.</returns>
+    private bool CanUserShareRole(string userId, SFProject project, string role, out string userRole)
     {
-        if (!IsOnProject(project, userId))
+        // If the user is not on the project, they cannot share any roles
+        if (!project.UserRoles.TryGetValue(userId, out userRole))
+        {
+            userRole = string.Empty;
             return false;
-        if (role == SFProjectRole.CommunityChecker)
-            return true;
+        }
 
-        if (role == SFProjectRole.Commenter)
+        // The user must have the right to invite users
+        if (!_projectRights.HasRight(project, userId, SFProjectDomain.UserInvites, Operation.Create))
         {
-            // This may change if we decide that other users should be able to invite reviewers
-            if (IsProjectAdmin(project, userId))
-                return true;
+            return false;
         }
-        else if (role == SFProjectRole.Viewer)
+
+        // Determine if the user's role can invite the specified role
+        return GetAvailableRoles(project, userRole).Contains(role);
+    }
+
+    /// <summary>
+    /// Gets the roles that are available for sharing.
+    /// </summary>
+    /// <param name="project"></param>
+    /// <param name="userRole">The role of the user that will be creating or did create the share link.</param>
+    /// <returns>An array of the available roles the user can create share invitations for.</returns>
+    /// <remarks>
+    /// If you update this function, you will need to update ShareBaseComponent.userShareableRoles in TypeScript.
+    /// </remarks>
+    private string[] GetAvailableRoles(SFProject project, string userRole)
+    {
+        bool checkUserRole = userRole is SFProjectRole.Administrator or SFProjectRole.Translator;
+        return new Dictionary<string, bool>
         {
-            if (HasParatextRole(project, userId))
-                return true;
-            if (project.UserRoles.TryGetValue(userId, out string projectRole))
             {
-                if (projectRole == SFProjectRole.Commenter || projectRole == SFProjectRole.Viewer)
-                    return true;
-            }
+                SFProjectRole.CommunityChecker,
+                project.CheckingConfig.CheckingEnabled
+                    && _projectRights.RoleHasRight(
+                        project,
+                        role: checkUserRole ? userRole : SFProjectRole.CommunityChecker,
+                        SFProjectDomain.UserInvites,
+                        Operation.Create
+                    )
+            },
+            {
+                SFProjectRole.Viewer,
+                _projectRights.RoleHasRight(
+                    project,
+                    role: checkUserRole ? userRole : SFProjectRole.Viewer,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+            },
+            {
+                SFProjectRole.Commenter,
+                _projectRights.RoleHasRight(
+                    project,
+                    role: checkUserRole ? userRole : SFProjectRole.Commenter,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+            },
         }
-        return false;
+            .Where(entry => entry.Value)
+            .Select(entry => entry.Key)
+            .ToArray();
     }
 
     /// <summary>
@@ -1904,40 +1959,4 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
     }
-
-    private string[] GetAvailableRoles(SFProject project, bool isProjectAdmin) =>
-        new Dictionary<string, bool>
-        {
-            {
-                SFProjectRole.CommunityChecker,
-                project.CheckingConfig.CheckingEnabled
-                    && _projectRights.RoleHasRight(
-                        project,
-                        role: isProjectAdmin ? SFProjectRole.Administrator : SFProjectRole.CommunityChecker,
-                        SFProjectDomain.UserInvites,
-                        Operation.Create
-                    )
-            },
-            {
-                SFProjectRole.Viewer,
-                _projectRights.RoleHasRight(
-                    project,
-                    role: isProjectAdmin ? SFProjectRole.Administrator : SFProjectRole.Viewer,
-                    SFProjectDomain.UserInvites,
-                    Operation.Create
-                )
-            },
-            {
-                SFProjectRole.Commenter,
-                _projectRights.RoleHasRight(
-                    project,
-                    role: isProjectAdmin ? SFProjectRole.Administrator : SFProjectRole.Commenter,
-                    SFProjectDomain.UserInvites,
-                    Operation.Create
-                )
-            },
-        }
-            .Where(entry => entry.Value)
-            .Select(entry => entry.Key)
-            .ToArray();
 }
