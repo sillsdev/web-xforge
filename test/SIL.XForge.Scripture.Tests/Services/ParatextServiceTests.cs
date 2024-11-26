@@ -381,17 +381,14 @@ public class ParatextServiceTests
         var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
         SFProject project = projects.First();
 
-        var ptUsernameMapping = new Dictionary<string, string>()
-        {
-            { env.User01, env.Username01 },
-            { env.User02, env.Username02 }
-        };
+        var ptUsernameMapping = new Dictionary<string, string>() { { env.User01, env.Username01 } };
         ScrText scrText = env.GetScrText(new SFParatextUser(env.Username01), project.ParatextId);
         scrText.Permissions.SetPermission(env.Username01, 0, PermissionSet.Manual, true);
         // Give automatic permission to Mark but not Matthew
         scrText.Permissions.SetPermission(env.Username01, 41, PermissionSet.Automatic, true);
         env.MockScrTextCollection.FindById(env.Username01, project.ParatextId).Returns(scrText);
 
+        // Matthew has permission granted explicitly
         Dictionary<string, string> permissions = await env.Service.GetPermissionsAsync(
             user01Secret,
             project,
@@ -399,6 +396,10 @@ public class ParatextServiceTests
             40
         );
         string[] expected = [TextInfoPermission.Write, TextInfoPermission.None, TextInfoPermission.None];
+        Assert.That(permissions.Values, Is.EquivalentTo(expected));
+        // Mark has permission explicitly and automatically
+        permissions = await env.Service.GetPermissionsAsync(user01Secret, project, ptUsernameMapping, 41);
+        expected = [TextInfoPermission.Write, TextInfoPermission.None, TextInfoPermission.None];
         Assert.That(permissions.Values, Is.EquivalentTo(expected));
     }
 
