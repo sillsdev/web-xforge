@@ -1,0 +1,64 @@
+/*
+ * SF-3076 Simplify guest role sharing settings
+ *
+ * Date:   27 November 2024
+ * Author: Peter Chapman
+ *
+ * This script migrates the sf_project_secrets collection as follows:
+ *
+ *  - Add the createdByRole property to shareKeys
+ *  - Set createdByRole to 'pt_administrator' if createdByAdmin is true
+ *  - Set createdByRole to projectRole if createdByAdmin is false or does not exist
+ *  - Remove the createdByAdmin property
+ *
+ * This script can be run via the following command:
+ *
+ *   mongosh 20241127-AddCreatedByRoleToShareKeys.mongodb
+ */
+
+use("xforge");
+
+// 1. Migrate to the createdByRole filed
+db.sf_project_secrets.updateMany(
+  {
+    "shareKeys.createdByRole": { $exists: false }
+  },
+  [
+    {
+      $set: {
+        shareKeys: {
+          $map: {
+            input: "$shareKeys",
+            as: "shareKey",
+            in: {
+              $mergeObjects: [
+                "$$shareKey",
+                {
+                  createdByRole: {
+                    $cond: {
+                      if: { $eq: ["$$shareKey.createdByAdmin", true] },
+                      then: "pt_administrator",
+                      else: "$$shareKey.projectRole"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+);
+
+// 2. Remove the createdByAdmin field from share keys
+db.sf_project_secrets.updateMany(
+  {
+    "shareKeys.createdByAdmin": { $exists: true }
+  },
+  {
+    $unset: {
+      "shareKeys.$[].createdByAdmin": ""
+    }
+  }
+);
