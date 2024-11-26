@@ -6,7 +6,6 @@ import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { MockConsole } from 'xforge-common/mock-console';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -30,7 +29,6 @@ import {
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
 const mockedDialog = mock(DialogService);
-const mockedI18nService = mock(I18nService);
 const mockedConsole: MockConsole = MockConsole.install();
 
 describe('AudioRecorderDialogComponent', () => {
@@ -44,9 +42,8 @@ describe('AudioRecorderDialogComponent', () => {
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
-      { provide: OnlineStatusService, useclass: TestOnlineStatusService },
-      { provide: DialogService, useMock: mockedDialog },
-      { provide: I18nService, useMock: mockedI18nService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: DialogService, useMock: mockedDialog }
     ]
   }));
 
@@ -151,11 +148,6 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(countdown: boolean = false) {
-    when(mockedI18nService.translateTextAroundTemplateTags(anything())).thenReturn({
-      before: 'before ',
-      templateTagText: '',
-      after: ' after'
-    });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(AudioRecorderDialogComponent, {
       data: { countdown } as AudioRecorderDialogData
