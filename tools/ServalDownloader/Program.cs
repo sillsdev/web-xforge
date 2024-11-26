@@ -85,13 +85,13 @@ foreach (
     Directory.CreateDirectory(parallelCorpusPath);
     foreach (ResourceLink sourceCorpus in parallelCorpus.SourceCorpora)
     {
+        // Create the source directory
+        string sourcePath = Path.Combine(parallelCorpusPath, "source");
+        Directory.CreateDirectory(sourcePath);
+
         Corpus corpus = await corporaClient.GetAsync(sourceCorpus.Id);
         foreach (CorpusFile corpusFile in corpus.Files)
         {
-            // Create the source directory
-            string sourcePath = Path.Combine(parallelCorpusPath, "source");
-            Directory.CreateDirectory(sourcePath);
-
             // Get the file extension
             DataFile dataFile = await dataFilesClient.GetAsync(corpusFile.File.Id);
             string extension = dataFile.Format == FileFormat.Paratext ? ".zip" : ".txt";
@@ -109,13 +109,13 @@ foreach (
 
     foreach (ResourceLink sourceCorpus in parallelCorpus.SourceCorpora)
     {
+        // Create the target directory
+        string targetPath = Path.Combine(parallelCorpusPath, "target");
+        Directory.CreateDirectory(targetPath);
+
         Corpus corpus = await corporaClient.GetAsync(sourceCorpus.Id);
         foreach (CorpusFile corpusFile in corpus.Files)
         {
-            // Create the target directory
-            string targetPath = Path.Combine(parallelCorpusPath, "target");
-            Directory.CreateDirectory(targetPath);
-
             // Get the file extension
             DataFile dataFile = await dataFilesClient.GetAsync(corpusFile.File.Id);
             string extension = dataFile.Format == FileFormat.Paratext ? ".zip" : ".txt";
