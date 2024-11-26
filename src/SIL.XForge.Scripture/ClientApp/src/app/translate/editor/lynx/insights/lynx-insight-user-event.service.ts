@@ -50,8 +50,9 @@ export class LynxInsightUserEventService {
     const ids: string[] = this.getInsightIds(target);
 
     if (ids.length === 0) {
-      // Non-insight clicks that are not in action overlay panel should clear display state
-      if (target?.closest(this.overlaySelector) == null) {
+      // Non- 'insights panel' clicks that are not in action overlay should clear display state
+      // unless action 'fixes' menu is open (indicated by '.cdk-overlay-backdrop').
+      if (target?.closest(`${this.overlaySelector}, .cdk-overlay-backdrop`) == null) {
         this.insightState.clearDisplayState();
       }
       return;
