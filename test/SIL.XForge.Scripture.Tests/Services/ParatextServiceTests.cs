@@ -352,7 +352,7 @@ public class ParatextServiceTests
 
         // Set up mock project
         var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
-        var project = projects.First();
+        SFProject project = projects.First();
         project.ParatextId = env.Resource2Id;
         project.UserRoles = new Dictionary<string, string>
         {
@@ -366,7 +366,39 @@ public class ParatextServiceTests
         };
 
         var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, ptUsernameMapping);
-        string[] expected = new[] { TextInfoPermission.Read, TextInfoPermission.None };
+        string[] expected = [TextInfoPermission.Read, TextInfoPermission.None];
+        Assert.That(permissions.Values, Is.EquivalentTo(expected));
+    }
+
+    [Test]
+    public async Task GetPermissionsAsync_AllBooksAndAutomaticBooks_HasBookLevelPermission()
+    {
+        // Set up environment
+        var env = new TestEnvironment();
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up mock project
+        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+        SFProject project = projects.First();
+
+        var ptUsernameMapping = new Dictionary<string, string>()
+        {
+            { env.User01, env.Username01 },
+            { env.User02, env.Username02 }
+        };
+        ScrText scrText = env.GetScrText(new SFParatextUser(env.Username01), project.ParatextId);
+        scrText.Permissions.SetPermission(env.Username01, 0, PermissionSet.Manual, true);
+        // Give automatic permission to Mark but not Matthew
+        scrText.Permissions.SetPermission(env.Username01, 41, PermissionSet.Automatic, true);
+        env.MockScrTextCollection.FindById(env.Username01, project.ParatextId).Returns(scrText);
+
+        Dictionary<string, string> permissions = await env.Service.GetPermissionsAsync(
+            user01Secret,
+            project,
+            ptUsernameMapping,
+            40
+        );
+        string[] expected = [TextInfoPermission.Write, TextInfoPermission.None, TextInfoPermission.None];
         Assert.That(permissions.Values, Is.EquivalentTo(expected));
     }
 

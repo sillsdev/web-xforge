@@ -882,15 +882,8 @@ public class ParatextService : DisposableBase, IParatextService
                             PermissionSet.Merged,
                             userName
                         );
-                        if (editable == null || !editable.Any())
-                        {
-                            // If there are no editable book permissions, check if they can edit all books
-                            if (scrText.Permissions.CanEditAllBooks(userName))
-                            {
-                                textInfoPermission = TextInfoPermission.Write;
-                            }
-                        }
-                        else if (editable.Contains(book))
+                        // Check if they can edit all books or the specified book
+                        if (scrText.Permissions.CanEditAllBooks(userName) || editable.Contains(book))
                         {
                             textInfoPermission = TextInfoPermission.Write;
                         }
