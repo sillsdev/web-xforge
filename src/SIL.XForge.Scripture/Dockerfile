@@ -83,4 +83,5 @@ LABEL org.opencontainers.image.source=https://github.com/sillsdev/web-xforge
 LABEL org.opencontainers.image.description="Scripture Forge"
 LABEL org.opencontainers.image.licenses=MIT
 COPY --from=publish /app/publish .
+COPY dev-cert/ /dev-cert/
 ENTRYPOINT [ "dotnet", "SIL.XForge.Scripture.dll", "--start-ng-serve=none"]

@@ -44,5 +44,6 @@ COPY src/SIL.XForge.Scripture/appsettings.json .
 COPY src/SIL.XForge.Scripture/appsettings.${MIGRATOR_ENVIRONMENT}.json .
 COPY --from=jering-build /src .
 COPY --from=build /src .
+COPY dev-cert/ /dev-cert/
 RUN chmod +x /app/start.sh
 ENTRYPOINT [ "sh", "/app/start.sh" ]
