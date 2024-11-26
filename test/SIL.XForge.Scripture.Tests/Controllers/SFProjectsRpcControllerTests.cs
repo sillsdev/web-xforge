@@ -24,6 +24,7 @@ public class SFProjectsRpcControllerTests
     private const string Role01 = "role01";
     private const string User01 = "user01";
     private const string User02 = "user02";
+    private const int DaysBeforeExpiration = 365;
     private static readonly string[] Permissions =
     [
         SFProjectRights.JoinRight(SFProjectDomain.Questions, Operation.Create),
@@ -306,6 +307,94 @@ public class SFProjectsRpcControllerTests
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.UpdateRole(Project01, User02, projectRole));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task LinkSharingKey_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.GetLinkSharingKeyAsync(
+                User01,
+                Project01,
+                Role01,
+                ShareLinkType.Recipient,
+                DaysBeforeExpiration
+            )
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.LinkSharingKey(
+            Project01,
+            Role01,
+            ShareLinkType.Recipient,
+            DaysBeforeExpiration
+        );
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task LinkSharingKey_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.GetLinkSharingKeyAsync(
+                User01,
+                Project01,
+                Role01,
+                ShareLinkType.Recipient,
+                DaysBeforeExpiration
+            )
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.LinkSharingKey(
+            Project01,
+            Role01,
+            ShareLinkType.Recipient,
+            DaysBeforeExpiration
+        );
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task LinkSharingKey_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.LinkSharingKey(
+            Project01,
+            Role01,
+            ShareLinkType.Recipient,
+            DaysBeforeExpiration
+        );
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env
+            .SFProjectService.Received()
+            .GetLinkSharingKeyAsync(User01, Project01, Role01, ShareLinkType.Recipient, DaysBeforeExpiration);
+    }
+
+    [Test]
+    public void LinkSharingKey_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.GetLinkSharingKeyAsync(
+                User01,
+                Project01,
+                Role01,
+                ShareLinkType.Recipient,
+                DaysBeforeExpiration
+            )
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(
+            () => env.Controller.LinkSharingKey(Project01, Role01, ShareLinkType.Recipient, DaysBeforeExpiration)
+        );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
