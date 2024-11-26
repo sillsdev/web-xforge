@@ -20,9 +20,7 @@ const meta: Meta = {
     const fontService = new FontService(document);
     const elements = Object.keys(FONT_FACE_DEFINITIONS).map(
       font =>
-        `<span>${font}</span><span style="font-family: '${fontService.getCSSFontName(font)}'">${
-          EXAMPLE_TEXT[font] ?? text
-        }</span>`
+        `<span>${font}</span><span style="font-family: '${fontService.getFontFamilyFromProject({ defaultFont: font })}'">${EXAMPLE_TEXT[font] ?? text}</span>`
     );
     return {
       template: `<div style="display: grid; grid-template-columns: auto 1fr; gap: 4px;">${elements.join('\n')}</div>`

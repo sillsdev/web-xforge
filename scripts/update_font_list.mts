@@ -64,6 +64,43 @@ for (const [family, files] of Object.entries(filesByFamily)) {
   }
 }
 
+// Step 3: Get the Noto fonts
+
+const notoFonts = await fetch(
+  "https://raw.githubusercontent.com/notofonts/notofonts.github.io/refs/heads/main/state.json"
+).then(response => response.json());
+
+const notoFontsByFamily: { [family: string]: string } = {};
+
+for (const [_group, specification] of Object.entries(notoFonts)) {
+  if ((specification as any).families == null) continue;
+
+  for (const [family, familySpecification] of Object.entries((specification as any).families)) {
+    const matchingFiles = (familySpecification as any).files.filter(file =>
+      /^fonts\/\w+\/full\/otf\/\w+-Regular.otf$/.test(file)
+    );
+
+    if (matchingFiles.length === 0) {
+      console.warn(`No matching files found for ${family}`);
+      continue;
+    }
+
+    // sort by file name and use the shortest
+    matchingFiles.sort((a, b) => a.length - b.length);
+
+    if (matchingFiles.length > 1) {
+      console.warn(`Multiple Regular files found for ${family}: ${matchingFiles.join(", ")}`);
+      console.warn(`Using ${matchingFiles[0]}`);
+    }
+
+    const file = matchingFiles[0];
+
+    const url = `https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/${file}`;
+    notoFontsByFamily[family] = url;
+    bestFileByFamily[family] = url;
+  }
+}
+
 const filePath = `${import.meta.dirname}/../src/SIL.XForge.Scripture/fonts.json`;
 
 Deno.writeTextFileSync(filePath, JSON.stringify(bestFileByFamily, null, 2) + "\n");
