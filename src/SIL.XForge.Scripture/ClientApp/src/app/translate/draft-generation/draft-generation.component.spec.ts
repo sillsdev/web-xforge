@@ -226,12 +226,20 @@ describe('DraftGenerationComponent', () => {
       return this.getElementByTestId('download-spinner');
     }
 
+    get draftingRateNotice(): HTMLElement | null {
+      return this.getElementByTestId('drafting-rate-notice');
+    }
+
     get offlineTextElement(): HTMLElement | null {
       return (this.fixture.nativeElement as HTMLElement).querySelector('.offline-text');
     }
 
     get preGenerationStepper(): HTMLElement | null {
       return (this.fixture.nativeElement as HTMLElement).querySelector('app-draft-generation-steps');
+    }
+
+    get warningSourceTargetSame(): HTMLElement | null {
+      return this.getElementByTestId('warning-source-target-same');
     }
 
     getElementByTestId(testId: string): HTMLElement | null {
@@ -299,6 +307,7 @@ describe('DraftGenerationComponent', () => {
             tag: 'xyz'
           },
           translateConfig: {
+            preTranslate: true,
             draftConfig: {
               alternateTrainingSourceEnabled: false
             },
@@ -329,6 +338,68 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(false);
       expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
+      expect(env.component.isPreTranslationApproved).toBe(true);
+      expect(env.warningSourceTargetSame).not.toBeNull();
+    }));
+
+    it('should detect source language same as target language but not display warning message if drafting is not enabled', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'xyz'
+          },
+          translateConfig: {
+            preTranslate: false,
+            draftConfig: {
+              alternateTrainingSourceEnabled: false
+            },
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'xyz'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: projectId,
+          projectId$: of(projectId),
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
+        });
+      });
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(false);
+      expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
+      expect(env.component.isPreTranslationApproved).toBe(false);
+      expect(env.warningSourceTargetSame).toBeNull();
+    }));
+
+    it('should detect project is not setup for drafting and not display drafting rate notice', fakeAsync(() => {
+      let env = new TestEnvironment(() => TestEnvironment.initProject('user01', false));
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isPreTranslationApproved).toBe(false);
+      expect(env.draftingRateNotice).toBeNull();
+    }));
+
+    it('should detect project is setup for drafting and show drafting rate notice', fakeAsync(() => {
+      let env = new TestEnvironment(() => TestEnvironment.initProject('user01', true));
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isPreTranslationApproved).toBe(true);
+      expect(env.draftingRateNotice).not.toBeNull();
     }));
 
     it('should detect alternate training source language when different to alternate source language', fakeAsync(() => {
