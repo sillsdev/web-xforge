@@ -59,46 +59,46 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-  <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
       <xsd:complexType>
         <xsd:choice maxOccurs="unbounded">
           <xsd:element name="metadata">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string"/>
-              <xsd:attribute name="type" type="xsd:string"/>
-              <xsd:attribute name="mimetype" type="xsd:string"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="assembly">
             <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string"/>
-              <xsd:attribute name="name" type="xsd:string"/>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="data">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="resheader">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
             </xsd:complexType>
           </xsd:element>
         </xsd:choice>
@@ -127,7 +127,7 @@
     <value>Flexibel</value>
   </data>
   <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 Stelle {0}eindeutige Fragen{1} zusammen, die zu Deinem spezifischen Kontext passen.</value>
+    <value>2 Utilize advanced Artificial Intelligence to generate preliminary drafts from existing translations. This reduces the workload and speeds up the translation process, giving translators a head start.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>Über Scripture Forge</value>
@@ -136,7 +136,7 @@
     <value>Arbeitet mit Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {2}Paratext-Integration{3} und {0}laufende Synchronisation{1} hält Dein Projekt auf dem neuesten Stand und ermöglicht Rückmeldungen der Benutzer über {4}Paratext Kommentare{3}.</value>
+    <value>1 Collaborative editing allows teams to draft and edit translations together efficiently. No more worrying about reconciling multiple versions—our platform ensures everyone stays on the same page.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Erweiter Deine Reichweite mit der Überprüfung von Bibeltexten</value>
@@ -145,19 +145,19 @@
     <value>Mitarbeit von Benutzern</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 {0}Eingeladene Benutzer{1} können Fragen beantworten, Kommentare zu vorhandenen Antworten hinterlassen und Antworten mit "Gefällt mir" markieren.</value>
+    <value>3 Launch modular Community Checking campaigns to gather extensive feedback quickly. This tool ensures that translations are thorough and accurate by involving community members in the verification process.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>Ein kostenloses Set von Tools, um mehr mit Deinem Paratext-Projekt zu tun, wo auch immer Du bist. </value>
+    <value>An online app for team-based translation, featuring AI help and tools for community review.</value>
   </data>
-  <data name="EngageChecking" xml:space="preserve">
-    <value>Teilnahme an der Überprüfung mit der Zielgruppe</value>
+  <data name="EngageDrafting" xml:space="preserve">
+    <value>Draft Generation</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
-    <value>Zusammenarbeit mit Bibeltexten</value>
+    <value>Collaborative Editing</value>
   </data>
-  <data name="EngageSuggestions" xml:space="preserve">
-    <value>Erhalte Vorschläge während Du tippst</value>
+  <data name="EngageChecking" xml:space="preserve">
+    <value>Community Checking</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Arbeite mit der Zielgruppe zusammen. Arbeite mit Kollegen zusammen.</value>

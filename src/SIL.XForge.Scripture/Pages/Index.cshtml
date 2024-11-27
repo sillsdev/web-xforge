@@ -41,12 +41,12 @@
                         <span>@Localizer["EngageCollaborate"]</span>
                     </div>
                     <div class="engage-feature">
-                        <img src="~/images/community-checking.svg" loading="lazy" alt="Community Checking" />
-                        <span>@Localizer["EngageChecking"]</span>
+                        <img src="~/images/ai-drafting.svg" loading="lazy" alt="Community Checking" />
+                        <span>@Localizer["EngageDrafting"]</span>
                     </div>
                     <div class="engage-feature">
-                        <img src="~/images/translate2.svg" loading="lazy" alt="Translate" />
-                        <span>@Localizer["EngageSuggestions"]</span>
+                        <img src="~/images/community-checking.svg" loading="lazy" alt="Translate" />
+                        <span>@Localizer["EngageChecking"]</span>
                     </div>
                 </div>
             </div>
@@ -75,24 +75,17 @@
                             <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext" />
                         </a>
                         <span>@Localizer["AboutParatext"]</span>
-                        <p>@(Html.Raw(Model.Localizer["AboutParatextDescription", "<span class=\"highlight\">",
-                            "</span>",
-                            "<a href=\"https://paratext.org/\" rel=\"noopener noreferrer\" target=\"_blank\">", "</a>",
-                            "<a href=\"https://paratext.org/features/translation-notes-and-comments/\" " +
-                            "rel=\"noopener noreferrer\" target=\"_blank\">"
-                            ]))</p>
+                        <p>@Localizer["AboutParatextDescription"]</p>
                     </div>
                     <div class="about-feature">
                         <i class="material-icons shuffle-icon">shuffle</i>
                         <span>@Localizer["AboutFlexible"]</span>
-                        <p>@(Html.Raw(Model.Localizer["AboutFlexibleDescription", "<span class=\"highlight\">",
-                            "</span>"]))</p>
+                        <p>@Localizer["AboutFlexibleDescription"]</p>
                     </div>
                     <div class="about-feature">
                         <i class="material-icons group-icon">group</i>
                         <span>@Localizer["AboutUserEngagement"]</span>
-                        <p>@(Html.Raw(Model.Localizer["AboutUserEngagementDescription", "<span class=\"highlight\">",
-                            "</span>"]))</p>
+                        <p>@Localizer["AboutUserEngagementDescription"]</p>
                     </div>
                 </div>
             </div>
