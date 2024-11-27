@@ -370,18 +370,6 @@ class SFProjectMigration21 extends DocMigration {
       const translateConfigShareEnabled = doc.data.translateConfig.shareEnabled;
       if (translateConfigShareEnabled === true) {
         ops.push({
-          p: ['rolePermissions', SFProjectRole.ParatextTranslator],
-          oi: permissions
-        });
-        ops.push({
-          p: ['rolePermissions', SFProjectRole.ParatextConsultant],
-          oi: permissions
-        });
-        ops.push({
-          p: ['rolePermissions', SFProjectRole.ParatextObserver],
-          oi: permissions
-        });
-        ops.push({
           p: ['rolePermissions', SFProjectRole.Commenter],
           oi: permissions
         });
