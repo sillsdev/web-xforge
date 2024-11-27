@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'book_select'">
-  @if (availableBooks.length > 0 && !readonly) {
+  @if (availableBooks.length > 0 && !readonly && !basicMode) {
     <div>
       <mat-checkbox
         class="ot-checkbox"
@@ -44,14 +44,20 @@
         [disabled]="readonly"
         (change)="onChipListChange(book)"
       >
-        <mat-chip-option
-          [value]="book"
-          [selected]="book.selected"
-          [matTooltip]="t('book_progress', { percent: getPercentage(book) | l10nPercent })"
-        >
-          {{ "canon.book_names." + book.bookId | transloco }}
-          <div class="border-fill" [style.width]="book.progressPercentage + '%'"></div>
-        </mat-chip-option>
+        @if (!basicMode) {
+          <mat-chip-option
+            [value]="book"
+            [selected]="book.selected"
+            [matTooltip]="t('book_progress', { percent: getPercentage(book) | l10nPercent })"
+          >
+            {{ "canon.book_names." + book.bookId | transloco }}
+            <div class="border-fill" [style.width]="book.progressPercentage + '%'"></div>
+          </mat-chip-option>
+        } @else {
+          <mat-chip-option [value]="book" [selected]="book.selected">
+            {{ "canon.book_names." + book.bookId | transloco }}
+          </mat-chip-option>
+        }
       </mat-chip-listbox>
     }
   </div>

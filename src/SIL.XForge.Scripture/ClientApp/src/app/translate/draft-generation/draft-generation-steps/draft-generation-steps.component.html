@@ -75,11 +75,13 @@
           </button>
         </div>
       </mat-step>
-      <mat-step [completed]="isTrainingOptional || userSelectedTrainingBooks.length > 0">
+      <mat-step [completed]="isTrainingOptional || userSelectedSourceTrainingBooks.length > 0">
         <ng-template matStepLabel>
           {{ t("choose_books_for_training_label") }}
         </ng-template>
         <h1 class="mat-headline-4">{{ t("choose_books_for_training") }}</h1>
+        <h2>{{ t("translated_books") }}</h2>
+        <p>{{ targetProjectName }}</p>
         <app-book-multi-select
           [availableBooks]="availableTrainingBooks"
           [selectedBooks]="initialSelectedTrainingBooks"
@@ -115,10 +117,30 @@
             </div>
           </app-notice>
         }
-        @if (unusableTranslateTargetBooks.length) {
-          <app-notice>
-            <transloco key="draft_generation_steps.unusable_target_books"></transloco>
-          </app-notice>
+        <h2>{{ t("reference_books") }}</h2>
+        <p>{{ trainingSourceProjectName }}</p>
+        @if (selectableTrainingBooks.length === 0) {
+          <app-notice mode="basic" type="light">{{ t("training_books_will_appear") }}</app-notice>
+        } @else {
+          <app-book-multi-select
+            [availableBooks]="selectableTrainingBooks"
+            [selectedBooks]="userSelectedSourceTrainingBooks"
+            [basicMode]="true"
+            (bookSelect)="onSourceTrainingBookSelect($event)"
+          ></app-book-multi-select>
+        }
+        @if (trainingAdditionalSourceProjectName != null) {
+          <p>{{ trainingAdditionalSourceProjectName }}</p>
+          @if (selectableAdditionalTrainingBooks.length === 0) {
+            <app-notice mode="basic" type="light">{{ t("training_books_will_appear") }}</app-notice>
+          } @else {
+            <app-book-multi-select
+              [availableBooks]="selectableAdditionalTrainingBooks"
+              [selectedBooks]="userSelectedAdditionalSourceTrainingBooks"
+              [basicMode]="true"
+              (bookSelect)="onAdditionalSourceTrainingBookSelect($event)"
+            ></app-book-multi-select>
+          }
         }
         @if (showBookSelectionError) {
           <app-notice type="error">
