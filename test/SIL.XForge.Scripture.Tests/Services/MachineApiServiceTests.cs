@@ -411,6 +411,8 @@ public class MachineApiServiceTests
         const string corpusId2 = "corpusId2";
         const string corpusId3 = "corpusId3";
         const string corpusId4 = "corpusId4";
+        const string parallelCorpusId1 = "parallelCorpusId1";
+        const string parallelCorpusId2 = "parallelCorpusId2";
         const int step = 123;
         env.TranslationEnginesClient.GetBuildAsync(
                 TranslationEngine01,
@@ -436,17 +438,22 @@ public class MachineApiServiceTests
                         [
                             new PretranslateCorpus
                             {
-                                // Previous corpus format
-                                Corpus = new ResourceLink { Id = corpusId1, Url = "https://example.com" },
+                                ParallelCorpus = new ResourceLink
+                                {
+                                    Id = parallelCorpusId1,
+                                    Url = "https://example.com",
+                                },
                             },
                             new PretranslateCorpus
                             {
-                                // Previous corpus format
-                                Corpus = new ResourceLink { Id = corpusId2, Url = "https://example.com" },
+                                ParallelCorpus = new ResourceLink
+                                {
+                                    Id = parallelCorpusId2,
+                                    Url = "https://example.com",
+                                },
                             },
                             new PretranslateCorpus
                             {
-                                // New parallel corpus format
                                 SourceFilters =
                                 [
                                     new ParallelCorpusFilter
@@ -466,12 +473,10 @@ public class MachineApiServiceTests
                         [
                             new TrainingCorpus
                             {
-                                // Previous corpus format
-                                Corpus = new ResourceLink { Id = corpusId3, Url = "https://example.com" },
+                                ParallelCorpus = new ResourceLink { Id = corpusId3, Url = "https://example.com" },
                             },
                             new TrainingCorpus
                             {
-                                // New parallel corpus format
                                 SourceFilters =
                                 [
                                     new ParallelCorpusFilter
@@ -526,6 +531,9 @@ public class MachineApiServiceTests
         Assert.AreEqual(corpusId2, actual.AdditionalInfo.CorporaIds.ElementAt(1));
         Assert.AreEqual(corpusId3, actual.AdditionalInfo.CorporaIds.ElementAt(2));
         Assert.AreEqual(corpusId4, actual.AdditionalInfo.CorporaIds.ElementAt(3));
+        Assert.IsNotNull(actual.AdditionalInfo.ParallelCorporaIds);
+        Assert.AreEqual(parallelCorpusId1, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(0));
+        Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(1));
     }
 
     [Test]
