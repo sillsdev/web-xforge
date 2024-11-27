@@ -30,7 +30,9 @@ if (translationEngine.Type != "nmt")
 }
 
 // Download every file for every legacy corpus
+#pragma warning disable CS0612 // Type or member is obsolete
 foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorporaAsync(translationEngineId))
+#pragma warning restore CS0612 // Type or member is obsolete
 {
     string corpusPath = Path.Combine(translationEnginePath, corpus.Id);
     Directory.CreateDirectory(corpusPath);

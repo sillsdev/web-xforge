@@ -992,17 +992,23 @@ public class MachineApiService(
                     // Use a HashSet to ensure there are no duplicate corpus ids
                     [
                         .. translationBuild
-                            .Pretranslate?.Select(t => t.Corpus?.Id)
-                            .Where(id => !string.IsNullOrEmpty(id)) ?? [],
-                        .. translationBuild
                             .Pretranslate?.SelectMany(t => t.SourceFilters ?? [])
                             .Select(f => f.Corpus.Id) ?? [],
-                        .. translationBuild.TrainOn?.Select(t => t.Corpus?.Id).Where(id => !string.IsNullOrEmpty(id))
-                            ?? [],
                         .. translationBuild.TrainOn?.SelectMany(t => t.SourceFilters ?? []).Select(f => f.Corpus.Id)
                             ?? [],
                         .. translationBuild.TrainOn?.SelectMany(t => t.TargetFilters ?? []).Select(f => f.Corpus.Id)
                             ?? [],
+                    ]
+                ),
+                ParallelCorporaIds = new HashSet<string>(
+                    // Use a HashSet to ensure there are no duplicate parallel corpus ids
+                    [
+                        .. translationBuild
+                            .Pretranslate?.Select(t => t.ParallelCorpus?.Id)
+                            .Where(id => !string.IsNullOrEmpty(id)) ?? [],
+                        .. translationBuild
+                            .TrainOn?.Select(t => t.ParallelCorpus?.Id)
+                            .Where(id => !string.IsNullOrEmpty(id)) ?? [],
                     ]
                 ),
                 DateFinished = translationBuild.DateFinished,
@@ -1030,7 +1036,11 @@ public class MachineApiService(
     /// <exception cref="NotSupportedException">
     /// Method not allowed or not supported for the specified translation engine.
     /// </exception>
-    /// <remarks>If this method returns, it is expected that the DTO will be null.</remarks>
+    /// <remarks>
+    /// If this method returns, it is expected that the DTO will be null.
+    /// The following status codes may be thrown by Serval, and are not handled by this method:
+    ///  - 499: Operation Cancelled
+    /// </remarks>
     private static void ProcessServalApiException(ServalApiException e)
     {
         switch (e)
