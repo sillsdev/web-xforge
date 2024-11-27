@@ -538,9 +538,6 @@ describe('SFProjectMigrations', () => {
       projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       const permissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)];
       expect(projectDoc.data.rolePermissions).toEqual({
-        pt_translator: permissions,
-        pt_consultant: permissions,
-        pt_observer: permissions,
         sf_commenter: permissions,
         sf_observer: permissions
       });
@@ -565,9 +562,6 @@ describe('SFProjectMigrations', () => {
       projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       const permissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)];
       expect(projectDoc.data.rolePermissions).toEqual({
-        pt_translator: permissions,
-        pt_consultant: permissions,
-        pt_observer: permissions,
         sf_community_checker: permissions,
         sf_commenter: permissions,
         sf_observer: permissions
