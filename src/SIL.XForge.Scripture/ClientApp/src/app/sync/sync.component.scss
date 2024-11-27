@@ -20,6 +20,9 @@
 .sync-header {
   display: flex;
   justify-content: center;
+  &.pad-status {
+    padding-bottom: 2rem;
+  }
 }
 
 .card-content {
@@ -28,10 +31,6 @@
 
 app-sync-progress {
   width: 100%;
-}
-
-mat-progress-bar {
-  padding-top: 2rem;
 }
 
 #btn-log-in {
