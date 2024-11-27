@@ -9,6 +9,7 @@ import {
 import { ComponentPortal } from '@angular/cdk/portal';
 import { Injectable, NgZone } from '@angular/core';
 import { Subject, asyncScheduler, observeOn, take, takeUntil } from 'rxjs';
+import { LynxEditor } from './lynx-editor';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
 
@@ -31,11 +32,7 @@ export class LynxInsightOverlayService {
     private ngZone: NgZone
   ) {}
 
-  open(
-    origin: HTMLElement,
-    insights: LynxInsight[],
-    scrollContainerEl: HTMLElement
-  ): LynxInsightOverlayRef | undefined {
+  open(origin: HTMLElement, insights: LynxInsight[], editor: LynxEditor): LynxInsightOverlayRef | undefined {
     if (insights.length === 0) {
       return undefined;
     }
@@ -43,12 +40,13 @@ export class LynxInsightOverlayService {
     // Close any existing overlay
     this.close();
 
-    this.registerScrollable(scrollContainerEl);
+    this.registerScrollable(editor.getScrollingContainer());
 
     const overlayRef: LynxInsightOverlayRef = this.createOverlayRef(origin);
     const componentRef = overlayRef.ref.attach(new ComponentPortal(LynxInsightOverlayComponent));
 
     componentRef.instance.insights = insights;
+    componentRef.instance.editor = editor;
     componentRef.instance.insightDismiss.pipe(take(1)).subscribe(() => this.close());
     componentRef.instance.insightHover
       .pipe(takeUntil(overlayRef.closed$))
@@ -120,7 +118,7 @@ export class LynxInsightOverlayService {
    * This allows the overlay to reposition itself when the scroll container is scrolled.
    * @param scrollContainer The scrolling element that contains the insight.
    */
-  private registerScrollable(scrollContainer: HTMLElement): void {
+  private registerScrollable(scrollContainer: Element): void {
     if (this.scrollableContainer?.getElementRef().nativeElement === scrollContainer) {
       return;
     }
@@ -130,7 +128,7 @@ export class LynxInsightOverlayService {
     }
 
     this.scrollableContainer = new CdkScrollable(
-      { nativeElement: scrollContainer },
+      { nativeElement: scrollContainer as HTMLElement },
       this.scrollDispatcher,
       this.ngZone
     );

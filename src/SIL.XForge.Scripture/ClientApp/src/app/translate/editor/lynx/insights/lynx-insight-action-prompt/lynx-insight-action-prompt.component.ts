@@ -1,8 +1,9 @@
 import { Component, DestroyRef, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import Quill, { BoundsStatic } from 'quill';
-import { EMPTY, combineLatest, debounceTime, filter, fromEvent, iif, map, startWith, switchMap, tap } from 'rxjs';
+import { BoundsStatic } from 'quill';
+import { combineLatest, debounceTime, EMPTY, filter, fromEvent, iif, map, startWith, switchMap, tap } from 'rxjs';
 import { EditorReadyService } from '../base-services/editor-ready.service';
+import { LynxableEditor, LynxEditor } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { getMostNestedInsight } from '../lynx-insight-util';
@@ -13,13 +14,17 @@ import { getMostNestedInsight } from '../lynx-insight-util';
   styleUrl: './lynx-insight-action-prompt.component.scss'
 })
 export class LynxInsightActionPromptComponent implements OnInit {
-  @Input() editor?: Quill;
+  @Input() set editor(value: LynxableEditor) {
+    this.lynxEditor = new LynxEditor(value);
+  }
 
   activeInsights: LynxInsight[] = [];
 
   // Adjust to move prompt up so less text is hidden
   private yOffsetAdjustment = -9; // TODO: Derive from 'line-height'?
   private xOffsetAdjustment = -4;
+
+  private lynxEditor?: LynxEditor;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -30,12 +35,12 @@ export class LynxInsightActionPromptComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.editor == null) {
+    if (this.lynxEditor == null) {
       return;
     }
 
     combineLatest([
-      this.editorReadyService.listenEditorReadyState(this.editor).pipe(
+      this.editorReadyService.listenEditorReadyState(this.lynxEditor.editor).pipe(
         filter(loaded => loaded),
         switchMap(() => this.editorInsightState.displayState$),
         map(displayState =>
@@ -47,8 +52,8 @@ export class LynxInsightActionPromptComponent implements OnInit {
       ),
       fromEvent(window, 'resize').pipe(debounceTime(200), startWith(undefined)),
       iif(
-        () => this.editor?.scrollingContainer != null,
-        fromEvent(this.editor.scrollingContainer, 'scroll').pipe(startWith(undefined)),
+        () => this.lynxEditor?.getScrollingContainer() != null,
+        fromEvent(this.lynxEditor.getScrollingContainer(), 'scroll').pipe(startWith(undefined)),
         EMPTY
       )
     ])
@@ -79,12 +84,12 @@ export class LynxInsightActionPromptComponent implements OnInit {
   }
 
   private getPromptOffset(): BoundsStatic | undefined {
-    if (this.editor != null) {
+    if (this.lynxEditor != null) {
       const insight: LynxInsight | undefined = getMostNestedInsight(this.activeInsights);
 
       if (insight?.range != null) {
         // Get bounds of last character in range to ensure bounds isn't for multiple lines
-        const bounds = this.editor.getBounds(insight.range.index + insight.range.length - 1, 1);
+        const bounds = this.lynxEditor.getBounds(insight.range.index + insight.range.length - 1, 1);
         return bounds;
       }
     }
