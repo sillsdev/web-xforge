@@ -15,9 +15,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="8.0.7" />
     <PackageReference Include="MongoDB.Driver" Version="2.27.0" />
-    <PackageReference Include="MailKit" Version="4.7.0" />
+    <PackageReference Include="MailKit" Version="4.8.0" />
     <PackageReference Include="idunno.Authentication.Basic" Version="2.3.1" />
     <PackageReference Include="AbrarJahin.DiffMatchPatch" Version="0.1.0" />
     <PackageReference Include="SIL.Core" Version="13.0.1" />
+  </ItemGroup>
+  <!-- Override vulnerable versions of dependencies -->
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
 </Project>
