@@ -1,11 +1,11 @@
 import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from 'lodash-es';
-import Quill from 'quill';
 import { filter, merge, switchMap, tap } from 'rxjs';
 import { pairwise } from 'rxjs/operators';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
+import { LynxableEditor } from '../lynx-editor';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
@@ -15,7 +15,7 @@ import { LynxInsightStateService } from '../lynx-insight-state.service';
   styleUrl: './lynx-insight-editor-objects.component.scss'
 })
 export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
-  @Input() editor?: Quill;
+  @Input() editor?: LynxableEditor;
 
   constructor(
     private readonly destroyRef: DestroyRef,

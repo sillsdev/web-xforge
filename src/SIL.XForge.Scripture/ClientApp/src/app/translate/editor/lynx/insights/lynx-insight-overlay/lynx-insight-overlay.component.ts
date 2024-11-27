@@ -3,6 +3,7 @@ import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output } fro
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { take } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
+import { LynxEditor } from '../lynx-editor';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightAction, LynxInsightActionService } from '../lynx-insight-action.service';
 import { LynxInsightCodeService } from '../lynx-insight-code.service';
@@ -35,6 +36,8 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
       this.focusInsight(this.insightsFlattened[0]);
     }
   }
+
+  @Input() editor: LynxEditor;
 
   /** Emits when insight is dismissed by user. */
   @Output() insightDismiss = new EventEmitter<LynxInsight>();
@@ -99,7 +102,7 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
   }
 
   selectAction(action: LynxInsightAction): void {
-    this.actionService.performAction(action);
+    this.actionService.performAction(action, this.editor);
 
     if (this.focusedInsight == null) {
       throw new Error('No focused insight');
@@ -129,7 +132,7 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
     }
 
     this.actionService
-      .getActions(insight.id, this.i18n.localeCode)
+      .getActions(insight, this.i18n.localeCode)
       .pipe(take(1))
       .subscribe(actions => {
         const menuActions: LynxInsightAction[] = [];

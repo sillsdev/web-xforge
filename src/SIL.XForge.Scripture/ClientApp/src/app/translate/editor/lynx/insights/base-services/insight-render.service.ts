@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
+import { LynxableEditor } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 
 @Injectable()
 export abstract class InsightRenderService {
-  // TODO: use generics?
-  abstract render(insights: LynxInsight[], editor: any | undefined): void;
-  abstract removeAllInsightFormatting(editor: any | undefined): void;
-  abstract renderActionOverlay(insights: LynxInsight[], editor: any | undefined, actionOverlayActive: boolean): void;
-  abstract renderCursorActiveState(insightIds: string[], editor: any | undefined): void;
+  abstract render(insights: LynxInsight[], editor: LynxableEditor): void;
+  abstract removeAllInsightFormatting(editor: LynxableEditor): void;
+  abstract renderActionOverlay(insights: LynxInsight[], editor: LynxableEditor, actionOverlayActive: boolean): void;
+  abstract renderCursorActiveState(insightIds: string[], editor: LynxableEditor): void;
 }
