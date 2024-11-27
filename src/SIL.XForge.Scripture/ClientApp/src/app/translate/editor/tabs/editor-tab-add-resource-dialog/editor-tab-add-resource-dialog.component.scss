@@ -21,6 +21,18 @@ mat-dialog-actions {
 ::ng-deep .editor-tab-add-resource-dialog {
   // For positioning the progress bar within the dialog
   position: relative !important;
+
+  app-sync-progress {
+    div {
+      & .sync-header,
+      .sync-status {
+        display: none !important;
+      }
+    }
+    mat-progress-bar {
+      padding-top: 0 !important;
+    }
+  }
 }
 
 .loading-message {
