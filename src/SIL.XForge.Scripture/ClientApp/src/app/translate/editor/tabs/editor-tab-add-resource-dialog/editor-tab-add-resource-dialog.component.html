@@ -1,9 +1,3 @@
-@if (isLoading && !isSyncActive) {
-  <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-} @else if (isSyncActive) {
-  <app-sync-progress [projectDoc]="selectedProjectDoc" (inProgress)="onSyncProgress($event)"></app-sync-progress>
-}
-
 <ng-container *transloco="let t; read: 'editor_add_tab_resource_dialog'">
   <h1 mat-dialog-title>{{ t("dialog_title") }}</h1>
   <mat-dialog-content>
@@ -24,11 +18,10 @@
         (projectSelect)="onProjectSelected($event)"
       ></app-project-select>
     </div>
-
-    @if (isSyncActive) {
-      <div class="loading-message">
-        {{ t("loading") }} {{ selectedProjectDoc?.data?.shortName }}{{ animatedEllipsis$ | async }}
-      </div>
+    @if (isLoading && !isSyncActive) {
+      <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+    } @else if (isSyncActive) {
+      <app-sync-progress [projectDoc]="selectedProjectDoc" (inProgress)="onSyncProgress($event)"></app-sync-progress>
     }
 
     @if (projectLoadingFailed && resourceLoadingFailed) {

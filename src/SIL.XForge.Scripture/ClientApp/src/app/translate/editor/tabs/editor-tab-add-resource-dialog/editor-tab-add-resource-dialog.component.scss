@@ -4,13 +4,16 @@ mat-dialog-content {
   gap: 1em;
 }
 
-mat-progress-bar,
-app-sync-progress {
+mat-progress-bar {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   border-radius: 4px 4px 0 0;
+}
+
+app-sync-progress {
+  align-items: baseline;
 }
 
 mat-dialog-actions {
