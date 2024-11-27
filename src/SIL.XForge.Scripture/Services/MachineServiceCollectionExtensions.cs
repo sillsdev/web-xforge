@@ -38,22 +38,23 @@ public static class MachineServiceCollectionExtensions
                     client.Parameters = new Parameters { { "audience", servalOptions.Audience } };
                 }
             );
-        services.AddClientCredentialsHttpClient(
-            MachineApi.HttpClientName,
-            MachineApi.TokenClientName,
-            configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
-        )
-        .ConfigurePrimaryHttpMessageHandler(() =>
-        {
-            var handler = new HttpClientHandler();
-            if (env.IsDevelopment() || env.IsEnvironment("Testing"))
+        services
+            .AddClientCredentialsHttpClient(
+                MachineApi.HttpClientName,
+                MachineApi.TokenClientName,
+                configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
+            )
+            .ConfigurePrimaryHttpMessageHandler(() =>
             {
-                handler.ServerCertificateCustomValidationCallback =
-                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-            }
+                var handler = new HttpClientHandler();
+                if (env.IsDevelopment() || env.IsEnvironment("Testing"))
+                {
+                    handler.ServerCertificateCustomValidationCallback =
+                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                }
 
-            return handler;
-        });
+                return handler;
+            });
         services
             .AddHttpClient(MachineApi.HttpClientName)
             .SetHandlerLifetime(TimeSpan.FromMinutes(5))
