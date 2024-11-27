@@ -4,6 +4,7 @@ import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/
 import { DeltaOperation } from 'rich-text';
 import { take, takeUntil } from 'rxjs';
 import { InsightRenderService } from '../base-services/insight-render.service';
+import { LynxEditor } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { getLeadingInsight, getMostNestedInsight } from '../lynx-insight-util';
@@ -95,7 +96,11 @@ export class QuillInsightRenderService extends InsightRenderService {
         const overlayAnchor: HTMLElement | null = this.getInsightElements(editor, overlayAnchorInsight.id)[0];
 
         if (overlayAnchor != null) {
-          const ref: LynxInsightOverlayRef | undefined = this.overlayService.open(overlayAnchor, insights, editor.root);
+          const ref: LynxInsightOverlayRef | undefined = this.overlayService.open(
+            overlayAnchor,
+            insights,
+            new LynxEditor(editor)
+          );
 
           // Clear editor attention when overlay is closed
           if (ref != null) {
