@@ -89,7 +89,7 @@
   "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
   "jest.debugCodeLens.showWhenTestStateIn": ["fail"],
   "jest.rootPath": "src/RealtimeServer",
-  "liveSassCompile.settings.includeItems": ["src/SIL.XForge.Scripture/wwwroot/scss/**.*"],
+  "liveSassCompile.settings.includeItems": ["/src/SIL.XForge.Scripture/wwwroot/scss/**.scss"],
   "liveSassCompile.settings.formats": [
     {
       "format": "compressed",

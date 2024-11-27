@@ -114,10 +114,10 @@ section.panel {
 
     &.dark {
       &:before {
-        background-color: $purpleDark;
+        background-color: $neutralDarkGray;
       }
       &:after {
-        border-color: transparent transparent transparent $purpleDark;
+        border-color: transparent transparent transparent $neutralDarkGray;
       }
     }
   }
