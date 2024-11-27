@@ -1,7 +1,11 @@
 @if (isLoading && !isSyncActive) {
   <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
 } @else if (isSyncActive) {
-  <app-sync-progress [projectDoc]="selectedProjectDoc" (inProgress)="onSyncProgress($event)"></app-sync-progress>
+  <app-sync-progress
+    [projectDoc]="selectedProjectDoc"
+    [showSyncStatus]="false"
+    (inProgress)="onSyncProgress($event)"
+  ></app-sync-progress>
 }
 
 <ng-container *transloco="let t; read: 'editor_add_tab_resource_dialog'">
