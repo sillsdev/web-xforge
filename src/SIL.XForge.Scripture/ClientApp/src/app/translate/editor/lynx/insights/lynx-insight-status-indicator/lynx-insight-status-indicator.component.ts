@@ -1,5 +1,4 @@
-import { Component, HostListener, Input } from '@angular/core';
-import Quill from 'quill';
+import { Component, HostListener } from '@angular/core';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { Observable, map } from 'rxjs';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
@@ -15,8 +14,6 @@ interface InsightCount {
   styleUrl: './lynx-insight-status-indicator.component.scss'
 })
 export class LynxInsightStatusIndicatorComponent {
-  @Input() editor?: Quill;
-
   private insightTypeOrder: LynxInsightType[] = ['info', 'warning', 'error'];
   readonly insightCountsByType$: Observable<InsightCount[]> = this.editorInsightState.filteredInsightCountsByType$.pipe(
     map(counts =>
