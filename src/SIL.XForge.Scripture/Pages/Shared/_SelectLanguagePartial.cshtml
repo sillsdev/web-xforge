@@ -5,13 +5,13 @@
 @using Microsoft.Extensions.Options
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer;
 @inject IOptions<RequestLocalizationOptions> LocOptions
-@inject IWebHostEnvironment env
+@inject IWebHostEnvironment Env
 
 @{
     var requestCulture = Context.Features.Get<IRequestCultureFeature>();
     var cultureItems = LocOptions.Value.SupportedUICultures?
-    .Where(c => SharedResource.Cultures[c.IetfLanguageTag].Production || !env.IsStaging() &&
-    !env.IsProduction())
+    .Where(c => SharedResource.Cultures[c.IetfLanguageTag].Production || !Env.IsStaging() &&
+    !Env.IsProduction())
     .Select(c => new SelectListItem
             {
                 Value = c.Name,
