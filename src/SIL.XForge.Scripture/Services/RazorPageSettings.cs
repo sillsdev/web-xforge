@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using SIL.XForge.Configuration;
@@ -11,23 +10,27 @@ namespace SIL.XForge.Scripture.Services;
 /// <summary>
 /// Various settings and values to be used in the Razor pages.
 /// </summary>
-/// <param name="configuration">The dotnet website configuration.</param>
+/// <param name="authOptions">The authentication options from the website configuration.</param>
+/// <param name="bugsnagOptions">The Bugsnag options from the website configuration.</param>
 /// <param name="httpContextAccessor">The HTTP context accessor.</param>
 /// <param name="siteOptions">The site options from the website configuration.</param>
 public class RazorPageSettings(
-    IConfiguration configuration,
+    IOptions<AuthOptions> authOptions,
+    IOptions<BugsnagOptions> bugsnagOptions,
     IHttpContextAccessor httpContextAccessor,
     IOptions<SiteOptions> siteOptions
 ) : IRazorPageSettings
 {
+    public PublicAuthOptions GetAuthOptions() => authOptions.Value;
+
     public string GetBugsnagConfig() =>
         JsonConvert.SerializeObject(
             new Dictionary<string, object>
             {
-                { "apiKey", configuration.GetValue<string>("Bugsnag:ApiKey") },
+                { "apiKey", bugsnagOptions.Value.ApiKey },
                 { "appVersion", GetProductVersion() },
-                { "notifyReleaseStages", configuration.GetSection("Bugsnag:NotifyReleaseStages").Get<string[]>() },
-                { "releaseStage", configuration.GetValue<string>("Bugsnag:ReleaseStage") },
+                { "notifyReleaseStages", bugsnagOptions.Value.NotifyReleaseStages },
+                { "releaseStage", bugsnagOptions.Value.ReleaseStage },
             },
             Formatting.Indented
         );
