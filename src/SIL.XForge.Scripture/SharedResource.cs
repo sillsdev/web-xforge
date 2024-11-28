@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using SIL.XForge.Models;
 
@@ -45,17 +46,7 @@ public class SharedResource
     /// <summary>
     /// Map of culture identifier (language tag) to interface language object (local name displayed in the chooser)
     /// </summary>
-    public static Dictionary<string, InterfaceLanguage> Cultures = SharedResource.getCultures();
-
-    static Dictionary<string, InterfaceLanguage> getCultures()
-    {
-        // TODO consider making file path relative to current file rather than CWD
-        var cultureData = JsonConvert.DeserializeObject<List<InterfaceLanguage>>(File.ReadAllText("locales.json"));
-        var cultures = new Dictionary<string, InterfaceLanguage> { };
-        foreach (var culture in cultureData)
-        {
-            cultures.Add(culture.CanonicalTag, culture);
-        }
-        return cultures;
-    }
+    public static readonly Dictionary<string, InterfaceLanguage> Cultures = JsonConvert
+        .DeserializeObject<List<InterfaceLanguage>>(File.ReadAllText("locales.json"))
+        .ToDictionary(culture => culture.CanonicalTag);
 }

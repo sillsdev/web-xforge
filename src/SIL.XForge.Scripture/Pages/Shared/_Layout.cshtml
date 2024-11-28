@@ -1,10 +1,7 @@
 @using System.Globalization
-@using Microsoft.AspNetCore.Mvc.TagHelpers
-@using Microsoft.Extensions.Options
-@using SIL.XForge.Configuration
-@using SIL.XForge.Scripture.ViewComponents
+@using SIL.XForge.Scripture.Services
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
-@inject IOptions<SiteOptions> SiteOptions
+@inject IRazorPageSettings Settings
 
 
 <!DOCTYPE html>
@@ -27,7 +24,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     @await RenderSectionAsync("meta", required: false)
-    <title>@SiteOptions.Value.Name</title>
+    <title>@Settings.GetSiteName()</title>
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300&display=swap" />
@@ -60,7 +57,7 @@
                 <div class="mdl-cell mdl-cell--12-col flex justify-content-space-between">
                     <div class="flex align-items-center">
                         <a asp-page="Index">
-                            <img src="~/assets/images/sf_logo_with_name_black.svg" alt="Scripture Forge">
+                            <img src="~/assets/images/@(Settings.UseScriptureForgeBranding() ? "sf_logo_with_name_black" : "sf_logo_with_space").svg" alt="@Settings.GetSiteName()">
                         </a>
                     </div>
                     @await Html.PartialAsync("_SelectLanguagePartial")
@@ -71,7 +68,7 @@
     <div id="render-body">
         @RenderBody()
     </div>
-    <vc:footer></vc:footer>
+    @(Settings.UseScriptureForgeBranding() ? await Html.PartialAsync("_Footer") : null)
     @await RenderSectionAsync("scripts", required: false)
 </body>
 
