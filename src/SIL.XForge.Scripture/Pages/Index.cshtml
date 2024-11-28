@@ -1,6 +1,8 @@
 @page
+@inject IRazorPageSettings Settings
 @inject IViewLocalizer Localizer
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
+@using SIL.XForge.Scripture.Services
 @model IndexModel
 @section scripts {
 <script src="https://cdn.auth0.com/js/auth0-spa-js/1.12/auth0-spa-js.production.js"></script>
@@ -37,15 +39,15 @@
                 <div class="title align-center">@Localizer["EngageTitle"]</div>
                 <div class="engage-features">
                     <div class="engage-feature">
-                        <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext" />
+                        <img src="~/images/logo-paratext.svg" loading="lazy" alt="" />
                         <span>@Localizer["EngageCollaborate"]</span>
                     </div>
                     <div class="engage-feature">
-                        <img src="~/images/ai-drafting.svg" loading="lazy" alt="Community Checking" />
+                        <img src="~/images/ai-drafting.svg" loading="lazy" alt="" />
                         <span>@Localizer["EngageDrafting"]</span>
                     </div>
                     <div class="engage-feature">
-                        <img src="~/images/community-checking.svg" loading="lazy" alt="Translate" />
+                        <img src="~/images/community-checking.svg" loading="lazy" alt="" />
                         <span>@Localizer["EngageChecking"]</span>
                     </div>
                 </div>
@@ -56,60 +58,60 @@
 <section id="about" class="panel">
     <div class="container">
         <div class="mdl-grid">
-            <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
-                <div class="section-title">
-                    <h2>@Localizer["AboutHeader"]</h2>
-                    <div class="title">@Localizer["AboutTitle"]</div>
-                </div>
-            </div>
-            <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet intro">
-                <p>@Localizer["AboutEngaging"]</p>
-                <p>@Localizer["AboutCheckingTool"]</p>
-            </div>
-        </div>
-        <div class="mdl-grid">
             <div class="mdl-cell mdl-cell--12-col">
                 <div class="about-features">
                     <div class="about-feature">
-                        <a href="https://paratext.org/" rel="noopener noreferrer" target="_blank">
-                            <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext" />
-                        </a>
-                        <span>@Localizer["AboutParatext"]</span>
-                        <p>@Localizer["AboutParatextDescription"]</p>
+                        <p>@Localizer["AboutCollaborate"]</p>
                     </div>
                     <div class="about-feature">
-                        <i class="material-icons shuffle-icon">shuffle</i>
-                        <span>@Localizer["AboutFlexible"]</span>
-                        <p>@Localizer["AboutFlexibleDescription"]</p>
+                        <p>@Localizer["AboutDrafting"]</p>
                     </div>
                     <div class="about-feature">
-                        <i class="material-icons group-icon">group</i>
-                        <span>@Localizer["AboutUserEngagement"]</span>
-                        <p>@Localizer["AboutUserEngagementDescription"]</p>
+                        <p>@Localizer["AboutChecking"]</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</section>
-<section class="quote">
-    <div class="quote-container">
-        <img src="/images/quoter.jpg" loading="lazy" alt="Quoter" />
-        <div class="quote-text">
-            <i class="material-icons">format_quote</i>
-            <p>
-                @Localizer["QuoteQuotation1"]<br />
-                <br />
-                @Localizer["QuoteQuotation2"]<br />
-                <br />
-                @Localizer["QuoteQuotation3"]<br />
-                <br />
-                <span class="quoter-name">@Localizer["QuoteQuoterName"]</span>
-                <span class="quoter-role">@Localizer["QuoteQuoterRole"]</span>
-            </p>
+    @if (Settings.UseScriptureForgeBranding())
+    {
+        <div class="container">
+            <div class="mdl-grid">
+                <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
+                    <div class="section-title">
+                        <h2>@Localizer["AboutHeader"]</h2>
+                        <div class="title">@Localizer["AboutTitle"]</div>
+                    </div>
+                </div>
+                <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet intro">
+                    <p>@Localizer["AboutEngaging"]</p>
+                    <p>@Localizer["AboutCheckingTool"]</p>
+                </div>
+            </div>
         </div>
-    </div>
+    }
 </section>
+@if (Settings.UseScriptureForgeBranding())
+{
+    <section class="quote">
+        <div class="quote-container">
+            <img src="/images/quoter.jpg" loading="lazy" alt="Quoter"/>
+            <div class="quote-text">
+                <i class="material-icons">format_quote</i>
+                <p>
+                    @Localizer["QuoteQuotation1"]<br/>
+                    <br/>
+                    @Localizer["QuoteQuotation2"]<br/>
+                    <br/>
+                    @Localizer["QuoteQuotation3"]<br/>
+                    <br/>
+                    <span class="quoter-name">@Localizer["QuoteQuoterName"]</span>
+                    <span class="quoter-role">@Localizer["QuoteQuoterRole"]</span>
+                </p>
+            </div>
+        </div>
+    </section>
+}
 <section class="statement">
     <div class="container">
         <div class="mdl-grid">
@@ -118,10 +120,13 @@
                     @Localizer["Statement"]
                 </div>
                 <div class="statement-buttons flex justify-content-center">
-                    <a href="https://help.scriptureforge.org"
-                        class="mdl-button mdl-button--raised mdl-button--colored button-lg">@SharedLocalizer[SharedResource.Keys.LearnMore]</a>
+                    @if (Settings.UseScriptureForgeBranding())
+                    {
+                        <a href="https://help.scriptureforge.org"
+                           class="mdl-button mdl-button--raised mdl-button--colored button-lg">@SharedLocalizer[SharedResource.Keys.LearnMore]</a>
+                    }
                     <a class="mdl-button mdl-button--raised mdl-button--accent button-lg"
-                        href="/login?sign-up=true">@SharedLocalizer[SharedResource.Keys.SignUp]</a>
+                       href="/login?sign-up=true">@SharedLocalizer[SharedResource.Keys.SignUp]</a>
                 </div>
             </div>
         </div>
