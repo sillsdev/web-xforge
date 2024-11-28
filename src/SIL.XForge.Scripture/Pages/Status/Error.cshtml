@@ -4,7 +4,7 @@
 @if (Model.RedirectToHome)
 {
     @section meta {
-<meta http-equiv="refresh" content='10;url=@ViewData["Origin"]' />
+    <meta http-equiv="refresh" content='10;url=@Model.SiteOrigin' />
     }
 }
 

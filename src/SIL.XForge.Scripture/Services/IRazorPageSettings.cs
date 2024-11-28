@@ -1,3 +1,5 @@
+using SIL.XForge.Configuration;
+
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary>
@@ -5,6 +7,14 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public interface IRazorPageSettings
 {
+    /// <summary>
+    /// Gets the authentication options.
+    /// </summary>
+    /// <returns>
+    /// The authentication options that may be rendered in the client.
+    /// </returns>
+    PublicAuthOptions GetAuthOptions();
+
     /// <summary>
     /// Gets the Bugsnag configuration as a JSON string.
     /// </summary>
