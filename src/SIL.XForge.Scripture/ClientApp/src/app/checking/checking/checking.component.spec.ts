@@ -447,7 +447,7 @@ describe('CheckingComponent', () => {
         projectChapterRoute: 1,
         questionScope: 'chapter'
       });
-      env.selectQuestion(1);
+      env.selectQuestion(2);
       const question = env.component.answersPanel!.questionDoc!.data!;
       expect(question.isArchived).toBe(false);
       expect(env.component.questionDocs.length).toEqual(14);
@@ -459,6 +459,7 @@ describe('CheckingComponent', () => {
       expect(question.isArchived).toBe(true);
       expect(env.component.questionDocs.length).toEqual(13);
       expect(env.component.questionVerseRefs.length).toEqual(13);
+      expect(env.component.questionsList.activeQuestionDoc.id).toBe('project01:q3Id');
     }));
 
     it('opens a dialog when edit question is clicked', fakeAsync(() => {

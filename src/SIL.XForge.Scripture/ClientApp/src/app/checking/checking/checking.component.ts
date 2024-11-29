@@ -777,6 +777,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         break;
       case 'archive':
         this._scriptureAudioPlayer?.pause();
+        this.activateQuestion(this.nextQuestion);
         break;
       case 'like':
         if (answerAction.answer != null) {
