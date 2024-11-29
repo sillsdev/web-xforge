@@ -144,6 +144,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       : this.legacyDraftDurationHours;
   }
 
+  get draftEnabled(): boolean {
+    return this.isBackTranslationMode || this.isPreTranslationApproved;
+  }
+
   get issueEmail(): string {
     return environment.issueEmail;
   }
