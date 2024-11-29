@@ -607,7 +607,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     for (const verseRef of chapterFeaturedVerseRefs) {
       let featuredVerseSegments: string[] =
         featureName === 'question' ? this.getVerseSegmentsNoHeadings(verseRef) : this.getVerseSegments(verseRef);
-      featuredVerseSegments = this.filterBlankNewlineSegment(featuredVerseSegments);
+      featuredVerseSegments = this.filterSegments(featuredVerseSegments);
       if (featuredVerseSegments.length === 0) {
         continue;
       }
@@ -743,7 +743,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   toggleVerseSelection(verseRef: VerseRef): boolean {
     if (this.editor == null) return false;
-    const verseSegments: string[] = this.filterBlankNewlineSegment(this.getCompatibleSegments(verseRef));
+    const verseSegments: string[] = this.filterSegments(this.getCompatibleSegments(verseRef));
     const verseRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let selectionValue: true | null = true;
     if (verseRange != null) {
@@ -796,15 +796,17 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
     if (segmentRefs == null && this._segment != null) {
+      // baseVerse will be null for extra verse content (i.e. mt_1, s_1)
       const baseVerse: VerseRef | undefined = getVerseRefFromSegmentRef(this._id.bookNum, this._segment.ref);
-      segmentRefs = this.getVerseSegments(baseVerse);
+      segmentRefs = baseVerse == null ? [this._segment.ref] : this.getVerseSegments(baseVerse);
+      // segmentRefs = this.getVerseSegments(baseVerse);
     }
     if (segmentRefs == null) {
       this.highlightMarkerVisible = false;
       return;
     }
 
-    segmentRefs = this.filterBlankNewlineSegment(segmentRefs);
+    segmentRefs = this.filterSegments(segmentRefs, false);
     // this changes the underlying HTML, which can mess up some Quill events, so defer this call
     Promise.resolve(segmentRefs).then(refs => {
       this.viewModel.highlight(refs);
@@ -1460,16 +1462,22 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this._segment.update(text, segmentRange);
   }
 
-  /** Filter the final segment if it is blank and a new line segment (i.e. verse_2_4/p_1) */
-  private filterBlankNewlineSegment(segmentRefs: string[]): string[] {
+  /** Filter the final segments if blank and on a new line segment (i.e. verse_2_4/p_1)
+   * Optionally filter extra verse segments (i.e. s_1)
+   */
+  private filterSegments(segmentRefs: string[], includeExtraVerseSegments = true): string[] {
     // do nothing if there is one or less segments
     if (segmentRefs.length <= 1) return segmentRefs;
     const filteredSegments: string[] = [...segmentRefs];
-    const lastSegment: string = filteredSegments[segmentRefs.length - 1];
-    const newLineSegment: boolean = lastSegment.includes('/p');
-    if (newLineSegment && this.isSegmentBlank(lastSegment)) {
-      // remove the last segment if it is blank and is on a new line
+    let lastSegment: string = filteredSegments[filteredSegments.length - 1];
+    while (filteredSegments.length > 1) {
+      const isBlankNewlineSegment: boolean = /\/[pq]+/.test(lastSegment) && this.isSegmentBlank(lastSegment);
+      if (!isBlankNewlineSegment && (includeExtraVerseSegments || VERSE_REGEX.test(lastSegment))) {
+        break;
+      }
+      // remove the last segment if it is blank and is on a new line and not part of the verse
       filteredSegments.pop();
+      lastSegment = filteredSegments[filteredSegments.length - 1];
     }
     return filteredSegments;
   }
