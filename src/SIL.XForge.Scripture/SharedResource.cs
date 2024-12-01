@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
@@ -12,6 +13,7 @@ namespace SIL.XForge.Scripture;
 /// Every string in the Keys class here should also be present in the Resources\SharedResource.en.resx
 /// with the english translation as the value.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "The static methods in this class access the file system")]
 public class SharedResource
 {
     public static class Keys

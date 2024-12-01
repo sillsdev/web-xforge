@@ -20,3 +20,5 @@ coverage:
     patch:
       default:
         informational: true
+ignore:
+  - "src/SIL.XForge.Scripture/**/*.cshtml"
