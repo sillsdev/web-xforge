@@ -5,10 +5,10 @@ namespace SIL.XForge.Configuration;
 /// </summary>
 public class AuthOptions : PublicAuthOptions
 {
-    public string BackendClientId { get; set; }
-    public string BackendClientSecret { get; set; }
-    public string HealthCheckApiKey { get; set; }
-    public string ManagementAudience { get; set; }
-    public string WebhookUsername { get; set; }
-    public string WebhookPassword { get; set; }
+    public string BackendClientId { get; init; } = string.Empty;
+    public string BackendClientSecret { get; init; } = string.Empty;
+    public string HealthCheckApiKey { get; init; } = string.Empty;
+    public string ManagementAudience { get; init; } = string.Empty;
+    public string WebhookUsername { get; init; } = string.Empty;
+    public string WebhookPassword { get; init; } = string.Empty;
 }

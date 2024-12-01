@@ -5,8 +5,8 @@ namespace SIL.XForge.Configuration;
 /// </summary>
 public class PublicAuthOptions
 {
-    public string Audience { get; set; }
-    public string Domain { get; set; }
-    public string FrontendClientId { get; set; }
-    public string Scope { get; set; }
+    public string Audience { get; init; } = string.Empty;
+    public string Domain { get; init; } = string.Empty;
+    public string FrontendClientId { get; init; } = string.Empty;
+    public string Scope { get; init; } = string.Empty;
 }
