@@ -12,7 +12,7 @@
         domain: '@(Settings.GetAuthOptions().Domain)',
         redirect_uri: window.location.origin + '/callback/auth0',
         scope: 'openid profile email @(Settings.GetAuthOptions().Scope)',
-        audience: '@(Settings.GetAuthOptions().Audience)',
+        audience: atob('@Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Settings.GetAuthOptions().Audience))'),
         cacheLocation: 'localstorage',
         useRefreshTokens: true
     });
