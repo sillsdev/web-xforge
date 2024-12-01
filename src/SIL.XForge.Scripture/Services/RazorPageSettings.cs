@@ -43,5 +43,5 @@ public class RazorPageSettings(
         HostName.Contains("scriptureforge.org", StringComparison.OrdinalIgnoreCase)
         || HostName.Contains("localhost", StringComparison.OrdinalIgnoreCase);
 
-    private string HostName { get; } = httpContextAccessor.HttpContext?.Request.Host.Host ?? string.Empty;
+    private string HostName => httpContextAccessor.HttpContext?.Request.Host.Host ?? string.Empty;
 }

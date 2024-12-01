@@ -2,7 +2,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
 
-namespace SIL.XForge.Scripture.Pages;
+namespace SIL.XForge.Scripture.Pages.Status;
 
 public class ErrorModel(IStringLocalizerFactory localizerFactory) : PageModel
 {
