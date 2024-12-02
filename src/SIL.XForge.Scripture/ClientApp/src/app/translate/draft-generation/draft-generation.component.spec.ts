@@ -1893,6 +1893,10 @@ describe('DraftGenerationComponent', () => {
 
   fdescribe('currentPage', () => {
     it('should navigate to pre-generate steps', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile()
+      } as SFProjectProfileDoc;
+
       let env = new TestEnvironment(() => {
         mockUserService.getCurrentUser.and.returnValue(
           new Promise<UserDoc>(() => ({
