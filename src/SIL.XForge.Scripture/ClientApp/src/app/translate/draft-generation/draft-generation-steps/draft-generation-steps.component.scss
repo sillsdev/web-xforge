@@ -144,18 +144,10 @@ app-notice {
 }
 
 .cell-padding-block {
-  padding-block: 16px;
+  margin-block: 16px;
 }
 
 .confirm-books {
-  display: flex;
-  flex-direction: row;
-  row-gap: 8px;
-  flex-wrap: wrap;
-}
-
-.confirm-book {
   padding-block: 4px;
   font-size: 16px;
-  white-space: pre;
 }

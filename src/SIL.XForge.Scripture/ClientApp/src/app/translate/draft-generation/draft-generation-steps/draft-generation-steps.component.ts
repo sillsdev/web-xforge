@@ -262,6 +262,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     );
   }
 
+  selectedTranslateBooks(): string {
+    return this.i18n.enumerateList(this.userSelectedTranslateBooks.map(b => this.i18n.localizeBook(b.number)));
+  }
+
   selectedTrainingBooksCollapsed(): TrainingGroup[] {
     const continguousGroups: TrainingGroup[] = [];
     let currentGroup: TrainingBook[] = [];
@@ -353,10 +357,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         fastTraining: this.fastTraining
       });
     }
-  }
-
-  selectedTranslateBooks(): string {
-    return this.i18n.enumerateList(this.userSelectedTranslateBooks.map(b => this.i18n.localizeBook(b.number)));
   }
 
   /**
