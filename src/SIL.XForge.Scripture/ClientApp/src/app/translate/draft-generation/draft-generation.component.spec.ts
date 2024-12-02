@@ -1937,6 +1937,10 @@ describe('DraftGenerationComponent', () => {
 
   describe('currentPage', () => {
     it('should navigate to pre-generate steps', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile()
+      } as SFProjectProfileDoc;
+
       let env = new TestEnvironment(() => {
         mockUserService.getCurrentUser.and.returnValue(
           new Promise<UserDoc>(() => ({
@@ -1947,7 +1951,7 @@ describe('DraftGenerationComponent', () => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
-          projectDoc: instance(mock(SFProjectProfileDoc)),
+          projectDoc: projectDoc,
           projectDoc$: of(null),
           changes$: of(null)
         });
