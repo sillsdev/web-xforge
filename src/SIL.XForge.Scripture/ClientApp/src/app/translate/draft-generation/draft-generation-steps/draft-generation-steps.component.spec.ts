@@ -44,6 +44,7 @@ describe('DraftGenerationStepsComponent', () => {
       translateConfig: {
         source: {
           projectRef: 'test',
+          shortName: 'TEST',
           writingSystem: { tag: 'eng' }
         }
       }
@@ -235,7 +236,7 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
 
       clickConfirmLanguages(fixture);
-      var test = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
       test[2].nativeElement.click(); //click the last step
       fixture.detectChanges();
 
@@ -292,7 +293,7 @@ describe('DraftGenerationStepsComponent', () => {
       spyOn(component, 'updateTrainingBooks');
 
       clickConfirmLanguages(fixture);
-      var test = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
       test[2].nativeElement.click(); //click the next step
       fixture.detectChanges();
 
@@ -328,7 +329,7 @@ describe('DraftGenerationStepsComponent', () => {
 
       fixture.detectChanges();
       clickConfirmLanguages(fixture);
-      var test = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
       test[3].nativeElement.click(); //click the next step
       fixture.detectChanges();
 
