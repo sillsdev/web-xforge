@@ -1,11 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-// import { I18nStoryModule } from '../../../../xforge-common/i18n-story.module';
-// import { UICommonModule } from '../../../../xforge-common/ui-common.module';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { instance, mock, when } from 'ts-mockito';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ConfirmSourcesComponent } from './confirm-sources.component';
 

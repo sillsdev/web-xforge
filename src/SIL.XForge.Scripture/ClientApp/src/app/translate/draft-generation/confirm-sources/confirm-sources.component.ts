@@ -4,8 +4,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { I18nService } from '../../../../xforge-common/i18n.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 
 @Component({
@@ -63,9 +63,9 @@ export class ConfirmSourcesComponent {
   }
 
   displayNameForProjectsLanguages(projects: (TranslateSource | SFProjectProfile)[]): string {
-    return Array.from(new Set(projects.map(p => p.writingSystem.tag)))
-      .map(tag => this.i18nService.getLanguageDisplayName(tag) ?? tag)
-      .join(', ');
+    const uniqueTags = Array.from(new Set(projects.map(p => p.writingSystem.tag)));
+    const displayNames = uniqueTags.map(tag => this.i18nService.getLanguageDisplayName(tag) ?? tag);
+    return this.i18nService.enumerateList(displayNames);
   }
 
   get referenceLanguage(): string {
@@ -81,6 +81,6 @@ export class ConfirmSourcesComponent {
   }
 
   get draftingSourceShortNames(): string {
-    return this.draftingSources.map(p => p.shortName).join(', ');
+    return this.i18nService.enumerateList(this.draftingSources.map(p => p.shortName));
   }
 }
