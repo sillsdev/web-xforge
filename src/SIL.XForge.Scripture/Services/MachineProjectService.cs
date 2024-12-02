@@ -141,10 +141,16 @@ public class MachineProjectService(
                 // Update the target writing system tag
                 if (string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag))
                 {
-                    string targetLanguageTag = paratextService.GetLanguageId(userSecret, projectDoc.Data.ParatextId);
+                    (string targetLanguageRegion, string targetLanguageScript, string targetLanguageTag) =
+                        paratextService.GetLanguageId(userSecret, projectDoc.Data.ParatextId);
                     if (!string.IsNullOrEmpty(targetLanguageTag))
                     {
-                        await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.WritingSystem.Tag, targetLanguageTag));
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            op.Set(p => p.WritingSystem.Region, targetLanguageRegion);
+                            op.Set(p => p.WritingSystem.Script, targetLanguageScript);
+                            op.Set(p => p.WritingSystem.Tag, targetLanguageTag);
+                        });
                     }
                 }
 
@@ -163,7 +169,7 @@ public class MachineProjectService(
                 // Update the source writing system tag
                 if (string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag))
                 {
-                    string sourceLanguageTag = paratextService.GetLanguageId(
+                    (string _, string _, string sourceLanguageTag) = paratextService.GetLanguageId(
                         userSecret,
                         projectDoc.Data.TranslateConfig.Source.ParatextId
                     );

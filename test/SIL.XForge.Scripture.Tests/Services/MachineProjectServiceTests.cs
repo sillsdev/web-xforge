@@ -2436,7 +2436,9 @@ public class MachineProjectServiceTests
             }
 
             ParatextService = Substitute.For<IParatextService>();
-            ParatextService.GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns("en");
+            ParatextService
+                .GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns((string.Empty, string.Empty, "en"));
             ParatextService
                 .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
                 .Returns(new ParatextSettings { IsRightToLeft = true, LanguageTag = LanguageTag });

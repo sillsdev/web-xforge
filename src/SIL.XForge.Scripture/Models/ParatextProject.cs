@@ -5,28 +5,63 @@ namespace SIL.XForge.Scripture.Models;
 /// <summary>Description of a project on the Paratext server.</summary>
 public class ParatextProject
 {
-    /// <summary> Id of PT project on Paratext servers. </summary>
-    public string ParatextId { get; set; }
-    public string Name { get; set; }
-    public string ShortName { get; set; }
-    public string LanguageTag { get; set; }
-    public bool? IsRightToLeft { get; set; }
+    /// <summary>
+    /// The identifier of the PT project on Paratext servers.
+    /// </summary>
+    public string ParatextId { get; init; } = string.Empty;
 
-    /// <summary> Id of corresponding SF project. </summary>
-    public string? ProjectId { get; set; }
+    /// <summary>
+    /// The full name of the project.
+    /// </summary>
+    public string Name { get; init; } = string.Empty;
+
+    /// <summary>
+    /// The short name of the project.
+    /// </summary>
+    public string ShortName { get; init; } = string.Empty;
+
+    /// <summary>
+    /// The writing system region from the language identifier.
+    /// </summary>
+    public string? LanguageRegion { get; init; }
+
+    /// <summary>
+    /// The writing system script from the language identifier.
+    /// </summary>
+    public string? LanguageScript { get; init; }
+
+    /// <summary>
+    /// The writing system tag from the language identifier.
+    /// </summary>
+    public string LanguageTag { get; init; } = string.Empty;
+
+    /// <summary>
+    /// If <c>true</c>, the project's script is right to left.
+    /// </summary>
+    public bool? IsRightToLeft { get; init; }
+
+    /// <summary>
+    /// The identifier of corresponding SF project.
+    /// </summary>
+    public string? ProjectId { get; init; }
 
     /// <summary>
     /// If the requesting user has access to the PT project, but not yet to a corresponding SF project, and has
-    /// permission to connect a SF project to the PT project. The SF project may or may not yet already exist.
+    /// permission to connect an SF project to the PT project. The SF project may or may not yet already exist.
     /// </summary>
-    public bool IsConnectable { get; set; }
+    public bool IsConnectable { get; init; }
 
     /// <summary>
     /// If the requesting user has access to both the PT project and the corresponding SF project.
     /// </summary>
-    public bool IsConnected { get; set; }
+    public bool IsConnected { get; init; }
 
-    /// <summary> Descriptive string of object's properties, for debugging. </summary>
+    /// <summary>
+    /// A descriptive string of object's properties, for debugging.
+    /// </summary>
+    /// <returns>
+    /// The object's properties
+    /// </returns>
     public override string ToString()
     {
         StringBuilder message = new StringBuilder();
@@ -36,10 +71,13 @@ public class ParatextProject
                 ParatextId,
                 Name,
                 ShortName,
+                LanguageRegion,
+                LanguageScript,
                 LanguageTag,
                 ProjectId,
                 IsConnectable.ToString(),
-                IsConnected.ToString()
+                IsConnected.ToString(),
+                IsRightToLeft?.ToString(),
             }
         )
         {

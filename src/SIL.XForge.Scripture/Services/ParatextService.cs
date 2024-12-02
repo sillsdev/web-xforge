@@ -973,6 +973,13 @@ public class ParatextService : DisposableBase, IParatextService
             copyrightNotice = null;
         }
 
+        // Get the writing system details
+        string languageTag = scrText.Settings.LanguageID?.Id;
+        string? languageRegion = null;
+        string? languageScript = null;
+        bool? isRightToLeft = null;
+        UpdateWritingSystem(languageTag, ref languageRegion, ref languageScript, ref isRightToLeft);
+
         return new ParatextSettings
         {
             FullName = scrText.FullName,
@@ -981,7 +988,9 @@ public class ParatextService : DisposableBase, IParatextService
             DefaultFontSize = scrText.Settings.DefaultFontSize,
             DefaultFont = scrText.Settings.DefaultFont,
             NoteTags = noteTags,
-            LanguageTag = scrText.Settings.LanguageID?.Id,
+            LanguageRegion = languageRegion,
+            LanguageScript = languageScript,
+            LanguageTag = languageTag,
             ProjectType = scrText.Settings.TranslationInfo.Type.ToString(),
             BaseProjectParatextId = scrText.Settings.TranslationInfo.BaseProjectGuid?.Id,
             BaseProjectShortName = scrText.Settings.TranslationInfo.BaseProjectName,
@@ -1846,10 +1855,16 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="ptProjectId">The Project identifier</param>
     /// <returns>The Language identifier.</returns>
     /// <remarks>This is used to get the WritingSystem Tag for Back Translations.</remarks>
-    public string GetLanguageId(UserSecret userSecret, string ptProjectId)
+    public (string region, string script, string tag) GetLanguageId(UserSecret userSecret, string ptProjectId)
     {
         using ScrText scrText = GetScrText(userSecret, ptProjectId);
-        return scrText.Language.Id;
+
+        string? languageRegion = null;
+        string? languageScript = null;
+        string? languageTag = scrText.Language.Id;
+        bool? isRightToLeft = null;
+        UpdateWritingSystem(languageTag, ref languageRegion, ref languageScript, ref isRightToLeft);
+        return (languageRegion, languageScript, languageTag);
     }
 
     public void ClearParatextDataCaches(UserSecret userSecret, string paratextId)
@@ -2263,12 +2278,14 @@ public class ParatextService : DisposableBase, IParatextService
             // If this happens, default to using the project's short name
             var projectMD = projectsMetadata.SingleOrDefault(pmd => pmd.ProjectGuid == remotePtProject.SendReceiveId);
             string fullOrShortName = projectMD == null ? remotePtProject.ScrTextName : projectMD.FullName;
-            string languageTag = correspondingSfProject?.WritingSystem.Tag ?? projectMD?.LanguageId.Code;
+
+            // Get the writing system details
+            string languageTag =
+                correspondingSfProject?.WritingSystem.Tag ?? projectMD?.LanguageId.Code ?? string.Empty;
+            string? languageRegion = correspondingSfProject?.WritingSystem.Region;
+            string? languageScript = correspondingSfProject?.WritingSystem.Script;
             bool? isRightToLeft = null;
-            if (!string.IsNullOrWhiteSpace(languageTag))
-            {
-                isRightToLeft = new WritingSystemDefinition(languageTag).RightToLeftScript;
-            }
+            UpdateWritingSystem(languageTag, ref languageRegion, ref languageScript, ref isRightToLeft);
 
             paratextProjects.Add(
                 new ParatextProject
@@ -2276,6 +2293,8 @@ public class ParatextService : DisposableBase, IParatextService
                     ParatextId = remotePtProject.SendReceiveId.Id,
                     Name = fullOrShortName,
                     ShortName = remotePtProject.ScrTextName,
+                    LanguageRegion = languageRegion,
+                    LanguageScript = languageScript,
                     LanguageTag = languageTag,
                     IsRightToLeft = isRightToLeft,
                     ProjectId = correspondingSfProject?.Id,
@@ -2786,24 +2805,38 @@ public class ParatextService : DisposableBase, IParatextService
         IReadOnlyDictionary<string, int> resourceRevisions = SFInstallableDblResource.GetInstalledResourceRevisions();
         return resources
             .OrderBy(r => r.FullName)
-            .Select(r => new ParatextResource
+            .Select(r =>
             {
-                AvailableRevision = r.DBLRevision,
-                CreatedTimestamp = r.CreatedTimestamp,
-                InstallableResource = includeInstallableResource ? r : null,
-                InstalledRevision = resourceRevisions.ContainsKey(r.DBLEntryUid.Id)
-                    ? resourceRevisions[r.DBLEntryUid.Id]
-                    : 0,
-                IsConnectable = false,
-                IsConnected = false,
-                IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid.Id),
-                LanguageTag = r.LanguageID.Code,
-                ManifestChecksum = r.ManifestChecksum,
-                Name = r.FullName,
-                ParatextId = r.DBLEntryUid.Id,
-                PermissionsChecksum = r.PermissionsChecksum,
-                ProjectId = null,
-                ShortName = r.Name,
+                // Get the writing system details
+                string languageTag = r.LanguageID.Code;
+                string? languageRegion = null;
+                string? languageScript = null;
+                bool? isRightToLeft = null;
+                UpdateWritingSystem(languageTag, ref languageRegion, ref languageScript, ref isRightToLeft);
+
+                // Return the resource details
+                return new ParatextResource
+                {
+                    AvailableRevision = r.DBLRevision,
+                    CreatedTimestamp = r.CreatedTimestamp,
+                    InstallableResource = includeInstallableResource ? r : null,
+                    InstalledRevision = resourceRevisions.TryGetValue(r.DBLEntryUid.Id, out int revision)
+                        ? revision
+                        : 0,
+                    IsConnectable = false,
+                    IsConnected = false,
+                    IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid.Id),
+                    IsRightToLeft = isRightToLeft,
+                    LanguageRegion = languageRegion,
+                    LanguageScript = languageScript,
+                    LanguageTag = languageTag,
+                    ManifestChecksum = r.ManifestChecksum,
+                    Name = r.FullName,
+                    ParatextId = r.DBLEntryUid.Id,
+                    PermissionsChecksum = r.PermissionsChecksum,
+                    ProjectId = null,
+                    ShortName = r.Name,
+                };
             })
             .ToArray();
     }
@@ -3364,6 +3397,29 @@ public class ParatextService : DisposableBase, IParatextService
             foreach ((int index, string syncuser) in paratextUserByNoteIndex)
                 op.Set(t => t.Notes[index].SyncUserRef, syncuser);
         });
+    }
+
+    /// <summary>
+    /// Updates the writing system values, based on the <seealso cref="WritingSystemDefinition"/> in <c>libpalaso</c>.
+    /// </summary>
+    /// <param name="languageTag">The language tag.</param>
+    /// <param name="languageRegion">A reference to the language region.</param>
+    /// <param name="languageScript">A reference to the language script.</param>
+    /// <param name="isRightToLeft">A reference to an optional boolean specifying if the writing system is right to left.</param>
+    private static void UpdateWritingSystem(
+        string? languageTag,
+        ref string? languageRegion,
+        ref string? languageScript,
+        ref bool? isRightToLeft
+    )
+    {
+        if (!string.IsNullOrWhiteSpace(languageTag))
+        {
+            var writingSystem = new WritingSystemDefinition(languageTag);
+            languageRegion = writingSystem.Region?.Code;
+            languageScript = writingSystem.Script?.Code;
+            isRightToLeft = writingSystem.RightToLeftScript;
+        }
     }
 
     // Make sure there are no asynchronous methods called after this until the progress is completed.

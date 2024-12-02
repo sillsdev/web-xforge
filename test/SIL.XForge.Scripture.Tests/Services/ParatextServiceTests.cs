@@ -86,12 +86,14 @@ public class ParatextServiceTests
             ParatextId = env.PTProjectIds[env.Project01].Id,
             Name = "Full Name " + env.Project01,
             ShortName = "P01",
+            LanguageScript = "Latn",
             LanguageTag = "en",
             ProjectId = "sf_id_" + env.Project01,
             // Not connectable since sf project exists and sf user is on sf project.
             IsConnectable = false,
             // Is connected since is in SF database and user is on project
-            IsConnected = true
+            IsConnected = true,
+            IsRightToLeft = false,
         };
         Assert.That(
             repos.Single(project => project.ParatextId == env.PTProjectIds[env.Project01].Id).ToString(),
@@ -5193,8 +5195,10 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         // SUT
-        string languageId = env.Service.GetLanguageId(userSecret, ptProjectId);
-        Assert.AreEqual(LanguageId.English.Id, languageId);
+        (string region, string script, string tag) = env.Service.GetLanguageId(userSecret, ptProjectId);
+        Assert.IsNull(region);
+        Assert.AreEqual("Latn", script);
+        Assert.AreEqual(LanguageId.English.Id, tag);
     }
 
     [Test]
