@@ -387,4 +387,59 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.initialSelectedTranslateBooks).toEqual([2, 3]);
     });
   });
+
+  describe('confirm step', () => {
+    const mockTargetProjectDoc = {
+      data: createTestProjectProfile({
+        // Include an 'extra material' book (100) that should be excluded
+        texts: [
+          { bookNum: 2 },
+          { bookNum: 1 },
+          { bookNum: 3 },
+          { bookNum: 4 },
+          { bookNum: 5 },
+          { bookNum: 6 },
+          { bookNum: 7 },
+          { bookNum: 100 }
+        ],
+        writingSystem: { tag: 'eng' },
+        translateConfig: {
+          source: { projectRef: 'test', writingSystem: { tag: 'eng' } },
+          draftConfig: {
+            lastSelectedTrainingBooks: [1, 6, 3, 4, 5],
+            lastSelectedTrainingDataFiles: [],
+            lastSelectedTranslationBooks: [1, 2, 7]
+          }
+        }
+      })
+    } as SFProjectProfileDoc;
+
+    beforeEach(fakeAsync(() => {
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc)
+      );
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
+      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataQuery.docs).thenReturn([]);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
+
+    it('should localize and concatenate the books to translate', () => {
+      expect(component.selectedTranslateBooks()).toEqual('Genesis and Exodus');
+    });
+
+    it('should localize, group, and collapse the books to use in training', () => {
+      const trainingGroups = component.selectedTrainingBooksCollapsed();
+      expect(trainingGroups.length).toEqual(1);
+      expect(trainingGroups[0].ranges.length).toEqual(2);
+      expect(trainingGroups[0].ranges[0]).toEqual('Genesis');
+      expect(trainingGroups[0].ranges[1]).toEqual('Leviticus - Deuteronomy');
+    });
+  });
 });
