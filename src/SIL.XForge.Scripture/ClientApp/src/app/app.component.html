@@ -72,7 +72,7 @@
           </a>
           <mat-divider></mat-divider>
           <div mat-menu-item disabled="true" (click)="versionNumberClicked()" id="version-number">
-            {{ t("product_version", { version: version + this.featureFlags.versionSuffix }) }}
+            {{ t("product_version", { version: version + featureFlags.versionSuffix }) }}
           </div>
           @if (featureFlags.showDeveloperTools.enabled) {
             <mat-divider></mat-divider>

@@ -1,4 +1,4 @@
-@if (this.canShowAdditionalInfo) {
+@if (canShowAdditionalInfo) {
   <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId }}</div>
   <div><strong>Corpora Ids:</strong> {{ draftJob?.additionalInfo?.corporaIds?.join(", ") }}</div>
   <div><strong>Date Finished:</strong> {{ draftJob?.additionalInfo?.dateFinished?.toLocaleString() }}</div>

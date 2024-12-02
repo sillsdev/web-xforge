@@ -18,7 +18,7 @@
     </p>
 
     @if (data.stack) {
-      <a (click)="this.showDetails = !this.showDetails">{{ showDetails ? t("hide_details") : t("show_details") }}</a>
+      <a (click)="showDetails = !showDetails">{{ showDetails ? t("hide_details") : t("show_details") }}</a>
       @if (showDetails) {
         <pre dir="ltr">{{ data.stack }}</pre>
       }
