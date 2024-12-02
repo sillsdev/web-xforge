@@ -1,5 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Inject,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule, translate } from '@ngneat/transloco';
@@ -7,9 +18,7 @@ import { Observable, Subscription, interval, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
@@ -43,12 +52,7 @@ export interface AudioRecorderDialogResult {
   imports: [UICommonModule, CommonModule, SharedModule, TranslocoModule]
 })
 /* eslint-disable brace-style */
-export class AudioRecorderDialogComponent
-  extends SubscriptionDisposable
-  implements ControlValueAccessor, OnInit, OnDestroy
-{
-  destroyed = false;
-
+export class AudioRecorderDialogComponent implements ControlValueAccessor, OnInit, OnDestroy {
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Output() status = new EventEmitter<AudioAttachment>();
 
@@ -64,6 +68,7 @@ export class AudioRecorderDialogComponent
   countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
 
+  private destroyed = false;
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
   private recordedChunks: Blob[] = [];
@@ -82,15 +87,16 @@ export class AudioRecorderDialogComponent
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly dialogService: DialogService,
-    private i18n: I18nService
+    private readonly destroyRef: DestroyRef
   ) {
-    super();
     this.showCountdown = data?.countdown ?? false;
     if (data?.audio != null) {
       this.audio = data.audio;
     }
     if (this.showCountdown) {
-      this.startCountdown();
+      this.navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then(this.startCountdown.bind(this), this.errorCallback.bind(this));
     }
   }
 
@@ -104,7 +110,6 @@ export class AudioRecorderDialogComponent
 
   ngOnDestroy(): void {
     this.destroyed = true;
-    super.ngOnDestroy();
     if (this.isRecording) {
       this.stopRecording();
     }
@@ -120,11 +125,11 @@ export class AudioRecorderDialogComponent
   }
 
   registerOnChange(fn: ((value: AudioAttachment) => void) | undefined): void {
-    this.subscribe(this.status, fn);
+    this.status.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fn);
   }
 
   registerOnTouched(fn: ((value: AudioAttachment) => void) | undefined): void {
-    this.subscribe(this._onTouched, fn);
+    this._onTouched.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fn);
   }
 
   processAudio(): void {
@@ -155,7 +160,7 @@ export class AudioRecorderDialogComponent
     this.dialogRef.close({ audio: this.audio });
   }
 
-  startCountdown(): void {
+  startCountdown(mediaStream: MediaStream): void {
     // Start a countdown timer from 3 seconds to zero and then start recording
     const seconds = 3;
     const countdown$ = timer(0, 1000).pipe(
@@ -169,18 +174,22 @@ export class AudioRecorderDialogComponent
       },
       complete: () => {
         this.showCountdown = false;
-        if (!this.destroyed) this.startRecording();
+        if (!this.destroyed) this.startRecording(mediaStream);
       }
     });
   }
 
-  startRecording(): void {
-    const mediaConstraints: MediaStreamConstraints = { audio: true };
+  startRecording(mediaStream?: MediaStream): void {
     if (this.mediaDevicesUnsupported) {
       this.audio = { status: 'denied' };
       this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, { data: BrowserIssue.AudioRecording });
       return;
     }
+    if (mediaStream != null) {
+      this.successCallback(mediaStream);
+      return;
+    }
+    const mediaConstraints: MediaStreamConstraints = { audio: true };
     this.navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
@@ -260,7 +269,7 @@ export class AudioRecorderDialogComponent
     };
 
     const refreshRate: Observable<number> = interval(150);
-    this.refreshWaveformSub = this.subscribe(refreshRate, _ => drawWaveForm());
+    this.refreshWaveformSub = refreshRate.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(_ => drawWaveForm());
   }
 
   private initCanvasContext(): void {
