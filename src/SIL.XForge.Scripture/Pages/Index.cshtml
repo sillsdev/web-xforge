@@ -41,40 +41,26 @@
                     <div class="engage-feature">
                         <img src="~/images/logo-paratext.svg" loading="lazy" alt="" />
                         <span>@Localizer["EngageCollaborate"]</span>
+                        <p>@Localizer["AboutCollaborate"]</p>
                     </div>
                     <div class="engage-feature">
                         <img src="~/images/ai-drafting.svg" loading="lazy" alt="" />
                         <span>@Localizer["EngageDrafting"]</span>
+                        <p>@Localizer["AboutDrafting"]</p>
                     </div>
                     <div class="engage-feature">
                         <img src="~/images/community-checking.svg" loading="lazy" alt="" />
                         <span>@Localizer["EngageChecking"]</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-<section id="about" class="panel">
-    <div class="container">
-        <div class="mdl-grid">
-            <div class="mdl-cell mdl-cell--12-col">
-                <div class="about-features">
-                    <div class="about-feature">
-                        <p>@Localizer["AboutCollaborate"]</p>
-                    </div>
-                    <div class="about-feature">
-                        <p>@Localizer["AboutDrafting"]</p>
-                    </div>
-                    <div class="about-feature">
                         <p>@Localizer["AboutChecking"]</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    @if (Settings.UseScriptureForgeBranding())
-    {
+</section>
+@if (Settings.UseScriptureForgeBranding())
+{
+    <section id="about" class="panel">
         <div class="container">
             <div class="mdl-grid">
                 <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
@@ -89,10 +75,7 @@
                 </div>
             </div>
         </div>
-    }
-</section>
-@if (Settings.UseScriptureForgeBranding())
-{
+    </section>
     <section class="quote">
         <div class="quote-container">
             <img src="/images/quoter.jpg" loading="lazy" alt="Quoter"/>
