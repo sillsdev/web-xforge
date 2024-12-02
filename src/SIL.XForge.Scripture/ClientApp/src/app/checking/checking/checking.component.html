@@ -200,7 +200,7 @@
       </div>
       @if (projectDoc) {
         <div id="question-nav">
-          @if (!this.isQuestionListPermanent) {
+          @if (!isQuestionListPermanent) {
             <button mat-button type="button" (click)="setQuestionsOverlayVisibility(true)">
               {{ t("view_questions") }}
             </button>

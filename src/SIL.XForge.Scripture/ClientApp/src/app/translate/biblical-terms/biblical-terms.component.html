@@ -67,9 +67,9 @@
               <mat-icon>settings</mat-icon>
             </button>
             <mat-menu #menu="matMenu">
-              <button mat-menu-item (click)="this.transliterateBiblicalTerms = !this.transliterateBiblicalTerms">
+              <button mat-menu-item (click)="transliterateBiblicalTerms = !transliterateBiblicalTerms">
                 <mat-icon class="material-icons-outlined">{{
-                  this.transliterateBiblicalTerms ? "check_box" : "check_box_outline_blank"
+                  transliterateBiblicalTerms ? "check_box" : "check_box_outline_blank"
                 }}</mat-icon>
                 <span>{{ t("transliterate_terms") }}</span>
               </button>
@@ -83,7 +83,7 @@
       <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell" [attr.colspan]="columnsToDisplay.length">
-          @if (this.isLoaded) {
+          @if (isLoaded) {
             <span class="not-found">{{ t("not_found") }}</span>
           }
         </td>
