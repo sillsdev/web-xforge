@@ -4,8 +4,9 @@ using System.Text;
 using NUnit.Framework;
 using Paratext.Data.ProjectComments;
 using Paratext.Data.Users;
+using SIL.XForge.Services;
 
-namespace SIL.XForge.Services;
+namespace SIL.XForge.Scripture.Services;
 
 [TestFixture]
 public class FileSystemServiceTests
@@ -15,7 +16,7 @@ public class FileSystemServiceTests
     {
         var env = new TestEnvironment();
         using MemoryStream stream = new MemoryStream();
-        CommentList data = new CommentList();
+        CommentList data = [];
 
         // SUT
         env.Service.WriteXmlFile(stream, data);
@@ -37,13 +38,13 @@ public class FileSystemServiceTests
     {
         var env = new TestEnvironment();
         using MemoryStream stream = new MemoryStream();
-        CommentList data = new CommentList();
+        CommentList data = [];
         string xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n";
         xml += "<CommentList />";
 
         // Get the XML as a byte array with BOM
         Encoding encoding = new UTF8Encoding(true);
-        byte[] expected = encoding.GetPreamble().Concat(encoding.GetBytes(xml)).ToArray();
+        byte[] expected = [.. encoding.GetPreamble().Concat(encoding.GetBytes(xml))];
 
         // SUT
         env.Service.WriteXmlFile(stream, data);
@@ -72,9 +73,9 @@ public class FileSystemServiceTests
         const bool hideInTextWindow = false;
         const string contents = "Plain Text";
 
-        // Setup the Comment List
-        CommentList data = new CommentList
-        {
+        // Set up the Comment List
+        CommentList data =
+        [
             new Comment(new DummyParatextUser(user))
             {
                 Thread = thread,
@@ -89,7 +90,7 @@ public class FileSystemServiceTests
                 ReplyToUser = string.Empty,
                 HideInTextWindow = false,
             },
-        };
+        ];
         data.First().AddTextToContent(contents, false);
 
         // Setup the XML data for comparison
@@ -115,7 +116,7 @@ public class FileSystemServiceTests
 
         // Get the XML as a byte array with BOM
         Encoding encoding = new UTF8Encoding(true);
-        byte[] expected = encoding.GetPreamble().Concat(encoding.GetBytes(xml)).ToArray();
+        byte[] expected = [.. encoding.GetPreamble().Concat(encoding.GetBytes(xml))];
 
         // SUT
         env.Service.WriteXmlFile(stream, data);
@@ -125,8 +126,6 @@ public class FileSystemServiceTests
 
     private class TestEnvironment
     {
-        public TestEnvironment() => Service = new FileSystemService();
-
-        public IFileSystemService Service { get; }
+        public IFileSystemService Service { get; } = new FileSystemService();
     }
 }

@@ -24,7 +24,6 @@
     <PackageReference Include="NSubstitute" Version="5.1.0" />
     <PackageReference Include="NUnit" Version="4.1.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
-    <PackageReference Include="ParatextData" Version="9.5.0.5" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\SIL.XForge\SIL.XForge.csproj" />
