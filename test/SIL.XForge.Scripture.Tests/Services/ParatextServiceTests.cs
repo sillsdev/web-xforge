@@ -86,12 +86,13 @@ public class ParatextServiceTests
             ParatextId = env.PTProjectIds[env.Project01].Id,
             Name = "Full Name " + env.Project01,
             ShortName = "P01",
+            LanguageScript = "Latn",
             LanguageTag = "en",
             ProjectId = "sf_id_" + env.Project01,
             // Not connectable since sf project exists and sf user is on sf project.
             IsConnectable = false,
             // Is connected since is in SF database and user is on project
-            IsConnected = true
+            IsConnected = true,
         };
         Assert.That(
             repos.Single(project => project.ParatextId == env.PTProjectIds[env.Project01].Id).ToString(),
@@ -5185,7 +5186,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetLanguageId_GetsTheLanguageIdFromTheScrText()
+    public void GetWritingSystem_GetsTheLanguageIdFromTheScrText()
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
@@ -5193,8 +5194,49 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         // SUT
-        string languageId = env.Service.GetLanguageId(userSecret, ptProjectId);
-        Assert.AreEqual(LanguageId.English.Id, languageId);
+        var actual = env.Service.GetWritingSystem(userSecret, ptProjectId);
+        Assert.IsNull(actual.Region);
+        Assert.AreEqual("Latn", actual.Script);
+        Assert.AreEqual(LanguageId.English.Id, actual.Tag);
+    }
+
+    [Test]
+    public void GetWritingSystem_Arabic()
+    {
+        _ = new TestEnvironment();
+        const string languageTag = "ar";
+
+        // SUT
+        var actual = ParatextService.GetWritingSystem(languageTag);
+        Assert.IsNull(actual.Region);
+        Assert.AreEqual("Arab", actual.Script);
+        Assert.AreEqual(languageTag, actual.Tag);
+    }
+
+    [Test]
+    public void GetWritingSystem_StandardArabic()
+    {
+        _ = new TestEnvironment();
+        const string languageTag = "arb";
+
+        // SUT
+        var actual = ParatextService.GetWritingSystem(languageTag);
+        Assert.IsNull(actual.Region);
+        Assert.IsNull(actual.Script);
+        Assert.AreEqual(languageTag, actual.Tag);
+    }
+
+    [Test]
+    public void GetWritingSystem_USEnglish()
+    {
+        _ = new TestEnvironment();
+        const string languageTag = "en-US";
+
+        // SUT
+        var actual = ParatextService.GetWritingSystem(languageTag);
+        Assert.AreEqual("US", actual.Region);
+        Assert.AreEqual("Latn", actual.Script);
+        Assert.AreEqual(languageTag, actual.Tag);
     }
 
     [Test]
@@ -6000,6 +6042,10 @@ public class ParatextServiceTests
             ScrTextCollection.Implementation = new SFScrTextCollection();
             AddProjectRepository();
             AddUserRepository();
+
+            // Ensure that the SLDR is initialized for LanguageID.Code to be retrieved correctly
+            if (!Sldr.IsInitialized)
+                Sldr.Initialize(true);
         }
 
         public MockScrText ProjectScrText { get; set; }
@@ -6232,10 +6278,6 @@ public class ParatextServiceTests
             MockInternetSharedRepositorySourceProvider
                 .GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(mockSource);
-
-            // Ensure that the SLDR is initialized for LanguageID.Code to be retrieved correctly
-            if (!Sldr.IsInitialized)
-                Sldr.Initialize(true);
 
             return mockSource;
         }
@@ -6574,9 +6616,6 @@ public class ParatextServiceTests
             ProjectCommentManager = CommentManager.Get(ProjectScrText);
             MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId).Returns(ProjectScrText);
             SetupCommentTags(ProjectScrText, null);
-            // Ensure that the SLDR is initialized for LanguageID.Code to be retrieved correctly
-            if (!Sldr.IsInitialized)
-                Sldr.Initialize(true);
             return ptProjectId;
         }
 

@@ -973,6 +973,8 @@ public class ParatextService : DisposableBase, IParatextService
             copyrightNotice = null;
         }
 
+        // Get the writing system details
+        WritingSystem writingSystem = GetWritingSystem(scrText.Language.Id);
         return new ParatextSettings
         {
             FullName = scrText.FullName,
@@ -981,7 +983,9 @@ public class ParatextService : DisposableBase, IParatextService
             DefaultFontSize = scrText.Settings.DefaultFontSize,
             DefaultFont = scrText.Settings.DefaultFont,
             NoteTags = noteTags,
-            LanguageTag = scrText.Settings.LanguageID?.Id,
+            LanguageRegion = writingSystem.Region,
+            LanguageScript = writingSystem.Script,
+            LanguageTag = writingSystem.Tag,
             ProjectType = scrText.Settings.TranslationInfo.Type.ToString(),
             BaseProjectParatextId = scrText.Settings.TranslationInfo.BaseProjectGuid?.Id,
             BaseProjectShortName = scrText.Settings.TranslationInfo.BaseProjectName,
@@ -1846,10 +1850,10 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="ptProjectId">The Project identifier</param>
     /// <returns>The Language identifier.</returns>
     /// <remarks>This is used to get the WritingSystem Tag for Back Translations.</remarks>
-    public string GetLanguageId(UserSecret userSecret, string ptProjectId)
+    public WritingSystem GetWritingSystem(UserSecret userSecret, string ptProjectId)
     {
         using ScrText scrText = GetScrText(userSecret, ptProjectId);
-        return scrText.Language.Id;
+        return GetWritingSystem(scrText.Language.Id);
     }
 
     public void ClearParatextDataCaches(UserSecret userSecret, string paratextId)
@@ -2169,6 +2173,23 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary>
+    /// Gets the writing system values, based on the <seealso cref="WritingSystemDefinition"/> in <c>libpalaso</c>.
+    /// </summary>
+    /// <param name="languageTag">The language tag.</param>
+    internal static WritingSystem GetWritingSystem(string? languageTag)
+    {
+        var writingSystem = new WritingSystem { Tag = languageTag };
+        if (!string.IsNullOrWhiteSpace(writingSystem.Tag))
+        {
+            var writingSystemDefinition = new WritingSystemDefinition(writingSystem.Tag);
+            writingSystem.Region = writingSystemDefinition.Region?.Code;
+            writingSystem.Script = writingSystemDefinition.Script?.Code;
+        }
+
+        return writingSystem;
+    }
+
+    /// <summary>
     /// Converts from a user role to a Paratext registry user role.
     /// </summary>
     /// <param name="role">The role.</param>
@@ -2263,12 +2284,11 @@ public class ParatextService : DisposableBase, IParatextService
             // If this happens, default to using the project's short name
             var projectMD = projectsMetadata.SingleOrDefault(pmd => pmd.ProjectGuid == remotePtProject.SendReceiveId);
             string fullOrShortName = projectMD == null ? remotePtProject.ScrTextName : projectMD.FullName;
-            string languageTag = correspondingSfProject?.WritingSystem.Tag ?? projectMD?.LanguageId.Code;
-            bool? isRightToLeft = null;
-            if (!string.IsNullOrWhiteSpace(languageTag))
-            {
-                isRightToLeft = new WritingSystemDefinition(languageTag).RightToLeftScript;
-            }
+
+            // Get the writing system details
+            WritingSystem writingSystem = GetWritingSystem(
+                correspondingSfProject?.WritingSystem.Tag ?? projectMD?.LanguageId.Code
+            );
 
             paratextProjects.Add(
                 new ParatextProject
@@ -2276,11 +2296,12 @@ public class ParatextService : DisposableBase, IParatextService
                     ParatextId = remotePtProject.SendReceiveId.Id,
                     Name = fullOrShortName,
                     ShortName = remotePtProject.ScrTextName,
-                    LanguageTag = languageTag,
-                    IsRightToLeft = isRightToLeft,
+                    LanguageRegion = writingSystem.Region,
+                    LanguageScript = writingSystem.Script,
+                    LanguageTag = writingSystem.Tag ?? string.Empty,
                     ProjectId = correspondingSfProject?.Id,
                     IsConnectable = ptProjectIsConnectable,
-                    IsConnected = sfProjectExists && sfUserIsOnSfProject
+                    IsConnected = sfProjectExists && sfUserIsOnSfProject,
                 }
             );
         }
@@ -2786,24 +2807,33 @@ public class ParatextService : DisposableBase, IParatextService
         IReadOnlyDictionary<string, int> resourceRevisions = SFInstallableDblResource.GetInstalledResourceRevisions();
         return resources
             .OrderBy(r => r.FullName)
-            .Select(r => new ParatextResource
+            .Select(r =>
             {
-                AvailableRevision = r.DBLRevision,
-                CreatedTimestamp = r.CreatedTimestamp,
-                InstallableResource = includeInstallableResource ? r : null,
-                InstalledRevision = resourceRevisions.ContainsKey(r.DBLEntryUid.Id)
-                    ? resourceRevisions[r.DBLEntryUid.Id]
-                    : 0,
-                IsConnectable = false,
-                IsConnected = false,
-                IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid.Id),
-                LanguageTag = r.LanguageID.Code,
-                ManifestChecksum = r.ManifestChecksum,
-                Name = r.FullName,
-                ParatextId = r.DBLEntryUid.Id,
-                PermissionsChecksum = r.PermissionsChecksum,
-                ProjectId = null,
-                ShortName = r.Name,
+                // Get the writing system details
+                WritingSystem writingSystem = GetWritingSystem(r.LanguageID.Code);
+
+                // Return the resource details
+                return new ParatextResource
+                {
+                    AvailableRevision = r.DBLRevision,
+                    CreatedTimestamp = r.CreatedTimestamp,
+                    InstallableResource = includeInstallableResource ? r : null,
+                    InstalledRevision = resourceRevisions.TryGetValue(r.DBLEntryUid.Id, out int revision)
+                        ? revision
+                        : 0,
+                    IsConnectable = false,
+                    IsConnected = false,
+                    IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid.Id),
+                    LanguageRegion = writingSystem.Region,
+                    LanguageScript = writingSystem.Script,
+                    LanguageTag = writingSystem.Tag ?? string.Empty,
+                    ManifestChecksum = r.ManifestChecksum,
+                    Name = r.FullName,
+                    ParatextId = r.DBLEntryUid.Id,
+                    PermissionsChecksum = r.PermissionsChecksum,
+                    ProjectId = null,
+                    ShortName = r.Name,
+                };
             })
             .ToArray();
     }

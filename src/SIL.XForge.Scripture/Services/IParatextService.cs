@@ -78,7 +78,7 @@ public interface IParatextService
     bool BackupRepository(UserSecret userSecret, string paratextId);
     bool RestoreRepository(UserSecret userSecret, string paratextId);
     bool LocalProjectDirExists(string paratextId);
-    string GetLanguageId(UserSecret userSecret, string paratextId);
+    WritingSystem GetWritingSystem(UserSecret userSecret, string paratextId);
     void ClearParatextDataCaches(UserSecret userSecret, string paratextId);
     void InitializeCommentManager(UserSecret userSecret, string paratextId);
 
