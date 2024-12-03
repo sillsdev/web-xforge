@@ -36,81 +36,30 @@ describe('RemoteTranslationEngine', () => {
     ).thenReturn(
       of({
         status: 200,
-        data: {
-          sourceTokens: sourceTokens,
-          initialStateScore: -111.111,
-          finalStates: [4],
-          arcs: [
-            {
-              prevState: 0,
-              nextState: 1,
-              score: -11.11,
-              targetTokens: ['This', 'is'],
-              confidences: [0.4, 0.5],
-              sourceSegmentStart: 0,
-              sourceSegmentEnd: 2,
-              sources: [[TranslationSource.Primary], [TranslationSource.Secondary], [TranslationSource.Human]],
-              alignment: [
-                { sourceIndex: 0, targetIndex: 0 },
-                { sourceIndex: 1, targetIndex: 1 }
-              ]
-            },
-            {
-              prevState: 1,
-              nextState: 2,
-              score: -22.22,
-              targetTokens: ['a'],
-              confidences: [0.6],
-              sourceSegmentStart: 2,
-              sourceSegmentEnd: 3,
-              sources: [[TranslationSource.Primary]],
-              alignment: [{ sourceIndex: 0, targetIndex: 0 }]
-            },
-            {
-              prevState: 2,
-              nextState: 3,
-              score: 33.33,
-              targetTokens: ['prueba'],
-              confidences: [0],
-              sourceSegmentStart: 3,
-              sourceSegmentEnd: 4,
-              sources: [[]],
-              alignment: [{ sourceIndex: 0, targetIndex: 0 }]
-            },
-            {
-              prevState: 3,
-              nextState: 4,
-              score: -44.44,
-              targetTokens: ['.'],
-              confidences: [0.7],
-              sourceSegmentStart: 4,
-              sourceSegmentEnd: 5,
-              sources: [[TranslationSource.Primary]],
-              alignment: [{ sourceIndex: 0, targetIndex: 0 }]
-            }
-          ]
-        }
+        data: env.getWordGraph(sourceTokens)
       })
     );
 
+    // SUT
     const wordGraph = await env.client.getWordGraph(sourceSegment);
-    expect(wordGraph.initialStateScore).toEqual(-111.111);
-    expect(wordGraph.sourceTokens).toEqual(sourceTokens);
-    expect(Array.from(wordGraph.finalStates)).toEqual([4]);
-    expect(wordGraph.arcs.length).toEqual(4);
-    let arc = wordGraph.arcs[0];
-    expect(arc.prevState).toEqual(0);
-    expect(arc.nextState).toEqual(1);
-    expect(arc.score).toEqual(-11.11);
-    expect(arc.targetTokens).toEqual(['This', 'is']);
-    expect(arc.confidences).toEqual([0.4, 0.5]);
-    expect(arc.sourceSegmentRange.start).toEqual(0);
-    expect(arc.sourceSegmentRange.end).toEqual(2);
-    expect(arc.sources).toEqual([TranslationSources.Smt, TranslationSources.Transfer, TranslationSources.Prefix]);
-    expect(arc.alignment.get(0, 0)).toBe(true);
-    expect(arc.alignment.get(1, 1)).toBe(true);
-    arc = wordGraph.arcs[2];
-    expect(arc.sources).toEqual([TranslationSources.None]);
+    env.verifyWordGraphAssertions(wordGraph, sourceTokens);
+  });
+
+  it('get word graph duplicate queued request', async () => {
+    const env = new TestEnvironment();
+    const sourceTokens = ['Esto', 'es', 'una', 'prueba', '.'];
+    const sourceSegment = 'Esto es una prueba.';
+
+    // Mock that a word graph request is already queued.
+    // This mocks the promise of executeGetWordGraphRequest()
+    env.client['pendingWordGraphRequests'].set(
+      sourceSegment,
+      Promise.resolve(env.client['createWordGraph'](env.getWordGraph(sourceTokens)))
+    );
+
+    // SUT
+    const wordGraph = await env.client.getWordGraph(sourceSegment);
+    env.verifyWordGraphAssertions(wordGraph, sourceTokens);
   });
 
   it('get stats is successful when engine exists', async () => {
@@ -529,6 +478,85 @@ class TestEnvironment {
         })
       );
     }
+  }
+
+  getWordGraph(sourceTokens: string[]): WordGraphDto {
+    return {
+      sourceTokens,
+      initialStateScore: -111.111,
+      finalStates: [4],
+      arcs: [
+        {
+          prevState: 0,
+          nextState: 1,
+          score: -11.11,
+          targetTokens: ['This', 'is'],
+          confidences: [0.4, 0.5],
+          sourceSegmentStart: 0,
+          sourceSegmentEnd: 2,
+          sources: [[TranslationSource.Primary], [TranslationSource.Secondary], [TranslationSource.Human]],
+          alignment: [
+            { sourceIndex: 0, targetIndex: 0 },
+            { sourceIndex: 1, targetIndex: 1 }
+          ]
+        },
+        {
+          prevState: 1,
+          nextState: 2,
+          score: -22.22,
+          targetTokens: ['a'],
+          confidences: [0.6],
+          sourceSegmentStart: 2,
+          sourceSegmentEnd: 3,
+          sources: [[TranslationSource.Primary]],
+          alignment: [{ sourceIndex: 0, targetIndex: 0 }]
+        },
+        {
+          prevState: 2,
+          nextState: 3,
+          score: 33.33,
+          targetTokens: ['prueba'],
+          confidences: [0],
+          sourceSegmentStart: 3,
+          sourceSegmentEnd: 4,
+          sources: [[]],
+          alignment: [{ sourceIndex: 0, targetIndex: 0 }]
+        },
+        {
+          prevState: 3,
+          nextState: 4,
+          score: -44.44,
+          targetTokens: ['.'],
+          confidences: [0.7],
+          sourceSegmentStart: 4,
+          sourceSegmentEnd: 5,
+          sources: [[TranslationSource.Primary]],
+          alignment: [{ sourceIndex: 0, targetIndex: 0 }]
+        }
+      ]
+    };
+  }
+
+  verifyWordGraphAssertions(wordGraph: WordGraph, sourceTokens: string[]): void {
+    expect(wordGraph.initialStateScore).toEqual(-111.111);
+    expect(wordGraph.sourceTokens).toEqual(sourceTokens);
+    expect(Array.from(wordGraph.finalStates)).toEqual([4]);
+    expect(wordGraph.arcs.length).toEqual(4);
+
+    let arc = wordGraph.arcs[0];
+    expect(arc.prevState).toEqual(0);
+    expect(arc.nextState).toEqual(1);
+    expect(arc.score).toEqual(-11.11);
+    expect(arc.targetTokens).toEqual(['This', 'is']);
+    expect(arc.confidences).toEqual([0.4, 0.5]);
+    expect(arc.sourceSegmentRange.start).toEqual(0);
+    expect(arc.sourceSegmentRange.end).toEqual(2);
+    expect(arc.sources).toEqual([TranslationSources.Smt, TranslationSources.Transfer, TranslationSources.Prefix]);
+    expect(arc.alignment.get(0, 0)).toBe(true);
+    expect(arc.alignment.get(1, 1)).toBe(true);
+
+    arc = wordGraph.arcs[2];
+    expect(arc.sources).toEqual([TranslationSources.None]);
   }
 
   async wait(ms: number = 500): Promise<void> {
