@@ -213,19 +213,19 @@
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let element" class="bookName">
                 <div class="confirm-books cell-padding-block">
-                  {{ this.i18n.enumerateList(element.ranges) }}
+                  {{ i18n.enumerateList(element.ranges) }}
                 </div>
               </td>
             </ng-container>
             <ng-container matColumnDef="source">
               <th mat-header-cell *matHeaderCellDef>
-                {{ this.i18n.getLanguageDisplayName(trainingSources[0].writingSystem.tag) }}
+                {{ i18n.getLanguageDisplayName(trainingSources[0].writingSystem.tag) }}
               </th>
               <td mat-cell *matCellDef="let element">{{ element.source }}</td>
             </ng-container>
             <ng-container matColumnDef="target">
               <th mat-header-cell *matHeaderCellDef>
-                {{ this.i18n.getLanguageDisplayName(trainingTargets[0].writingSystem.tag) }}
+                {{ i18n.getLanguageDisplayName(trainingTargets[0].writingSystem.tag) }}
               </th>
               <td mat-cell *matCellDef="let element">{{ element.target }}</td>
             </ng-container>
