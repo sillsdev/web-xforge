@@ -32,6 +32,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.7" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="8.0.7" />
     <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" Version="3.4.0" />
+    <!-- Use a version of ICU on Windows that supports ARM64, x86, and x64 -->
+    <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" Condition="$([MSBuild]::IsOsPlatform('Windows'))" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
     <PackageReference Include="NPOI" Version="2.7.2" />
     <!-- When using a new major or minor version of ParatextData, update where dependencies.yml copies the
