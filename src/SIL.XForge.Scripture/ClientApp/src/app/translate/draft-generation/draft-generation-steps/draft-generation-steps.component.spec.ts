@@ -299,6 +299,20 @@ describe('DraftGenerationStepsComponent', () => {
 
       expect(component.updateTrainingBooks).toHaveBeenCalledTimes(1);
     }));
+
+    it('should only navigate to next step if language codes are verified', fakeAsync(() => {
+      fixture.detectChanges();
+      expect(component.stepper.selectedIndex).toBe(0);
+
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.stepper.selectedIndex).toBe(0);
+
+      clickConfirmLanguages(fixture);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.stepper.selectedIndex).toBe(1);
+    }));
   });
 
   describe('allow fast training feature flag is enabled', () => {
