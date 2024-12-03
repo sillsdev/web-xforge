@@ -106,7 +106,7 @@
   },
   "confirm_draft_sources": {
     "confirm_lang_codes_correct": "All the language codes are correct.",
-    "confirm_project_setup": "Confirm project setup",
+    "confirm_project_setup": "Review draft setup",
     "drafting_from_heading": "Drafting from {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
     "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
     "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
@@ -234,7 +234,7 @@
     "back": "Back",
     "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
-    "confirm_setup": "Confirm setup",
+    "confirm_setup": "Overview",
     "confirm_codes_correct_to_continue": "Please confirm the language codes are correct before continuing",
     "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Choose additional files for training the language model",
