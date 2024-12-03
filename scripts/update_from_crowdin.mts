@@ -4,6 +4,10 @@ const projectId = Deno.env.get("CROWDIN_PROJECT_ID");
 const apiKey = Deno.env.get("CROWDIN_API_KEY");
 const projectRoot = Deno.cwd();
 
+function ensureSuccess(response: Response) {
+  if (!response.ok) throw new Error(`Request for ${response.url} failed with status code ${response.status}`);
+}
+
 async function saveLatestBuild() {
   // Create a new build
   const response = await fetch(`https://api.crowdin.com/api/v2/projects/${projectId}/translations/builds`, {
@@ -16,6 +20,7 @@ async function saveLatestBuild() {
     })
   });
 
+  ensureSuccess(response);
   const buildResponseBody = await response.json();
 
   const buildId = buildResponseBody.data.id;
@@ -30,13 +35,16 @@ async function saveLatestBuild() {
       { headers: { Authorization: `Bearer ${apiKey}` } }
     );
 
+    ensureSuccess(buildStatusResponse);
     const buildStatusBody = await buildStatusResponse.json();
 
     if (buildStatusBody.data.status === "finished") {
       finished = true;
-    } else {
+    } else if (buildStatusBody.data.status === "inProgress") {
       console.log(`Build status: ${buildStatusBody.data.status}. Waiting for 5 seconds...`);
       await new Promise(resolve => setTimeout(resolve, 5000));
+    } else {
+      throw new Error(`Unexpected build status: ${buildStatusBody.data.status}`);
     }
   }
 
@@ -47,6 +55,7 @@ async function saveLatestBuild() {
     { headers: { Authorization: `Bearer ${apiKey}` } }
   );
 
+  ensureSuccess(buildDownloadResponse);
   const buildDownloadBody = await buildDownloadResponse.json();
   const buildUrl = buildDownloadBody.data.url;
 
@@ -54,8 +63,9 @@ async function saveLatestBuild() {
   console.log("Downloading the build:");
   console.log(buildUrl);
   const downloadResponse = await fetch(buildUrl);
-  const arrayBuffer = await downloadResponse.arrayBuffer();
-  const buffer = new Uint8Array(arrayBuffer);
+  ensureSuccess(downloadResponse);
+
+  const buffer = await downloadResponse.bytes();
 
   const zipFilePath = `${projectRoot}/translations.zip`;
   await Deno.writeFile(zipFilePath, buffer);
@@ -74,7 +84,8 @@ async function saveLatestBuild() {
     console.log("Extraction completed successfully.");
   } else {
     const errorString = new TextDecoder().decode(stderr);
-    console.error("Extraction failed:", errorString);
+    console.error(errorString);
+    throw new Error("ZIP extraction failed");
   }
 }
 
@@ -133,4 +144,5 @@ try {
 } finally {
   console.log("--- Cleaning up ---");
   await cleanup();
+  console.log("--- Done ---");
 }
