@@ -5,7 +5,7 @@
       <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
 
       <mat-step [completed]="languagesVerified">
-        <ng-template matStepLabel>{{ t("confirm_setup") }}</ng-template>
+        <ng-template matStepLabel>{{ t("overview") }}</ng-template>
         <app-confirm-sources (languageCodesVerified)="languagesVerified = $event"></app-confirm-sources>
         @if (nextClickedOnLanguageVerification && !languagesVerified) {
           <app-notice type="error" mode="fill-dark">{{ t("confirm_codes_correct_to_continue") }}</app-notice>

@@ -106,12 +106,12 @@
   },
   "confirm_draft_sources": {
     "confirm_lang_codes_correct": "All the language codes are correct.",
-    "confirm_project_setup": "Confirm project setup",
     "drafting_from_heading": "Drafting from {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
     "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
     "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
     "language_code": "Language code: ",
     "references_heading": "References ({{ referenceLanguage }})",
+    "review_draft_setup": "Review draft setup",
     "targets_heading": "Translation project ({{ targetLanguage }})",
     "training_language_model": "Training the language model"
   },
@@ -234,7 +234,6 @@
     "back": "Back",
     "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
-    "confirm_setup": "Confirm setup",
     "confirm_codes_correct_to_continue": "Please confirm the language codes are correct before continuing",
     "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Choose additional files for training the language model",
@@ -252,6 +251,7 @@
     "loading": "Loading...",
     "next": "Next",
     "no_available_books": "You have no books available for drafting.",
+    "overview": "Overview",
     "these_source_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
     "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
