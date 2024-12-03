@@ -60,6 +60,12 @@ export class SFProjectService extends ProjectService<SFProject> {
       writingSystem: {
         bsonType: 'object',
         properties: {
+          region: {
+            bsonType: 'string'
+          },
+          script: {
+            bsonType: 'string'
+          },
           tag: {
             bsonType: 'string'
           }
@@ -94,6 +100,12 @@ export class SFProjectService extends ProjectService<SFProject> {
               writingSystem: {
                 bsonType: 'object',
                 properties: {
+                  region: {
+                    bsonType: 'string'
+                  },
+                  script: {
+                    bsonType: 'string'
+                  },
                   tag: {
                     bsonType: 'string'
                   }
@@ -143,6 +155,12 @@ export class SFProjectService extends ProjectService<SFProject> {
                   writingSystem: {
                     bsonType: 'object',
                     properties: {
+                      region: {
+                        bsonType: 'string'
+                      },
+                      script: {
+                        bsonType: 'string'
+                      },
                       tag: {
                         bsonType: 'string'
                       }
@@ -177,6 +195,12 @@ export class SFProjectService extends ProjectService<SFProject> {
                   writingSystem: {
                     bsonType: 'object',
                     properties: {
+                      region: {
+                        bsonType: 'string'
+                      },
+                      script: {
+                        bsonType: 'string'
+                      },
                       tag: {
                         bsonType: 'string'
                       }
@@ -211,6 +235,12 @@ export class SFProjectService extends ProjectService<SFProject> {
                   writingSystem: {
                     bsonType: 'object',
                     properties: {
+                      region: {
+                        bsonType: 'string'
+                      },
+                      script: {
+                        bsonType: 'string'
+                      },
                       tag: {
                         bsonType: 'string'
                       }

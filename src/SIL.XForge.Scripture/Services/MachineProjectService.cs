@@ -141,10 +141,18 @@ public class MachineProjectService(
                 // Update the target writing system tag
                 if (string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag))
                 {
-                    string targetLanguageTag = paratextService.GetLanguageId(userSecret, projectDoc.Data.ParatextId);
-                    if (!string.IsNullOrEmpty(targetLanguageTag))
+                    WritingSystem writingSystem = paratextService.GetWritingSystem(
+                        userSecret,
+                        projectDoc.Data.ParatextId
+                    );
+                    if (!string.IsNullOrEmpty(writingSystem.Tag))
                     {
-                        await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.WritingSystem.Tag, targetLanguageTag));
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            op.Set(p => p.WritingSystem.Region, writingSystem.Region);
+                            op.Set(p => p.WritingSystem.Script, writingSystem.Script);
+                            op.Set(p => p.WritingSystem.Tag, writingSystem.Tag);
+                        });
                     }
                 }
 
@@ -163,14 +171,14 @@ public class MachineProjectService(
                 // Update the source writing system tag
                 if (string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag))
                 {
-                    string sourceLanguageTag = paratextService.GetLanguageId(
+                    WritingSystem writingSystem = paratextService.GetWritingSystem(
                         userSecret,
                         projectDoc.Data.TranslateConfig.Source.ParatextId
                     );
-                    if (!string.IsNullOrEmpty(sourceLanguageTag))
+                    if (!string.IsNullOrEmpty(writingSystem.Tag))
                     {
                         await projectDoc.SubmitJson0OpAsync(op =>
-                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, sourceLanguageTag)
+                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, writingSystem.Tag)
                         );
                     }
                 }
