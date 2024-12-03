@@ -18,7 +18,7 @@ import { Locale, LocaleDirection } from './models/i18n-locale';
 import { PseudoLocalization } from './pseudo-localization';
 import { ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue, getAspCultureCookieLanguage, getI18nLocales } from './utils';
 
-export type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
+export type DateFormat = Intl.DateTimeFormatOptions | ((date: Date, options: { showTimeZone?: boolean }) => string);
 
 export interface TextAroundTemplate {
   before: string;
@@ -74,8 +74,13 @@ export class I18nService {
     en: { month: 'short' },
     'en-GB': { month: 'short', hour12: true },
     // Chrome formats az dates as en-US. This manual override is the format Firefox uses for az
-    az: (d: Date) =>
-      `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    az: (d: Date, options) => {
+      let s = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      if (options.showTimeZone) {
+        s += ` ${I18nService.getHumanReadableTimeZoneOffset('az', d)}`;
+      }
+      return s;
+    },
     [PseudoLocalization.locale.canonicalTag]: PseudoLocalization.dateFormat
   };
 
@@ -249,16 +254,37 @@ export class I18nService {
     });
   }
 
-  formatDate(date: Date): string {
+  formatDate(date: Date, options: { showTimeZone?: boolean } = {}): string {
+    // FIXME If options are specified, and the active locale has a custom date format function, the options have no
+    // effect.
+
     // fall back to en in the event the language code isn't valid
     const format = I18nService.dateFormats[this.localeCode] || {};
     return typeof format === 'function'
-      ? format(date)
+      ? format(date, options)
       : date.toLocaleString(
           [this.localeCode, I18nService.defaultLocale.canonicalTag],
           // Browser default is all numeric, but includes seconds. This is same as default, but without seconds
-          { month: 'numeric', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', ...format }
+          {
+            month: 'numeric',
+            year: 'numeric',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            ...(options?.showTimeZone ? { timeZoneName: 'short' } : {}),
+            ...format
+          }
         );
+  }
+
+  static getHumanReadableTimeZoneOffset(localeCode: string, date: Date): string {
+    return new Intl.DateTimeFormat(localeCode, { timeZoneName: 'short' })
+      .formatToParts(date)
+      .find(e => e.type === 'timeZoneName').value;
+  }
+
+  enumerateList(list: string[]): string {
+    return new (Intl as any).ListFormat(this.localeCode, { style: 'long', type: 'conjunction' }).format(list) as string;
   }
 
   translateTextAroundTemplateTags(key: I18nKey, params: object = {}): TextAroundTemplate | undefined {

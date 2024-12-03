@@ -267,3 +267,16 @@ header {
     text-overflow: ellipsis;
   }
 }
+
+.downtime-notice {
+  margin: 0 auto 12px;
+  padding-block: 4px;
+  width: 65em;
+  max-width: 100%;
+}
+
+.downtime-notice-content-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
