@@ -234,6 +234,13 @@ export class I18nService {
     return this.transloco.selectTranslate<string>(key, params);
   }
 
+  /** Returns a translation for the given I18nKey. A string is returned, so this cannot be used to keep a localization
+   * updated without re-calling this whenever the locale changes. Avoid using this when observing a localization is
+   * possible. */
+  translateStatic(key: I18nKey, params: object = {}): string {
+    return this.transloco.translate(key, params);
+  }
+
   translateAndInsertTags(key: I18nKey, params: object = {}): string {
     return this.transloco.translate(key, {
       ...params,
