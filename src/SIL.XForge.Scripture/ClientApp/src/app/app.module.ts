@@ -33,6 +33,7 @@ import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings/settings.component';
+import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
 import { SyncComponent } from './sync/sync.component';
@@ -75,7 +76,8 @@ import { UsersModule } from './users/users.module';
     AppRoutingModule,
     SharedModule,
     AvatarComponent,
-    MatRipple
+    MatRipple,
+    GlobalNoticesComponent
   ],
   providers: [
     CookieService,

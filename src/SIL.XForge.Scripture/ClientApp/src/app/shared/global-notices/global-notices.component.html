@@ -1,0 +1,16 @@
+<ng-container *transloco="let t; read: 'global_notices'">
+  @if (showDowntimeNotice) {
+    <app-notice class="downtime-notice" type="warning" mode="fill-dark" icon="warning">
+      <div class="downtime-notice-content-wrapper">
+        <div>
+          <!-- TODO Update i18n.formatDate to specify { showTimeZone: true } once #2887 is merged -->
+          {{ t("upcoming_maintenance", { duration, startTime: i18n.formatDate(upcomingDowntime.start) }) }}
+          <a [href]="upcomingDowntime.detailsUrl" target="_blank">{{ t("learn_more") }}</a>
+        </div>
+        <button mat-icon-button (click)="showDowntimeNotice = false" [matTooltip]="t('close')">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </app-notice>
+  }
+</ng-container>
