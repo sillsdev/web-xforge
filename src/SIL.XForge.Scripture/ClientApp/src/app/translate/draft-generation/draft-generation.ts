@@ -6,11 +6,9 @@ import { BuildStates } from '../../machine-api/build-states';
  */
 export interface BuildConfig {
   projectId: string;
-  trainingBooks: number[];
   trainingDataFiles: string[];
   trainingScriptureRange?: string;
   trainingScriptureRanges: ProjectScriptureRange[];
-  translationBooks: number[];
   translationScriptureRange?: string;
   translationScriptureRanges: ProjectScriptureRange[];
   fastTraining: boolean;

@@ -107,11 +107,11 @@
         }
         <h2>{{ t("reference_books") }}</h2>
         <p>{{ trainingSourceProjectName }}</p>
-        @if (selectableTrainingBooks.length === 0) {
+        @if (selectableSourceTrainingBooks.length === 0) {
           <app-notice mode="basic" type="light">{{ t("training_books_will_appear") }}</app-notice>
         } @else {
           <app-book-multi-select
-            [availableBooks]="selectableTrainingBooks"
+            [availableBooks]="selectableSourceTrainingBooks"
             [selectedBooks]="userSelectedSourceTrainingBooks"
             [basicMode]="true"
             (bookSelect)="onSourceTrainingBookSelect($event)"

@@ -137,4 +137,15 @@ describe('BookMultiSelectComponent', () => {
     expect(component.partialOT).toBe(false);
     expect(component.partialDC).toBe(true);
   });
+
+  it('can hide checkboxes and progress in basic mode', async () => {
+    await component.ngOnChanges();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.book-multi-select .border-fill')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.scope-selection')).not.toBeNull();
+    component.basicMode = true;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.book-multi-select .border-fill')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.scope-selection')).toBeNull();
+  });
 });
