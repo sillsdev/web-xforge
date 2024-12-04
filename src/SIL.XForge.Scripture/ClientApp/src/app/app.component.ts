@@ -58,9 +58,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   hasUpdate: boolean = false;
 
-  showDowntimeNotice = true;
-  downtimeStart = new Date('2024-12-04 16:30 UTC');
-
   private currentUserDoc?: UserDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private isLoggedInUserAnonymous: boolean = false;
