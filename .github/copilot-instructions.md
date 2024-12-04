@@ -54,6 +54,30 @@ This repository contains three interconnected applications:
 - Keep related files together in feature folders
 - Follow existing naming conventions
 
+# MongoDB Schema Validation Guidelines
+
+- Use MongoDB BSON types in validation schemas ('bool' not 'boolean', etc)
+- Follow existing patterns for indexes and validation rules
+- Add validation schemas for new collections
+
+# Realtime Server Guidelines
+
+- Define migrations for schema changes in the appropriate service
+- Follow existing patterns for DocService implementations
+- Initialize collections with proper indexes and validation
+- Test migrations with both empty and existing data
+
+# Migration Guidelines
+
+- Add migrations for any schema changes
+- Test migrations on both empty and populated databases
+- Follow existing patterns in \*-migrations.ts files
+- Consider data validation before and after migration
+
+# Collection Management
+
+- Define clear validation rules using MongoDB schemas
+
 Do not remove existing comments from code. You can add to existing comments, but do not removing the existing comments.
 Do not insert new comments into the code where method calls already make it clear.
 Do not add method comments unless the method would be unclear to an experienced developer.
