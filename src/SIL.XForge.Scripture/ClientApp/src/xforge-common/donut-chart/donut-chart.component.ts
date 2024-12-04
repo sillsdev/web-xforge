@@ -96,6 +96,7 @@ export class DonutChartComponent extends SubscriptionDisposable implements After
         this.oldData = this._data;
       }
       this._data = value;
+      this.constructSegments();
     }
   }
 
