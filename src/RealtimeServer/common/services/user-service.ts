@@ -96,7 +96,7 @@ export class UserService extends JsonDocService<User> {
         bsonType: 'object',
         patternProperties: {
           '^.*$': {
-            bsonType: 'boolean'
+            bsonType: 'bool'
           }
         },
         additionalProperties: true
