@@ -7,4 +7,5 @@ public static class FeatureFlags
 {
     public const string UpdatedLearningRateForServal = "UpdatedLearningRateForServal";
     public const string UseEchoForPreTranslation = "UseEchoForPreTranslation";
+    public const string ShowNotifications = "ShowNotifications";
 }

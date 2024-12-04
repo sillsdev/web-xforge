@@ -3,6 +3,7 @@ import { Operation } from '../common/models/project-rights';
 import { RealtimeServer } from '../common/realtime-server';
 import { SchemaVersionRepository } from '../common/schema-version-repository';
 import { DocService } from '../common/services/doc-service';
+import { NotificationService } from '../common/services/notification-service';
 import { UserService } from '../common/services/user-service';
 import { NOTE_THREAD_COLLECTION } from './models/note-thread';
 import { SF_PROJECTS_COLLECTION } from './models/sf-project';
@@ -20,6 +21,7 @@ import { TrainingDataService } from './services/training-data-service';
 
 const SF_DOC_SERVICES: DocService[] = [
   new UserService(),
+  new NotificationService(),
   new SFProjectService(SF_PROJECT_MIGRATIONS),
   new SFProjectUserConfigService(SF_PROJECT_USER_CONFIG_MIGRATIONS),
   new TextService(),

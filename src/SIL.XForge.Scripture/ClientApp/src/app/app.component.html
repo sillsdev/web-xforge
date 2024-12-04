@@ -32,11 +32,28 @@
           </span>
         }
         <span class="toolbar-spacer"></span>
+
         @if (isAppOnline) {
+          <button
+            *ngIf="featureFlagService.showNotifications.enabled"
+            mat-icon-button
+            [title]="t('notifications')"
+            [matMenuTriggerFor]="notificationsMenu"
+            [class.has-unviewed]="(unviewedCount$ | async) !== 0"
+            class="notifications-button"
+          >
+            <mat-icon [matBadge]="unviewedCount$ | async" [matBadgeHidden]="(unviewedCount$ | async) === 0">
+              notifications
+            </mat-icon>
+          </button>
+          <mat-menu #notificationsMenu="matMenu" class="notifications-menu">
+            <app-notification-list [pageId]="currentPageId"></app-notification-list>
+          </mat-menu>
           <button mat-icon-button [title]="t('language')" [matMenuTriggerFor]="localeMenu">
             <mat-icon>translate</mat-icon>
           </button>
         }
+
         <mat-menu #localeMenu="matMenu" class="locale-menu">
           @for (locale of i18n.locales; track locale.canonicalTag) {
             <button
@@ -194,6 +211,7 @@
         <app-navigation></app-navigation>
       </mat-drawer>
     }
+
     <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
     <div #appContent cdkScrollable class="app-content" [dir]="i18n.direction">
       <div>

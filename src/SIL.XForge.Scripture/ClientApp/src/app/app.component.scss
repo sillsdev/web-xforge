@@ -152,6 +152,19 @@ header {
   }
 }
 
+.notifications-button.has-unviewed {
+  color: var(--mdc-theme-warning);
+}
+
+.notifications-menu {
+  max-width: 400px;
+  max-height: 80vh;
+
+  ::ng-deep .mat-mdc-menu-content {
+    padding: 0;
+  }
+}
+
 .mat-toolbar {
   min-height: initial;
 }

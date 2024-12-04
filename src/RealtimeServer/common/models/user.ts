@@ -53,6 +53,7 @@ export interface User extends UserProfile {
   interfaceLanguage?: string;
   authId: string;
   sites: { [key: string]: Site };
+  viewedNotifications: Set<string>;
 }
 
 /** Do we understand the SF user to also be a PT user? */

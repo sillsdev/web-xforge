@@ -313,6 +313,13 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  readonly showNotifications: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'SHOW_NOTIFICATIONS',
+    'Show notifications system',
+    15, // Use next available position number
+    new StaticFeatureFlagStore(true, { readonly: true })
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

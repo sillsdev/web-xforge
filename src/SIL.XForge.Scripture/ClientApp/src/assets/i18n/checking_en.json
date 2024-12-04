@@ -387,6 +387,11 @@
     "open": "Open",
     "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
   },
+  "notifications": {
+    "notifications": "Notifications",
+    "no_notifications": "No notifications to display",
+    "dismiss": "Dismiss"
+  },
   "roles": {
     "sf_community_checker": "Community Checker"
   },

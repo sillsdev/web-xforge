@@ -1,6 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { Event, NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
@@ -38,7 +38,8 @@ import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
-import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
+import { NotificationService } from './core/notification.service';
+import { SFProjectUserConfigDoc } from './core/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { checkAppAccess } from './shared/utils';
 
@@ -57,6 +58,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   versionNumberClickCount = 0;
 
   hasUpdate: boolean = false;
+  unviewedCount$: Observable<number>;
+  currentPageId?: string;
 
   private currentUserDoc?: UserDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -85,7 +88,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
-    onlineStatusService: OnlineStatusService
+    onlineStatusService: OnlineStatusService,
+    private readonly notificationService: NotificationService,
+    public readonly featureFlagService: FeatureFlagService
   ) {
     super(noticeService);
     this.subscribe(
@@ -126,6 +131,21 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     }
+
+    this.router.events
+      .pipe(
+        filter((event: Event): event is NavigationEnd => event instanceof NavigationEnd),
+        map(event => {
+          const segments = event.url.split('/');
+          return segments[segments.length - 1];
+        })
+      )
+      .subscribe(pageId => {
+        this.currentPageId = pageId;
+        void this.notificationService.loadNotifications(pageId ? [pageId] : undefined);
+      });
+
+    this.unviewedCount$ = this.notificationService.getUnviewedCount(this.currentPageId);
   }
 
   get canInstallOnDevice$(): Observable<boolean> {

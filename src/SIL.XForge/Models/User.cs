@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace SIL.XForge.Models;
 
-public class User : Json0Snapshot
+public class User : ProjectMember
 {
     public string Name { get; set; }
     public string Email { get; set; }
@@ -23,4 +23,5 @@ public class User : Json0Snapshot
     /// </summary>
     public string AuthId { get; set; }
     public Dictionary<string, Site> Sites { get; set; } = new Dictionary<string, Site>();
+    public HashSet<string> ViewedNotifications { get; set; } = new();
 }
