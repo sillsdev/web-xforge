@@ -197,28 +197,6 @@
     <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
     <div #appContent cdkScrollable class="app-content" [dir]="i18n.direction">
       <div>
-        @if (showDowntimeNotice) {
-          <app-notice class="downtime-notice" type="warning" mode="fill-dark" icon="warning">
-            <div class="downtime-notice-content-wrapper">
-              <div>
-                Scripture Forge will be down for maintenance for about 2 to 6 hours starting at
-                {{ i18n.formatDate(downtimeStart, { showTimeZone: true }) }}.
-                <a
-                  href="https://software.sil.org/scriptureforge/scripture-forge-will-be-unavailable-for-scheduled-maintenance/"
-                  target="_blank"
-                  >Learn more</a
-                >.
-              </div>
-              <button
-                mat-icon-button
-                (click)="showDowntimeNotice = false"
-                [matTooltip]="i18n.translate('dialog.close') | async"
-              >
-                <mat-icon>close</mat-icon>
-              </button>
-            </div>
-          </app-notice>
-        }
         <router-outlet></router-outlet>
         @if (showCheckingDisabled) {
           <p class="checking-unavailable">{{ t("scripture_checking_not_available") }}</p>
