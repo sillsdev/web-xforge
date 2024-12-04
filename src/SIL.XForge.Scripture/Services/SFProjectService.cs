@@ -104,12 +104,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             ParatextId = settings.ParatextId,
             Name = ptProject.Name,
             ShortName = ptProject.ShortName,
-            WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
-            TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false, },
+            WritingSystem = new WritingSystem
+            {
+                Region = ptProject.LanguageRegion,
+                Script = ptProject.LanguageScript,
+                Tag = ptProject.LanguageTag,
+            },
+            TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
             CheckingConfig = new CheckingConfig
             {
                 CheckingEnabled = settings.CheckingEnabled,
-                AnswerExportMethod = settings.AnswerExportMethod
+                AnswerExportMethod = settings.AnswerExportMethod,
             },
         };
         Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
@@ -1617,7 +1622,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             ParatextId = ptProject.ParatextId,
             Name = ptProject.Name,
             ShortName = ptProject.ShortName,
-            WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
+            WritingSystem = new WritingSystem
+            {
+                Region = ptProject.LanguageRegion,
+                Script = ptProject.LanguageScript,
+                Tag = ptProject.LanguageTag,
+            },
             TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false, Source = null },
             CheckingConfig = new CheckingConfig { CheckingEnabled = false },
         };
@@ -1729,7 +1739,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             ProjectRef = sourceProjectRef,
             Name = sourcePTProject.Name,
             ShortName = sourcePTProject.ShortName,
-            WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag },
+            WritingSystem = new WritingSystem
+            {
+                Region = sourcePTProject.LanguageRegion,
+                Script = sourcePTProject.LanguageScript,
+                Tag = sourcePTProject.LanguageTag,
+            },
         };
     }
 
@@ -1821,8 +1836,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 if (!string.IsNullOrEmpty(ptProject?.LanguageTag))
                 {
                     await projectDoc.SubmitJson0OpAsync(op =>
-                        UpdateSetting(op, p => p.WritingSystem.Tag, ptProject.LanguageTag)
-                    );
+                    {
+                        UpdateSetting(op, p => p.WritingSystem.Region, ptProject.LanguageRegion);
+                        UpdateSetting(op, p => p.WritingSystem.Script, ptProject.LanguageScript);
+                        UpdateSetting(op, p => p.WritingSystem.Tag, ptProject.LanguageTag);
+                    });
                 }
             }
 

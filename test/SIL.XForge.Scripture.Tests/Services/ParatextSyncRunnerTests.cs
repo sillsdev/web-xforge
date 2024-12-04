@@ -857,9 +857,9 @@ public class ParatextSyncRunnerTests
                 Arg.Any<CancellationToken>()
             )
             .Returns([TestEnvironment.ParatextProjectUser01]);
-        int fontSize = 10;
-        string font = ProjectSettings.defaultFontName;
-        string sourceWritingSystemTag = "en";
+        const int fontSize = 10;
+        const string font = ProjectSettings.defaultFontName;
+        const string sourceWritingSystemTag = "en";
         SFProject project = env.GetProject();
         Assert.That(project.DefaultFontSize, Is.EqualTo(fontSize));
         Assert.That(project.DefaultFont, Is.EqualTo(font));
@@ -867,19 +867,21 @@ public class ParatextSyncRunnerTests
         Assert.IsNull(project.CopyrightBanner);
         Assert.IsNull(project.CopyrightNotice);
         Assert.That(project.TranslateConfig.Source.WritingSystem.Tag, Is.EqualTo(sourceWritingSystemTag));
-        int newFontSize = 16;
-        string newFont = "Doulos SIL";
-        string customIcon = "customIcon01";
-        string newWritingSystemTag = "en-US";
-        List<NoteTag> noteTags = new List<NoteTag>
-        {
+        const int newFontSize = 16;
+        const string newFont = "Doulos SIL";
+        const string customIcon = "customIcon01";
+        const string newWritingSystemRegion = "US";
+        const string newWritingSystemScript = "latn";
+        const string newWritingSystemTag = "en-US";
+        List<NoteTag> noteTags =
+        [
             new NoteTag
             {
                 TagId = env.translateNoteTagId,
                 Icon = customIcon,
-                Name = "Tag Name"
-            }
-        };
+                Name = "Tag Name",
+            },
+        ];
         string newProjectType = ProjectType.BackTranslation.ToString();
         string? newBaseProjectParatextId = "base_pt";
         string newBaseProjectShortName = "BPT";
@@ -892,6 +894,8 @@ public class ParatextSyncRunnerTests
                     DefaultFontSize = newFontSize,
                     DefaultFont = newFont,
                     NoteTags = noteTags,
+                    LanguageRegion = newWritingSystemRegion,
+                    LanguageScript = newWritingSystemScript,
                     LanguageTag = newWritingSystemTag,
                     ProjectType = newProjectType,
                     BaseProjectParatextId = newBaseProjectParatextId,
@@ -907,10 +911,12 @@ public class ParatextSyncRunnerTests
         Assert.That(project.DefaultFontSize, Is.EqualTo(newFontSize));
         Assert.That(project.DefaultFont, Is.EqualTo(newFont));
         Assert.That(project.NoteTags.Select(t => t.Icon), Is.EquivalentTo(new[] { customIcon }));
+        Assert.That(project.WritingSystem.Region, Is.EqualTo(newWritingSystemRegion));
+        Assert.That(project.WritingSystem.Script, Is.EqualTo(newWritingSystemScript));
         Assert.That(project.WritingSystem.Tag, Is.EqualTo(newWritingSystemTag));
-        Assert.That(project.TranslateConfig.Source.WritingSystem.Tag, Is.EqualTo(newWritingSystemTag));
+        Assert.That(project.TranslateConfig.Source!.WritingSystem.Tag, Is.EqualTo(newWritingSystemTag));
         Assert.That(project.TranslateConfig.ProjectType, Is.EqualTo(newProjectType));
-        Assert.That(project.TranslateConfig.BaseProject.ParatextId, Is.EqualTo(newBaseProjectParatextId));
+        Assert.That(project.TranslateConfig.BaseProject!.ParatextId, Is.EqualTo(newBaseProjectParatextId));
         Assert.That(project.TranslateConfig.BaseProject.ShortName, Is.EqualTo(newBaseProjectShortName));
         Assert.That(project.CopyrightBanner, Is.EqualTo(newCopyrightBanner));
         Assert.That(project.CopyrightNotice, Is.EqualTo(newCopyrightNotice));

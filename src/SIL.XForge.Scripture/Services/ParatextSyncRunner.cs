@@ -1764,6 +1764,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
                 if (settings.NoteTags != null)
                     op.Set(pd => pd.NoteTags, settings.NoteTags, _noteTagListEqualityComparer);
+                if (settings.LanguageRegion != null)
+                    op.Set(pd => pd.WritingSystem.Region, settings.LanguageRegion);
+                if (settings.LanguageScript != null)
+                    op.Set(pd => pd.WritingSystem.Script, settings.LanguageScript);
                 if (settings.LanguageTag != null)
                     op.Set(pd => pd.WritingSystem.Tag, settings.LanguageTag);
                 op.Set(pd => pd.TranslateConfig.ProjectType, settings.ProjectType);
