@@ -1,5 +1,6 @@
-// src/RealtimeServer/common/services/notification-service.ts
+import { ConnectSession } from '../connect-session';
 import { Notification } from '../models/notification';
+import { SystemRole } from '../models/system-role';
 import { ValidationSchema } from '../models/validation-schema';
 import { DocService } from './doc-service';
 
@@ -7,12 +8,13 @@ import { DocService } from './doc-service';
  * This class manages system-wide notification documents
  */
 export class NotificationService extends DocService<Notification> {
+  readonly indexPaths: string[] = [];
   readonly collection = 'notifications';
 
   readonly validationSchema: ValidationSchema = {
     bsonType: DocService.validationSchema.bsonType,
     required: [
-      ...DocService.validationSchema.required,
+      ...(DocService.validationSchema.required ?? []),
       'title',
       'content',
       'type',
@@ -57,24 +59,24 @@ export class NotificationService extends DocService<Notification> {
     super([]);
   }
 
-  protected async checkShareAccess(doc: ShareDB.Doc, session: ConnectSession, _op?: ShareDB.Op[]): Promise<void> {
-    // Only system admins can create/edit notifications
-    if (!session.isSystemAdmin) {
-      throw new Error('User does not have permission to modify notifications');
-    }
+  protected allowRead(_docId: string, _doc: Notification, _session: ConnectSession): boolean {
+    // All users can read notifications
+    return true;
   }
 
-  protected async checkSubmitAccess(doc: ShareDB.Doc, session: ConnectSession, _op?: ShareDB.Op[]): Promise<void> {
+  protected allowUpdate(
+    _docId: string,
+    _oldDoc: Notification,
+    _newDoc: Notification,
+    _ops: any,
+    session: ConnectSession
+  ): boolean {
     // Only system admins can create/edit notifications
-    if (!session.isSystemAdmin) {
-      throw new Error('User does not have permission to modify notifications');
-    }
+    return session.roles.includes(SystemRole.SystemAdmin);
   }
 
-  protected async checkDeleteAccess(doc: ShareDB.Doc, session: ConnectSession): Promise<void> {
+  protected allowDelete(_docId: string, _doc: Notification, session: ConnectSession): boolean {
     // Only system admins can delete notifications
-    if (!session.isSystemAdmin) {
-      throw new Error('User does not have permission to delete notifications');
-    }
+    return session.roles.includes(SystemRole.SystemAdmin);
   }
 }

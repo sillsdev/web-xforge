@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using SIL.XForge.Realtime;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 

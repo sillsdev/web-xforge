@@ -1,4 +1,12 @@
-public class Notification
+using System;
+using SIL.XForge.Models;
+
+namespace SIL.XForge.Scripture.Models;
+
+/// <summary>
+/// Represents a notification that can be shown to users in the application.
+/// </summary>
+public class Notification : IIdentifiable
 {
     public string Id { get; set; } = "";
     public string Title { get; set; } = "";

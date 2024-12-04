@@ -19,7 +19,8 @@ function testUser(ordinal: number): User {
     isDisplayNameConfirmed: false,
     interfaceLanguage: 'en',
     authId: `authId${ordinal}`,
-    sites: {}
+    sites: {},
+    viewedNotifications: new Set<string>()
   };
 }
 
