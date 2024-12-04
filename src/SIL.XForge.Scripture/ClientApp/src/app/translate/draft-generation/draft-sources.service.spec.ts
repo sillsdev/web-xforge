@@ -11,7 +11,7 @@ import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { DraftSources, DraftSourcesService } from './draft-sources.service';
+import { DraftSource, DraftSources, DraftSourcesService } from './draft-sources.service';
 
 describe('DraftSourcesService', () => {
   let service: DraftSourcesService;
@@ -45,7 +45,14 @@ describe('DraftSourcesService', () => {
           source: undefined,
           alternateSource: undefined,
           alternateTrainingSource: undefined,
-          additionalTrainingSource: undefined
+          additionalTrainingSource: undefined,
+          draftSourceIds: {
+            draftingSourceId: undefined,
+            draftingAlternateSourceId: undefined,
+            trainingSourceId: undefined,
+            trainingAlternateSourceId: undefined,
+            trainingAdditionalSourceId: undefined
+          }
         } as DraftSources);
         done();
       });
@@ -141,6 +148,13 @@ describe('DraftSourcesService', () => {
               tag: 'en_UK'
             },
             noAccess: true
+          },
+          draftSourceIds: {
+            draftingSourceId: 'source_project',
+            draftingAlternateSourceId: 'alternate_source_project',
+            trainingSourceId: 'source_project',
+            trainingAlternateSourceId: 'alternate_training_source_project',
+            trainingAdditionalSourceId: 'additional_training_source_project'
           }
         } as DraftSources);
         done();
@@ -242,7 +256,14 @@ describe('DraftSourcesService', () => {
           source: sourceProject,
           alternateSource: alternateSourceProject,
           alternateTrainingSource: alternateTrainingSourceProject,
-          additionalTrainingSource: additionalTrainingSourceProject
+          additionalTrainingSource: additionalTrainingSourceProject,
+          draftSourceIds: {
+            draftingSourceId: 'source_project',
+            draftingAlternateSourceId: 'alternate_source_project',
+            trainingSourceId: 'source_project',
+            trainingAlternateSourceId: 'alternate_training_source_project',
+            trainingAdditionalSourceId: 'additional_training_source_project'
+          }
         } as DraftSources);
         done();
       });
@@ -271,13 +292,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expect(result).toEqual({
-          target: targetProject,
-          source: undefined,
-          alternateSource: undefined,
-          alternateTrainingSource: undefined,
-          additionalTrainingSource: undefined
-        } as DraftSources);
+        expectTargetOnly(targetProject, result);
         done();
       });
     });
@@ -286,7 +301,7 @@ describe('DraftSourcesService', () => {
       const targetProject = createTestProjectProfile({
         translateConfig: {
           draftConfig: {
-            alternateSourceEnabled: false
+            alternateSourceEnabled: true
           }
         }
       });
@@ -297,13 +312,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expect(result).toEqual({
-          target: targetProject,
-          source: undefined,
-          alternateSource: undefined,
-          alternateTrainingSource: undefined,
-          additionalTrainingSource: undefined
-        } as DraftSources);
+        expectTargetOnly(targetProject, result);
         done();
       });
     });
@@ -331,13 +340,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expect(result).toEqual({
-          target: targetProject,
-          source: undefined,
-          alternateSource: undefined,
-          alternateTrainingSource: undefined,
-          additionalTrainingSource: undefined
-        } as DraftSources);
+        expectTargetOnly(targetProject, result);
         done();
       });
     });
@@ -346,7 +349,7 @@ describe('DraftSourcesService', () => {
       const targetProject = createTestProjectProfile({
         translateConfig: {
           draftConfig: {
-            alternateTrainingSourceEnabled: false
+            alternateTrainingSourceEnabled: true
           }
         }
       });
@@ -357,13 +360,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expect(result).toEqual({
-          target: targetProject,
-          source: undefined,
-          alternateSource: undefined,
-          alternateTrainingSource: undefined,
-          additionalTrainingSource: undefined
-        } as DraftSources);
+        expectTargetOnly(targetProject, result);
         done();
       });
     });
@@ -391,13 +388,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expect(result).toEqual({
-          target: targetProject,
-          source: undefined,
-          alternateSource: undefined,
-          alternateTrainingSource: undefined,
-          additionalTrainingSource: undefined
-        } as DraftSources);
+        expectTargetOnly(targetProject, result);
         done();
       });
     });
@@ -406,7 +397,7 @@ describe('DraftSourcesService', () => {
       const targetProject = createTestProjectProfile({
         translateConfig: {
           draftConfig: {
-            additionalTrainingSourceEnabled: false
+            additionalTrainingSourceEnabled: true
           }
         }
       });
@@ -417,15 +408,26 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expect(result).toEqual({
-          target: targetProject,
-          source: undefined,
-          alternateSource: undefined,
-          alternateTrainingSource: undefined,
-          additionalTrainingSource: undefined
-        } as DraftSources);
+        expectTargetOnly(targetProject, result);
         done();
       });
     });
   });
+
+  function expectTargetOnly(targetProject: DraftSource, result: DraftSources): void {
+    expect(result).toEqual({
+      target: targetProject,
+      source: undefined,
+      alternateSource: undefined,
+      alternateTrainingSource: undefined,
+      additionalTrainingSource: undefined,
+      draftSourceIds: {
+        draftingSourceId: undefined,
+        draftingAlternateSourceId: undefined,
+        trainingSourceId: undefined,
+        trainingAlternateSourceId: undefined,
+        trainingAdditionalSourceId: undefined
+      }
+    } as DraftSources);
+  }
 });
