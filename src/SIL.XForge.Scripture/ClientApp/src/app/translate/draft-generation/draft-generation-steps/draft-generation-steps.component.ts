@@ -26,11 +26,9 @@ import { TrainingDataUploadDialogComponent } from '../training-data/training-dat
 import { TrainingDataService } from '../training-data/training-data.service';
 
 export interface DraftGenerationStepsResult {
-  trainingBooks: number[];
   trainingDataFiles: string[];
   trainingScriptureRange?: string;
   trainingScriptureRanges: ProjectScriptureRange[];
-  translationBooks: number[];
   translationScriptureRange?: string;
   translationScriptureRanges: ProjectScriptureRange[];
   fastTraining: boolean;
@@ -59,8 +57,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   availableTranslateBooks?: number[] = undefined;
   availableTrainingBooks: number[] = [];
-  selectableTrainingBooks: number[] = [];
-  selectableAdditionalTrainingBooks: number[] = [];
+  selectableSourceTrainingBooks: number[] = [];
+  selectableAdditionalSourceTrainingBooks: number[] = [];
   availableTrainingData: Readonly<TrainingData>[] = [];
 
   // Unusable books do not exist in the target or corresponding drafting/training source project
@@ -249,14 +247,22 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   onTrainingBookSelect(selectedBooks: number[]): void {
     const newBookSelections: number[] = selectedBooks.filter(b => !this.userSelectedTrainingBooks.includes(b));
-    this.userSelectedTrainingBooks = selectedBooks;
-    this.selectableTrainingBooks = selectedBooks;
-    this.selectableAdditionalTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
+    this.userSelectedTrainingBooks = [...selectedBooks];
+    this.selectableSourceTrainingBooks = [...selectedBooks];
+    this.selectableAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
       selectedBooks.includes(b)
     );
+
+    // remove selected books that are no longer selectable
+    this.userSelectedSourceTrainingBooks = this.userSelectedSourceTrainingBooks.filter(b => selectedBooks.includes(b));
+    this.userSelectedAdditionalSourceTrainingBooks = this.userSelectedAdditionalSourceTrainingBooks.filter(b =>
+      selectedBooks.includes(b)
+    );
+
+    // automatically select books that are newly selected as training books
     for (const bookNum of newBookSelections) {
       this.userSelectedSourceTrainingBooks.push(bookNum);
-      if (this.selectableAdditionalTrainingBooks.includes(bookNum)) {
+      if (this.selectableAdditionalSourceTrainingBooks.includes(bookNum)) {
         this.userSelectedAdditionalSourceTrainingBooks.push(bookNum);
       }
     }
@@ -270,12 +276,14 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   onSourceTrainingBookSelect(selectedBooks: number[]): void {
-    this.userSelectedSourceTrainingBooks = selectedBooks;
+    this.userSelectedSourceTrainingBooks = this.selectableSourceTrainingBooks.filter(b => selectedBooks.includes(b));
     this.clearErrorMessage();
   }
 
   onAdditionalSourceTrainingBookSelect(selectedBooks: number[]): void {
-    this.userSelectedAdditionalSourceTrainingBooks = selectedBooks;
+    this.userSelectedAdditionalSourceTrainingBooks = this.selectableAdditionalSourceTrainingBooks.filter(b =>
+      selectedBooks.includes(b)
+    );
     this.clearErrorMessage();
   }
 
@@ -319,11 +327,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         this.userSelectedTranslateBooks
       );
       this.done.emit({
-        // TODO: Can trainingBooks and translationBooks be removed?
-        trainingBooks: this.userSelectedTrainingBooks,
         trainingScriptureRanges,
         trainingDataFiles: this.selectedTrainingDataIds,
-        translationBooks: this.userSelectedTranslateBooks,
         translationScriptureRanges: [translationScriptureRange],
         fastTraining: this.fastTraining
       });
@@ -348,8 +353,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     this.initialSelectedTrainingBooks = newSelectedTrainingBooks;
     this.userSelectedTrainingBooks = [...newSelectedTrainingBooks];
-    this.selectableTrainingBooks = [...newSelectedTrainingBooks];
-    this.selectableAdditionalTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
+    this.selectableSourceTrainingBooks = [...newSelectedTrainingBooks];
+    this.userSelectedSourceTrainingBooks = [...newSelectedTrainingBooks];
+    this.selectableAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
+      newSelectedTrainingBooks.includes(b)
+    );
+    this.userSelectedAdditionalSourceTrainingBooks = this.selectableAdditionalSourceTrainingBooks.filter(b =>
       newSelectedTrainingBooks.includes(b)
     );
   }

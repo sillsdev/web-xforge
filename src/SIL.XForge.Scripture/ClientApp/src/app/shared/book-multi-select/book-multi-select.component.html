@@ -1,6 +1,9 @@
 <ng-container *transloco="let t; read: 'book_select'">
   @if (availableBooks.length > 0 && !readonly && !basicMode) {
-    <div>
+    <div class="scope-selection">
+      @if (projectName != null) {
+        <span class="project-name">{{ projectName }}</span>
+      }
       <mat-checkbox
         class="ot-checkbox"
         value="OT"

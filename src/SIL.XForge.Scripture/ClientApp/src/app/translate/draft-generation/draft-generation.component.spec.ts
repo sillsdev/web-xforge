@@ -1966,10 +1966,8 @@ describe('DraftGenerationComponent', () => {
 
       env.component.currentPage = 'steps';
       env.component.startBuild({
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
@@ -1978,10 +1976,8 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.currentPage).toBe('steps');
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false
       });
@@ -1997,10 +1993,8 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.startBuild({
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
@@ -2008,10 +2002,8 @@ describe('DraftGenerationComponent', () => {
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Queued });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false
       });
@@ -2026,10 +2018,8 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.startBuild({
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
@@ -2037,10 +2027,8 @@ describe('DraftGenerationComponent', () => {
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Pending });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false
       });
@@ -2055,10 +2043,8 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.startBuild({
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
@@ -2066,10 +2052,8 @@ describe('DraftGenerationComponent', () => {
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Active });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false
       });
@@ -2085,10 +2069,8 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.startBuild({
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
@@ -2096,10 +2078,8 @@ describe('DraftGenerationComponent', () => {
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Canceled });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false
       });
@@ -2114,10 +2094,8 @@ describe('DraftGenerationComponent', () => {
       });
 
       env.component.startBuild({
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
@@ -2126,10 +2104,8 @@ describe('DraftGenerationComponent', () => {
 
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
-        trainingBooks: [],
         trainingDataFiles: [],
         trainingScriptureRanges: [],
-        translationBooks: [],
         translationScriptureRanges: [],
         fastTraining: false
       });

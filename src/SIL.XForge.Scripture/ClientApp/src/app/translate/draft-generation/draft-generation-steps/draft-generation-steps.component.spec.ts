@@ -71,9 +71,17 @@ describe('DraftGenerationStepsComponent', () => {
     })
   } as SFProjectProfileDoc;
 
+  const mockAdditionalTrainingSourceProjectDoc = {
+    data: createTestProjectProfile({
+      texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }, { bookNum: 100 }]
+    })
+  } as SFProjectProfileDoc;
+
   const mockUserDoc = {
     data: createTestUser({
-      sites: { [environment.siteId]: { projects: ['alternateTrainingProject', 'sourceProject', 'test'] } }
+      sites: {
+        [environment.siteId]: { projects: ['alternateTrainingProject', 'sourceProject', 'test', 'sourceProject2'] }
+      }
     })
   } as UserDoc;
 
@@ -134,6 +142,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockProjectService.getProfile('alternateTrainingProject')).thenResolve(
         mockAlternateTrainingSourceProjectDoc
       );
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
       when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
       when(mockTrainingDataQuery.docs).thenReturn([]);
 
@@ -160,6 +169,55 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.unusableTranslateTargetBooks).toEqual([4, 5]);
       expect(component.unusableTrainingTargetBooks).toEqual([4, 5, 8]);
     }));
+
+    it('should allow selecting books from the alternate training source project', () => {
+      const trainingBooks = [3];
+      const trainingDataFiles: string[] = [];
+      const translationBooks = [2];
+
+      component.userSelectedTrainingBooks = trainingBooks;
+      component.userSelectedTranslateBooks = translationBooks;
+      component.selectedTrainingDataIds = trainingDataFiles;
+      component['draftSourceProjectIds'] = {
+        draftingSourceId: 'sourceProject',
+        trainingSourceId: 'sourceProject',
+        trainingAlternateSourceId: 'alternateTrainingProject'
+      };
+      component.onStepChange();
+      expect(component.availableTrainingBooks).toEqual(trainingBooks);
+      expect(component.selectableSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.userSelectedSourceTrainingBooks).toEqual(trainingBooks);
+      expect(fixture.nativeElement.querySelector('.books-appear-notice')).toBeNull();
+
+      component.onSourceTrainingBookSelect([]);
+      fixture.detectChanges();
+      expect(component.selectableSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.userSelectedSourceTrainingBooks).toEqual([]);
+      expect(fixture.nativeElement.querySelector('.books-appear-notice')).toBeNull();
+    });
+
+    it('does not allow selecting not selectable source training books', () => {
+      const trainingBooks = [3];
+      const trainingDataFiles: string[] = [];
+      const translationBooks = [2];
+
+      component.userSelectedTrainingBooks = trainingBooks;
+      component.userSelectedTranslateBooks = translationBooks;
+      component.selectedTrainingDataIds = trainingDataFiles;
+      component['draftSourceProjectIds'] = {
+        draftingSourceId: 'sourceProject',
+        trainingSourceId: 'sourceProject',
+        trainingAlternateSourceId: 'alternateTrainingProject'
+      };
+      component.onStepChange();
+      expect(component.availableTrainingBooks).toEqual(trainingBooks);
+      expect(component.selectableSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.userSelectedSourceTrainingBooks).toEqual(trainingBooks);
+
+      component.onSourceTrainingBookSelect([2, 3]);
+      fixture.detectChanges();
+      expect(component.userSelectedSourceTrainingBooks).toEqual(trainingBooks);
+    });
   });
 
   describe('NO alternate training source project', () => {
@@ -218,6 +276,8 @@ describe('DraftGenerationStepsComponent', () => {
     it('should select no books initially', () => {
       expect(component.initialSelectedTrainingBooks).toEqual([]);
       expect(component.userSelectedTrainingBooks).toEqual([]);
+      expect(component.userSelectedSourceTrainingBooks).toEqual([]);
+      expect(component.userSelectedAdditionalSourceTrainingBooks).toEqual([]);
       expect(component.initialSelectedTranslateBooks).toEqual([]);
       expect(component.userSelectedTranslateBooks).toEqual([]);
     });
@@ -230,6 +290,8 @@ describe('DraftGenerationStepsComponent', () => {
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
+      component.userSelectedSourceTrainingBooks = trainingBooks;
+      component['draftSourceProjectIds'] = { draftingSourceId: 'sourceProject', trainingSourceId: 'sourceProject' };
 
       spyOn(component.done, 'emit');
       expect(component.isStepsCompleted).toBe(false);
@@ -246,11 +308,9 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
-        trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book)),
         trainingDataFiles,
-        trainingScriptureRanges: [],
-        translationBooks,
-        translationScriptureRanges: [],
+        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'LEV' }],
+        translationScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
@@ -317,6 +377,143 @@ describe('DraftGenerationStepsComponent', () => {
     }));
   });
 
+  describe('additional training source project', () => {
+    beforeEach(fakeAsync(() => {
+      const mockTargetProjectDoc = {
+        data: createTestProjectProfile({
+          texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
+          translateConfig: {
+            source: { projectRef: 'sourceProject' },
+            draftConfig: {
+              additionalTrainingSourceEnabled: true,
+              additionalTrainingSource: { projectRef: 'sourceProject2' }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockUserService.getCurrentUser()).thenResolve(mockUserDoc);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+      when(mockProjectService.getProfile('sourceProject')).thenResolve(mockSourceNonNllbProjectDoc);
+      when(mockProjectService.getProfile('sourceProject2')).thenResolve(mockAdditionalTrainingSourceProjectDoc);
+      when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
+      when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
+      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataQuery.docs).thenReturn([]);
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      tick();
+      fixture.detectChanges();
+    }));
+
+    it('should show and hide selectable training source books when training books selected', () => {
+      const trainingBooks = [3];
+      const trainingDataFiles: string[] = [];
+      const translationBooks = [1, 2];
+
+      component.userSelectedTrainingBooks = [];
+      component.userSelectedTranslateBooks = translationBooks;
+      component.selectedTrainingDataIds = trainingDataFiles;
+      component.userSelectedSourceTrainingBooks = [];
+      component.userSelectedAdditionalSourceTrainingBooks = [];
+      component['availableAdditionalTrainingBooks'] = trainingBooks;
+      component['draftSourceProjectIds'] = {
+        draftingSourceId: 'sourceProject',
+        trainingSourceId: 'sourceProject',
+        trainingAdditionalSourceId: 'sourceProject2'
+      };
+      component.onStepChange();
+      fixture.detectChanges();
+      expect(component.availableTrainingBooks).toEqual(trainingBooks);
+      expect(component.selectableSourceTrainingBooks).toEqual([]);
+      expect(component.selectableAdditionalSourceTrainingBooks).toEqual([]);
+      expect(fixture.nativeElement.querySelector('.books-appear-notice')).not.toBeNull();
+
+      // select a training book
+      component.onTrainingBookSelect(trainingBooks);
+      fixture.detectChanges();
+      expect(component.selectableSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.selectableAdditionalSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.userSelectedSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.userSelectedAdditionalSourceTrainingBooks).toEqual(trainingBooks);
+      expect(fixture.nativeElement.querySelector('.books-appear-notice')).toBeNull();
+
+      // deselect all training books
+      component.onTrainingBookSelect([]);
+      fixture.detectChanges();
+      expect(component.selectableSourceTrainingBooks).toEqual([]);
+      expect(component.selectableAdditionalSourceTrainingBooks).toEqual([]);
+      expect(component.userSelectedSourceTrainingBooks).toEqual([]);
+      expect(component.userSelectedAdditionalSourceTrainingBooks).toEqual([]);
+      expect(fixture.nativeElement.querySelector('.books-appear-notice')).not.toBeNull();
+    });
+
+    it('should correctly emit the selected books when done', () => {
+      const trainingBooks = [3];
+      const trainingDataFiles: string[] = [];
+      const translationBooks = [1, 2];
+
+      component.userSelectedTrainingBooks = trainingBooks;
+      component.userSelectedTranslateBooks = translationBooks;
+      component.selectedTrainingDataIds = trainingDataFiles;
+      component.userSelectedSourceTrainingBooks = trainingBooks;
+      component.userSelectedAdditionalSourceTrainingBooks = trainingBooks;
+      component['draftSourceProjectIds'] = {
+        draftingSourceId: 'sourceProject',
+        trainingSourceId: 'sourceProject',
+        trainingAdditionalSourceId: 'sourceProject2'
+      };
+
+      spyOn(component.done, 'emit');
+      expect(component.isStepsCompleted).toBe(false);
+      // Advance to the next step when at last step should emit books result
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+
+      expect(component.done.emit).toHaveBeenCalledWith({
+        trainingDataFiles,
+        trainingScriptureRanges: [
+          { projectId: 'sourceProject', scriptureRange: 'LEV' },
+          { projectId: 'sourceProject2', scriptureRange: 'LEV' }
+        ],
+        translationScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
+        fastTraining: false
+      } as DraftGenerationStepsResult);
+      expect(component.isStepsCompleted).toBe(true);
+    });
+
+    it('does not allow selecting not selectable additional source training books', () => {
+      const trainingBooks = [3];
+      const trainingDataFiles: string[] = [];
+      const translationBooks = [1, 2];
+
+      component.userSelectedTrainingBooks = trainingBooks;
+      component.userSelectedTranslateBooks = translationBooks;
+      component.selectedTrainingDataIds = trainingDataFiles;
+      component['draftSourceProjectIds'] = {
+        draftingSourceId: 'sourceProject',
+        trainingSourceId: 'sourceProject',
+        trainingAdditionalSourceId: 'sourceProject2'
+      };
+      component.onStepChange();
+      expect(component.availableTrainingBooks).toEqual(trainingBooks);
+      expect(component.selectableSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.userSelectedSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.selectableAdditionalSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.userSelectedAdditionalSourceTrainingBooks).toEqual(trainingBooks);
+
+      component.onAdditionalSourceTrainingBookSelect([2, 3]);
+      fixture.detectChanges();
+      expect(component.userSelectedAdditionalSourceTrainingBooks).toEqual(trainingBooks);
+    });
+  });
+
   describe('allow fast training feature flag is enabled', () => {
     beforeEach(fakeAsync(() => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
@@ -340,6 +537,8 @@ describe('DraftGenerationStepsComponent', () => {
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
+      component.userSelectedSourceTrainingBooks = trainingBooks;
+      component['draftSourceProjectIds'] = { draftingSourceId: 'sourceProject', trainingSourceId: 'sourceProject' };
 
       spyOn(component.done, 'emit');
 
@@ -361,11 +560,9 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
-        trainingBooks,
         trainingDataFiles,
-        trainingScriptureRanges: [],
-        translationBooks,
-        translationScriptureRanges: [],
+        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
+        translationScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'LEV;NUM' }],
         fastTraining: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);

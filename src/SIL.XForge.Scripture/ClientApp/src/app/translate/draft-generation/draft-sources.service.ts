@@ -25,10 +25,11 @@ interface DraftSourceDoc {
 }
 
 export interface DraftSourceIds {
-  trainingSourceId: string;
+  trainingSourceId?: string;
   trainingAlternateSourceId?: string;
   trainingAdditionalSourceId?: string;
-  draftingSourceId: string;
+  draftingSourceId?: string;
+  draftingAlternateSourceId?: string;
 }
 
 export interface DraftSources {
@@ -129,9 +130,10 @@ export class DraftSourcesService {
               additionalTrainingSource: additionalTrainingSourceProjectDoc?.data,
               draftSourceIds: {
                 trainingSourceId: sourceProjectId,
-                trainingAlternateSourceId: alternateSourceProjectId,
+                trainingAlternateSourceId: alternateTrainingSourceProjectId,
                 trainingAdditionalSourceId: additionalTrainingSourceProjectId,
-                draftingSourceId: alternateSourceProjectId ?? sourceProjectId
+                draftingSourceId: sourceProjectId,
+                draftingAlternateSourceId: alternateSourceProjectId
               }
             };
           })
