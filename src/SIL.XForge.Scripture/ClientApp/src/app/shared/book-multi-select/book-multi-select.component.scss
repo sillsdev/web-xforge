@@ -1,5 +1,15 @@
 @use 'src/variables';
 
+.scope-selection {
+  display: flex;
+  align-items: center;
+  column-gap: 8px;
+
+  .project-name {
+    font-weight: 500;
+  }
+}
+
 .book-multi-select {
   .mat-mdc-standard-chip {
     position: relative;
@@ -21,29 +31,6 @@
     left: 0;
     height: 3px;
     background: black;
-  }
-}
-
-.bulk-select {
-  width: fit-content;
-  margin-top: 2px;
-  margin-block-end: 12px;
-  font-weight: 300;
-  div {
-    display: flex;
-    align-items: center;
-    column-gap: 12px;
-    button {
-      padding-inline: 12px;
-      font-weight: 300;
-      font-size: 16px;
-    }
-    mat-button-toggle {
-      width: 50px;
-    }
-    .mat-button-toggle-checked {
-      background-color: unset;
-    }
   }
 }
 
