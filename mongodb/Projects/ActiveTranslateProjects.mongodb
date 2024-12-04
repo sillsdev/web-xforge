@@ -13,5 +13,16 @@ db.texts.aggregate([
   }},
   {$group: {
     _id: {$first: { $split: ["$_id", ":"] } }
+  }},
+  {$lookup: {
+    from: 'sf_projects',
+    localField: '_id',
+    foreignField: '_id',
+    as: 'project'
+  }},
+  {$unwind: '$project'},
+  {$project: {
+    name: '$project.name',
+    shortName: '$project.shortName'
   }}
-]).toArray()
+]).toArray();
