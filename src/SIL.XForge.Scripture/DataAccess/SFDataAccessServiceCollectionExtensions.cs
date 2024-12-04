@@ -37,6 +37,7 @@ public static class SFDataAccessServiceCollectionExtensions
                 )
         );
         services.AddMongoRepository<SyncMetrics>("sync_metrics", cm => cm.MapIdProperty(sm => sm.Id));
+        services.AddMongoRepository<Notification>("notifications", cm => cm.MapIdProperty(n => n.Id));
 
         return services;
     }

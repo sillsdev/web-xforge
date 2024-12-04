@@ -3,12 +3,22 @@ import { Notification } from '../models/notification';
 import { SystemRole } from '../models/system-role';
 import { ValidationSchema } from '../models/validation-schema';
 import { DocService } from './doc-service';
+import { NOTIFICATION_MIGRATIONS } from './notification-migrations';
 
 /**
  * This class manages system-wide notification documents
  */
 export class NotificationService extends DocService<Notification> {
-  readonly indexPaths: string[] = [];
+  constructor() {
+    super(NOTIFICATION_MIGRATIONS);
+  }
+
+  readonly indexPaths: string[] = [
+    // Index for filtering active notifications by scope and pageIds
+    'expirationDate_1_scope_1_pageIds_1',
+    // Index for filtering active global notifications
+    'expirationDate_1_scope_1'
+  ];
   readonly collection = 'notifications';
 
   readonly validationSchema: ValidationSchema = {
@@ -53,11 +63,6 @@ export class NotificationService extends DocService<Notification> {
     },
     additionalProperties: false
   };
-
-  constructor() {
-    // No migrations needed for initial implementation
-    super([]);
-  }
 
   protected allowRead(_docId: string, _doc: Notification, _session: ConnectSession): boolean {
     // All users can read notifications
