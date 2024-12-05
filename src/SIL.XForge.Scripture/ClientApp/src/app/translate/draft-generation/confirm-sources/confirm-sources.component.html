@@ -1,0 +1,52 @@
+<ng-container *transloco="let t; read: 'confirm_draft_sources'">
+  <h1 class="mat-headline-4">{{ t("review_draft_setup") }}</h1>
+  <h2>{{ t("training_language_model") }}</h2>
+  <div class="training-data">
+    <div class="source-description">
+      <h3>{{ t("references_heading", { referenceLanguage }) }}</h3>
+    </div>
+    <span class="gap"></span>
+    <div class="target-description">
+      <h3>{{ t("targets_heading", { targetLanguage }) }}</h3>
+    </div>
+    <div class="sources">
+      @for (project of trainingSources; track project.paratextId) {
+        <div class="project">
+          <span class="project-name">{{ project.name }}</span>
+          <span class="language-code">
+            {{ t("language_code") }} <strong>{{ project.writingSystem.tag }}</strong>
+          </span>
+        </div>
+      }
+    </div>
+    <span class="arrow mirror-rtl"><mat-icon>arrow_right_alt</mat-icon></span>
+    <div class="targets">
+      @for (project of trainingTargets; track project.paratextId) {
+        <div class="project">
+          <span class="project-name">{{ project.name }}</span>
+          <span class="language-code">
+            {{ t("language_code") }} <strong>{{ project.writingSystem.tag }}</strong>
+          </span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <h2>{{ t("drafting_from_heading", { draftingSourceShortNames, draftingSourceLanguage }) }}</h2>
+  <div class="translation-data">
+    @for (project of draftingSources; track project.paratextId) {
+      <div class="project">
+        <span class="project-name">{{ project.name }}</span>
+        <span class="language-code">
+          {{ t("language_code") }} <strong>{{ project.writingSystem.tag }}</strong>
+        </span>
+      </div>
+    }
+  </div>
+
+  <app-notice mode="outline">
+    <strong>{{ t("incorrect_language_codes_reduce_quality") }}</strong>
+    <p>{{ t("how_to_change_language_codes") }}</p>
+    <mat-checkbox (change)="confirmationChanged($event)">{{ t("confirm_lang_codes_correct") }}</mat-checkbox>
+  </app-notice>
+</ng-container>

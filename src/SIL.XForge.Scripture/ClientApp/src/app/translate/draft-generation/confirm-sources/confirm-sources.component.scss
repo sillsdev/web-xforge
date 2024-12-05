@@ -1,0 +1,76 @@
+.training-data {
+  display: grid;
+  grid-template-areas: '. . .' '. . .';
+  row-gap: 1em;
+}
+
+.arrow mat-icon {
+  scale: 2;
+}
+
+.gap,
+.arrow {
+  padding-inline: 2em;
+}
+
+.training-data,
+.translation-data {
+  background: #f6f6f6;
+  border-radius: 4px;
+  padding: 1em;
+}
+
+.sources,
+.targets,
+.arrow {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1em;
+}
+
+.training-data h3 {
+  margin-block: 0;
+}
+
+.training-data p {
+  margin: 0;
+}
+
+h2 {
+  font-weight: 400;
+}
+
+h3,
+h4,
+strong {
+  font-weight: 500;
+}
+
+h1 {
+  margin-top: 1em;
+  margin-bottom: 0;
+}
+
+h2 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.project {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25em;
+}
+
+.project-name {
+  font-size: 1.1em;
+}
+
+.language-code {
+  font-size: 0.9em;
+}
+
+app-notice {
+  margin-top: 4em;
+}

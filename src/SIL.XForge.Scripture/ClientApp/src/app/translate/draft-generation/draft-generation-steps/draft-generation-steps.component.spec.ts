@@ -1,3 +1,4 @@
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -41,7 +42,11 @@ describe('DraftGenerationStepsComponent', () => {
       texts: [{ bookNum: 2 }, { bookNum: 1 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 100 }],
       writingSystem: { tag: 'eng' },
       translateConfig: {
-        source: { projectRef: 'test' }
+        source: {
+          projectRef: 'test',
+          shortName: 'TEST',
+          writingSystem: { tag: 'eng' }
+        }
       }
     })
   } as SFProjectProfileDoc;
@@ -228,10 +233,13 @@ describe('DraftGenerationStepsComponent', () => {
 
       spyOn(component.done, 'emit');
       expect(component.isStepsCompleted).toBe(false);
-      // Advance to the next step when at last step should emit books result
       fixture.detectChanges();
-      component.tryAdvanceStep();
+
+      clickConfirmLanguages(fixture);
+      const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      test[2].nativeElement.click(); //click the last step
       fixture.detectChanges();
+
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
       expect(generateDraftButton['disabled']).toBe(false);
       component.tryAdvanceStep();
@@ -284,11 +292,26 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       spyOn(component, 'updateTrainingBooks');
 
-      var test = fixture.debugElement.queryAll(By.css('mat-step-header'));
-      test[1].nativeElement.click(); //click the next step
+      clickConfirmLanguages(fixture);
+      const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      test[2].nativeElement.click(); //click the next step
       fixture.detectChanges();
 
       expect(component.updateTrainingBooks).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should only navigate to next step if language codes are verified', fakeAsync(() => {
+      fixture.detectChanges();
+      expect(component.stepper.selectedIndex).toBe(0);
+
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.stepper.selectedIndex).toBe(0);
+
+      clickConfirmLanguages(fixture);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.stepper.selectedIndex).toBe(1);
     }));
   });
 
@@ -318,11 +341,11 @@ describe('DraftGenerationStepsComponent', () => {
 
       spyOn(component.done, 'emit');
 
-      // Advance to the next step, until the last step which will allow selection of the checkbox
       fixture.detectChanges();
-      component.tryAdvanceStep();
+      clickConfirmLanguages(fixture);
+      const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      test[3].nativeElement.click(); //click the next step
       fixture.detectChanges();
-      component.tryAdvanceStep();
 
       // Tick the checkbox
       const fastTrainingCheckbox = fixture.nativeElement.querySelector('mat-checkbox.fast-training input');
@@ -378,4 +401,12 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.initialSelectedTranslateBooks).toEqual([2, 3]);
     });
   });
+
+  function clickConfirmLanguages(fixture: ComponentFixture<DraftGenerationStepsComponent>): void {
+    const notice: DebugElement = fixture.debugElement.query(By.css('app-notice'));
+    const checkboxDebug = notice.query(By.css('input[type="checkbox"]'));
+    const checkbox = checkboxDebug.nativeElement as HTMLInputElement;
+    checkbox.click();
+    fixture.detectChanges();
+  }
 });
