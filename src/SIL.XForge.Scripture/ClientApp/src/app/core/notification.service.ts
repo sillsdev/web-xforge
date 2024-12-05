@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Notification, NotificationScope } from 'realtime-server/lib/esm/common/models/notification';
 import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -7,22 +8,12 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
-import { Notification } from './models/notification';
-export enum NotificationType {
-  Obtrusive = 'Obtrusive',
-  Unobtrusive = 'Unobtrusive'
-}
-
-export enum NotificationScope {
-  Global = 'Global',
-  Page = 'Page'
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-  private activeNotifications = new BehaviorSubject<Notification[]>([]);
+  private activeNotifications = new BehaviorSubject<Readonly<Notification>[]>([]);
   private userDoc?: UserDoc;
   private currentQuery?: RealtimeQuery<NotificationDoc>;
 
@@ -52,17 +43,19 @@ export class NotificationService {
       $and: [
         { expirationDate: { $gt: new Date().toISOString() } },
         {
-          $or: [{ scope: 'Global' }, ...(pageIds ? [{ scope: 'Page', pageIds: { $in: pageIds } }] : [])]
+          $or: [
+            { scope: NotificationScope.Global },
+            ...(pageIds ? [{ scope: NotificationScope.Page, pageIds: { $in: pageIds } }] : [])
+          ]
         }
       ]
     };
 
-    this.currentQuery = await this.realtimeService.subscribeQuery('notifications', query);
-    // Set initial notifications
-    this.activeNotifications.next(this.currentQuery.docs.map(doc => doc.data as Notification));
-    // Subscribe to changes
+    this.currentQuery = await this.realtimeService.subscribeQuery(NotificationDoc.COLLECTION, query);
+    // The data from docs is already readonly, so this assignment is type-safe
+    this.activeNotifications.next(this.currentQuery.docs.map(doc => doc.data));
     void this.currentQuery.remoteChanges$.subscribe(() =>
-      this.activeNotifications.next(this.currentQuery.docs.map(doc => doc.data as Notification))
+      this.activeNotifications.next(this.currentQuery!.docs.map(doc => doc.data))
     );
   }
 

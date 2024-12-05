@@ -1,9 +1,6 @@
-import { NotificationScope } from './notification-scope';
-import { NotificationType } from './notification-type';
-
 export const NOTIFICATIONS_COLLECTION = 'notifications';
 
-/** Represents a notification that can be shown to users */
+/** Represents a message that can be shown to users */
 export interface Notification {
   id: string;
   title: string;
@@ -13,4 +10,14 @@ export interface Notification {
   pageIds?: string[];
   expirationDate: string;
   creationDate: string;
+}
+
+export enum NotificationType {
+  Obtrusive = 'Obtrusive',
+  Unobtrusive = 'Unobtrusive'
+}
+
+export enum NotificationScope {
+  Global = 'Global',
+  Page = 'Page'
 }
