@@ -198,8 +198,8 @@
           </as-split>
         </div>
       </div>
-      @if (projectDoc) {
-        <div id="question-nav">
+      @if (projectDoc && totalVisibleQuestions() > 0) {
+        <div id="question-nav" [ngClass]="{ hide: (textHasFocus && isScreenSmall) || showScriptureAudioPlayer }">
           @if (!isQuestionListPermanent) {
             <button mat-button type="button" (click)="setQuestionsOverlayVisibility(true)">
               {{ t("view_questions") }}

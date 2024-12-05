@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
@@ -32,8 +32,8 @@ import { QuestionDialogData } from '../../question-dialog/question-dialog.compon
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
 import { AudioAttachment } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
-import { CommentAction } from './checking-comments/checking-comments.component';
-import { CheckingInput } from './checking-input-form/checking-input-form.component';
+import { CheckingCommentsComponent, CommentAction } from './checking-comments/checking-comments.component';
+import { CheckingInput, CheckingInputFormComponent } from './checking-input-form/checking-input-form.component';
 import { CheckingQuestionComponent } from './checking-question/checking-question.component';
 
 export interface AnswerAction {
@@ -81,6 +81,8 @@ enum LikeAnswerResponse {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
+  @ViewChild(CheckingInputFormComponent) answerInput?: CheckingInputFormComponent;
+  @ViewChildren(CheckingCommentsComponent) allComments?: QueryList<CheckingCommentsComponent>;
   @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
