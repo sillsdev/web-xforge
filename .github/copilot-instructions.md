@@ -119,5 +119,6 @@ Data models are defined in each of the 3 applications, and should stay in sync.
 
 Localizations that a Community Checker user might see should be created or edited in src/SIL.XForge.Scripture/ClientApp/src/assets/i18n/checking_en.json. Only localizations that a Community Checker user will not see can be created or edited in src/SIL.XForge.Scripture/ClientApp/src/assets/i18n/non_checking_en.json.
 Even if something is a system-wide feature that isn't specific to community checking functionality, it should still be placed in checking_en.json if a community checking user would POSSIBLY see it.
+Do not localize the System Administration components in src/SIL.XForge.Scripture/ClientApp/src/xforge-common/system-administration.
 
 When fixing problems, please carefully examine the codebase to understand what the proper fix is.
