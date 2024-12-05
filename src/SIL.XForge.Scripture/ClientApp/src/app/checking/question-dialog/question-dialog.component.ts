@@ -8,7 +8,6 @@ import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -63,7 +62,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   constructor(
     private readonly dialogRef: MatDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>,
     @Inject(MAT_DIALOG_DATA) private data: QuestionDialogData,
-    private noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly dialogService: DialogService
   ) {
