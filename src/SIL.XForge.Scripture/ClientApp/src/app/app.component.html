@@ -33,7 +33,7 @@
         }
         <span class="toolbar-spacer"></span>
 
-        @if (isAppOnline) {
+        @if (isLoggedIn | async) {
           <button
             *ngIf="featureFlagService.showNotifications.enabled"
             mat-icon-button

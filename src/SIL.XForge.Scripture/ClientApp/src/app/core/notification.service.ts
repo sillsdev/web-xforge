@@ -16,6 +16,7 @@ export class NotificationService {
   private activeNotifications = new BehaviorSubject<Readonly<Notification>[]>([]);
   private userDoc?: UserDoc;
   private currentQuery?: RealtimeQuery<NotificationDoc>;
+  private initialized = false;
 
   constructor(
     private readonly realtimeService: RealtimeService,
@@ -23,12 +24,16 @@ export class NotificationService {
     private readonly userService: UserService
   ) {
     if (this.featureFlagService.showNotifications.enabled) {
-      void this.initUserDoc();
+      void this.init();
     }
   }
 
-  private async initUserDoc(): Promise<void> {
+  private async init(): Promise<void> {
+    //todo not a hack
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    //todo what about app component currentUser instead?
     this.userDoc = await this.realtimeService.subscribe<UserDoc>(UserDoc.COLLECTION, this.userService.currentUserId);
+    this.initialized = true;
   }
 
   getActiveNotifications(): Observable<Notification[]> {
@@ -36,6 +41,10 @@ export class NotificationService {
   }
 
   async loadNotifications(pageIds?: string[]): Promise<void> {
+    if (!this.initialized) {
+      return;
+    }
+
     // Clean up previous subscription
     this.currentQuery?.dispose();
 
@@ -60,7 +69,7 @@ export class NotificationService {
   }
 
   getUnviewedCount(pageId?: string): Observable<number> {
-    if (!this.featureFlagService.showNotifications.enabled) {
+    if (this.initialized === false || !this.featureFlagService.showNotifications.enabled) {
       return of(0);
     }
     return combineLatest([
