@@ -275,10 +275,11 @@ describe('TextComponent', () => {
     }
   }));
 
-  it('can highlight combined verses', fakeAsync(() => {
+  it('can highlight combined verses and extra verse segments', fakeAsync(() => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 41, 1);
+    env.component.highlightSegment = true;
     env.waitForEditor();
     env.hostComponent.isReadOnly = true;
 
@@ -287,20 +288,27 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.component.segment!.ref).toEqual('verse_1_2-3');
-    env.component.highlight();
     tick();
     env.fixture.detectChanges();
     expect(env.isSegmentHighlighted(1, '2-3')).toBe(true);
+    expect(env.getSegment('s_2').classList.contains('highlight-segment')).toBe(false);
 
     // segments overlaps on verse 3
     env.component.setSegment('verse_1_3');
     tick();
     env.fixture.detectChanges();
     expect(env.component.segment!.ref).toEqual('verse_1_2-3');
-    env.component.highlight();
     tick();
     env.fixture.detectChanges();
     expect(env.isSegmentHighlighted(1, '2-3')).toBe(true);
+    expect(env.getSegment('s_2').classList.contains('highlight-segment')).toBe(false);
+
+    env.component.setSegment('s_2');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.segment!.ref).toEqual('s_2');
+    expect(env.getSegment('s_2').classList.contains('highlight-segment')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '2-3')).toBe(false);
 
     TestEnvironment.waitForPresenceTimer();
   }));
@@ -1522,40 +1530,6 @@ describe('TextComponent', () => {
   }));
 });
 
-/** Represents both what the TextComponent understand to be the text in a segment, and what the editor
- * understands the length to be, which includes non-text items like icons. */
-interface SegmentContent {
-  text: string;
-  editorLength: number;
-}
-
-/** Represents a selection in the editor: Where it is, and what it contains. */
-interface SelectionSpecification {
-  segmentRef: string;
-  text: string;
-  startEditorPosInSegment: number;
-  editorLength: number;
-}
-
-/** Arguments for method. */
-interface PerformDropTestArgs {
-  env: TestEnvironment;
-  originSegmentRef: string;
-  targetSegmentRef: string;
-  originSegmentContentBeforeEvent: SegmentContent;
-  selectionBeforeEvent: SelectionSpecification;
-  targetSegmentContentBeforeEvent: SegmentContent;
-  expectedOriginSegmentContentAfterEvent: SegmentContent;
-  expectedTargetSegmentContentAfterEvent: SegmentContent;
-  expectedSelectionAfterEvent: SelectionSpecification;
-  segmentElementDropTarget: Element;
-  elementDropTarget: Element;
-  specificNodeDropTarget: ChildNode;
-  dropDistanceIn: number;
-  topLevelNodeSeriesBeforeEvent: string[];
-  expectedTopLevelNodeSeriesAfterEvent: string[];
-}
-
 class MockDragEvent extends DragEvent {
   private _target: EventTarget | null = null;
   private _dataTransfer: DataTransfer | null = null;
@@ -1850,94 +1824,6 @@ class TestEnvironment {
     const format = { iconsrc: iconSource, preview: text, threadid: id };
     this.component.embedElementInline(verseRef, id, role, textAnchor, 'note-thread-embed', format);
     this.component.toggleFeaturedVerseRefs(true, [verseRef], 'note-thread');
-  }
-
-  /** Helper method to perform a drag-and-drop and check expectations on resulting data, elements, and
-   *  editor selection. */
-  performDropTest({
-    env,
-    originSegmentRef,
-    targetSegmentRef,
-    originSegmentContentBeforeEvent,
-    selectionBeforeEvent,
-    targetSegmentContentBeforeEvent,
-    expectedOriginSegmentContentAfterEvent,
-    expectedTargetSegmentContentAfterEvent,
-    expectedSelectionAfterEvent,
-    elementDropTarget,
-    segmentElementDropTarget,
-    specificNodeDropTarget,
-    dropDistanceIn,
-    topLevelNodeSeriesBeforeEvent,
-    expectedTopLevelNodeSeriesAfterEvent
-  }: PerformDropTestArgs): void {
-    this.assertNodeOrder(segmentElementDropTarget, topLevelNodeSeriesBeforeEvent);
-
-    expect(env.component.getSegmentText(originSegmentRef))
-      .withContext('setup')
-      .toEqual(originSegmentContentBeforeEvent.text);
-    expect(env.component.getSegmentText(targetSegmentRef))
-      .withContext('setup')
-      .toEqual(targetSegmentContentBeforeEvent.text);
-
-    const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(selectionBeforeEvent.segmentRef);
-    if (originSegmentRange == null) {
-      throw Error();
-    }
-    const selectionStart: number = originSegmentRange.index + selectionBeforeEvent.startEditorPosInSegment;
-    const selectionLength: number = selectionBeforeEvent.editorLength;
-    env.component.editor?.setSelection(selectionStart, selectionLength);
-
-    const dataTransfer = new DataTransfer();
-    dataTransfer.setData('text/plain', selectionBeforeEvent.text);
-    dataTransfer.setData('text/html', `<span background="white">${selectionBeforeEvent.text}</span>`);
-    const dropEvent: MockDragEvent = new MockDragEvent('drop', {
-      dataTransfer,
-      cancelable: true
-    });
-    dropEvent.setTarget(elementDropTarget);
-
-    // eslint-disable-next-line deprecation/deprecation
-    document.caretRangeFromPoint = (_x: number, _y: number) =>
-      ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node }) as Range;
-
-    const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
-      dataTransfer,
-      cancelable: true
-    });
-    env.component.editor?.container.dispatchEvent(dragstartEvent);
-    tick();
-
-    // SUT
-    const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dropEvent);
-    flush();
-
-    expect(cancelled).withContext('should cancel browser acting').toBeTrue();
-    expect(env.component.getSegmentText(originSegmentRef))
-      .withContext('origin segment should be changed as expected')
-      .toEqual(expectedOriginSegmentContentAfterEvent.text);
-    expect(env.component.getSegmentText(targetSegmentRef))
-      .withContext('target segment should be changed as expected')
-      .toEqual(expectedTargetSegmentContentAfterEvent.text);
-
-    const targetSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(
-      expectedSelectionAfterEvent.segmentRef
-    );
-    if (targetSegmentRange == null) {
-      throw Error();
-    }
-    const desiredSelectionStart = targetSegmentRange.index + expectedSelectionAfterEvent.startEditorPosInSegment;
-    const desiredSelectionLength = expectedSelectionAfterEvent.editorLength;
-    const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
-    if (resultingSelection == null) {
-      throw Error();
-    }
-
-    // After text is dragged, the new selection should be the inserted text.
-    expect(resultingSelection.index).toEqual(desiredSelectionStart);
-    expect(resultingSelection.length).toEqual(desiredSelectionLength);
-
-    this.assertNodeOrder(segmentElementDropTarget, expectedTopLevelNodeSeriesAfterEvent);
   }
 
   performDeleteWordTest(
