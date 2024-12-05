@@ -78,6 +78,18 @@ This repository contains three interconnected applications:
 
 - Define clear validation rules using MongoDB schemas
 
+# Type Safety Guidelines
+
+- Use RealtimeDoc types for ShareDB documents
+
+# Realtime Data Guidelines
+
+- Clean up query subscriptions with dispose() when component is destroyed
+
+# Service Guidelines
+
+- Inject UserService for current user information rather than accessing through RealtimeService
+
 Do not remove existing comments from code. You can add to existing comments, but do not removing the existing comments.
 Do not insert new comments into the code where method calls already make it clear.
 Do not add method comments unless the method would be unclear to an experienced developer.
