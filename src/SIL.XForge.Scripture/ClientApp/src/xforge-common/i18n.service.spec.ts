@@ -121,6 +121,20 @@ describe('I18nService', () => {
     expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
   });
 
+  it('should support including the timezone in the date', () => {
+    const date = new Date('November 25, 1991 17:28');
+    const service = getI18nService();
+
+    // look for ending with something like " UTC+5" or " EST"
+    const trailingTimezoneRegex = / (UTC[\-+−]\d+|[A-Z]+)$/;
+
+    service.setLocale('fr');
+    expect(service.formatDate(date, { showTimeZone: true })).toMatch(trailingTimezoneRegex);
+
+    service.setLocale('az');
+    expect(service.formatDate(date, { showTimeZone: true })).toMatch(trailingTimezoneRegex);
+  });
+
   it('should interpolate translations around and within numbered template tags', done => {
     when(mockedTranslocoService.selectTranslate<string>('app.settings', anything())).thenReturn(
       of('A quick brown { 1 }fox{ 2 } jumps over the lazy { 3 }dog{ 4 }.')
