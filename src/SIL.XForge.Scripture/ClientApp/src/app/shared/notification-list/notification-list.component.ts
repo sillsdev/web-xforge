@@ -1,11 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { TranslocoModule } from '@ngneat/transloco';
+import { Notification } from 'realtime-server/lib/esm/common/models/notification';
+import { Observable } from 'rxjs';
+import { NotificationService } from '../../core/notification.service';
+import { NotificationComponent } from '../notification/notification.component';
 
-// src/SIL.XForge.Scripture/ClientApp/src/app/shared/notification-list/notification-list.component.ts
 @Component({
   selector: 'app-notification-list',
   template: `
-    <ng-container *transloco="let t">
+    <ng-container *transloco="let t; read: 'notifications-list'">
       <div class="notification-list">
         @if (notifications$ | async; as notifications) {
           @if (notifications.length === 0) {
@@ -43,7 +47,7 @@ import { Input } from '@angular/core';
   standalone: true,
   imports: [CommonModule, NotificationComponent, TranslocoModule]
 })
-export class NotificationListComponent {
+export class NotificationListComponent implements OnInit {
   @Input() pageId?: string;
   notifications$: Observable<Notification[]>;
 

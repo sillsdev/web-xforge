@@ -37,7 +37,7 @@
           <button
             *ngIf="featureFlagService.showNotifications.enabled"
             mat-icon-button
-            [title]="t('notifications')"
+            [title]="'notifications.notifications' | transloco"
             [matMenuTriggerFor]="notificationsMenu"
             [class.has-unviewed]="(unviewedCount$ | async) !== 0"
             class="notifications-button"

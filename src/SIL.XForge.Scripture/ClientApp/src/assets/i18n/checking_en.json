@@ -389,9 +389,9 @@
   },
   "notifications": {
     "notifications": "Notifications",
-    "no_notifications": "No notifications to display",
     "dismiss": "Dismiss"
   },
+  "notifications-list": { "no_notifications": "No notifications to display" },
   "roles": {
     "sf_community_checker": "Community Checker"
   },

@@ -1,9 +1,14 @@
-import { EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { TranslocoModule } from '@ngneat/transloco';
+import { Notification } from 'realtime-server/lib/esm/common/models/notification';
+import { NoticeComponent } from '../notice/notice.component';
 
 @Component({
   selector: 'app-notification',
   template: `
-    <ng-container *transloco="let t">
+    <ng-container *transloco="let t; read: 'notifications'">
       <div class="notification" [class.obtrusive]="notification.type === 'Obtrusive'">
         <app-notice [type]="noticeType" [mode]="noticeMode" [icon]="'notifications'">
           <h3>{{ notification.title }}</h3>
@@ -37,7 +42,7 @@ export class NotificationComponent {
     return this.notification.type === 'Obtrusive' ? 'warning' : 'info';
   }
 
-  get noticeMode(): NoticeMode {
+  get noticeMode(): 'fill-light' | 'fill-dark' {
     return this.notification.type === 'Obtrusive' ? 'fill-dark' : 'fill-light';
   }
 

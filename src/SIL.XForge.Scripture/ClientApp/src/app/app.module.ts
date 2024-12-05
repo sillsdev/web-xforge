@@ -33,6 +33,8 @@ import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings/settings.component';
+import { NotificationListComponent } from './shared/notification-list/notification-list.component';
+import { NotificationComponent } from './shared/notification/notification.component';
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
 import { SyncComponent } from './sync/sync.component';
@@ -62,6 +64,8 @@ import { UsersModule } from './users/users.module';
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     BrowserAnimationsModule,
     CoreModule,
+    NotificationComponent,
+    NotificationListComponent,
     ServiceWorkerModule.register('sf-service-worker.js', {
       enabled: environment.pwaTest || environment.production,
       registrationStrategy: 'registerImmediately'
