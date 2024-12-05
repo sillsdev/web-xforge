@@ -21,4 +21,14 @@ class UserMigration1 extends DocMigration {
   }
 }
 
-export const USER_MIGRATIONS: MigrationConstructor[] = [UserMigration1];
+class UserMigration2 extends DocMigration {
+  static readonly VERSION = 2;
+  async migrateDoc(doc: Doc): Promise<void> {
+    if (doc.data.viewedNotifications === undefined) {
+      const ops: Op[] = [{ p: ['viewedNotifications'], oi: {} }];
+      await submitMigrationOp(UserMigration2.VERSION, doc, ops);
+    }
+  }
+}
+
+export const USER_MIGRATIONS: MigrationConstructor[] = [UserMigration1, UserMigration2];

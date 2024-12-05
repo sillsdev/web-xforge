@@ -73,10 +73,12 @@ This repository contains three interconnected applications:
 - Test migrations on both empty and populated databases
 - Follow existing patterns in \*-migrations.ts files
 - Consider data validation before and after migration
+- Before writing a data migration, first look at the existing migrations in RealtimeServer, and understand how they are designed.
 
 # Collection Management
 
 - Define clear validation rules using MongoDB schemas
+- Collection indexes are defined via DocService.indexPaths
 
 # Type Safety Guidelines
 

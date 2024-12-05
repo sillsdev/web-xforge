@@ -89,7 +89,9 @@ export abstract class DocService<T = any> {
   async addValidationSchema(db: Db): Promise<void> {
     if (this.validationSchema != null) {
       const collectionExists = await db.listCollections({ name: this.collection }).hasNext();
-      if (!collectionExists) await db.createCollection(this.collection);
+      if (!collectionExists) {
+        await db.createCollection(this.collection);
+      }
       await db.command({
         collMod: this.collection,
         validator: {
