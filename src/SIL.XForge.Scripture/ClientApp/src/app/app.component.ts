@@ -38,8 +38,8 @@ import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
+import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { NotificationService } from './core/notification.service';
-import { SFProjectUserConfigDoc } from './core/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { checkAppAccess } from './shared/utils';
 

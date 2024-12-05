@@ -1,21 +1,13 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, combineLatest, of } from 'rxjs';
+import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { FeatureFlagService } from 'xforge-common/feature-flag.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { NotificationDoc } from 'xforge-common/models/notification-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { RealtimeService } from 'xforge-common/realtime.service';
-
-export interface Notification {
-  id: string;
-  title: string;
-  content: string;
-  type: NotificationType;
-  scope: NotificationScope;
-  pageIds?: string[];
-  expirationDate: string;
-  creationDate: string;
-}
-
+import { UserService } from 'xforge-common/user.service';
+import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
+import { Notification } from './models/notification';
 export enum NotificationType {
   Obtrusive = 'Obtrusive',
   Unobtrusive = 'Unobtrusive'
@@ -32,10 +24,12 @@ export enum NotificationScope {
 export class NotificationService {
   private activeNotifications = new BehaviorSubject<Notification[]>([]);
   private userDoc?: UserDoc;
+  private currentQuery?: RealtimeQuery<NotificationDoc>;
 
   constructor(
     private readonly realtimeService: RealtimeService,
-    private readonly featureFlagService: FeatureFlagService
+    private readonly featureFlagService: FeatureFlagService,
+    private readonly userService: UserService
   ) {
     if (this.featureFlagService.showNotifications.enabled) {
       void this.initUserDoc();
@@ -43,7 +37,7 @@ export class NotificationService {
   }
 
   private async initUserDoc(): Promise<void> {
-    this.userDoc = await this.realtimeService.subscribe<UserDoc>('user', this.realtimeService.currentUserId);
+    this.userDoc = await this.realtimeService.subscribe<UserDoc>('user', this.userService.currentUserId);
   }
 
   getActiveNotifications(): Observable<Notification[]> {
@@ -51,6 +45,9 @@ export class NotificationService {
   }
 
   async loadNotifications(pageIds?: string[]): Promise<void> {
+    // Clean up previous subscription
+    this.currentQuery?.dispose();
+
     const query: any = {
       $and: [
         { expirationDate: { $gt: new Date().toISOString() } },
@@ -59,8 +56,14 @@ export class NotificationService {
         }
       ]
     };
-    const notifications = await this.realtimeService.subscribeQuery('notifications', query);
-    this.activeNotifications.next(notifications);
+
+    this.currentQuery = await this.realtimeService.subscribeQuery('notifications', query);
+    // Set initial notifications
+    this.activeNotifications.next(this.currentQuery.docs.map(doc => doc.data as Notification));
+    // Subscribe to changes
+    void this.currentQuery.remoteChanges$.subscribe(() =>
+      this.activeNotifications.next(this.currentQuery.docs.map(doc => doc.data as Notification))
+    );
   }
 
   getUnviewedCount(pageId?: string): Observable<number> {
@@ -72,7 +75,7 @@ export class NotificationService {
       this.userDoc
         ? this.userDoc.remoteChanges$
         : this.realtimeService
-            .subscribe<UserDoc>('user', this.realtimeService.currentUserId)
+            .subscribe<UserDoc>('user', this.userService.currentUserId)
             .then(doc => doc.remoteChanges$)
     ]).pipe(
       map(

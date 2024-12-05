@@ -1,5 +1,5 @@
 import { ConnectSession } from '../connect-session';
-import { Notification } from '../models/notification';
+import { Notification, NOTIFICATIONS_COLLECTION } from '../models/notification';
 import { SystemRole } from '../models/system-role';
 import { ValidationSchema } from '../models/validation-schema';
 import { DocService } from './doc-service';
@@ -19,7 +19,7 @@ export class NotificationService extends DocService<Notification> {
     // Index for filtering active global notifications
     'expirationDate_1_scope_1'
   ];
-  readonly collection = 'notifications';
+  readonly collection = NOTIFICATIONS_COLLECTION;
 
   readonly validationSchema: ValidationSchema = {
     bsonType: DocService.validationSchema.bsonType,
