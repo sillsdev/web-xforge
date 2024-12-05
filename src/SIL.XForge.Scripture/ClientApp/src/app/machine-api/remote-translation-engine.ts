@@ -28,6 +28,8 @@ import { WordGraphDto } from './word-graph-dto';
 
 export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   private trainingStatus$?: Observable<ProgressStatus>;
+  private wordGraphQueue: Promise<void> = Promise.resolve();
+  private pendingWordGraphRequests = new Map<string, Promise<WordGraph>>();
 
   constructor(
     public readonly projectId: string,
@@ -58,6 +60,32 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   async getWordGraph(segment: string): Promise<WordGraph> {
+    // See if a request for this segment is already in progress
+    if (this.pendingWordGraphRequests.has(segment)) {
+      return this.pendingWordGraphRequests.get(segment)!;
+    }
+
+    // Add the request to the queue
+    const requestPromise = this.wordGraphQueue.then(() => this.executeGetWordGraphRequest(segment));
+
+    // Put the promise in the pendingRequests cache.
+    //
+    // This is so we can return the word graph for any pending requests
+    // that are for the same segment to stop duplicate requests.
+    // We do not cache already run word graph queries,
+    // as the SMT model may have changed via trainSegment().
+    this.pendingWordGraphRequests.set(segment, requestPromise);
+
+    // After the queue has run, remove the pending request
+    this.wordGraphQueue = requestPromise
+      .then(() => undefined)
+      .finally(() => this.pendingWordGraphRequests.delete(segment));
+
+    // Return the promise for the quests in the queue
+    return requestPromise;
+  }
+
+  private async executeGetWordGraphRequest(segment: string): Promise<WordGraph> {
     try {
       const response = await lastValueFrom(
         this.httpClient.post<WordGraphDto>(
