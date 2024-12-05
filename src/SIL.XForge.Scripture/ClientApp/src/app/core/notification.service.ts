@@ -28,7 +28,7 @@ export class NotificationService {
   }
 
   private async initUserDoc(): Promise<void> {
-    this.userDoc = await this.realtimeService.subscribe<UserDoc>('user', this.userService.currentUserId);
+    this.userDoc = await this.realtimeService.subscribe<UserDoc>(UserDoc.COLLECTION, this.userService.currentUserId);
   }
 
   getActiveNotifications(): Observable<Notification[]> {
@@ -68,7 +68,7 @@ export class NotificationService {
       this.userDoc
         ? this.userDoc.remoteChanges$
         : this.realtimeService
-            .subscribe<UserDoc>('user', this.userService.currentUserId)
+            .subscribe<UserDoc>(UserDoc.COLLECTION, this.userService.currentUserId)
             .then(doc => doc.remoteChanges$)
     ]).pipe(
       map(

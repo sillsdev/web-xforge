@@ -66,6 +66,7 @@ This repository contains three interconnected applications:
 - Follow existing patterns for DocService implementations
 - Initialize collections with proper indexes and validation
 - Test migrations with both empty and existing data
+- Do not refer to collection names using string literals, but instead use FooDoc.COLLECTION.
 
 # Migration Guidelines
 
