@@ -869,7 +869,7 @@ public class MachineProjectServiceTests
                     CancellationToken.None
                 )
         );
-        env.ParatextService.DidNotReceiveWithAnyArgs().GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>());
+        env.ParatextService.DidNotReceiveWithAnyArgs().GetWritingSystem(Arg.Any<UserSecret>(), Arg.Any<string>());
     }
 
     [Test]
@@ -889,8 +889,8 @@ public class MachineProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
         // Delete the project mid-sync (normally this would be done out of process)
-        env.ParatextService.GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>())
-            .Returns(string.Empty)
+        env.ParatextService.GetWritingSystem(Arg.Any<UserSecret>(), Arg.Any<string>())
+            .Returns(new WritingSystem())
             .AndDoes(_ => projectDoc.DeleteAsync());
 
         // SUT
@@ -904,7 +904,7 @@ public class MachineProjectServiceTests
                     CancellationToken.None
                 )
         );
-        env.ParatextService.Received(1).GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>());
+        env.ParatextService.Received(1).GetWritingSystem(Arg.Any<UserSecret>(), Arg.Any<string>());
     }
 
     [Test]
@@ -951,8 +951,10 @@ public class MachineProjectServiceTests
         env.Service.Configure()
             .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: true, CancellationToken.None)
             .Returns(Task.FromResult(TranslationEngine02));
-        env.ParatextService.GetLanguageId(Arg.Any<UserSecret>(), Paratext01).Returns(sourceLanguage);
-        env.ParatextService.GetLanguageId(Arg.Any<UserSecret>(), Paratext03).Returns(targetLanguage);
+        env.ParatextService.GetWritingSystem(Arg.Any<UserSecret>(), Paratext01)
+            .Returns(new WritingSystem { Tag = sourceLanguage });
+        env.ParatextService.GetWritingSystem(Arg.Any<UserSecret>(), Paratext03)
+            .Returns(new WritingSystem { Tag = targetLanguage });
 
         // Retrieve required objects
         await using IConnection connection = await env.RealtimeService.ConnectAsync();
@@ -988,8 +990,10 @@ public class MachineProjectServiceTests
         env.Service.Configure()
             .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: false, CancellationToken.None)
             .Returns(Task.FromResult(TranslationEngine02));
-        env.ParatextService.GetLanguageId(Arg.Any<UserSecret>(), Paratext01).Returns(sourceLanguage);
-        env.ParatextService.GetLanguageId(Arg.Any<UserSecret>(), Paratext03).Returns(targetLanguage);
+        env.ParatextService.GetWritingSystem(Arg.Any<UserSecret>(), Paratext01)
+            .Returns(new WritingSystem { Tag = sourceLanguage });
+        env.ParatextService.GetWritingSystem(Arg.Any<UserSecret>(), Paratext03)
+            .Returns(new WritingSystem { Tag = targetLanguage });
 
         // Retrieve required objects
         await using IConnection connection = await env.RealtimeService.ConnectAsync();
@@ -1069,7 +1073,7 @@ public class MachineProjectServiceTests
                     CancellationToken.None
                 )
         );
-        env.ParatextService.DidNotReceiveWithAnyArgs().GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>());
+        env.ParatextService.DidNotReceiveWithAnyArgs().GetWritingSystem(Arg.Any<UserSecret>(), Arg.Any<string>());
     }
 
     [Test]
