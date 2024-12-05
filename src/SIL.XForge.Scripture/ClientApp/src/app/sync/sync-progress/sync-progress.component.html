@@ -1,19 +1,23 @@
-<div *transloco="let t; read: 'sync'">
-  <div class="sync-header">
-    <h3>{{ activeSyncProjectName }}</h3>
-  </div>
-  <div class="sync-status">
-    @if (syncPhaseMessage.includes("_percent")) {
-      {{ t(syncPhaseMessage, { progressPercent: phasePercentage }) }}
-    } @else {
-      {{ t(syncPhaseMessage) }}
-    }
-  </div>
+<div class="sync-progress">
+  @if (showSyncStatus) {
+    <div *transloco="let t; read: 'sync'">
+      <div class="sync-header">
+        <h3>{{ activeSyncProjectName }}</h3>
+      </div>
+      <div class="sync-status">
+        @if (syncPhaseMessage.includes("_percent")) {
+          {{ t(syncPhaseMessage, { progressPercent: phasePercentage }) }}
+        } @else {
+          {{ t(syncPhaseMessage) }}
+        }
+      </div>
+    </div>
+  }
+  <mat-progress-bar
+    class="progress-bar"
+    [mode]="(syncProgressMode$ | async) ?? 'indeterminate'"
+    [value]="syncProgressPercent$ | async"
+    [bufferValue]="1"
+    color="accent"
+  ></mat-progress-bar>
 </div>
-<mat-progress-bar
-  class="progress-bar"
-  [mode]="(syncProgressMode$ | async) ?? 'indeterminate'"
-  [value]="syncProgressPercent$ | async"
-  [bufferValue]="1"
-  color="accent"
-></mat-progress-bar>

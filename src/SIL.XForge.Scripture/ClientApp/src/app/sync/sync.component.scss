@@ -16,6 +16,12 @@
   min-width: 25rem;
 }
 
+.sync-progress {
+  display: flex;
+  flex-direction: column;
+  row-gap: 2rem;
+}
+
 .sync-status,
 .sync-header {
   display: flex;
@@ -28,10 +34,6 @@
 
 app-sync-progress {
   width: 100%;
-}
-
-mat-progress-bar {
-  padding-top: 2rem;
 }
 
 #btn-log-in {

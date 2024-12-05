@@ -39,6 +39,7 @@ enum SyncPhase {
   styleUrl: '../sync.component.scss'
 })
 export class SyncProgressComponent extends SubscriptionDisposable {
+  @Input() showSyncStatus: boolean = true;
   @Output() inProgress: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   syncPhase: SyncPhase;
