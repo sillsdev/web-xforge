@@ -9,6 +9,7 @@ using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -49,6 +50,22 @@ public static class DataAccessServiceCollectionExtensions
         services.AddSingleton(sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
 
         services.AddMongoRepository<UserSecret>("user_secrets", cm => cm.MapIdProperty(us => us.Id));
+        services.AddMongoRepository<EventMetric>(
+            "event_metrics",
+            cm => cm.MapIdProperty(em => em.Id),
+            idx =>
+                idx.CreateMany(
+                    [
+                        new CreateIndexModel<EventMetric>(Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope)),
+                        new CreateIndexModel<EventMetric>(
+                            Builders<EventMetric>.IndexKeys.Ascending($"{nameof(EventMetric.Payload)}.projectId")
+                        ),
+                        new CreateIndexModel<EventMetric>(
+                            Builders<EventMetric>.IndexKeys.Ascending($"{nameof(EventMetric.Payload)}.userId")
+                        ),
+                    ]
+                )
+        );
 
         return services;
     }

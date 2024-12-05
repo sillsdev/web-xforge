@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac.Extras.DynamicProxy;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
 
+[Intercept(typeof(EventMetricLogger))]
 public interface ISFProjectService : IProjectService
 {
     Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings);
@@ -59,6 +62,8 @@ public interface ISFProjectService : IProjectService
         string audioUrl
     );
     Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter);
+
+    [LogEventMetric(EventScope.Drafting)]
     Task SetPreTranslateAsync(string curUserId, string[] systemRoles, string projectId, bool preTranslate);
     Task SetServalConfigAsync(string curUserId, string[] systemRoles, string projectId, string? servalConfig);
     Task SetDraftAppliedAsync(string userId, string projectId, int book, int chapter, bool draftApplied);
