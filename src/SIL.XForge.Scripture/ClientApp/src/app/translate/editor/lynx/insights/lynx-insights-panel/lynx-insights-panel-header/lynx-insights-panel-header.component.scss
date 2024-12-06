@@ -33,15 +33,28 @@
 .title {
   display: flex;
   align-items: center;
-  gap: 0.8em;
+  gap: 0.5em;
   font-size: 0.9em;
   font-weight: 700;
-  cursor: pointer;
+
+  button {
+    min-width: 0;
+    height: auto;
+    padding: 0.3em;
+  }
 
   mat-icon {
     width: auto;
     height: auto;
     font-size: 1.2em;
+    margin: 0;
+
+    &.menu-arrow {
+      position: absolute;
+      right: -0.3em;
+      bottom: -0.2em;
+      transform: rotate(45deg);
+    }
   }
 }
 
