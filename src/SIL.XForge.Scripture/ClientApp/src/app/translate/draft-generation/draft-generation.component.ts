@@ -446,7 +446,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       trainingScriptureRange: result.trainingScriptureRange,
       trainingScriptureRanges: result.trainingScriptureRanges,
       translationScriptureRange: result.translationScriptureRange,
-      translationScriptureRanges: result.trainingScriptureRanges,
+      translationScriptureRanges: result.translationScriptureRanges,
       fastTraining: result.fastTraining
     });
   }
@@ -568,7 +568,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   private hasStartedBuild(projectDoc: SFProjectProfileDoc): boolean {
     return (
       projectDoc.data?.translateConfig.preTranslate === true &&
-      projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationBooks.length > 0
+      projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange != null
     );
   }
 }

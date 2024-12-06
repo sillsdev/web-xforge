@@ -266,7 +266,7 @@ class TestEnvironment {
       ],
       translateConfig: {
         preTranslate: true,
-        draftConfig: { lastSelectedTranslationBooks: [40], lastSelectedTrainingBooks: [41] }
+        draftConfig: { lastSelectedTranslationScriptureRange: 'MAT', lastSelectedTrainingScriptureRange: 'MRK' }
       },
       userRoles: TestEnvironment.rolesByUser,
       biblicalTermsConfig: { biblicalTermsEnabled: true }

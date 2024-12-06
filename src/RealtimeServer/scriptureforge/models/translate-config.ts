@@ -27,6 +27,14 @@ export interface BaseProject {
   shortName: string;
 }
 
+/**
+ * A per-project scripture range.
+ */
+export interface ProjectScriptureRange {
+  projectId: string;
+  scriptureRange: string;
+}
+
 export interface DraftConfig {
   additionalTrainingData: boolean;
   additionalTrainingSourceEnabled: boolean;
@@ -38,6 +46,7 @@ export interface DraftConfig {
   lastSelectedTrainingBooks: number[];
   lastSelectedTrainingDataFiles: string[];
   lastSelectedTrainingScriptureRange?: string;
+  lastSelectedTrainingScriptureRanges?: ProjectScriptureRange[];
   lastSelectedTranslationBooks: number[];
   lastSelectedTranslationScriptureRange?: string;
   servalConfig?: string;
