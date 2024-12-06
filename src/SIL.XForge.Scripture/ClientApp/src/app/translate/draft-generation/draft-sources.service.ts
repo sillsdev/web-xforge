@@ -23,12 +23,22 @@ export interface DraftSource {
 interface DraftSourceDoc {
   data: DraftSource;
 }
+
+export interface DraftSourceIds {
+  trainingSourceId?: string;
+  trainingAlternateSourceId?: string;
+  trainingAdditionalSourceId?: string;
+  draftingSourceId?: string;
+  draftingAlternateSourceId?: string;
+}
+
 export interface DraftSources {
   target?: Readonly<DraftSource>;
   source?: Readonly<DraftSource>;
   alternateSource?: Readonly<DraftSource>;
   alternateTrainingSource?: Readonly<DraftSource>;
   additionalTrainingSource?: Readonly<DraftSource>;
+  draftSourceIds?: DraftSourceIds;
 }
 
 @Injectable({
@@ -117,7 +127,14 @@ export class DraftSourcesService {
               source: sourceDoc?.data,
               alternateSource: alternateSourceDoc?.data,
               alternateTrainingSource: alternateTrainingSourceDoc?.data,
-              additionalTrainingSource: additionalTrainingSourceProjectDoc?.data
+              additionalTrainingSource: additionalTrainingSourceProjectDoc?.data,
+              draftSourceIds: {
+                trainingSourceId: sourceProjectId,
+                trainingAlternateSourceId: alternateTrainingSourceProjectId,
+                trainingAdditionalSourceId: additionalTrainingSourceProjectId,
+                draftingSourceId: sourceProjectId,
+                draftingAlternateSourceId: alternateSourceProjectId
+              }
             };
           })
         );
