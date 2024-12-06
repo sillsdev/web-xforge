@@ -27,7 +27,6 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { isString } from '../../../../type-utils';
 import { Delta, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { TextDocService } from '../../../core/text-doc.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
@@ -68,8 +67,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    readonly onlineStatusService: OnlineStatusService,
-    private readonly textDocService: TextDocService
+    readonly onlineStatusService: OnlineStatusService
   ) {}
 
   ngOnChanges(): void {

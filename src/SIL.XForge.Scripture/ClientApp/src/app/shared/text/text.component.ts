@@ -2,7 +2,6 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -246,7 +245,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _placeholder?: string;
   private currentUserDoc?: UserDoc;
   private readonly cursorColorStorageKey = 'cursor_color';
-  private displayMessage: string = '';
   private isDestroyed: boolean = false;
   private localPresenceChannel?: LocalPresence<PresenceData>;
   private localPresenceDoc?: LocalPresence<RangeStatic | null>;
@@ -266,7 +264,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     private readonly transloco: TranslocoService,
     private readonly userService: UserService,
     private readonly viewModel: TextViewModel,
-    private readonly destroyRef: DestroyRef,
     private readonly textDocService: TextDocService
   ) {
     super();
