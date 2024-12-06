@@ -1,16 +1,18 @@
-@model RazorPageSettings
 @using Microsoft.AspNetCore.Builder
 @using Microsoft.AspNetCore.Localization
 @using Microsoft.Extensions.Options
+@using SIL.XForge.Models
+@using SIL.XForge.Scripture.Services
+@inject IRazorPageSettings Settings
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
 @inject IOptions<RequestLocalizationOptions> LocOptions
 
 @{
     var requestCulture = Context.Features.Get<IRequestCultureFeature>();
-    var locale = LocOptions.Value.SupportedUICultures.Where(c =>
-    SharedResource.Cultures[c.IetfLanguageTag].Tags.Contains(@requestCulture.RequestCulture.UICulture.Name)
+    InterfaceLanguage? locale = LocOptions.Value.SupportedUICultures?.Where(c =>
+    SharedResource.Cultures[c.IetfLanguageTag].Tags.Contains(requestCulture.RequestCulture.UICulture.Name)
     ).Select(c => SharedResource.Cultures[c.IetfLanguageTag]).First();
-    var helps = "https://help.scriptureforge.org/" + (locale.Helps ?? "");
+    string helps = "https://help.scriptureforge.org/" + (locale?.Helps ?? string.Empty);
 }
 
 <footer>
@@ -22,12 +24,12 @@
                         <li class="copyright">&copy; @DateTime.Now.Year
                             <a target="_blank" href="http://www.sil.org">SIL International</a>
                         </li>
-                        <li class="version">@Model.ProductVersion</li>
+                        <li class="version">@Settings.GetProductVersion()</li>
                     </ul>
                     <ul class="links">
                         <li><a asp-page="Terms">@SharedLocalizer[SharedResource.Keys.Terms]</a></li>
                         <li><a asp-page="Privacy">@SharedLocalizer[SharedResource.Keys.Privacy]</a></li>
-                        <li><a asp-page="LearnMore">@SharedLocalizer[SharedResource.Keys.LearnMore]</a></li>
+                        <li><a href="https://help.scriptureforge.org">@SharedLocalizer[SharedResource.Keys.LearnMore]</a></li>
                         <li><a href="@helps" target="_blank">@SharedLocalizer[SharedResource.Keys.Help]</a></li>
                         <li><a href="https://community.scripture.software.sil.org/c/scripture-forge/19"
                                 target="_blank">@SharedLocalizer[SharedResource.Keys.CommunitySupport]</a></li>
@@ -43,8 +45,8 @@
         </div>
     </div>
 </footer>
-<script src="https://d2wy8f7a9ursnm.cloudfront.net/v6/bugsnag.min.js"></script>
+<script src="https://d2wy8f7a9ursnm.cloudfront.net/v8/bugsnag.min.js"></script>
 <script>
-    window.bugsnagClient = bugsnag(@Html.Raw(@Model.BugsnagConfig));
+    window.bugsnagClient = bugsnag(@Html.Raw(Settings.GetBugsnagConfig()));
 </script>
 <script src="~/lib/material-design-lite/js/material.min.js"></script>

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!--
-    Microsoft ResX Schema
-
+  <!-- 
+    Microsoft ResX Schema 
+    
     Version 2.0
-
-    The primary goals of this format is to allow a simple XML format
-    that is mostly human readable. The generation and parsing of the
-    various data types are done through the TypeConverter classes
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
     associated with the data types.
-
+    
     Example:
-
+    
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-
-    There are any number of "resheader" rows that contain simple
+                
+    There are any number of "resheader" rows that contain simple 
     name/value pairs.
-
-    Each data row contains a name, and value. The row also contains a
-    type or mimetype. Type corresponds to a .NET class that support
-    text/value conversion through the TypeConverter architecture.
-    Classes that don't support this are serialized and stored with the
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
     mimetype set.
-
-    The mimetype is used for serialized objects, and tells the
-    ResXResourceReader how to depersist the object. This is currently not
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
     extensible. For a given mimetype the value must be set accordingly:
-
-    Note - application/x-microsoft.net.object.binary.base64 is the format
-    that the ResXResourceWriter will generate, however the reader can
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
     read any of the formats listed below.
-
+    
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-
+    
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array
+    value   : The object must be serialized into a byte array 
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -123,41 +123,32 @@
   <data name="AboutEngaging" xml:space="preserve">
     <value>Scripture projects engage increasingly geographically diverse groups of heart language speakers.</value>
   </data>
-  <data name="AboutFlexible" xml:space="preserve">
-    <value>Flexible</value>
-  </data>
-  <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 Compile {0}unique questions{1} that fit your specific context.</value>
+  <data name="AboutDrafting" xml:space="preserve">
+    <value>2 Utilize advanced Artificial Intelligence to generate preliminary drafts from existing translations. This reduces the workload and speeds up the translation process, giving translators a head start.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>About Scripture Forge</value>
   </data>
-  <data name="AboutParatext" xml:space="preserve">
-    <value>Works with Paratext</value>
-  </data>
-  <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {2}Paratext integration{3} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {4}Paratext Notes{3}.</value>
+  <data name="AboutCollaborate" xml:space="preserve">
+    <value>1 Collaborative editing allows teams to draft and edit translations together efficiently. No more worrying about reconciling multiple versions—our platform ensures everyone stays on the same page.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Extend Your Reach with Scripture Checking</value>
   </data>
-  <data name="AboutUserEngagement" xml:space="preserve">
-    <value>User Engagement</value>
-  </data>
-  <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 {0}Invited users{1} can answer questions, leave comments on existing answers and like responses.</value>
+  <data name="AboutChecking" xml:space="preserve">
+    <value>3 Launch modular Community Checking campaigns to gather extensive feedback quickly. This tool ensures that translations are thorough and accurate by involving community members in the verification process.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>A free set of tools to do more with your Paratext project, wherever you are. </value>
+    <value>An online app for team-based translation, featuring AI help and tools for community review</value>
   </data>
-  <data name="EngageChecking" xml:space="preserve">
-    <value>Engage in community checking</value>
+  <data name="EngageDrafting" xml:space="preserve">
+    <value>Draft Generation</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
-    <value>Collaborate on Scripture</value>
+    <value>Collaborative Editing</value>
   </data>
-  <data name="EngageSuggestions" xml:space="preserve">
-    <value>Get suggestions as you type</value>
+  <data name="EngageChecking" xml:space="preserve">
+    <value>Community Checking</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Engage with the language community. Collaborate with your peers.</value>

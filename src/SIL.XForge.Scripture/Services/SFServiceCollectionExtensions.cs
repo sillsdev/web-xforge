@@ -11,6 +11,7 @@ public static class SFServiceCollectionExtensions
     public static IServiceCollection AddSFServices(this IServiceCollection services)
     {
         services.AddCommonServices();
+        services.AddTransient<IRazorPageSettings, RazorPageSettings>();
         services.AddSingleton<IAnonymousService, AnonymousService>();
         services.AddSingleton<ISyncService, SyncService>();
         services.AddSingleton<IParatextService, ParatextService>();
