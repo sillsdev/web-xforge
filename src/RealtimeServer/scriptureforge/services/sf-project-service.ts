@@ -19,6 +19,7 @@ import { SFProjectRole } from '../models/sf-project-role';
 const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   name: true,
   paratextId: true,
+  rolePermissions: true,
   userRoles: true,
   userPermissions: true,
   shortName: true,
@@ -117,9 +118,6 @@ export class SFProjectService extends ProjectService<SFProject> {
               }
             },
             additionalProperties: false
-          },
-          shareEnabled: {
-            bsonType: 'bool'
           },
           defaultNoteTagId: {
             bsonType: 'int'
@@ -323,9 +321,6 @@ export class SFProjectService extends ProjectService<SFProject> {
             bsonType: 'bool'
           },
           usersSeeEachOthersResponses: {
-            bsonType: 'bool'
-          },
-          shareEnabled: {
             bsonType: 'bool'
           },
           answerExportMethod: {

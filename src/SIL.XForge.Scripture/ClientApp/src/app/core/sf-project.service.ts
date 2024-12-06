@@ -245,6 +245,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineRetryInvoke<TransceleratorQuestion[]>('transceleratorQuestions', cancel, { projectId });
   }
 
+  async onlineSetRoleProjectPermissions(projectId: string, role: string, permissions: string[]): Promise<void> {
+    return (await this.onlineInvoke<void>('setRoleProjectPermissions', {
+      projectId,
+      role,
+      permissions
+    }))!;
+  }
+
   async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {
     return (await this.onlineInvoke<void>('setUserProjectPermissions', {
       projectId,

@@ -31,6 +31,15 @@
 
   > .checkbox-field {
     display: flex;
+
+    span {
+      display: block;
+    }
+
+    .description {
+      color: gray;
+      font-size: smaller;
+    }
   }
 
   > .tool-setting-field {

@@ -10,16 +10,11 @@ import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../../environments/environment';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import {
-  SF_DEFAULT_SHARE_ROLE,
-  SF_DEFAULT_TRANSLATE_SHARE_ROLE,
-  SF_PROJECT_ROLES
-} from '../../core/models/sf-project-role-info';
+import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
+import { ShareBaseComponent } from './share-base.component';
 
 export interface ShareDialogData {
   projectId: string;
@@ -35,7 +30,7 @@ export enum ShareLinkType {
   templateUrl: './share-dialog.component.html',
   styleUrls: ['./share-dialog.component.scss']
 })
-export class ShareDialogComponent extends SubscriptionDisposable {
+export class ShareDialogComponent extends ShareBaseComponent {
   // this is duplicated with the strings to ease their translation
   readonly ShareExpiration = {
     days_seven: 7,
@@ -54,7 +49,6 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   private readonly projectId?: string;
   private linkSharingKey: string | undefined;
   private linkSharingReady: boolean = false;
-  private projectDoc?: SFProjectProfileDoc;
   private _error: string | undefined;
 
   constructor(
@@ -65,9 +59,9 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly userService: UserService
+    userService: UserService
   ) {
-    super();
+    super(userService);
     this.projectId = this.data.projectId;
     Promise.all([
       this.projectService.getProfile(this.projectId),
@@ -90,12 +84,6 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       }
       this.subscribe(this.onlineStatusService.onlineStatus$, () => this.updateSharingKey());
     });
-  }
-
-  get availableRoles(): SFProjectRole[] {
-    return SF_PROJECT_ROLES.filter(info => info.canBeShared && this.userShareableRoles.includes(info.role)).map(
-      r => r.role
-    ) as SFProjectRole[];
   }
 
   get canUserChangeRole(): boolean {
@@ -134,14 +122,19 @@ export class ShareDialogComponent extends SubscriptionDisposable {
 
   get shareLinkUsageOptions(): ShareLinkType[] {
     const options: ShareLinkType[] = [];
+    const canShare = SF_PROJECT_RIGHTS.hasRight(
+      this.projectDoc.data,
+      this.userService.currentUserId,
+      SFProjectDomain.UserInvites,
+      Operation.Create
+    );
     if (this.isProjectAdmin) {
       options.push(ShareLinkType.Anyone);
       options.push(ShareLinkType.Recipient);
     } else if (
-      (this.shareRole === SFProjectRole.CommunityChecker &&
-        this.projectDoc?.data?.checkingConfig.checkingEnabled &&
-        this.projectDoc?.data?.checkingConfig.shareEnabled) ||
-      (this.shareRole !== SFProjectRole.CommunityChecker && this.projectDoc?.data?.translateConfig.shareEnabled)
+      canShare &&
+      ((this.shareRole === SFProjectRole.CommunityChecker && this.projectDoc?.data?.checkingConfig.checkingEnabled) ||
+        this.shareRole !== SFProjectRole.CommunityChecker)
     ) {
       options.push(ShareLinkType.Anyone);
     }
@@ -270,37 +263,5 @@ export class ShareDialogComponent extends SubscriptionDisposable {
         this.linkSharingKey = shareKey;
         this.linkSharingReady = true;
       });
-  }
-
-  private get userShareableRoles(): string[] {
-    const project = this.projectDoc?.data;
-    if (project == null) {
-      return [];
-    }
-    const userRole = project.userRoles[this.userService.currentUserId];
-    return [
-      {
-        role: SFProjectRole.CommunityChecker,
-        available: project.checkingConfig.checkingEnabled,
-        permission:
-          project.checkingConfig.shareEnabled &&
-          SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Questions, Operation.View)
-      },
-      {
-        role: SFProjectRole.Viewer,
-        available: true,
-        permission:
-          project.translateConfig.shareEnabled &&
-          SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View) &&
-          userRole !== SFProjectRole.CommunityChecker
-      },
-      {
-        role: SFProjectRole.Commenter,
-        available: true,
-        permission: this.isProjectAdmin
-      }
-    ]
-      .filter(info => info.available && (this.isProjectAdmin || info.permission))
-      .map(info => info.role as string);
   }
 }

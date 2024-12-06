@@ -6,5 +6,6 @@
     "outDir": "../lib/cjs/scriptureforge"
   },
   "references": [{ "path": "../common/tsconfig.build.json" }],
+  "include": ["**/*.ts", "rightsByRole.json"],
   "exclude": ["**/*.spec.ts"]
 }

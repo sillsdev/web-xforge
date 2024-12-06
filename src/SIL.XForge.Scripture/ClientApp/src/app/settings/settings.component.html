@@ -326,42 +326,77 @@
             }
           </mat-card-content>
           <mat-card-content>
-            <mat-card-title>{{ t("sharing") }}</mat-card-title>
+            <mat-card-title>{{ t("sharing_settings") }}</mat-card-title>
+            <p class="helper-text">{{ t("sharing_description") }}</p>
+            <h4>{{ t("sharing_paratext_members") }}</h4>
             <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
-                <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
-                  {{ t("shareTranslate") }}
+                <mat-checkbox [checked]="true" [disabled]="true">
+                  {{ t("sharing_administrators") }}
                 </mat-checkbox>
-                <app-info [text]="t('users_can_share_the_project')"></app-info>
+              </div>
+            </div>
+            <div class="tool-setting">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="translatorsShareEnabled" id="checkbox-translators-share">
+                  {{ t("sharing_translators") }}
+                </mat-checkbox>
                 <app-write-status
-                  [state]="getControlState('translateShareEnabled')"
+                  [state]="getControlState('translatorsShareEnabled')"
                   [formGroup]="form"
-                  id="translate-share-status"
+                  id="translators-share-status"
                 ></app-write-status>
               </div>
             </div>
+            <h4>{{ t("sharing_scripture_forge_guests") }}</h4>
+            <p class="helper-text">
+              <transloco
+                key="settings.sharing_scripture_forge_guests_help"
+                [params]="{
+                  rolesHelpUrl: 'https://help.scriptureforge.org/community-checking/#5aa7e3d8451f40cfa6b33c5dd39a3c6f'
+                }"
+              ></transloco>
+            </p>
             @if (isCheckingEnabled) {
               <div class="tool-setting">
                 <div class="tool-setting-field checkbox-field">
-                  <mat-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share">
-                    {{ t("shareChecking") }}
+                  <mat-checkbox formControlName="communityCheckersShareEnabled" id="checkbox-community-checkers-share">
+                    <span>{{ t("sharing_community_checkers") }}</span>
+                    <span class="description">{{ i18n.localizeRoleDescription(SFProjectRole.CommunityChecker) }}</span>
                   </mat-checkbox>
-                  <app-info [text]="t('users_can_share_the_project')"></app-info>
                   <app-write-status
-                    [state]="getControlState('checkingShareEnabled')"
+                    [state]="getControlState('communityCheckersShareEnabled')"
                     [formGroup]="form"
-                    id="checking-share-status"
+                    id="community-checkers-share-status"
                   ></app-write-status>
                 </div>
               </div>
             }
-            <div class="indent">
-              <mat-icon class="no-hover">admin_panel_settings</mat-icon>
-              <span>
-                <span [innerHTML]="shareDescription?.before"></span>
-                <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
-                <span>{{ shareDescription?.after }}</span>
-              </span>
+            <div class="tool-setting">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="commentersShareEnabled" id="checkbox-commenters-share">
+                  <span>{{ t("sharing_commenters") }}</span>
+                  <span class="description">{{ i18n.localizeRoleDescription(SFProjectRole.Commenter) }}</span>
+                </mat-checkbox>
+                <app-write-status
+                  [state]="getControlState('commentersShareEnabled')"
+                  [formGroup]="form"
+                  id="commenters-share-status"
+                ></app-write-status>
+              </div>
+            </div>
+            <div class="tool-setting">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="viewersShareEnabled" id="checkbox-viewers-share">
+                  <span>{{ t("sharing_viewers") }}</span>
+                  <span class="description">{{ i18n.localizeRoleDescription(SFProjectRole.Viewer) }}</span>
+                </mat-checkbox>
+                <app-write-status
+                  [state]="getControlState('viewersShareEnabled')"
+                  [formGroup]="form"
+                  id="viewers-share-status"
+                ></app-write-status>
+              </div>
             </div>
           </mat-card-content>
         </mat-card>

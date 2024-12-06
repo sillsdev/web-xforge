@@ -223,8 +223,7 @@ class TestEnvironment {
       id: 'project01',
       data: createTestProjectProfile({
         translateConfig: {
-          translationSuggestionsEnabled: user1Config.translationSuggestionsEnabled,
-          shareEnabled: true
+          translationSuggestionsEnabled: user1Config.translationSuggestionsEnabled
         },
         userRoles: { user01: SFProjectRole.ParatextTranslator }
       })

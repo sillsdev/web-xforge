@@ -48,6 +48,12 @@ public class SFProjectServiceTests
     private const string LinkExpiredUser = "linkexpireduser";
     private const string SiteId = "xf";
     private const string PTProjectIdNotYetInSF = "paratext_notYetInSF";
+    private const string Role01 = "role01";
+    private static readonly string[] Permissions =
+    [
+        SFProjectRights.JoinRight(SFProjectDomain.Answers, Operation.Create),
+        SFProjectRights.JoinRight(SFProjectDomain.AnswerComments, Operation.Create),
+    ];
 
     [Test]
     public async Task InviteAsync_ProjectAdminSharingDisabled_UserInvited()
@@ -255,7 +261,6 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
-        Assert.That(project.CheckingConfig.ShareEnabled, Is.True, "setup");
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
         // SUT
@@ -437,7 +442,7 @@ public class SFProjectServiceTests
     public async Task GetLinkSharingKeyAsync_LinkDoesNotExist_NewShareKeyCreated()
     {
         var env = new TestEnvironment();
-        await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings { });
+        await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings());
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == null), Is.False);
         env.SecurityService.GenerateKey().Returns("newkey");
@@ -580,30 +585,34 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
+    public void JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-        await env.Service.UpdateSettingsAsync(
-            User02,
-            Project02,
-            new SFProjectSettings { CheckingShareEnabled = false }
-        );
+        env.ProjectRights.RoleHasRight(
+                project: Arg.Is<SFProject>(p => p.Id == Project02),
+                role: SFProjectRole.CommunityChecker,
+                SFProjectDomain.UserInvites,
+                Operation.Create
+            )
+            .Returns(false);
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing02"));
     }
 
     [Test]
-    public async Task JoinWithShareKeyAsync_LinkFromAdmin_SharingDisabledAndUserNotOnProject_Success()
+    public void JoinWithShareKeyAsync_LinkFromAdmin_SharingDisabledAndUserNotOnProject_Success()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-        await env.Service.UpdateSettingsAsync(
-            User02,
-            Project02,
-            new SFProjectSettings { CheckingShareEnabled = false }
-        );
+        env.ProjectRights.RoleHasRight(
+                project: Arg.Is<SFProject>(p => p.Id == Project02),
+                role: SFProjectRole.CommunityChecker,
+                SFProjectDomain.UserInvites,
+                Operation.Create
+            )
+            .Returns(false);
         Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "reusableLinkFromAdmin"));
     }
 
@@ -827,13 +836,13 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(4), "setup");
 
-        await env.Service.UpdateSettingsAsync(
+        await env.Service.SetRoleProjectPermissionsAsync(
             User01,
             Project03,
-            new SFProjectSettings { CheckingShareEnabled = false }
+            SFProjectRole.CommunityChecker,
+            permissions: []
         );
         project = env.GetProject(Project03);
-        Assert.That(project.CheckingConfig.ShareEnabled, Is.False, "setup");
         await env.Service.JoinWithShareKeyAsync(User03, "key1234");
 
         project = env.GetProject(Project03);
@@ -1455,7 +1464,6 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         Assert.That(env.GetProject(Project06).CheckingConfig.CheckingEnabled, Is.False);
-        Assert.That(env.GetProject(Project06).CheckingConfig.ShareEnabled, Is.True);
         Assert.That(
             env.GetProject(Project06).UserRoles.GetValueOrDefault(User01, null),
             Is.EqualTo(SFProjectRole.CommunityChecker)
@@ -1470,8 +1478,6 @@ public class SFProjectServiceTests
     public async Task IsAlreadyInvitedAsync_CheckingSharingDisabledTranslateSharingEnabled_False()
     {
         var env = new TestEnvironment();
-        Assert.That(env.GetProject(Project04).CheckingConfig.ShareEnabled, Is.False);
-        Assert.That(env.GetProject(Project04).TranslateConfig.ShareEnabled, Is.True);
         Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project04, "user@example.com"), Is.False);
     }
 
@@ -1480,7 +1486,6 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         Assert.That(env.GetProject(Project02).CheckingConfig.CheckingEnabled, Is.True);
-        Assert.That(env.GetProject(Project02).CheckingConfig.ShareEnabled, Is.True);
         Assert.That(env.GetProject(Project02).UserRoles.GetValueOrDefault(User01, null), Is.Null);
 
         Assert.ThrowsAsync<ForbiddenException>(
@@ -1504,12 +1509,12 @@ public class SFProjectServiceTests
         invitees = await env.Service.InvitedUsersAsync(User01, Project03);
         Assert.That(invitees.Count, Is.EqualTo(4));
         string[] expectedEmailList =
-        {
+        [
             "bob@example.com",
             "expired@example.com",
             "user03@example.com",
-            "bill@example.com"
-        };
+            "bill@example.com",
+        ];
         Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expectedEmailList));
     }
 
@@ -2655,22 +2660,39 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_EnableSharing_NoSync()
+    public void UpdateSettingsAsync_CheckingShareEnabled_Forbidden()
     {
         var env = new TestEnvironment();
 
-        await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { CheckingShareEnabled = true });
+        // SUT
+#pragma warning disable CS0618 // Type or member is obsolete
+        Assert.ThrowsAsync<ForbiddenException>(
+            () =>
+                env.Service.UpdateSettingsAsync(
+                    User01,
+                    Project01,
+                    new SFProjectSettings { CheckingShareEnabled = true }
+                )
+        );
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
 
-        SFProject project = env.GetProject(Project01);
-        Assert.That(project.CheckingConfig.ShareEnabled, Is.True);
+    [Test]
+    public void UpdateSettingsAsync_TranslateShareEnabled_Forbidden()
+    {
+        var env = new TestEnvironment();
 
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
+        // SUT
+#pragma warning disable CS0618 // Type or member is obsolete
+        Assert.ThrowsAsync<ForbiddenException>(
+            () =>
+                env.Service.UpdateSettingsAsync(
+                    User01,
+                    Project01,
+                    new SFProjectSettings { TranslateShareEnabled = true }
+                )
+        );
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Test]
@@ -2753,8 +2775,7 @@ public class SFProjectServiceTests
             Is.EqualTo(projectCount + 1),
             "should have increased"
         );
-        SFProject newProject = env.RealtimeService.GetRepository<SFProject>().Get(sfProjectId);
-        Assert.That(newProject.CheckingConfig.ShareEnabled, Is.False, "Should default to not shared (SF-1142)");
+        _ = env.RealtimeService.GetRepository<SFProject>().Get(sfProjectId);
     }
 
     [Test]
@@ -3936,6 +3957,123 @@ public class SFProjectServiceTests
         );
     }
 
+    [Test]
+    public void TransceleratorQuestionsAsync_Forbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.TransceleratorQuestionsAsync(User02, Project01));
+    }
+
+    [Test]
+    public async Task TransceleratorQuestionsAsync_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.TransceleratorQuestionsAsync(User01, Project01);
+        env.TransceleratorService.Received().Questions(Arg.Any<string>());
+    }
+
+    [Test]
+    public void SetRoleProjectPermissionsAsync_AdminCannotGrantPermissionsTheyDoNotHave()
+    {
+        var env = new TestEnvironment();
+        env.ProjectRights.HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05), User01, Permissions).Returns(false);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetRoleProjectPermissionsAsync(User01, Project05, Role01, Permissions)
+        );
+    }
+
+    [Test]
+    public async Task SetRoleProjectPermissionsAsync_AdminHasPermission()
+    {
+        var env = new TestEnvironment();
+        Project project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.RolePermissions.Count, "setup");
+
+        // Admin can give a role question permission
+        await env.Service.SetRoleProjectPermissionsAsync(User01, Project05, Role01, Permissions);
+        project = env.GetProject(Project05);
+        Assert.AreEqual(1, project.RolePermissions.Count);
+        project.RolePermissions.TryGetValue(Role01, out string[] value);
+        Assert.AreEqual(Permissions, value);
+
+        // Admin can revoke permission, which removes the key value pair from the RolePermissions property
+        await env.Service.SetRoleProjectPermissionsAsync(User01, Project05, Role01, []);
+        project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.RolePermissions.Count);
+    }
+
+    [Test]
+    public void SetRoleProjectPermissionsAsync_NonAdminDoesNotHavePermission()
+    {
+        var env = new TestEnvironment();
+        Project project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.RolePermissions.Count, "setup");
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetRoleProjectPermissionsAsync(User02, Project05, Role01, Permissions)
+        );
+
+        // Permissions are not updated
+        project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.RolePermissions.Count);
+    }
+
+    [Test]
+    public void SetUserProjectPermissionsAsync_AdminCannotGrantPermissionsTheyDoNotHave()
+    {
+        var env = new TestEnvironment();
+        env.ProjectRights.HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05), User01, Permissions).Returns(false);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetUserProjectPermissionsAsync(User01, Project05, User02, Permissions)
+        );
+    }
+
+    [Test]
+    public async Task SetUserProjectPermissionsAsync_AdminHasPermission()
+    {
+        var env = new TestEnvironment();
+        Project project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.UserPermissions.Count, "setup");
+
+        // Admin can give user question permission
+        await env.Service.SetUserProjectPermissionsAsync(User01, Project05, User02, Permissions);
+        project = env.GetProject(Project05);
+        Assert.AreEqual(1, project.UserPermissions.Count);
+        project.UserPermissions.TryGetValue(User02, out string[] value);
+        Assert.AreEqual(Permissions, value);
+
+        // Admin can revoke permission, which removes the key value pair from the UserPermissions property
+        await env.Service.SetUserProjectPermissionsAsync(User01, Project05, User02, []);
+        project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.UserPermissions.Count);
+    }
+
+    [Test]
+    public void SetUserProjectPermissionsAsync_NonAdminDoesNotHavePermission()
+    {
+        var env = new TestEnvironment();
+        Project project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.UserPermissions.Count, "setup");
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetUserProjectPermissionsAsync(User02, Project05, User02, Permissions)
+        );
+
+        // Permissions are not updated
+        project = env.GetProject(Project05);
+        Assert.AreEqual(0, project.UserPermissions.Count);
+    }
+
     private class TestEnvironment
     {
         public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);
@@ -4056,7 +4194,6 @@ public class SFProjectServiceTests
                             {
                                 PreTranslate = true,
                                 TranslationSuggestionsEnabled = true,
-                                ShareEnabled = true,
                                 Source = new TranslateSource
                                 {
                                     ProjectRef = Resource01,
@@ -4067,7 +4204,7 @@ public class SFProjectServiceTests
                                 },
                                 DraftConfig = new DraftConfig { ServalConfig = "{ existingConfig: true }" },
                             },
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = false },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
                             UserRoles = new Dictionary<string, string>
                             {
                                 { User01, SFProjectRole.Administrator },
@@ -4075,9 +4212,23 @@ public class SFProjectServiceTests
                                 { User05, SFProjectRole.Translator },
                                 { User06, SFProjectRole.Viewer },
                             },
+                            RolePermissions =
+                            {
+                                {
+                                    SFProjectRole.Viewer,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                                },
+                            },
                             UserPermissions = new Dictionary<string, string[]>
                             {
-                                { User03, ["text_audio.create", "text_audio.delete"] },
+                                {
+                                    User03,
+
+                                    [
+                                        SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Create),
+                                        SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Delete),
+                                    ]
+                                },
                                 { User05, [] },
                             },
                             Texts =
@@ -4127,7 +4278,14 @@ public class SFProjectServiceTests
                             Name = "project02",
                             ShortName = "P02",
                             ParatextId = "paratext_" + Project02,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = true },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
+                            RolePermissions =
+                            {
+                                {
+                                    SFProjectRole.CommunityChecker,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                                },
+                            },
                             UserRoles =
                             {
                                 { User02, SFProjectRole.Administrator },
@@ -4140,7 +4298,7 @@ public class SFProjectServiceTests
                             Name = "project03",
                             ShortName = "P03",
                             ParatextId = "paratext_" + Project03,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = true },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
                             TranslateConfig =
                             {
                                 TranslationSuggestionsEnabled = false,
@@ -4149,6 +4307,13 @@ public class SFProjectServiceTests
                                     ProjectRef = SourceOnly,
                                     ParatextId = "pt_source_no_suggestions",
                                     Name = "Source Only Project",
+                                },
+                            },
+                            RolePermissions =
+                            {
+                                {
+                                    SFProjectRole.CommunityChecker,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
                                 },
                             },
                             UserRoles =
@@ -4166,7 +4331,13 @@ public class SFProjectServiceTests
                             {
                                 TranslationSuggestionsEnabled = true,
                                 Source = new TranslateSource { ProjectRef = "Invalid_Source", ParatextId = "P04" },
-                                ShareEnabled = true,
+                            },
+                            RolePermissions =
+                            {
+                                {
+                                    SFProjectRole.Viewer,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                                },
                             },
                             UserRoles =
                             {
@@ -4192,7 +4363,7 @@ public class SFProjectServiceTests
                                     WritingSystem = new WritingSystem { Tag = "qaa" },
                                 },
                             },
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = false },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
                             UserRoles = new Dictionary<string, string>
                             {
                                 { User01, SFProjectRole.Administrator },
@@ -4242,7 +4413,14 @@ public class SFProjectServiceTests
                             Id = Project06,
                             Name = "project06",
                             ParatextId = "paratext_" + Project06,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = false, ShareEnabled = true },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = false },
+                            RolePermissions =
+                            {
+                                {
+                                    SFProjectRole.CommunityChecker,
+                                    [SFProjectRights.JoinRight(SFProjectDomain.UserInvites, Operation.Create)]
+                                },
+                            },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.CommunityChecker },
@@ -4414,14 +4592,14 @@ public class SFProjectServiceTests
                                 Key = "abcd",
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                             new ShareKey
                             {
                                 Key = "onetimekeyalreadyused",
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                                 RecipientUserId = User03,
                             },
                         ],
@@ -4436,13 +4614,14 @@ public class SFProjectServiceTests
                                 Key = "linksharing02",
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Anyone,
+                                CreatedByRole = SFProjectRole.CommunityChecker,
                             },
                             new ShareKey
                             {
                                 Key = "reusableLinkFromAdmin",
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Anyone,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                             new ShareKey
                             {
@@ -4451,7 +4630,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                         ],
                     },
@@ -4467,7 +4646,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                             new ShareKey
                             {
@@ -4476,7 +4655,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(-1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                             new ShareKey
                             {
@@ -4485,7 +4664,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                             new ShareKey
                             {
@@ -4494,7 +4673,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                         ],
                     },
@@ -4508,6 +4687,7 @@ public class SFProjectServiceTests
                                 Key = "linksharing04",
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Anyone,
+                                CreatedByRole = SFProjectRole.Viewer,
                             },
                         ],
                     },
@@ -4523,7 +4703,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                         ],
                     },
@@ -4538,7 +4718,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(-1),
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                             new ShareKey
                             {
@@ -4546,14 +4726,14 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(-2),
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Anyone,
-                                CreatedByAdmin = false,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                             new ShareKey
                             {
                                 Key = "usedKey",
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                                 RecipientUserId = User02,
                             },
                             new ShareKey
@@ -4562,7 +4742,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                                 Reserved = true,
                             },
                             new ShareKey
@@ -4570,7 +4750,7 @@ public class SFProjectServiceTests
                                 Key = "toBeReservedKey",
                                 ProjectRole = SFProjectRole.Commenter,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                             new ShareKey
                             {
@@ -4578,6 +4758,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Anyone,
+                                CreatedByRole = SFProjectRole.CommunityChecker,
                             },
                             new ShareKey
                             {
@@ -4585,14 +4766,14 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                             },
                             new ShareKey
                             {
                                 Key = "maxUsersReached",
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true,
+                                CreatedByRole = SFProjectRole.Administrator,
                                 UsersGenerated = 250,
                             },
                         ],
@@ -4645,8 +4826,105 @@ public class SFProjectServiceTests
             Localizer = new StringLocalizer<SharedResource>(factory);
             SecurityService = Substitute.For<ISecurityService>();
             SecurityService.GenerateKey().Returns("1234abc");
-            var transceleratorService = Substitute.For<ITransceleratorService>();
+            TransceleratorService = Substitute.For<ITransceleratorService>();
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
+
+            // These project rights correspond to the permissions in the projects above
+            ProjectRights = Substitute.For<ISFProjectRights>();
+            ProjectRights
+                .HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05 || p.Id == Project03), User01, Permissions)
+                .Returns(true);
+            ProjectRights
+                .HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05 || p.Id == Project03), User01, permissions: [])
+                .Returns(true);
+            ProjectRights
+                .RoleHasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01 || p.Id == Project04),
+                    role: SFProjectRole.Viewer,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .RoleHasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project02 || p.Id == Project03 || p.Id == Project06),
+                    role: SFProjectRole.CommunityChecker,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .RoleHasRight(
+                    project: Arg.Any<SFProject>(),
+                    role: SFProjectRole.Administrator,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project02 || p.Id == Project03 || p.Id == Project04),
+                    User02,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01 || p.Id == Project03),
+                    userId: Arg.Is<string>(u => u == User01 || u == User06),
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project06),
+                    User07,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User01,
+                    SFProjectDomain.Questions,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User03,
+                    SFProjectDomain.TextAudio,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User01,
+                    SFProjectDomain.TextAudio,
+                    Operation.Delete
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User01,
+                    SFProjectDomain.TextAudio,
+                    Operation.Create
+                )
+                .Returns(true);
+            ProjectRights
+                .HasRight(
+                    project: Arg.Is<SFProject>(p => p.Id == Project01),
+                    User03,
+                    SFProjectDomain.TextAudio,
+                    Operation.Delete
+                )
+                .Returns(true);
 
             ParatextService
                 .IsResource(Arg.Any<string>())
@@ -4669,8 +4947,9 @@ public class SFProjectServiceTests
                 UserSecrets,
                 translateMetrics,
                 Localizer,
-                transceleratorService,
-                BackgroundJobClient
+                TransceleratorService,
+                BackgroundJobClient,
+                ProjectRights
             );
         }
 
@@ -4686,7 +4965,9 @@ public class SFProjectServiceTests
         public IParatextService ParatextService { get; }
         public IStringLocalizer<SharedResource> Localizer { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
+        public ITransceleratorService TransceleratorService { get; set; }
         public IBackgroundJobClient BackgroundJobClient { get; }
+        public ISFProjectRights ProjectRights { get; }
 
         public SFProject GetProject(string id) => RealtimeService.GetRepository<SFProject>().Get(id);
 
