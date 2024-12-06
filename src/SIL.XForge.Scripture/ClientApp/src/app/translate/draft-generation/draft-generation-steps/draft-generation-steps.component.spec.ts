@@ -59,6 +59,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockSourceNonNllbProjectDoc = {
     data: createTestProjectProfile({
+      paratextId: 'sourcePt1',
       texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 100 }],
       writingSystem: { tag: 'xyz' }
     })
@@ -73,6 +74,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockAlternateTrainingSourceProjectDoc = {
     data: createTestProjectProfile({
+      paratextId: 'sourcePtAlt1',
       texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }, { bookNum: 100 }],
       writingSystem: { tag: 'xyz' }
     })
@@ -80,6 +82,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockAdditionalTrainingSourceProjectDoc = {
     data: createTestProjectProfile({
+      paratextId: 'sourcePt2',
       texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }, { bookNum: 100 }],
       writingSystem: { tag: 'xyz' }
     })
@@ -226,6 +229,7 @@ describe('DraftGenerationStepsComponent', () => {
         trainingAlternateSourceId: 'alternateTrainingProject'
       };
       component.onStepChange();
+      fixture.detectChanges();
       expect(component.availableTrainingBooks).toEqual(trainingBooks);
       expect(component.selectableSourceTrainingBooks).toEqual(trainingBooks);
       expect(component.userSelectedSourceTrainingBooks).toEqual(trainingBooks);
@@ -352,7 +356,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
         trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'LEV' }],
-        translationScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
+        translationScriptureRange: 'GEN;EXO',
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
@@ -425,10 +429,14 @@ describe('DraftGenerationStepsComponent', () => {
         data: createTestProjectProfile({
           texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
           translateConfig: {
-            source: { projectRef: 'sourceProject' },
+            source: { projectRef: 'sourceProject', writingSystem: { tag: 'xyz' }, paratextId: 'sourcePT1' },
             draftConfig: {
               additionalTrainingSourceEnabled: true,
-              additionalTrainingSource: { projectRef: 'sourceProject2' }
+              additionalTrainingSource: {
+                projectRef: 'sourceProject2',
+                writingSystem: { tag: 'xyz' },
+                paratextId: 'sourcePT2'
+              }
             }
           }
         })
@@ -493,7 +501,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(fixture.nativeElement.querySelector('.books-appear-notice')).not.toBeNull();
     });
 
-    it('should correctly emit the selected books when done', () => {
+    it('should correctly emit the selected books when done', fakeAsync(() => {
       const trainingBooks = [3];
       const trainingDataFiles: string[] = [];
       const translationBooks = [1, 2];
@@ -510,8 +518,12 @@ describe('DraftGenerationStepsComponent', () => {
       };
 
       spyOn(component.done, 'emit');
+      fixture.detectChanges();
+      clickConfirmLanguages(fixture);
       expect(component.isStepsCompleted).toBe(false);
       // Advance to the next step when at last step should emit books result
+      fixture.detectChanges();
+      component.tryAdvanceStep();
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
@@ -524,11 +536,11 @@ describe('DraftGenerationStepsComponent', () => {
           { projectId: 'sourceProject', scriptureRange: 'LEV' },
           { projectId: 'sourceProject2', scriptureRange: 'LEV' }
         ],
-        translationScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
+        translationScriptureRange: 'GEN;EXO',
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
-    });
+    }));
 
     it('does not allow selecting not selectable additional source training books', () => {
       const trainingBooks = [3];
@@ -604,7 +616,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
         trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
-        translationScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'LEV;NUM' }],
+        translationScriptureRange: 'LEV;NUM',
         fastTraining: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
@@ -620,7 +632,7 @@ describe('DraftGenerationStepsComponent', () => {
           draftConfig: {
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationScriptureRange: 'GEN;EXO',
-            lastSelectedTrainingScriptureRange: 'LEV'
+            lastSelectedTrainingScriptureRanges: [{ projectId: 'test', scriptureRange: 'LEV' }]
           }
         }
       })

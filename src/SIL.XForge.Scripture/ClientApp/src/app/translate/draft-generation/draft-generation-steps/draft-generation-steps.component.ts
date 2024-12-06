@@ -4,6 +4,7 @@ import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
+import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { merge, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -21,7 +22,6 @@ import { SharedModule } from '../../../shared/shared.module';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
-import { ProjectScriptureRange } from '../draft-generation';
 import { DraftSource, DraftSourceIds, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataUploadDialogComponent } from '../training-data/training-data-upload-dialog.component';
@@ -32,7 +32,7 @@ export interface DraftGenerationStepsResult {
   trainingScriptureRange?: string;
   trainingScriptureRanges: ProjectScriptureRange[];
   translationScriptureRange?: string;
-  translationScriptureRanges: ProjectScriptureRange[];
+  translationScriptureRanges?: ProjectScriptureRange[];
   fastTraining: boolean;
 }
 
@@ -330,14 +330,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
           )
         );
       }
-      const translationScriptureRange: ProjectScriptureRange = this.convertToScriptureRange(
-        this.draftSourceProjectIds!.draftingSourceId,
-        this.userSelectedTranslateBooks
-      );
       this.done.emit({
         trainingScriptureRanges,
         trainingDataFiles: this.selectedTrainingDataIds,
-        translationScriptureRanges: [translationScriptureRange],
+        translationScriptureRange: this.userSelectedTranslateBooks.map(b => Canon.bookNumberToId(b)).join(';'),
         fastTraining: this.fastTraining
       });
     }
@@ -405,8 +401,18 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   private setInitialTrainingBooks(availableBooks: number[]): void {
     // Get the previously selected training books from the target project
-    const previousTrainingRange: string =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange ?? '';
+    const trainingSourceId =
+      this.draftSourceProjectIds?.trainingAlternateSourceId ?? this.draftSourceProjectIds?.trainingSourceId;
+    let previousTrainingRange: string =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges?.find(
+        r => r.projectId === trainingSourceId
+      )?.scriptureRange ?? '';
+    const trainingScriptureRange =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange;
+    if (previousTrainingRange === '' && trainingScriptureRange != null) {
+      previousTrainingRange =
+        this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange ?? '';
+    }
     const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTrainingRange));
 
     // The intersection is all of the available books in the source project that match the target's previous books
