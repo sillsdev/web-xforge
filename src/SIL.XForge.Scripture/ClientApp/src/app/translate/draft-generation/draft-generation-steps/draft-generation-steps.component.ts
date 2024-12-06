@@ -18,7 +18,7 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { SharedModule } from '../../../shared/shared.module';
-import { projectLabel } from '../../../shared/utils';
+import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { ProjectScriptureRange } from '../draft-generation';
@@ -391,12 +391,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   private setInitialTranslateBooks(availableBooks: number[]): void {
     // Get the previously selected translation books from the target project
-    const previousBooks: Set<number> = new Set<number>(
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationBooks ?? []
-    );
+    const previousTranslationRange: string =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange ?? '';
+    const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTranslationRange));
 
     // The intersection is all of the available books in the source project that match the target's previous books
-    const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
+    const intersection: number[] = availableBooks.filter(bookNum => previousBooks.has(bookNum));
 
     // Set the selected books to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTranslateBooks = intersection.length > 0 ? intersection : [];
@@ -405,12 +405,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   private setInitialTrainingBooks(availableBooks: number[]): void {
     // Get the previously selected training books from the target project
-    const previousBooks: Set<number> = new Set<number>(
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingBooks ?? []
-    );
+    const previousTrainingRange: string =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange ?? '';
+    const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTrainingRange));
 
     // The intersection is all of the available books in the source project that match the target's previous books
-    const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
+    const intersection: number[] = availableBooks.filter(bookNum => previousBooks.has(bookNum));
 
     // Set the selected books to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTrainingBooks = intersection.length > 0 ? intersection : [];

@@ -618,9 +618,9 @@ describe('DraftGenerationStepsComponent', () => {
         translateConfig: {
           source: { projectRef: 'test' },
           draftConfig: {
-            lastSelectedTrainingBooks: [2, 3, 4],
             lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [2, 3, 4]
+            lastSelectedTranslationScriptureRange: 'GEN;EXO',
+            lastSelectedTrainingScriptureRange: 'LEV'
           }
         }
       })
@@ -639,9 +639,9 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
     }));
 
-    it('should restore previously selected books', () => {
-      expect(component.initialSelectedTrainingBooks).toEqual([2, 3]);
-      expect(component.initialSelectedTranslateBooks).toEqual([2, 3]);
+    it('should restore previously selected ranges', () => {
+      expect(component.initialSelectedTrainingBooks).toEqual([3]);
+      expect(component.initialSelectedTranslateBooks).toEqual([1, 2]);
     });
   });
 
