@@ -1,21 +1,8 @@
 @for (insight of insightCountsByType$ | async; track insight) {
   <div class="type-count">
-    @switch (insight.type) {
-      @case ("info") {
-        <mat-icon class="info-icon">info</mat-icon>
-      }
-
-      @case ("warning") {
-        <mat-icon class="warning-icon">warning</mat-icon>
-      }
-
-      @case ("error") {
-        <mat-icon class="error-icon">error</mat-icon>
-      }
-    }
-
-    <span>{{ insight.count }}</span>
+    <mat-icon [svgIcon]="'lynx_' + insight.type" />
+    <span [class]="insight.type">{{ insight.count }}</span>
   </div>
 } @empty {
-  <mat-icon class="no-insights-icon">check</mat-icon>
+  <mat-icon svgIcon="lynx_checkmark" />
 }

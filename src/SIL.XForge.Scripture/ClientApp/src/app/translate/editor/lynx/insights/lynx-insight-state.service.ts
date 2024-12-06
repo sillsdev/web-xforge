@@ -111,6 +111,17 @@ export class LynxInsightStateService {
       code: '2001'
     },
     {
+      id: '2b',
+      type: 'error',
+      chapter: 1,
+      book: 41,
+      range: {
+        index: 40,
+        length: 10
+      },
+      code: '3002'
+    },
+    {
       id: '3',
       type: 'error',
       chapter: 1,

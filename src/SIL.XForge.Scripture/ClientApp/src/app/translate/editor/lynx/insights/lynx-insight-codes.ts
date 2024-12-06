@@ -27,6 +27,7 @@ const codes = new Map<string, LynxInsightCode>([
   ['2011', { code: '2011', description: 'I warned you!' }],
   ['2002', { code: '2002', description: 'No such thing as "Information".' }],
   ['3001', { code: '3001', description: 'Better to ask forgiveness.' }],
+  ['3002', { code: '3002', description: 'Some error text.' }],
   ['2005', { code: '2005', description: 'Some warning text.' }],
   ['1005', { code: '1005', description: 'Some notice text.' }],
   ['1006', { code: '1006', description: 'Some notice text.' }],
