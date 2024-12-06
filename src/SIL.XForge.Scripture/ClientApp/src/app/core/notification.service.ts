@@ -19,6 +19,9 @@ import { objectId } from '../../xforge-common/utils';
 })
 export class NotificationService {
   private activeNotifications = new BehaviorSubject<Readonly<Notification>[]>([]);
+  activeNotificationDocsObservable$: Observable<readonly NotificationDoc[]>;
+  private activeNotificationDocs = new BehaviorSubject<readonly NotificationDoc[]>([]);
+
   private userDoc?: UserDoc;
   private currentQuery?: RealtimeQuery<NotificationDoc>;
 
@@ -27,6 +30,13 @@ export class NotificationService {
       await this.loadNotifications();
     }
     return this.activeNotifications.asObservable();
+  }
+
+  async getUnexpiredNotificationDocs(): Promise<Observable<readonly NotificationDoc[]>> {
+    if (this.currentQuery === undefined) {
+      await this.loadNotifications();
+    }
+    return this.activeNotificationDocs.asObservable();
   }
 
   async getCurrentUserDoc(): Promise<UserDoc> {
@@ -52,7 +62,6 @@ export class NotificationService {
   }
 
   async loadNotifications(pageIds?: string[]): Promise<void> {
-    // Clean up previous subscription
     this.currentQuery?.dispose();
     this.currentQuery = null;
 
@@ -69,18 +78,20 @@ export class NotificationService {
     };
 
     this.currentQuery = await this.realtimeService.subscribeQuery(NotificationDoc.COLLECTION, query);
-    // The data from docs is already readonly, so this assignment is type-safe
+    this.activeNotificationDocsObservable$ = this.currentQuery.docs$;
+    this.activeNotificationDocs.next(this.currentQuery.docs);
     this.activeNotifications.next(this.currentQuery.docs.map(doc => doc.data));
-    void this.currentQuery.remoteChanges$.subscribe(() =>
-      this.activeNotifications.next(this.currentQuery!.docs.map(doc => doc.data))
-    );
+    void this.currentQuery.remoteChanges$.subscribe(() => {
+      this.activeNotificationDocs.next(this.currentQuery.docs);
+      this.activeNotifications.next(this.currentQuery.docs.map(doc => doc.data));
+    });
   }
 
   getUnviewedCount(pageId?: string): Observable<number> {
     if (!this.featureFlagService.showNotifications.enabled) {
-      return of(0);
+      return of(2);
     }
-    return of(0);
+    return of(2);
     // todo review
 
     // return combineLatest([
