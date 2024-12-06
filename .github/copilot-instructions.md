@@ -27,7 +27,7 @@ This repository contains three interconnected applications:
 
 # Data Layer Guidelines
 
-- Define interfaces/models in all 3 applications
+- Define models in the C# dotnet backend and in the RealtimeServer backend. The frontend should import the RealtimeServer's model.
 - Use RealtimeService for CRUD operations
 - Follow existing patterns for validation schemas
 - Check permissions in both frontend and backend
@@ -82,6 +82,9 @@ This repository contains three interconnected applications:
 - Collection indexes are defined via DocService.indexPaths
 - Doc types for collections should be registered in src/SIL.XForge.Scripture/ClientApp/src/app/core/models/sf-type-registry.ts so that IndexeddbOfflineStore knows to create the collection in IndexedDB.
 - The `offlineDBVersion` number in all environment\*.ts files needs incremented so that an upgrade is triggered, which will result in any needed new collection being created in IndexedDB.
+- Only collections that are not using RealtimeServer/ShareDB should be added to the Data Access service collection extensions. Any collections that are managed using RealtimeServer/ShareDB should not be registered in the C# Data Access service collection extensions classes.
+- Examples of collections that are managed by RealtimeServer/ShareDB include: biblical_terms, note_threads, questions, sf_project_user_configs, sf_projects, text_audio, texts, training_data, users.
+- Examples of collections that are not managed by RealtimeServer/ShareDB include: schema_versions, sf_project_secrets, sync_metrics, translation_metrics, user_secrets.
 
 # Type Safety Guidelines
 

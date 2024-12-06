@@ -4,11 +4,10 @@ using SIL.XForge.Models;
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
-/// Represents a notification that can be shown to users in the application.
+/// Represents a notification that can be shown to users.
 /// </summary>
-public class Notification : IIdentifiable
+public class Notification : Json0Snapshot
 {
-    public string Id { get; set; } = "";
     public string Title { get; set; } = "";
     public string Content { get; set; } = "";
     public NotificationType Type { get; set; }

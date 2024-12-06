@@ -2,7 +2,6 @@ export const NOTIFICATIONS_COLLECTION = 'notifications';
 
 /** Represents a message that can be shown to users */
 export interface Notification {
-  id: string;
   title: string;
   content: string;
   type: NotificationType;

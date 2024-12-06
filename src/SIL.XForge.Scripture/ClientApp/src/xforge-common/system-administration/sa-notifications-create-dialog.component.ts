@@ -96,7 +96,6 @@ export class SaNotificationsDialogComponent {
   submit(): void {
     if (this.notificationForm.valid) {
       const notification: Notification = {
-        id: objectId(),
         ...this.notificationForm.value,
         expirationDate: new Date(this.notificationForm.value.expirationDate).toISOString(),
         creationDate: new Date().toISOString()
