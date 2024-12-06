@@ -222,7 +222,9 @@ describe('ServalProjectComponent', () => {
                 shortName: 'P4'
               },
               lastSelectedTrainingBooks: preTranslate ? [1, 2] : [],
-              lastSelectedTranslationBooks: preTranslate ? [3, 4] : []
+              lastSelectedTranslationBooks: preTranslate ? [3, 4] : [],
+              lastSelectedTrainingScriptureRange: preTranslate ? 'GEN;EXO' : undefined,
+              lastSelectedTranslationScriptureRange: preTranslate ? 'LEV;NUM' : undefined
             },
             preTranslate,
             source: {

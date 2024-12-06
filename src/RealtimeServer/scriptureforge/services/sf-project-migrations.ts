@@ -1,3 +1,4 @@
+import { Canon } from '@sillsdev/scripture';
 import { Doc, Op } from 'sharedb/lib/client';
 import { DocMigration, MigrationConstructor } from '../../common/migration';
 import { Operation } from '../../common/models/project-rights';
@@ -387,6 +388,38 @@ class SFProjectMigration21 extends DocMigration {
   }
 }
 
+class SFProjectMigration22 extends DocMigration {
+  static readonly VERSION = 22;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange == null) {
+      const trainingRangeFromBooks: string[] = doc.data.translateConfig.draftConfig.lastSelectedTrainingBooks.map(
+        (b: number) => Canon.bookNumberToId(b)
+      );
+      if (trainingRangeFromBooks.length > 0) {
+        ops.push({
+          p: ['translateConfig', 'draftConfig', 'lastSelectedTrainingScriptureRange'],
+          oi: trainingRangeFromBooks.join(';')
+        });
+      }
+    }
+    if (doc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange == null) {
+      const translationRangeFromBooks: string[] = doc.data.translateConfig.draftConfig.lastSelectedTranslationBooks.map(
+        (b: number) => Canon.bookNumberToId(b)
+      );
+      if (translationRangeFromBooks.length > 0) {
+        ops.push({
+          p: ['translateConfig', 'draftConfig', 'lastSelectedTranslationScriptureRange'],
+          oi: translationRangeFromBooks.join(';')
+        });
+      }
+    }
+
+    await submitMigrationOp(SFProjectMigration21.VERSION, doc, ops);
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -408,5 +441,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration18,
   SFProjectMigration19,
   SFProjectMigration20,
-  SFProjectMigration21
+  SFProjectMigration21,
+  SFProjectMigration22
 ];
