@@ -1,7 +1,10 @@
 <ng-container *transloco="let t; read: 'lynx_insights_panel_header'">
-  <div class="title" [matMenuTriggerFor]="filterMenu">
+  <div class="title">
     {{ t("insights") }}
-    <mat-icon>visibility</mat-icon>
+    <button mat-button [matMenuTriggerFor]="filterMenu">
+      <mat-icon>visibility</mat-icon>
+      <mat-icon class="menu-arrow">arrow_right</mat-icon>
+    </button>
   </div>
   <mat-tab-group
     mat-stretch-tabs="false"
