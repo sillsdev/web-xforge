@@ -1,5 +1,5 @@
 @if (activeInsights.length === 1) {
-  <mat-icon [class]="activeInsights[0].type" (click)="onPromptClick($event)">tips_and_updates</mat-icon>
+  <mat-icon [svgIcon]="'lynx_' + activeInsights[0].type" (click)="onPromptClick($event)" />
 }
 @if (activeInsights.length > 1) {
   <div class="multi-insight-prompt" (click)="onPromptClick($event)">

@@ -1,3 +1,4 @@
+import { BidiModule } from '@angular/cdk/bidi';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { APP_INITIALIZER, ModuleWithProviders, NgModule } from '@angular/core';
@@ -43,6 +44,7 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
   ],
   imports: [
     CommonModule,
+    BidiModule,
     TranslocoModule,
     MatButtonModule,
     MatDividerModule,

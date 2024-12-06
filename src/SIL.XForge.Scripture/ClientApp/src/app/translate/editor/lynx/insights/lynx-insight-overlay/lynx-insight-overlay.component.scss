@@ -74,7 +74,7 @@ mat-icon {
       padding: 0.3em 0.7em;
       display: flex;
       align-items: center;
-      gap: 0.5em;
+      gap: 0.6em;
       cursor: pointer;
 
       h1 {
@@ -89,13 +89,13 @@ mat-icon {
         background-color: #06395c;
       }
 
-      .bulb-icon {
-        font-size: 1.2em;
+      .severity-icon {
+        width: 1em;
       }
 
       @each $type in insights.$insightTypes {
         &.#{$type} {
-          .bulb-icon {
+          .severity-icon {
             color: insights.insight-color($type);
           }
         }

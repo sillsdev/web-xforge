@@ -23,15 +23,8 @@
 }
 
 mat-icon {
-  width: auto;
-  height: auto;
-  font-size: 1.1em;
-}
-
-@each $type in insights.$insightTypes {
-  .#{$type}-icon {
-    color: insights.insight-color($type);
-  }
+  width: 0.9em;
+  height: 1em;
 }
 
 .type-count {
@@ -42,5 +35,17 @@ mat-icon {
   span {
     font-size: 0.75em;
     font-weight: 500;
+    border-radius: 50%;
+    width: 1.5em;
+    height: 1.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    @each $type in insights.$insightTypes {
+      &.#{$type} {
+        background-color: insights.insight-bg-color($type);
+      }
+    }
   }
 }

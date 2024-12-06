@@ -32,7 +32,7 @@
         @switch (node.level) {
           @case (0) {
             <div class="level-code">
-              <mat-icon [class.dismissed]="node.isDismissed" [class]="node.type">{{ node.type }}</mat-icon>
+              <mat-icon [svgIcon]="'lynx_' + node.type" [class.dismissed]="node.isDismissed" [class]="node.type" />
               <span class="text">{{ node.name | insightCode: i18n.localeCode }}</span>
               <span class="code">({{ node.name }})</span>
               <span class="count">{{ node.count }}</span>
