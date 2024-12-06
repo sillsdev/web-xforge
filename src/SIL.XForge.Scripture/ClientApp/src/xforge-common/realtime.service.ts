@@ -71,7 +71,7 @@ export class RealtimeService {
     if (doc == null) {
       const RealtimeDocType = this.typeRegistry.getDocType(collection);
       if (RealtimeDocType == null) {
-        throw new Error('The collection is unknown.');
+        throw new Error(`The collection "${collection}" is unknown.`);
       }
       doc = new RealtimeDocType(this, this.remoteStore.createDocAdapter(collection, id));
       if (doc.id == null) {

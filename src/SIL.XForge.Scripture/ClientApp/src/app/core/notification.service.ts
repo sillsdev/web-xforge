@@ -101,4 +101,11 @@ export class NotificationService {
     }
     this.userDoc.submitJson0Op(op => op.set(u => u.viewedNotifications[notificationId], true));
   }
+
+  async createNotification(notification: Notification): Promise<void> {
+    if (this.initialized === false) {
+      return;
+    }
+    await this.realtimeService.create(NotificationDoc.COLLECTION, notification.id, notification);
+  }
 }

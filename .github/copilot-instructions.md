@@ -80,6 +80,8 @@ This repository contains three interconnected applications:
 
 - Define clear validation rules using MongoDB schemas
 - Collection indexes are defined via DocService.indexPaths
+- Doc types for collections should be registered in src/SIL.XForge.Scripture/ClientApp/src/app/core/models/sf-type-registry.ts so that IndexeddbOfflineStore knows to create the collection in IndexedDB.
+- The `offlineDBVersion` number in all environment\*.ts files needs incremented so that an upgrade is triggered, which will result in any needed new collection being created in IndexedDB.
 
 # Type Safety Guidelines
 

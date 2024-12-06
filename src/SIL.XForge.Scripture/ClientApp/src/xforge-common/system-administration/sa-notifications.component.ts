@@ -8,6 +8,8 @@ import { Notification } from 'realtime-server/lib/esm/common/models/notification
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NotificationService } from '../../app/core/notification.service';
+import { MatDialog } from '@angular/material/dialog';
+import { SaNotificationsDialogComponent } from './sa-notifications-create-dialog.component';
 
 /**
  * System administration component for managing user notifications
@@ -84,7 +86,10 @@ export class SaNotificationsComponent implements OnInit {
   displayedColumns: string[] = ['title', 'type', 'scope', 'expirationDate', 'actions'];
   notifications$: Observable<Notification[]>;
 
-  constructor(private readonly notificationService: NotificationService) {
+  constructor(
+    private readonly notificationService: NotificationService,
+    private readonly dialog: MatDialog
+  ) {
     // Get all notifications and sort by creation date descending
     this.notifications$ = this.notificationService
       .getActiveNotifications()
@@ -100,8 +105,13 @@ export class SaNotificationsComponent implements OnInit {
   }
 
   createNotification(): void {
-    // TODO: Implement notification creation dialog
-    console.log('Create notification');
+    const dialogRef = this.dialog.open(SaNotificationsDialogComponent);
+
+    dialogRef.afterClosed().subscribe(notification => {
+      if (notification) {
+        void this.notificationService.createNotification(notification);
+      }
+    });
   }
 
   deleteNotification(notification: Notification): void {

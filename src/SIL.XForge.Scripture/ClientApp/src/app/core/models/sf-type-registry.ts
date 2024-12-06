@@ -12,6 +12,7 @@ import { SFProjectUserConfigDoc } from './sf-project-user-config-doc';
 import { TextAudioDoc } from './text-audio-doc';
 import { TextDoc } from './text-doc';
 import { TrainingDataDoc } from './training-data-doc';
+import { NotificationDoc } from 'xforge-common/models/notification-doc';
 
 export const SF_TYPE_REGISTRY = new TypeRegistry(
   [
@@ -24,6 +25,7 @@ export const SF_TYPE_REGISTRY = new TypeRegistry(
     QuestionDoc,
     TextDoc,
     NoteThreadDoc,
+    NotificationDoc,
     TextAudioDoc,
     TrainingDataDoc
   ],
