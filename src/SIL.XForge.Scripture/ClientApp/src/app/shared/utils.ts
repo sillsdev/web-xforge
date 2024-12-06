@@ -266,6 +266,11 @@ export function getUnsupportedTags(deltaOp: DeltaOperation): string[] {
   return [...invalidTags];
 }
 
+export function booksFromScriptureRange(scriptureRange: string): number[] {
+  if (scriptureRange === '') return [];
+  return scriptureRange.split(';').map(book => Canon.bookIdToNumber(book));
+}
+
 export class XmlUtils {
   /** Encode text to be valid xml text node. Escape reserved xml characters such as & and < >. */
   static encodeForXml(text: string): string {
