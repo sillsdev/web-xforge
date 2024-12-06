@@ -302,7 +302,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
         trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'LEV' }],
-        translationScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
+        translationScriptureRange: 'GEN;EXO',
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
@@ -459,7 +459,7 @@ describe('DraftGenerationStepsComponent', () => {
           { projectId: 'sourceProject', scriptureRange: 'LEV' },
           { projectId: 'sourceProject2', scriptureRange: 'LEV' }
         ],
-        translationScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
+        translationScriptureRange: 'GEN;EXO',
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
@@ -539,7 +539,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
         trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
-        translationScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'LEV;NUM' }],
+        translationScriptureRange: 'LEV;NUM',
         fastTraining: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
@@ -555,7 +555,7 @@ describe('DraftGenerationStepsComponent', () => {
           draftConfig: {
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationScriptureRange: 'GEN;EXO',
-            lastSelectedTrainingScriptureRange: 'LEV'
+            lastSelectedTrainingScriptureRanges: [{ projectId: 'test', scriptureRange: 'LEV' }]
           }
         }
       })
