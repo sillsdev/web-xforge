@@ -144,8 +144,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.currentPageId = pageId;
         void this.notificationService.loadNotifications(pageId ? [pageId] : undefined);
       });
-
-    this.unviewedCount$ = this.notificationService.getUnviewedCount(this.currentPageId);
   }
 
   get canInstallOnDevice$(): Observable<boolean> {
@@ -345,6 +343,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.isExpanded = false;
       }
     });
+
+    this.unviewedCount$ = this.notificationService.getUnviewedCount(this.currentPageId);
 
     this.loadingFinished();
   }

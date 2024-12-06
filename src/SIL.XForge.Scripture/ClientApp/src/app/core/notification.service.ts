@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Notification, NotificationScope } from 'realtime-server/lib/esm/common/models/notification';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of } from 'rxjs';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NotificationDoc } from 'xforge-common/models/notification-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -89,28 +89,26 @@ export class NotificationService {
 
   getUnviewedCount(pageId?: string): Observable<number> {
     if (!this.featureFlagService.showNotifications.enabled) {
-      return of(2);
+      return of(0);
     }
-    return of(2);
-    // todo review
 
-    // return combineLatest([
-    //   this.activeNotifications,
-    //   this.userDoc
-    //     ? this.userDoc.remoteChanges$
-    //     : this.realtimeService
-    //         .subscribe<UserDoc>(UserDoc.COLLECTION, this.userService.currentUserId)
-    //         .then(doc => doc.remoteChanges$)
-    // ]).pipe(
-    //   map(
-    //     ([notifications, _]) =>
-    //       notifications.filter(
-    //         n =>
-    //           (n.scope === 'Global' || (n.pageIds && n.pageIds.includes(pageId ?? ''))) &&
-    //           !this.userDoc?.data?.viewedNotifications?.has(n.id)
-    //       ).length
-    //   )
-    // );
+    return combineLatest([
+      this.activeNotificationDocs,
+      this.userDoc
+        ? this.userDoc.remoteChanges$
+        : this.realtimeService
+            .subscribe<UserDoc>(UserDoc.COLLECTION, this.userService.currentUserId)
+            .then(doc => doc.remoteChanges$)
+    ]).pipe(
+      map(
+        ([notifications, _]) =>
+          notifications.filter(
+            n =>
+              (n.data.scope === 'Global' || (n.data.pageIds && n.data.pageIds.includes(pageId ?? ''))) &&
+              !this.userDoc?.data?.viewedNotifications?.has(n.id)
+          ).length
+      )
+    );
   }
 
   isNotificationViewed(notificationId: string): boolean {
