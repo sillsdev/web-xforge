@@ -51,11 +51,10 @@ export class NotificationListComponent implements OnInit {
   @Input() pageId?: string;
   notifications$: Observable<Notification[]>;
 
-  constructor(public readonly notificationService: NotificationService) {
-    this.notifications$ = this.notificationService.getActiveNotifications();
-  }
+  constructor(public readonly notificationService: NotificationService) {}
 
   ngOnInit(): void {
+    this.notifications$ = void this.notificationService.getUnexpiredNotifications();
     void this.notificationService.loadNotifications(this.pageId ? [this.pageId] : undefined);
   }
 }

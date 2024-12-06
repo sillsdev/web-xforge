@@ -7,7 +7,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Notification } from 'realtime-server/lib/esm/common/models/notification';
-import { objectId } from '../utils';
 
 /**
  * Dialog for creating system notifications
@@ -45,8 +44,8 @@ import { objectId } from '../utils';
         </mat-form-field>
 
         <mat-form-field>
-          <mat-label>Expiration Date</mat-label>
-          <input matInput type="datetime-local" formControlName="expirationDate" required />
+          <mat-label>Expiration date (UTC) (defaults to 7 days from now)</mat-label>
+          <input matInput type="datetime-local" formControlName="expirationDate" required class="custom-datetime" />
         </mat-form-field>
       </mat-dialog-content>
 
@@ -63,6 +62,14 @@ import { objectId } from '../utils';
         flex-direction: column;
         gap: 16px;
         min-width: 400px;
+      }
+
+      .custom-datetime::-webkit-datetime-edit {
+        font-family: monospace;
+      }
+
+      .custom-datetime::-webkit-calendar-picker-indicator {
+        margin-left: 8px;
       }
     `
   ],
@@ -84,12 +91,17 @@ export class SaNotificationsDialogComponent {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<SaNotificationsDialogComponent>
   ) {
+    const sevenDaysMs: number = 7 * 24 * 60 * 60 * 1000;
+    const sevenDaysFromNow: Date = new Date(new Date().getTime() + sevenDaysMs);
+    // Format as YYYY-MM-DDTHH:mm for datetime-local input
+    const formattedDate: string = sevenDaysFromNow.toISOString().slice(0, 16);
+
     this.notificationForm = this.fb.group({
-      title: ['', Validators.required],
-      content: ['', Validators.required],
-      type: ['Unobtrusive', Validators.required],
+      title: ['my title', Validators.required],
+      content: ['my content', Validators.required],
+      type: ['Obtrusive', Validators.required],
       scope: ['Global', Validators.required],
-      expirationDate: ['', Validators.required]
+      expirationDate: [formattedDate, Validators.required]
     });
   }
 

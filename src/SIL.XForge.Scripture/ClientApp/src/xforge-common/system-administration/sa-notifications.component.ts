@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -8,7 +9,6 @@ import { Notification } from 'realtime-server/lib/esm/common/models/notification
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NotificationService } from '../../app/core/notification.service';
-import { MatDialog } from '@angular/material/dialog';
 import { SaNotificationsDialogComponent } from './sa-notifications-create-dialog.component';
 
 /**
@@ -89,18 +89,15 @@ export class SaNotificationsComponent implements OnInit {
   constructor(
     private readonly notificationService: NotificationService,
     private readonly dialog: MatDialog
-  ) {
-    // Get all notifications and sort by creation date descending
-    this.notifications$ = this.notificationService
-      .getActiveNotifications()
-      .pipe(
-        map(notifications =>
-          notifications.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime())
-        )
-      );
-  }
+  ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    // Get all notifications and sort by creation date descending
+    this.notifications$ = (await this.notificationService.getUnexpiredNotifications()).pipe(
+      map(notifications =>
+        notifications.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime())
+      )
+    );
     void this.notificationService.loadNotifications();
   }
 

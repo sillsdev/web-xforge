@@ -1,13 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Notification, NotificationScope } from 'realtime-server/lib/esm/common/models/notification';
-import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NotificationDoc } from 'xforge-common/models/notification-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
+import { AuthService } from '../../xforge-common/auth.service';
+import { CommandService } from '../../xforge-common/command.service';
+import { DialogService } from '../../xforge-common/dialog.service';
+import { LocalSettingsService } from '../../xforge-common/local-settings.service';
 import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
+import { NoticeService } from '../../xforge-common/notice.service';
+import { objectId } from '../../xforge-common/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -16,37 +21,40 @@ export class NotificationService {
   private activeNotifications = new BehaviorSubject<Readonly<Notification>[]>([]);
   private userDoc?: UserDoc;
   private currentQuery?: RealtimeQuery<NotificationDoc>;
-  private initialized = false;
 
-  constructor(
-    private readonly realtimeService: RealtimeService,
-    private readonly featureFlagService: FeatureFlagService,
-    private readonly userService: UserService
-  ) {
-    if (this.featureFlagService.showNotifications.enabled) {
-      void this.init();
+  async getUnexpiredNotifications(): Promise<Observable<Notification[]>> {
+    if (this.currentQuery === undefined) {
+      await this.loadNotifications();
     }
-  }
-
-  private async init(): Promise<void> {
-    //todo not a hack
-    await new Promise(resolve => setTimeout(resolve, 10000));
-    //todo what about app component currentUser instead?
-    this.userDoc = await this.realtimeService.subscribe<UserDoc>(UserDoc.COLLECTION, this.userService.currentUserId);
-    this.initialized = true;
-  }
-
-  getActiveNotifications(): Observable<Notification[]> {
     return this.activeNotifications.asObservable();
   }
 
-  async loadNotifications(pageIds?: string[]): Promise<void> {
-    if (!this.initialized) {
-      return;
+  async getCurrentUserDoc(): Promise<UserDoc> {
+    if (this.userDoc === undefined) {
+      this.userDoc = await this.realtimeService.subscribe<UserDoc>(UserDoc.COLLECTION, this.userService.currentUserId);
     }
+    return this.userDoc;
+  }
 
+  constructor(
+    private readonly realtimeService: RealtimeService,
+    private readonly authService: AuthService,
+    private readonly commandService: CommandService,
+    private readonly localSettings: LocalSettingsService,
+    private readonly dialogService: DialogService,
+    private readonly noticeService: NoticeService,
+    private readonly featureFlagService: FeatureFlagService,
+    private readonly userService: UserService
+  ) {
+    // if (this.featureFlagService.showNotifications.enabled) {
+    //   void this.init();
+    // }
+  }
+
+  async loadNotifications(pageIds?: string[]): Promise<void> {
     // Clean up previous subscription
     this.currentQuery?.dispose();
+    this.currentQuery = null;
 
     const query: any = {
       $and: [
@@ -69,26 +77,29 @@ export class NotificationService {
   }
 
   getUnviewedCount(pageId?: string): Observable<number> {
-    if (this.initialized === false || !this.featureFlagService.showNotifications.enabled) {
+    if (!this.featureFlagService.showNotifications.enabled) {
       return of(0);
     }
-    return combineLatest([
-      this.activeNotifications,
-      this.userDoc
-        ? this.userDoc.remoteChanges$
-        : this.realtimeService
-            .subscribe<UserDoc>(UserDoc.COLLECTION, this.userService.currentUserId)
-            .then(doc => doc.remoteChanges$)
-    ]).pipe(
-      map(
-        ([notifications, _]) =>
-          notifications.filter(
-            n =>
-              (n.scope === 'Global' || (n.pageIds && n.pageIds.includes(pageId ?? ''))) &&
-              !this.userDoc?.data?.viewedNotifications?.has(n.id)
-          ).length
-      )
-    );
+    return of(0);
+    // todo review
+
+    // return combineLatest([
+    //   this.activeNotifications,
+    //   this.userDoc
+    //     ? this.userDoc.remoteChanges$
+    //     : this.realtimeService
+    //         .subscribe<UserDoc>(UserDoc.COLLECTION, this.userService.currentUserId)
+    //         .then(doc => doc.remoteChanges$)
+    // ]).pipe(
+    //   map(
+    //     ([notifications, _]) =>
+    //       notifications.filter(
+    //         n =>
+    //           (n.scope === 'Global' || (n.pageIds && n.pageIds.includes(pageId ?? ''))) &&
+    //           !this.userDoc?.data?.viewedNotifications?.has(n.id)
+    //       ).length
+    //   )
+    // );
   }
 
   isNotificationViewed(notificationId: string): boolean {
@@ -103,9 +114,6 @@ export class NotificationService {
   }
 
   async createNotification(notification: Notification): Promise<void> {
-    if (this.initialized === false) {
-      return;
-    }
-    await this.realtimeService.create(NotificationDoc.COLLECTION, notification.id, notification);
+    await this.realtimeService.create(NotificationDoc.COLLECTION, objectId(), notification);
   }
 }
