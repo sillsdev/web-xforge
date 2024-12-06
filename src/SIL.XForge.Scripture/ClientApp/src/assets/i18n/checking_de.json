@@ -343,6 +343,13 @@
   "font_size": {
     "text_size": "Schriftgröße"
   },
+  "global_notices": {
+    "close": "Schliessen",
+    "hour_range": "{{ min }} to {{ max }} hours",
+    "learn_more": "Mehr erfahren",
+    "minute_range": "{{ min }} to {{ max }} minutes",
+    "upcoming_maintenance": "Scripture Forge will be down for maintenance for about {{ duration }} starting at {{ startTime }}."
+  },
   "issue_email": {
     "heading": "Bitte beschreibe das Problem.",
     "technical_details": "Technische Details",
