@@ -50,7 +50,7 @@
         (mouseover)="highlightInsight(insight)"
         (mouseout)="highlightInsight(null)"
       >
-        <mat-icon class="bulb-icon">lightbulb</mat-icon>
+        <mat-icon [svgIcon]="'lynx_' + insight.type" class="severity-icon" />
         <h1>
           <span class="description">{{ insight.description }}</span>
           <span class="code">({{ insight.code }})</span>

@@ -7,9 +7,9 @@
 }
 
 mat-icon {
-  width: auto;
-  height: auto;
   font-size: 1.2em;
+  width: 0.9em;
+  height: 0.9em;
   cursor: pointer;
 
   @each $type in insights.$insightTypes {
@@ -25,6 +25,8 @@ mat-icon {
 
 .multi-insight-prompt {
   mat-icon {
+    width: auto;
+    height: auto;
     color: var(--lynx-insights-multi-insight-prompt-color);
 
     &.count-icon {
