@@ -9,6 +9,7 @@ namespace SIL.XForge.Scripture.Models;
 public static class MachineApi
 {
     public const string HttpClientName = "machine_api";
+    public const string TokenClientName = "machine_api_token";
     public const string Namespace = "machine-api/v3";
     public const string StartBuild = "translation/builds";
     public const string GetBuild = "translation/builds/id:{sfProjectId}.{buildId?}";

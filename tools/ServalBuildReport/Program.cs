@@ -161,6 +161,7 @@ return;
 static ServiceProvider SetupServices(string environment)
 {
     const string httpClientName = "serval-api";
+    const string tokenClientName = "serval-api-token";
 
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
     IConfiguration configuration = configurationBuilder
@@ -170,21 +171,22 @@ static ServiceProvider SetupServices(string environment)
     ServalOptions servalOptions = configuration.GetSection(environment).Get<ServalOptions>()!;
 
     var services = new ServiceCollection();
-    services.AddAccessTokenManagement(options =>
-    {
-        options.Client.Clients.Add(
-            httpClientName,
-            new ClientCredentialsTokenRequest
+    services.AddDistributedMemoryCache();
+    services
+        .AddClientCredentialsTokenManagement()
+        .AddClient(
+            tokenClientName,
+            client =>
             {
-                Address = servalOptions.TokenUrl,
-                ClientId = servalOptions.ClientId,
-                ClientSecret = servalOptions.ClientSecret,
-                Parameters = new Parameters { { "audience", servalOptions.Audience } },
+                client.TokenEndpoint = servalOptions.TokenUrl;
+                client.ClientId = servalOptions.ClientId;
+                client.ClientSecret = servalOptions.ClientSecret;
+                client.Parameters = new Parameters { { "audience", servalOptions.Audience } };
             }
         );
-    });
-    services.AddClientAccessTokenHttpClient(
+    services.AddClientCredentialsHttpClient(
         httpClientName,
+        tokenClientName,
         configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
     );
     services.AddHttpClient(httpClientName).SetHandlerLifetime(TimeSpan.FromMinutes(5));

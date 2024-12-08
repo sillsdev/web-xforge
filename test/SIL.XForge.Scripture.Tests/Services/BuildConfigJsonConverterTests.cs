@@ -94,7 +94,7 @@ public class BuildConfigJsonConverterTests
         var converter = new BuildConfigJsonConverter();
         var writer = Substitute.For<JsonWriter>();
         var serializer = Substitute.For<JsonSerializer>();
-        var buildConfig = new BuildConfig { ProjectId = Project01, TranslationBooks = [1, 2, 3], };
+        var buildConfig = new BuildConfig { ProjectId = Project01, TranslationBooks = [1, 2, 3] };
 
         // SUT
         converter.WriteJson(writer, buildConfig, serializer);
@@ -114,7 +114,7 @@ public class BuildConfigJsonConverterTests
         var converter = new BuildConfigJsonConverter();
         var writer = Substitute.For<JsonWriter>();
         var serializer = Substitute.For<JsonSerializer>();
-        var buildConfig = new BuildConfig { ProjectId = Project01, TrainingBooks = [1, 2, 3], };
+        var buildConfig = new BuildConfig { ProjectId = Project01, TrainingBooks = [1, 2, 3] };
 
         // SUT
         converter.WriteJson(writer, buildConfig, serializer);
@@ -134,7 +134,7 @@ public class BuildConfigJsonConverterTests
         var converter = new BuildConfigJsonConverter();
         var writer = Substitute.For<JsonWriter>();
         var serializer = Substitute.For<JsonSerializer>();
-        var buildConfig = new BuildConfig { TrainingDataFiles = [Data01, Data02], };
+        var buildConfig = new BuildConfig { TrainingDataFiles = [Data01, Data02] };
 
         // SUT
         converter.WriteJson(writer, buildConfig, serializer);
@@ -151,7 +151,7 @@ public class BuildConfigJsonConverterTests
         var converter = new BuildConfigJsonConverter();
         var writer = Substitute.For<JsonWriter>();
         var serializer = Substitute.For<JsonSerializer>();
-        var buildConfig = new BuildConfig { TrainingScriptureRange = "MAT;MRK1-2,4", };
+        var buildConfig = new BuildConfig { TrainingScriptureRange = "MAT;MRK1-2,4" };
 
         // SUT
         converter.WriteJson(writer, buildConfig, serializer);
@@ -168,14 +168,57 @@ public class BuildConfigJsonConverterTests
         var converter = new BuildConfigJsonConverter();
         var writer = Substitute.For<JsonWriter>();
         var serializer = Substitute.For<JsonSerializer>();
-        var buildConfig = new BuildConfig { TrainingScriptureRange = "JHN", };
+        var buildConfig = new BuildConfig { TranslationScriptureRange = "JHN" };
 
         // SUT
         converter.WriteJson(writer, buildConfig, serializer);
 
         writer.Received().WriteStartObject();
-        writer.Received().WritePropertyName(nameof(buildConfig.TrainingScriptureRange));
-        serializer.Received().Serialize(writer, buildConfig.TrainingScriptureRange);
+        writer.Received().WritePropertyName(nameof(buildConfig.TranslationScriptureRange));
+        serializer.Received().Serialize(writer, buildConfig.TranslationScriptureRange);
+        writer.Received().WriteEndObject();
+    }
+
+    [Test]
+    public void WriteJson_Serializes_BuildConfig_TrainingScriptureRanges()
+    {
+        var converter = new BuildConfigJsonConverter();
+        var writer = Substitute.For<JsonWriter>();
+        var serializer = Substitute.For<JsonSerializer>();
+        var buildConfig = new BuildConfig
+        {
+            TrainingScriptureRanges = [new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "MAT;MRK" }],
+        };
+
+        // SUT
+        converter.WriteJson(writer, buildConfig, serializer);
+
+        writer.Received().WriteStartObject();
+        writer.Received().WritePropertyName(nameof(buildConfig.TrainingScriptureRanges));
+        serializer.Received().Serialize(writer, buildConfig.TrainingScriptureRanges);
+        writer.Received().WriteEndObject();
+    }
+
+    [Test]
+    public void WriteJson_Serializes_BuildConfig_TranslationScriptureRanges()
+    {
+        var converter = new BuildConfigJsonConverter();
+        var writer = Substitute.For<JsonWriter>();
+        var serializer = Substitute.For<JsonSerializer>();
+        var buildConfig = new BuildConfig
+        {
+            TranslationScriptureRanges =
+            [
+                new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "MAT;MRK" },
+            ],
+        };
+
+        // SUT
+        converter.WriteJson(writer, buildConfig, serializer);
+
+        writer.Received().WriteStartObject();
+        writer.Received().WritePropertyName(nameof(buildConfig.TranslationScriptureRanges));
+        serializer.Received().Serialize(writer, buildConfig.TranslationScriptureRanges);
         writer.Received().WriteEndObject();
     }
 
@@ -213,8 +256,14 @@ public class BuildConfigJsonConverterTests
     public void ReadJson_Deserializes_JSON_Object()
     {
         var converter = new BuildConfigJsonConverter();
-        const string jsonString =
-            $"{{\"{nameof(BuildConfig.ProjectId)}\":\"{Project01}\",\"{nameof(BuildConfig.TrainingBooks)}\":[1,2,3],\"{nameof(BuildConfig.TranslationBooks)}\":[4,5,6],\"{nameof(BuildConfig.FastTraining)}\":true}}";
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.TrainingBooks)}}":[1,2,3],
+            "{{nameof(BuildConfig.TranslationBooks)}}":[4,5,6],
+            "{{nameof(BuildConfig.FastTraining)}}":true
+            }
+            """;
         using var stringReader = new StringReader(jsonString);
         using var reader = new JsonTextReader(stringReader);
         var serializer = new JsonSerializer();
@@ -234,8 +283,13 @@ public class BuildConfigJsonConverterTests
     public void ReadJson_Deserializes_JSON_Object_WithoutFastConfig()
     {
         var converter = new BuildConfigJsonConverter();
-        const string jsonString =
-            $"{{\"{nameof(BuildConfig.ProjectId)}\":\"{Project01}\",\"{nameof(BuildConfig.TrainingBooks)}\":[1,2,3],\"{nameof(BuildConfig.TranslationBooks)}\":[4,5,6]}}";
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.TrainingBooks)}}":[1,2,3],
+            "{{nameof(BuildConfig.TranslationBooks)}}":[4,5,6]
+            }
+            """;
         using var stringReader = new StringReader(jsonString);
         using var reader = new JsonTextReader(stringReader);
         var serializer = new JsonSerializer();
@@ -255,8 +309,12 @@ public class BuildConfigJsonConverterTests
     public void ReadJson_Deserializes_JSON_Object_TrainingDataFiles()
     {
         var converter = new BuildConfigJsonConverter();
-        const string jsonString =
-            $"{{\"{nameof(BuildConfig.ProjectId)}\":\"{Project01}\",\"{nameof(BuildConfig.TrainingDataFiles)}\":[\"{Data01}\",\"{Data02}\"]}}";
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.TrainingDataFiles)}}":["{{Data01}}","{{Data02}}"]
+            }
+            """;
         using var stringReader = new StringReader(jsonString);
         using var reader = new JsonTextReader(stringReader);
         var serializer = new JsonSerializer();
@@ -276,8 +334,12 @@ public class BuildConfigJsonConverterTests
     {
         var converter = new BuildConfigJsonConverter();
         const string scriptureRange = "MAT;MRK1-2,4";
-        const string jsonString =
-            $"{{\"{nameof(BuildConfig.ProjectId)}\":\"{Project01}\",\"{nameof(BuildConfig.TrainingScriptureRange)}\":\"{scriptureRange}\"}}";
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.TrainingScriptureRange)}}":"{{scriptureRange}}"
+            }
+            """;
         using var stringReader = new StringReader(jsonString);
         using var reader = new JsonTextReader(stringReader);
         var serializer = new JsonSerializer();
@@ -288,7 +350,7 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsFalse(buildConfig!.FastTraining);
-        CollectionAssert.AreEqual(scriptureRange, buildConfig.TrainingScriptureRange);
+        Assert.AreEqual(scriptureRange, buildConfig.TrainingScriptureRange);
         Assert.AreEqual(Project01, buildConfig.ProjectId);
     }
 
@@ -297,8 +359,12 @@ public class BuildConfigJsonConverterTests
     {
         var converter = new BuildConfigJsonConverter();
         const string scriptureRange = "JHN";
-        const string jsonString =
-            $"{{\"{nameof(BuildConfig.ProjectId)}\":\"{Project01}\",\"{nameof(BuildConfig.TranslationScriptureRange)}\":\"{scriptureRange}\"}}";
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.TranslationScriptureRange)}}":"{{scriptureRange}}"
+            }
+            """;
         using var stringReader = new StringReader(jsonString);
         using var reader = new JsonTextReader(stringReader);
         var serializer = new JsonSerializer();
@@ -309,7 +375,81 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsFalse(buildConfig!.FastTraining);
-        CollectionAssert.AreEqual(scriptureRange, buildConfig.TranslationScriptureRange);
+        Assert.AreEqual(scriptureRange, buildConfig.TranslationScriptureRange);
+        Assert.AreEqual(Project01, buildConfig.ProjectId);
+    }
+
+    [Test]
+    public void ReadJson_Deserializes_JSON_Object_TrainingScriptureRanges()
+    {
+        var converter = new BuildConfigJsonConverter();
+        const string scriptureRange = "JHN";
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.TrainingScriptureRanges)}}":
+            [
+                {
+                "{{nameof(ProjectScriptureRange.ProjectId)}}":"{{Project01}}",
+                "{{nameof(ProjectScriptureRange.ScriptureRange)}}":"{{scriptureRange}}"
+                }
+            ]
+            }
+            """;
+        using var stringReader = new StringReader(jsonString);
+        using var reader = new JsonTextReader(stringReader);
+        var serializer = new JsonSerializer();
+
+        // SUT
+        var buildConfig = converter.ReadJson(reader, typeof(BuildConfig), null, false, serializer);
+
+        Assert.IsNotNull(buildConfig);
+        Assert.IsInstanceOf<BuildConfig>(buildConfig);
+        Assert.IsFalse(buildConfig!.FastTraining);
+        CollectionAssert.AreEqual(
+            new List<ProjectScriptureRange>
+            {
+                new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = scriptureRange },
+            },
+            buildConfig.TrainingScriptureRanges
+        );
+        Assert.AreEqual(Project01, buildConfig.ProjectId);
+    }
+
+    [Test]
+    public void ReadJson_Deserializes_JSON_Object_TranslationScriptureRanges()
+    {
+        var converter = new BuildConfigJsonConverter();
+        const string scriptureRange = "JHN";
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.TranslationScriptureRanges)}}":
+            [
+                {
+                "{{nameof(ProjectScriptureRange.ProjectId)}}":"{{Project01}}",
+                "{{nameof(ProjectScriptureRange.ScriptureRange)}}":"{{scriptureRange}}"
+                }
+            ]
+            }
+            """;
+        using var stringReader = new StringReader(jsonString);
+        using var reader = new JsonTextReader(stringReader);
+        var serializer = new JsonSerializer();
+
+        // SUT
+        var buildConfig = converter.ReadJson(reader, typeof(BuildConfig), null, false, serializer);
+
+        Assert.IsNotNull(buildConfig);
+        Assert.IsInstanceOf<BuildConfig>(buildConfig);
+        Assert.IsFalse(buildConfig!.FastTraining);
+        CollectionAssert.AreEqual(
+            new List<ProjectScriptureRange>
+            {
+                new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = scriptureRange },
+            },
+            buildConfig.TranslationScriptureRanges
+        );
         Assert.AreEqual(Project01, buildConfig.ProjectId);
     }
 }
