@@ -1312,10 +1312,12 @@ public class MachineProjectService(
         }
 
         // Remove the corpora and files
-        foreach (
-            (string corpusId, _) in projectSecret.ServalData?.Corpora?.Where(c => c.Value.PreTranslate == preTranslate)
-                ?? []
-        )
+        string[] corpusIds =
+            projectSecret
+                .ServalData?.Corpora?.Where(c => c.Value.PreTranslate == preTranslate)
+                .Select(c => c.Key)
+                .ToArray() ?? [];
+        foreach (string corpusId in corpusIds)
         {
             // Delete the corpus
             try
