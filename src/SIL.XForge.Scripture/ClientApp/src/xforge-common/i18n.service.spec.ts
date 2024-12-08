@@ -125,8 +125,8 @@ describe('I18nService', () => {
     const date = new Date('November 25, 1991 17:28');
     const service = getI18nService();
 
-    // look for ending with something like " UTC+5" or " EST"
-    const trailingTimezoneRegex = / (UTC[\-+−]\d+|[A-Z]+)$/;
+    // look for ending with something like " GMT+13", " UTC+5", " UTC+13:45" or " EST"
+    const trailingTimezoneRegex = / ((GMT|UTC)[\-+−]\d{1,2}(:\d{2})?|[A-Z]+)$/;
 
     service.setLocale('fr');
     expect(service.formatDate(date, { showTimeZone: true })).toMatch(trailingTimezoneRegex);
