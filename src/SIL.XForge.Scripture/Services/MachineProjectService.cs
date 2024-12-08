@@ -1028,7 +1028,7 @@ public class MachineProjectService(
     {
         // Echo requires the target and source language to be the same, as it outputs your source texts
         bool useEcho = await featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-        return useEcho ? GetSourceLanguage(project) : project.WritingSystem.Tag;
+        return useEcho ? GetSourceLanguage(project) : project.WritingSystem.Tag!;
     }
 
     /// <summary>
