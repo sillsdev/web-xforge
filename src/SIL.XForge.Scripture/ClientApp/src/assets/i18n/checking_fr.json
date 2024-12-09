@@ -263,7 +263,7 @@
     "stop_recording": "Arrêter l'enregistrement"
   },
   "checking_input_form": {
-    "attach": "Attach Scripture",
+    "attach": "Joindre les écritures",
     "cancel": "Annuler",
     "save": "Envoyer la réponse",
     "your_answer": "Votre réponse",
@@ -342,6 +342,13 @@
   },
   "font_size": {
     "text_size": "Taille du texte"
+  },
+  "global_notices": {
+    "close": "Fermer",
+    "hour_range": "{{ min }} to {{ max }} hours",
+    "learn_more": "En savoir plus",
+    "minute_range": "{{ min }} to {{ max }} minutes",
+    "upcoming_maintenance": "Scripture Forge will be down for maintenance for about {{ duration }} starting at {{ startTime }}."
   },
   "issue_email": {
     "heading": "Veuillez expliquer le problème.",

@@ -343,6 +343,13 @@
   "font_size": {
     "text_size": "Ukuran teks"
   },
+  "global_notices": {
+    "close": "Tutup",
+    "hour_range": "{{ min }} to {{ max }} hours",
+    "learn_more": "Pelajari lebih lanjut",
+    "minute_range": "{{ min }} to {{ max }} minutes",
+    "upcoming_maintenance": "Scripture Forge will be down for maintenance for about {{ duration }} starting at {{ startTime }}."
+  },
   "issue_email": {
     "heading": "Tolong jelaskan masalahnya.",
     "technical_details": "Detail teknis",
