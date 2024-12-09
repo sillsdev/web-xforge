@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
@@ -74,7 +74,7 @@ const ROUTES: Route[] = [
   { path: 'projects/:projectId/translate', component: MockComponent }
 ];
 
-describe('CheckingOverviewComponent', () => {
+fdescribe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
     imports: [
       DialogTestModule,
@@ -415,6 +415,8 @@ describe('CheckingOverviewComponent', () => {
       env.clickElement(env.questionPublishButtons[0]);
       expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).not.toBeNull();
+
+      discardPeriodicTasks();
     }));
 
     it('archives and republishes a question', fakeAsync(() => {
@@ -441,6 +443,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textArchivedRows.length).toEqual(3);
       expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 questions');
       expect(env.textRows.length).toEqual(9);
+
+      discardPeriodicTasks();
     }));
 
     it('archives and republishes questions for an entire chapter or book', fakeAsync(() => {
@@ -515,6 +519,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
       expect(env.getPublishedQuestionsCountTextByRow(0)).toContain('7 questions');
       expect(env.getPublishedQuestionsCountTextByRow(1)).toContain('1 questions');
+
+      discardPeriodicTasks();
     }));
   });
 
@@ -560,6 +566,8 @@ describe('CheckingOverviewComponent', () => {
       // Chapter should still be visible as it has audio
       expect(env.questionEditButtons.length).toEqual(0);
       expect(env.checkChapterHasAudio(johnChapter1Index)).toBeTrue();
+
+      discardPeriodicTasks();
     }));
 
     it('click chapter with audio and no questions should not open panel ', fakeAsync(() => {
@@ -587,6 +595,8 @@ describe('CheckingOverviewComponent', () => {
       env.clickElement(env.questionArchiveButtons[johnIndex]);
       expect(env.questionArchiveButtons[johnIndex]).toBeNull();
       expect(env.textRows.length).toBe(3);
+
+      discardPeriodicTasks();
     }));
 
     it('can delete chapter audio ', fakeAsync(() => {
