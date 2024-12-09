@@ -249,10 +249,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   tryAdvanceStep(): void {
-    if (!this.onlineStatusService.isOnline) {
-      this.noticeService.show(translate('draft_generation.offline_message'));
-      return;
-    }
     if (!this.validateCurrentStep()) {
       return;
     }
@@ -260,6 +256,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     if (this.stepper.selected !== this.stepper.steps.last) {
       this.stepper.next();
     } else {
+      if (!this.onlineStatusService.isOnline) {
+        this.noticeService.show(translate('draft_generation.offline_message'));
+        return;
+      }
       this.isStepsCompleted = true;
       this.done.emit({
         trainingBooks: this.userSelectedTrainingBooks,

@@ -149,7 +149,7 @@ describe('DraftGenerationStepsComponent', () => {
       );
       when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
       when(mockTrainingDataQuery.docs).thenReturn([]);
-      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
@@ -177,13 +177,29 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should not advance steps if user is offline', fakeAsync(() => {
-      expect(component.stepper.selectedIndex).toBe(0);
       when(mockOnlineStatusService.isOnline).thenReturn(false);
+      expect(component.stepper.selectedIndex).toBe(0);
+      component['languagesVerified'] = true;
+      fixture.detectChanges();
+      // Go to translation books
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.userSelectedTranslateBooks = [1];
+      fixture.detectChanges();
+      // Go to training books
       component.tryAdvanceStep();
       tick();
       fixture.detectChanges();
+      verify(mockNoticeService.show(anything())).never();
+      expect(component.stepper.selectedIndex).toBe(2);
+      component.userSelectedTrainingBooks = [2, 3];
+      tick();
+      fixture.detectChanges();
+      // Attempt to generate draft
+      component.tryAdvanceStep();
+      fixture.detectChanges();
       verify(mockNoticeService.show(anything())).once();
-      expect(component.stepper.selectedIndex).toBe(0);
+      expect(component.stepper.selectedIndex).toBe(2);
     }));
   });
 
