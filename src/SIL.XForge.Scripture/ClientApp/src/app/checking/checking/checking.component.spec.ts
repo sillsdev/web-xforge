@@ -574,7 +574,7 @@ describe('CheckingComponent', () => {
       });
 
       env.clickButton(env.editQuestionButton);
-      env.realtimeService.updateAllSubscribeQueries();
+      env.realtimeService.updateQueryAdaptersRemote();
       tick(100);
       env.fixture.detectChanges();
 
@@ -3068,7 +3068,7 @@ class TestEnvironment {
       id: docId,
       data: newQuestion
     });
-    this.realtimeService.updateAllSubscribeQueries();
+    this.realtimeService.updateQueryAdaptersRemote();
   }
 
   resolveFileUploadSubject(fileUrl: string): Subject<void> {
