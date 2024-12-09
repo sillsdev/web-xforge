@@ -42,6 +42,11 @@ header {
     height: auto;
   }
 
+  img.square {
+    width: 48px;
+    height: 48px;
+  }
+
   a {
     color: $greyDark;
     text-decoration: none;

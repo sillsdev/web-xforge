@@ -57,7 +57,10 @@
                 <div class="mdl-cell mdl-cell--12-col flex justify-content-space-between">
                     <div class="flex align-items-center">
                         <a asp-page="Index">
-                            <img src="~/assets/images/@(Settings.UseScriptureForgeBranding() ? "sf_logo_with_name_black" : "sf_logo_with_space").svg" alt="@Settings.GetSiteName()">
+                            <img
+                                src="~/assets/images/@(Settings.UseScriptureForgeBranding() ? "sf_logo_with_name_black" : "sf").svg"
+                                class="@(Settings.UseScriptureForgeBranding() ? string.Empty : "square")"
+                                alt="@Settings.GetSiteName()">
                         </a>
                     </div>
                     @await Html.PartialAsync("_SelectLanguagePartial")
