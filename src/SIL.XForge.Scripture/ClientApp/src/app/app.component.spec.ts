@@ -46,6 +46,7 @@ import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
 import { NavigationComponent } from './navigation/navigation.component';
+import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
 
@@ -99,7 +100,8 @@ describe('AppComponent', () => {
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      AvatarComponent
+      AvatarComponent,
+      GlobalNoticesComponent
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
