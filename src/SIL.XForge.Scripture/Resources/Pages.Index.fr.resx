@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!--
-    Microsoft ResX Schema
-
+  <!-- 
+    Microsoft ResX Schema 
+    
     Version 2.0
-
-    The primary goals of this format is to allow a simple XML format
-    that is mostly human readable. The generation and parsing of the
-    various data types are done through the TypeConverter classes
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
     associated with the data types.
-
+    
     Example:
-
+    
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,79 +26,79 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-
-    There are any number of "resheader" rows that contain simple
+                
+    There are any number of "resheader" rows that contain simple 
     name/value pairs.
-
-    Each data row contains a name, and value. The row also contains a
-    type or mimetype. Type corresponds to a .NET class that support
-    text/value conversion through the TypeConverter architecture.
-    Classes that don't support this are serialized and stored with the
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
     mimetype set.
-
-    The mimetype is used for serialized objects, and tells the
-    ResXResourceReader how to depersist the object. This is currently not
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
     extensible. For a given mimetype the value must be set accordingly:
-
-    Note - application/x-microsoft.net.object.binary.base64 is the format
-    that the ResXResourceWriter will generate, however the reader can
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
     read any of the formats listed below.
-
+    
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-
+    
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array
+    value   : The object must be serialized into a byte array 
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-  <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
       <xsd:complexType>
         <xsd:choice maxOccurs="unbounded">
           <xsd:element name="metadata">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string"/>
-              <xsd:attribute name="type" type="xsd:string"/>
-              <xsd:attribute name="mimetype" type="xsd:string"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="assembly">
             <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string"/>
-              <xsd:attribute name="name" type="xsd:string"/>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="data">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="resheader">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
             </xsd:complexType>
           </xsd:element>
         </xsd:choice>
@@ -123,41 +123,32 @@
   <data name="AboutEngaging" xml:space="preserve">
     <value>Les projets d'Écritures impliquent des groupes de locuteurs de langue maternelle de plus en plus diversifiés géographiquement.</value>
   </data>
-  <data name="AboutFlexible" xml:space="preserve">
-    <value>Flexible</value>
-  </data>
-  <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 Compile {0}des questions uniques{1} qui correspondent à votre contexte spécifique.</value>
+  <data name="AboutDrafting" xml:space="preserve">
+    <value>2 Utilize advanced Artificial Intelligence to generate preliminary drafts from existing translations. This reduces the workload and speeds up the translation process, giving translators a head start.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>À propos de Scripture Forge</value>
   </data>
-  <data name="AboutParatext" xml:space="preserve">
-    <value>Fonctionne avec Paratext</value>
-  </data>
-  <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {2}Intégration de Paratext{3} et {0}synchronisation continue{1} maintiennent votre projet à jour et permettent les retours d'utilisateurs via {4}Notes de Paratext{3}.</value>
+  <data name="AboutCollaborate" xml:space="preserve">
+    <value>1 Collaborative editing allows teams to draft and edit translations together efficiently. No more worrying about reconciling multiple versions—our platform ensures everyone stays on the same page.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Augmentez vos possibilités avec la vérification des Écritures</value>
   </data>
-  <data name="AboutUserEngagement" xml:space="preserve">
-    <value>Engagement utilisateur</value>
-  </data>
-  <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 {0}Les utilisateurs invités{1} peuvent répondre aux questions, laisser des commentaires sur les réponses existantes et mettre des J'aime sur les réponses.</value>
+  <data name="AboutChecking" xml:space="preserve">
+    <value>3 Launch modular Community Checking campaigns to gather extensive feedback quickly. This tool ensures that translations are thorough and accurate by involving community members in the verification process.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>Un ensemble d'outils gratuits pour en faire davantage avec votre projet Paratext, où que vous soyez. </value>
+    <value>An online app for team-based translation, featuring AI help and tools for community review</value>
   </data>
-  <data name="EngageChecking" xml:space="preserve">
-    <value>Impliquez-vous dans la vérification par la communauté</value>
+  <data name="EngageDrafting" xml:space="preserve">
+    <value>Draft Generation</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
-    <value>Collaborer sur les Écritures</value>
+    <value>Collaborative Editing</value>
   </data>
-  <data name="EngageSuggestions" xml:space="preserve">
-    <value>Obtenez des suggestions au fur et à mesure de votre saisie</value>
+  <data name="EngageChecking" xml:space="preserve">
+    <value>Community Checking</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Impliquez-vous avec la communauté linguistique. Collaborez avec vous pairs.</value>
