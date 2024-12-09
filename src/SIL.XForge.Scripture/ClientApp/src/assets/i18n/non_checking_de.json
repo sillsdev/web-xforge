@@ -104,25 +104,32 @@
     "remove_user": "Benutzer entfernen",
     "share_with_others": "Mit anderen teilen"
   },
+  "confirm_draft_sources": {
+    "confirm_lang_codes_correct": "Alle Sprachcodes sind korrekt.",
+    "drafting_from_heading": "Entwurf von {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
+    "how_to_change_language_codes": "Die Sprachcodes können in Paratext unter Projekteinstellungen > Projekteigenschaften > Sprache geändert werden.",
+    "incorrect_language_codes_reduce_quality": "Falsche Sprachcodes beeinträchtigen die Qualität des Entwurfs erheblich.",
+    "language_code": "Sprachcode: ",
+    "references_heading": "Bezug auf ({{ referenceLanguage }})",
+    "review_draft_setup": "Einstellung für Entwürfe überprüfen",
+    "targets_heading": "Übersetzungsprojekt ({{ targetLanguage }})",
+    "training_language_model": "Sprachmodell schulen"
+  },
   "connect_project": {
     "connect_network_to_connect_project": "Bitte mit dem Internet verbinden, um eine Verbindung zu einem Projekt herzustellen",
     "connect_paratext_project": "Mit Paratext-Projekt verbinden",
     "connect": "Verbinden",
     "connecting_to_project": "Verbinden mit {{ projectName }}...",
     "enable_community_checking": "Überprüfung mit Zielgruppe aktivieren",
-    "enable_translation_suggestions": "Übersetzungsvorschläge aktivieren",
     "engage_the_wider_community_to_check_scripture": "Arbeite mit der weiteren Zielgruppe zusammen, um sicherzustellen, dass die Übersetzung klar, genau und natürlich ist. Wähle Verse aus, stelle gezielte Fragen und ermögliche eine Diskussion über die Antworten.",
     "error_fetching_resources": "Beim Abrufen der Ressourcen aus der digitalen Bibelbibliothek ist ein Fehler aufgetreten. Du kannst nur Projekte auswählen.",
-    "log_in_with_paratext": "Mit Paratext anmelden",
     "paratext_account_linked_to_another_user": "Du hast Dich in ein Paratext-Konto eingeloggt, das bereits mit einem Benutzer mit der E-Mail {{ email }} verknüpft ist. Du wirst von Deinem aktuellen Konto abgemeldet und fährst als Paratext-Benutzer fort.",
     "problem_already_connected": "Das Projekt ist bereits verbunden. Möglicherweise hat ein anderer Projektadministrator das Projekt zur gleichen Zeit verbunden. Bitte versuche es erneut. Wenn das Problem weiterhin besteht, melde bitte den Fehler, damit wir ihn beheben können.",
     "proceed": "Fortfahren",
     "project_settings": "Projekteinstellungen",
     "select_project_or_resource": "Wähle das Paratext-Projekt oder die Ressource aus der digitalen Bibelbibliothek, auf der Dein Projekt basiert. Wenn Dein Projekt auf einem Paratext-Projekt basiert, ist es am besten, es als Tochterprojekt in Paratext einzurichten.",
     "source_text_placeholder": "Ausgangstext (optional)",
-    "translation_suggestions_require_source_text": "Hinweis: Übersetzungsvorschläge sind nur verfügbar, wenn ein Ausgangstext ausgewählt ist.",
-    "you_can_change_later": "Du kannst dies später noch ändern.",
-    "you_must_be_logged_in_to_paratext": "Du musst Dich mit Ihrem Paratext-Konto anmelden, um eine Verbindung zu einem Projekt herzustellen."
+    "you_can_change_later": "Du kannst dies später noch ändern."
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Bist Du sicher, dass Du dieses Projekt löschen willst?",
@@ -227,6 +234,7 @@
     "back": "Zurück",
     "books_are_hidden_show_why": "{{ numBooks }} Bücher sind versteckt. {{ underlineStart }}Grund anzeigen{{ underlineEnd }}",
     "books_are_hidden_hide_explanation": "{{ numBooks }} Bücher sind versteckt. {{ underlineStart }}Erklärung ausblenden{{ underlineEnd }}",
+    "confirm_codes_correct_to_continue": "Bitte bestätige, dass die Sprachcodes korrekt sind, bevor Du fortfährst.",
     "choose_additional_training_data_files_label": "Zusätzliche Schulung",
     "choose_additional_training_data_files": "Zusätzliche Dateien für die Schulung des Sprachmodells wählen",
     "choose_books_for_training_error": "Keine Bücher ausgewählt. Wähle Bücher für die Schulung aus, um fortzufahren.",
@@ -243,6 +251,7 @@
     "loading": "Wird geladen...",
     "next": "Weiter",
     "no_available_books": "Du hast keine Bücher für die Erstellung von Entwürfen verfügbar.",
+    "overview": "Übersicht",
     "these_source_books_cannot_be_used_for_training": "Die folgenden Bücher können nicht für Schulungen verwendet werden, da sie nicht im Ausgangstext für die Schulung ({{ trainingSourceProjectName }}) enthalten sind.",
     "these_source_books_cannot_be_used_for_translating": "Die folgenden Bücher können nicht übersetzt werden, da sie nicht im Ausgangstext für Entwürfe ({{ draftingSourceProjectName }}) enthalten sind.",
     "unusable_target_books": "Du kannst das Buch nicht finden? Stelle sicher, dass das Buch in Paratext erstellt wurde und synchronisiere Dein Projekt."
@@ -381,6 +390,7 @@
     "paratext_user": "Einem Paratext-Benutzer zugewiesen",
     "permanently_delete_note": "Diesen Kommentar dauerhaft löschen?",
     "reattached": "(Wieder angehängt)",
+    "required": "Obligatorisch",
     "resolve": "Speichern und erledigen",
     "save": "Speichern",
     "show_changes": "Änderungen anzeigen",

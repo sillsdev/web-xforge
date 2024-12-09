@@ -104,25 +104,32 @@
     "remove_user": "Hapus Pengguna",
     "share_with_others": "Bagikan dengan orang lain"
   },
+  "confirm_draft_sources": {
+    "confirm_lang_codes_correct": "All the language codes are correct.",
+    "drafting_from_heading": "Drafting from {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
+    "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
+    "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
+    "language_code": "Language code: ",
+    "references_heading": "References ({{ referenceLanguage }})",
+    "review_draft_setup": "Review draft setup",
+    "targets_heading": "Translation project ({{ targetLanguage }})",
+    "training_language_model": "Training the language model"
+  },
   "connect_project": {
     "connect_network_to_connect_project": "Harap sambungkan ke internet untuk mengaktifkan hubungan ke proyek",
     "connect_paratext_project": "Hubungkan Proyek Paratext",
     "connect": "Menghubungkan",
     "connecting_to_project": "Menghubungkan ke {{ projectName }}...",
     "enable_community_checking": "Mengaktifkan Pemeriksaan Komunitas",
-    "enable_translation_suggestions": "Mengaktifkan saran terjemahan",
     "engage_the_wider_community_to_check_scripture": "Libatkan komunitas yang lebih luas untuk memastikan bahwa terjemahannya jelas, akurat, dan alami. Pilih ayat, ajukan pertanyaan yang ditargetkan, izinkan diskusi jawaban.",
     "error_fetching_resources": "Terjadi kesalahan saat mengambil sumber daya Perpustakaan Alkitab Digital. Anda hanya dapat memilih proyek.",
-    "log_in_with_paratext": "Masuk dengan Paratext",
     "paratext_account_linked_to_another_user": "Anda telah masuk ke akun Paratext yang telah ditautkan ke pengguna dengan email {{ email }}. Anda akan keluar dari akun Anda saat ini dan melanjutkan sebagai pengguna Paratext.",
     "problem_already_connected": "Proyek sudah terhubung. Mungkin administrator proyek lain sedang menghubungkan proyek tersebut pada saat yang bersamaan. Silakan coba lagi. Jika masih ada masalah, silakan laporkan masalahnya agar kami dapat memperbaikinya.",
     "proceed": "Dilanjutkan",
     "project_settings": "Pengaturan Proyek",
     "select_project_or_resource": "Pilih proyek Paratext atau sumber daya Perpustakaan Alkitab Digital yang menjadi dasar proyek Anda. Jika proyek Anda didasarkan pada proyek Paratext, yang terbaik adalah mengaturnya sebagai proyek anak di Paratext.",
     "source_text_placeholder": "Teks sumber (pilihan)",
-    "translation_suggestions_require_source_text": "Catatan: Saran terjemahan hanya tersedia jika teks sumber dipilih.",
-    "you_can_change_later": "Anda dapat mengubahnya nanti.",
-    "you_must_be_logged_in_to_paratext": "Anda harus masuk dengan akun Paratext Anda untuk menghubungkan ke proyek."
+    "you_can_change_later": "Anda dapat mengubahnya nanti."
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Apakah anda yakin anda ingin menghapus proyek ini?",
@@ -227,6 +234,7 @@
     "back": "Kembali",
     "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
+    "confirm_codes_correct_to_continue": "Please confirm the language codes are correct before continuing",
     "choose_additional_training_data_files_label": "Pelatihan tambahan",
     "choose_additional_training_data_files": "Memilih file tambahan untuk melatih model bahasa",
     "choose_books_for_training_error": "Tidak ada kitab yang dipilih. Pilih kitab pelatihan untuk melanjutkan.",
@@ -243,6 +251,7 @@
     "loading": "Memuat...",
     "next": "Berikutnya",
     "no_available_books": "Anda tidak memiliki kitab yang tersedia untuk menyusun konsep.",
+    "overview": "Ringkasan",
     "these_source_books_cannot_be_used_for_training": "Kitab-kitab berikut ini tidak dapat digunakan untuk pelatihan karena tidak ada dalam teks sumber pelatihan ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "Kitab-kitab berikut ini tidak dapat diterjemahkan karena tidak ada dalam teks sumber draf ({{ draftingSourceProjectName }}).",
     "unusable_target_books": "Tidak dapat menemukan kitab yang Anda cari? Pastikan kitab tersebut dibuat di Paratext, lalu sinkronkan proyek Anda."
@@ -381,6 +390,7 @@
     "paratext_user": "Ditugaskan ke pengguna Paratext",
     "permanently_delete_note": "Menghapus komentar ini secara permanen?",
     "reattached": "(Re-attached)",
+    "required": "Required",
     "resolve": "Simpan dan selesaikan",
     "save": "Simpan",
     "show_changes": "Lihat perubahan",

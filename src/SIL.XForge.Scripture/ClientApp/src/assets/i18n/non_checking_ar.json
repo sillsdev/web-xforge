@@ -104,25 +104,32 @@
     "remove_user": "Remove User",
     "share_with_others": "مشاركة مع الآخرين"
   },
+  "confirm_draft_sources": {
+    "confirm_lang_codes_correct": "All the language codes are correct.",
+    "drafting_from_heading": "Drafting from {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
+    "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
+    "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
+    "language_code": "Language code: ",
+    "references_heading": "References ({{ referenceLanguage }})",
+    "review_draft_setup": "Review draft setup",
+    "targets_heading": "Translation project ({{ targetLanguage }})",
+    "training_language_model": "Training the language model"
+  },
   "connect_project": {
     "connect_network_to_connect_project": "يُرجى الاتصال بالإنترنت من أجل الاتصال بالمشروع",
     "connect_paratext_project": "اتصل بمشروع Paratext",
     "connect": "اتصال",
     "connecting_to_project": "جاري الاتصال بـ {{ projectName }}...",
     "enable_community_checking": "فعِّل إمكانية المراجعة المجتمعية",
-    "enable_translation_suggestions": "فعِّل اقتراحات الترجمة",
     "engage_the_wider_community_to_check_scripture": "إشراك المجتمع الأوسع لضمان أن تكون الترجمة واضحة، ودقيقة، وطبيعية. اختر الأعداد الكتابية، واطرح أسئلة هادفة، واسمح بمناقشة الإجابات.",
     "error_fetching_resources": "حدث خطأ أثناء جلب مصادر مكتبة الكتاب المقدس الرقمية. ستتمكن فقط من اختيار المشاريع.",
-    "log_in_with_paratext": "سجل الدخول مع Paratext",
     "paratext_account_linked_to_another_user": "لقد قمت بتسجيل الدخول إلى حساب Paratext المرتبط مسبقاً بمستخدم من خلال البريد الإلكتروني {{ email }}. سيتم تسجيل الخروج من حسابك الحالي لتستمرّ كمستخدم Paratext.",
     "problem_already_connected": "المشروع متصل أصلاً. ربما مدير مشروع آخر قام بربط المشروع في نفس الوقت. يُرجى المحاولة مرة أخرى. إذا استمرت المشكلة، فيُرجى الإبلاغ عن المشكلة حتى نتمكن من إصلاحها.",
     "proceed": "باشِر",
     "project_settings": "إعدادات المشروع",
     "select_project_or_resource": "حدد مشروع Paratext أو مصدر من مكتبة الكتاب المُقدَّس الرقمية يعتمد عليه مشروعك. إذا كان مشروعك مبني على مشروع Paratext ، فالأفضل إعداده كمشروع تابع في Paratext.",
     "source_text_placeholder": "نص المصدر (اختياري)",
-    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
-    "you_can_change_later": "يمكنك تغيير الإعدادات لاحقاً.",
-    "you_must_be_logged_in_to_paratext": "ينبغي أن تسجيل الدخول في حسابك على Paratext للاتصال بمشروع."
+    "you_can_change_later": "يمكنك تغيير الإعدادات لاحقاً."
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "هل أنت متأكد من أنّك تريد أن تحذف هذا المشروع؟",
@@ -227,6 +234,7 @@
     "back": "Back",
     "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
+    "confirm_codes_correct_to_continue": "Please confirm the language codes are correct before continuing",
     "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Choose additional files for training the language model",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
@@ -243,6 +251,7 @@
     "loading": "التحميل جارٍ...",
     "next": "التالي",
     "no_available_books": "You have no books available for drafting.",
+    "overview": "نظرة عامة",
     "these_source_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
     "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
@@ -381,6 +390,7 @@
     "paratext_user": "تعيين لمستخدم Paratext",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(أعيد إرفاقها)",
+    "required": "Required",
     "resolve": "Save and resolve",
     "save": "حفظ",
     "show_changes": "عرض التغييرات",

@@ -104,25 +104,32 @@
     "remove_user": "Eliminar usuario",
     "share_with_others": "Compartir con otros"
   },
+  "confirm_draft_sources": {
+    "confirm_lang_codes_correct": "All the language codes are correct.",
+    "drafting_from_heading": "Drafting from {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
+    "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
+    "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
+    "language_code": "Language code: ",
+    "references_heading": "References ({{ referenceLanguage }})",
+    "review_draft_setup": "Review draft setup",
+    "targets_heading": "Translation project ({{ targetLanguage }})",
+    "training_language_model": "Training the language model"
+  },
   "connect_project": {
     "connect_network_to_connect_project": "Por favor, conéctese a Internet para permitir la conexión a un proyecto",
     "connect_paratext_project": "Conectar proyecto de Paratext",
     "connect": "Conectar",
     "connecting_to_project": "Conectando a {{ projectName }}...",
     "enable_community_checking": "Habilitar la Comprobación por la Comunidad",
-    "enable_translation_suggestions": "Habilitar las sugerencias de traducción",
     "engage_the_wider_community_to_check_scripture": "Involucrar a la comunidad en general para asegurar que la traducción sea clara, precisa y natural. Seleccione versículos, haga preguntas específicas, permita la discusión de las respuestas.",
     "error_fetching_resources": "Se ha producido un error al recuperar los recursos de la Biblioteca Bíblica Digital. Sólo podrá seleccionar proyectos.",
-    "log_in_with_paratext": "Iniciar sesión con Paratext",
     "paratext_account_linked_to_another_user": "Has entrado en una cuenta de Paratext que ya está vinculada a un usuario con el correo electrónico {{ email }}. Saldrás de tu cuenta actual y procederás como usuario de Paratext.",
     "problem_already_connected": "El proyecto ya está conectado. Tal vez otro administrador del proyecto conectó el proyecto al mismo tiempo. Por favor, inténtelo de nuevo. Si sigue siendo un problema, por favor informe del problema para que podamos arreglarlo.",
     "proceed": "Continuar",
     "project_settings": "Configuración del proyecto",
     "select_project_or_resource": "Seleccione el proyecto Paratext o el recurso de la Biblioteca Bíblica Digital en el que se basa su proyecto. Si su proyecto se basa en un proyecto Paratext, lo mejor es configurarlo como un proyecto hijo en Paratext.",
     "source_text_placeholder": "Texto original (opcional)",
-    "translation_suggestions_require_source_text": "Nota: Las sugerencias de traducción sólo están disponibles si se selecciona un texto de origen.",
-    "you_can_change_later": "Puede cambiarlo más tarde.",
-    "you_must_be_logged_in_to_paratext": "Debe iniciar sesión con su cuenta de Paratext para conectarse a un proyecto."
+    "you_can_change_later": "Puede cambiarlo más tarde."
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "¿Está seguro de que quiere borrar este proyecto?",
@@ -227,6 +234,7 @@
     "back": "Atrás",
     "books_are_hidden_show_why": "{{ numBooks }} libros están ocultos. {{ underlineStart }}Demuestre por qué{{ underlineEnd }}",
     "books_are_hidden_hide_explanation": "{{ numBooks }} libros están ocultos. {{ underlineStart }}Ocultar explicación{{ underlineEnd }}",
+    "confirm_codes_correct_to_continue": "Please confirm the language codes are correct before continuing",
     "choose_additional_training_data_files_label": "Entrenamiento adicional",
     "choose_additional_training_data_files": "Elija archivos adicionales para entrenar el modelo lingüístico",
     "choose_books_for_training_error": "No hay libros seleccionados. Seleccione libros de formación para continuar.",
@@ -243,6 +251,7 @@
     "loading": "Cargando...",
     "next": "Siguiente",
     "no_available_books": "No tiene libros disponibles para la redacción.",
+    "overview": "Panorama general",
     "these_source_books_cannot_be_used_for_training": "Los siguientes libros no pueden utilizarse para la formación, ya que no se encuentran en el texto fuente de formación ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "Los siguientes libros no pueden traducirse porque no se encuentran en el texto fuente de redacción ({{ draftingSourceProjectName }}).",
     "unusable_target_books": "¿No encuentras el libro que buscas? Asegúrate de que el libro se ha creado en Paratext y, a continuación, sincroniza tu proyecto."
@@ -381,6 +390,7 @@
     "paratext_user": "Asignado a un usuario de Paratext",
     "permanently_delete_note": "¿Borrar permanentemente este comentario?",
     "reattached": "(Reajustada)",
+    "required": "Required",
     "resolve": "Guardar y resolver",
     "save": "Guardar",
     "show_changes": "Mostrar cambios",
