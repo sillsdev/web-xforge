@@ -1,4 +1,5 @@
 import { InjectionToken } from '@angular/core';
+import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BuildStates } from '../../machine-api/build-states';
 
 /**
@@ -6,22 +7,12 @@ import { BuildStates } from '../../machine-api/build-states';
  */
 export interface BuildConfig {
   projectId: string;
-  trainingBooks: number[];
   trainingDataFiles: string[];
   trainingScriptureRange?: string;
   trainingScriptureRanges: ProjectScriptureRange[];
-  translationBooks: number[];
   translationScriptureRange?: string;
   translationScriptureRanges: ProjectScriptureRange[];
   fastTraining: boolean;
-}
-
-/**
- * A per-project scripture range.
- */
-export interface ProjectScriptureRange {
-  projectId: string;
-  scriptureRange: string;
 }
 
 /**

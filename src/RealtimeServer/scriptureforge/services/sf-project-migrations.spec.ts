@@ -220,36 +220,36 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.translateConfig.preTranslate).toBe(false);
     });
   });
-});
 
-describe('version 11', () => {
-  it('adds biblical terms properties', async () => {
-    const env = new TestEnvironment(10);
-    const conn = env.server.connect();
-    await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
-    let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.biblicalTermsConfig).not.toBeDefined();
+  describe('version 11', () => {
+    it('adds biblical terms properties', async () => {
+      const env = new TestEnvironment(10);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.biblicalTermsConfig).not.toBeDefined();
 
-    await env.server.migrateIfNecessary();
+      await env.server.migrateIfNecessary();
 
-    projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled).toBe(false);
-    expect(projectDoc.data.biblicalTermsConfig.hasRenderings).toBe(false);
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled).toBe(false);
+      expect(projectDoc.data.biblicalTermsConfig.hasRenderings).toBe(false);
+    });
   });
-});
 
-describe('version 12', () => {
-  it('adds draftConfig to translateConfig', async () => {
-    const env = new TestEnvironment(11);
-    const conn = env.server.connect();
-    await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { translateConfig: {} });
-    let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.translateConfig.draftConfig).not.toBeDefined();
+  describe('version 12', () => {
+    it('adds draftConfig to translateConfig', async () => {
+      const env = new TestEnvironment(11);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { translateConfig: {} });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig).not.toBeDefined();
 
-    await env.server.migrateIfNecessary();
+      await env.server.migrateIfNecessary();
 
-    projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.translateConfig.draftConfig).toBeDefined();
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig).toBeDefined();
+    });
   });
 
   describe('version 13', () => {
@@ -453,6 +453,28 @@ describe('version 12', () => {
 
       projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled).toBe(false);
+    });
+  });
+
+  describe('version 21', () => {
+    it('copies selected training and translation books to scripture ranges', async () => {
+      const env = new TestEnvironment(20);
+      const conn = env.server.connect();
+
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { lastSelectedTrainingBooks: [1, 2, 3], lastSelectedTranslationBooks: [4, 5] } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingBooks).toEqual([1, 2, 3]);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).toEqual([4, 5]);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingBooks).toEqual([1, 2, 3]);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).toEqual([4, 5]);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toEqual('GEN;EXO;LEV');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toEqual('NUM;DEU');
     });
   });
 });
