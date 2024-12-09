@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http;
 using IdentityModel.Client;
@@ -13,6 +14,7 @@ using SIL.XForge.Scripture.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+[ExcludeFromCodeCoverage(Justification = "This logic will only work in a valid ASP.NET Core Context")]
 public static class MachineServiceCollectionExtensions
 {
     public static IServiceCollection AddSFMachine(
@@ -21,24 +23,25 @@ public static class MachineServiceCollectionExtensions
         IWebHostEnvironment env
     )
     {
-        // Setup the Machine API
+        // Set up the Machine API
         var servalOptions = configuration.GetOptions<ServalOptions>();
-        services.AddAccessTokenManagement(options =>
-        {
-            options.Client.Clients.Add(
-                MachineApi.HttpClientName,
-                new ClientCredentialsTokenRequest
+        services.AddDistributedMemoryCache();
+        services
+            .AddClientCredentialsTokenManagement()
+            .AddClient(
+                MachineApi.TokenClientName,
+                client =>
                 {
-                    Address = servalOptions.TokenUrl,
-                    ClientId = servalOptions.ClientId,
-                    ClientSecret = servalOptions.ClientSecret,
-                    Parameters = new Parameters { { "audience", servalOptions.Audience } },
+                    client.TokenEndpoint = servalOptions.TokenUrl;
+                    client.ClientId = servalOptions.ClientId;
+                    client.ClientSecret = servalOptions.ClientSecret;
+                    client.Parameters = new Parameters { { "audience", servalOptions.Audience } };
                 }
             );
-        });
         services
-            .AddClientAccessTokenHttpClient(
+            .AddClientCredentialsHttpClient(
                 MachineApi.HttpClientName,
+                MachineApi.TokenClientName,
                 configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
             )
             .ConfigurePrimaryHttpMessageHandler(() =>
@@ -77,6 +80,13 @@ public static class MachineServiceCollectionExtensions
             var factory = sp.GetService<IHttpClientFactory>();
             var httpClient = factory.CreateClient(MachineApi.HttpClientName);
             return new DataFilesClient(httpClient);
+        });
+        services.AddSingleton<ICorporaClient, CorporaClient>(sp =>
+        {
+            // Instantiate the corpora client with our named HTTP client
+            var factory = sp.GetService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
+            return new CorporaClient(httpClient);
         });
         services.AddSingleton<IMachineApiService, MachineApiService>();
         services.AddSingleton<IMachineProjectService, MachineProjectService>();
