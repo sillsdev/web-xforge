@@ -74,7 +74,7 @@ const ROUTES: Route[] = [
   { path: 'projects/:projectId/translate', component: MockComponent }
 ];
 
-fdescribe('CheckingOverviewComponent', () => {
+describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
     imports: [
       DialogTestModule,
