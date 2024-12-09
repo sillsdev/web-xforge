@@ -155,8 +155,6 @@ public class SFProjectsRpcController(
                     { "AdditionalTrainingSourceEnabled", settings?.AdditionalTrainingSourceEnabled?.ToString() },
                     { "AdditionalTrainingSourceParatextId", settings?.AdditionalTrainingSourceParatextId },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
-                    { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
-                    { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
                     { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled?.ToString() },
                     { "UsersSeeEachOthersResponses", settings?.UsersSeeEachOthersResponses?.ToString() },
                     { "HideCommunityCheckingText", settings?.HideCommunityCheckingText?.ToString() },
@@ -429,6 +427,10 @@ public class SFProjectsRpcController(
                 )
             );
         }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
         catch (DataNotFoundException dnfe)
         {
             return NotFoundError(dnfe.Message);
@@ -442,7 +444,7 @@ public class SFProjectsRpcController(
                     { "projectId", projectId },
                     { "role", role },
                     { "shareLinkType", shareLinkType },
-                    { "daysBeforeExpiration", daysBeforeExpiration.ToString() }
+                    { "daysBeforeExpiration", daysBeforeExpiration.ToString() },
                 }
             );
             throw;
@@ -739,7 +741,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            return Ok(await projectService.TransceleratorQuestions(UserId, projectId));
+            return Ok(await projectService.TransceleratorQuestionsAsync(UserId, projectId));
         }
         catch (ForbiddenException)
         {
@@ -758,11 +760,41 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> SetRoleProjectPermissions(string projectId, string role, string[] permissions)
+    {
+        try
+        {
+            await projectService.SetRoleProjectPermissionsAsync(UserId, projectId, role, permissions);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SetRoleProjectPermissions" },
+                    { "projectId", projectId },
+                    { "role", role },
+                    { "permissions", string.Join(',', permissions) },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> SetUserProjectPermissions(string projectId, string userId, string[] permissions)
     {
         try
         {
-            await projectService.SetUserProjectPermissions(UserId, projectId, userId, permissions);
+            await projectService.SetUserProjectPermissionsAsync(UserId, projectId, userId, permissions);
             return Ok();
         }
         catch (ForbiddenException)

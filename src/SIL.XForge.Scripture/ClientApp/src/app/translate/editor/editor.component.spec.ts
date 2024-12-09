@@ -1221,7 +1221,6 @@ describe('EditorComponent', () => {
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: true,
-          shareEnabled: false,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -3527,7 +3526,6 @@ describe('EditorComponent', () => {
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: false,
-          shareEnabled: false,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -4142,8 +4140,7 @@ describe('EditorComponent', () => {
 });
 
 const defaultTranslateConfig = {
-  translationSuggestionsEnabled: false,
-  shareEnabled: false
+  translationSuggestionsEnabled: false
 };
 
 class TestEnvironment {
@@ -4210,8 +4207,7 @@ class TestEnvironment {
       }
     },
     checkingConfig: {
-      checkingEnabled: false,
-      shareEnabled: true
+      checkingEnabled: false
     },
     texts: [
       {

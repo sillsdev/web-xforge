@@ -42,7 +42,7 @@ public interface ISFProjectService : IProjectService
     Task<string> JoinWithShareKeyAsync(string curUserId, string shareKey);
     Task<IReadOnlyList<InviteeStatus>> InvitedUsersAsync(string curUserId, string projectId);
     bool IsSourceProject(string projectId);
-    Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
+    Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestionsAsync(string curUserId, string projectId);
     Task UpdatePermissionsAsync(
         string curUserId,
         IDocument<SFProject> projectDoc,
@@ -63,4 +63,6 @@ public interface ISFProjectService : IProjectService
     Task SetServalConfigAsync(string curUserId, string[] systemRoles, string projectId, string? servalConfig);
     Task SetDraftAppliedAsync(string userId, string projectId, int book, int chapter, bool draftApplied);
     Task SetIsValidAsync(string userId, string projectId, int book, int chapter, bool draftApplied);
+    Task SetRoleProjectPermissionsAsync(string curUserId, string projectId, string role, string[] permissions);
+    Task SetUserProjectPermissionsAsync(string curUserId, string projectId, string userId, string[] permissions);
 }

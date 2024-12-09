@@ -3,8 +3,10 @@ import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { firstValueFrom } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -380,6 +382,7 @@ class TestEnvironment {
     translateShareEnabled = true
   }: TestEnvironmentArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
+    const permissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)];
     this.realtimeService.addSnapshot(SFProjectProfileDoc.COLLECTION, {
       id: projectId,
       data: {
@@ -389,8 +392,11 @@ class TestEnvironment {
           user02: SFProjectRole.ParatextAdministrator,
           user03: SFProjectRole.Viewer
         },
-        translateConfig: { shareEnabled: translateShareEnabled },
-        checkingConfig: { checkingEnabled: checkingEnabled, shareEnabled: checkingShareEnabled }
+        checkingConfig: { checkingEnabled: checkingEnabled },
+        rolePermissions: {
+          sf_community_checker: checkingShareEnabled ? permissions : [],
+          sf_observer: translateShareEnabled ? permissions : []
+        }
       }
     });
     const locale = mock<Locale>();
@@ -502,7 +508,6 @@ class TestEnvironment {
       op =>
         op.set(p => p.checkingConfig, {
           checkingEnabled: false,
-          shareEnabled: false,
           usersSeeEachOthersResponses: false,
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         }),

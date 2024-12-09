@@ -135,6 +135,7 @@ describe('RealtimeServer', () => {
       userRoles: {
         user01: 'user'
       },
+      rolePermissions: {},
       userPermissions: {}
     });
     await submitOp(userConn, PROJECTS_COLLECTION, 'project02', []);
@@ -659,6 +660,7 @@ class TestEnvironment {
       userRoles: {
         user01: 'admin'
       },
+      rolePermissions: {},
       userPermissions: {}
     });
   }
