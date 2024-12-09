@@ -179,6 +179,33 @@ describe('CheckingOverviewComponent', () => {
       expect(env.questionEditButtons.length).toEqual(2);
     }));
 
+    it('should show new question after local change', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      env.waitForQuestions();
+
+      const dateNow = new Date();
+      const newQuestion: Question = {
+        dataId: 'newQId1',
+        ownerRef: env.adminUser.id,
+        projectRef: 'project01',
+        text: 'Admin just added a question.',
+        answers: [],
+        verseRef: { bookNum: 42, chapterNum: 1, verseNum: 10, verse: '10-11' },
+        isArchived: false,
+        dateCreated: dateNow.toJSON(),
+        dateModified: dateNow.toJSON()
+      };
+
+      //project01:LUK:1:target
+      const numQuestions = env.component.getQuestionDocs(new TextDocId('project01', 42, 1)).length;
+
+      env.addQuestion(newQuestion);
+      await env.realtimeService.updateQueriesLocal();
+      env.waitForProjectDocChanges();
+
+      expect(env.component.getQuestionDocs(new TextDocId('project01', 42, 1)).length).toEqual(numQuestions + 1);
+    }));
+
     it('should show question in canonical order', fakeAsync(() => {
       const env = new TestEnvironment();
       env.waitForQuestions();
@@ -1187,7 +1214,7 @@ class TestEnvironment {
   }
 
   waitForQuestions(): void {
-    this.realtimeService.updateAllSubscribeQueries();
+    this.realtimeService.updateQueryAdaptersRemote();
     this.fixture.detectChanges();
     this.waitForProjectDocChanges();
   }

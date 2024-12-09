@@ -5139,7 +5139,7 @@ class TestEnvironment {
   resolveNote(projectId: string, threadId: string): void {
     const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
     noteDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
-    this.realtimeService.updateAllSubscribeQueries();
+    this.realtimeService.updateQueryAdaptersRemote();
     this.wait();
   }
 
@@ -5150,7 +5150,7 @@ class TestEnvironment {
     const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
     noteDoc.submitJson0Op(op => op.set(d => d.notes[0].deleted, true));
     this.mockNoteDialogRef.close({ deleted: true });
-    this.realtimeService.updateAllSubscribeQueries();
+    this.realtimeService.updateQueryAdaptersRemote();
     this.wait();
   }
 
