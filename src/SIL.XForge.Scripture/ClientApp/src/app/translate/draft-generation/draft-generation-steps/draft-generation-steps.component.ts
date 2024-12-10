@@ -24,7 +24,6 @@ import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
-import { TrainingDataUploadDialogComponent } from '../training-data/training-data-upload-dialog.component';
 import { TrainingDataService } from '../training-data/training-data.service';
 
 export interface DraftGenerationStepsResult {
@@ -37,7 +36,6 @@ export interface DraftGenerationStepsResult {
 }
 
 export interface Book {
-  name: string;
   number: number;
 }
 
@@ -64,7 +62,6 @@ interface TrainingPair {
     TranslocoMarkupModule,
     BookMultiSelectComponent,
     TrainingDataMultiSelectComponent,
-    TrainingDataUploadDialogComponent,
     ConfirmSourcesComponent
   ]
 })
@@ -271,7 +268,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   selectedTrainingBooksCollapsed(): TrainingGroup[] {
-    const continguousGroups: TrainingGroup[] = [];
+    const contiguousGroups: TrainingGroup[] = [];
     let currentGroup: TrainingBook[] = [];
     for (const book of this.userSelectedTrainingBooks) {
       const isBookConsecutiveAndMatching =
@@ -293,7 +290,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     }
 
     const groupsCollapsed: TrainingGroup[] = [];
-    for (const group of continguousGroups) {
+    for (const group of contiguousGroups) {
       const matchIndex = groupsCollapsed.findIndex(g => g.source === group.source && g.target === group.target);
       if (matchIndex === -1) {
         //make a new group for this source/target
@@ -313,14 +310,13 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       } else {
         range = i18n.localizeBook(group[0].number) + ' - ' + i18n.localizeBook(group[group.length - 1].number);
       }
-      continguousGroups.push({ ranges: [range], source: group[0].source, target: group[0].target });
+      contiguousGroups.push({ ranges: [range], source: group[0].source, target: group[0].target });
     }
   }
 
   onTrainingBookSelect(selectedBooks: number[]): void {
     this.userSelectedTrainingBooks = selectedBooks.map((bookNum: number) => ({
       number: bookNum,
-      name: this.i18n.localizeBook(bookNum),
       source: this.trainingSources[0].shortName,
       target: this.trainingTargets[0].shortName
     }));
@@ -334,8 +330,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   onTranslateBookSelect(selectedBooks: number[]): void {
     this.userSelectedTranslateBooks = selectedBooks.map((bookNum: number) => ({
-      number: bookNum,
-      name: this.i18n.localizeBook(bookNum)
+      number: bookNum
     }));
     this.clearErrorMessage();
   }
@@ -417,8 +412,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     // Set the selected books to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTranslateBooks = intersection.length > 0 ? intersection : [];
     this.userSelectedTranslateBooks = this.initialSelectedTranslateBooks.map((bookNum: number) => ({
-      number: bookNum,
-      name: this.i18n.localizeBook(bookNum)
+      number: bookNum
     }));
   }
 
@@ -436,7 +430,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     this.userSelectedTrainingBooks = this.initialSelectedTrainingBooks.map((bookNum: number) => ({
       number: bookNum,
-      name: this.i18n.localizeBook(bookNum),
       source: this.trainingSources[0].shortName,
       target: this.trainingTargets[0].shortName
     }));
