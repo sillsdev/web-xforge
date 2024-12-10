@@ -6,7 +6,11 @@ namespace Microsoft.AspNetCore.Builder;
 
 public static class DataAccessApplicationBuilderExtensions
 {
-    public static void UseDataAccess(this IApplicationBuilder app) => app.InitRepository<UserSecret>();
+    public static void UseDataAccess(this IApplicationBuilder app)
+    {
+        app.InitRepository<HelpVideo>();
+        app.InitRepository<UserSecret>();
+    }
 
     public static void InitRepository<T>(this IApplicationBuilder app)
         where T : IIdentifiable => app.ApplicationServices.GetService<IRepository<T>>().Init();

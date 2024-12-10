@@ -1,0 +1,12 @@
+.help-videos,
+mat-card-header,
+mat-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+}
+
+mat-form-field {
+  width: 85%;
+}

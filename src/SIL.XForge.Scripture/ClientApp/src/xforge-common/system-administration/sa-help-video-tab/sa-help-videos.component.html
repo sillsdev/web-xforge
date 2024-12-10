@@ -1,0 +1,54 @@
+<button mat-raised-button (click)="addEditVideoData()">Add Video</button>
+<mat-table [dataSource]="dataSource">
+  <ng-container matColumnDef="videoName">
+    <mat-header-cell *matHeaderCellDef> Video Name </mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      {{ element.videoName }}
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="videoDescription">
+    <mat-header-cell *matHeaderCellDef> Video Description </mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      {{ element.videoDescription }}
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="url">
+    <mat-header-cell *matHeaderCellDef> URL </mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      {{ element.url }}
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="component">
+    <mat-header-cell *matHeaderCellDef> Component </mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      {{ element.component }}
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="keywords">
+    <mat-header-cell *matHeaderCellDef> Keywords </mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      {{ element.keywords }}
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="edit">
+    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      <button mat-raised-button (click)="addEditVideoData()">Edit</button>
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="delete">
+    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      <button mat-raised-button (click)="addEditVideoData()">Delete</button>
+    </mat-cell>
+  </ng-container>
+
+  <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+  <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+</mat-table>

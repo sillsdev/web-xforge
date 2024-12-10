@@ -1,0 +1,47 @@
+@use 'src/variables';
+@use 'src/breakpoints';
+
+.help-controls {
+  margin: 32px 0;
+}
+
+mat-form-field {
+  margin-top: 10px;
+}
+
+mat-table {
+  width: 100%;
+}
+
+.mat-column-tasks {
+  @include breakpoints.media-breakpoint-down(md) {
+    display: none;
+  }
+}
+
+.no-projects-label {
+  padding-top: 14px;
+}
+
+.connect-cell {
+  text-align: right;
+  text-overflow: initial;
+}
+
+.task-label {
+  font-size: small;
+  color: variables.$greyLight;
+}
+
+.small-form-field {
+  width: 130px;
+}
+
+td > mat-checkbox {
+  margin: 0 1em;
+}
+
+ng-container {
+  display: flex;
+  align-items: center;
+}
