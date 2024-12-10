@@ -3,7 +3,9 @@ import { MatStepper } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Subscription, merge } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -20,7 +22,6 @@ import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
-import { TrainingDataUploadDialogComponent } from '../training-data/training-data-upload-dialog.component';
 import { TrainingDataService } from '../training-data/training-data.service';
 
 export interface DraftGenerationStepsResult {
@@ -30,6 +31,21 @@ export interface DraftGenerationStepsResult {
   translationBooks: number[];
   translationScriptureRange?: string;
   fastTraining: boolean;
+}
+
+export interface Book {
+  number: number;
+}
+
+export interface TrainingBook extends Book, TrainingPair {}
+
+export interface TrainingGroup extends TrainingPair {
+  ranges: string[];
+}
+
+interface TrainingPair {
+  source: string;
+  target: string;
 }
 
 @Component({
@@ -44,7 +60,6 @@ export interface DraftGenerationStepsResult {
     TranslocoMarkupModule,
     BookMultiSelectComponent,
     TrainingDataMultiSelectComponent,
-    TrainingDataUploadDialogComponent,
     ConfirmSourcesComponent
   ]
 })
@@ -65,8 +80,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   initialSelectedTrainingBooks: number[] = [];
   initialSelectedTranslateBooks: number[] = [];
-  userSelectedTrainingBooks: number[] = [];
-  userSelectedTranslateBooks: number[] = [];
+  userSelectedTrainingBooks: TrainingBook[] = [];
+  userSelectedTranslateBooks: Book[] = [];
 
   selectedTrainingDataIds: string[] = [];
 
@@ -93,15 +108,35 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataSub?: Subscription;
 
+  readonly trainingSources: TranslateSource[] = [];
+  readonly trainingTargets: SFProjectProfile[] = [];
+
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
-    readonly featureFlags: FeatureFlagService,
+    protected readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
     private readonly trainingDataService: TrainingDataService,
-    readonly i18n: I18nService
+    protected readonly i18n: I18nService
   ) {
     super();
+    const project = activatedProject.projectDoc!.data!;
+    this.trainingTargets.push(project);
+
+    let trainingSource: TranslateSource | undefined;
+    if (project.translateConfig.draftConfig.alternateTrainingSourceEnabled) {
+      trainingSource = project.translateConfig.draftConfig.alternateTrainingSource;
+    } else {
+      trainingSource = project.translateConfig.source;
+    }
+
+    if (trainingSource != null) {
+      this.trainingSources.push(trainingSource);
+    }
+
+    if (project.translateConfig.draftConfig.additionalTrainingSourceEnabled) {
+      this.trainingSources.push(project.translateConfig.draftConfig.additionalTrainingSource!);
+    }
   }
 
   ngOnInit(): void {
@@ -224,8 +259,63 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     );
   }
 
+  selectedTranslateBooks(): string {
+    return this.i18n.enumerateList(this.userSelectedTranslateBooks.map(b => this.i18n.localizeBook(b.number)));
+  }
+
+  selectedTrainingBooksCollapsed(): TrainingGroup[] {
+    const contiguousGroups: TrainingGroup[] = [];
+    let currentGroup: TrainingBook[] = [];
+    for (const book of this.userSelectedTrainingBooks) {
+      const isBookConsecutiveAndMatching =
+        book.source === currentGroup[0]?.source &&
+        book.target === currentGroup[0]?.target &&
+        book.number === currentGroup[currentGroup.length - 1]?.number + 1;
+      if (currentGroup.length > 0 && !isBookConsecutiveAndMatching) {
+        //process and reset current group
+        addGroup(currentGroup, this.i18n);
+        currentGroup.length = 0;
+      }
+      //add book to current group
+      currentGroup.push(book);
+    }
+
+    //add last group
+    if (currentGroup.length > 0) {
+      addGroup(currentGroup, this.i18n);
+    }
+
+    const groupsCollapsed: TrainingGroup[] = [];
+    for (const group of contiguousGroups) {
+      const matchIndex = groupsCollapsed.findIndex(g => g.source === group.source && g.target === group.target);
+      if (matchIndex === -1) {
+        //make a new group for this source/target
+        groupsCollapsed.push(group);
+      } else {
+        //append the current group onto the matching group
+        groupsCollapsed[matchIndex].ranges.push(group.ranges[0]);
+      }
+    }
+
+    return groupsCollapsed;
+
+    function addGroup(group: TrainingBook[], i18n: I18nService): void {
+      let range;
+      if (group.length === 1) {
+        range = i18n.localizeBook(group[0].number);
+      } else {
+        range = i18n.localizeBook(group[0].number) + ' - ' + i18n.localizeBook(group[group.length - 1].number);
+      }
+      contiguousGroups.push({ ranges: [range], source: group[0].source, target: group[0].target });
+    }
+  }
+
   onTrainingBookSelect(selectedBooks: number[]): void {
-    this.userSelectedTrainingBooks = selectedBooks;
+    this.userSelectedTrainingBooks = selectedBooks.map((bookNum: number) => ({
+      number: bookNum,
+      source: this.trainingSources[0].shortName,
+      target: this.trainingTargets[0].shortName
+    }));
     this.clearErrorMessage();
   }
 
@@ -235,7 +325,9 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   onTranslateBookSelect(selectedBooks: number[]): void {
-    this.userSelectedTranslateBooks = selectedBooks;
+    this.userSelectedTranslateBooks = selectedBooks.map((bookNum: number) => ({
+      number: bookNum
+    }));
     this.clearErrorMessage();
   }
 
@@ -254,9 +346,9 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     } else {
       this.isStepsCompleted = true;
       this.done.emit({
-        trainingBooks: this.userSelectedTrainingBooks,
+        trainingBooks: this.userSelectedTrainingBooks.map(book => book.number),
         trainingDataFiles: this.selectedTrainingDataIds,
-        translationBooks: this.userSelectedTranslateBooks,
+        translationBooks: this.userSelectedTranslateBooks.map(book => book.number),
         fastTraining: this.fastTraining
       });
     }
@@ -268,22 +360,26 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
    * but this requirement may be removed in the future.
    */
   updateTrainingBooks(): void {
-    const selectedTranslateBooks = new Set<number>(this.userSelectedTranslateBooks);
+    const selectedTranslateBooks = new Set<number>(this.userSelectedTranslateBooks.map(book => book.number));
 
     this.availableTrainingBooks = this.initialAvailableTrainingBooks.filter(
       bookNum => !selectedTranslateBooks.has(bookNum)
     );
 
     const newSelectedTrainingBooks = this.userSelectedTrainingBooks.filter(
-      bookNum => !selectedTranslateBooks.has(bookNum)
+      book => !selectedTranslateBooks.has(book.number)
     );
 
-    this.initialSelectedTrainingBooks = newSelectedTrainingBooks;
+    this.initialSelectedTrainingBooks = newSelectedTrainingBooks.map(book => book.number);
     this.userSelectedTrainingBooks = newSelectedTrainingBooks;
   }
 
+  get firstTrainingSource(): string {
+    return this.trainingSources[0].shortName;
+  }
+
   bookNames(books: number[]): string {
-    return books.map(bookNum => this.i18n.localizeBook(bookNum)).join(', ');
+    return this.i18n.enumerateList(books.map(bookNum => this.i18n.localizeBook(bookNum)));
   }
 
   private validateCurrentStep(): boolean {
@@ -307,7 +403,9 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     // Set the selected books to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTranslateBooks = intersection.length > 0 ? intersection : [];
-    this.userSelectedTranslateBooks = this.initialSelectedTranslateBooks;
+    this.userSelectedTranslateBooks = this.initialSelectedTranslateBooks.map((bookNum: number) => ({
+      number: bookNum
+    }));
   }
 
   private setInitialTrainingBooks(availableBooks: number[]): void {
@@ -321,7 +419,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     // Set the selected books to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTrainingBooks = intersection.length > 0 ? intersection : [];
-    this.userSelectedTrainingBooks = this.initialSelectedTrainingBooks;
+
+    this.userSelectedTrainingBooks = this.initialSelectedTrainingBooks.map((bookNum: number) => ({
+      number: bookNum,
+      source: this.trainingSources[0].shortName,
+      target: this.trainingTargets[0].shortName
+    }));
   }
 
   private setInitialTrainingDataFiles(availableDataFiles: string[]): void {
