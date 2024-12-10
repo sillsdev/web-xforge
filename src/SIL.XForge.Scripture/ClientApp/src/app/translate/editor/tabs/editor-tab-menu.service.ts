@@ -55,7 +55,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         for (const tabType of editorTabTypes) {
           switch (tabType) {
             case 'biblical-terms':
-              if (!this.canShowBiblicalTerms(projectDoc)) {
+              if (!isOnline || !this.canShowBiblicalTerms(projectDoc)) {
                 continue;
               }
               break;
