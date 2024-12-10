@@ -20,9 +20,9 @@
 
       <mat-step [completed]="userSelectedTranslateBooks.length > 0">
         <ng-template matStepLabel>
-          {{ t("choose_books_to_translate_label") }}
+          {{ t("choose_books_to_translate_header") }}
         </ng-template>
-        <h1 class="mat-headline-4">{{ t("choose_books_to_translate") }}</h1>
+        <h1 class="mat-headline-4">{{ t("choose_books_to_translate_title") }}</h1>
         <app-book-multi-select
           [availableBooks]="availableTranslateBooks"
           [selectedBooks]="initialSelectedTranslateBooks"
@@ -77,9 +77,9 @@
       </mat-step>
       <mat-step [completed]="isTrainingOptional || trainingSourceBooksSelected">
         <ng-template matStepLabel>
-          {{ t("choose_books_for_training_label") }}
+          {{ t("choose_books_for_training_header") }}
         </ng-template>
-        <h1 class="mat-headline-4">{{ t("choose_books_for_training") }}</h1>
+        <h1 class="mat-headline-4">{{ t("choose_books_for_training_title") }}</h1>
         <h2>{{ t("translated_books") }}</h2>
         <app-book-multi-select
           [availableBooks]="availableTrainingBooks"
@@ -170,9 +170,9 @@
       @if (trainingDataFilesAvailable) {
         <mat-step [completed]="true">
           <ng-template matStepLabel>
-            {{ t("choose_additional_training_data_files_label") }}
+            {{ t("choose_additional_training_data_files_header") }}
           </ng-template>
-          <h1 class="mat-headline-4">{{ t("choose_additional_training_data_files") }}</h1>
+          <h1 class="mat-headline-4">{{ t("choose_additional_training_data_files_title") }}</h1>
           <app-training-data-multi-select
             [availableTrainingData]="availableTrainingData"
             [selectedTrainingDataIds]="selectedTrainingDataIds"
@@ -199,9 +199,9 @@
       @if (featureFlags.allowFastTraining.enabled) {
         <mat-step [completed]="true">
           <ng-template matStepLabel>
-            {{ t("configure_advanced_settings_label") }}
+            {{ t("configure_advanced_settings_header") }}
           </ng-template>
-          <h1 class="mat-headline-4">{{ t("configure_advanced_settings") }}</h1>
+          <h1 class="mat-headline-4">{{ t("configure_advanced_settings_title") }}</h1>
           <div>
             <mat-checkbox class="fast-training" [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
           </div>
@@ -227,9 +227,9 @@
       }
       <mat-step [completed]="true">
         <ng-template matStepLabel>
-          {{ t("confirm_label") }}
+          {{ t("confirm_header") }}
         </ng-template>
-        <h1 class="mat-headline-4">{{ t("confirm") }}</h1>
+        <h1 class="mat-headline-4">{{ t("confirm_title") }}</h1>
 
         <h2>{{ t("confirm_training_title") }}</h2>
         <mat-card class="confirm-section mat-elevation-z2">
@@ -237,7 +237,7 @@
           <table mat-table class="confirm-training" [dataSource]="selectedTrainingBooksCollapsed()">
             <ng-container matColumnDef="book">
               <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let element" class="bookName">
+              <td mat-cell *matCellDef="let element">
                 <div class="confirm-books cell-padding-block">
                   {{ i18n.enumerateList(element.ranges) }}
                 </div>
@@ -268,10 +268,8 @@
         </h2>
         <mat-card class="confirm-section mat-elevation-z2">
           <span class="explanation">{{ t("confirm_translate") }}</span>
-          <div class="confirm-translate">
-            <div class="confirm-books confirm-translate-books">
-              <span>{{ selectedTranslateBooks() }}</span>
-            </div>
+          <div class="confirm-translate confirm-books">
+            <span>{{ selectedTranslateBooks() }}</span>
           </div>
         </mat-card>
 
