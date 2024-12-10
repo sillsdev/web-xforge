@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 
-namespace SIL.XForge.Scripture.Services;
+namespace SIL.XForge.Utils;
 
 [TestFixture]
 public class DictionaryComparerTests
