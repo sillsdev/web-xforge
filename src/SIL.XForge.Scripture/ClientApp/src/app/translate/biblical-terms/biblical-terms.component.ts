@@ -23,6 +23,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -180,6 +181,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   readonly columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
   readonly rangeFilters: RangeFilter[] = ['current_verse', 'current_chapter', 'current_book'];
   rows: Row[] = [];
+  biblicalTermsLoaded: boolean = false;
 
   private biblicalTermQuery?: RealtimeQuery<BiblicalTermDoc>;
   private biblicalTermSub?: Subscription;
@@ -202,6 +204,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly dialogService: DialogService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {
@@ -238,6 +241,10 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     this._verse = verse;
     this.verse$.next(verse);
+  }
+
+  get appOnline(): boolean {
+    return this.onlineStatusService.isOnline && this.onlineStatusService.isBrowserOnline;
   }
 
   get selectedCategory(): string {
@@ -307,6 +314,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       this.loadingStarted();
       this.categoriesLoading = true;
       const biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
+
       this.biblicalTermSub?.unsubscribe();
 
       this.biblicalTermSub = this.subscribe(
@@ -322,6 +330,12 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           this.categoriesLoading = false;
         }
       );
+
+      if (!this.appOnline && biblicalTermsAndNotesChanges$.pipe(filter(val => val == null))) {
+        this.loadingFinished();
+      } else {
+        this.biblicalTermsLoaded = true;
+      }
     });
   }
 
@@ -488,6 +502,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     ]);
 
     // Return a merged observable to monitor changes
+
     return merge(
       this.biblicalTermQuery.ready$.pipe(filter(isReady => isReady)),
       this.biblicalTermQuery.remoteChanges$,
