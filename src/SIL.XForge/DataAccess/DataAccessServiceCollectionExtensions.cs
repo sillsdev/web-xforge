@@ -53,18 +53,7 @@ public static class DataAccessServiceCollectionExtensions
         services.AddMongoRepository<EventMetric>(
             "event_metrics",
             cm => cm.MapIdProperty(em => em.Id),
-            idx =>
-                idx.CreateMany(
-                    [
-                        new CreateIndexModel<EventMetric>(Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope)),
-                        new CreateIndexModel<EventMetric>(
-                            Builders<EventMetric>.IndexKeys.Ascending($"{nameof(EventMetric.Payload)}.projectId")
-                        ),
-                        new CreateIndexModel<EventMetric>(
-                            Builders<EventMetric>.IndexKeys.Ascending($"{nameof(EventMetric.Payload)}.userId")
-                        ),
-                    ]
-                )
+            CreateEventMetricsIndexes
         );
 
         return services;
@@ -81,6 +70,26 @@ public static class DataAccessServiceCollectionExtensions
         DataAccessClassMap.RegisterClass(mapSetup);
         services.AddSingleton<IRepository<T>>(sp => CreateMongoRepository(sp, collection, indexSetup));
     }
+
+    /// <summary>
+    /// Creates the indexes for <see cref="EventMetric"/> collection.
+    /// </summary>
+    /// <param name="indexManager">The index manager.</param>
+    /// <remarks>
+    /// This function is internal for unit testing purposes.
+    /// </remarks>
+    internal static void CreateEventMetricsIndexes(IMongoIndexManager<EventMetric> indexManager) =>
+        indexManager.CreateMany(
+            [
+                new CreateIndexModel<EventMetric>(Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope)),
+                new CreateIndexModel<EventMetric>(
+                    Builders<EventMetric>.IndexKeys.Ascending($"{nameof(EventMetric.Payload)}.projectId")
+                ),
+                new CreateIndexModel<EventMetric>(
+                    Builders<EventMetric>.IndexKeys.Ascending($"{nameof(EventMetric.Payload)}.userId")
+                ),
+            ]
+        );
 
     private static MongoRepository<T> CreateMongoRepository<T>(
         IServiceProvider sp,

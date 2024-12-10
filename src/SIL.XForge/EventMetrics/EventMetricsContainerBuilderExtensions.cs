@@ -15,12 +15,7 @@ public static class EventMetricsContainerBuilderExtensions
     /// </summary>
     /// <param name="containerBuilder">The container builder.</param>
     public static void RegisterEventMetrics(this ContainerBuilder containerBuilder) =>
-        containerBuilder.Register(c =>
-        {
-            var repository = c.Resolve<IRepository<EventMetric>>();
-            var logger = c.Resolve<ILogger<EventMetric>>();
-            return new EventMetricLogger(repository, logger);
-        });
+        containerBuilder.Register(GetEventLogger);
 
     /// <summary>
     /// Register event metrics for a class.
@@ -38,4 +33,17 @@ public static class EventMetricsContainerBuilderExtensions
     /// <param name="containerBuilder">The container builder.</param>
     public static void RegisterEventMetrics<TI, T>(this ContainerBuilder containerBuilder)
         where T : class, TI => containerBuilder.RegisterType<T>().As<TI>().EnableInterfaceInterceptors();
+
+    /// <summary>
+    /// Gets the event metric logger.
+    /// </summary>
+    /// <param name="componentContext">The component context.</param>
+    /// <returns>The instantiated <see cref="EventMetricLogger"/>.</returns>
+    /// <remarks>This function is internal for unit testing purposes.</remarks>
+    internal static EventMetricLogger GetEventLogger(IComponentContext componentContext)
+    {
+        var repository = componentContext.Resolve<IRepository<EventMetric>>();
+        var logger = componentContext.Resolve<ILogger<EventMetric>>();
+        return new EventMetricLogger(repository, logger);
+    }
 }
