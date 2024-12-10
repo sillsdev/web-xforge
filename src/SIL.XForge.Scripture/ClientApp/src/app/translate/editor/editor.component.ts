@@ -1281,6 +1281,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             continue;
           }
 
+          // Exclude tabs that have projectDoc but not projectDoc data (project may have been deleted).
+          // These will be cleaned out the next time tab state is persisted.
+          if (tabData.projectDoc != null && tabData.projectDoc.data == null) {
+            continue;
+          }
+
           // Create the tab
           const tab: EditorTabInfo = await this.editorTabFactory.createTab(tabData.tabType, {
             projectId: tabData.projectId,
