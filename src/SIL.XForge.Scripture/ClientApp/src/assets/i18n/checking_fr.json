@@ -345,10 +345,10 @@
   },
   "global_notices": {
     "close": "Fermer",
-    "hour_range": "{{ min }} to {{ max }} hours",
+    "hour_range": "{{ min }} à {{ max }} heures",
     "learn_more": "En savoir plus",
-    "minute_range": "{{ min }} to {{ max }} minutes",
-    "upcoming_maintenance": "Scripture Forge will be down for maintenance for about {{ duration }} starting at {{ startTime }}."
+    "minute_range": "{{ min }} à {{ max }} minutes",
+    "upcoming_maintenance": "Scripture Forge sera indisponible pour maintenance pendant environ {{ duration }} à partir de {{ startTime }}."
   },
   "issue_email": {
     "heading": "Veuillez expliquer le problème.",
