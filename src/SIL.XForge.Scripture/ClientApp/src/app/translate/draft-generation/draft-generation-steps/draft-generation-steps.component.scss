@@ -119,35 +119,22 @@ app-notice {
 }
 
 .confirm-section {
-  display: flex;
   row-gap: 8px;
-  flex-direction: column;
   padding: 1.5em;
   margin-block: 0 2em;
-  border-radius: 4px;
   max-width: 750px;
 }
 
 .explanation {
   font-style: italic;
-  display: inline-block;
-  font-weight: 100;
+  font-weight: 300;
 }
 
 .mat-mdc-table {
   background-color: initial;
 }
 
-.bookName {
-  font-size: 1.1em;
-}
-
 .confirm-translate {
-  display: flex;
-  flex-direction: row;
-}
-
-.confirm-translate-books {
   padding-inline-start: 16px;
 }
 
