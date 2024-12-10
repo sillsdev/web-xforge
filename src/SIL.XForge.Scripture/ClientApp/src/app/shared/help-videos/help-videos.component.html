@@ -1,0 +1,27 @@
+<h1>Tutorial Videos</h1>
+@if (!isOnline) {
+  <span class="offline-text"> Connect to internet to view videos </span>
+} @else {
+  <mat-form-field>
+    <mat-label>Search for video</mat-label>
+    <input matInput type="text" placeholder="Search for video" />
+  </mat-form-field>
+  <button mat-button mat-icon-button aria-label="Search">
+    <mat-icon>search</mat-icon>
+  </button>
+  <div class="help-videos">
+    @for (value of ["1", "2", "3", "4", "5"]; track value) {
+      <mat-card class="help-video">
+        <mat-card-header>
+          <mat-card-title>Video Name {{ value }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <iframe width="320" height="240" src="https://www.youtube.com/embed/qgTusgXJOoM"> </iframe>
+        </mat-card-content>
+        <mat-card-footer>
+          <mat-card-subtitle> Description of the video {{ value }} </mat-card-subtitle>
+        </mat-card-footer>
+      </mat-card>
+    }
+  </div>
+}

@@ -1,0 +1,53 @@
+<mat-table [dataSource]="dataSource">
+  <!-- Video Name Column -->
+  <ng-container matColumnDef="videoName">
+    <mat-header-cell *matHeaderCellDef> Video Name </mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      <mat-form-field>
+        <input matInput [(ngModel)]="element.videoName" />
+      </mat-form-field>
+    </mat-cell>
+  </ng-container>
+
+  <!-- Video Description Column -->
+  <ng-container matColumnDef="videoDescription">
+    <mat-header-cell *matHeaderCellDef> Video Description </mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      <mat-form-field>
+        <textarea matInput [(ngModel)]="element.videoDescription"></textarea>
+      </mat-form-field>
+    </mat-cell>
+  </ng-container>
+
+  <!-- URL Column -->
+  <ng-container matColumnDef="url">
+    <mat-header-cell *matHeaderCellDef> URL </mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      <mat-form-field>
+        <input matInput [[(ngModel)]="element.url" />
+      </mat-form-field>
+    </mat-cell>
+  </ng-container>
+
+  <!-- Component Column -->
+  <ng-container matColumnDef="component">
+    <mat-header-cell *matHeaderCellDef> Component </mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      <mat-form-field>
+        <mat-select [[(ngModel)]]="element.component" multiple>
+          <mat-option *ngFor="let option of componentOptions" [value]="option">{{ option }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="button">
+    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+    <mat-cell *matCellDef="let element">
+      <button mat-raised-button (click)="addRow()">Add Row</button>
+    </mat-cell>
+  </ng-container>
+
+  <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+  <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+</mat-table>
