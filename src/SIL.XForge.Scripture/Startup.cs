@@ -189,6 +189,8 @@ public class Startup
 
         containerBuilder.Populate(services);
 
+        containerBuilder.RegisterSFEventMetrics();
+
         ApplicationContainer = containerBuilder.Build();
         return new AutofacServiceProvider(ApplicationContainer);
     }
