@@ -32,15 +32,15 @@ namespace SIL.XForge.EventMetrics;
 /// [Intercept(typeof(EventMetricLogger))]
 /// public interface IMyService
 /// {
-///     [LogEventMetric(Scope.Settings)]
+///     [LogEventMetric(EventScope.Settings)]
 ///     void ThisMethodWillBeLogged();
 ///
 ///     void ThisMethodWillNot();
 ///
-///     [LogEventMetric(Scope.Settings)]
+///     [LogEventMetric(EventScope.Settings)]
 ///     void ThisMethodUsesDefaultParameterNames(string userId, string projectId);
 ///
-///     [LogEventMetric(Scope.Settings, nameof(curUserId), nameof(targetProjectId))]
+///     [LogEventMetric(EventScope.Settings, nameof(curUserId), nameof(targetProjectId))]
 ///     void ThisMethodUsesDifferentParameterNames(string curUserId, string targetProjectId);
 ///
 ///     [LogEventMetric(EventScope.Sync, userId: "syncConfig.UserId", projectId: "syncConfig.ProjectId")]
