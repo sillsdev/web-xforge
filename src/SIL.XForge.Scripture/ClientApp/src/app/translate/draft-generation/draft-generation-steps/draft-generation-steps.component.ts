@@ -283,7 +283,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   bookNames(books: number[]): string {
-    return books.map(bookNum => this.i18n.localizeBook(bookNum)).join(', ');
+    return this.i18n.enumerateList(books.map(bookNum => this.i18n.localizeBook(bookNum)));
   }
 
   private validateCurrentStep(): boolean {
