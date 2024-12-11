@@ -162,6 +162,7 @@
     "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ underlineStart }}the projects page{{ underlineEnd }} first.",
     "no_write_permissions": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
     "please_select_valid_project": "Please select a valid project",
+    "project_has_chapters_missing": "{{ bookName }} in this project has chapters missing. Please add the missing chapters in Paratext",
     "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
     "select_alternate_project": "Select the project you want to add the draft to"
   },
