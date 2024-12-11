@@ -25,6 +25,21 @@
 mat-icon {
   width: 0.9em;
   height: 1em;
+
+  &.check-icon {
+    width: 1.2em;
+    height: 1.2em;
+  }
+
+  &.hidden-indicator-icon {
+    width: auto;
+    height: auto;
+    font-size: 0.7em;
+    position: absolute;
+    bottom: 0.3em;
+    inset-inline-end: 0.3em;
+    color: #a4a4a4;
+  }
 }
 
 .type-count {
