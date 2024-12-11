@@ -18,7 +18,19 @@ public class DependencyInjectionTests
         var env = new TestEnvironment();
 
         // SUT
-        env.Services.AddConfiguration(env.Configuration);
+        IServiceCollection services = env.Services.AddConfiguration(env.Configuration);
+        Assert.AreEqual(env.Services, services);
+        env.Services.Received().Add(Arg.Any<ServiceDescriptor>());
+    }
+
+    [Test]
+    public void AddEventMetrics_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        IServiceCollection services = env.Services.AddEventMetrics();
+        Assert.AreEqual(env.Services, services);
         env.Services.Received().Add(Arg.Any<ServiceDescriptor>());
     }
 
@@ -28,7 +40,8 @@ public class DependencyInjectionTests
         var env = new TestEnvironment();
 
         // SUT
-        env.Services.AddSFServices();
+        IServiceCollection services = env.Services.AddSFServices();
+        Assert.AreEqual(env.Services, services);
         env.Services.Received().Add(Arg.Any<ServiceDescriptor>());
     }
 
