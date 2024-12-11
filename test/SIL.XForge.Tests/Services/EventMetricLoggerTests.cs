@@ -1,21 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Autofac.Extras.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using Newtonsoft.Json;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
+using SIL.XForge.Models;
 using SIL.XForge.Utils;
 
 namespace SIL.XForge.Services;
@@ -27,29 +22,25 @@ public class EventMetricLoggerTests
     private const string User01 = "user01";
 
     [Test]
-    public void CreateEventMetricsIndexes_Success()
-    {
-        var env = new TestEnvironment();
-
-        // SUT
-        DataAccessServiceCollectionExtensions.CreateEventMetricsIndexes(env.EventMetricIndexManager);
-        env.EventMetricIndexManager.ReceivedWithAnyArgs().CreateMany(models: []);
-    }
-
-    [Test]
     public async Task EventMetrics_ErrorsAreLogged()
     {
-        var env = new TestEnvironment(new TestEnvironmentOptions { UseMemoryRepository = false });
+        var env = new TestEnvironment();
         var ex = new ArgumentException();
-        env.EventMetrics.InsertAsync(Arg.Any<EventMetric>()).ThrowsAsync(ex);
+        env.EventMetrics.SaveEventMetricAsync(
+                projectId: null,
+                userId: null,
+                eventType: nameof(TestClass.NoArguments),
+                EventScope.None,
+                Arg.Any<Dictionary<string, object>>()
+            )
+            .ThrowsAsync(ex);
 
         // SUT
         bool actual = env.TestClass.NoArguments();
         Assert.IsTrue(actual);
         await env.TaskCompletionSource.Task;
 
-        // Verify the event metric and log
-        Assert.Zero(env.EventMetrics.Query().Count());
+        // Verify the log
         env.MockLogger.AssertEventCount(e => e.LogLevel == LogLevel.Error && e.Exception == ex, 1);
     }
 
@@ -77,11 +68,16 @@ public class EventMetricLoggerTests
         Assert.IsTrue(actual);
         await env.TaskCompletionSource.Task;
 
-        // Verify the event metric and log
-        EventMetric eventMetric = env.EventMetrics.Query().Single();
-        Assert.AreEqual(EventScope.None, eventMetric.Scope);
-        Assert.AreEqual(nameof(TestClass.NoArguments), eventMetric.EventType);
-        Assert.IsEmpty(eventMetric.Payload);
+        // Verify the event metric service and log
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                projectId: null,
+                userId: null,
+                eventType: nameof(TestClass.NoArguments),
+                eventScope: EventScope.None,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a => a.Count == 0)
+            );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
@@ -94,7 +90,17 @@ public class EventMetricLoggerTests
         bool actual = env.TestClass.NoLogEventMetric();
         Assert.IsTrue(actual);
         await env.TaskCompletionSource.Task;
-        Assert.Zero(env.EventMetrics.Query().Count());
+
+        // Verify the event metric service and log
+        await env
+            .EventMetrics.DidNotReceiveWithAnyArgs()
+            .SaveEventMetricAsync(
+                projectId: null,
+                userId: null,
+                eventType: nameof(TestClass.NoArguments),
+                eventScope: EventScope.None,
+                argumentsWithNames: Arg.Any<Dictionary<string, object>>()
+            );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
@@ -102,10 +108,10 @@ public class EventMetricLoggerTests
     public async Task ProjectIdAndUserId_Success()
     {
         var env = new TestEnvironment();
-        Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
-            { "projectId", BsonValue.Create(Project01) },
-            { "userId", BsonValue.Create(User01) },
+            { "projectId", Project01 },
+            { "userId", User01 },
         };
 
         // SUT
@@ -114,12 +120,17 @@ public class EventMetricLoggerTests
         await env.TaskCompletionSource.Task;
 
         // Verify the event metric and log
-        EventMetric eventMetric = env.EventMetrics.Query().Single();
-        Assert.AreEqual(EventScope.Settings, eventMetric.Scope);
-        Assert.AreEqual(Project01, eventMetric.ProjectId);
-        Assert.AreEqual(User01, eventMetric.UserId);
-        Assert.AreEqual(nameof(TestClass.ProjectIdAndUserId), eventMetric.EventType);
-        Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ProjectIdAndUserId),
+                eventScope: EventScope.Settings,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                )
+            );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
@@ -127,10 +138,10 @@ public class EventMetricLoggerTests
     public async Task ProjectIdAndNonStandardUserId_Success()
     {
         var env = new TestEnvironment();
-        Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
-            { "projectId", BsonValue.Create(Project01) },
-            { "curUserId", BsonValue.Create(User01) },
+            { "projectId", Project01 },
+            { "curUserId", User01 },
         };
 
         // SUT
@@ -139,12 +150,17 @@ public class EventMetricLoggerTests
         await env.TaskCompletionSource.Task;
 
         // Verify the event metric and log
-        EventMetric eventMetric = env.EventMetrics.Query().Single();
-        Assert.AreEqual(EventScope.Sync, eventMetric.Scope);
-        Assert.AreEqual(Project01, eventMetric.ProjectId);
-        Assert.AreEqual(User01, eventMetric.UserId);
-        Assert.AreEqual(nameof(TestClass.ProjectIdAndNonStandardUserId), eventMetric.EventType);
-        Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ProjectIdAndNonStandardUserId),
+                eventScope: EventScope.Sync,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                )
+            );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
@@ -152,10 +168,10 @@ public class EventMetricLoggerTests
     public async Task NonStandardProjectIdAndUserId_Success()
     {
         var env = new TestEnvironment();
-        Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
-            { "targetProjectId", BsonValue.Create(Project01) },
-            { "userId", BsonValue.Create(User01) },
+            { "targetProjectId", Project01 },
+            { "userId", User01 },
         };
 
         // SUT
@@ -164,12 +180,17 @@ public class EventMetricLoggerTests
         await env.TaskCompletionSource.Task;
 
         // Verify the event metric and log
-        EventMetric eventMetric = env.EventMetrics.Query().Single();
-        Assert.AreEqual(EventScope.Drafting, eventMetric.Scope);
-        Assert.AreEqual(Project01, eventMetric.ProjectId);
-        Assert.AreEqual(User01, eventMetric.UserId);
-        Assert.AreEqual(nameof(TestClass.NonStandardProjectIdAndUserId), eventMetric.EventType);
-        Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.NonStandardProjectIdAndUserId),
+                eventScope: EventScope.Drafting,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                )
+            );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
@@ -177,10 +198,10 @@ public class EventMetricLoggerTests
     public async Task NonStandardProjectIdAndNonStandardUserId_Success()
     {
         var env = new TestEnvironment();
-        Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
-            { "targetProjectId", BsonValue.Create(Project01) },
-            { "curUserId", BsonValue.Create(User01) },
+            { "targetProjectId", Project01 },
+            { "curUserId", User01 },
         };
 
         // SUT
@@ -189,12 +210,17 @@ public class EventMetricLoggerTests
         await env.TaskCompletionSource.Task;
 
         // Verify the event metric and log
-        EventMetric eventMetric = env.EventMetrics.Query().Single();
-        Assert.AreEqual(EventScope.Checking, eventMetric.Scope);
-        Assert.AreEqual(Project01, eventMetric.ProjectId);
-        Assert.AreEqual(User01, eventMetric.UserId);
-        Assert.AreEqual(nameof(TestClass.NonStandardProjectIdAndNonStandardUserId), eventMetric.EventType);
-        Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.NonStandardProjectIdAndNonStandardUserId),
+                eventScope: EventScope.Checking,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                )
+            );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
@@ -202,7 +228,7 @@ public class EventMetricLoggerTests
     public async Task ObjectAsArgument_Success()
     {
         var env = new TestEnvironment();
-        var complexObject = new ComplexObject
+        var complexObject = new TestComplexObject
         {
             Boolean = true,
             DateAndTime = DateTime.UtcNow,
@@ -214,16 +240,9 @@ public class EventMetricLoggerTests
             SingleFloat = 90.12F,
             UserId = User01,
         };
-        Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
-            {
-                "complexObject",
-                BsonValue.Create(
-                    JsonConvert.DeserializeObject<Dictionary<string, object>>(
-                        JsonConvert.SerializeObject(complexObject)
-                    )
-                )
-            },
+            { "complexObject", complexObject },
         };
 
         // SUT
@@ -232,12 +251,17 @@ public class EventMetricLoggerTests
         await env.TaskCompletionSource.Task;
 
         // Verify the event metric and log
-        EventMetric eventMetric = env.EventMetrics.Query().Single();
-        Assert.AreEqual(EventScope.None, eventMetric.Scope);
-        Assert.AreEqual(Project01, eventMetric.ProjectId);
-        Assert.AreEqual(User01, eventMetric.UserId);
-        Assert.AreEqual(nameof(TestClass.ObjectAsArgument), eventMetric.EventType);
-        Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ObjectAsArgument),
+                eventScope: EventScope.None,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                )
+            );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
@@ -253,19 +277,19 @@ public class EventMetricLoggerTests
         const long longInteger = 5678L;
         const float singleFloat = 90.12F;
         string[] stringArray = ["string1", "string2"];
-        Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
-            { "projectId", BsonValue.Create(Project01) },
-            { "userId", BsonValue.Create(User01) },
-            { "boolean", BsonBoolean.Create(boolean) },
-            { "dateAndTime", BsonDateTime.Create(dateAndTime) },
-            { "decimalNumber", BsonString.Create(decimalNumber.ToString(CultureInfo.InvariantCulture)) }, // Decimals are stored as strings in JSON
-            { "doubleFloat", BsonDouble.Create(doubleFloat) },
-            { "integer", BsonInt64.Create(integer) }, // 32-bit integers are stored as 64-bit integers in JSON
-            { "longInteger", BsonInt64.Create(longInteger) },
-            { "singleFloat", BsonDouble.Create(singleFloat) },
-            { "stringArray", BsonArray.Create(stringArray) },
-            { "nullValue", BsonNull.Value },
+            { "projectId", Project01 },
+            { "userId", User01 },
+            { "boolean", boolean },
+            { "dateAndTime", dateAndTime },
+            { "decimalNumber", decimalNumber },
+            { "doubleFloat", doubleFloat },
+            { "integer", integer },
+            { "longInteger", longInteger },
+            { "singleFloat", singleFloat },
+            { "stringArray", stringArray },
+            { "nullValue", null },
         };
 
         // SUT
@@ -286,12 +310,17 @@ public class EventMetricLoggerTests
         await env.TaskCompletionSource.Task;
 
         // Verify the event metric and log
-        EventMetric eventMetric = env.EventMetrics.Query().Single();
-        Assert.AreEqual(EventScope.None, eventMetric.Scope);
-        Assert.AreEqual(Project01, eventMetric.ProjectId);
-        Assert.AreEqual(User01, eventMetric.UserId);
-        Assert.AreEqual(nameof(TestClass.ComplexArguments), eventMetric.EventType);
-        Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ComplexArguments),
+                eventScope: EventScope.None,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                )
+            );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
@@ -299,15 +328,10 @@ public class EventMetricLoggerTests
     public async Task MisconfiguredProperty_Success()
     {
         var env = new TestEnvironment();
-        var simpleObject = new SimpleObject { ProjectId = Project01, UserId = User01, };
-        Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
+        var simpleObject = new TestSimpleObject { ProjectId = Project01, UserId = User01 };
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
-            {
-                "simpleObject",
-                BsonValue.Create(
-                    JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(simpleObject))
-                )
-            },
+            { "simpleObject", simpleObject },
         };
 
         // SUT
@@ -316,18 +340,22 @@ public class EventMetricLoggerTests
         await env.TaskCompletionSource.Task;
 
         // Verify the event metric and log
-        EventMetric eventMetric = env.EventMetrics.Query().Single();
-        Assert.AreEqual(EventScope.None, eventMetric.Scope);
-        Assert.IsNull(eventMetric.ProjectId);
-        Assert.IsNull(eventMetric.UserId);
-        Assert.AreEqual(nameof(TestClass.MisconfiguredProperty), eventMetric.EventType);
-        Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                projectId: null,
+                userId: null,
+                eventType: nameof(TestClass.MisconfiguredProperty),
+                eventScope: EventScope.None,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                )
+            );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
     private class TestEnvironmentOptions
     {
-        public bool UseMemoryRepository { get; init; } = true;
         public bool UseTaskCompletionSource { get; init; } = true;
     }
 
@@ -343,9 +371,6 @@ public class EventMetricLoggerTests
             containerBuilder.Populate(services);
             containerBuilder.RegisterEventMetrics();
             containerBuilder.RegisterEventMetrics<TestClass>();
-            EventMetrics = options.UseMemoryRepository
-                ? new MemoryRepository<EventMetric>()
-                : Substitute.For<IRepository<EventMetric>>();
             containerBuilder.RegisterInstance(EventMetrics);
             containerBuilder.RegisterInstance<ILogger<EventMetric>>(MockLogger);
             var container = containerBuilder.Build();
@@ -365,11 +390,9 @@ public class EventMetricLoggerTests
             TestClass = container.Resolve<TestClass>();
         }
 
-        public IEqualityComparer<Dictionary<string, BsonValue>> PayloadEqualityComparer { get; } =
-            new DictionaryComparer<string, BsonValue>();
-        public IMongoIndexManager<EventMetric> EventMetricIndexManager { get; } =
-            Substitute.For<IMongoIndexManager<EventMetric>>();
-        public IRepository<EventMetric> EventMetrics { get; }
+        public IEqualityComparer<Dictionary<string, object>> PayloadEqualityComparer { get; } =
+            new DictionaryComparer<string, object>();
+        public IEventMetricService EventMetrics { get; } = Substitute.For<IEventMetricService>();
         public MockLogger<EventMetric> MockLogger { get; } = new MockLogger<EventMetric>();
         public TaskCompletionSource TaskCompletionSource { get; } = new TaskCompletionSource();
         public TestClass TestClass { get; }
@@ -403,7 +426,7 @@ public class EventMetricLoggerTests
             !string.IsNullOrWhiteSpace(targetProjectId) && !string.IsNullOrWhiteSpace(curUserId);
 
         [LogEventMetric(EventScope.None, userId: "complexObject.UserId", projectId: "complexObject.ProjectId")]
-        public virtual bool ObjectAsArgument(ComplexObject complexObject) =>
+        public virtual bool ObjectAsArgument(TestComplexObject complexObject) =>
             !string.IsNullOrWhiteSpace(complexObject.ProjectId) && !string.IsNullOrWhiteSpace(complexObject.UserId);
 
         [LogEventMetric(EventScope.None)]
@@ -433,26 +456,7 @@ public class EventMetricLoggerTests
             && nullValue is null;
 
         [LogEventMetric(EventScope.None, userId: "simpleObject.User.Id", projectId: "simpleObject.Project.Id")]
-        public virtual bool MisconfiguredProperty(SimpleObject simpleObject) =>
+        public virtual bool MisconfiguredProperty(TestSimpleObject simpleObject) =>
             !string.IsNullOrWhiteSpace(simpleObject.ProjectId) && !string.IsNullOrWhiteSpace(simpleObject.UserId);
-    }
-
-    public class ComplexObject : SimpleObject
-    {
-        // ReSharper disable UnusedAutoPropertyAccessor.Global
-        public required bool Boolean { get; init; }
-        public required DateTime DateAndTime { get; init; }
-        public required decimal DecimalNumber { get; init; }
-        public required double DoubleFloat { get; init; }
-        public required int Integer { get; init; }
-        public required long LongInteger { get; init; }
-        public required float SingleFloat { get; init; }
-        // ReSharper restore UnusedAutoPropertyAccessor.Global
-    }
-
-    public class SimpleObject
-    {
-        public required string ProjectId { get; init; }
-        public required string UserId { get; init; }
     }
 }
