@@ -4,17 +4,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SIL.XForge.DataAccess;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.EventMetrics;
 
 /// <summary>
 /// The event metric logger interceptor. This utilizes the Aspect-Oriented Programming pattern.
 /// </summary>
-/// <param name="eventMetrics">The event metrics repository.</param>
+/// <param name="eventMetricService">The event metric service.</param>
+/// <param name="logger">The application log (to log errors).</param>
 /// <remarks>
 /// <para>
 /// This interceptor can be added to interfaces or classes via <c>[Intercept(typeof(EventMetricLogger))]</c>.
@@ -48,7 +47,7 @@ namespace SIL.XForge.EventMetrics;
 /// }
 /// </code>
 /// </example>
-public class EventMetricLogger(IRepository<EventMetric> eventMetrics, ILogger<EventMetric> logger) : IInterceptor
+public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<EventMetric> logger) : IInterceptor
 {
     /// <summary>
     /// A task was started by the Interceptor.
@@ -84,40 +83,15 @@ public class EventMetricLogger(IRepository<EventMetric> eventMetrics, ILogger<Ev
                         .Zip(invocation.Arguments, (name, value) => new KeyValuePair<string, object>(name, value))
                         .ToDictionary();
 
-                    // Process these for the payload
-                    var payload = new Dictionary<string, BsonValue>();
-                    foreach (var kvp in argumentsWithNames)
-                    {
-                        payload[kvp.Key] = kvp.Value switch
-                        {
-                            int value => new BsonInt32(value),
-                            long value => new BsonInt64(value),
-                            bool value => new BsonBoolean(value),
-                            Array array => new BsonArray(array),
-                            double value => new BsonDouble(value),
-                            float value => new BsonDouble(value),
-                            string value => new BsonString(value),
-                            decimal value => new BsonDecimal128(value),
-                            DateTime value => new BsonDateTime(value),
-                            null => BsonNull.Value,
-                            _
-                                => BsonValue.Create(
-                                    JsonConvert.DeserializeObject<Dictionary<string, object>>(
-                                        JsonConvert.SerializeObject(kvp.Value)
-                                    )
-                                ),
-                        };
-                    }
-
                     // Get the user identifier
                     string? userId = null;
                     if (
-                        payload.TryGetValue(logEventMetricAttribute.UserId, out BsonValue userBsonValue)
-                        && userBsonValue is BsonString userBsonString
+                        argumentsWithNames.TryGetValue(logEventMetricAttribute.UserId, out object userIdValue)
+                        && userIdValue is string userIdString
                     )
                     {
                         // Method parameter is a simple string
-                        userId = userBsonString.Value;
+                        userId = userIdString;
                     }
                     else if (
                         argumentsWithNames.TryGetValue(logEventMetricAttribute.UserId.Split('.')[0], out object value)
@@ -130,12 +104,12 @@ public class EventMetricLogger(IRepository<EventMetric> eventMetrics, ILogger<Ev
                     // Get the project identifier
                     string? projectId = null;
                     if (
-                        payload.TryGetValue(logEventMetricAttribute.ProjectId, out BsonValue projectBsonValue)
-                        && projectBsonValue is BsonString projectBsonString
+                        argumentsWithNames.TryGetValue(logEventMetricAttribute.ProjectId, out object projectIdValue)
+                        && projectIdValue is string projectIdString
                     )
                     {
                         // Method parameter is a simple string
-                        projectId = projectBsonString.Value;
+                        projectId = projectIdString;
                     }
                     else if (
                         argumentsWithNames.TryGetValue(
@@ -148,22 +122,18 @@ public class EventMetricLogger(IRepository<EventMetric> eventMetrics, ILogger<Ev
                         projectId = GetProperty(value, logEventMetricAttribute.ProjectId);
                     }
 
-                    // Write the event metric
-                    await eventMetrics.InsertAsync(
-                        new EventMetric
-                        {
-                            Id = ObjectId.GenerateNewId().ToString(),
-                            EventType = methodName,
-                            Payload = payload,
-                            ProjectId = projectId,
-                            Scope = logEventMetricAttribute.Scope,
-                            UserId = userId,
-                        }
+                    // Save the event metric
+                    await eventMetricService.SaveEventMetricAsync(
+                        projectId,
+                        userId,
+                        eventType: methodName,
+                        logEventMetricAttribute.Scope,
+                        argumentsWithNames
                     );
                 }
                 catch (Exception e)
                 {
-                    // Just log any errors
+                    // Just log any errors rather than throwing
                     logger.LogError(e, "Error logging event metric for {methodName}", methodName);
                 }
             });
@@ -181,6 +151,12 @@ public class EventMetricLogger(IRepository<EventMetric> eventMetrics, ILogger<Ev
         invocation.Proceed();
     }
 
+    /// <summary>
+    /// Gets a property from an object by converting that object to JSON.
+    /// </summary>
+    /// <param name="value">The object to get the property from.</param>
+    /// <param name="property">The name of the property in "subObject.subSubObject.propertyName" format.</param>
+    /// <returns>The value of the property.</returns>
     private static string? GetProperty(object value, string property)
     {
         string[] userIdParts = property.Split('.', StringSplitOptions.RemoveEmptyEntries);
