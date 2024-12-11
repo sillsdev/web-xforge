@@ -36,6 +36,13 @@ public interface ISFProjectService : IProjectService
         int daysBeforeExpiration
     );
     Task<ValidShareKey> CheckShareKeyValidity(string shareKey);
+    Task<IEnumerable<EventMetric>> GetEventMetricsAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        int pageIndex,
+        int pageSize
+    );
     Task<SFProject> GetProjectAsync(string projectId);
     SFProjectSecret GetProjectSecretByShareKey(string shareKey);
     Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey, int daysBeforeExpiration);
