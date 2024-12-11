@@ -24,18 +24,13 @@ public class EventMetric : IIdentifiable
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the event metadata.
-    /// </summary>
-    public object? Metadata { get; set; } = null;
-
-    /// <summary>
     /// Gets or sets the event payload.
     /// </summary>
     /// <remarks>
     /// <para>If you are querying by projectId or userId, that will be done here.</para>
     /// <para>Your payload's properties should be normalized to lowerCamelCase.</para>
     /// </remarks>
-    public Dictionary<string, BsonValue>? Payload { get; set; } = [];
+    public Dictionary<string, BsonValue> Payload { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the event project identifier.
