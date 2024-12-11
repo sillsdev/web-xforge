@@ -16,6 +16,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -4074,6 +4075,126 @@ public class SFProjectServiceTests
         Assert.AreEqual(0, project.UserPermissions.Count);
     }
 
+    [Test]
+    public void GetEventMetrics_InvalidPageIndex()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<FormatException>(
+            () =>
+                env.Service.GetEventMetricsAsync(
+                    User01,
+                    systemRoles: [SystemRole.User],
+                    Project01,
+                    pageIndex: -1,
+                    pageSize: 0
+                )
+        );
+    }
+
+    [Test]
+    public void GetEventMetrics_InvalidPageSize()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<FormatException>(
+            () =>
+                env.Service.GetEventMetricsAsync(
+                    User01,
+                    systemRoles: [SystemRole.User],
+                    Project01,
+                    pageIndex: 0,
+                    pageSize: 0
+                )
+        );
+    }
+
+    [Test]
+    public void GetEventMetrics_InvalidProject()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.GetEventMetricsAsync(
+                    User01,
+                    systemRoles: [SystemRole.User],
+                    projectId: "invalid_project",
+                    pageIndex: 0,
+                    pageSize: 10
+                )
+        );
+    }
+
+    [Test]
+    public async Task GetEventMetrics_ProjectAdmin()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        IEnumerable<EventMetric> _ = await env.Service.GetEventMetricsAsync(
+            User01,
+            systemRoles: [SystemRole.User],
+            Project01,
+            pageIndex: 0,
+            pageSize: 10
+        );
+        env.EventMetricService.Received().GetEventMetrics(Project01, pageIndex: 0, pageSize: 10);
+    }
+
+    [Test]
+    public async Task GetEventMetrics_ServalAdmin()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        IEnumerable<EventMetric> _ = await env.Service.GetEventMetricsAsync(
+            User06,
+            systemRoles: [SystemRole.ServalAdmin],
+            Project01,
+            pageIndex: 0,
+            pageSize: 10
+        );
+        env.EventMetricService.Received().GetEventMetrics(Project01, pageIndex: 0, pageSize: 10);
+    }
+
+    [Test]
+    public async Task GetEventMetrics_SystemAdmin()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        IEnumerable<EventMetric> _ = await env.Service.GetEventMetricsAsync(
+            User06,
+            systemRoles: [SystemRole.SystemAdmin],
+            Project01,
+            pageIndex: 0,
+            pageSize: 10
+        );
+        env.EventMetricService.Received().GetEventMetrics(Project01, pageIndex: 0, pageSize: 10);
+    }
+
+    [Test]
+    public void GetEventMetrics_UserForbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () =>
+                env.Service.GetEventMetricsAsync(
+                    User05,
+                    systemRoles: [SystemRole.User],
+                    Project01,
+                    pageIndex: 0,
+                    pageSize: 10
+                )
+        );
+    }
+
     private class TestEnvironment
     {
         public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);
@@ -4826,6 +4947,7 @@ public class SFProjectServiceTests
             SecurityService = Substitute.For<ISecurityService>();
             SecurityService.GenerateKey().Returns("1234abc");
             TransceleratorService = Substitute.For<ITransceleratorService>();
+            EventMetricService = Substitute.For<IEventMetricService>();
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
 
             // These project rights correspond to the permissions in the projects above
@@ -4948,6 +5070,7 @@ public class SFProjectServiceTests
                 Localizer,
                 TransceleratorService,
                 BackgroundJobClient,
+                EventMetricService,
                 ProjectRights
             );
         }
@@ -4960,6 +5083,7 @@ public class SFProjectServiceTests
         public IFileSystemService FileSystemService { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public IEmailService EmailService { get; }
+        public IEventMetricService EventMetricService { get; }
         public ISecurityService SecurityService { get; }
         public IParatextService ParatextService { get; }
         public IStringLocalizer<SharedResource> Localizer { get; }
