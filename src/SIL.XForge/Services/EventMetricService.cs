@@ -11,8 +11,9 @@ namespace SIL.XForge.Services;
 
 public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventMetricService
 {
-    public IEnumerable<EventMetric> GetEventMetrics(string? projectId, int pageIndex, int pageSize = 10)
+    public IEnumerable<EventMetric> GetEventMetrics(string? projectId, int pageIndex, int pageSize)
     {
+        // Do not allow querying of event metrics without a project identifier
         if (projectId is null)
         {
             return [];
