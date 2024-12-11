@@ -70,7 +70,7 @@ const defaultLocale = locales.find(locale => locale.tags.some(canonicalTag => ca
 export class I18nService {
   static readonly locales: Locale[] = locales;
 
-  static dateFormats: { [key: string]: DateFormat } = {
+  static customDateFormats: { [key: string]: DateFormat } = {
     en: { month: 'short' },
     'en-GB': { month: 'short', hour12: true },
     // Chrome formats az dates as en-US. This manual override is the format Firefox uses for az
@@ -80,6 +80,29 @@ export class I18nService {
         s += ` ${I18nService.getHumanReadableTimeZoneOffset('az', d)}`;
       }
       return s;
+    },
+    npi: (d: Date, options) => {
+      const o = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        numberingSystem: 'deva',
+        ...options
+      };
+
+      const parts = new Intl.DateTimeFormat('npi', o as any).formatToParts(d);
+
+      // Build custom YYYY-MM-DD, HH:MM format
+      const year = parts.find(p => p.type === 'year')?.value;
+      const month = parts.find(p => p.type === 'month')?.value;
+      const day = parts.find(p => p.type === 'day')?.value;
+      const hour = parts.find(p => p.type === 'hour')?.value;
+      const minute = parts.find(p => p.type === 'minute')?.value;
+
+      return `${year}-${month}-${day}, ${hour}:${minute}`;
     },
     [PseudoLocalization.locale.canonicalTag]: PseudoLocalization.dateFormat
   };
@@ -263,7 +286,7 @@ export class I18nService {
 
   formatDate(date: Date, options: { showTimeZone?: boolean } = {}): string {
     // fall back to en in the event the language code isn't valid
-    const format = I18nService.dateFormats[this.localeCode] || {};
+    const format = I18nService.customDateFormats[this.localeCode] || {};
     return typeof format === 'function'
       ? format(date, options)
       : date.toLocaleString(
