@@ -1,6 +1,8 @@
 using Autofac;
 using Autofac.Extras.DynamicProxy;
 using Castle.DynamicProxy;
+using Microsoft.Extensions.DependencyInjection;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.EventMetrics;
 
@@ -10,11 +12,19 @@ namespace SIL.XForge.EventMetrics;
 public static class EventMetricsContainerBuilderExtensions
 {
     /// <summary>
+    /// Adds the event metrics service.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection.</returns>
+    public static IServiceCollection AddEventMetrics(this IServiceCollection services) =>
+        services.AddSingleton<IEventMetricService, EventMetricService>();
+
+    /// <summary>
     /// Register the <see cref="EventMetricLogger"/> interceptor.
     /// </summary>
     /// <param name="containerBuilder">The container builder.</param>
     public static void RegisterEventMetrics(this ContainerBuilder containerBuilder) =>
-        containerBuilder.RegisterType<EventMetricLogger>().As<IInterceptor>().SingleInstance();
+        containerBuilder.RegisterType<EventMetricLogger>().AsSelf().As<IInterceptor>().SingleInstance();
 
     /// <summary>
     /// Register event metrics for a class.
