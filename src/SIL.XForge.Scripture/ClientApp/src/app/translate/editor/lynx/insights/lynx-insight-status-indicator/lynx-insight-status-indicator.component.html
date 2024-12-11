@@ -4,5 +4,8 @@
     <span [class]="insight.type">{{ insight.count }}</span>
   </div>
 } @empty {
-  <mat-icon svgIcon="lynx_checkmark" />
+  <mat-icon class="check-icon" svgIcon="lynx_checkmark" />
+  @if (isFilterHidingInsights$ | async) {
+    <mat-icon class="hidden-indicator-icon">visibility_off</mat-icon>
+  }
 }

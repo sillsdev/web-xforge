@@ -14,6 +14,10 @@ interface InsightCount {
   styleUrl: './lynx-insight-status-indicator.component.scss'
 })
 export class LynxInsightStatusIndicatorComponent {
+  isFilterHidingInsights$: Observable<boolean> = this.editorInsightState.filter$.pipe(
+    map(filter => filter.types.length === 0)
+  );
+
   private insightTypeOrder: LynxInsightType[] = ['info', 'warning', 'error'];
   readonly insightCountsByType$: Observable<InsightCount[]> = this.editorInsightState.filteredInsightCountsByType$.pipe(
     map(counts =>
