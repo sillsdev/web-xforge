@@ -6,7 +6,7 @@ namespace SIL.XForge.Services;
 
 public interface IEventMetricService
 {
-    IEnumerable<EventMetric> GetEventMetrics(string? projectId, int pageIndex, int pageSize = 10);
+    IEnumerable<EventMetric> GetEventMetrics(string? projectId, int pageIndex, int pageSize);
     Task SaveEventMetricAsync(
         string? projectId,
         string? userId,
