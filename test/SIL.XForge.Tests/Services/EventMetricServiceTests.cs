@@ -41,7 +41,7 @@ public class EventMetricServiceTests
         Assert.AreEqual(4, env.EventMetrics.Query().Count());
 
         // SUT
-        IEnumerable<EventMetric> actual = env.Service.GetEventMetrics(projectId: null, pageIndex: 0);
+        IEnumerable<EventMetric> actual = env.Service.GetEventMetrics(projectId: null, pageIndex: 0, pageSize: 10);
 
         // Do not retrieve any projects, even the metric with no project identifier
         Assert.IsEmpty(actual);
@@ -54,7 +54,7 @@ public class EventMetricServiceTests
         Assert.AreEqual(4, env.EventMetrics.Query().Count());
 
         // SUT
-        IEnumerable<EventMetric> actual = env.Service.GetEventMetrics(Project01, pageIndex: 0);
+        IEnumerable<EventMetric> actual = env.Service.GetEventMetrics(Project01, pageIndex: 0, pageSize: 10);
 
         // Skip the one event metric without a project identifier
         Assert.AreEqual(3, actual.Count());
