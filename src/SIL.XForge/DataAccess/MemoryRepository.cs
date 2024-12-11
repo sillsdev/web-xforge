@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.DataAccess;
 
+[ExcludeFromCodeCoverage(Justification = "This class is used exclusively in unit tests.")]
 public class MemoryRepository<T> : IRepository<T>
     where T : IIdentifiable
 {
@@ -18,6 +20,7 @@ public class MemoryRepository<T> : IRepository<T>
     {
         TypeNameHandling = TypeNameHandling.Auto,
         ContractResolver = new WritableContractResolver(),
+        Converters = [new BsonValueConverter()],
     };
 
     private readonly ConcurrentDictionary<string, string> _entities;
@@ -27,7 +30,7 @@ public class MemoryRepository<T> : IRepository<T>
     public MemoryRepository(IEnumerable<T> entities)
         : this(null, entities) { }
 
-    public MemoryRepository(IEnumerable<Func<T, object>> uniqueKeySelectors = null, IEnumerable<T> entities = null)
+    public MemoryRepository(IEnumerable<Func<T, object>>? uniqueKeySelectors = null, IEnumerable<T>? entities = null)
     {
         _uniqueKeySelectors = uniqueKeySelectors?.ToArray() ?? [];
         _uniqueKeys = new HashSet<object>[_uniqueKeySelectors.Length];
@@ -137,10 +140,10 @@ public class MemoryRepository<T> : IRepository<T>
                 if (filter.Body is BinaryExpression binaryExpr)
                 {
                     object value = ExpressionHelper.FindConstantValue(binaryExpr.Right);
-                    if (value is string)
-                        id = (string)value;
+                    if (value is string stringValue)
+                        id = stringValue;
                 }
-                entity.Id = id;
+                entity!.Id = id;
             }
             else
             {
@@ -180,19 +183,17 @@ public class MemoryRepository<T> : IRepository<T>
     /// true if there is any existing entity, other than the original, that shares any keys with the new or updated
     /// entity
     /// </returns>
-    private bool CheckDuplicateKeys(T entity, T original = default)
+    private bool CheckDuplicateKeys(T entity, T? original = default)
     {
         for (int i = 0; i < _uniqueKeySelectors.Length; i++)
         {
             object key = _uniqueKeySelectors[i](entity);
-            if (key != null)
-            {
-                if (_uniqueKeys[i].Contains(key))
-                {
-                    if (original == null || !key.Equals(_uniqueKeySelectors[i](original)))
-                        return true;
-                }
-            }
+            if (
+                key != null
+                && _uniqueKeys[i].Contains(key)
+                && (original == null || !key.Equals(_uniqueKeySelectors[i](original)))
+            )
+                return true;
         }
         return false;
     }
@@ -200,7 +201,98 @@ public class MemoryRepository<T> : IRepository<T>
     private static T DeserializeEntity(string id, string json)
     {
         var entity = JsonConvert.DeserializeObject<T>(json, Settings);
-        entity.Id ??= id;
+        if (string.IsNullOrEmpty(entity.Id))
+        {
+            entity.Id = id;
+        }
+
         return entity;
+    }
+
+    /// <summary>
+    /// The class converts BSON to and from JSON to function like the MongoDB driver.
+    /// </summary>
+    private class BsonValueConverter : JsonConverter<BsonValue>
+    {
+        public override BsonValue ReadJson(
+            JsonReader reader,
+            Type objectType,
+            BsonValue? existingValue,
+            bool hasExistingValue,
+            JsonSerializer serializer
+        )
+        {
+            // Arrays are handled specially
+            if (reader.TokenType == JsonToken.StartArray)
+            {
+                var bsonArray = new BsonArray();
+                while (reader.Read() && reader.TokenType != JsonToken.EndArray)
+                {
+                    bsonArray.Add(BsonValue.Create(reader.Value));
+                }
+
+                return bsonArray;
+            }
+
+            // Handle objects
+            if (reader.TokenType == JsonToken.StartObject)
+            {
+                var bsonDocument = new BsonDocument();
+
+                while (reader.Read() && reader.TokenType != JsonToken.EndObject)
+                {
+                    if (reader.TokenType == JsonToken.PropertyName)
+                    {
+                        var propertyName = reader.Value?.ToString();
+                        reader.Read();
+
+                        // Recursively deserialize the value
+                        var value = ReadJson(reader, typeof(BsonValue), null, false, serializer);
+                        bsonDocument[propertyName!] = value;
+                    }
+                }
+
+                return bsonDocument;
+            }
+
+            // Convert all other values
+            return reader.Value is null ? BsonNull.Value : BsonValue.Create(reader.Value);
+        }
+
+        public override void WriteJson(JsonWriter writer, BsonValue value, JsonSerializer serializer)
+        {
+            if (value.IsBsonArray)
+            {
+                // Convert a BsonArray into a JSON array
+                writer.WriteStartArray();
+                foreach (var item in (BsonArray)value)
+                {
+                    serializer.Serialize(writer, item);
+                }
+
+                writer.WriteEndArray();
+            }
+            else if (value.IsBsonDocument)
+            {
+                // Convert a BSON document (i.e. an object) to a JSON object
+                writer.WriteStartObject();
+                foreach (var element in (BsonDocument)value)
+                {
+                    writer.WritePropertyName(element.Name);
+                    serializer.Serialize(writer, element.Value);
+                }
+                writer.WriteEndObject();
+            }
+            else if (value.IsBsonNull)
+            {
+                // Handle nulls correctly
+                writer.WriteNull();
+            }
+            else
+            {
+                // Write all other values using the defaults
+                writer.WriteValue(value);
+            }
+        }
     }
 }
