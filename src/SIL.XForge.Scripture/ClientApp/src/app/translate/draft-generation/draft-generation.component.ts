@@ -170,6 +170,16 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     super(noticeService);
   }
 
+  // Stop showing learning rate notice 60 days after it went live
+  // TODO Remove the notice entirely after it's expired
+  readonly learningRateNoticeExpired = new Date() > new Date('2025-01-06');
+
+  get showAdjustedLearningRateNotice(): boolean {
+    return (
+      this.draftEnabled && this.featureFlags.updatedLearningRateForServal.enabled && !this.learningRateNoticeExpired
+    );
+  }
+
   get downloadProgress(): number {
     if (this.downloadBooksTotal === 0) return 0;
     return (this.downloadBooksProgress / this.downloadBooksTotal) * 100;
