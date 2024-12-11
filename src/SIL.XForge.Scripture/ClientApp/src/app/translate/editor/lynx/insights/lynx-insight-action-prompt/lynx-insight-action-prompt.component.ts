@@ -25,7 +25,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
   // Adjust to move prompt up so less text is hidden
   private readonly defaultLineHeight = 9;
   private yOffsetAdjustment = this.defaultLineHeight;
-  private xOffsetAdjustment = 4 * (this.isLtr ? -1 : 1);
+  private xOffsetAdjustment = -9;
 
   private lynxEditor?: LynxEditor;
 
