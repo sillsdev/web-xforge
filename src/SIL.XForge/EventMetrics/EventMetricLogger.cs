@@ -32,15 +32,15 @@ namespace SIL.XForge.EventMetrics;
 /// [Intercept(typeof(EventMetricLogger))]
 /// public interface IMyService
 /// {
-///     [LogEventMetric(Scope.Settings)]
+///     [LogEventMetric(EventScope.Settings)]
 ///     void ThisMethodWillBeLogged();
 ///
 ///     void ThisMethodWillNot();
 ///
-///     [LogEventMetric(Scope.Settings)]
+///     [LogEventMetric(EventScope.Settings)]
 ///     void ThisMethodUsesDefaultParameterNames(string userId, string projectId);
 ///
-///     [LogEventMetric(Scope.Settings, nameof(curUserId), nameof(targetProjectId))]
+///     [LogEventMetric(EventScope.Settings, nameof(curUserId), nameof(targetProjectId))]
 ///     void ThisMethodUsesDifferentParameterNames(string curUserId, string targetProjectId);
 ///
 ///     [LogEventMetric(EventScope.Sync, userId: "syncConfig.UserId", projectId: "syncConfig.ProjectId")]
@@ -50,6 +50,14 @@ namespace SIL.XForge.EventMetrics;
 /// </example>
 public class EventMetricLogger(IRepository<EventMetric> eventMetrics, ILogger<EventMetric> logger) : IInterceptor
 {
+    /// <summary>
+    /// A task was started by the Interceptor.
+    /// </summary>
+    /// <remarks>
+    /// This is for use in unit tests to wait for the intercept task to complete.
+    /// </remarks>
+    internal event Action<Task>? TaskStarted;
+
     /// <summary>
     /// Intercept the member execution.
     /// </summary>
@@ -63,7 +71,7 @@ public class EventMetricLogger(IRepository<EventMetric> eventMetrics, ILogger<Ev
         )
         {
             // Run as a separate task so we do not slow down the method execution
-            Task.Run(async () =>
+            var task = Task.Run(async () =>
             {
                 string methodName = invocation.Method.Name;
                 try
@@ -87,6 +95,7 @@ public class EventMetricLogger(IRepository<EventMetric> eventMetrics, ILogger<Ev
                             bool value => new BsonBoolean(value),
                             Array array => new BsonArray(array),
                             double value => new BsonDouble(value),
+                            float value => new BsonDouble(value),
                             string value => new BsonString(value),
                             decimal value => new BsonDecimal128(value),
                             DateTime value => new BsonDateTime(value),
@@ -158,6 +167,14 @@ public class EventMetricLogger(IRepository<EventMetric> eventMetrics, ILogger<Ev
                     logger.LogError(e, "Error logging event metric for {methodName}", methodName);
                 }
             });
+
+            // Notify observers of the task
+            TaskStarted?.Invoke(task);
+        }
+        else
+        {
+            // Notify observers of the task of immediate completion
+            TaskStarted?.Invoke(Task.CompletedTask);
         }
 
         // Invoke the method

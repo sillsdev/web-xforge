@@ -1,7 +1,6 @@
 using Autofac;
 using Autofac.Extras.DynamicProxy;
-using Microsoft.Extensions.Logging;
-using SIL.XForge.DataAccess;
+using Castle.DynamicProxy;
 
 namespace SIL.XForge.EventMetrics;
 
@@ -15,12 +14,7 @@ public static class EventMetricsContainerBuilderExtensions
     /// </summary>
     /// <param name="containerBuilder">The container builder.</param>
     public static void RegisterEventMetrics(this ContainerBuilder containerBuilder) =>
-        containerBuilder.Register(c =>
-        {
-            var repository = c.Resolve<IRepository<EventMetric>>();
-            var logger = c.Resolve<ILogger<EventMetric>>();
-            return new EventMetricLogger(repository, logger);
-        });
+        containerBuilder.RegisterType<EventMetricLogger>().As<IInterceptor>().SingleInstance();
 
     /// <summary>
     /// Register event metrics for a class.
