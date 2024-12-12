@@ -6,11 +6,14 @@ import { ActivatedRoute } from '@angular/router';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -35,6 +38,9 @@ describe('DraftGenerationStepsComponent', () => {
   const mockTrainingDataService = mock(TrainingDataService);
   const mockUserService = mock(UserService);
   const mockProgressService = mock(ProgressService);
+  const mockOnlineStatusService = mock(OnlineStatusService);
+  const mockNoticeService = mock(NoticeService);
+  const mockI18nService = mock(I18nService);
 
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
@@ -67,7 +73,8 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockAlternateTrainingSourceProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }, { bookNum: 100 }]
+      texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }, { bookNum: 100 }],
+      writingSystem: { tag: 'xyz' }
     })
   } as SFProjectProfileDoc;
 
@@ -95,7 +102,10 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: UserService, useMock: mockUserService },
       { provide: ProgressService, useMock: mockProgressService },
-      { provide: ActivatedRoute, useMock: mockActivatedRoute }
+      { provide: ActivatedRoute, useMock: mockActivatedRoute },
+      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
+      { provide: NoticeService, useMock: mockNoticeService },
+      { provide: I18nService, useMock: mockI18nService }
     ]
   }));
 
@@ -110,20 +120,23 @@ describe('DraftGenerationStepsComponent', () => {
       { text: { bookNum: 6 } } as TextProgress,
       { text: { bookNum: 7 } } as TextProgress
     ]);
+    when(mockOnlineStatusService.isOnline).thenReturn(true);
+    when(mockI18nService.localeCode).thenReturn('en');
   }));
 
-  describe('alternate training source project', () => {
+  describe('alternate training source project', async () => {
     beforeEach(fakeAsync(() => {
       const mockTargetProjectDoc = {
         data: createTestProjectProfile({
           texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
           translateConfig: {
-            source: { projectRef: 'sourceProject' },
+            source: { projectRef: 'sourceProject', writingSystem: { tag: 'xyz' } },
             draftConfig: {
               alternateTrainingSourceEnabled: true,
-              alternateTrainingSource: { projectRef: 'alternateTrainingProject' }
+              alternateTrainingSource: { projectRef: 'alternateTrainingProject', writingSystem: { tag: 'xyz' } }
             }
-          }
+          },
+          writingSystem: { tag: 'eng' }
         })
       } as SFProjectProfileDoc;
       const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
@@ -136,11 +149,13 @@ describe('DraftGenerationStepsComponent', () => {
       );
       when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
       when(mockTrainingDataQuery.docs).thenReturn([]);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
       fixture.detectChanges();
       tick();
+      fixture.detectChanges();
     }));
 
     it('should set "availableTranslateBooks" correctly', fakeAsync(() => {
@@ -159,6 +174,32 @@ describe('DraftGenerationStepsComponent', () => {
     it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
       expect(component.unusableTranslateTargetBooks).toEqual([4, 5]);
       expect(component.unusableTrainingTargetBooks).toEqual([4, 5, 8]);
+    }));
+
+    it('should not advance steps if user is offline', fakeAsync(() => {
+      when(mockOnlineStatusService.isOnline).thenReturn(false);
+      expect(component.stepper.selectedIndex).toBe(0);
+      component['languagesVerified'] = true;
+      fixture.detectChanges();
+      // Go to translation books
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.userSelectedTranslateBooks = [1];
+      fixture.detectChanges();
+      // Go to training books
+      component.tryAdvanceStep();
+      tick();
+      fixture.detectChanges();
+      verify(mockNoticeService.show(anything())).never();
+      expect(component.stepper.selectedIndex).toBe(2);
+      component.userSelectedTrainingBooks = [2, 3];
+      tick();
+      fixture.detectChanges();
+      // Attempt to generate draft
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      verify(mockNoticeService.show(anything())).once();
+      expect(component.stepper.selectedIndex).toBe(2);
     }));
   });
 

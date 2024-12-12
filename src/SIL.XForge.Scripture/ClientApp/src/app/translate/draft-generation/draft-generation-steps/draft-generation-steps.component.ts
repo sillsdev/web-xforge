@@ -1,15 +1,17 @@
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
-import { TranslocoModule } from '@ngneat/transloco';
+import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { Subscription, merge } from 'rxjs';
+import { merge, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -99,7 +101,9 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
     private readonly trainingDataService: TrainingDataService,
-    readonly i18n: I18nService
+    readonly i18n: I18nService,
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly noticeService: NoticeService
   ) {
     super();
   }
@@ -252,6 +256,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     if (this.stepper.selected !== this.stepper.steps.last) {
       this.stepper.next();
     } else {
+      if (!this.onlineStatusService.isOnline) {
+        this.noticeService.show(translate('draft_generation.offline_message'));
+        return;
+      }
       this.isStepsCompleted = true;
       this.done.emit({
         trainingBooks: this.userSelectedTrainingBooks,
