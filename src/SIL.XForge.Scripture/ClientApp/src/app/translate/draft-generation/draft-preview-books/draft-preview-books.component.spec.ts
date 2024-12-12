@@ -89,30 +89,31 @@ describe('DraftPreviewBooks', () => {
   it('does not apply draft if user cancels', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    when(mockedDialogService.confirmWithOptions(anything())).thenResolve(false);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    env.component.confirmAndAddToProjectAsync(bookWithDraft);
+    const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
+    when(mockedDialogRef.afterClosed()).thenReturn(of(undefined));
+    when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
+      instance(mockedDialogRef)
+    );
+    env.component.addDraftToCurrentProject(bookWithDraft);
     tick();
     env.fixture.detectChanges();
-    verify(mockedDialogService.confirmWithOptions(anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
   }));
 
   it('notifies user if applying a draft failed due to an error', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    when(mockedDialogService.confirmWithOptions(anything())).thenResolve(true);
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything()))
       .thenReject(new Error('Draft error'))
       .thenResolve(true)
       .thenResolve(false);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    env.component.confirmAndAddToProjectAsync(bookWithDraft);
+    env.component.addDraftToCurrentProject(bookWithDraft);
     tick();
     env.fixture.detectChanges();
     expect(env.draftApplyProgress.chaptersApplied).toEqual([2]);
     expect(env.draftApplyProgress.completed).toBe(true);
-    verify(mockedDialogService.confirmWithOptions(anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(3);
     verify(mockedErrorReportingService.silentError(anything(), anything())).once();
   }));
@@ -122,10 +123,9 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[2];
     when(mockedDialogService.message(anything())).thenResolve();
     expect(env.getBookButtonAtIndex(2).querySelector('.book-more')).toBeTruthy();
-    env.component.confirmAndAddToProjectAsync(bookWithDraft);
+    env.component.addDraftToCurrentProject(bookWithDraft);
     tick();
     env.fixture.detectChanges();
-    verify(mockedDialogService.confirmWithOptions(anything())).never();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
     verify(mockedErrorReportingService.silentError(anything(), anything())).never();
   }));
@@ -133,40 +133,31 @@ describe('DraftPreviewBooks', () => {
   it('can apply all chapters of a draft to a book', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    when(mockedDialogService.confirmWithOptions(anything())).thenResolve(true);
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenResolve(true);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    env.component.confirmAndAddToProjectAsync(bookWithDraft);
+    env.component.addDraftToCurrentProject(bookWithDraft);
     tick();
     env.fixture.detectChanges();
     expect(env.draftApplyProgress.chaptersApplied).toEqual([1, 2, 3]);
     expect(env.draftApplyProgress.completed).toBe(true);
-    verify(mockedDialogService.confirmWithOptions(anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(3);
   }));
 
   it('can apply chapters with drafts and skips chapters without drafts', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
-    when(mockedDialogService.confirmWithOptions(anything())).thenResolve(true);
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenResolve(true);
     expect(env.getBookButtonAtIndex(1).querySelector('.book-more')).toBeTruthy();
-    env.component.confirmAndAddToProjectAsync(bookWithDraft);
+    env.component.addDraftToCurrentProject(bookWithDraft);
     tick();
     env.fixture.detectChanges();
-    verify(mockedDialogService.confirmWithOptions(anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(1);
   }));
 
   it('can open dialog to apply draft to a different project', fakeAsync(() => {
     env = new TestEnvironment();
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
-    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'project01' }));
-    when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
-      instance(mockedDialogRef)
-    );
-    env.component.chooseAlternateProjectToAddDraft(env.booksWithDrafts[0]);
+    env.component.chooseProjectToAddDraft(env.booksWithDrafts[0]);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
@@ -197,7 +188,7 @@ describe('DraftPreviewBooks', () => {
     when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
       instance(mockedDialogRef)
     );
-    env.component.chooseAlternateProjectToAddDraft(env.booksWithDrafts[0]);
+    env.component.chooseProjectToAddDraft(env.booksWithDrafts[0]);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
@@ -208,20 +199,17 @@ describe('DraftPreviewBooks', () => {
   it('shows message to generate a new draft if legacy USFM draft', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    when(mockedDialogService.confirmWithOptions(anything())).thenResolve(true);
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenResolve(false);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    env.component.confirmAndAddToProjectAsync(bookWithDraft);
+    env.component.addDraftToCurrentProject(bookWithDraft);
     tick();
     env.fixture.detectChanges();
-    verify(mockedDialogService.confirmWithOptions(anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(3);
   }));
 
   it('can track progress of chapters applied', fakeAsync(() => {
     env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    when(mockedDialogService.confirmWithOptions(anything())).thenResolve(true);
     const resolveSubject$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
     const promise: Promise<boolean> = new Promise<boolean>(resolve => {
       resolveSubject$.pipe(filter(value => value)).subscribe(() => resolve(true));
@@ -230,10 +218,9 @@ describe('DraftPreviewBooks', () => {
       .thenReturn(Promise.resolve(true))
       .thenReturn(promise);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    env.component.confirmAndAddToProjectAsync(bookWithDraft);
+    env.component.addDraftToCurrentProject(bookWithDraft);
     tick();
     env.fixture.detectChanges();
-    verify(mockedDialogService.confirmWithOptions(anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(3);
     expect(env.component.numChaptersApplied).toEqual(1);
     resolveSubject$.next(true);
@@ -301,6 +288,11 @@ class TestEnvironment {
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenResolve();
     when(mockedActivatedProjectService.projectId).thenReturn('project01');
     when(mockedUserService.currentUserId).thenReturn('user01');
+    const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
+    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'project01' }));
+    when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
+      instance(mockedDialogRef)
+    );
     this.fixture = TestBed.createComponent(DraftPreviewBooksComponent);
     this.component = this.fixture.componentInstance;
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);

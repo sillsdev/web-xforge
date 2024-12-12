@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Router, RouterModule } from '@angular/router';
-import { TranslocoModule, translate } from '@ngneat/transloco';
+import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { BehaviorSubject, Observable, firstValueFrom, map } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, map, Observable } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -107,10 +107,11 @@ export class DraftPreviewBooksComponent {
     return this.i18n.localizeBook(bookNumber);
   }
 
-  async chooseAlternateProjectToAddDraft(bookWithDraft: BookWithDraft): Promise<void> {
+  async chooseProjectToAddDraft(bookWithDraft: BookWithDraft, paratextId?: string): Promise<void> {
     const dialogData: DraftApplyDialogData = {
       bookNum: bookWithDraft.bookNumber,
-      chapters: bookWithDraft.chaptersWithDrafts
+      chapters: bookWithDraft.chaptersWithDrafts,
+      paratextId: paratextId
     };
     const dialogRef: MatDialogRef<DraftApplyDialogComponent, DraftApplyDialogResult> = this.dialogService.openMatDialog(
       DraftApplyDialogComponent,
@@ -123,24 +124,13 @@ export class DraftPreviewBooksComponent {
     await this.applyBookDraftAsync(bookWithDraft, result.projectId);
   }
 
-  async confirmAndAddToProjectAsync(bookWithDraft: BookWithDraft): Promise<void> {
+  async addDraftToCurrentProject(bookWithDraft: BookWithDraft): Promise<void> {
     if (!bookWithDraft.canEdit) {
       await this.dialogService.message(translate('draft_preview_books.no_permission_to_edit_book'));
       return;
     }
 
-    const bookName: string = this.bookNumberToName(bookWithDraft.bookNumber);
-    const confirmed = await this.dialogService.confirmWithOptions({
-      title: bookWithDraft.draftApplied
-        ? this.i18n.translate('draft_add_dialog.readd_book_to_project', { bookName })
-        : this.i18n.translate('draft_add_dialog.add_book_to_project', { bookName }),
-      message: this.i18n.translate('draft_add_dialog.book_contents_will_be_overwritten', { bookName }),
-      affirmative: bookWithDraft.draftApplied ? 'draft_add_dialog.readd_to_project' : 'draft_add_dialog.add_to_project'
-    });
-
-    if (!confirmed) return;
-
-    await this.applyBookDraftAsync(bookWithDraft);
+    await this.chooseProjectToAddDraft(bookWithDraft, this.activatedProjectService.projectDoc.data.paratextId);
   }
 
   private async applyBookDraftAsync(bookWithDraft: BookWithDraft, alternateProjectId?: string): Promise<void> {

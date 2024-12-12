@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { TranslocoModule, translate } from '@ngneat/transloco';
+import { translate, TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -31,6 +32,7 @@ export interface DraftApplyDialogResult {
 export interface DraftApplyDialogConfig {
   bookNum: number;
   chapters: number[];
+  paratextId?: string;
 }
 
 @Component({
@@ -78,7 +80,8 @@ export class DraftApplyDialogComponent implements OnInit {
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
     private readonly userService: UserService,
-    private readonly onlineStatusService: OnlineStatusService
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly destroyRef: DestroyRef
   ) {
     this.targetProject$.pipe(filterNullish()).subscribe(async project => {
       const chapters: number = await this.chaptersWithTextAsync(project);
@@ -113,6 +116,7 @@ export class DraftApplyDialogComponent implements OnInit {
   ngOnInit(): void {
     this.userProjectsService.projectDocs$
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         filterNullish(),
         map(resourceAndProjectDocs => {
           const projects: SFProjectProfile[] = [];
@@ -128,7 +132,15 @@ export class DraftApplyDialogComponent implements OnInit {
           return projects.sort(compareProjectsForSorting);
         })
       )
-      .subscribe(projects => (this._projects = projects));
+      .subscribe(projects => {
+        this._projects = projects;
+        if (this.data.paratextId != null) {
+          setTimeout(() => {
+            // give the project select component a whole cycle to load the projects
+            this.projectSelect.value = this.data.paratextId;
+          });
+        }
+      });
   }
 
   addToProject(): void {
