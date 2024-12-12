@@ -70,7 +70,8 @@
     "webm",
     "xforge",
     "xfvalidators",
-    "xlink"
+    "xlink",
+    "zizmor"
   ],
   "dotnet.defaultSolution": "xForge.sln",
   "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj",
