@@ -16,7 +16,6 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
-import { TextDocService } from '../../../core/text-doc.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
@@ -29,7 +28,6 @@ const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDraftHandlingService = mock(DraftHandlingService);
 const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
-const mockTextDocService = mock(TextDocService);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -52,8 +50,7 @@ describe('EditorDraftComponent', () => {
       { provide: DraftHandlingService, useMock: mockDraftHandlingService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: DialogService, useMock: mockDialogService },
-      { provide: TextDocService, useMock: mockTextDocService }
+      { provide: DialogService, useMock: mockDialogService }
     ]
   }));
 
