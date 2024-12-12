@@ -3,7 +3,7 @@ import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { anything, instance, mock, objectContaining, verify, when } from 'ts-mockito';
 import { SystemRole } from '../models/system-role';
-import { User, USERS_COLLECTION, USER_PROFILES_COLLECTION } from '../models/user';
+import { User, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user';
 import { createTestUser } from '../models/user-test-data';
 import { RealtimeServer } from '../realtime-server';
 import { SchemaVersionRepository } from '../schema-version-repository';

@@ -3,7 +3,7 @@ import { catchError, lastValueFrom, map, of } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { HttpClient } from '../machine-api/http-client';
-import { NllbLanguage, NllbLanguageDict, NLLB_LANGUAGES } from './nllb-languages';
+import { NLLB_LANGUAGES, NllbLanguage, NllbLanguageDict } from './nllb-languages';
 
 interface LanguageDto {
   isSupported: boolean;

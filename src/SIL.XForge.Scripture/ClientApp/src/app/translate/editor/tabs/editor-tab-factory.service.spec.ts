@@ -3,7 +3,7 @@ import { EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/edi
 import { of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { EditorTabFactoryService } from './editor-tab-factory.service';
 
 describe('EditorTabFactoryService', () => {

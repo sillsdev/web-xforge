@@ -9,9 +9,9 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   AssignedUsers,
-  NoteThread,
   NOTE_THREAD_COLLECTION,
-  NOTE_THREAD_INDEX_PATHS
+  NOTE_THREAD_INDEX_PATHS,
+  NoteThread
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';

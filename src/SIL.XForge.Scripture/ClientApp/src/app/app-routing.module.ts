@@ -5,6 +5,7 @@ import { SystemAdminAuthGuard } from 'xforge-common/system-admin-auth.guard';
 import { SystemAdministrationComponent } from 'xforge-common/system-administration/system-administration.component';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
 import { JoinComponent } from './join/join.component';
+import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { ProjectComponent } from './project/project.component';
 import { ServalAdminAuthGuard } from './serval-administration/serval-admin-auth.guard';
 import { ServalAdministrationComponent } from './serval-administration/serval-administration.component';
@@ -12,7 +13,6 @@ import { ServalProjectComponent } from './serval-administration/serval-project.c
 import { SettingsComponent } from './settings/settings.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
 import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
-import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { SyncComponent } from './sync/sync.component';
 
 const routes: Routes = [

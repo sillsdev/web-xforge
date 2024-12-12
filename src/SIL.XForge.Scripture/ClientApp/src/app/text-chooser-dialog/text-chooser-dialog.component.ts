@@ -1,5 +1,5 @@
 import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
-import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { VerseRef } from '@sillsdev/scripture';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { fromEvent } from 'rxjs';

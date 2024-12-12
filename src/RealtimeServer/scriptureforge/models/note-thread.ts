@@ -1,4 +1,4 @@
-import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
+import { PROJECT_DATA_INDEX_PATHS, ProjectData } from '../../common/models/project-data';
 import { obj } from '../../common/utils/obj-path';
 import { BiblicalTermNoteHeadingInfo } from './biblical-term-note-heading-info';
 import { Note } from './note';

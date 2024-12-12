@@ -1,7 +1,7 @@
 import {
-  BiblicalTerm,
   BIBLICAL_TERM_COLLECTION,
-  BIBLICAL_TERM_INDEX_PATHS
+  BIBLICAL_TERM_INDEX_PATHS,
+  BiblicalTerm
 } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
 

@@ -6,7 +6,7 @@ import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { AuthType, User, getAuthType } from 'realtime-server/lib/esm/common/models/user';
+import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Observable, Subscription } from 'rxjs';

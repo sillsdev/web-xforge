@@ -1,6 +1,6 @@
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
-import { BiblicalTerm, BIBLICAL_TERM_COLLECTION, BIBLICAL_TERM_INDEX_PATHS } from '../models/biblical-term';
+import { BIBLICAL_TERM_COLLECTION, BIBLICAL_TERM_INDEX_PATHS, BiblicalTerm } from '../models/biblical-term';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import { BIBLICAL_TERM_MIGRATIONS } from './biblical-term-migrations';
 import { SFProjectDataService } from './sf-project-data-service';
