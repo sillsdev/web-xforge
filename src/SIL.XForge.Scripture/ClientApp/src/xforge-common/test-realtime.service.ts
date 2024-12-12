@@ -57,10 +57,19 @@ export class TestRealtimeService extends RealtimeService {
     return (this.offlineStore as MemoryOfflineStore).getData(fileType, id);
   }
 
-  updateAllSubscribeQueries(): void {
+  updateQueryAdaptersRemote(): void {
     for (const collectionQueries of this.subscribeQueries.values()) {
       for (const query of collectionQueries) {
         (query.adapter as MemoryRealtimeQueryAdapter).updateResults();
+      }
+    }
+  }
+
+  async updateQueriesLocal(): Promise<void> {
+    for (const collectionQueries of this.subscribeQueries.values()) {
+      for (const query of collectionQueries) {
+        await query.fetch();
+        await query.localUpdate();
       }
     }
   }

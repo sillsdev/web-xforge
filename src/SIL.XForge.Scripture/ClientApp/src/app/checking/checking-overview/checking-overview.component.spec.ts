@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
@@ -177,6 +177,33 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(5); // Matthew, Luke, Luke 1, Question 1, Question 2
       expect(env.questionEditButtons.length).toEqual(2);
+    }));
+
+    it('should show new question after local change', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      env.waitForQuestions();
+
+      const dateNow = new Date();
+      const newQuestion: Question = {
+        dataId: 'newQId1',
+        ownerRef: env.adminUser.id,
+        projectRef: 'project01',
+        text: 'Admin just added a question.',
+        answers: [],
+        verseRef: { bookNum: 42, chapterNum: 1, verseNum: 10, verse: '10-11' },
+        isArchived: false,
+        dateCreated: dateNow.toJSON(),
+        dateModified: dateNow.toJSON()
+      };
+
+      //project01:LUK:1:target
+      const numQuestions = env.component.getQuestionDocs(new TextDocId('project01', 42, 1)).length;
+
+      env.addQuestion(newQuestion);
+      await env.realtimeService.updateQueriesLocal();
+      env.waitForProjectDocChanges();
+
+      expect(env.component.getQuestionDocs(new TextDocId('project01', 42, 1)).length).toEqual(numQuestions + 1);
     }));
 
     it('should show question in canonical order', fakeAsync(() => {
@@ -388,6 +415,8 @@ describe('CheckingOverviewComponent', () => {
       env.clickElement(env.questionPublishButtons[0]);
       expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).not.toBeNull();
+
+      discardPeriodicTasks();
     }));
 
     it('archives and republishes a question', fakeAsync(() => {
@@ -414,6 +443,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textArchivedRows.length).toEqual(3);
       expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 questions');
       expect(env.textRows.length).toEqual(9);
+
+      discardPeriodicTasks();
     }));
 
     it('archives and republishes questions for an entire chapter or book', fakeAsync(() => {
@@ -488,6 +519,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
       expect(env.getPublishedQuestionsCountTextByRow(0)).toContain('7 questions');
       expect(env.getPublishedQuestionsCountTextByRow(1)).toContain('1 questions');
+
+      discardPeriodicTasks();
     }));
   });
 
@@ -533,6 +566,8 @@ describe('CheckingOverviewComponent', () => {
       // Chapter should still be visible as it has audio
       expect(env.questionEditButtons.length).toEqual(0);
       expect(env.checkChapterHasAudio(johnChapter1Index)).toBeTrue();
+
+      discardPeriodicTasks();
     }));
 
     it('click chapter with audio and no questions should not open panel ', fakeAsync(() => {
@@ -560,6 +595,8 @@ describe('CheckingOverviewComponent', () => {
       env.clickElement(env.questionArchiveButtons[johnIndex]);
       expect(env.questionArchiveButtons[johnIndex]).toBeNull();
       expect(env.textRows.length).toBe(3);
+
+      discardPeriodicTasks();
     }));
 
     it('can delete chapter audio ', fakeAsync(() => {
@@ -1187,7 +1224,7 @@ class TestEnvironment {
   }
 
   waitForQuestions(): void {
-    this.realtimeService.updateAllSubscribeQueries();
+    this.realtimeService.updateQueryAdaptersRemote();
     this.fixture.detectChanges();
     this.waitForProjectDocChanges();
   }

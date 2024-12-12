@@ -221,7 +221,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       if (this.dataChangesSub != null) {
         this.dataChangesSub.unsubscribe();
       }
-      this.dataChangesSub = merge(this.projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$)
+      this.dataChangesSub = merge(
+        this.projectDoc.remoteChanges$,
+        this.questionsQuery.remoteChanges$,
+        this.questionsQuery.localChanges$
+      )
         // TODO Find a better solution than merely throttling remote changes
         .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
         .subscribe(() => {
