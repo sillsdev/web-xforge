@@ -91,9 +91,9 @@ export class I18nService {
         hour12: false,
         numberingSystem: 'deva',
         ...options
-      };
+      } as const;
 
-      const parts = new Intl.DateTimeFormat('npi', o as any).formatToParts(d);
+      const parts = new Intl.DateTimeFormat('npi', o).formatToParts(d);
 
       // Build custom YYYY-MM-DD, HH:MM format
       const year = parts.find(p => p.type === 'year')?.value;
