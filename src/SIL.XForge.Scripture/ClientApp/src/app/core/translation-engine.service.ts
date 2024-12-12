@@ -14,7 +14,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { HttpClient } from '../machine-api/http-client';
 import { RemoteTranslationEngine } from '../machine-api/remote-translation-engine';
-import { EditedSegmentData, EDITED_SEGMENTS } from './models/edited-segment-data';
+import { EDITED_SEGMENTS, EditedSegmentData } from './models/edited-segment-data';
 import { SFProjectService } from './sf-project.service';
 
 /**

@@ -1,4 +1,4 @@
-import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
+import { PROJECT_DATA_INDEX_PATHS, ProjectData } from '../../common/models/project-data';
 import { BiblicalTermDefinition } from './biblical-term-definition';
 
 export const BIBLICAL_TERM_COLLECTION = 'biblical_terms';

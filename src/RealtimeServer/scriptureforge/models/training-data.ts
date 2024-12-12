@@ -1,4 +1,4 @@
-import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
+import { PROJECT_DATA_INDEX_PATHS, ProjectData } from '../../common/models/project-data';
 
 export const TRAINING_DATA_COLLECTION = 'training_data';
 export const TRAINING_DATA_INDEX_PATHS: string[] = PROJECT_DATA_INDEX_PATHS;

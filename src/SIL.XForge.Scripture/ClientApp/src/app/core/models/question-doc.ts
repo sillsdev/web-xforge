@@ -2,8 +2,8 @@ import { obj, PathItem } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import {
   Question,
-  QUESTIONS_COLLECTION,
-  QUESTION_INDEX_PATHS
+  QUESTION_INDEX_PATHS,
+  QUESTIONS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';

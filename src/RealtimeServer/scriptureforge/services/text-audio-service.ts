@@ -1,7 +1,7 @@
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { SFProjectDomain } from '../models/sf-project-rights';
-import { TextAudio, TEXT_AUDIO_COLLECTION, TEXT_AUDIO_INDEX_PATHS } from '../models/text-audio';
+import { TEXT_AUDIO_COLLECTION, TEXT_AUDIO_INDEX_PATHS, TextAudio } from '../models/text-audio';
 import { SFProjectDataService } from './sf-project-data-service';
 import { TEXT_AUDIO_MIGRATIONS } from './text-audio-migrations';
 

@@ -3,8 +3,8 @@ import { Project } from '../../common/models/project';
 import { Operation } from '../../common/models/project-rights';
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { DocService } from '../../common/services/doc-service';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
-import { TextData, TEXTS_COLLECTION, TEXT_INDEX_PATHS } from '../models/text-data';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
+import { TEXT_INDEX_PATHS, TextData, TEXTS_COLLECTION } from '../models/text-data';
 import { TEXT_MIGRATIONS } from './text-migrations';
 
 /**

@@ -1,7 +1,7 @@
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { mock, when } from 'ts-mockito';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 @NgModule({ imports: [], providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()] })
 export class TestOnlineStatusModule {

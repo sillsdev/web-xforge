@@ -6,10 +6,10 @@ import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op } from '../../common/utils/test-utils';
-import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
+import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
-import { getTrainingDataId, TrainingData, TRAINING_DATA_COLLECTION } from '../models/training-data';
+import { getTrainingDataId, TRAINING_DATA_COLLECTION, TrainingData } from '../models/training-data';
 import { TrainingDataService } from './training-data-service';
 
 describe('TrainingDataService', () => {

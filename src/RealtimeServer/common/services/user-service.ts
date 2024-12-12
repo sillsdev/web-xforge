@@ -1,7 +1,7 @@
 import ShareDB from 'sharedb';
 import { ConnectSession } from '../connect-session';
 import { SystemRole } from '../models/system-role';
-import { User, USERS_COLLECTION, USER_INDEX_PATHS, USER_PROFILES_COLLECTION } from '../models/user';
+import { User, USER_INDEX_PATHS, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user';
 import { ValidationSchema } from '../models/validation-schema';
 import { RealtimeServer } from '../realtime-server';
 import { ANY_KEY, ObjPathTemplate } from '../utils/obj-path';

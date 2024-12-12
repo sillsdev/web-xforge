@@ -1,7 +1,7 @@
 import {
-  TextAudio,
   TEXT_AUDIO_COLLECTION,
-  TEXT_AUDIO_INDEX_PATHS
+  TEXT_AUDIO_INDEX_PATHS,
+  TextAudio
 } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
 

@@ -5,9 +5,9 @@ import { ProjectDomainConfig } from '../../common/services/project-data-service'
 import { ANY_INDEX } from '../../common/utils/obj-path';
 import { createFetchQuery, docSubmitJson0Op } from '../../common/utils/sharedb-utils';
 import { Note } from '../models/note';
-import { NoteThread, NOTE_THREAD_COLLECTION, NOTE_THREAD_INDEX_PATHS } from '../models/note-thread';
+import { NOTE_THREAD_COLLECTION, NOTE_THREAD_INDEX_PATHS, NoteThread } from '../models/note-thread';
 import { SFProjectDomain } from '../models/sf-project-rights';
-import { SFProjectUserConfig, SF_PROJECT_USER_CONFIGS_COLLECTION } from '../models/sf-project-user-config';
+import { SF_PROJECT_USER_CONFIGS_COLLECTION, SFProjectUserConfig } from '../models/sf-project-user-config';
 import { NOTE_THREAD_MIGRATIONS } from './note-thread-migrations';
 import { SFProjectDataService } from './sf-project-data-service';
 

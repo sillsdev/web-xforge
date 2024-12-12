@@ -1,7 +1,7 @@
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { SFProjectDomain } from '../models/sf-project-rights';
-import { TrainingData, TRAINING_DATA_COLLECTION, TRAINING_DATA_INDEX_PATHS } from '../models/training-data';
+import { TRAINING_DATA_COLLECTION, TRAINING_DATA_INDEX_PATHS, TrainingData } from '../models/training-data';
 import { SFProjectDataService } from './sf-project-data-service';
 import { TRAINING_DATA_MIGRATIONS } from './training-data-migrations';
 

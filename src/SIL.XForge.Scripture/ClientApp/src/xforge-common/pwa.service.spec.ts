@@ -5,7 +5,7 @@ import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { WINDOW } from 'xforge-common/browser-globals';
 import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { LocationService } from './location.service';
-import { InstallPromptOutcome, PwaService, PWA_CHECK_FOR_UPDATES } from './pwa.service';
+import { InstallPromptOutcome, PWA_CHECK_FOR_UPDATES, PwaService } from './pwa.service';
 
 const mockedSwUpdate = mock(SwUpdate);
 const mockedLocationService = mock(LocationService);

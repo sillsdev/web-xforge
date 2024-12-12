@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, InjectionToken, Injector, OnInit, Provider } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
-import { StoryFn } from '@storybook/angular';
-import { hasProp } from '../../src/type-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TranslocoModule } from '@ngneat/transloco';
+import { StoryFn } from '@storybook/angular';
+import { UICommonModule } from 'xforge-common/ui-common.module';
+import { hasProp } from '../../src/type-utils';
 
 export function getOverlays(element: HTMLElement): HTMLElement[] {
   return Array.from(element.ownerDocument.querySelectorAll('.cdk-overlay-container .cdk-overlay-pane'));

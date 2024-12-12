@@ -19,19 +19,19 @@ import {
 import { Note } from '../models/note';
 import {
   getNoteThreadDocId,
+  NOTE_THREAD_COLLECTION,
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType,
-  NOTE_THREAD_COLLECTION
+  NoteType
 } from '../models/note-thread';
-import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
+import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
-  SFProjectUserConfig,
-  SF_PROJECT_USER_CONFIGS_COLLECTION
+  SF_PROJECT_USER_CONFIGS_COLLECTION,
+  SFProjectUserConfig
 } from '../models/sf-project-user-config';
 import { createTestProjectUserConfig } from '../models/sf-project-user-config-test-data';
 import { TextAnchor } from '../models/text-anchor';
