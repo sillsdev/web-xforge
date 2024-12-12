@@ -15,6 +15,7 @@ vagrant_ansible_inventory_*
 artifacts/
 dist/
 src/RealtimeServer/lib/
+#src/SIL.XForge.Scripture/ClientApp/src/assets/videos/*
 
 # VS files
 .vs
