@@ -60,7 +60,7 @@ import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, Observable, Subject, defer, of, take } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, defer, firstValueFrom, of, take } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -3869,6 +3869,21 @@ describe('EditorComponent', () => {
         env.wait();
         expect(spyCreateTab).toHaveBeenCalledWith('biblical-terms', jasmine.any(Object));
         discardPeriodicTasks();
+      }));
+
+      it('should exclude deleted resource tabs (tabs that have "projectDoc" but not "projectDoc.data")', fakeAsync(async () => {
+        const absentProjectId = 'absentProjectId';
+        when(mockedSFProjectService.getProfile(absentProjectId)).thenResolve({ data: null } as SFProjectProfileDoc);
+        const env = new TestEnvironment();
+        env.setProjectUserConfig({
+          editorTabsOpen: [{ tabType: 'project-resource', groupId: 'target', projectId: absentProjectId }]
+        });
+        env.routeWithParams({ projectId: 'project01', bookId: 'GEN', chapter: '1' });
+        env.wait();
+
+        const tabs = await firstValueFrom(env.component.tabState.tabs$);
+        expect(tabs.find(t => t.projectId === absentProjectId)).toBeUndefined();
+        env.dispose();
       }));
     });
 
