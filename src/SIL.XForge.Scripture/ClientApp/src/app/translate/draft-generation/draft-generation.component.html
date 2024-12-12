@@ -386,5 +386,8 @@
       (done)="onPreGenerationStepsComplete($event)"
       (cancel)="currentPage = 'initial'"
     ></app-draft-generation-steps>
+    @if (!isOnline) {
+      <p class="offline-text">{{ t("offline_message") }}</p>
+    }
   }
 </ng-container>
