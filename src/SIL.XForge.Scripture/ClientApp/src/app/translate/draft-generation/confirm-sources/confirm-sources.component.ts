@@ -7,6 +7,7 @@ import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
+import { DraftSources, projectToDraftSources } from '../draft-utils';
 
 @Component({
   selector: 'app-confirm-sources',
@@ -26,36 +27,11 @@ export class ConfirmSourcesComponent {
     private readonly i18nService: I18nService,
     activatedProjectService: ActivatedProjectService
   ) {
-    const project = activatedProjectService.projectDoc!.data!;
-    this.trainingTargets.push(project);
+    const sources: DraftSources = projectToDraftSources(activatedProjectService.projectDoc.data);
 
-    const draftConfig = project.translateConfig.draftConfig;
-
-    let trainingSource: TranslateSource | undefined;
-    if (draftConfig.alternateTrainingSourceEnabled && draftConfig.alternateTrainingSource != null) {
-      trainingSource = draftConfig.alternateTrainingSource;
-    } else {
-      trainingSource = project.translateConfig.source;
-    }
-
-    if (trainingSource != null) {
-      this.trainingSources.push(trainingSource);
-    }
-
-    if (draftConfig.additionalTrainingSourceEnabled && draftConfig.additionalTrainingSource != null) {
-      this.trainingSources.push(draftConfig.additionalTrainingSource!);
-    }
-
-    let draftingSource: TranslateSource | undefined;
-    if (draftConfig.alternateSourceEnabled && draftConfig.alternateSource != null) {
-      draftingSource = draftConfig.alternateSource;
-    } else {
-      draftingSource = project.translateConfig.source;
-    }
-
-    if (draftingSource != null) {
-      this.draftingSources.push(draftingSource);
-    }
+    this.trainingSources = sources.trainingSources;
+    this.trainingTargets = sources.trainingTargets;
+    this.draftingSources = sources.draftingSources;
   }
 
   confirmationChanged(change: MatCheckboxChange): void {
