@@ -670,13 +670,21 @@ describe('DraftGenerationComponent', () => {
     it('should display offline message when offline', () => {
       let env = new TestEnvironment();
       env.testOnlineStatusService.setIsOnline(false);
+      env.fixture.detectChanges();
+      expect(env.offlineTextElement).not.toBeNull();
 
-      expect(env.offlineTextElement).toBeDefined();
+      env.component.currentPage = 'steps';
+      env.fixture.detectChanges();
+      expect(env.offlineTextElement).not.toBeNull();
     });
 
     it('should not display offline message when online', () => {
       let env = new TestEnvironment();
+      env.fixture.detectChanges();
+      expect(env.offlineTextElement).toBeNull();
 
+      env.component.currentPage = 'steps';
+      env.fixture.detectChanges();
       expect(env.offlineTextElement).toBeNull();
     });
   });
