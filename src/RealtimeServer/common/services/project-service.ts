@@ -24,6 +24,18 @@ export abstract class ProjectService<T extends Project = Project> extends JsonDo
       name: {
         bsonType: 'string'
       },
+      rolePermissions: {
+        bsonType: 'object',
+        patternProperties: {
+          '^[a-z_]+$': {
+            bsonType: 'array',
+            items: {
+              bsonType: 'string'
+            }
+          }
+        },
+        additionalProperties: false
+      },
       userRoles: {
         bsonType: 'object',
         patternProperties: {

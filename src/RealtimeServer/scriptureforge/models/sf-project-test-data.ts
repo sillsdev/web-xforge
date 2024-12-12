@@ -6,6 +6,7 @@ import { SFProject, SFProjectProfile } from './sf-project';
 function testProjectProfile(ordinal: number): SFProjectProfile {
   return {
     name: `Test project ${ordinal}`,
+    rolePermissions: {},
     userRoles: {},
     userPermissions: {},
     syncDisabled: false,
@@ -15,7 +16,6 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
     isRightToLeft: false,
     translateConfig: {
       translationSuggestionsEnabled: false,
-      shareEnabled: false,
       preTranslate: false,
       defaultNoteTagId: 1,
       draftConfig: {
@@ -31,7 +31,6 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
     checkingConfig: {
       checkingEnabled: true,
       usersSeeEachOthersResponses: true,
-      shareEnabled: false,
       answerExportMethod: CheckingAnswerExport.MarkedForExport,
       hideCommunityCheckingText: false
     },

@@ -43,6 +43,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private readonly ISecurityService _securityService;
     private readonly IStringLocalizer<SharedResource> _localizer;
     private readonly ITransceleratorService _transceleratorService;
+    private readonly ISFProjectRights _projectRights;
 
     public SFProjectService(
         IRealtimeService realtimeService,
@@ -60,7 +61,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IRepository<TranslateMetrics> translateMetrics,
         IStringLocalizer<SharedResource> localizer,
         ITransceleratorService transceleratorService,
-        IBackgroundJobClient backgroundJobClient
+        IBackgroundJobClient backgroundJobClient,
+        ISFProjectRights projectRights
     )
         : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
     {
@@ -75,6 +77,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _localizer = localizer;
         _transceleratorService = transceleratorService;
         _backgroundJobClient = backgroundJobClient;
+        _projectRights = projectRights;
     }
 
     protected override string ProjectAdminRole => SFProjectRole.Administrator;
@@ -313,6 +316,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     public async Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings)
     {
+        // Throw an exception if obsolete settings are specified
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (settings.CheckingShareEnabled is not null)
+            throw new ForbiddenException();
+        if (settings.TranslateShareEnabled is not null)
+            throw new ForbiddenException();
+#pragma warning restore CS0618 // Type or member is obsolete
+
+        // Connect to the realtime server
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
@@ -429,7 +441,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             );
             UpdateSetting(op, p => p.BiblicalTermsConfig.BiblicalTermsEnabled, settings.BiblicalTermsEnabled);
             UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
-            UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
             UpdateSetting(
                 op,
                 p => p.TranslateConfig.DraftConfig.AlternateSourceEnabled,
@@ -471,7 +482,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
             UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
             UpdateSetting(op, p => p.CheckingConfig.UsersSeeEachOthersResponses, settings.UsersSeeEachOthersResponses);
-            UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
             UpdateSetting(op, p => p.CheckingConfig.AnswerExportMethod, settings.CheckingAnswerExport);
             UpdateSetting(op, p => p.CheckingConfig.HideCommunityCheckingText, settings.HideCommunityCheckingText);
         });
@@ -624,7 +634,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     )
     {
         SFProject project = await GetProjectAsync(projectId);
-        if (!CanUserShareRole(curUserId, project, role))
+        if (!CanUserShareRole(curUserId, project, role, out string userRole))
             throw new ForbiddenException();
 
         if (
@@ -637,20 +647,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
         SiteOptions siteOptions = SiteOptions.Value;
 
-        bool isAdmin = IsProjectAdmin(project, curUserId);
-        string[] availableRoles = new Dictionary<string, bool>
-        {
-            {
-                SFProjectRole.CommunityChecker,
-                project.CheckingConfig.CheckingEnabled && (isAdmin || project.CheckingConfig.ShareEnabled)
-            },
-            { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled || isAdmin },
-            { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled || isAdmin }
-        }
-            .Where(entry => entry.Value)
-            .Select(entry => entry.Key)
-            .ToArray();
-
+        string[] availableRoles = GetAvailableRoles(project, userRole);
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
@@ -675,7 +672,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         ExpirationTime = expTime,
                         ProjectRole = role,
                         ShareLinkType = ShareLinkType.Recipient,
-                        CreatedByAdmin = isAdmin
+                        CreatedByRole = userRole,
                     }
                 )
         );
@@ -724,24 +721,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     )
     {
         SFProject project = await GetProjectAsync(projectId);
-        if (!CanUserShareRole(curUserId, project, role))
+        if (!CanUserShareRole(curUserId, project, role, out string userRole))
             throw new ForbiddenException();
 
-        bool isProjectAdmin = IsProjectAdmin(project, curUserId);
-
-        string[] availableRoles = new Dictionary<string, bool>
-        {
-            {
-                SFProjectRole.CommunityChecker,
-                project.CheckingConfig.CheckingEnabled && (isProjectAdmin || project.CheckingConfig.ShareEnabled)
-            },
-            { SFProjectRole.Viewer, isProjectAdmin || project.TranslateConfig.ShareEnabled },
-            { SFProjectRole.Commenter, isProjectAdmin || project.TranslateConfig.ShareEnabled }
-        }
-            .Where(entry => entry.Value)
-            .Select(entry => entry.Key)
-            .ToArray();
-
+        string[] availableRoles = GetAvailableRoles(project, userRole);
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
@@ -759,7 +742,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         ProjectRole = role,
                         ShareLinkType = shareLinkType,
                         ExpirationTime = DateTime.UtcNow.AddDays(daysBeforeExpiration),
-                        CreatedByAdmin = isProjectAdmin
+                        CreatedByRole = userRole,
                     }
                 )
         );
@@ -821,12 +804,19 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     }
 
     /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
-    public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email)
+    public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string? email)
     {
         SFProject project = await GetProjectAsync(projectId);
+        if (!project.UserRoles.TryGetValue(curUserId, out string userRole))
+        {
+            throw new ForbiddenException();
+        }
+
+        string[] availableRoles = GetAvailableRoles(project, userRole);
         bool sharingEnabled =
-            project.TranslateConfig.ShareEnabled
-            || (project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled);
+            availableRoles.Contains(SFProjectRole.CommunityChecker)
+            || availableRoles.Contains(SFProjectRole.Commenter)
+            || availableRoles.Contains(SFProjectRole.Viewer);
         if (!IsProjectAdmin(project, curUserId) && !(IsOnProject(project, curUserId) && sharingEnabled))
             throw new ForbiddenException();
 
@@ -854,7 +844,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 Email = sk.Email,
                 Role = sk.ProjectRole,
-                Expired = sk.ExpirationTime < now
+                Expired = sk.ExpirationTime < now,
             })
             .ToArray();
     }
@@ -934,11 +924,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             throw new DataNotFoundException("role_not_found");
         }
+
         // If the key is expired
         if (projectSecretShareKey.ExpirationTime < DateTime.UtcNow)
         {
             throw new DataNotFoundException("key_expired");
         }
+
         // If the desired role is community checker but community checking is disabled
         if (
             projectSecretShareKey.ProjectRole == SFProjectRole.CommunityChecker
@@ -947,26 +939,18 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             throw new DataNotFoundException("role_not_found");
         }
-        // If the link was sent by a non-admin and an admin has since disabled non-admin sharing
-        if (!projectSecretShareKey.CreatedByAdmin)
-        {
-            string[] availableRoles = new Dictionary<string, bool>
-            {
-                { SFProjectRole.CommunityChecker, project.CheckingConfig.ShareEnabled },
-                { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled },
-                { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled },
-            }
-                .Where(entry => entry.Value)
-                .Select(entry => entry.Key)
-                .ToArray();
 
+        // If the link was sent by a non-admin and an admin has since disabled non-admin sharing
+        if (projectSecretShareKey.CreatedByRole != SFProjectRole.Administrator)
+        {
+            string[] availableRoles = GetAvailableRoles(project, projectSecretShareKey.CreatedByRole);
             if (!availableRoles.Contains(projectSecretShareKey.ProjectRole))
             {
                 throw new DataNotFoundException("role_not_found");
             }
         }
 
-        return new ValidShareKey()
+        return new ValidShareKey
         {
             Project = project,
             ProjectSecret = projectSecret,
@@ -1003,19 +987,18 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
-    public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
+    public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestionsAsync(
+        string curUserId,
+        string projectId
+    )
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-        if (!projectDoc.IsLoaded)
-            throw new DataNotFoundException("The project does not exist.");
-        // TODO Checking whether the permissions contains a particular string is not a very robust way to check
-        // permissions. A rights service needs to be created in C# land.
-        if (
-            !IsProjectAdmin(projectDoc.Data, curUserId)
-            && !projectDoc.Data.UserPermissions[curUserId].Contains("questions.create")
-        )
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!_projectRights.HasRight(projectDoc.Data, curUserId, SFProjectDomain.Questions, Operation.Create))
+        {
             throw new ForbiddenException();
+        }
+
         return _transceleratorService.Questions(projectDoc.Data.ParatextId);
     }
 
@@ -1031,12 +1014,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public async Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
         await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, null);
     }
 
@@ -1062,15 +1040,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     )
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(userId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-        if (
-            !IsProjectAdmin(projectDoc.Data, userId)
-            && !projectDoc.Data.UserPermissions[userId].Contains("text_audio.create")
-        )
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!_projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.TextAudio, Operation.Create))
         {
             throw new ForbiddenException();
         }
@@ -1118,15 +1089,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public async Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(userId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-        if (
-            !IsProjectAdmin(projectDoc.Data, userId)
-            && !projectDoc.Data.UserPermissions[userId].Contains("text_audio.delete")
-        )
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!_projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.TextAudio, Operation.Delete))
         {
             throw new ForbiddenException();
         }
@@ -1495,6 +1459,94 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
+    /// <summary>
+    /// Sets the permissions for the specified role in the project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="role">The role.</param>
+    /// <param name="permissions">
+    /// The array of permissions. The strings are in the format <c>domain.operation</c>.
+    /// </param>
+    /// <returns>The asynchronous task.</returns>
+    /// <exception cref="ForbiddenException">
+    /// The user does not have permission to set the permissions for the role.
+    /// </exception>
+    /// <remarks>
+    /// The current user must be an administrator and have permissions they are granting.
+    /// </remarks>
+    public async Task SetRoleProjectPermissionsAsync(
+        string curUserId,
+        string projectId,
+        string role,
+        string[] permissions
+    )
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+
+        // Only administrators can grant permissions to a role
+        if (!IsProjectAdmin(projectDoc.Data, curUserId))
+            throw new ForbiddenException();
+
+        // An administrator cannot grant greater permissions than they already have
+        if (!_projectRights.HasPermissions(projectDoc.Data, curUserId, permissions))
+            throw new ForbiddenException();
+
+        if (permissions.Length == 0)
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.RolePermissions[role]));
+        }
+        else
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.RolePermissions[role], permissions));
+        }
+    }
+
+    /// <summary>
+    /// Sets the permissions for the specified user in the project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="permissions">
+    /// The array of permissions. The strings are in the format <c>domain.operation</c>.
+    /// </param>
+    /// <returns>The asynchronous task.</returns>
+    /// <exception cref="ForbiddenException">
+    /// The user does not have permission to set the permissions for the role.
+    /// </exception>
+    /// <remarks>
+    /// The current user must be an administrator and have permissions they are granting.
+    /// </remarks>
+    public async Task SetUserProjectPermissionsAsync(
+        string curUserId,
+        string projectId,
+        string userId,
+        string[] permissions
+    )
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+
+        // Only administrators can grant permissions to a user
+        if (!IsProjectAdmin(projectDoc.Data, curUserId))
+            throw new ForbiddenException();
+
+        // An administrator cannot grant greater permissions than they already have
+        if (!_projectRights.HasPermissions(projectDoc.Data, curUserId, permissions))
+            throw new ForbiddenException();
+
+        if (permissions.Length == 0)
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserPermissions[userId]));
+        }
+        else
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserPermissions[userId], permissions));
+        }
+    }
+
     protected override async Task RemoveUserFromProjectAsync(
         IConnection conn,
         IDocument<SFProject> projectDoc,
@@ -1759,31 +1811,79 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             .ToArray();
     }
 
-    /// <summary> Determines if a user on a project has the right to share a specific role. </summary>
-    private bool CanUserShareRole(string userId, SFProject project, string role)
+    /// <summary>
+    /// Determines if a user on a project has the right to share a specific role.
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="project">The project.</param>
+    /// <param name="role">The role.</param>
+    /// <param name="userRole">The role of the user identifier by <paramref name="userId"/>.</param>
+    /// <returns><c>true</c> if the user can share the specified role; otherwise, <c>false</c>.</returns>
+    private bool CanUserShareRole(string userId, SFProject project, string role, out string userRole)
     {
-        if (!IsOnProject(project, userId))
+        // If the user is not on the project, they cannot share any roles
+        if (!project.UserRoles.TryGetValue(userId, out userRole))
+        {
+            userRole = string.Empty;
             return false;
-        if (role == SFProjectRole.CommunityChecker)
-            return true;
+        }
 
-        if (role == SFProjectRole.Commenter)
+        // The user must have the right to invite users
+        if (!_projectRights.HasRight(project, userId, SFProjectDomain.UserInvites, Operation.Create))
         {
-            // This may change if we decide that other users should be able to invite reviewers
-            if (IsProjectAdmin(project, userId))
-                return true;
+            return false;
         }
-        else if (role == SFProjectRole.Viewer)
+
+        // Determine if the user's role can invite the specified role
+        return GetAvailableRoles(project, userRole).Contains(role);
+    }
+
+    /// <summary>
+    /// Gets the roles that are available for sharing.
+    /// </summary>
+    /// <param name="project"></param>
+    /// <param name="userRole">The role of the user that will be creating or did create the share link.</param>
+    /// <returns>An array of the available roles the user can create share invitations for.</returns>
+    /// <remarks>
+    /// If you update this function, you will need to update ShareBaseComponent.userShareableRoles in TypeScript.
+    /// </remarks>
+    private string[] GetAvailableRoles(SFProject project, string userRole)
+    {
+        bool checkUserRole = userRole is SFProjectRole.Administrator or SFProjectRole.Translator;
+        return new Dictionary<string, bool>
         {
-            if (HasParatextRole(project, userId))
-                return true;
-            if (project.UserRoles.TryGetValue(userId, out string projectRole))
             {
-                if (projectRole == SFProjectRole.Commenter || projectRole == SFProjectRole.Viewer)
-                    return true;
-            }
+                SFProjectRole.CommunityChecker,
+                project.CheckingConfig.CheckingEnabled
+                    && _projectRights.RoleHasRight(
+                        project,
+                        role: checkUserRole ? userRole : SFProjectRole.CommunityChecker,
+                        SFProjectDomain.UserInvites,
+                        Operation.Create
+                    )
+            },
+            {
+                SFProjectRole.Viewer,
+                _projectRights.RoleHasRight(
+                    project,
+                    role: checkUserRole ? userRole : SFProjectRole.Viewer,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+            },
+            {
+                SFProjectRole.Commenter,
+                _projectRights.RoleHasRight(
+                    project,
+                    role: checkUserRole ? userRole : SFProjectRole.Commenter,
+                    SFProjectDomain.UserInvites,
+                    Operation.Create
+                )
+            },
         }
-        return false;
+            .Where(entry => entry.Value)
+            .Select(entry => entry.Key)
+            .ToArray();
     }
 
     /// <summary>

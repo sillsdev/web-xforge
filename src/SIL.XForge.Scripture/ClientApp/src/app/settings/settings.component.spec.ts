@@ -6,20 +6,20 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route, RouterModule } from '@angular/router';
+import { cloneDeep, merge } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { Sync } from 'realtime-server/lib/esm/scriptureforge/models/sync';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
-import {
-  DraftConfig,
-  ProjectType,
-  TranslateConfig
-} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -70,6 +70,7 @@ describe('SettingsComponent', () => {
       RouterModule.forRoot(ROUTES),
       UICommonModule,
       TestTranslocoModule,
+      TranslocoMarkupModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
       NoopAnimationsModule
@@ -199,10 +200,12 @@ describe('SettingsComponent', () => {
       it('should change alternate source select value', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            alternateSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+          translateConfig: {
+            draftConfig: {
+              alternateSourceEnabled: true
+            },
+            preTranslate: true
+          }
         });
         env.wait();
         env.wait();
@@ -219,19 +222,21 @@ describe('SettingsComponent', () => {
       it('should display alternate source project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            alternateSource: {
-              paratextId: 'paratextId01',
-              projectRef: 'paratext01',
-              name: 'ParatextP1',
-              shortName: 'PT1',
-              writingSystem: {
-                tag: 'qaa'
-              }
+          translateConfig: {
+            draftConfig: {
+              alternateSource: {
+                paratextId: 'paratextId01',
+                projectRef: 'paratext01',
+                name: 'ParatextP1',
+                shortName: 'PT1',
+                writingSystem: {
+                  tag: 'qaa'
+                }
+              },
+              alternateSourceEnabled: true
             },
-            alternateSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+            preTranslate: true
+          }
         });
         when(mockedParatextService.getProjects()).thenResolve([
           {
@@ -256,10 +261,12 @@ describe('SettingsComponent', () => {
       it('should display projects then resources', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: true,
-          draftConfig: {
-            alternateSourceEnabled: true
-          } as DraftConfig
+          translateConfig: {
+            preTranslate: true,
+            draftConfig: {
+              alternateSourceEnabled: true
+            }
+          }
         });
         env.wait();
         env.wait();
@@ -272,11 +279,13 @@ describe('SettingsComponent', () => {
       it('should display for back translations for serval administrators', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: false,
-          draftConfig: {
-            alternateSourceEnabled: true
-          } as DraftConfig,
-          projectType: ProjectType.BackTranslation
+          translateConfig: {
+            preTranslate: false,
+            draftConfig: {
+              alternateSourceEnabled: true
+            },
+            projectType: ProjectType.BackTranslation
+          }
         });
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
@@ -287,10 +296,12 @@ describe('SettingsComponent', () => {
       it('should display for forward translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: true,
-          draftConfig: {
-            alternateSourceEnabled: true
-          } as DraftConfig
+          translateConfig: {
+            preTranslate: true,
+            draftConfig: {
+              alternateSourceEnabled: true
+            }
+          }
         });
         env.wait();
         env.wait();
@@ -311,11 +322,13 @@ describe('SettingsComponent', () => {
       it('should not display for back translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: true,
-          draftConfig: {
-            alternateSourceEnabled: true
-          } as DraftConfig,
-          projectType: ProjectType.BackTranslation
+          translateConfig: {
+            preTranslate: true,
+            draftConfig: {
+              alternateSourceEnabled: true
+            },
+            projectType: ProjectType.BackTranslation
+          }
         });
         env.wait();
         env.wait();
@@ -334,10 +347,12 @@ describe('SettingsComponent', () => {
       it('should not display for forward translations when not approved', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: false,
-          draftConfig: {
-            alternateSourceEnabled: true
-          } as DraftConfig
+          translateConfig: {
+            preTranslate: false,
+            draftConfig: {
+              alternateSourceEnabled: true
+            }
+          }
         });
         env.wait();
         env.wait();
@@ -347,19 +362,21 @@ describe('SettingsComponent', () => {
       it('should unset alternate source select value', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            alternateSource: {
-              paratextId: 'paratextId01',
-              projectRef: 'paratext01',
-              name: 'ParatextP1',
-              shortName: 'PT1',
-              writingSystem: {
-                tag: 'qaa'
-              }
+          translateConfig: {
+            draftConfig: {
+              alternateSource: {
+                paratextId: 'paratextId01',
+                projectRef: 'paratext01',
+                name: 'ParatextP1',
+                shortName: 'PT1',
+                writingSystem: {
+                  tag: 'qaa'
+                }
+              },
+              alternateSourceEnabled: true
             },
-            alternateSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+            preTranslate: true
+          }
         });
         env.wait();
         env.wait();
@@ -378,10 +395,12 @@ describe('SettingsComponent', () => {
       it('should change alternate training source select value', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSourceEnabled: true
+            },
+            preTranslate: true
+          }
         });
         env.wait();
         env.wait();
@@ -398,19 +417,21 @@ describe('SettingsComponent', () => {
       it('should display alternate training source project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            alternateTrainingSource: {
-              paratextId: 'paratextId01',
-              projectRef: 'paratext01',
-              name: 'ParatextP1',
-              shortName: 'PT1',
-              writingSystem: {
-                tag: 'qaa'
-              }
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSource: {
+                paratextId: 'paratextId01',
+                projectRef: 'paratext01',
+                name: 'ParatextP1',
+                shortName: 'PT1',
+                writingSystem: {
+                  tag: 'qaa'
+                }
+              },
+              alternateTrainingSourceEnabled: true
             },
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+            preTranslate: true
+          }
         });
         when(mockedParatextService.getProjects()).thenResolve([
           {
@@ -435,10 +456,12 @@ describe('SettingsComponent', () => {
       it('should display projects then resources', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSourceEnabled: true
+            },
+            preTranslate: true
+          }
         });
         env.wait();
         env.wait();
@@ -452,11 +475,13 @@ describe('SettingsComponent', () => {
       it('should display for back translations for serval administrators', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: false,
-          draftConfig: {
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig,
-          projectType: ProjectType.BackTranslation
+          translateConfig: {
+            preTranslate: false,
+            draftConfig: {
+              alternateTrainingSourceEnabled: true
+            },
+            projectType: ProjectType.BackTranslation
+          }
         });
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
@@ -467,10 +492,12 @@ describe('SettingsComponent', () => {
       it('should display for forward translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: true,
-          draftConfig: {
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig
+          translateConfig: {
+            preTranslate: true,
+            draftConfig: {
+              alternateTrainingSourceEnabled: true
+            }
+          }
         });
         env.wait();
         env.wait();
@@ -491,11 +518,13 @@ describe('SettingsComponent', () => {
       it('should not display for back translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: true,
-          draftConfig: {
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig,
-          projectType: ProjectType.BackTranslation
+          translateConfig: {
+            preTranslate: true,
+            draftConfig: {
+              alternateTrainingSourceEnabled: true
+            },
+            projectType: ProjectType.BackTranslation
+          }
         });
         env.wait();
         env.wait();
@@ -514,10 +543,12 @@ describe('SettingsComponent', () => {
       it('should not display for forward translations when not approved', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: false,
-          draftConfig: {
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig
+          translateConfig: {
+            preTranslate: false,
+            draftConfig: {
+              alternateTrainingSourceEnabled: true
+            }
+          }
         });
         env.wait();
         env.wait();
@@ -527,19 +558,21 @@ describe('SettingsComponent', () => {
       it('should unset alternate training source select value', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            alternateTrainingSource: {
-              paratextId: 'paratextId01',
-              projectRef: 'paratext01',
-              name: 'ParatextP1',
-              shortName: 'PT1',
-              writingSystem: {
-                tag: 'qaa'
-              }
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSource: {
+                paratextId: 'paratextId01',
+                projectRef: 'paratext01',
+                name: 'ParatextP1',
+                shortName: 'PT1',
+                writingSystem: {
+                  tag: 'qaa'
+                }
+              },
+              alternateTrainingSourceEnabled: true
             },
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+            preTranslate: true
+          }
         });
         env.wait();
         env.wait();
@@ -558,10 +591,12 @@ describe('SettingsComponent', () => {
       it('should change additional training source select value', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            additionalTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+          translateConfig: {
+            draftConfig: {
+              additionalTrainingSourceEnabled: true
+            },
+            preTranslate: true
+          }
         });
         env.wait();
         env.wait();
@@ -578,19 +613,21 @@ describe('SettingsComponent', () => {
       it('should display additional training source project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            additionalTrainingSource: {
-              paratextId: 'paratextId01',
-              projectRef: 'paratext01',
-              name: 'ParatextP1',
-              shortName: 'PT1',
-              writingSystem: {
-                tag: 'qaa'
-              }
+          translateConfig: {
+            draftConfig: {
+              additionalTrainingSource: {
+                paratextId: 'paratextId01',
+                projectRef: 'paratext01',
+                name: 'ParatextP1',
+                shortName: 'PT1',
+                writingSystem: {
+                  tag: 'qaa'
+                }
+              },
+              additionalTrainingSourceEnabled: true
             },
-            additionalTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+            preTranslate: true
+          }
         });
         when(mockedParatextService.getProjects()).thenResolve([
           {
@@ -615,10 +652,12 @@ describe('SettingsComponent', () => {
       it('should display projects then resources', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            additionalTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+          translateConfig: {
+            draftConfig: {
+              additionalTrainingSourceEnabled: true
+            },
+            preTranslate: true
+          }
         });
         env.wait();
         env.wait();
@@ -632,11 +671,13 @@ describe('SettingsComponent', () => {
       it('should display for back translations for serval administrators', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: false,
-          draftConfig: {
-            additionalTrainingSourceEnabled: true
-          } as DraftConfig,
-          projectType: ProjectType.BackTranslation
+          translateConfig: {
+            preTranslate: false,
+            draftConfig: {
+              additionalTrainingSourceEnabled: true
+            },
+            projectType: ProjectType.BackTranslation
+          }
         });
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
@@ -647,10 +688,12 @@ describe('SettingsComponent', () => {
       it('should display for forward translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: true,
-          draftConfig: {
-            additionalTrainingSourceEnabled: true
-          } as DraftConfig
+          translateConfig: {
+            preTranslate: true,
+            draftConfig: {
+              additionalTrainingSourceEnabled: true
+            }
+          }
         });
         env.wait();
         env.wait();
@@ -671,11 +714,13 @@ describe('SettingsComponent', () => {
       it('should not display for back translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: true,
-          draftConfig: {
-            additionalTrainingSourceEnabled: true
-          } as DraftConfig,
-          projectType: ProjectType.BackTranslation
+          translateConfig: {
+            preTranslate: true,
+            draftConfig: {
+              additionalTrainingSourceEnabled: true
+            },
+            projectType: ProjectType.BackTranslation
+          }
         });
         env.wait();
         env.wait();
@@ -702,10 +747,12 @@ describe('SettingsComponent', () => {
       it('should display when the feature flag is disabled and the additional source is enabled', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: true,
-          draftConfig: {
-            additionalTrainingSourceEnabled: true
-          } as DraftConfig
+          translateConfig: {
+            preTranslate: true,
+            draftConfig: {
+              additionalTrainingSourceEnabled: true
+            }
+          }
         });
         when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(false));
         env.wait();
@@ -716,10 +763,12 @@ describe('SettingsComponent', () => {
       it('should not display for forward translations when not approved', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: false,
-          draftConfig: {
-            additionalTrainingSourceEnabled: true
-          } as DraftConfig
+          translateConfig: {
+            preTranslate: false,
+            draftConfig: {
+              additionalTrainingSourceEnabled: true
+            }
+          }
         });
         env.wait();
         env.wait();
@@ -729,19 +778,21 @@ describe('SettingsComponent', () => {
       it('should unset additional training source select value', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            additionalTrainingSource: {
-              paratextId: 'paratextId01',
-              projectRef: 'paratext01',
-              name: 'ParatextP1',
-              shortName: 'PT1',
-              writingSystem: {
-                tag: 'qaa'
-              }
+          translateConfig: {
+            draftConfig: {
+              additionalTrainingSource: {
+                paratextId: 'paratextId01',
+                projectRef: 'paratext01',
+                name: 'ParatextP1',
+                shortName: 'PT1',
+                writingSystem: {
+                  tag: 'qaa'
+                }
+              },
+              additionalTrainingSourceEnabled: true
             },
-            additionalTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
+            preTranslate: true
+          }
         });
         env.wait();
         env.wait();
@@ -773,10 +824,12 @@ describe('SettingsComponent', () => {
       it('should update when the additional training data checkbox is unticked', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            additionalTrainingData: true
-          } as DraftConfig,
-          preTranslate: true
+          translateConfig: {
+            draftConfig: {
+              additionalTrainingData: true
+            },
+            preTranslate: true
+          }
         });
         env.wait();
         expect(env.statusDone(env.additionalTrainingDataStatus)).toBeNull();
@@ -801,8 +854,10 @@ describe('SettingsComponent', () => {
       it('should display for serval administrators on back translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: false,
-          projectType: ProjectType.BackTranslation
+          translateConfig: {
+            preTranslate: false,
+            projectType: ProjectType.BackTranslation
+          }
         });
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
@@ -863,10 +918,12 @@ describe('SettingsComponent', () => {
       it('should clear the serval config value', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          draftConfig: {
-            servalConfig: '{}'
-          } as DraftConfig,
-          preTranslate: true
+          translateConfig: {
+            draftConfig: {
+              servalConfig: '{}'
+            },
+            preTranslate: true
+          }
         });
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
@@ -951,11 +1008,11 @@ describe('SettingsComponent', () => {
       it('should show Translation Suggestions when Based On is set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          translationSuggestionsEnabled: false,
-          shareEnabled: false
+          translateConfig: {
+            translationSuggestionsEnabled: false,
+            source: null
+          }
         });
-        tick();
-        env.fixture.detectChanges();
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
         expect(env.basedOnSelectValue).toEqual('');
@@ -1045,8 +1102,10 @@ describe('SettingsComponent', () => {
       it('Translation Suggestions should remain unchanged when Based On is changed', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          translationSuggestionsEnabled: false,
-          shareEnabled: false
+          translateConfig: {
+            translationSuggestionsEnabled: false,
+            source: null
+          }
         });
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
@@ -1076,15 +1135,16 @@ describe('SettingsComponent', () => {
       it('should save Translation Suggestions only if Based On is set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          translationSuggestionsEnabled: false,
-          shareEnabled: false,
-          source: {
-            paratextId: 'paratextId01',
-            projectRef: 'paratext01',
-            name: 'ParatextP1',
-            shortName: 'PT1',
-            writingSystem: {
-              tag: 'qaa'
+          translateConfig: {
+            translationSuggestionsEnabled: false,
+            source: {
+              paratextId: 'paratextId01',
+              projectRef: 'paratext01',
+              name: 'ParatextP1',
+              shortName: 'PT1',
+              writingSystem: {
+                tag: 'qaa'
+              }
             }
           }
         });
@@ -1108,12 +1168,12 @@ describe('SettingsComponent', () => {
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
         expect(env.seeOthersResponsesCheckbox).toBeNull();
-        expect(env.checkingShareCheckbox).toBeNull();
+        expect(env.communityCheckersShareCheckbox).toBeNull();
         expect(env.checkingHideCommunityCheckingTextCheckbox).toBeNull();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
         expect(env.seeOthersResponsesCheckbox).not.toBeNull();
-        expect(env.checkingShareCheckbox).not.toBeNull();
+        expect(env.communityCheckersShareCheckbox).not.toBeNull();
         expect(env.checkingHideCommunityCheckingTextCheckbox).not.toBeNull();
       }));
 
@@ -1131,11 +1191,11 @@ describe('SettingsComponent', () => {
         env.fixture.detectChanges();
         expect(env.statusDone(env.seeOthersResponsesStatus)).not.toBeNull();
 
-        expect(env.statusDone(env.checkingShareStatus)).toBeNull();
-        env.clickElement(env.inputElement(env.checkingShareCheckbox));
+        expect(env.statusDone(env.communityCheckersShareStatus)).toBeNull();
+        env.clickElement(env.inputElement(env.communityCheckersShareCheckbox));
         tick();
         env.fixture.detectChanges();
-        expect(env.statusDone(env.checkingShareStatus)).not.toBeNull();
+        expect(env.statusDone(env.communityCheckersShareStatus)).not.toBeNull();
 
         expect(env.statusDone(env.checkingExportStatus)).toBeNull();
         env.clickElement(env.inputElement(env.checkingExportAll));
@@ -1165,12 +1225,231 @@ describe('SettingsComponent', () => {
     describe('Biblical Terms options', () => {
       it('Biblical Terms should be disabled if a message is present', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject(undefined, undefined, false, 'A message');
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: false, errorMessage: 'A message' } });
         env.wait();
         expect(env.inputElement(env.biblicalTermsCheckbox).checked).toBe(false);
         expect(env.inputElement(env.biblicalTermsCheckbox).disabled).toBe(true);
       }));
     });
+  });
+
+  describe('Sharing Settings', () => {
+    it('updateSharingSetting merges role permissions', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({
+        rolePermissions: {
+          [SFProjectRole.Viewer]: [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create)]
+        }
+      });
+      env.wait();
+
+      expect(env.statusDone(env.viewersShareStatus)).toBeNull();
+      expect(env.inputElement(env.viewersShareCheckbox).checked).toBeFalse();
+      env.clickElement(env.inputElement(env.viewersShareCheckbox));
+      tick();
+      env.fixture.detectChanges();
+      expect(env.statusDone(env.viewersShareStatus)).not.toBeNull();
+      verify(
+        mockedSFProjectService.onlineSetRoleProjectPermissions(
+          'project01',
+          SFProjectRole.Viewer,
+          deepEqual([
+            SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
+            SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
+          ])
+        )
+      ).once();
+    }));
+
+    describe('translators checkbox', () => {
+      it('retrieves its value from the role permissions', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          rolePermissions: {
+            [SFProjectRole.ParatextTranslator]: [
+              SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
+            ]
+          }
+        });
+        env.wait();
+
+        expect(env.statusDone(env.translatorsShareStatus)).toBeNull();
+        expect(env.inputElement(env.translatorsShareCheckbox).checked).toBeTrue();
+        env.clickElement(env.inputElement(env.translatorsShareCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.translatorsShareStatus)).not.toBeNull();
+        verify(
+          mockedSFProjectService.onlineSetRoleProjectPermissions(
+            'project01',
+            SFProjectRole.ParatextTranslator,
+            deepEqual([])
+          )
+        ).once();
+      }));
+
+      it('sets role permissions', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+
+        expect(env.statusDone(env.translatorsShareStatus)).toBeNull();
+        expect(env.inputElement(env.translatorsShareCheckbox).checked).toBeFalse();
+        env.clickElement(env.inputElement(env.translatorsShareCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.translatorsShareStatus)).not.toBeNull();
+        verify(
+          mockedSFProjectService.onlineSetRoleProjectPermissions(
+            'project01',
+            SFProjectRole.ParatextTranslator,
+            deepEqual([SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)])
+          )
+        ).once();
+      }));
+    });
+
+    describe('community checkers checkbox', () => {
+      it('does not display if checking is not enabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({ checkingConfig: { checkingEnabled: false } });
+        env.wait();
+
+        expect(env.communityCheckersShareStatus).toBeNull();
+        expect(env.communityCheckersShareCheckbox).toBeNull();
+      }));
+
+      it('retrieves its value from the role permissions', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          checkingConfig: { checkingEnabled: true },
+          rolePermissions: {
+            [SFProjectRole.CommunityChecker]: [
+              SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
+            ]
+          }
+        });
+        env.wait();
+
+        expect(env.statusDone(env.communityCheckersShareStatus)).toBeNull();
+        expect(env.inputElement(env.communityCheckersShareCheckbox).checked).toBeTrue();
+        env.clickElement(env.inputElement(env.communityCheckersShareCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.communityCheckersShareStatus)).not.toBeNull();
+        verify(
+          mockedSFProjectService.onlineSetRoleProjectPermissions(
+            'project01',
+            SFProjectRole.CommunityChecker,
+            deepEqual([])
+          )
+        ).once();
+      }));
+
+      it('sets role permissions', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({ checkingConfig: { checkingEnabled: true } });
+        env.wait();
+
+        expect(env.statusDone(env.communityCheckersShareStatus)).toBeNull();
+        expect(env.inputElement(env.communityCheckersShareCheckbox).checked).toBeFalse();
+        env.clickElement(env.inputElement(env.communityCheckersShareCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.communityCheckersShareStatus)).not.toBeNull();
+        verify(
+          mockedSFProjectService.onlineSetRoleProjectPermissions(
+            'project01',
+            SFProjectRole.CommunityChecker,
+            deepEqual([SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)])
+          )
+        ).once();
+      }));
+    });
+
+    describe('commenters checkbox', () => {
+      it('retrieves its value from the role permissions', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          rolePermissions: {
+            [SFProjectRole.Commenter]: [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)]
+          }
+        });
+        env.wait();
+
+        expect(env.statusDone(env.commentersShareStatus)).toBeNull();
+        expect(env.inputElement(env.commentersShareCheckbox).checked).toBeTrue();
+        env.clickElement(env.inputElement(env.commentersShareCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.commentersShareStatus)).not.toBeNull();
+        verify(
+          mockedSFProjectService.onlineSetRoleProjectPermissions('project01', SFProjectRole.Commenter, deepEqual([]))
+        ).once();
+      }));
+
+      it('sets role permissions', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+
+        expect(env.statusDone(env.commentersShareStatus)).toBeNull();
+        expect(env.inputElement(env.commentersShareCheckbox).checked).toBeFalse();
+        env.clickElement(env.inputElement(env.commentersShareCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.commentersShareStatus)).not.toBeNull();
+        verify(
+          mockedSFProjectService.onlineSetRoleProjectPermissions(
+            'project01',
+            SFProjectRole.Commenter,
+            deepEqual([SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)])
+          )
+        ).once();
+      }));
+    });
+
+    describe('viewers checkbox', () => {
+      it('retrieves its value from the role permissions', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          rolePermissions: {
+            [SFProjectRole.Viewer]: [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)]
+          }
+        });
+        env.wait();
+
+        expect(env.statusDone(env.viewersShareStatus)).toBeNull();
+        expect(env.inputElement(env.viewersShareCheckbox).checked).toBeTrue();
+        env.clickElement(env.inputElement(env.viewersShareCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.viewersShareStatus)).not.toBeNull();
+        verify(
+          mockedSFProjectService.onlineSetRoleProjectPermissions('project01', SFProjectRole.Viewer, deepEqual([]))
+        ).once();
+      }));
+    });
+
+    it('sets role permissions', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject();
+      env.wait();
+
+      expect(env.statusDone(env.viewersShareStatus)).toBeNull();
+      expect(env.inputElement(env.viewersShareCheckbox).checked).toBeFalse();
+      env.clickElement(env.inputElement(env.viewersShareCheckbox));
+      tick();
+      env.fixture.detectChanges();
+      expect(env.statusDone(env.viewersShareStatus)).not.toBeNull();
+      verify(
+        mockedSFProjectService.onlineSetRoleProjectPermissions(
+          'project01',
+          SFProjectRole.Viewer,
+          deepEqual([SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)])
+        )
+      ).once();
+    }));
   });
 
   describe('Danger Zone', () => {
@@ -1221,7 +1500,7 @@ describe('SettingsComponent', () => {
 
     it('should disable Delete button if project is syncing', fakeAsync(() => {
       const env = new TestEnvironment(true);
-      env.setupProject(undefined, undefined, undefined, undefined, { queuedCount: 1 });
+      env.setupProject({ sync: { queuedCount: 1 } });
       env.wait();
       env.fixture.detectChanges();
       expect(env.deleteProjectButton).not.toBeNull();
@@ -1270,6 +1549,7 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     when(mockedSFProjectService.onlineSetServalConfig('project01', anything())).thenResolve();
+    when(mockedSFProjectService.onlineSetRoleProjectPermissions('project01', anything(), anything())).thenResolve();
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
@@ -1396,14 +1676,6 @@ class TestEnvironment {
 
   get checkingExportStatus(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checkingExport-status'));
-  }
-
-  get checkingShareCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checkbox-checking-share'));
-  }
-
-  get checkingShareStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checking-share-status'));
   }
 
   get checkingHideCommunityCheckingTextCheckbox(): DebugElement {
@@ -1534,6 +1806,38 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#pre-translation-additional-training-data-status'));
   }
 
+  get translatorsShareCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-translators-share'));
+  }
+
+  get translatorsShareStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#translators-share-status'));
+  }
+
+  get communityCheckersShareCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-community-checkers-share'));
+  }
+
+  get communityCheckersShareStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#community-checkers-share-status'));
+  }
+
+  get commentersShareCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-commenters-share'));
+  }
+
+  get commentersShareStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#commenters-share-status'));
+  }
+
+  get viewersShareCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-viewers-share'));
+  }
+
+  get viewersShareStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#viewers-share-status'));
+  }
+
   makeProjectHaveTextAudio(): void {
     this.realtimeService.addSnapshot<TextAudio>(TextAudioDoc.COLLECTION, {
       id: 'sAudio1',
@@ -1624,8 +1928,8 @@ class TestEnvironment {
     tick();
   }
 
-  setupProject(
-    translateConfig: Partial<TranslateConfig> = {
+  testProject: SFProject = createTestProject({
+    translateConfig: {
       preTranslate: true,
       translationSuggestionsEnabled: true,
       source: {
@@ -1636,39 +1940,34 @@ class TestEnvironment {
         writingSystem: {
           tag: 'qaa'
         }
-      },
-      draftConfig: {
-        lastSelectedTrainingBooks: [],
-        lastSelectedTrainingDataFiles: [],
-        lastSelectedTranslationBooks: [],
-        alternateSourceEnabled: false,
-        alternateTrainingSourceEnabled: false,
-        additionalTrainingData: false,
-        additionalTrainingSourceEnabled: false
       }
     },
-    checkingConfig: Partial<CheckingConfig> = {
+    checkingConfig: {
       checkingEnabled: false,
       usersSeeEachOthersResponses: false
-    },
-    biblicalTermsEnabled: boolean = false,
-    biblicalTermsMessage: string | undefined = undefined,
-    sync: Partial<Sync> = {
-      queuedCount: 0
     }
-  ): void {
+  });
+
+  setupProject(data: RecursivePartial<SFProject> = {}): void {
+    const projectData = cloneDeep(this.testProject);
+    if (data.translateConfig != null) {
+      projectData.translateConfig = merge(projectData.translateConfig, data.translateConfig);
+    }
+    if (data.checkingConfig != null) {
+      projectData.checkingConfig = merge(projectData.checkingConfig, data.checkingConfig);
+    }
+    if (data.biblicalTermsConfig != null) {
+      projectData.biblicalTermsConfig = merge(projectData.biblicalTermsConfig, data.biblicalTermsConfig);
+    }
+    if (data.sync != null) {
+      projectData.sync = merge(projectData.sync, data.sync);
+    }
+    if (data.rolePermissions != null) {
+      projectData.rolePermissions = data.rolePermissions;
+    }
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
-      data: createTestProject({
-        translateConfig,
-        checkingConfig,
-        biblicalTermsConfig: {
-          biblicalTermsEnabled: biblicalTermsEnabled,
-          errorMessage: biblicalTermsMessage,
-          hasRenderings: false
-        },
-        sync
-      })
+      data: projectData
     });
   }
 }

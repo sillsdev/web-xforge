@@ -7,7 +7,6 @@ export interface SFProjectSettings {
   translationSuggestionsEnabled?: boolean | null;
   sourceParatextId?: string | null;
   biblicalTermsEnabled?: boolean | null;
-  translateShareEnabled?: boolean | null;
 
   additionalTrainingData?: boolean | null;
   additionalTrainingSourceEnabled?: boolean | null;
@@ -20,7 +19,11 @@ export interface SFProjectSettings {
 
   checkingEnabled?: boolean | null;
   usersSeeEachOthersResponses?: boolean | null;
-  checkingShareEnabled?: boolean | null;
   checkingAnswerExport?: CheckingAnswerExport | null;
   hideCommunityCheckingText?: boolean | null;
+
+  translatorsShareEnabled?: boolean | null;
+  communityCheckersShareEnabled?: boolean | null;
+  commentersShareEnabled?: boolean | null;
+  viewersShareEnabled?: boolean | null;
 }
