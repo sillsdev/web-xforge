@@ -83,8 +83,12 @@
       <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell" [attr.colspan]="columnsToDisplay.length">
-          @if (isLoaded) {
+          @if (isLoaded && isOnline && biblicalTermsLoaded) {
             <span class="not-found">{{ t("not_found") }}</span>
+          } @else if (isOnline && !biblicalTermsLoaded) {
+            <span>{{ t("loading") }}</span>
+          } @else if (isLoaded && !biblicalTermsLoaded) {
+            <span class="offline-message">{{ t("offline") }}</span>
           }
         </td>
       </tr>
