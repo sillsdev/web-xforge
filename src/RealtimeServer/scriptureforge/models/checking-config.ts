@@ -7,7 +7,6 @@ export enum CheckingAnswerExport {
 export interface CheckingConfig {
   checkingEnabled: boolean;
   usersSeeEachOthersResponses: boolean;
-  shareEnabled: boolean;
   answerExportMethod: CheckingAnswerExport;
   noteTagId?: number;
   hideCommunityCheckingText?: boolean;

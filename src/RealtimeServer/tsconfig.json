@@ -13,6 +13,7 @@
     "lib": ["es2017", "dom"],
     "composite": true,
     "baseUrl": ".",
+    "resolveJsonModule": true,
     "paths": {
       "*": ["./typings/*"]
     }

@@ -10,16 +10,10 @@ public static class SFProjectRole
     public const string CommunityChecker = "sf_community_checker";
     public const string Viewer = "sf_observer";
 
-    public static bool IsParatextRole(string role)
-    {
-        return role switch
+    public static bool IsParatextRole(string role) =>
+        role switch
         {
-            SFProjectRole.Administrator
-            or SFProjectRole.Translator
-            or SFProjectRole.Consultant
-            or SFProjectRole.PTObserver
-                => true,
+            Administrator or Translator or Consultant or PTObserver => true,
             _ => false,
         };
-    }
 }

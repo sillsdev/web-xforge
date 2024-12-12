@@ -255,25 +255,6 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.SyncDisabled, isDisabled));
     }
 
-    public async Task SetUserProjectPermissions(string curUserId, string projectId, string userId, string[] permissions)
-    {
-        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-        IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
-        if (!projectDoc.IsLoaded)
-            throw new DataNotFoundException("The project does not exist.");
-        if (!IsProjectAdmin(projectDoc.Data, curUserId))
-            throw new ForbiddenException();
-
-        if (permissions.Length == 0)
-        {
-            await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserPermissions[userId]));
-        }
-        else
-        {
-            await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserPermissions[userId], permissions));
-        }
-    }
-
     protected virtual async Task AddUserToProjectAsync(
         IConnection conn,
         IDocument<TModel> projectDoc,
@@ -343,6 +324,13 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
 
     protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
 
+    /// <summary>
+    /// Gets the project document.
+    /// </summary>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="conn">The connection.</param>
+    /// <returns>The loaded project document.</returns>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     protected async Task<IDocument<TModel>> GetProjectDocAsync(string projectId, IConnection conn)
     {
         IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);

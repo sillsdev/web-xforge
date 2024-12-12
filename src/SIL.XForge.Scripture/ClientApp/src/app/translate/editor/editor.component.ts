@@ -463,7 +463,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get canShare(): boolean {
-    return this.isProjectAdmin || this.projectDoc?.data?.translateConfig.shareEnabled === true;
+    return (
+      this.projectDoc != null &&
+      SF_PROJECT_RIGHTS.hasRight(
+        this.projectDoc.data,
+        this.userService.currentUserId,
+        SFProjectDomain.UserInvites,
+        Operation.Create
+      )
+    );
   }
 
   get currentSegmentReference(): string {
