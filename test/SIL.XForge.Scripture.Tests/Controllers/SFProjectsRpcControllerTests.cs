@@ -158,6 +158,81 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task EventMetrics_Success()
+    {
+        var env = new TestEnvironment();
+        const int pageIndex = 0;
+        const int pageSize = 10;
+
+        // SUT
+        var result = await env.Controller.EventMetrics(Project01, pageIndex, pageSize);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().GetEventMetricsAsync(User01, Roles, Project01, pageIndex, pageSize);
+    }
+
+    [Test]
+    public async Task EventMetrics_Forbidden()
+    {
+        var env = new TestEnvironment();
+        const int pageIndex = 0;
+        const int pageSize = 10;
+        env.SFProjectService.GetEventMetricsAsync(User01, Roles, Project01, pageIndex, pageSize)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.EventMetrics(Project01, pageIndex, pageSize);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task EventMetrics_InvalidParams()
+    {
+        var env = new TestEnvironment();
+        const int pageIndex = 0;
+        const int pageSize = 10;
+        const string errorMessage = "Invalid Format";
+        env.SFProjectService.GetEventMetricsAsync(User01, Roles, Project01, pageIndex, pageSize)
+            .Throws(new FormatException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.EventMetrics(Project01, pageIndex, pageSize);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+    }
+
+    [Test]
+    public async Task EventMetrics_NotFound()
+    {
+        var env = new TestEnvironment();
+        const int pageIndex = 0;
+        const int pageSize = 10;
+        const string errorMessage = "Not Found";
+        env.SFProjectService.GetEventMetricsAsync(User01, Roles, Project01, pageIndex, pageSize)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.EventMetrics(Project01, pageIndex, pageSize);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void EventMetrics_UnknownError()
+    {
+        var env = new TestEnvironment();
+        const int pageIndex = 0;
+        const int pageSize = 10;
+        env.SFProjectService.GetEventMetricsAsync(User01, Roles, Project01, pageIndex, pageSize)
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.EventMetrics(Project01, pageIndex, pageSize));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task Invite_Success()
     {
         var env = new TestEnvironment();

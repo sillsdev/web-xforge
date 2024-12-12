@@ -14,6 +14,7 @@ using MongoDB.Bson;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
@@ -43,6 +44,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private readonly ISecurityService _securityService;
     private readonly IStringLocalizer<SharedResource> _localizer;
     private readonly ITransceleratorService _transceleratorService;
+    private readonly IEventMetricService _eventMetricService;
 
     public SFProjectService(
         IRealtimeService realtimeService,
@@ -60,6 +62,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IRepository<TranslateMetrics> translateMetrics,
         IStringLocalizer<SharedResource> localizer,
         ITransceleratorService transceleratorService,
+        IEventMetricService eventMetricService,
         IBackgroundJobClient backgroundJobClient
     )
         : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
@@ -74,6 +77,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _securityService = securityService;
         _localizer = localizer;
         _transceleratorService = transceleratorService;
+        _eventMetricService = eventMetricService;
         _backgroundJobClient = backgroundJobClient;
     }
 
@@ -972,6 +976,51 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             ProjectSecret = projectSecret,
             ShareKey = projectSecretShareKey
         };
+    }
+
+    public async Task<IEnumerable<EventMetric>> GetEventMetricsAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        int pageIndex,
+        int pageSize
+    )
+    {
+        // Ensure that the page index is valid
+        if (pageIndex < 0)
+        {
+            throw new FormatException($"{nameof(pageIndex)} is not a valid page index.");
+        }
+
+        // Ensure that the page size is valid
+        if (pageSize <= 0)
+        {
+            throw new FormatException($"{nameof(pageSize)} is not a valid page size.");
+        }
+
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+
+        // Ensure that the project exists
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // The user must be an admin on the project, or have system admin or serval admin permissions
+        if (
+            !(
+                IsProjectAdmin(projectDoc.Data, curUserId)
+                || systemRoles.Contains(SystemRole.SystemAdmin)
+                || systemRoles.Contains(SystemRole.ServalAdmin)
+            )
+        )
+        {
+            throw new ForbiddenException();
+        }
+
+        // Return the event metrics
+        return _eventMetricService.GetEventMetrics(projectId, pageIndex, pageSize);
     }
 
     public SFProjectSecret GetProjectSecretByShareKey(string shareKey)
