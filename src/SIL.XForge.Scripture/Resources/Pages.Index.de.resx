@@ -124,28 +124,28 @@
     <value>Bibelübersetzungsprojekte arbeiten vermehrt mit geografisch unterschiedlichen Gruppen von Sprechern der Sprache ihres Herzens zusammen.</value>
   </data>
   <data name="AboutDrafting" xml:space="preserve">
-    <value>2 Utilize advanced Artificial Intelligence to generate preliminary drafts from existing translations. This reduces the workload and speeds up the translation process, giving translators a head start.</value>
+    <value>2 Nutze fortgeschrittene künstliche Intelligenz, um aus vorhandenen Übersetzungen erste Entwürfe zu generieren. Dies verringert den Arbeitsaufwand und beschleunigt den Übersetzungsprozess, was Übersetzern einen schnelleren Einstieg ermöglicht.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>Über Scripture Forge</value>
   </data>
   <data name="AboutCollaborate" xml:space="preserve">
-    <value>1 Collaborative editing allows teams to draft and edit translations together efficiently. No more worrying about reconciling multiple versions—our platform ensures everyone stays on the same page.</value>
+    <value>1 Das gemeinsame Bearbeiten ermöglicht es Teams, Übersetzungsentwürfe effizient gemeinsam zu erstellen und zu bearbeiten. Du musst Dich nicht mehr um den Abgleich mehrerer Versionen kümmern - unsere Plattform stellt sicher, dass alle an der gleichen Version arbeiten.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Erweiter Deine Reichweite mit der Überprüfung von Bibeltexten</value>
   </data>
   <data name="AboutChecking" xml:space="preserve">
-    <value>3 Launch modular Community Checking campaigns to gather extensive feedback quickly. This tool ensures that translations are thorough and accurate by involving community members in the verification process.</value>
+    <value>3 Starte modulare Überprüfungen mit der Zielgruppe, um schnell umfassendes Feedback zu erhalten. Dieses Werkzeug stellt sicher, dass die Übersetzungen gründlich und genau sind, indem es Mitglieder der Zielgruppe in den Überprüfungsprozess einbezieht.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>An online app for team-based translation, featuring AI help and tools for community review</value>
+    <value>Eine Online-App für teambasiertes Übersetzen, mit KI-Hilfe und Werkzeugen für die Überprüfung durch die Zielgruppe</value>
   </data>
   <data name="EngageDrafting" xml:space="preserve">
-    <value>Draft Generation</value>
+    <value>Generieren von Entwürfen</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
-    <value>Collaborative Editing</value>
+    <value>Gemeinsame Bearbeitung</value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
     <value>Überprüfung mit der Zielgruppe</value>
