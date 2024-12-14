@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Paratext.Data;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.XForge.Models;
@@ -404,6 +405,65 @@ public class MachineApiController : ControllerBase
                 cancellationToken
             );
             return Ok(usfm);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict();
+        }
+        catch (NotSupportedException)
+        {
+            return new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
+        }
+    }
+
+    /// <summary>
+    /// Gets the pre-translations for the specified chapter as USX.
+    /// </summary>
+    /// <remarks>This method can be called by Serval Administrators for any project.</remarks>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="chapterNum">The chapter number. If zero, the entire book is returned</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The pre-translations were successfully queried for.</response>
+    /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="405">Retrieving the pre-translations in this format is not supported.</response>
+    /// <response code="409">The engine has not been built on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetPreTranslationUsx)]
+    public async Task<ActionResult<string>> GetPreTranslationUsxAsync(
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+            string usfm = await _machineApiService.GetPreTranslationUsfmAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                isServalAdmin,
+                cancellationToken
+            );
+            string usx = UsfmToUsx.ConvertToXmlString(new ScrStylesheet("./usfm.sty"), usfm, false);
+            return Content(usx, "application/xml");
         }
         catch (BrokenCircuitException e)
         {
