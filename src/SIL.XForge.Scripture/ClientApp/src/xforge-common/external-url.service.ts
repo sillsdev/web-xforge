@@ -42,6 +42,10 @@ export class ExternalUrlService {
     return this.helps + '/community-checking#fd31ef9b6d74417099996e7dadb5068e';
   }
 
+  get sharingSettingsHelpPage(): string {
+    return this.helps + '/community-checking#5aa7e3d8451f40cfa6b33c5dd39a3c6f';
+  }
+
   get graphite(): string {
     return 'https://graphite.sil.org/';
   }

@@ -352,9 +352,7 @@
             <p class="helper-text">
               <transloco
                 key="settings.sharing_scripture_forge_guests_help"
-                [params]="{
-                  rolesHelpUrl: 'https://help.scriptureforge.org/community-checking/#5aa7e3d8451f40cfa6b33c5dd39a3c6f'
-                }"
+                [params]="{ rolesHelpUrl: externalUrls.sharingSettingsHelpPage }"
               ></transloco>
             </p>
             @if (isCheckingEnabled) {

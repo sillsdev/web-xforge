@@ -15,6 +15,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
@@ -111,6 +112,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     readonly i18n: I18nService,
     readonly authService: AuthService,
     readonly featureFlags: FeatureFlagService,
+    readonly externalUrls: ExternalUrlService,
     private readonly activatedProjectService: ActivatedProjectService
   ) {
     super(noticeService);
