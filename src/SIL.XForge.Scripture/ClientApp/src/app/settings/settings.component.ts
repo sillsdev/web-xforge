@@ -22,6 +22,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { ExternalUrlService } from '../../xforge-common/external-url.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
@@ -111,6 +112,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     readonly i18n: I18nService,
     readonly authService: AuthService,
     readonly featureFlags: FeatureFlagService,
+    readonly externalUrls: ExternalUrlService,
     private readonly activatedProjectService: ActivatedProjectService
   ) {
     super(noticeService);
