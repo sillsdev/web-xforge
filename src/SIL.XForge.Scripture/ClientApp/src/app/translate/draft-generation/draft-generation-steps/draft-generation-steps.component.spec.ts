@@ -189,7 +189,7 @@ describe('DraftGenerationStepsComponent', () => {
       // Go to translation books
       component.tryAdvanceStep();
       fixture.detectChanges();
-      component.userSelectedTranslateBooks = [1];
+      component.userSelectedTranslateBooks = [{ number: 1 } as any];
       fixture.detectChanges();
       // Go to training books
       component.tryAdvanceStep();
@@ -197,7 +197,7 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       verify(mockNoticeService.show(anything())).never();
       expect(component.stepper.selectedIndex).toBe(2);
-      component.userSelectedTrainingBooks = [2, 3];
+      component.userSelectedTrainingBooks = [{ number: 2 } as any, { number: 3 } as any];
       tick();
       fixture.detectChanges();
       // Attempt to generate draft
