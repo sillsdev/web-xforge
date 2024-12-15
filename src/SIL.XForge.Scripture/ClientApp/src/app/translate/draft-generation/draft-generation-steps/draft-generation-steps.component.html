@@ -201,13 +201,13 @@
       }
       <mat-step [completed]="true">
         <ng-template matStepLabel>
-          {{ t("confirm_header") }}
+          {{ t("summary_header") }}
         </ng-template>
-        <h1 class="mat-headline-4">{{ t("confirm_title") }}</h1>
+        <h1 class="mat-headline-4">{{ t("summary_title") }}</h1>
 
-        <h2>{{ t("confirm_training_title") }}</h2>
+        <h2>{{ t("summary_training_title") }}</h2>
         <mat-card class="confirm-section mat-elevation-z2">
-          <span class="explanation">{{ t("confirm_training") }}</span>
+          <span class="explanation">{{ t("summary_training") }}</span>
           <table mat-table class="confirm-training" [dataSource]="selectedTrainingBooksCollapsed()">
             <ng-container matColumnDef="book">
               <th mat-header-cell *matHeaderCellDef></th>
@@ -236,14 +236,14 @@
 
         <h2>
           <transloco
-            key="draft_generation_steps.confirm_translate_title"
+            key="draft_generation_steps.summary_translate_title"
             [params]="{ firstTrainingSource }"
           ></transloco>
         </h2>
         <mat-card class="confirm-section mat-elevation-z2">
-          <span class="explanation">{{ t("confirm_translate") }}</span>
+          <span class="explanation">{{ t("summary_translate") }}</span>
           <div class="confirm-translate confirm-books">
-            <span>{{ selectedTranslateBooks() }}</span>
+            {{ selectedTranslateBooks() }}
           </div>
         </mat-card>
 
