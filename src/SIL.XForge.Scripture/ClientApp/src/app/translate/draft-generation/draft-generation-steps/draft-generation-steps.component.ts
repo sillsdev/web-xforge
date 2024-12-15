@@ -24,6 +24,7 @@ import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSource, DraftSourceIds, DraftSourcesService } from '../draft-sources.service';
+import { DraftSourcesAsArrays, projectToDraftSources } from '../draft-utils';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataService } from '../training-data/training-data.service';
 
@@ -131,23 +132,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     private readonly noticeService: NoticeService
   ) {
     super();
-    const project = activatedProject.projectDoc!.data!;
-    this.trainingTargets.push(project);
 
-    let trainingSource: TranslateSource | undefined;
-    if (project.translateConfig.draftConfig.alternateTrainingSourceEnabled) {
-      trainingSource = project.translateConfig.draftConfig.alternateTrainingSource;
-    } else {
-      trainingSource = project.translateConfig.source;
-    }
-
-    if (trainingSource != null) {
-      this.trainingSources.push(trainingSource);
-    }
-
-    if (project.translateConfig.draftConfig.additionalTrainingSourceEnabled) {
-      this.trainingSources.push(project.translateConfig.draftConfig.additionalTrainingSource!);
-    }
+    const sources: DraftSourcesAsArrays = projectToDraftSources(activatedProject.projectDoc.data);
+    this.trainingSources = sources.trainingSources;
+    this.trainingTargets = sources.trainingTargets;
   }
 
   get trainingSourceBooksSelected(): boolean {
