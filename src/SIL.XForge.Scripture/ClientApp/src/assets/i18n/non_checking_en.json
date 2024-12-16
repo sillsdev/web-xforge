@@ -164,6 +164,7 @@
     "please_select_valid_project": "Please select a valid project",
     "project_has_chapters_missing": "{{ bookName }} in this project has chapters missing. Please add the missing chapters in Paratext",
     "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
+    "project_has_text_in_one_chapter": "{{ bookName }} in {{ projectName }} has text in 1 chapter",
     "select_alternate_project": "Select the project you want to add the draft to"
   },
   "draft_apply_progress-dialog": {
