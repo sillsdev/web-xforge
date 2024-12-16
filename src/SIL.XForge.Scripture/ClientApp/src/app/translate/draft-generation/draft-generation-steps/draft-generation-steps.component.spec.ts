@@ -9,7 +9,6 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -45,7 +44,6 @@ describe('DraftGenerationStepsComponent', () => {
   const mockProgressService = mock(ProgressService);
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
-  const mockI18nService = mock(I18nService);
 
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
@@ -109,8 +107,7 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: ProgressService, useMock: mockProgressService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
-      { provide: NoticeService, useMock: mockNoticeService },
-      { provide: I18nService, useMock: mockI18nService }
+      { provide: NoticeService, useMock: mockNoticeService }
     ]
   }));
 
@@ -126,7 +123,6 @@ describe('DraftGenerationStepsComponent', () => {
       { text: { bookNum: 7 } } as TextProgress
     ]);
     when(mockOnlineStatusService.isOnline).thenReturn(true);
-    when(mockI18nService.localeCode).thenReturn('en');
   }));
 
   describe('alternate training source project', async () => {
@@ -135,7 +131,7 @@ describe('DraftGenerationStepsComponent', () => {
         data: createTestProjectProfile({
           texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
           translateConfig: {
-            source: { projectRef: 'sourceProject', writingSystem: { tag: 'xyz' } },
+            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'xyz' } },
             draftConfig: {
               alternateTrainingSourceEnabled: true,
               alternateTrainingSource: { projectRef: 'alternateTrainingProject', writingSystem: { tag: 'xyz' } }
@@ -200,11 +196,13 @@ describe('DraftGenerationStepsComponent', () => {
       component.userSelectedTrainingBooks = [{ number: 2 } as any, { number: 3 } as any];
       tick();
       fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
       // Attempt to generate draft
       component.tryAdvanceStep();
       fixture.detectChanges();
       verify(mockNoticeService.show(anything())).once();
-      expect(component.stepper.selectedIndex).toBe(2);
+      expect(component.stepper.selectedIndex).toBe(3);
     }));
   });
 
