@@ -31,7 +31,7 @@ public class EventMetricServiceTests
 
         // SUT
         DataAccessServiceCollectionExtensions.CreateEventMetricsIndexes(env.EventMetricIndexManager);
-        env.EventMetricIndexManager.ReceivedWithAnyArgs().CreateMany(models: []);
+        env.EventMetricIndexManager.ReceivedWithAnyArgs().CreateOne(Arg.Any<CreateIndexModel<EventMetric>>());
     }
 
     [Test]

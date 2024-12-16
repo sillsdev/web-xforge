@@ -1,5 +1,7 @@
+using System;
 using Autofac;
 using Castle.DynamicProxy;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
@@ -89,8 +91,24 @@ public class DependencyInjectionTests
         Assert.IsTrue(container.IsRegistered<IInterceptor>());
     }
 
+    [Test]
+    public void UseSFDataAccess_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        env.ApplicationBuilder.UseSFDataAccess();
+        env.ApplicationBuilder.ApplicationServices.Received().GetService(Arg.Any<Type>());
+    }
+
     private class TestEnvironment
     {
+        public TestEnvironment() =>
+            ApplicationBuilder
+                .ApplicationServices.GetService(Arg.Any<Type>())
+                .Returns(callInfo => Substitute.For([callInfo.Arg<Type>()], null));
+
+        public IApplicationBuilder ApplicationBuilder { get; } = Substitute.For<IApplicationBuilder>();
         public IConfiguration Configuration { get; } = Substitute.For<IConfiguration>();
         public ContainerBuilder ContainerBuilder { get; } = new ContainerBuilder();
         public IServiceCollection Services { get; } = Substitute.For<IServiceCollection>();
