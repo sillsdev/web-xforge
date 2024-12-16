@@ -573,7 +573,7 @@ describe('SFProjectMigrations', () => {
 
   describe('version 22', () => {
     it('copies selected training and translation books to scripture ranges', async () => {
-      const env = new TestEnvironment(20);
+      const env = new TestEnvironment(21);
       const conn = env.server.connect();
 
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
