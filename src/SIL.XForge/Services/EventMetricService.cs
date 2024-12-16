@@ -19,7 +19,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             return [];
         }
 
-        return eventMetrics.Query().Where(m => m.ProjectId == projectId).Skip(pageIndex * pageSize).Take(pageSize);
+        return eventMetrics.Query().Where(m => m.ProjectId == projectId).OrderByDescending(m => m.ProjectId).Skip(pageIndex * pageSize).Take(pageSize);
     }
 
     public async Task SaveEventMetricAsync(
