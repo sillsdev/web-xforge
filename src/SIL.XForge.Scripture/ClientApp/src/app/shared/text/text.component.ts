@@ -18,7 +18,7 @@ import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
-import { Subject, Subscription, fromEvent, timer } from 'rxjs';
+import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
@@ -36,11 +36,11 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
 import {
-  VERSE_REGEX,
   attributeFromMouseEvent,
   getBaseVerse,
   getVerseRefFromSegmentRef,
-  getVerseStrFromSegmentRef
+  getVerseStrFromSegmentRef,
+  VERSE_REGEX
 } from '../utils';
 import { getAttributesAtPosition, registerScripture } from './quill-scripture';
 import { Segment } from './segment';
@@ -736,6 +736,19 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (position != null && this.editor != null) {
       this.editor.formatText(position, 1, embedName, format, 'api');
     }
+  }
+
+  get commenterSelection(): RangeStatic[] {
+    const ret = [];
+    for (const segment of this.viewModel.segments) {
+      const range = segment[1];
+      const formats = getAttributesAtPosition(this.editor, range.index);
+      if (formats['commenter-selection'] != null && formats['commenter-selection'] === true) {
+        ret.push(range);
+      }
+    }
+
+    return ret;
   }
 
   toggleVerseSelection(verseRef: VerseRef): boolean {

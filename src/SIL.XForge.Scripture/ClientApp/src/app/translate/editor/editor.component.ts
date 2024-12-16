@@ -924,6 +924,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.syncScrollRequested$.next();
     }
 
+    if (this.target.commenterSelection.length === 0 && this.commenterSelectedVerseRef != null) {
+      // if we're here, the state hasn't been updated, and we need to re-toggle the selected verse
+      const correctVerseRef = this.commenterSelectedVerseRef;
+      this.commenterSelectedVerseRef = undefined;
+      this.toggleVerseRefElement(correctVerseRef);
+    }
+
     if (delta != null && this.shouldNoteThreadsRespondToEdits) {
       // wait 20 ms so that note thread docs have time to receive the updated note positions
       setTimeout(() => {
