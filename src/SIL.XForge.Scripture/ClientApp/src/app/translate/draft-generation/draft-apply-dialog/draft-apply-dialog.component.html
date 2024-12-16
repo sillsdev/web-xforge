@@ -21,7 +21,11 @@
         <div class="target-project-content">
           @if (targetChapters$ | async; as chapters) {
             <app-notice icon="warning" type="warning"
-              >{{ t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name }) }}
+              >{{
+                chapters > 1
+                  ? t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name })
+                  : t("project_has_text_in_one_chapter", { bookName, projectName: project.name })
+              }}
             </app-notice>
           } @else {
             <app-notice [icon]="'verified'">{{
