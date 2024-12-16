@@ -19,7 +19,12 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             return [];
         }
 
-        return eventMetrics.Query().Where(m => m.ProjectId == projectId).Skip(pageIndex * pageSize).Take(pageSize);
+        return eventMetrics
+            .Query()
+            .Where(m => m.ProjectId == projectId)
+            .OrderByDescending(m => m.TimeStamp)
+            .Skip(pageIndex * pageSize)
+            .Take(pageSize);
     }
 
     public async Task SaveEventMetricAsync(
@@ -46,12 +51,9 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
                 decimal value => new BsonDecimal128(value),
                 DateTime value => new BsonDateTime(value),
                 null => BsonNull.Value,
-                _
-                    => BsonValue.Create(
-                        JsonConvert.DeserializeObject<Dictionary<string, object>>(
-                            JsonConvert.SerializeObject(kvp.Value)
-                        )
-                    ),
+                _ => BsonValue.Create(
+                    JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(kvp.Value))
+                ),
             };
         }
 

@@ -210,8 +210,10 @@ public class MemoryRepository<T> : IRepository<T>
     }
 
     /// <summary>
-    /// The class converts BSON to and from JSON to function like the MongoDB driver.
+    /// The class converts BSON to and from JSON to function like the MongoDB driver for Newtonsoft Json.NET.
     /// </summary>
+    /// <remarks>This is exclusively used by <see cref="MemoryRepository{T}"/>.</remarks>
+    /// <seealso cref="DataAccess.BsonValueConverter"/>
     private class BsonValueConverter : JsonConverter<BsonValue>
     {
         public override BsonValue ReadJson(
@@ -281,6 +283,7 @@ public class MemoryRepository<T> : IRepository<T>
                     writer.WritePropertyName(element.Name);
                     serializer.Serialize(writer, element.Value);
                 }
+
                 writer.WriteEndObject();
             }
             else if (value.IsBsonNull)

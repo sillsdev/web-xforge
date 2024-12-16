@@ -79,16 +79,8 @@ public static class DataAccessServiceCollectionExtensions
     /// This function is internal for unit testing purposes.
     /// </remarks>
     internal static void CreateEventMetricsIndexes(IMongoIndexManager<EventMetric> indexManager) =>
-        indexManager.CreateMany(
-            [
-                new CreateIndexModel<EventMetric>(Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope)),
-                new CreateIndexModel<EventMetric>(
-                    Builders<EventMetric>.IndexKeys.Ascending($"{nameof(EventMetric.Payload)}.projectId")
-                ),
-                new CreateIndexModel<EventMetric>(
-                    Builders<EventMetric>.IndexKeys.Ascending($"{nameof(EventMetric.Payload)}.userId")
-                ),
-            ]
+        indexManager.CreateOne(
+            new CreateIndexModel<EventMetric>(Builders<EventMetric>.IndexKeys.Ascending(em => em.ProjectId))
         );
 
     private static MongoRepository<T> CreateMongoRepository<T>(
