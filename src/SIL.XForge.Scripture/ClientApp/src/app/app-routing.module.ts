@@ -4,6 +4,8 @@ import { AuthGuard } from 'xforge-common/auth.guard';
 import { SystemAdminAuthGuard } from 'xforge-common/system-admin-auth.guard';
 import { SystemAdministrationComponent } from 'xforge-common/system-administration/system-administration.component';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
+import { EventMetricsAuthGuard } from './event-metrics/event-metrics-auth.guard';
+import { EventMetricsComponent } from './event-metrics/event-metrics.component';
 import { JoinComponent } from './join/join.component';
 import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { ProjectComponent } from './project/project.component';
@@ -21,6 +23,7 @@ const routes: Routes = [
   { path: 'login', redirectTo: 'projects', pathMatch: 'full' },
   { path: 'join/:shareKey', component: JoinComponent },
   { path: 'join/:shareKey/:locale', component: JoinComponent },
+  { path: 'projects/:projectId/event-log', component: EventMetricsComponent, canActivate: [EventMetricsAuthGuard] },
   { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SettingsAuthGuard] },
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SyncAuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
