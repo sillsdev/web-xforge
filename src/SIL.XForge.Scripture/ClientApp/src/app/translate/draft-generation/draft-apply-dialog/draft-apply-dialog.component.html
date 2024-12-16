@@ -22,7 +22,7 @@
           @if (targetChapters$ | async; as chapters) {
             <app-notice icon="warning" type="warning"
               >{{
-                chapters > 1
+                i18n.getPluralRule(chapters) !== "one"
                   ? t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name })
                   : t("project_has_text_in_one_chapter", { bookName, projectName: project.name })
               }}
