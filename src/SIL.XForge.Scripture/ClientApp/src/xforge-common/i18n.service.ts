@@ -395,10 +395,10 @@ export class I18nService {
       .find(e => e.type === 'timeZoneName').value;
   }
 
-  /** Takes a number and returns a string representing the plural-related rule for the current locale.
+  /** Takes a number and returns a rule representing the plural-related rule for the current locale.
    * Possible values include 'zero', 'one', 'two', 'few', 'many', and 'other'.
    */
-  getPluralRule(number: number): string {
+  getPluralRule(number: number): Intl.LDMLPluralRule {
     return new Intl.PluralRules(this.locale.canonicalTag).select(number);
   }
 
