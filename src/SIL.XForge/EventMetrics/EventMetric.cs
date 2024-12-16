@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using SIL.XForge.Models;
 
@@ -42,7 +43,9 @@ public class EventMetric : IIdentifiable
     /// </summary>
     /// <remarks>
     /// This will be used for filtering events.
+    /// On the front end, it will be a string that corresponds to the EventScope enum.
     /// </remarks>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public EventScope Scope { get; set; }
 
     /// <summary>
