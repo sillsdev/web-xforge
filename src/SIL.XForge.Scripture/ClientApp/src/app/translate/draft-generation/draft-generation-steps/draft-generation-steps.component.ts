@@ -20,6 +20,7 @@ import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book
 import { SharedModule } from '../../../shared/shared.module';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
+import { ProjectScriptureRange } from '../draft-generation';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataUploadDialogComponent } from '../training-data/training-data-upload-dialog.component';
@@ -29,8 +30,10 @@ export interface DraftGenerationStepsResult {
   trainingBooks: number[];
   trainingDataFiles: string[];
   trainingScriptureRange?: string;
+  trainingScriptureRanges: ProjectScriptureRange[];
   translationBooks: number[];
   translationScriptureRange?: string;
+  translationScriptureRanges: ProjectScriptureRange[];
   fastTraining: boolean;
 }
 
@@ -263,8 +266,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       this.isStepsCompleted = true;
       this.done.emit({
         trainingBooks: this.userSelectedTrainingBooks,
+        trainingScriptureRanges: [],
         trainingDataFiles: this.selectedTrainingDataIds,
         translationBooks: this.userSelectedTranslateBooks,
+        translationScriptureRanges: [],
         fastTraining: this.fastTraining
       });
     }

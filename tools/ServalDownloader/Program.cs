@@ -15,6 +15,7 @@ if (args.Length == 0 || string.IsNullOrWhiteSpace(args[0]))
 // Setup services
 ServiceProvider services = SetupServices();
 IDataFilesClient dataFilesClient = services.GetService<IDataFilesClient>()!;
+ICorporaClient corporaClient = services.GetService<ICorporaClient>()!;
 ITranslationEnginesClient translationEnginesClient = services.GetService<ITranslationEnginesClient>()!;
 
 // Set up the translation engine directory and get the translation engine
@@ -28,8 +29,10 @@ if (translationEngine.Type != "nmt")
     return;
 }
 
-// Download every file for every corpus
+// Download every file for every legacy corpus
+#pragma warning disable CS0612 // Type or member is obsolete
 foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorporaAsync(translationEngineId))
+#pragma warning restore CS0612 // Type or member is obsolete
 {
     string corpusPath = Path.Combine(translationEnginePath, corpus.Id);
     Directory.CreateDirectory(corpusPath);
@@ -73,6 +76,64 @@ foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorpor
     }
 }
 
+// Download every file for every parallel corpus
+foreach (
+    TranslationParallelCorpus parallelCorpus in await translationEnginesClient.GetAllParallelCorporaAsync(
+        translationEngineId
+    )
+)
+{
+    string parallelCorpusPath = Path.Combine(translationEnginePath, parallelCorpus.Id);
+    Directory.CreateDirectory(parallelCorpusPath);
+    foreach (ResourceLink sourceCorpus in parallelCorpus.SourceCorpora)
+    {
+        // Create the source directory
+        string sourcePath = Path.Combine(parallelCorpusPath, "source");
+        Directory.CreateDirectory(sourcePath);
+
+        Corpus corpus = await corporaClient.GetAsync(sourceCorpus.Id);
+        foreach (CorpusFile corpusFile in corpus.Files)
+        {
+            // Get the file extension
+            DataFile dataFile = await dataFilesClient.GetAsync(corpusFile.File.Id);
+            string extension = dataFile.Format == FileFormat.Paratext ? ".zip" : ".txt";
+
+            // Download the file
+            FileResponse file = await dataFilesClient.DownloadAsync(corpusFile.File.Id);
+
+            // Write the file
+            string path = Path.Combine(sourcePath, $"{corpusFile.TextId}_({corpusFile.File.Id}){extension}");
+            Console.WriteLine($"Writing {path}...");
+            await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
+            file.Stream.CopyTo(fileStream);
+        }
+    }
+
+    foreach (ResourceLink sourceCorpus in parallelCorpus.SourceCorpora)
+    {
+        // Create the target directory
+        string targetPath = Path.Combine(parallelCorpusPath, "target");
+        Directory.CreateDirectory(targetPath);
+
+        Corpus corpus = await corporaClient.GetAsync(sourceCorpus.Id);
+        foreach (CorpusFile corpusFile in corpus.Files)
+        {
+            // Get the file extension
+            DataFile dataFile = await dataFilesClient.GetAsync(corpusFile.File.Id);
+            string extension = dataFile.Format == FileFormat.Paratext ? ".zip" : ".txt";
+
+            // Download the file
+            FileResponse file = await dataFilesClient.DownloadAsync(corpusFile.File.Id);
+
+            // Write the file
+            string path = Path.Combine(targetPath, $"{corpusFile.TextId}_({corpusFile.File.Id}){extension}");
+            Console.WriteLine($"Writing {path}...");
+            await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
+            file.Stream.CopyTo(fileStream);
+        }
+    }
+}
+
 // If we are on Windows, open the directory in Explorer
 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 {
@@ -85,6 +146,7 @@ return;
 static ServiceProvider SetupServices()
 {
     const string httpClientName = "serval-api";
+    const string tokenClientName = "serval-api-token";
 
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
     IConfiguration configuration = configurationBuilder
@@ -94,21 +156,23 @@ static ServiceProvider SetupServices()
     ServalOptions servalOptions = configuration.GetSection("Serval").Get<ServalOptions>()!;
 
     var services = new ServiceCollection();
-    services.AddAccessTokenManagement(options =>
-    {
-        options.Client.Clients.Add(
-            httpClientName,
-            new ClientCredentialsTokenRequest
+
+    services.AddDistributedMemoryCache();
+    services
+        .AddClientCredentialsTokenManagement()
+        .AddClient(
+            tokenClientName,
+            client =>
             {
-                Address = servalOptions.TokenUrl,
-                ClientId = servalOptions.ClientId,
-                ClientSecret = servalOptions.ClientSecret,
-                Parameters = new Parameters { { "audience", servalOptions.Audience } },
+                client.TokenEndpoint = servalOptions.TokenUrl;
+                client.ClientId = servalOptions.ClientId;
+                client.ClientSecret = servalOptions.ClientSecret;
+                client.Parameters = new Parameters { { "audience", servalOptions.Audience } };
             }
         );
-    });
-    services.AddClientAccessTokenHttpClient(
+    services.AddClientCredentialsHttpClient(
         httpClientName,
+        tokenClientName,
         configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
     );
     services.AddHttpClient(httpClientName).SetHandlerLifetime(TimeSpan.FromMinutes(5));
@@ -118,6 +182,13 @@ static ServiceProvider SetupServices()
         var factory = sp.GetService<IHttpClientFactory>();
         var httpClient = factory!.CreateClient(httpClientName);
         return new TranslationEnginesClient(httpClient);
+    });
+    services.AddSingleton<ICorporaClient, CorporaClient>(sp =>
+    {
+        // Instantiate the corpora client with our named HTTP client
+        var factory = sp.GetService<IHttpClientFactory>();
+        var httpClient = factory!.CreateClient(httpClientName);
+        return new CorporaClient(httpClient);
     });
     services.AddSingleton<IDataFilesClient, DataFilesClient>(sp =>
     {
@@ -129,11 +200,11 @@ static ServiceProvider SetupServices()
     return services.BuildServiceProvider();
 }
 
-public class ServalOptions
+internal class ServalOptions
 {
-    public string ApiServer { get; set; } = string.Empty;
-    public string Audience { get; set; } = string.Empty;
-    public string ClientId { get; set; } = string.Empty;
-    public string ClientSecret { get; set; } = string.Empty;
-    public string TokenUrl { get; set; } = string.Empty;
+    public string ApiServer { get; init; } = string.Empty;
+    public string Audience { get; init; } = string.Empty;
+    public string ClientId { get; init; } = string.Empty;
+    public string ClientSecret { get; init; } = string.Empty;
+    public string TokenUrl { get; init; } = string.Empty;
 }

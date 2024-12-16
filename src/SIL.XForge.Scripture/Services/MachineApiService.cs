@@ -62,6 +62,8 @@ public class MachineApiService(
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
         EqualityComparer<string>.Default
     );
+    private static readonly IEqualityComparer<IList<ProjectScriptureRange>> _listProjectScriptureRangeComparer =
+        SequenceEqualityComparer.Create(EqualityComparer<ProjectScriptureRange>.Default);
 
     public async Task CancelPreTranslationBuildAsync(
         string curUserId,
@@ -221,7 +223,7 @@ public class MachineApiService(
         // Make sure the DTO conforms to the machine-api V2 URLs
         if (buildDto is not null)
         {
-            UpdateDto(buildDto, sfProjectId);
+            buildDto = UpdateDto(buildDto, sfProjectId);
         }
 
         return buildDto;
@@ -266,7 +268,7 @@ public class MachineApiService(
         // Make sure the DTO conforms to the machine-api V2 URLs
         if (buildDto is not null)
         {
-            UpdateDto(buildDto, sfProjectId);
+            buildDto = UpdateDto(buildDto, sfProjectId);
         }
 
         return buildDto;
@@ -314,7 +316,7 @@ public class MachineApiService(
             }
 
             buildDto = CreateDto(translationBuild);
-            UpdateDto(buildDto, sfProjectId);
+            buildDto = UpdateDto(buildDto, sfProjectId);
         }
         catch (ServalApiException e)
         {
@@ -474,7 +476,7 @@ public class MachineApiService(
                 {
                     State = BuildStateFaulted,
                     Message = errorMessage,
-                    AdditionalInfo = new ServalBuildAdditionalInfo { TranslationEngineId = engineId ?? string.Empty, },
+                    AdditionalInfo = new ServalBuildAdditionalInfo { TranslationEngineId = engineId ?? string.Empty },
                 };
             }
             else
@@ -517,7 +519,7 @@ public class MachineApiService(
         // Make sure the DTO conforms to the machine-api V2 URLs
         if (buildDto is not null)
         {
-            UpdateDto(buildDto, sfProjectId);
+            buildDto = UpdateDto(buildDto, sfProjectId);
         }
 
         return buildDto;
@@ -697,7 +699,7 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Ensure that there are no errors in the build configuration
+        // Ensure that there are no errors in the build configuration for training
         if (!string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange) && buildConfig.TrainingBooks.Count > 0)
         {
             throw new DataNotFoundException(
@@ -706,10 +708,49 @@ public class MachineApiService(
             );
         }
 
+        if (
+            !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
+            && buildConfig.TrainingScriptureRanges.Count > 0
+        )
+        {
+            throw new DataNotFoundException(
+                $"You cannot specify both {nameof(buildConfig.TrainingScriptureRange)}"
+                    + $" and {nameof(buildConfig.TrainingScriptureRanges)}."
+            );
+        }
+
+        if (buildConfig.TrainingScriptureRanges.Count > 0 && buildConfig.TrainingBooks.Count > 0)
+        {
+            throw new DataNotFoundException(
+                $"You cannot specify both {nameof(buildConfig.TrainingScriptureRanges)}"
+                    + $" and {nameof(buildConfig.TrainingBooks)}."
+            );
+        }
+
+        // Ensure that there are no errors in the build configuration for translation
         if (!string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange) && buildConfig.TranslationBooks.Count > 0)
         {
             throw new DataNotFoundException(
                 $"You cannot specify both {nameof(buildConfig.TranslationScriptureRange)}"
+                    + $" and {nameof(buildConfig.TranslationBooks)}."
+            );
+        }
+
+        if (
+            !string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange)
+            && buildConfig.TranslationScriptureRanges.Count > 0
+        )
+        {
+            throw new DataNotFoundException(
+                $"You cannot specify both {nameof(buildConfig.TranslationScriptureRange)}"
+                    + $" and {nameof(buildConfig.TranslationScriptureRanges)}."
+            );
+        }
+
+        if (buildConfig.TranslationScriptureRanges.Count > 0 && buildConfig.TranslationBooks.Count > 0)
+        {
+            throw new DataNotFoundException(
+                $"You cannot specify both {nameof(buildConfig.TranslationScriptureRanges)}"
                     + $" and {nameof(buildConfig.TranslationBooks)}."
             );
         }
@@ -730,12 +771,12 @@ public class MachineApiService(
         {
             op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTrainingBooks,
-                buildConfig.TrainingBooks.ToList(),
+                [.. buildConfig.TrainingBooks],
                 _listIntComparer
             );
             op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles,
-                buildConfig.TrainingDataFiles.ToList(),
+                [.. buildConfig.TrainingDataFiles],
                 _listStringComparer
             );
             op.Set(
@@ -743,16 +784,28 @@ public class MachineApiService(
                 buildConfig.TrainingScriptureRange
             );
             op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges,
+                [.. buildConfig.TrainingScriptureRanges],
+                _listProjectScriptureRangeComparer
+            );
+            op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTranslationBooks,
-                buildConfig.TranslationBooks.ToList(),
+                [.. buildConfig.TranslationBooks],
                 _listIntComparer
             );
             op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRange,
                 buildConfig.TranslationScriptureRange
             );
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges,
+                [.. buildConfig.TranslationScriptureRanges],
+                _listProjectScriptureRangeComparer
+            );
             if (!projectDoc.Data.TranslateConfig.PreTranslate)
+            {
                 op.Set(p => p.TranslateConfig.PreTranslate, true);
+            }
         });
 
         // Sync the source and target before running the build
@@ -935,7 +988,29 @@ public class MachineApiService(
             AdditionalInfo = new ServalBuildAdditionalInfo
             {
                 BuildId = translationBuild.Id,
-                CorporaIds = translationBuild.Pretranslate?.Select(p => p.Corpus.Id),
+                CorporaIds = new HashSet<string>(
+                    // Use a HashSet to ensure there are no duplicate corpus ids
+                    [
+                        .. translationBuild
+                            .Pretranslate?.SelectMany(t => t.SourceFilters ?? [])
+                            .Select(f => f.Corpus.Id) ?? [],
+                        .. translationBuild.TrainOn?.SelectMany(t => t.SourceFilters ?? []).Select(f => f.Corpus.Id)
+                            ?? [],
+                        .. translationBuild.TrainOn?.SelectMany(t => t.TargetFilters ?? []).Select(f => f.Corpus.Id)
+                            ?? [],
+                    ]
+                ),
+                ParallelCorporaIds = new HashSet<string>(
+                    // Use a HashSet to ensure there are no duplicate parallel corpus ids
+                    [
+                        .. translationBuild
+                            .Pretranslate?.Select(t => t.ParallelCorpus?.Id)
+                            .Where(id => !string.IsNullOrEmpty(id)) ?? [],
+                        .. translationBuild
+                            .TrainOn?.Select(t => t.ParallelCorpus?.Id)
+                            .Where(id => !string.IsNullOrEmpty(id)) ?? [],
+                    ]
+                ),
                 DateFinished = translationBuild.DateFinished,
                 Step = translationBuild.Step,
                 TranslationEngineId = translationBuild.Engine.Id,
@@ -961,7 +1036,11 @@ public class MachineApiService(
     /// <exception cref="NotSupportedException">
     /// Method not allowed or not supported for the specified translation engine.
     /// </exception>
-    /// <remarks>If this method returns, it is expected that the DTO will be null.</remarks>
+    /// <remarks>
+    /// If this method returns, it is expected that the DTO will be null.
+    /// The following status codes may be thrown by Serval, and are not handled by this method:
+    ///  - 499: Operation Cancelled
+    /// </remarks>
     private static void ProcessServalApiException(ServalApiException e)
     {
         switch (e)

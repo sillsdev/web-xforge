@@ -1,6 +1,7 @@
 @if (canShowAdditionalInfo) {
   <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId }}</div>
   <div><strong>Corpora Ids:</strong> {{ draftJob?.additionalInfo?.corporaIds?.join(", ") }}</div>
+  <div><strong>Parallel Corpora Ids:</strong> {{ draftJob?.additionalInfo?.parallelCorporaIds?.join(", ") }}</div>
   <div><strong>Date Finished:</strong> {{ draftJob?.additionalInfo?.dateFinished?.toLocaleString() }}</div>
   <div><strong>Message:</strong> {{ draftJob?.message }}</div>
   <div><strong>Percent Completed:</strong> {{ draftJob?.percentCompleted }}</div>

@@ -34,24 +34,11 @@ public class PreTranslationService(
     {
         List<PreTranslation> preTranslations = [];
 
-        // Load the target project secrets, so we can get the translation engine ID and corpus ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
-        {
-            throw new DataNotFoundException("The project secret cannot be found.");
-        }
-
         // Ensure we have the parameters to retrieve the pre-translation
-        string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
-        string corpusId = projectSecret
-            .ServalData?.Corpora.FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
-            .Key;
-        if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
-        {
-            throw new DataNotFoundException("The pre-translation engine is not configured.");
-        }
+        (string? translationEngineId, string corpusId, bool useParatextVerseRef) =
+            await GetPreTranslationParametersAsync(sfProjectId);
 
         // Get the pre-translation data from Serval
-        bool useParatextVerseRef = projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile;
         string textId = useParatextVerseRef ? GetTextId(bookNum) : GetTextId(bookNum, chapterNum);
         foreach (
             Pretranslation preTranslation in await translationEnginesClient.GetAllPretranslationsAsync(
@@ -195,21 +182,8 @@ public class PreTranslationService(
         CancellationToken cancellationToken
     )
     {
-        // Load the project secrets, so we can get the translation engine ID and corpus ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
-        {
-            throw new DataNotFoundException("The project secret cannot be found.");
-        }
-
         // Ensure we have the parameters to retrieve the pre-translation
-        string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
-        string? corpusId = projectSecret
-            .ServalData?.Corpora.FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
-            .Key;
-        if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
-        {
-            throw new DataNotFoundException("The pre-translation engine is not configured.");
-        }
+        (string? translationEngineId, string corpusId, bool _) = await GetPreTranslationParametersAsync(sfProjectId);
 
         // Get the USFM
         string usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
@@ -243,12 +217,6 @@ public class PreTranslationService(
 
     public async Task UpdatePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken)
     {
-        // Load the target project secrets, so we can get the translation engine ID and corpus ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
-        {
-            throw new DataNotFoundException("The project secret cannot be found.");
-        }
-
         // Load the project from the realtime service
         await using IConnection conn = await realtimeService.ConnectAsync();
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
@@ -258,18 +226,11 @@ public class PreTranslationService(
         }
 
         // Ensure we have the parameters to retrieve the pre-translation
-        string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
-        string corpusId = projectSecret
-            .ServalData?.Corpora.FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
-            .Key;
-        if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
-        {
-            throw new DataNotFoundException("The pre-translation engine is not configured.");
-        }
+        (string? translationEngineId, string corpusId, bool useParatextVerseRef) =
+            await GetPreTranslationParametersAsync(sfProjectId);
 
         // Get all the pre-translations and update the chapters
         Dictionary<int, HashSet<int>> bookChapters = [];
-        bool useParatextVerseRef = projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile;
         foreach (
             Pretranslation preTranslation in await translationEnginesClient.GetAllPretranslationsAsync(
                 translationEngineId,
@@ -350,5 +311,54 @@ public class PreTranslationService(
                 }
             }
         });
+    }
+
+    /// <summary>
+    /// Gets the required parameters from the project secret to retrieve the pre-translations.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <returns>
+    /// The translation engine identifier, the corpus identifier, and whether to use Paratext verse references.
+    /// </returns>
+    /// <remarks>This can be mocked in unit tests.</remarks>
+    /// <exception cref="DataNotFoundException">The pre-translation engine is not configured, or the project secret cannot be found.</exception>
+    protected internal virtual async Task<(
+        string translationEngineId,
+        string corpusId,
+        bool useParatextVerseRef
+    )> GetPreTranslationParametersAsync(string sfProjectId)
+    {
+        // Load the target project secrets, so we can get the translation engine ID and corpus ID
+        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        {
+            throw new DataNotFoundException("The project secret cannot be found.");
+        }
+
+        string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
+        string corpusId;
+        bool useParatextVerseRef = false;
+        if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.ParallelCorpusIdForPreTranslate))
+        {
+            corpusId = projectSecret.ServalData.ParallelCorpusIdForPreTranslate;
+            useParatextVerseRef = true;
+        }
+        else
+        {
+            // Legacy Serval Project
+            corpusId = projectSecret
+                .ServalData?.Corpora?.FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+                .Key;
+            if (!string.IsNullOrWhiteSpace(corpusId))
+            {
+                useParatextVerseRef = projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
+        {
+            throw new DataNotFoundException("The pre-translation engine is not configured.");
+        }
+
+        return (translationEngineId, corpusId, useParatextVerseRef);
     }
 }
