@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using Newtonsoft.Json;
@@ -36,8 +37,9 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
     )
     {
         // Process the arguments into a MongoDB format for the payload
+        // We should not save the cancellation token as it is not user data
         var payload = new Dictionary<string, BsonValue>();
-        foreach (var kvp in argumentsWithNames)
+        foreach (var kvp in argumentsWithNames.Where(kvp => kvp.Value is not CancellationToken))
         {
             payload[kvp.Key] = kvp.Value switch
             {
