@@ -348,7 +348,17 @@ public class ParatextService : DisposableBase, IParatextService
                 if (
                     !noErrors
                     || !success
-                    || (results != null && results.Any(r => r != null && r.Result == SendReceiveResultEnum.Failed))
+                    || (
+                        results != null
+                        && results.Any(r =>
+                            r
+                                is {
+                                    Result: SendReceiveResultEnum.Failed
+                                        or SendReceiveResultEnum.NotUpgraded
+                                        or SendReceiveResultEnum.ProjectVersionUpgraded,
+                                }
+                        )
+                    )
                 )
                 {
                     string resultsInfo = ExplainSRResults(results);
@@ -627,7 +637,7 @@ public class ParatextService : DisposableBase, IParatextService
         return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
     }
 
-    private static string ExplainSRResults(IEnumerable<SendReceiveResult> srResults)
+    private static string ExplainSRResults(IEnumerable<SendReceiveResult>? srResults)
     {
         return string.Join(
             ";",
