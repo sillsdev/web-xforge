@@ -416,7 +416,7 @@ class SFProjectMigration22 extends DocMigration {
       }
     }
 
-    await submitMigrationOp(SFProjectMigration21.VERSION, doc, ops);
+    await submitMigrationOp(SFProjectMigration22.VERSION, doc, ops);
   }
 }
 

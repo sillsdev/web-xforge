@@ -407,11 +407,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges?.find(
         r => r.projectId === trainingSourceId
       )?.scriptureRange ?? '';
-    const trainingScriptureRange =
+    const trainingScriptureRange: string | undefined =
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange;
     if (previousTrainingRange === '' && trainingScriptureRange != null) {
-      previousTrainingRange =
-        this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange ?? '';
+      previousTrainingRange = trainingScriptureRange;
     }
     const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTrainingRange));
 

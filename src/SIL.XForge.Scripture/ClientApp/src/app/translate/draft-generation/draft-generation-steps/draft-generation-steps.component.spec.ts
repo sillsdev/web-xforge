@@ -159,7 +159,6 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockProjectService.getProfile('alternateTrainingProject')).thenResolve(
         mockAlternateTrainingSourceProjectDoc
       );
-      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
       when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
       when(mockTrainingDataQuery.docs).thenReturn([]);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
