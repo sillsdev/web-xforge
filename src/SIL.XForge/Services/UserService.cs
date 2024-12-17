@@ -215,7 +215,7 @@ public class UserService : IUserService
 
         string initials = string.Concat(
             userDoc
-                .Data.DisplayName.Split([' '], StringSplitOptions.RemoveEmptyEntries)
+                .Data.DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .Where(x => x.Length > 1 && char.IsLetter(x[0]))
                 .Select(x => char.ToLower(x[0]))
         );
