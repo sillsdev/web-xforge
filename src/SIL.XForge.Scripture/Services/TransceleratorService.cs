@@ -27,8 +27,7 @@ public class TransceleratorService : ITransceleratorService
         // Check that the schema version declared in the file is at least 1.1 (coresponding to Transcelerator version 1.5.2)
         if (
             docs.Any(doc =>
-                doc.Attributes["version"] == null
-                || !VersionSatisfies(doc.Attributes["version"].Value, new int[] { 1, 1 })
+                doc.Attributes["version"] == null || !VersionSatisfies(doc.Attributes["version"].Value, [1, 1])
             )
         )
         {

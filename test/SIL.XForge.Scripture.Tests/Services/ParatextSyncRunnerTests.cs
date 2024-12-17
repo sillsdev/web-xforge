@@ -340,7 +340,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_DataNotChanged()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, true, false, false, books);
         env.SetupPTData(books);
 
@@ -390,7 +390,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_DataChangedTranslateAndCheckingEnabled()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
 
@@ -433,7 +433,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_DataChangedTranslateEnabledCheckingDisabled()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, false, true, false, books);
         env.SetupPTData(books);
 
@@ -486,7 +486,7 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
-        Book[] books = new[] { new Book("MRK", 2) };
+        Book[] books = [new Book("MRK", 2)];
         env.AddParatextNoteThreadData(books);
         Assert.That(env.ContainsNote(1), Is.True);
 
@@ -548,7 +548,7 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
         // Need to make sure we have notes BEFORE the sync
-        Book[] books = new[] { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.AddParatextNoteThreadData(books);
 
         // Expectations of setup
@@ -719,7 +719,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_CreatesNoteTagIcon()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 1) };
+        Book[] books = [new Book("MAT", 1)];
         env.SetupSFData(true, true, false, true, books);
         await env.SetupUndefinedNoteTag("project01", false);
         SFProject project = env.GetProject();
@@ -749,7 +749,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_CreatesCheckingNoteTag()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 1) };
+        Book[] books = [new Book("MAT", 1)];
         env.SetupSFData(false, true, false, false, books);
         env.SetupPTData(books);
 
@@ -795,7 +795,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_UpdatesExistingNoteTags()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 1) };
+        Book[] books = [new Book("MAT", 1)];
         env.SetupSFData(true, true, false, true, books);
         var noteTags = new List<NoteTag>
         {
@@ -1019,7 +1019,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_LanguageIsRightToLeft_ProjectPropertySet()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, false, false, false, books);
         env.SetupPTData(books);
 
@@ -1038,7 +1038,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_FullName_ProjectPropertyNotSetIfNull()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, false, false, false, books);
         env.SetupPTData(books);
 
@@ -1056,7 +1056,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_FullName_ProjectPropertySet()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, false, false, false, books);
         env.SetupPTData(books);
 
@@ -1807,7 +1807,7 @@ public class ParatextSyncRunnerTests
         var book = new Book("MAT", 1, true);
         env.SetupSFData(true, false, false, true, book);
         env.SetupPTData(book);
-        Book[] books = new[] { book };
+        Book[] books = [book];
         env.AddParatextNoteThreadData(books, true, true);
         SyncMetricInfo info = new SyncMetricInfo(1, 0, 0);
         env.ParatextService.UpdateParatextCommentsAsync(
@@ -1976,14 +1976,7 @@ public class ParatextSyncRunnerTests
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
         NoteThread thread01 = env.GetNoteThread("project01", "dataId01");
-        string[] reattachedParts = new[]
-        {
-            "MAT 1:5",
-            "reattach selected text",
-            "16",
-            "Reattach before ",
-            " reattach after.",
-        };
+        string[] reattachedParts = ["MAT 1:5", "reattach selected text", "16", "Reattach before ", " reattach after."];
         string reattached = string.Join(PtxUtils.StringUtils.orcCharacter, reattachedParts);
         string expected = "Context before Scripture text in project context after-" + $"Start:16-Length:22-MAT 1:1";
         Assert.That(thread01.NoteThreadToString(), Is.EqualTo(expected));
@@ -2107,7 +2100,7 @@ public class ParatextSyncRunnerTests
         );
         await env.SetThreadNotesAsync(sfProjectId, dataId, beginningNoteSet);
         env.SetupPTData(book);
-        env.SetupNoteRemovedChange(dataId, threadId, new[] { "n02" });
+        env.SetupNoteRemovedChange(dataId, threadId, ["n02"]);
         NoteThread thread01 = env.GetNoteThread(sfProjectId, dataId);
         Assert.That(
             thread01.Notes.Select(n => n.DataId),
@@ -2133,7 +2126,7 @@ public class ParatextSyncRunnerTests
         Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
 
         // Remove note 3
-        env.SetupNoteRemovedChange(dataId, threadId, new[] { "n03" });
+        env.SetupNoteRemovedChange(dataId, threadId, ["n03"]);
 
         // SUT 2
         await env.Runner.RunAsync(sfProjectId, "user01", "project01_alt1", false, CancellationToken.None);
@@ -2182,7 +2175,7 @@ public class ParatextSyncRunnerTests
         );
 
         // Remove note 2 and 3
-        env.SetupNoteRemovedChange(dataId, threadId, new[] { "n02", "n03" });
+        env.SetupNoteRemovedChange(dataId, threadId, ["n02", "n03"]);
         // SUT
         await env.Runner.RunAsync(sfProjectId, "user01", sfProjectId, false, CancellationToken.None);
         Assert.That(env.ContainsNoteThread(sfProjectId, dataId), Is.True);
@@ -2203,7 +2196,7 @@ public class ParatextSyncRunnerTests
         var book = new Book("MAT", 1);
         env.SetupSFData(true, false, false, true, book);
         env.SetupPTData(book);
-        env.SetupNoteRemovedChange("dataId01", "thread01", new[] { "n01", "n02" });
+        env.SetupNoteRemovedChange("dataId01", "thread01", ["n01", "n02"]);
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
@@ -2487,7 +2480,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_SyncMetricsRecordsParatextNotes()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
         var syncMetricInfo = new SyncMetricInfo(1, 2, 3);
@@ -2508,7 +2501,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_SyncMetricsRecordsParatextBooks()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
         env.ParatextService.PutBookText(
@@ -2590,7 +2583,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_BiblicalTermsAreUpdated()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
 
@@ -2753,7 +2746,7 @@ public class ParatextSyncRunnerTests
         var book = new Book("MAT", 1, true);
         env.SetupSFData(true, false, false, true, book);
         env.SetupPTData(book);
-        Book[] books = { book };
+        Book[] books = [book];
         env.AddParatextNoteThreadData(books, true, true, true);
         SyncMetricInfo info = new SyncMetricInfo(1, 0, 0);
         env.ParatextService.UpdateParatextCommentsAsync(
@@ -3277,7 +3270,7 @@ public class ParatextSyncRunnerTests
                         Number = chapterDelta.Number,
                         IsValid = chapterDelta.IsValid,
                         LastVerse = chapterDelta.LastVerse,
-                        Permissions = new Dictionary<string, string>(),
+                        Permissions = [],
                     }
             )
             .ToList();
@@ -3342,9 +3335,9 @@ public class ParatextSyncRunnerTests
         public int HighestTargetChapter { get; }
         public int HighestSourceChapter { get; }
 
-        public HashSet<int> InvalidChapters { get; } = new HashSet<int>();
-        public HashSet<int> MissingTargetChapters { get; set; } = new HashSet<int>();
-        public HashSet<int> MissingSourceChapters { get; set; } = new HashSet<int>();
+        public HashSet<int> InvalidChapters { get; } = [];
+        public HashSet<int> MissingTargetChapters { get; set; } = [];
+        public HashSet<int> MissingSourceChapters { get; set; } = [];
     }
 
     private class TestEnvironment
@@ -3600,7 +3593,7 @@ public class ParatextSyncRunnerTests
             int bookNum = 70;
             int chapterNum = 1;
             string id = TextData.GetTextDocId(projectId, bookNum, chapterNum);
-            Dictionary<string, string> chapterPermissions = new Dictionary<string, string>();
+            Dictionary<string, string> chapterPermissions = [];
             if (setChapterPermissions)
             {
                 chapterPermissions.Add("user01", TextInfoPermission.Write);
@@ -3609,10 +3602,7 @@ public class ParatextSyncRunnerTests
             var textInfo = new TextInfo
             {
                 BookNum = bookNum,
-                Chapters = new List<Chapter>
-                {
-                    new Chapter { Number = chapterNum, Permissions = chapterPermissions },
-                },
+                Chapters = [new Chapter { Number = chapterNum, Permissions = chapterPermissions }],
             };
             RealtimeService.AddRepository(
                 "users",
@@ -3624,8 +3614,8 @@ public class ParatextSyncRunnerTests
                 OTType.RichText,
                 new MemoryRepository<TextData>(new[] { new TextData(Delta.New()) { Id = id } })
             );
-            SFProject[] sfProjects = new[]
-            {
+            SFProject[] sfProjects =
+            [
                 new SFProject
                 {
                     Id = projectId,
@@ -3635,7 +3625,7 @@ public class ParatextSyncRunnerTests
                         { "user04", SFProjectRole.Translator },
                     },
                 },
-            };
+            ];
             RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             MockProjectDirsExist(sfProjects.Select((SFProject proj) => proj.ParatextId));
 
@@ -3694,8 +3684,8 @@ public class ParatextSyncRunnerTests
                     }
                 )
             );
-            SFProject[] sfProjects = new[]
-            {
+            SFProject[] sfProjects =
+            [
                 new SFProject
                 {
                     Id = "project01",
@@ -3740,8 +3730,8 @@ public class ParatextSyncRunnerTests
                         SyncedToRepositoryVersion = "beforeSR",
                         DataInSync = true,
                     },
-                    ParatextUsers = new List<ParatextUserProfile>
-                    {
+                    ParatextUsers =
+                    [
                         new ParatextUserProfile
                         {
                             OpaqueUserId = "syncuser01",
@@ -3749,19 +3739,19 @@ public class ParatextSyncRunnerTests
                             SFUserId = "user01",
                         },
                         new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" },
-                    },
-                    NoteTags = new List<NoteTag>(),
+                    ],
+                    NoteTags = [],
                 },
                 new SFProject
                 {
                     Id = "project02",
                     Name = "Source",
                     ShortName = "SRC",
-                    UserRoles = new Dictionary<string, string>(),
+                    UserRoles = [],
                     ParatextId = "source",
                     IsRightToLeft = false,
                     TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
-                    NoteTags = new List<NoteTag>(),
+                    NoteTags = [],
                     CheckingConfig = new CheckingConfig
                     {
                         CheckingEnabled = checkingEnabled,
@@ -3816,7 +3806,7 @@ public class ParatextSyncRunnerTests
                     Id = "project04",
                     Name = "project04",
                     ShortName = "P04",
-                    UserRoles = new Dictionary<string, string>(),
+                    UserRoles = [],
                     ParatextId = "paratext-project04",
                     IsRightToLeft = false,
                     TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
@@ -3874,9 +3864,9 @@ public class ParatextSyncRunnerTests
                         DataInSync = false,
                         // No SyncedToRepositoryVersion
                     },
-                    NoteTags = new List<NoteTag>(),
+                    NoteTags = [],
                 },
-            };
+            ];
             RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             MockProjectDirsExist(sfProjects.Select((SFProject proj) => proj.ParatextId));
 
@@ -3885,7 +3875,7 @@ public class ParatextSyncRunnerTests
             RealtimeService.AddRepository("biblical_terms", OTType.Json0, new MemoryRepository<BiblicalTerm>());
             if (noteOnFirstBook && books.Length > 0)
             {
-                Book[] book = new[] { books[0] };
+                Book[] book = [books[0]];
                 AddParatextNoteThreadData(book);
             }
             else
@@ -4060,7 +4050,7 @@ public class ParatextSyncRunnerTests
             {
                 ThreadUpdated = true,
             };
-            SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
+            SetupNoteThreadChanges([noteThreadChange], "target", 40);
         }
 
         public void SetupNewNoteThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
@@ -4083,7 +4073,7 @@ public class ParatextSyncRunnerTests
                 CreateNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added),
                 ChangeType.Added
             );
-            SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
+            SetupNoteThreadChanges([noteThreadChange], "target", 40);
         }
 
         public void SetupNewConflictNoteThreadChange(string threadId, string verseRef = "MAT 1:1")
@@ -4105,7 +4095,7 @@ public class ParatextSyncRunnerTests
                 CreateNote(threadId, "conflict1", "", "Conflict on note.", ChangeType.Added, CommentTag.conflictTagId),
                 ChangeType.Added
             );
-            SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
+            SetupNoteThreadChanges([noteThreadChange], "target", 40);
         }
 
         public void SetupNoteRemovedChange(
@@ -4128,7 +4118,7 @@ public class ParatextSyncRunnerTests
             {
                 NoteIdsRemoved = new List<string>(noteIds),
             };
-            SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
+            SetupNoteThreadChanges([noteThreadChange], "target", 40);
         }
 
         public void SetupNoteReattachedChange(string dataId, string threadId, string verseRef)
@@ -4148,7 +4138,7 @@ public class ParatextSyncRunnerTests
             int start = before.Length;
             int length = reattachSelectedText.Length;
             noteThreadChange.Position = new TextAnchor { Start = start, Length = length };
-            string[] reattachParts = { verseRef, reattachSelectedText, start.ToString(), before, " reattach after." };
+            string[] reattachParts = [verseRef, reattachSelectedText, start.ToString(), before, " reattach after."];
             string reattached = string.Join(PtxUtils.StringUtils.orcCharacter, reattachParts);
             Note reattachedNote = CreateNote(threadId, "reattached01", "syncuser01", null, ChangeType.Added);
             reattachedNote.Reattached = reattached;
@@ -4187,7 +4177,7 @@ public class ParatextSyncRunnerTests
             }
 
             // Cause the created NoteThreadChange to be what is given when changes are asked for.
-            SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
+            SetupNoteThreadChanges([noteThreadChange], "target", 40);
         }
 
         /// <summary> Set the project's default comment tag to the a blank comment tag. </summary>
@@ -4283,8 +4273,8 @@ public class ParatextSyncRunnerTests
                     OriginalContextAfter = " context after",
                     OriginalSelectedText = "Scripture text in project",
                     PublishedToSF = publishedToSF,
-                    Notes = new List<Note>
-                    {
+                    Notes =
+                    [
                         new Note
                         {
                             DataId = "n01",
@@ -4307,7 +4297,7 @@ public class ParatextSyncRunnerTests
                             TagId = tagId,
                             DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                         },
-                    },
+                    ],
                 };
                 if (biblicalTermNote)
                 {
@@ -4340,7 +4330,7 @@ public class ParatextSyncRunnerTests
             string? startingDBSyncedToRepositoryVersion
         )
         {
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
             bool translationSuggestionsEnabled = false;
             bool checkingEnabled = true;
             bool changed = true;

@@ -318,12 +318,8 @@ public class UserServiceTests
     public void DeleteAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Service.DeleteAsync(null, new string[] { "systemRole" }, "userId")
-        );
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Service.DeleteAsync("curUserId", new string[] { "systemRole" }, null)
-        );
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync(null, ["systemRole"], "userId"));
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync("curUserId", ["systemRole"], null));
     }
 
     [Test]
@@ -332,7 +328,7 @@ public class UserServiceTests
         var env = new TestEnvironment();
         string curUserId = "user01";
         // Role is not a system admin
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user02";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
@@ -348,7 +344,7 @@ public class UserServiceTests
         var env = new TestEnvironment();
         string curUserId = "user01";
         // Role is not a system admin
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user01";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
@@ -361,7 +357,7 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.SystemAdmin };
+        string[] curUserSystemRoles = [SystemRole.SystemAdmin];
         string userIdToDelete = "user02";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
@@ -374,7 +370,7 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.SystemAdmin };
+        string[] curUserSystemRoles = [SystemRole.SystemAdmin];
         string userIdToDelete = "user01";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
@@ -387,7 +383,7 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user01";
         // SUT
         await env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete);
@@ -399,7 +395,7 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user01";
         Assert.That(env.UserSecrets.Contains(userIdToDelete), Is.True);
         // SUT
@@ -415,7 +411,7 @@ public class UserServiceTests
         // page.
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user01";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT

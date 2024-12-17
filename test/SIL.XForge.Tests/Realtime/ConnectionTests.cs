@@ -331,11 +331,10 @@ public class ConnectionTests
         // Setup
         var env = new TestEnvironment();
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
-        string[] ids = { "id1", "id2" };
+        string[] ids = ["id1", "id2"];
         env.RealtimeService.Server.FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
             .Returns(
-                new Snapshot<Project>[]
-                {
+                [
                     new Snapshot<Project>
                     {
                         Data = null,
@@ -348,7 +347,7 @@ public class ConnectionTests
                         Id = "id2",
                         Version = 2,
                     },
-                }
+                ]
             );
 
         // SUT
@@ -367,18 +366,17 @@ public class ConnectionTests
         // Setup
         var env = new TestEnvironment(documentCacheDisabled: true);
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
-        string[] ids = { "id1" };
+        string[] ids = ["id1"];
         env.RealtimeService.Server.FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
             .Returns(
-                new Snapshot<Project>[]
-                {
+                [
                     new Snapshot<Project>
                     {
                         Data = new TestProject(),
                         Id = "id1",
                         Version = 1,
                     },
-                }
+                ]
             );
 
         // SUT
@@ -626,8 +624,8 @@ public class ConnectionTests
                 new RealtimeOptions()
                 {
                     ProjectDoc = new DocConfig("some_projects", typeof(Project)),
-                    ProjectDataDocs = new List<DocConfig>(),
-                    UserDataDocs = new List<DocConfig>(),
+                    ProjectDataDocs = [],
+                    UserDataDocs = [],
                 }
             );
             var authOptions = Options.Create(Substitute.For<AuthOptions>());

@@ -28,7 +28,7 @@ public class Delta
     /// For a document, represents a sequence of content. Paragraph and table information describes the content that
     /// came before, not after, in the sequence.
     /// </summary>
-    public Delta() => Ops = new List<JToken>();
+    public Delta() => Ops = [];
 
     public Delta(IEnumerable<JToken> ops) => Ops = ops.ToList();
 
@@ -229,7 +229,7 @@ public class Delta
     /// <param name="includeParaWithStyle">Function to determine if the paragraph break should be included.</param>
     public bool TryConcatenateInserts(out string opStr, string verseRef, Func<string, bool> includeParaWithStyle)
     {
-        List<JToken> verseOps = new List<JToken>();
+        List<JToken> verseOps = [];
         bool isTargetVerse = verseRef == "0";
         foreach (JToken op in this.Ops)
         {
@@ -320,8 +320,8 @@ public class Delta
 
     private static JToken ComposeAttributes(JToken a, JToken b, bool keepNull)
     {
-        JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : new JObject();
-        JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : new JObject();
+        JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : [];
+        JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : [];
         JObject attributes = (JObject)bObj.DeepClone();
         if (!keepNull)
             attributes = new JObject(attributes.Properties().Where(p => p.Value.Type != JTokenType.Null));
@@ -375,8 +375,8 @@ public class Delta
 
     static JToken DiffAttributes(JToken a, JToken b, bool ignoreCharIdDifferences)
     {
-        JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : new JObject();
-        JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : new JObject();
+        JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : [];
+        JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : [];
         // Clone the objects so that if there is a real difference in the attributes we can update the cid
         // to be the cid for the new object
         JObject aClone = (JObject)aObj.DeepClone();
@@ -512,9 +512,9 @@ public class Delta
     /// <summary>Provides methods to process ops for text that may have attribute changes</summary>
     private class DeltaOpsAttributeHelper
     {
-        private List<int> opLengths = new List<int>();
-        private List<JObject> originalDeltaOps = new List<JObject>();
-        private List<JObject> newDeltaOps = new List<JObject>();
+        private List<int> opLengths = [];
+        private List<JObject> originalDeltaOps = [];
+        private List<JObject> newDeltaOps = [];
         private bool retainCharIdsOnAttributes;
 
         public DeltaOpsAttributeHelper(bool retainCharIds) => retainCharIdsOnAttributes = retainCharIds;
@@ -522,8 +522,8 @@ public class Delta
         public void Add(int length, JToken originalOp, JToken newOp)
         {
             opLengths.Add(length);
-            JObject originalOpObject = originalOp?.Type == JTokenType.Object ? (JObject)originalOp : new JObject();
-            JObject newOpObject = newOp?.Type == JTokenType.Object ? (JObject)newOp : new JObject();
+            JObject originalOpObject = originalOp?.Type == JTokenType.Object ? (JObject)originalOp : [];
+            JObject newOpObject = newOp?.Type == JTokenType.Object ? (JObject)newOp : [];
             originalDeltaOps.Add(originalOpObject);
             newDeltaOps.Add(newOpObject);
         }
@@ -557,8 +557,8 @@ public class Delta
 
         private bool HaveOpsChanged()
         {
-            JObject[] originalOpsArray = originalDeltaOps.ToArray();
-            JObject[] newOpsArray = newDeltaOps.ToArray();
+            JObject[] originalOpsArray = [.. originalDeltaOps];
+            JObject[] newOpsArray = [.. newDeltaOps];
             for (int i = 0; i < originalOpsArray.Length; i++)
             {
                 JObject originalOp = originalOpsArray[i];

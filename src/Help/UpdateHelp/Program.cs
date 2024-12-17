@@ -152,7 +152,7 @@ class Program
 
             string[] htmlFiles = Directory.GetFiles(targetPath, "*.htm", SearchOption.AllDirectories);
             // auxiliary html files with titles or headings that can be ignored
-            string[] ignoreFiles = { "index1.htm", "csh-redirect.htm" };
+            string[] ignoreFiles = ["index1.htm", "csh-redirect.htm"];
             IEnumerable<string> targetFiles = htmlFiles.Where(t => !ignoreFiles.Contains(Path.GetFileName(t)));
             foreach (string file in targetFiles)
             {

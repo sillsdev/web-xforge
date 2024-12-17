@@ -14,7 +14,7 @@ namespace SIL.XForge.Controllers;
 [TestFixture]
 public class UsersRpcControllerTests
 {
-    private static readonly string[] Roles = { SystemRole.User };
+    private static readonly string[] Roles = [SystemRole.User];
     private const string User01 = "user01";
     private const string User02 = "user02";
 

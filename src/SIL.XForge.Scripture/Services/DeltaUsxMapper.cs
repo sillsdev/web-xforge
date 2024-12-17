@@ -26,8 +26,8 @@ public class DeltaUsxMapper : IDeltaUsxMapper
     /// Paragraph, Poetry, and List styles. This indicates paragraph styles that can contain verse text. For example, s
     /// is not included in the set, because it cannot contain verse text. See also text-view-model.ts PARA_STYLES.
     ///</summary>
-    private static readonly HashSet<string> ParagraphPoetryListStyles = new HashSet<string>
-    {
+    private static readonly HashSet<string> ParagraphPoetryListStyles =
+    [
         // Paragraphs
         "p",
         "nb",
@@ -56,7 +56,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         "li",
         "lf",
         "lim",
-    };
+    ];
 
     private IGuidService GuidService;
     private ILogger<DeltaUsxMapper> Logger;
@@ -287,14 +287,14 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                         break;
 
                     case "ref":
-                        var newRefAttributes = (JObject)attributes?.DeepClone() ?? new JObject();
+                        var newRefAttributes = (JObject)attributes?.DeepClone() ?? [];
                         newRefAttributes.Add(new JProperty(elem.Name.LocalName, GetAttributes(elem)));
                         newRefAttributes = AddInvalidInlineAttribute(invalidNodes, elem, newRefAttributes);
                         newDelta.InsertText(elem.Value, state.CurRef, newRefAttributes);
                         break;
 
                     case "char":
-                        var newChildAttributes = (JObject)attributes?.DeepClone() ?? new JObject();
+                        var newChildAttributes = (JObject)attributes?.DeepClone() ?? [];
                         JToken existingCharAttrs = newChildAttributes["char"];
                         JObject newCharAttrs = GetAttributes(elem);
                         if (!newCharAttrs.ContainsKey("cid"))
@@ -476,7 +476,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
     {
         if (invalidNodes.Contains(node))
         {
-            attributes = (JObject)attributes?.DeepClone() ?? new JObject();
+            attributes = (JObject)attributes?.DeepClone() ?? [];
             attributes["invalid-inline"] = true;
         }
         return attributes;
@@ -486,7 +486,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
     {
         if (invalidNodes.Contains(node))
         {
-            attributes = (JObject)attributes?.DeepClone() ?? new JObject();
+            attributes = (JObject)attributes?.DeepClone() ?? [];
             attributes["invalid-block"] = true;
         }
         return attributes;
@@ -595,7 +595,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         // In-progress nested text and formatting, with the top of the stack representing the inner part of the nesting.
         // Each element contains a first-to-last set of XML nodes.
         var childNodes = new Stack<List<XNode>>();
-        childNodes.Push(new List<XNode>());
+        childNodes.Push([]);
         JObject curTableAttrs = null;
         JObject curRowAttrs = null;
         foreach (JToken op in delta.Ops)
@@ -625,7 +625,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                 // If the current op is inserting text with formatting that is not already being tracked for the
                 // existing text, prepare places to isolate the new text that the new formatting will apply to.
                 for (int i = curCharAttrs.Count; i < charAttrs.Count; i++)
-                    childNodes.Push(new List<XNode>());
+                    childNodes.Push([]);
                 curCharAttrs = charAttrs;
             }
 
@@ -667,9 +667,9 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                     }
 
                     while (childNodes.Count < 2)
-                        childNodes.Push(new List<XNode>());
+                        childNodes.Push([]);
                     childNodes.Peek().Add(cellElem);
-                    childNodes.Push(new List<XNode>());
+                    childNodes.Push([]);
 
                     curTableAttrs = tableAttrs;
                     curRowAttrs = rowAttrs;
@@ -793,8 +793,8 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         return charAttrs switch
         {
             JArray array => new List<JObject>(array.Children<JObject>()),
-            JObject obj => new List<JObject> { obj },
-            _ => new List<JObject>(),
+            JObject obj => [obj],
+            _ => [],
         };
     }
 

@@ -33,7 +33,7 @@ public class MockScrText : ScrText
         }
     }
 
-    public Dictionary<string, string> Data { get; } = new Dictionary<string, string>();
+    public Dictionary<string, string> Data { get; } = [];
 
     /// <summary>
     /// Return text of specified chapter or book.

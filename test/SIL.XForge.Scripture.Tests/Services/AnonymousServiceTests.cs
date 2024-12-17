@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NSubstitute;
@@ -185,8 +184,8 @@ public class AnonymousServiceTests
                     new SFProjectSecret
                     {
                         Id = Project01,
-                        ShareKeys = new List<ShareKey>
-                        {
+                        ShareKeys =
+                        [
                             new ShareKey
                             {
                                 Key = "key01",
@@ -208,7 +207,7 @@ public class AnonymousServiceTests
                                 ShareLinkType = ShareLinkType.Recipient,
                                 UsersGenerated = MaxUsers,
                             },
-                        },
+                        ],
                     },
                 }
             );

@@ -29,10 +29,10 @@ public class MemoryRepository<T> : IRepository<T>
 
     public MemoryRepository(IEnumerable<Func<T, object>> uniqueKeySelectors = null, IEnumerable<T> entities = null)
     {
-        _uniqueKeySelectors = uniqueKeySelectors?.ToArray() ?? Array.Empty<Func<T, object>>();
+        _uniqueKeySelectors = uniqueKeySelectors?.ToArray() ?? [];
         _uniqueKeys = new HashSet<object>[_uniqueKeySelectors.Length];
         for (int i = 0; i < _uniqueKeys.Length; i++)
-            _uniqueKeys[i] = new HashSet<object>();
+            _uniqueKeys[i] = [];
 
         _entities = new ConcurrentDictionary<string, string>();
         if (entities != null)
@@ -168,7 +168,7 @@ public class MemoryRepository<T> : IRepository<T>
 
     public Task<int> DeleteAllAsync(Expression<Func<T, bool>> filter)
     {
-        T[] entities = Query().Where(filter).ToArray();
+        T[] entities = [.. Query().Where(filter)];
         foreach (T entity in entities)
             Remove(entity);
         return Task.FromResult(entities.Length);

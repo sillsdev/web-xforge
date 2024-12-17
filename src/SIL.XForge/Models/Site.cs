@@ -7,5 +7,5 @@ namespace SIL.XForge.Models;
 public class Site
 {
     public string CurrentProjectId { get; set; }
-    public List<string> Projects { get; set; } = new List<string>();
+    public List<string> Projects { get; set; } = [];
 }

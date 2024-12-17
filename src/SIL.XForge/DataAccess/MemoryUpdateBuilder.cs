@@ -26,7 +26,7 @@ public class MemoryUpdateBuilder<T> : IUpdateBuilder<T>
     public IUpdateBuilder<T> Set<TField>(Expression<Func<T, TField>> field, TField value)
     {
         (IEnumerable<object> owners, PropertyInfo propInfo, object index) = GetFieldOwners(field);
-        object[] indices = index == null ? null : new[] { index };
+        object[] indices = index == null ? null : [index];
         foreach (object owner in owners)
             propInfo.SetValue(owner, value, indices);
         return this;
@@ -47,9 +47,9 @@ public class MemoryUpdateBuilder<T> : IUpdateBuilder<T>
             // remove value from a dictionary
             Type dictionaryType = prop.DeclaringType;
             Type keyType = dictionaryType.GetGenericArguments()[0];
-            MethodInfo removeMethod = dictionaryType.GetMethod("Remove", new[] { keyType });
+            MethodInfo removeMethod = dictionaryType.GetMethod("Remove", [keyType]);
             foreach (object owner in owners)
-                removeMethod.Invoke(owner, new[] { index });
+                removeMethod.Invoke(owner, [index]);
         }
         else
         {
@@ -66,7 +66,7 @@ public class MemoryUpdateBuilder<T> : IUpdateBuilder<T>
     public IUpdateBuilder<T> Inc(Expression<Func<T, int>> field, int value)
     {
         (IEnumerable<object> owners, PropertyInfo prop, object index) = GetFieldOwners(field);
-        object[] indices = index == null ? null : new[] { index };
+        object[] indices = index == null ? null : [index];
         foreach (object owner in owners)
         {
             var curValue = (int)prop.GetValue(owner, indices);
@@ -86,7 +86,7 @@ public class MemoryUpdateBuilder<T> : IUpdateBuilder<T>
         TItem[] toRemove = collection.Where(predicate.Compile()).ToArray();
         MethodInfo removeMethod = collection.GetType().GetMethod("Remove");
         foreach (TItem item in toRemove)
-            removeMethod.Invoke(collection, new object[] { item });
+            removeMethod.Invoke(collection, [item]);
         return this;
     }
 
@@ -95,7 +95,7 @@ public class MemoryUpdateBuilder<T> : IUpdateBuilder<T>
         Func<T, IEnumerable<TItem>> getCollection = field.Compile();
         IEnumerable<TItem> collection = getCollection(_entity);
         MethodInfo addMethod = collection.GetType().GetMethod("Remove");
-        addMethod.Invoke(collection, new object[] { value });
+        addMethod.Invoke(collection, [value]);
         return this;
     }
 
@@ -104,7 +104,7 @@ public class MemoryUpdateBuilder<T> : IUpdateBuilder<T>
         Func<T, IEnumerable<TItem>> getCollection = field.Compile();
         IEnumerable<TItem> collection = getCollection(_entity);
         MethodInfo addMethod = collection.GetType().GetMethod("Add");
-        addMethod.Invoke(collection, new object[] { value });
+        addMethod.Invoke(collection, [value]);
         return this;
     }
 
@@ -150,10 +150,7 @@ public class MemoryUpdateBuilder<T> : IUpdateBuilder<T>
                                         var predicate = (LambdaExpression)callExpr.Arguments[1];
                                         Type itemType = predicate.Parameters[0].Type;
                                         MethodInfo firstOrDefault = GetFirstOrDefaultMethod(itemType);
-                                        newOwner = firstOrDefault.Invoke(
-                                            null,
-                                            new object[] { owner, predicate.Compile() }
-                                        );
+                                        newOwner = firstOrDefault.Invoke(null, [owner, predicate.Compile()]);
                                         if (newOwner != null)
                                             newOwners.Add(newOwner);
                                     }
@@ -178,7 +175,7 @@ public class MemoryUpdateBuilder<T> : IUpdateBuilder<T>
                                     }
                                     else
                                     {
-                                        newOwner = method.Invoke(owner, new object[] { index });
+                                        newOwner = method.Invoke(owner, [index]);
                                         if (newOwner != null)
                                             newOwners.Add(newOwner);
                                     }

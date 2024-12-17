@@ -169,11 +169,9 @@ public class SFInstallableDblResource : InstallableResource
                 if (_fileSystemService.FileExists(projectPath))
                 {
                     var name = new ProjectName(projectPath);
-                    string userName = _jwtTokenHelper.GetParatextUsername(_userSecret);
-                    if (userName == null)
-                    {
-                        throw new Exception($"Failed to get a PT username for SF user id {_userSecret.Id}.");
-                    }
+                    string userName =
+                        _jwtTokenHelper.GetParatextUsername(_userSecret)
+                        ?? throw new Exception($"Failed to get a PT username for SF user id {_userSecret.Id}.");
                     var passwordProvider = new ParatextZippedResourcePasswordProvider(_paratextOptions);
                     var resourceScrText = _scrTextCollection.CreateResourceScrText(userName, name, passwordProvider);
                     if (resourceScrText.Settings.DBLId == DBLEntryUid)
@@ -345,7 +343,7 @@ public class SFInstallableDblResource : InstallableResource
             var report = new Exception(errorExplanation);
             // Report to bugsnag, but don't throw.
             exceptionHandler.ReportException(report);
-            return Enumerable.Empty<SFInstallableDblResource>();
+            return [];
         }
         IEnumerable<SFInstallableDblResource> resources = ConvertJsonResponseToInstallableDblResources(
             baseUrl,
@@ -480,7 +478,7 @@ public class SFInstallableDblResource : InstallableResource
     internal static IReadOnlyDictionary<string, int> GetInstalledResourceRevisions()
     {
         // Initialize variables
-        Dictionary<string, int> resourceRevisions = new Dictionary<string, int>();
+        Dictionary<string, int> resourceRevisions = [];
         string resourcesDirectory;
         string resourcesByIdDirectory;
 
@@ -501,8 +499,7 @@ public class SFInstallableDblResource : InstallableResource
         if (!string.IsNullOrWhiteSpace(resourcesDirectory) && Directory.Exists(resourcesDirectory))
         {
             const string resourceFilesPattern = $"*{ProjectFileManager.resourceFileExtension}";
-            List<string> resourceFiles = new List<string>();
-            resourceFiles.AddRange(Directory.EnumerateFiles(resourcesDirectory, resourceFilesPattern));
+            List<string> resourceFiles = [.. Directory.EnumerateFiles(resourcesDirectory, resourceFilesPattern)];
             if (Directory.Exists(resourcesByIdDirectory))
             {
                 resourceFiles.AddRange(Directory.EnumerateFiles(resourcesByIdDirectory, resourceFilesPattern));
@@ -671,7 +668,7 @@ public class SFInstallableDblResource : InstallableResource
                 // This is probably caused by partial result from poor connection to DBL
                 yield break;
             }
-            foreach (JToken jsonResource in jsonResources["resources"] as JArray ?? new JArray())
+            foreach (JToken jsonResource in jsonResources["resources"] as JArray ?? [])
             {
                 var name = (string)jsonResource["name"];
                 var nameCommon = (string)jsonResource["nameCommon"];

@@ -659,7 +659,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         LogMetric("Updating Paratext biblical terms");
         await NotifySyncProgress(syncPhase, 50);
         double i = 0.0;
-        List<BiblicalTerm> biblicalTermsToUpdate = new List<BiblicalTerm>();
+        List<BiblicalTerm> biblicalTermsToUpdate = [];
         foreach (IDocument<BiblicalTerm> biblicalTermDoc in biblicalTermDocs)
         {
             i++;
@@ -695,11 +695,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     )
     {
         LogMetric("Updating Biblical Terms thread docs");
-        await UpdateNoteThreadDocsAsync(
-            null,
-            biblicalTermNoteThreadDocs.ToDictionary(nt => nt.Data.DataId),
-            new Dictionary<int, ChapterDelta>()
-        );
+        await UpdateNoteThreadDocsAsync(null, biblicalTermNoteThreadDocs.ToDictionary(nt => nt.Data.DataId), []);
 
         LogMetric("Getting Paratext biblical terms");
         await NotifySyncProgress(syncPhase, 0);
@@ -918,7 +914,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 !targetTextDocsByBook.TryGetValue(text.BookNum, out SortedList<int, IDocument<TextData>> targetTextDocs)
             )
             {
-                targetTextDocs = new SortedList<int, IDocument<TextData>>();
+                targetTextDocs = [];
             }
 
             LogMetric("Updating text docs - get deltas");
@@ -1028,7 +1024,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
         _userIdsToDisplayNames = await _userService.DisplayNamesFromUserIds(
             userId,
-            _projectDoc.Data.UserRoles.Keys.ToArray()
+            [.. _projectDoc.Data.UserRoles.Keys]
         );
 
         if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))

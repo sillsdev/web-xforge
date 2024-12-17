@@ -9,5 +9,5 @@ public abstract class ProjectSecret : IIdentifiable
     /// <summary>
     /// Outstanding project access shares to specific people, represented by an email address and code pair.
     /// </summary>
-    public List<ShareKey> ShareKeys { get; set; } = new List<ShareKey>();
+    public List<ShareKey> ShareKeys { get; set; } = [];
 }

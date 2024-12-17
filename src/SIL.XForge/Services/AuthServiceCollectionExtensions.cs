@@ -62,8 +62,8 @@ public static class AuthServiceCollectionExtensions
                         var authService = context.HttpContext.RequestServices.GetService<IAuthService>();
                         if (authService.ValidateWebhookCredentials(context.Username, context.Password))
                         {
-                            Claim[] claims = new[]
-                            {
+                            Claim[] claims =
+                            [
                                 new Claim(
                                     ClaimTypes.NameIdentifier,
                                     context.Username,
@@ -76,7 +76,7 @@ public static class AuthServiceCollectionExtensions
                                     ClaimValueTypes.String,
                                     context.Options.ClaimsIssuer
                                 ),
-                            };
+                            ];
 
                             context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
                             context.Success();

@@ -91,7 +91,7 @@ public class UserService : IUserService
                 op.Set(u => u.Name, name);
                 op.Set(u => u.Email, (string)userProfile["email"]);
                 op.Set(u => u.AvatarUrl, avatarUrl);
-                List<string> roles = new List<string>();
+                List<string> roles = [];
                 if (userProfile["app_metadata"]?["xf_role"] is JArray)
                 {
                     roles.AddRange(userProfile["app_metadata"]["xf_role"].Select(r => r.ToString()));
@@ -207,7 +207,7 @@ public class UserService : IUserService
         await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
         IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
         // Only overwrite the avatar for allowed domains so as not to overwrite an avatar provided by a social connection
-        string[] allowedDomains = { "cdn.auth0.com", "gravatar.com" };
+        string[] allowedDomains = ["cdn.auth0.com", "gravatar.com"];
         if (!allowedDomains.Any(userDoc.Data.AvatarUrl.Contains))
         {
             return;
@@ -215,7 +215,7 @@ public class UserService : IUserService
 
         string initials = string.Concat(
             userDoc
-                .Data.DisplayName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Data.DisplayName.Split([' '], StringSplitOptions.RemoveEmptyEntries)
                 .Where(x => x.Length > 1 && char.IsLetter(x[0]))
                 .Select(x => char.ToLower(x[0]))
         );

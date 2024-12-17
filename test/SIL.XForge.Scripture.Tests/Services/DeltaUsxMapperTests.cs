@@ -3665,7 +3665,7 @@ public class DeltaUsxMapperTests
         using ZipArchive archive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
         Assert.That(archive.Entries.Any(), "setup. unexpected input size.");
         bool allBooksRoundtrip = true;
-        List<string> errorMessages = new();
+        List<string> errorMessages = [];
         foreach (ZipArchiveEntry entry in archive.Entries)
         {
             string bookCode = Regex

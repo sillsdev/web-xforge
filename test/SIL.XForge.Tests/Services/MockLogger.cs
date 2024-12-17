@@ -37,7 +37,7 @@ public class MockLogger<T> : ILogger<T>
     /// <summary>
     /// Stores logged events.
     /// </summary>
-    public readonly List<LogEvent> LogEvents = new List<LogEvent>();
+    public readonly List<LogEvent> LogEvents = [];
 
     public MockLogger() { }
 

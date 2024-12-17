@@ -47,7 +47,7 @@ public class HgWrapper : IHgWrapper
     public string GetLastPublicRevision(string repository)
     {
         string ids = RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
-        string revision = ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
+        string revision = ids.Split(["\n"], StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
         return revision;
     }
 

@@ -69,7 +69,7 @@ public class AnonymousController(
     [HttpGet("featureFlags")]
     public async Task<ActionResult<Dictionary<string, bool>>> FeatureFlags()
     {
-        Dictionary<string, bool> features = new Dictionary<string, bool>();
+        Dictionary<string, bool> features = [];
         await foreach (string feature in featureManager.GetFeatureNamesAsync())
         {
             features.Add(feature, await featureManager.IsEnabledAsync(feature));

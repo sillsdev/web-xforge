@@ -35,8 +35,8 @@ public class MemoryRealtimeService : IRealtimeService
 
     public MemoryRealtimeService()
     {
-        _repos = new Dictionary<Type, object>();
-        _docConfigs = new Dictionary<Type, DocConfig>();
+        _repos = [];
+        _docConfigs = [];
     }
 
     /// <summary>

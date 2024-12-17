@@ -66,10 +66,10 @@ public class ParatextNotesMapper(
     )
     {
         // Usernames of SF community checker users. Paratext users are mapped to null.
-        Dictionary<string, string> checkerUsernames = new Dictionary<string, string>();
+        Dictionary<string, string> checkerUsernames = [];
         var version = (string)oldNotesElem.Attribute("version") ?? "1.1";
         Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem, ptProjectUsers);
-        List<XElement> commentsToDelete = new List<XElement>();
+        List<XElement> commentsToDelete = [];
 
         var notesElem = new XElement("notes", new XAttribute("version", version));
         if (answerExportMethod != CheckingAnswerExport.None)

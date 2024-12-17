@@ -17,7 +17,7 @@ public class MemoryConnection : IConnection
     internal MemoryConnection(MemoryRealtimeService realtimeService)
     {
         _realtimeService = realtimeService;
-        _documents = new Dictionary<(string, string), object>();
+        _documents = [];
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public class MemoryConnection : IConnection
     public async Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)
         where T : IIdentifiable
     {
-        List<IDocument<T>> docs = new List<IDocument<T>>();
+        List<IDocument<T>> docs = [];
         foreach (IDocument<T> doc in ids.Select(Get<T>))
         {
             await doc.FetchAsync();

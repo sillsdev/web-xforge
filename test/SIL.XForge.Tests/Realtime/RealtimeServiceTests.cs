@@ -35,7 +35,7 @@ public class RealtimeServiceTests
         // is defined in TestEnvironment.
         var collectionsToBePruned = new Dictionary<string, IMongoCollection<BsonDocument>>();
         string[] collectionNames =
-        {
+        [
             "some_projects",
             "favorite_numbers",
             "favorite_things",
@@ -48,7 +48,7 @@ public class RealtimeServiceTests
             "m_favorite_numbers",
             "m_favorite_things",
             "m_favorite_verses",
-        };
+        ];
         foreach (string collectionName in collectionNames)
         {
             IMongoCollection<BsonDocument> collection = Substitute.For<IMongoCollection<BsonDocument>>();
@@ -85,14 +85,14 @@ public class RealtimeServiceTests
         // is defined in TestEnvironment.
         var collectionsToBePruned = new Dictionary<string, IMongoCollection<BsonDocument>>();
         string[] collectionNames =
-        {
+        [
             "users",
             "o_users",
             "m_users",
             "favorite_animals",
             "o_favorite_animals",
             "m_favorite_animals",
-        };
+        ];
         foreach (string collectionName in collectionNames)
         {
             IMongoCollection<BsonDocument> collection = Substitute.For<IMongoCollection<BsonDocument>>();
@@ -304,13 +304,13 @@ public class RealtimeServiceTests
                 new RealtimeOptions
                 {
                     ProjectDoc = new DocConfig("some_projects", typeof(Project)),
-                    ProjectDataDocs = new List<DocConfig>
-                    {
+                    ProjectDataDocs =
+                    [
                         new DocConfig("favorite_numbers", typeof(int)),
                         new DocConfig("favorite_things", typeof(object)),
                         new DocConfig("favorite_verses", typeof(string)),
-                    },
-                    UserDataDocs = new List<DocConfig> { new DocConfig("favorite_animals", typeof(object)) },
+                    ],
+                    UserDataDocs = [new DocConfig("favorite_animals", typeof(object))],
                 }
             );
             IOptions<AuthOptions> authOptions = Microsoft.Extensions.Options.Options.Create(

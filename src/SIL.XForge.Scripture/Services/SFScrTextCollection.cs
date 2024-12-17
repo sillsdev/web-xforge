@@ -14,7 +14,7 @@ namespace SIL.XForge.Scripture.Services;
 public class SFScrTextCollection : ScrTextCollection
 {
     // Keep track of languages that weren't found in SLDR so we don't call over and over for the same bad code.
-    private static readonly List<string> _sldrLookupFailed = new List<string>();
+    private static readonly List<string> _sldrLookupFailed = [];
 
     /// <summary>
     /// The location where resources reside if there is more than one resource with the same short name.

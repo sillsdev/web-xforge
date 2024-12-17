@@ -16,12 +16,12 @@ public class Json0OpBuilder<T>
 
     public Json0OpBuilder(T data) => _data = data;
 
-    public List<Json0Op> Op { get; } = new List<Json0Op>();
+    public List<Json0Op> Op { get; } = [];
 
     public Json0OpBuilder<T> Insert<TItem>(Expression<Func<T, List<TItem>>> field, int index, TItem item)
     {
         var objectPath = new ObjectPath(field);
-        List<object> path = objectPath.Items.ToList();
+        List<object> path = [.. objectPath.Items];
         path.Add(index);
         Op.Add(new Json0Op { Path = CreateJson0Path(path), InsertItem = item });
         return this;
@@ -32,7 +32,7 @@ public class Json0OpBuilder<T>
         var objectPath = new ObjectPath(field);
         if (!objectPath.TryGetValue(_data, out List<TItem> list) || list == null)
             throw new InvalidOperationException("The specified list does not exist.");
-        List<object> path = objectPath.Items.ToList();
+        List<object> path = [.. objectPath.Items];
         path.Add(list.Count);
         Op.Add(new Json0Op { Path = CreateJson0Path(path), InsertItem = item });
         return this;
@@ -43,7 +43,7 @@ public class Json0OpBuilder<T>
         var objectPath = new ObjectPath(field);
         if (!objectPath.TryGetValue(_data, out List<TItem> list) || list == null)
             throw new InvalidOperationException("The specified list does not exist.");
-        List<object> path = objectPath.Items.ToList();
+        List<object> path = [.. objectPath.Items];
         path.Add(index);
         Op.Add(new Json0Op { Path = CreateJson0Path(path), DeleteItem = list[index] });
         return this;
@@ -52,7 +52,7 @@ public class Json0OpBuilder<T>
     public Json0OpBuilder<T> Remove<TItem>(Expression<Func<T, List<TItem>>> field, int index, TItem item)
     {
         var objectPath = new ObjectPath(field);
-        List<object> path = objectPath.Items.ToList();
+        List<object> path = [.. objectPath.Items];
         path.Add(index);
         Op.Add(new Json0Op { Path = CreateJson0Path(path), DeleteItem = item });
         return this;
@@ -74,7 +74,7 @@ public class Json0OpBuilder<T>
         TItem oldItem = list[index];
         if (!equalityComparer.Equals(oldItem, newItem))
         {
-            List<object> path = objectPath.Items.ToList();
+            List<object> path = [.. objectPath.Items];
             path.Add(index);
             Op.Add(
                 new Json0Op
@@ -106,7 +106,7 @@ public class Json0OpBuilder<T>
         if (!equalityComparer.Equals(oldItem, newItem))
         {
             var objectPath = new ObjectPath(field);
-            List<object> path = objectPath.Items.ToList();
+            List<object> path = [.. objectPath.Items];
             path.Add(index);
             Op.Add(
                 new Json0Op

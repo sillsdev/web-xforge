@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -16,7 +15,7 @@ internal class AudioServiceTests
     {
         var env = new TestEnvironment();
         const string path = "file.mp3";
-        await using var stream = new MemoryStream(Array.Empty<byte>());
+        await using var stream = new MemoryStream([]);
         env.FileSystemService.OpenFile(path, FileMode.Open).Returns(stream);
 
         // SUT
@@ -29,7 +28,7 @@ internal class AudioServiceTests
     {
         var env = new TestEnvironment();
         const string path = "file.mp3";
-        await using var stream = new MemoryStream(new byte[] { 0x44, 0x2E, 0x56, 0x2E });
+        await using var stream = new MemoryStream([0x44, 0x2E, 0x56, 0x2E]);
         env.FileSystemService.OpenFile(path, FileMode.Open).Returns(stream);
 
         // SUT
@@ -42,7 +41,7 @@ internal class AudioServiceTests
     {
         var env = new TestEnvironment();
         const string path = "file.mp3";
-        await using var stream = new MemoryStream(new byte[] { 0xFF, 0xFF });
+        await using var stream = new MemoryStream([0xFF, 0xFF]);
         env.FileSystemService.OpenFile(path, FileMode.Open).Returns(stream);
 
         // SUT
@@ -55,7 +54,7 @@ internal class AudioServiceTests
     {
         var env = new TestEnvironment();
         const string path = "file.mp3";
-        await using var stream = new MemoryStream(new byte[] { 0x0, 0x0, 0x0, 0x0 });
+        await using var stream = new MemoryStream([0x0, 0x0, 0x0, 0x0]);
         env.FileSystemService.OpenFile(path, FileMode.Open).Returns(stream);
 
         // SUT
@@ -68,7 +67,7 @@ internal class AudioServiceTests
     {
         var env = new TestEnvironment();
         const string path = "file.mp3";
-        await using var stream = new MemoryStream(new byte[] { 0x49, 0x44, 0x33, 0x03 });
+        await using var stream = new MemoryStream([0x49, 0x44, 0x33, 0x03]);
         env.FileSystemService.OpenFile(path, FileMode.Open).Returns(stream);
 
         // SUT
@@ -81,7 +80,7 @@ internal class AudioServiceTests
     {
         var env = new TestEnvironment();
         const string path = "file.mp3";
-        await using var stream = new MemoryStream(new byte[] { 0xFF, 0xEB, 0x10, 0x0 });
+        await using var stream = new MemoryStream([0xFF, 0xEB, 0x10, 0x0]);
         env.FileSystemService.OpenFile(path, FileMode.Open).Returns(stream);
 
         // SUT
@@ -94,7 +93,7 @@ internal class AudioServiceTests
     {
         var env = new TestEnvironment();
         const string path = "file.mp3";
-        await using var stream = new MemoryStream(new byte[] { 0xFF, 0xF3, 0x28, 0xC4 });
+        await using var stream = new MemoryStream([0xFF, 0xF3, 0x28, 0xC4]);
         env.FileSystemService.OpenFile(path, FileMode.Open).Returns(stream);
 
         // SUT
@@ -107,7 +106,7 @@ internal class AudioServiceTests
     {
         var env = new TestEnvironment();
         const string path = "file.mp3";
-        await using var stream = new MemoryStream(new byte[] { 0x0, 0x0, 0x0, 0xFF, 0xF3, 0x28, 0xC4 });
+        await using var stream = new MemoryStream([0x0, 0x0, 0x0, 0xFF, 0xF3, 0x28, 0xC4]);
         env.FileSystemService.OpenFile(path, FileMode.Open).Returns(stream);
 
         // SUT
