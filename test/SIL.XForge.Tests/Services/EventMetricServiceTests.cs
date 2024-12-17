@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
@@ -206,6 +207,34 @@ public class EventMetricServiceTests
             { "singleFloat", BsonDouble.Create(singleFloat) },
             { "stringArray", BsonArray.Create(stringArray) },
             { "nullValue", BsonNull.Value },
+        };
+
+        // SUT
+        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+
+        // Verify the saved event metric
+        EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
+        Assert.AreEqual(EventScope01, eventMetric.Scope);
+        Assert.AreEqual(Project01, eventMetric.ProjectId);
+        Assert.AreEqual(User01, eventMetric.UserId);
+        Assert.AreEqual(EventType01, eventMetric.EventType);
+        Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+    }
+
+    [Test]
+    public async Task SaveEventMetricAsync_DoNotSaveCancellationToken()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
+        {
+            { "sfProjectId", Project01 },
+            { "curUserId", User01 },
+            { "token", CancellationToken.None },
+        };
+        Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
+        {
+            { "sfProjectId", BsonValue.Create(Project01) },
+            { "curUserId", BsonValue.Create(User01) },
         };
 
         // SUT
