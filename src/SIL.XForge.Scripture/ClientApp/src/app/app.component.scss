@@ -240,10 +240,22 @@ header {
   z-index: 10;
 }
 
+@keyframes expandIcon {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--mdc-icon-button-state-layer-size);
+  }
+}
+
 #sf-logo-button {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  transform-origin: left;
+  animation: expandIcon 0.3s ease forwards;
 }
 
 .project-name-wrapper {
