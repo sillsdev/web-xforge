@@ -230,7 +230,7 @@ public class Program
             Arguments = arguments,
             UseShellExecute = false,
             RedirectStandardOutput = true,
-            RedirectStandardError = true
+            RedirectStandardError = true,
         };
         process.Start();
         while (!process.HasExited)

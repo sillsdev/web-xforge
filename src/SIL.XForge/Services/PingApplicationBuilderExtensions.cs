@@ -18,7 +18,7 @@ public static class PingApplicationBuilderExtensions
                     {
                         NoCache = true,
                         NoStore = true,
-                        MustRevalidate = true
+                        MustRevalidate = true,
                     };
                     headers.Set(HeaderNames.Pragma, "no-cache");
                     headers.Set(HeaderNames.Expires, "0");

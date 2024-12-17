@@ -318,7 +318,7 @@ public class RealtimeServiceTests
                 {
                     Audience = "https://scriptureforge.org/",
                     Domain = "login.scriptureforge.org",
-                    Scope = "sf_data"
+                    Scope = "sf_data",
                 }
             );
 

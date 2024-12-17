@@ -76,7 +76,7 @@ public class JwtTokenHelper(IExceptionHandler exceptionHandler, ILogger<JwtToken
         Tokens tokens = new Tokens
         {
             AccessToken = (string)responseObj["access_token"],
-            RefreshToken = (string)responseObj["refresh_token"]
+            RefreshToken = (string)responseObj["refresh_token"],
         };
 
         // Track the clock drift between the Scripture Forge and the Paratext Registry servers

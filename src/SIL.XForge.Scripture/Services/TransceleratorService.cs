@@ -48,7 +48,7 @@ public class TransceleratorService : ITransceleratorService
                     EndChapter = AttributeText(q, "endChapter"),
                     EndVerse = AttributeText(q, "endVerse"),
                     Text = NodeTextOfLanguage(q.SelectNodes("Q/StringAlt").Cast<XmlNode>(), lang),
-                    Id = AttributeText(q, "id")
+                    Id = AttributeText(q, "id"),
                 });
         });
     }

@@ -71,7 +71,7 @@ class Program
         {
             { "es", "9f727aa1dd179dd6d" },
             { "fr", "7da597faaebed6cc7" },
-            { "pt_BR", "40bf11d4080246d99" }
+            { "pt_BR", "40bf11d4080246d99" },
         };
 
         Console.WriteLine("Update Help files.\n");

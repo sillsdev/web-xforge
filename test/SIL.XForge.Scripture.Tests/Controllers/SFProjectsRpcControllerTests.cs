@@ -28,7 +28,7 @@ public class SFProjectsRpcControllerTests
     private static readonly string[] Permissions =
     [
         SFProjectRights.JoinRight(SFProjectDomain.Questions, Operation.Create),
-        SFProjectRights.JoinRight(SFProjectDomain.Questions, Operation.Edit)
+        SFProjectRights.JoinRight(SFProjectDomain.Questions, Operation.Edit),
     ];
     private static readonly string[] Roles = [SystemRole.User];
 

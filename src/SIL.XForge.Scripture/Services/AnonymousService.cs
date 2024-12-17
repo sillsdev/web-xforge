@@ -36,7 +36,7 @@ public class AnonymousService : IAnonymousService
         {
             ProjectName = validShareKey.Project.Name,
             Role = validShareKey.ShareKey.ProjectRole,
-            ShareKey = shareKey
+            ShareKey = shareKey,
         };
     }
 
@@ -55,7 +55,7 @@ public class AnonymousService : IAnonymousService
         var credentials = new TransparentAuthenticationCredentials
         {
             Username = _securityService.GenerateKey(),
-            Password = _securityService.GenerateKey(16)
+            Password = _securityService.GenerateKey(16),
         };
         _ = await _authService.GenerateAnonymousUser(displayName, credentials, language);
         await _projectService.IncreaseShareKeyUsersGenerated(shareKey);

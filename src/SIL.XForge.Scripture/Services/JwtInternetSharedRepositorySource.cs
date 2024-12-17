@@ -76,7 +76,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
             "projid",
             pullRepo.SendReceiveId.Id,
             "type",
-            "zstd-v2"
+            "zstd-v2",
         };
         if (baseRev != null)
         {

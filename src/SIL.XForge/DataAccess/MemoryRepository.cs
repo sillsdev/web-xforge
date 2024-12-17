@@ -17,7 +17,7 @@ public class MemoryRepository<T> : IRepository<T>
     private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
     {
         TypeNameHandling = TypeNameHandling.Auto,
-        ContractResolver = new WritableContractResolver()
+        ContractResolver = new WritableContractResolver(),
     };
 
     private readonly ConcurrentDictionary<string, string> _entities;

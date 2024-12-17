@@ -151,7 +151,7 @@ public class ParatextServiceTests
         project.UserRoles = new Dictionary<string, string>
         {
             { env.User01, SFProjectRole.Administrator },
-            { env.User02, SFProjectRole.CommunityChecker }
+            { env.User02, SFProjectRole.CommunityChecker },
         };
         env.AddProjectRepository(project);
         // Check resulting IsConnectable and IsConnected values across various scenarios of SF project existing,
@@ -173,7 +173,7 @@ public class ParatextServiceTests
                 isConnected = true,
                 reason1 = "sf project exists and sf user is member of the sf project",
                 isConnectable = false,
-                reason2 = "can not re-connect to project"
+                reason2 = "can not re-connect to project",
             },
             new
             {
@@ -187,7 +187,7 @@ public class ParatextServiceTests
                 isConnected = false,
                 reason1 = "sf project exists and but sf user is not member of the sf project",
                 isConnectable = true,
-                reason2 = "can connect to existing SF project"
+                reason2 = "can connect to existing SF project",
             },
             new
             {
@@ -201,7 +201,7 @@ public class ParatextServiceTests
                 isConnected = false,
                 reason1 = "sf project does not exist",
                 isConnectable = true,
-                reason2 = "pt admin can start connection to not-yet-existing sf project"
+                reason2 = "pt admin can start connection to not-yet-existing sf project",
             },
             new
             {
@@ -215,7 +215,7 @@ public class ParatextServiceTests
                 isConnected = false,
                 reason1 = "sf project does not exist",
                 isConnectable = false,
-                reason2 = "pt non-admin can not start connection to not-yet-existing sf project"
+                reason2 = "pt non-admin can not start connection to not-yet-existing sf project",
             },
         };
 
@@ -358,12 +358,12 @@ public class ParatextServiceTests
         project.UserRoles = new Dictionary<string, string>
         {
             { env.User01, SFProjectRole.Administrator },
-            { env.User02, SFProjectRole.CommunityChecker }
+            { env.User02, SFProjectRole.CommunityChecker },
         };
         var ptUsernameMapping = new Dictionary<string, string>()
         {
             { env.User01, env.Username01 },
-            { env.User02, env.Username02 }
+            { env.User02, env.Username02 },
         };
 
         var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, ptUsernameMapping);
@@ -635,7 +635,7 @@ public class ParatextServiceTests
             "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere"
             + "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />"
             + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
-        var chapterAuthors = new Dictionary<int, string> { { 1, env.User01 }, { 2, env.User01 }, };
+        var chapterAuthors = new Dictionary<int, string> { { 1, env.User01 }, { 2, env.User01 } };
 
         // SUT
         int booksUpdated = await env.Service.PutBookText(
@@ -675,7 +675,7 @@ public class ParatextServiceTests
             "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere"
             + "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />"
             + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
-        var chapterAuthors = new Dictionary<int, string> { { 1, env.User01 }, { 2, env.User02 }, };
+        var chapterAuthors = new Dictionary<int, string> { { 1, env.User01 }, { 2, env.User02 } };
 
         // SUT
         int booksUpdated = await env.Service.PutBookText(
@@ -714,7 +714,7 @@ public class ParatextServiceTests
             new Paratext.Data.ProjectComments.Comment(associatedPtUser)
             {
                 Thread = "Answer_dataId0123",
-                VerseRefStr = "RUT 1:1"
+                VerseRefStr = "RUT 1:1",
             }
         );
         string notes = env.Service.GetNotes(userSecret, ptProjectId, ruthBookNum);
@@ -780,7 +780,7 @@ public class ParatextServiceTests
         env.AddNoteThreadData(
             new[]
             {
-                new ThreadComponents { threadNum = 1, noteCount = 1 }
+                new ThreadComponents { threadNum = 1, noteCount = 1 },
             }
         );
         env.AddParatextComments(
@@ -790,15 +790,15 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    username = env.Username01
+                    username = env.Username01,
                 },
                 new ThreadComponents
                 {
                     threadNum = 2,
                     noteCount = 1,
                     username = env.Username01,
-                    appliesToVerse = true
-                }
+                    appliesToVerse = true,
+                },
             }
         );
 
@@ -812,7 +812,7 @@ public class ParatextServiceTests
             {
                 env.Username01,
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
-            }
+            },
         };
 
         string contextBefore = "Context before changed ";
@@ -858,7 +858,7 @@ public class ParatextServiceTests
         env.AddNoteThreadData(
             new[]
             {
-                new ThreadComponents { threadNum = 1, noteCount = 1 }
+                new ThreadComponents { threadNum = 1, noteCount = 1 },
             }
         );
         env.AddParatextComments(
@@ -868,8 +868,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    username = env.Username01
-                }
+                    username = env.Username01,
+                },
             }
         );
 
@@ -883,7 +883,7 @@ public class ParatextServiceTests
             {
                 env.Username01,
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
-            }
+            },
         };
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
             1,
@@ -923,7 +923,7 @@ public class ParatextServiceTests
         {
             ownerRef = env.User01,
             content = "Admin comment no xml tags.",
-            assignedPTUser = CommentThread.unassignedUser
+            assignedPTUser = CommentThread.unassignedUser,
         };
         env.AddNoteThreadData(
             new[]
@@ -932,46 +932,46 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    notes = new[] { user1Note }
+                    notes = new[] { user1Note },
                 },
                 new ThreadComponents
                 {
                     threadNum = 2,
                     noteCount = 1,
-                    notes = new[] { user1Note }
+                    notes = new[] { user1Note },
                 },
                 new ThreadComponents
                 {
                     threadNum = 4,
                     noteCount = 3,
                     notes = new[] { user1Note, user1NoteNoTag, user1NoteNoTag },
-                    deletedNotes = new[] { false, true, false }
+                    deletedNotes = new[] { false, true, false },
                 },
                 new ThreadComponents
                 {
                     threadNum = 5,
                     noteCount = 2,
                     notes = new[] { user1Note, user1NoteNoTag },
-                    deletedNotes = new[] { true, false }
+                    deletedNotes = new[] { true, false },
                 },
                 new ThreadComponents
                 {
                     threadNum = 7,
                     noteCount = 1,
-                    notes = new[] { user1Note }
+                    notes = new[] { user1Note },
                 },
                 new ThreadComponents
                 {
                     threadNum = 8,
                     noteCount = 1,
-                    notes = new[] { thread8Note }
+                    notes = new[] { thread8Note },
                 },
                 new ThreadComponents
                 {
                     threadNum = 9,
                     noteCount = 3,
-                    notes = new[] { user1Note, user1Note, user1Note }
-                }
+                    notes = new[] { user1Note, user1Note, user1Note },
+                },
             }
         );
         env.AddParatextComments(
@@ -983,7 +983,7 @@ public class ParatextServiceTests
                     noteCount = 1,
                     username = env.Username01,
                     notes = new[] { user1Note },
-                    isEdited = true
+                    isEdited = true,
                 },
                 new ThreadComponents
                 {
@@ -991,50 +991,50 @@ public class ParatextServiceTests
                     noteCount = 1,
                     username = env.Username01,
                     notes = new[] { user1Note },
-                    deletedNotes = new[] { true }
+                    deletedNotes = new[] { true },
                 },
                 new ThreadComponents
                 {
                     threadNum = 3,
                     noteCount = 1,
                     username = env.Username02,
-                    notes = new[] { user1Note }
+                    notes = new[] { user1Note },
                 },
                 new ThreadComponents
                 {
                     threadNum = 4,
                     noteCount = 1,
                     username = env.Username01,
-                    notes = new[] { user1Note }
+                    notes = new[] { user1Note },
                 },
                 new ThreadComponents
                 {
                     threadNum = 6,
                     noteCount = 1,
                     isConflict = true,
-                    notes = new[] { user1Note }
+                    notes = new[] { user1Note },
                 },
                 new ThreadComponents
                 {
                     threadNum = 7,
                     noteCount = 2,
                     username = env.Username01,
-                    notes = new[] { user1Note, user1NoteNoTag }
+                    notes = new[] { user1Note, user1NoteNoTag },
                 },
                 new ThreadComponents
                 {
                     threadNum = 8,
                     noteCount = 1,
                     username = env.Username01,
-                    notes = new[] { thread8Note }
+                    notes = new[] { thread8Note },
                 },
                 new ThreadComponents
                 {
                     threadNum = 9,
                     noteCount = 3,
                     username = env.Username01,
-                    notes = new[] { user1Note, user1NoteNoTag, user1NoteNoTag }
-                }
+                    notes = new[] { user1Note, user1NoteNoTag, user1NoteNoTag },
+                },
             }
         );
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -1044,7 +1044,7 @@ public class ParatextServiceTests
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
@@ -1157,8 +1157,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 3,
-                    notes = new[] { note1a, note2a, note3a }
-                }
+                    notes = new[] { note1a, note2a, note3a },
+                },
             }
         );
 
@@ -1166,7 +1166,7 @@ public class ParatextServiceTests
         {
             content = content1b,
             ownerRef = env.User01,
-            tagsAdded = new[] { "1" }
+            tagsAdded = new[] { "1" },
         };
         var note2b = new ThreadNoteComponents { content = content2b, ownerRef = env.User01 };
         var note3b = new ThreadNoteComponents { content = content3, ownerRef = env.User01 };
@@ -1178,8 +1178,8 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 3,
                     username = env.Username01,
-                    notes = new[] { note1b, note2b, note3b }
-                }
+                    notes = new[] { note1b, note2b, note3b },
+                },
             }
         );
 
@@ -1191,9 +1191,9 @@ public class ParatextServiceTests
                 {
                     Username = env.Username01,
                     OpaqueUserId = "syncuser01",
-                    SFUserId = env.User01
+                    SFUserId = env.User01,
                 }
-            }
+            },
         };
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
@@ -1312,16 +1312,16 @@ public class ParatextServiceTests
             {
                 ownerRef = env.User05,
                 tagsAdded = new[] { "2" },
-                content = "original content"
+                content = "original content",
             },
-            new ThreadNoteComponents { ownerRef = env.User05 }
+            new ThreadNoteComponents { ownerRef = env.User05 },
         };
         var threadDocs = new ThreadComponents
         {
             threadNum = 1,
             noteCount = 2,
             username = env.Username01,
-            notes = notes
+            notes = notes,
         };
         env.AddNoteThreadData(new[] { threadDocs });
         string originalContent = $"<p>[User 05 - xForge]</p><p>original content</p>";
@@ -1332,16 +1332,16 @@ public class ParatextServiceTests
             {
                 ownerRef = env.User05,
                 tagsAdded = new[] { "2" },
-                content = originalContent
+                content = originalContent,
             },
-            new ThreadNoteComponents { ownerRef = env.User05, content = editedContent }
+            new ThreadNoteComponents { ownerRef = env.User05, content = editedContent },
         };
         var commentThreads = new ThreadComponents
         {
             threadNum = 1,
             noteCount = 2,
             username = env.Username01,
-            notes = comments
+            notes = comments,
         };
         env.AddParatextComments(new[] { commentThreads });
 
@@ -1352,7 +1352,7 @@ public class ParatextServiceTests
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
@@ -1409,7 +1409,7 @@ public class ParatextServiceTests
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
@@ -1493,7 +1493,7 @@ public class ParatextServiceTests
             chapterDeltas.Add(1, chapterDelta);
             Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
             {
-                new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
             }.ToDictionary(u => u.Username);
             IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
                 userSecret,
@@ -1574,8 +1574,8 @@ public class ParatextServiceTests
                 tagsAdded = new[] { "1" },
                 assignedPTUser = CommentThread.unassignedUser,
                 // tests that if duplicate project notes exist, the sync succeeds
-                duplicate = true
-            }
+                duplicate = true,
+            },
         };
         env.AddNoteThreadData(
             new[]
@@ -1584,8 +1584,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    notes = noteComponents
-                }
+                    notes = noteComponents,
+                },
             }
         );
 
@@ -1597,8 +1597,8 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 1,
                     notes = noteComponents,
-                    username = env.Username01
-                }
+                    username = env.Username01,
+                },
             }
         );
 
@@ -1614,7 +1614,7 @@ public class ParatextServiceTests
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
             userSecret,
@@ -1796,7 +1796,7 @@ public class ParatextServiceTests
             {
                 ownerRef = env.User01,
                 status = NoteStatus.Todo,
-                tagsAdded = new[] { "2" }
+                tagsAdded = new[] { "2" },
             },
             new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Unspecified },
             new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Unspecified },
@@ -1805,7 +1805,7 @@ public class ParatextServiceTests
             {
                 ownerRef = env.User01,
                 status = NoteStatus.Todo,
-                tagsAdded = new[] { "3" }
+                tagsAdded = new[] { "3" },
             },
             new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Unspecified },
             new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Done },
@@ -1814,8 +1814,8 @@ public class ParatextServiceTests
             {
                 ownerRef = env.User01,
                 status = NoteStatus.Todo,
-                tagsAdded = new[] { "4" }
-            }
+                tagsAdded = new[] { "4" },
+            },
         };
         env.AddParatextComments(
             new[]
@@ -1825,7 +1825,7 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = threadNotes.Length,
                     notes = threadNotes,
-                    username = env.Username01
+                    username = env.Username01,
                 },
             }
         );
@@ -1837,7 +1837,7 @@ public class ParatextServiceTests
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
@@ -1849,7 +1849,7 @@ public class ParatextServiceTests
             ptProjectUsers
         );
 
-        List<int?> expectedIcons = new List<int?>() { 2, null, null, 2, 3, null, 3, 3, 4, };
+        List<int?> expectedIcons = new List<int?>() { 2, null, null, 2, 3, null, 3, 3, 4 };
         NoteThreadChange changedThread = changes.Where(c => c.ThreadId == "thread1").Single();
         for (int i = 0; i < expectedIcons.Count; i++)
         {
@@ -1872,7 +1872,7 @@ public class ParatextServiceTests
             {
                 env.Username01,
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
-            }
+            },
         };
 
         ThreadNoteComponents[] getThreadNoteComponents(int noteCount, string[] assignedUsers, bool iconChange = false)
@@ -1898,7 +1898,7 @@ public class ParatextServiceTests
                     status = NoteStatus.Todo,
                     tagsAdded = i == 0 ? commentTagsAdded : null,
                     assignedPTUser = assignedUser,
-                    ownerRef = env.User01
+                    ownerRef = env.User01,
                 };
                 components.Add(noteComponents);
             }
@@ -1918,14 +1918,14 @@ public class ParatextServiceTests
                 {
                     threadNum = 7,
                     noteCount = 1,
-                    notes = threadDocNotes7
+                    notes = threadDocNotes7,
                 },
                 new ThreadComponents
                 {
                     threadNum = 8,
                     noteCount = 1,
-                    notes = threadDocNotes8
-                }
+                    notes = threadDocNotes8,
+                },
             }
         );
 
@@ -1946,57 +1946,57 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 2,
                     username = env.Username01,
-                    notes = threadNotes1
+                    notes = threadNotes1,
                 },
                 new ThreadComponents
                 {
                     threadNum = 2,
                     noteCount = 1,
                     username = env.Username01,
-                    notes = threadNotes2
+                    notes = threadNotes2,
                 },
                 new ThreadComponents
                 {
                     threadNum = 3,
                     noteCount = 1,
                     username = env.Username01,
-                    notes = threadNotes3
+                    notes = threadNotes3,
                 },
                 new ThreadComponents
                 {
                     threadNum = 4,
                     noteCount = 1,
                     username = env.Username01,
-                    notes = threadNotes4
+                    notes = threadNotes4,
                 },
                 new ThreadComponents
                 {
                     threadNum = 5,
                     noteCount = 1,
                     username = env.Username01,
-                    notes = threadNotes5
+                    notes = threadNotes5,
                 },
                 new ThreadComponents
                 {
                     threadNum = 6,
                     noteCount = 1,
-                    username = env.Username01
+                    username = env.Username01,
                 },
                 new ThreadComponents
                 {
                     threadNum = 7,
                     noteCount = 1,
                     username = env.Username01,
-                    notes = threadNotes7
+                    notes = threadNotes7,
                 },
                 new ThreadComponents
                 {
                     threadNum = 8,
                     noteCount = 1,
                     username = env.Username01,
-                    notes = threadNotes8
+                    notes = threadNotes8,
                 },
-                new ThreadComponents { threadNum = 9, noteCount = 1 }
+                new ThreadComponents { threadNum = 9, noteCount = 1 },
             }
         );
 
@@ -2088,29 +2088,29 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 1,
                     username = env.Username01,
-                    alternateText = SelectionType.RelatedVerse
+                    alternateText = SelectionType.RelatedVerse,
                 },
                 new ThreadComponents
                 {
                     threadNum = 8,
                     noteCount = 1,
                     username = env.Username01,
-                    alternateText = SelectionType.Section
+                    alternateText = SelectionType.Section,
                 },
                 new ThreadComponents
                 {
                     threadNum = 9,
                     noteCount = 1,
                     username = env.Username01,
-                    alternateText = SelectionType.SectionEnd
+                    alternateText = SelectionType.SectionEnd,
                 },
                 new ThreadComponents
                 {
                     threadNum = 10,
                     noteCount = 1,
                     username = env.Username01,
-                    alternateText = SelectionType.RelatedVerse
-                }
+                    alternateText = SelectionType.RelatedVerse,
+                },
             }
         );
 
@@ -2122,7 +2122,7 @@ public class ParatextServiceTests
                 {
                     env.Username01,
                     new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
-                }
+                },
             };
             IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
                 userSecret,
@@ -2185,15 +2185,15 @@ public class ParatextServiceTests
                 {
                     threadNum = 3,
                     noteCount = 1,
-                    reattachedVerseStr = verseStr
+                    reattachedVerseStr = verseStr,
                 },
                 new ThreadComponents { threadNum = 4, noteCount = 1 },
                 new ThreadComponents
                 {
                     threadNum = 5,
                     noteCount = 1,
-                    reattachedVerseStr = verseStr
-                }
+                    reattachedVerseStr = verseStr,
+                },
             }
         );
         env.AddParatextComments(
@@ -2204,35 +2204,35 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 1,
                     username = env.Username01,
-                    reattachedVerseStr = verseStr
+                    reattachedVerseStr = verseStr,
                 },
                 new ThreadComponents
                 {
                     threadNum = 2,
                     noteCount = 1,
                     username = env.Username01,
-                    reattachedVerseStr = verseStr
+                    reattachedVerseStr = verseStr,
                 },
                 new ThreadComponents
                 {
                     threadNum = 3,
                     noteCount = 1,
                     username = env.Username01,
-                    reattachedVerseStr = verseStr
+                    reattachedVerseStr = verseStr,
                 },
                 new ThreadComponents
                 {
                     threadNum = 4,
                     noteCount = 2,
                     username = env.Username01,
-                    reattachedVerseStr = verseStr
+                    reattachedVerseStr = verseStr,
                 },
                 new ThreadComponents
                 {
                     threadNum = 5,
                     noteCount = 1,
-                    username = env.Username01
-                }
+                    username = env.Username01,
+                },
             }
         );
 
@@ -2247,7 +2247,7 @@ public class ParatextServiceTests
             {
                 env.Username01,
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
-            }
+            },
         };
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
             userSecret,
@@ -2268,7 +2268,7 @@ public class ParatextServiceTests
         TextAnchor expectedAnchor = new TextAnchor
         {
             Start = rti.contextBefore.Length,
-            Length = rti.selectedText.Length
+            Length = rti.selectedText.Length,
         };
         Assert.That(change1.Position, Is.EqualTo(expectedAnchor));
 
@@ -2294,7 +2294,7 @@ public class ParatextServiceTests
         TextAnchor originalAnchor = new TextAnchor
         {
             Start = change5.ContextBefore.Length,
-            Length = change5.SelectedText.Length
+            Length = change5.SelectedText.Length,
         };
         Assert.That(change5.Position, Is.EqualTo(originalAnchor));
     }
@@ -2439,8 +2439,8 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 1,
                     username = env.Username01,
-                    deletedNotes = new[] { true }
-                }
+                    deletedNotes = new[] { true },
+                },
             }
         );
 
@@ -2450,7 +2450,7 @@ public class ParatextServiceTests
             {
                 env.Username01,
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
-            }
+            },
         };
         IEnumerable<IDocument<NoteThread>> emptyDocs = Array.Empty<IDocument<NoteThread>>();
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
@@ -2481,8 +2481,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    deletedNotes = new[] { true }
-                }
+                    deletedNotes = new[] { true },
+                },
             }
         );
 
@@ -2493,8 +2493,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    username = env.Username01
-                }
+                    username = env.Username01,
+                },
             }
         );
         string newDataId = "newdataid1";
@@ -2513,9 +2513,9 @@ public class ParatextServiceTests
                 {
                     Username = env.Username01,
                     OpaqueUserId = "syncuser01",
-                    SFUserId = env.User01
+                    SFUserId = env.User01,
                 }
-            }
+            },
         };
         var changes = env.Service.GetNoteThreadChanges(
             userSecret,
@@ -2570,14 +2570,14 @@ public class ParatextServiceTests
             new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
             new ThreadNoteComponents { ownerRef = env.User01, content = content5a },
             new ThreadNoteComponents { ownerRef = env.User01, content = content6a },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content7a }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content7a },
         };
         ThreadComponents threadCompSF = new ThreadComponents
         {
             threadNum = 1,
             noteCount = notesSF.Length,
             username = env.Username01,
-            notes = notesSF
+            notes = notesSF,
         };
         env.AddNoteThreadData(new[] { threadCompSF });
         ThreadNoteComponents[] notesPT =
@@ -2588,14 +2588,14 @@ public class ParatextServiceTests
             new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
             new ThreadNoteComponents { ownerRef = env.User01, content = content5b },
             new ThreadNoteComponents { ownerRef = env.User01, content = content6b },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content7b }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content7b },
         };
         ThreadComponents threadCompPT = new ThreadComponents
         {
             threadNum = 1,
             noteCount = notesPT.Length,
             username = env.Username01,
-            notes = notesPT
+            notes = notesPT,
         };
         env.AddParatextComments(new[] { threadCompPT });
 
@@ -2609,9 +2609,9 @@ public class ParatextServiceTests
                 {
                     OpaqueUserId = "syncuser01",
                     Username = env.Username01,
-                    SFUserId = env.User01
+                    SFUserId = env.User01,
                 }
-            }
+            },
         };
 
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
@@ -2855,7 +2855,7 @@ public class ParatextServiceTests
                     isNew = true,
                     notes = new[] { new ThreadNoteComponents { } },
                     editable = true,
-                }
+                },
             }
         );
         await using IConnection conn = await env.RealtimeService.ConnectAsync(env.User01);
@@ -2894,9 +2894,9 @@ public class ParatextServiceTests
             {
                 ownerRef = env.User01,
                 tagsAdded = new[] { "2" },
-                versionNumber = 1
+                versionNumber = 1,
             },
-            new ThreadNoteComponents { ownerRef = env.User05, versionNumber = 1 }
+            new ThreadNoteComponents { ownerRef = env.User05, versionNumber = 1 },
         };
         env.AddNoteThreadData(
             new[]
@@ -2909,7 +2909,7 @@ public class ParatextServiceTests
                     notes = threadNoteComponents,
                     isEdited = true,
                     editable = true,
-                }
+                },
             }
         );
         env.AddParatextComments(
@@ -2921,7 +2921,7 @@ public class ParatextServiceTests
                     noteCount = 2,
                     username = env.Username01,
                     notes = threadNoteComponents,
-                }
+                },
             }
         );
 
@@ -2933,8 +2933,8 @@ public class ParatextServiceTests
             {
                 OpaqueUserId = "syncuser01",
                 Username = env.Username01,
-                SFUserId = env.User01
-            }
+                SFUserId = env.User01,
+            },
         }.ToDictionary(u => u.Username);
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
@@ -2991,13 +2991,13 @@ public class ParatextServiceTests
         {
             content = "thread1 note 1",
             syncUserRef = "syncuser01",
-            ownerRef = env.User01
+            ownerRef = env.User01,
         };
         ThreadNoteComponents note2 = new ThreadNoteComponents
         {
             content = "thread1 note 2",
             syncUserRef = string.Empty,
-            ownerRef = env.User01
+            ownerRef = env.User01,
         };
         ThreadComponents sfThread1 = new ThreadComponents
         {
@@ -3013,7 +3013,7 @@ public class ParatextServiceTests
             noteCount = 1,
             username = env.Username01,
             editable = true,
-            isNew = true
+            isNew = true,
         };
         env.AddNoteThreadData([sfThread1, sfThread2]);
         ThreadComponents ptThread = new ThreadComponents
@@ -3036,7 +3036,7 @@ public class ParatextServiceTests
                 {
                     OpaqueUserId = "syncuser01",
                     Username = env.Username01,
-                    SFUserId = env.User01
+                    SFUserId = env.User01,
                 }
             },
             {
@@ -3045,13 +3045,13 @@ public class ParatextServiceTests
                 {
                     OpaqueUserId = "syncuser02",
                     Username = env.Username02,
-                    SFUserId = env.User02
+                    SFUserId = env.User02,
                 }
             },
             {
                 newUsername,
-                new ParatextUserProfile { OpaqueUserId = "syncuser03", Username = newUsername, }
-            }
+                new ParatextUserProfile { OpaqueUserId = "syncuser03", Username = newUsername }
+            },
         };
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
@@ -3088,7 +3088,7 @@ public class ParatextServiceTests
             {
                 ownerRef = env.User01,
                 tagsAdded = new[] { "2" },
-                versionNumber = 1
+                versionNumber = 1,
             },
             new ThreadNoteComponents { ownerRef = env.User05, versionNumber = 1 },
         };
@@ -3272,7 +3272,7 @@ public class ParatextServiceTests
             threadNum = 1,
             noteCount = 1,
             versionNumber = 1,
-            editable = true
+            editable = true,
         };
         env.AddNoteThreadData(new[] { threadComp });
 
@@ -3282,7 +3282,7 @@ public class ParatextServiceTests
             noteCount = 1,
             username = env.Username01,
             versionNumber = 2,
-            isEdited = true
+            isEdited = true,
         };
         env.AddParatextComments(new[] { threadCompPt });
 
@@ -3297,9 +3297,9 @@ public class ParatextServiceTests
                 {
                     OpaqueUserId = "syncuser01",
                     Username = env.Username01,
-                    SFUserId = env.User01
+                    SFUserId = env.User01,
                 }
-            }
+            },
         };
 
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
@@ -3364,7 +3364,7 @@ public class ParatextServiceTests
             new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
             new ThreadNoteComponents { ownerRef = env.User01, content = content5a },
             new ThreadNoteComponents { ownerRef = env.User01, content = content6a },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content7a }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content7a },
         };
         ThreadComponents threadCompSF = new ThreadComponents
         {
@@ -3372,7 +3372,7 @@ public class ParatextServiceTests
             noteCount = 7,
             username = env.Username01,
             notes = notesSF,
-            versionNumber = 1
+            versionNumber = 1,
         };
         env.AddNoteThreadData(new[] { threadCompSF });
         ThreadNoteComponents[] notesPT = new[]
@@ -3383,7 +3383,7 @@ public class ParatextServiceTests
             new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
             new ThreadNoteComponents { ownerRef = env.User01, content = content5b },
             new ThreadNoteComponents { ownerRef = env.User01, content = content6b },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content7b }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content7b },
         };
         ThreadComponents threadCompPT = new ThreadComponents
         {
@@ -3391,7 +3391,7 @@ public class ParatextServiceTests
             noteCount = 7,
             username = env.Username01,
             notes = notesPT,
-            versionNumber = 1
+            versionNumber = 1,
         };
         env.AddParatextComments(new[] { threadCompPT });
 
@@ -3403,8 +3403,8 @@ public class ParatextServiceTests
             {
                 OpaqueUserId = "syncuser01",
                 Username = env.Username01,
-                SFUserId = env.User01
-            }
+                SFUserId = env.User01,
+            },
         }.ToDictionary(u => u.Username);
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
@@ -3499,7 +3499,7 @@ public class ParatextServiceTests
         // One comment is marked deleted, the other is permanently deleted
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
@@ -3534,7 +3534,7 @@ public class ParatextServiceTests
                     username = env.Username01,
                     deletedNotes = new[] { true },
                     versionNumber = 1,
-                }
+                },
             }
         );
         env.AddParatextComments(
@@ -3546,8 +3546,8 @@ public class ParatextServiceTests
                     noteCount = 2,
                     username = env.Username01,
                     deletedNotes = new[] { true, false },
-                    versionNumber = 1
-                }
+                    versionNumber = 1,
+                },
             }
         );
 
@@ -3557,7 +3557,7 @@ public class ParatextServiceTests
         // One comment is marked deleted, the other is permanently deleted
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
@@ -3618,8 +3618,8 @@ public class ParatextServiceTests
             {
                 ownerRef = env.User05,
                 forceNullContent = true,
-                status = NoteStatus.Resolved
-            }
+                status = NoteStatus.Resolved,
+            },
         };
         ThreadComponents components = new ThreadComponents
         {
@@ -3627,7 +3627,7 @@ public class ParatextServiceTests
             noteCount = 2,
             username = env.Username01,
             notes = threadNotes,
-            editable = true
+            editable = true,
         };
         env.AddNoteThreadData(new[] { components });
         env.AddParatextComments(new[] { components });
@@ -3639,7 +3639,7 @@ public class ParatextServiceTests
 
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
@@ -3713,8 +3713,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    username = env.Username01
-                }
+                    username = env.Username01,
+                },
             }
         );
         CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
@@ -3725,7 +3725,7 @@ public class ParatextServiceTests
             {
                 env.Username01,
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
-            }
+            },
         };
 
         IEnumerable<IDocument<NoteThread>> emptyDocs = Array.Empty<IDocument<NoteThread>>();
@@ -3769,7 +3769,7 @@ public class ParatextServiceTests
             {
                 env.Username01,
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
-            }
+            },
         };
         // The comment thread must exist if the Note Thread is not new
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -3797,7 +3797,7 @@ public class ParatextServiceTests
             TagId = 5,
             Icon = "sf05",
             Name = "SF Note Tag",
-            CreatorResolve = true
+            CreatorResolve = true,
         };
         env.SetupCommentTags(env.ProjectScrText, noteTag);
         ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
@@ -3818,7 +3818,7 @@ public class ParatextServiceTests
             TagId = CommentTag.notSetId,
             Icon = "sf05",
             Name = "SF Note Tag",
-            CreatorResolve = false
+            CreatorResolve = false,
         };
         ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
         Assert.That(settings?.NoteTags.FirstOrDefault(t => t.Icon == noteTag.Icon), Is.Null);
@@ -3836,7 +3836,7 @@ public class ParatextServiceTests
         {
             TagId = CommentTag.notSetId,
             Icon = icon,
-            Name = "SF Note Tag"
+            Name = "SF Note Tag",
         };
         env.Service.UpdateCommentTag(userSecret, paratextId, noteTag);
         // the new tag is created with a tag id one greater than the last used id
@@ -3857,7 +3857,7 @@ public class ParatextServiceTests
         {
             TagId = existingId,
             Icon = "existingIcon",
-            Name = "SF Note Tag"
+            Name = "SF Note Tag",
         };
         env.SetupCommentTags(env.ProjectScrText, noteTag);
         Assert.Throws<ArgumentException>(() => env.Service.UpdateCommentTag(userSecret, paratextId, noteTag));
@@ -3957,7 +3957,7 @@ public class ParatextServiceTests
             {
                 x[2] = new List<SendReceiveResult>
                 {
-                    new SendReceiveResult(new SharedProject()) { Result = SendReceiveResultEnum.Failed, },
+                    new SendReceiveResult(new SharedProject()) { Result = SendReceiveResultEnum.Failed },
                 };
                 return true;
             });
@@ -4998,7 +4998,7 @@ public class ParatextServiceTests
     {
         // Setup test environment
         var env = new TestEnvironment();
-        var project = new SFProject { ParatextId = env.PTProjectIds[env.Project01].Id, };
+        var project = new SFProject { ParatextId = env.PTProjectIds[env.Project01].Id };
         var resource = new ParatextResource();
 
         // SUT
@@ -5012,7 +5012,7 @@ public class ParatextServiceTests
     {
         // Setup test environment
         var env = new TestEnvironment();
-        var project = new SFProject { ParatextId = env.Resource1Id, };
+        var project = new SFProject { ParatextId = env.Resource1Id };
         var resource = new ParatextResource();
 
         // SUT
@@ -6071,7 +6071,7 @@ public class ParatextServiceTests
                 ScrTextCollection = MockScrTextCollection,
                 SharingLogicWrapper = MockSharingLogicWrapper,
                 SyncDir = SyncDir,
-                _registryClient = MockRegistryHttpClient
+                _registryClient = MockRegistryHttpClient,
             };
 
             PTProjectIds.Add(Project01, HexId.CreateNew());
@@ -6153,7 +6153,7 @@ public class ParatextServiceTests
             UserSecret userSecret = new UserSecret
             {
                 Id = userSecretId,
-                ParatextTokens = new Tokens { AccessToken = accessToken, RefreshToken = "refresh_token_1234" }
+                ParatextTokens = new Tokens { AccessToken = accessToken, RefreshToken = "refresh_token_1234" },
             };
             return userSecret;
         }
@@ -6470,7 +6470,7 @@ public class ParatextServiceTests
             Delta chapterDelta = Delta.New().Insert("In the beginning");
             var textDoc = new TextData(chapterDelta)
             {
-                Id = TextData.GetTextDocId("sf_id_" + Project01, bookNum, chapterNum)
+                Id = TextData.GetTextDocId("sf_id_" + Project01, bookNum, chapterNum),
             };
             var texts = new TextData[] { textDoc };
             RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
@@ -6511,7 +6511,7 @@ public class ParatextServiceTests
                     {
                         status = NoteStatus.Todo,
                         tagsAdded = new[] { CommentTag.toDoTagId.ToString() },
-                        assignedPTUser = CommentThread.unassignedUser
+                        assignedPTUser = CommentThread.unassignedUser,
                     };
                     if (comp.notes != null)
                         noteComponent = comp.notes[i - 1];
@@ -6807,7 +6807,7 @@ public class ParatextServiceTests
                 new MockZippedResourcePasswordProvider()
             )
             {
-                CachedGuid = HexId.FromStr(projectId)
+                CachedGuid = HexId.FromStr(projectId),
             };
             scrText.Settings.LanguageID = LanguageId.English;
             scrText.ZipFile.AddFile(
@@ -6842,7 +6842,7 @@ public class ParatextServiceTests
                         tags.Add(
                             new CommentTag(noteTag.Name, noteTag.Icon, tagId)
                             {
-                                CreatorResolve = noteTag.CreatorResolve
+                                CreatorResolve = noteTag.CreatorResolve,
                             }
                         );
                     }
@@ -6963,8 +6963,8 @@ public class ParatextServiceTests
                         Assignment = CommentThread.unassignedUser,
                         Content = "<p>Note content.</p>",
                         AcceptedChangeXml = null,
-                    }
-                }
+                    },
+                },
             };
             modifyNoteThread?.Invoke(thread01);
 
@@ -6999,7 +6999,7 @@ public class ParatextServiceTests
             IEnumerable<IDocument<NoteThread>> noteThreadDocs = await GetNoteThreadDocsAsync(conn, ["dataId01"]);
             Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
             {
-                new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
             }.ToDictionary(u => u.Username);
             Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
                 1,

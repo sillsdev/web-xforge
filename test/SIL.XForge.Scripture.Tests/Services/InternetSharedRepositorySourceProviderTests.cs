@@ -35,8 +35,8 @@ public class InternetSharedRepositorySourceProviderTests
             ParatextTokens = new Tokens
             {
                 AccessToken = TokenHelper.CreateNewAccessToken(),
-                RefreshToken = "refresh_token01"
-            }
+                RefreshToken = "refresh_token01",
+            },
         };
         IInternetSharedRepositorySource source = env.Provider.GetSource(userSecret, "srServer", "regServer");
         Assert.That(source, Is.Not.Null);
@@ -52,8 +52,8 @@ public class InternetSharedRepositorySourceProviderTests
             ParatextTokens = new Tokens
             {
                 AccessToken = TokenHelper.CreateNewAccessToken(),
-                RefreshToken = "refresh_token01"
-            }
+                RefreshToken = "refresh_token01",
+            },
         };
         env.MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(default(string?));
         Assert.Throws<Exception>(() => env.Provider.GetSource(userSecret, "srServer", "regServer"));
@@ -72,7 +72,7 @@ public class InternetSharedRepositorySourceProviderTests
             RegistryU.Implementation = new DotNetCoreRegistry();
             InternetAccess.RawStatus = InternetUse.Enabled;
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions.Value.Returns(new SiteOptions { Name = "xForge", });
+            siteOptions.Value.Returns(new SiteOptions { Name = "xForge" });
             Provider = new InternetSharedRepositorySourceProvider(
                 MockJwtTokenHelper,
                 siteOptions,

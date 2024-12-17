@@ -55,7 +55,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         "lh",
         "li",
         "lf",
-        "lim"
+        "lim",
     };
 
     private IGuidService GuidService;

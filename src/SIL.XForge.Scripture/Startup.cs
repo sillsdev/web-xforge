@@ -28,7 +28,7 @@ public enum SpaDevServerStartup
 {
     None,
     Start,
-    Listen
+    Listen,
 }
 
 public class Startup
@@ -49,7 +49,7 @@ public class Startup
         "main.js.map",
         "manifest.json",
         "sockjs-node",
-        "3rdpartylicenses.txt"
+        "3rdpartylicenses.txt",
     };
 
     // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
@@ -61,7 +61,7 @@ public class Startup
         "runtime-es5",
         "main-es2015",
         "main-es5",
-        "styles"
+        "styles",
     };
     private static readonly HashSet<string> SpaGetRoutes = new HashSet<string>
     {
@@ -73,7 +73,7 @@ public class Startup
         "serval-administration",
         "system-administration",
         "favicon.ico",
-        "assets"
+        "assets",
     };
 
     private static readonly HashSet<string> DevelopmentSpaPostRoutes = new HashSet<string> { "sockjs-node" };
@@ -230,7 +230,7 @@ public class Startup
             new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SiteDir, "audio")),
-                RequestPath = "/assets/audio"
+                RequestPath = "/assets/audio",
             }
         );
         app.UseStaticFiles(

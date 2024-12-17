@@ -105,7 +105,7 @@ public class AnonymousController(
                 { "method", "GenerateAccount" },
                 { "shareKey", request.ShareKey },
                 { "displayName", request.DisplayName },
-                { "language", request.Language }
+                { "language", request.Language },
             }
         );
         try

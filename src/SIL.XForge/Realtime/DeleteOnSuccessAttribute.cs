@@ -12,7 +12,7 @@ public class DeleteOnSuccess : JobFilterAttribute, IElectStateFilter
     {
         if (context.CandidateState.Name == SucceededState.StateName)
         {
-            context.CandidateState = new DeletedState { Reason = "Deleted automatically when succeeded.", };
+            context.CandidateState = new DeletedState { Reason = "Deleted automatically when succeeded." };
         }
     }
 }

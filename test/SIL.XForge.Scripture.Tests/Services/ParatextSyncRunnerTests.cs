@@ -111,7 +111,7 @@ public class ParatextSyncRunnerTests
             )
             .Throws(new ForbiddenException());
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
-            .Returns(new ParatextSettings { ProjectType = ProjectType.BackTranslation.ToString(), });
+            .Returns(new ParatextSettings { ProjectType = ProjectType.BackTranslation.ToString() });
         await env.Runner.RunAsync("project01", "user02", "project01", false, CancellationToken.None);
 
         SFProject project = env.VerifyProjectSync(false, projectSFId: "project01");
@@ -803,20 +803,20 @@ public class ParatextSyncRunnerTests
             {
                 TagId = 1,
                 Name = "To do",
-                Icon = NoteTag.defaultTagIcon
+                Icon = NoteTag.defaultTagIcon,
             },
             new NoteTag
             {
                 TagId = 2,
                 Name = "Original tag",
-                Icon = "originalIcon"
+                Icon = "originalIcon",
             },
             new NoteTag
             {
                 TagId = 3,
                 Name = "Tag to delete",
-                Icon = "delete"
-            }
+                Icon = "delete",
+            },
         };
         await env.SetupProjectNoteTags("project01", noteTags);
         env.SetupPTData(books);
@@ -826,14 +826,14 @@ public class ParatextSyncRunnerTests
             {
                 TagId = 1,
                 Name = "To do",
-                Icon = NoteTag.defaultTagIcon
+                Icon = NoteTag.defaultTagIcon,
             },
             new NoteTag
             {
                 TagId = 2,
                 Name = "Edited tag",
-                Icon = "editedIcon"
-            }
+                Icon = "editedIcon",
+            },
         };
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
             .Returns(new ParatextSettings { NoteTags = newNoteTags });
@@ -1863,7 +1863,7 @@ public class ParatextSyncRunnerTests
             ParatextId = TestEnvironment.ParatextProjectUser01.ParatextId,
             Username = "New User 1",
             Id = TestEnvironment.ParatextProjectUser01.Id,
-            Role = TestEnvironment.ParatextProjectUser01.Role
+            Role = TestEnvironment.ParatextProjectUser01.Role,
         };
         env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
             .Returns([newUser, TestEnvironment.ParatextProjectUser02]);
@@ -1892,7 +1892,7 @@ public class ParatextSyncRunnerTests
             ParatextId = TestEnvironment.ParatextProjectUser01.ParatextId,
             Username = "User 2",
             Id = TestEnvironment.ParatextProjectUser01.Id,
-            Role = TestEnvironment.ParatextProjectUser01.Role
+            Role = TestEnvironment.ParatextProjectUser01.Role,
         };
         env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
             .Returns([user2]);
@@ -1982,7 +1982,7 @@ public class ParatextSyncRunnerTests
             "reattach selected text",
             "16",
             "Reattach before ",
-            " reattach after."
+            " reattach after.",
         };
         string reattached = string.Join(PtxUtils.StringUtils.orcCharacter, reattachedParts);
         string expected = "Context before Scripture text in project context after-" + $"Start:16-Length:22-MAT 1:1";
@@ -2102,7 +2102,7 @@ public class ParatextSyncRunnerTests
                 ThreadId = threadId,
                 SyncUserRef = "syncuser02",
                 Content = "Paratext note 3.",
-                DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
             }
         );
         await env.SetThreadNotesAsync(sfProjectId, dataId, beginningNoteSet);
@@ -2169,7 +2169,7 @@ public class ParatextSyncRunnerTests
                 ThreadId = threadId,
                 SyncUserRef = "syncuser02",
                 Content = "Paratext note 3.",
-                DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
             }
         );
         await env.SetThreadNotesAsync(sfProjectId, dataId, beginningNoteSet);
@@ -3181,7 +3181,7 @@ public class ParatextSyncRunnerTests
                 Id = "project01",
                 Name = "project01",
                 ShortName = "P01",
-                UserRoles = new Dictionary<string, string> { { "user01", SFProjectRole.Administrator }, },
+                UserRoles = new Dictionary<string, string> { { "user01", SFProjectRole.Administrator } },
                 ParatextId = "pt01",
                 IsRightToLeft = false,
                 DefaultFontSize = 10,
@@ -3196,15 +3196,15 @@ public class ParatextSyncRunnerTests
                         Name = "Source",
                         ShortName = "SRC",
                         WritingSystem = new WritingSystem { Tag = "en" },
-                        IsRightToLeft = false
+                        IsRightToLeft = false,
                     },
-                    DefaultNoteTagId = 1234
+                    DefaultNoteTagId = 1234,
                 },
                 CheckingConfig = new CheckingConfig
                 {
                     CheckingEnabled = true,
                     AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
-                    NoteTagId = 1234
+                    NoteTagId = 1234,
                 },
                 Texts = books.Select(b => textInfo).ToList(),
                 Sync = new Sync
@@ -3213,14 +3213,14 @@ public class ParatextSyncRunnerTests
                     // it to 1 to simulate it being incremented.
                     QueuedCount = 1,
                     SyncedToRepositoryVersion = "beforeSR",
-                    DataInSync = true
+                    DataInSync = true,
                 },
                 ParatextUsers =
                 [
                     new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
-                    new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
+                    new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" },
                 ],
-                NoteTags = []
+                NoteTags = [],
             },
         ];
         env.RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
@@ -3277,7 +3277,7 @@ public class ParatextSyncRunnerTests
                         Number = chapterDelta.Number,
                         IsValid = chapterDelta.IsValid,
                         LastVerse = chapterDelta.LastVerse,
-                        Permissions = new Dictionary<string, string>()
+                        Permissions = new Dictionary<string, string>(),
                     }
             )
             .ToList();
@@ -3289,7 +3289,7 @@ public class ParatextSyncRunnerTests
                 new[]
                 {
                     new User { Id = "user01", ParatextId = "pt01" },
-                    new User { Id = "user02", ParatextId = "pt02" }
+                    new User { Id = "user02", ParatextId = "pt02" },
                 }
             )
         );
@@ -3397,7 +3397,7 @@ public class ParatextSyncRunnerTests
             _projectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
                 {
-                    new SFProjectSecret { Id = "project01", JobIds = ["test_jobid"], },
+                    new SFProjectSecret { Id = "project01", JobIds = ["test_jobid"] },
                     new SFProjectSecret { Id = "project02" },
                     new SFProjectSecret { Id = "project03" },
                     new SFProjectSecret { Id = "project04" },
@@ -3454,7 +3454,7 @@ public class ParatextSyncRunnerTests
                 {
                     FullName = (string)x[1],
                     IsRightToLeft = false,
-                    Editable = true
+                    Editable = true,
                 });
             ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
             ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source").Returns("beforeSR", "afterSR");
@@ -3611,18 +3611,18 @@ public class ParatextSyncRunnerTests
                 BookNum = bookNum,
                 Chapters = new List<Chapter>
                 {
-                    new Chapter { Number = chapterNum, Permissions = chapterPermissions, },
+                    new Chapter { Number = chapterNum, Permissions = chapterPermissions },
                 },
             };
             RealtimeService.AddRepository(
                 "users",
                 OTType.Json0,
-                new MemoryRepository<User>(new[] { new User { Id = "user01" }, })
+                new MemoryRepository<User>(new[] { new User { Id = "user01" } })
             );
             RealtimeService.AddRepository(
                 "texts",
                 OTType.RichText,
-                new MemoryRepository<TextData>(new[] { new TextData(Delta.New()) { Id = id }, })
+                new MemoryRepository<TextData>(new[] { new TextData(Delta.New()) { Id = id } })
             );
             SFProject[] sfProjects = new[]
             {
@@ -3678,7 +3678,7 @@ public class ParatextSyncRunnerTests
                     new[]
                     {
                         new User { Id = "user01", ParatextId = "pt01" },
-                        new User { Id = "user02", ParatextId = "pt02" }
+                        new User { Id = "user02", ParatextId = "pt02" },
                     }
                 )
             );
@@ -3689,8 +3689,8 @@ public class ParatextSyncRunnerTests
                 new MemoryRepository<SFProjectUserConfig>(
                     new[]
                     {
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId("project01", "user01"), },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId("project01", "user02"), }
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId("project01", "user01") },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId("project01", "user02") },
                     }
                 )
             );
@@ -3705,7 +3705,7 @@ public class ParatextSyncRunnerTests
                     {
                         { "user01", SFProjectRole.Administrator },
                         { "user02", SFProjectRole.Translator },
-                        { "user03", SFProjectRole.Commenter }
+                        { "user03", SFProjectRole.Commenter },
                     },
                     ParatextId = "target",
                     IsRightToLeft = false,
@@ -3721,15 +3721,15 @@ public class ParatextSyncRunnerTests
                             Name = "Source",
                             ShortName = "SRC",
                             WritingSystem = new WritingSystem { Tag = "en" },
-                            IsRightToLeft = false
+                            IsRightToLeft = false,
                         },
-                        DefaultNoteTagId = translateNoteTagId
+                        DefaultNoteTagId = translateNoteTagId,
                     },
                     CheckingConfig = new CheckingConfig
                     {
                         CheckingEnabled = checkingEnabled,
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
-                        NoteTagId = checkingNoteTagId
+                        NoteTagId = checkingNoteTagId,
                     },
                     Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                     Sync = new Sync
@@ -3738,7 +3738,7 @@ public class ParatextSyncRunnerTests
                         // it to 1 to simulate it being incremented.
                         QueuedCount = 1,
                         SyncedToRepositoryVersion = "beforeSR",
-                        DataInSync = true
+                        DataInSync = true,
                     },
                     ParatextUsers = new List<ParatextUserProfile>
                     {
@@ -3746,11 +3746,11 @@ public class ParatextSyncRunnerTests
                         {
                             OpaqueUserId = "syncuser01",
                             Username = "User 1",
-                            SFUserId = "user01"
+                            SFUserId = "user01",
                         },
-                        new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
+                        new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" },
                     },
-                    NoteTags = new List<NoteTag>()
+                    NoteTags = new List<NoteTag>(),
                 },
                 new SFProject
                 {
@@ -3769,7 +3769,7 @@ public class ParatextSyncRunnerTests
                     },
                     WritingSystem = new WritingSystem { Tag = "en" },
                     Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                    Sync = new Sync { QueuedCount = 0, SyncedToRepositoryVersion = "beforeSR" }
+                    Sync = new Sync { QueuedCount = 0, SyncedToRepositoryVersion = "beforeSR" },
                 },
                 new SFProject
                 {
@@ -3781,7 +3781,7 @@ public class ParatextSyncRunnerTests
                     UserRoles = new Dictionary<string, string>
                     {
                         { "user01", SFProjectRole.Administrator },
-                        { "user02", SFProjectRole.Translator }
+                        { "user02", SFProjectRole.Translator },
                     },
                     ParatextId = "paratext-project03",
                     IsRightToLeft = false,
@@ -3795,13 +3795,13 @@ public class ParatextSyncRunnerTests
                             Name = "project04",
                             ShortName = "P04",
                             WritingSystem = new WritingSystem { Tag = "en" },
-                            IsRightToLeft = false
-                        }
+                            IsRightToLeft = false,
+                        },
                     },
                     CheckingConfig = new CheckingConfig
                     {
                         CheckingEnabled = checkingEnabled,
-                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
                     Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                     Sync = new Sync
@@ -3823,7 +3823,7 @@ public class ParatextSyncRunnerTests
                     CheckingConfig = new CheckingConfig
                     {
                         CheckingEnabled = checkingEnabled,
-                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
                     WritingSystem = new WritingSystem { Tag = "en" },
                     Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
@@ -3832,7 +3832,7 @@ public class ParatextSyncRunnerTests
                         QueuedCount = 0,
                         // No SyncedToRepositoryVersion
                         // No DataInSync
-                    }
+                    },
                 },
                 new SFProject
                 {
@@ -3845,7 +3845,7 @@ public class ParatextSyncRunnerTests
                     UserRoles = new Dictionary<string, string>
                     {
                         { "user01", SFProjectRole.Administrator },
-                        { "user02", SFProjectRole.Translator }
+                        { "user02", SFProjectRole.Translator },
                     },
                     ParatextId = "paratext-project05",
                     IsRightToLeft = false,
@@ -3859,23 +3859,23 @@ public class ParatextSyncRunnerTests
                             Name = "project04",
                             ShortName = "P04",
                             WritingSystem = new WritingSystem { Tag = "en" },
-                            IsRightToLeft = false
-                        }
+                            IsRightToLeft = false,
+                        },
                     },
                     CheckingConfig = new CheckingConfig
                     {
                         CheckingEnabled = checkingEnabled,
-                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
                     Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                     Sync = new Sync
                     {
                         QueuedCount = 1,
-                        DataInSync = false
+                        DataInSync = false,
                         // No SyncedToRepositoryVersion
                     },
-                    NoteTags = new List<NoteTag>()
-                }
+                    NoteTags = new List<NoteTag>(),
+                },
             };
             RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             MockProjectDirsExist(sfProjects.Select((SFProject proj) => proj.ParatextId));
@@ -3943,10 +3943,10 @@ public class ParatextSyncRunnerTests
                         Number = c,
                         LastVerse = 10,
                         IsValid = !book.InvalidChapters.Contains(c),
-                        Permissions = { }
+                        Permissions = { },
                     })
                     .ToList(),
-                HasSource = book.HighestSourceChapter > 0
+                HasSource = book.HighestSourceChapter > 0,
             };
         }
 
@@ -4014,7 +4014,7 @@ public class ParatextSyncRunnerTests
                 {
                     ThreadUpdated = true,
                     Position = new TextAnchor { Start = 0, Length = 0 },
-                    Assignment = CommentThread.teamUser
+                    Assignment = CommentThread.teamUser,
                 };
                 noteThreadChange.AddChange(
                     CreateNote(threadId, "n01", "syncuser01", $"{threadId} updated.", ChangeType.Updated, null, 2),
@@ -4058,7 +4058,7 @@ public class ParatextSyncRunnerTests
                 ""
             )
             {
-                ThreadUpdated = true
+                ThreadUpdated = true,
             };
             SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
         }
@@ -4077,7 +4077,7 @@ public class ParatextSyncRunnerTests
             )
             {
                 Position = new TextAnchor { Start = 0, Length = 0 },
-                Assignment = CommentThread.teamUser
+                Assignment = CommentThread.teamUser,
             };
             noteThreadChange.AddChange(
                 CreateNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added),
@@ -4099,7 +4099,7 @@ public class ParatextSyncRunnerTests
                 ""
             )
             {
-                Position = new TextAnchor { Start = 0, Length = 0 }
+                Position = new TextAnchor { Start = 0, Length = 0 },
             };
             noteThreadChange.AddChange(
                 CreateNote(threadId, "conflict1", "", "Conflict on note.", ChangeType.Added, CommentTag.conflictTagId),
@@ -4126,7 +4126,7 @@ public class ParatextSyncRunnerTests
                 ""
             )
             {
-                NoteIdsRemoved = new List<string>(noteIds)
+                NoteIdsRemoved = new List<string>(noteIds),
             };
             SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
         }
@@ -4568,8 +4568,8 @@ public class ParatextSyncRunnerTests
                                 Id = $"{projectId}:question{bookId}{c}",
                                 DataId = $"question{bookId}{c}",
                                 ProjectRef = projectId,
-                                VerseRef = new VerseRefData(bookNum, c, 1)
-                            }
+                                VerseRef = new VerseRefData(bookNum, c, 1),
+                            },
                         }
                     );
             }

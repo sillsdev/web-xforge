@@ -16,7 +16,7 @@ public static class JsonRpcServiceCollectionExtensions
             config.JsonSerializerSettings = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             };
 
             config.OnInvokeException = context =>

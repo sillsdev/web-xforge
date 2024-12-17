@@ -104,7 +104,7 @@ public class ParatextResource : ParatextProject
                 InstalledRevision.ToString(),
                 CreatedTimestamp.ToString(CultureInfo.CurrentCulture),
                 ManifestChecksum,
-                PermissionsChecksum
+                PermissionsChecksum,
             }
         )
         {

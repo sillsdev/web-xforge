@@ -246,7 +246,7 @@ public class NotesFormatterTests
             DateTime = commentDate,
             Thread = thread,
             VerseRefStr = verseRefStr,
-            Contents = doc.DocumentElement
+            Contents = doc.DocumentElement,
         };
         List<CommentThread> commentThreads = new List<CommentThread>
         {
@@ -254,8 +254,8 @@ public class NotesFormatterTests
             {
                 ContextScrTextName = env.ProjectScrText?.Name,
                 ScrText = env.ProjectScrText,
-                Comments = new List<Comment> { comment }
-            }
+                Comments = new List<Comment> { comment },
+            },
         };
 
         // SUT

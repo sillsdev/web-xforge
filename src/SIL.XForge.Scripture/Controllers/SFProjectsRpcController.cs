@@ -60,7 +60,7 @@ public class SFProjectsRpcController(
                     { "method", "Create" },
                     { "ParatextId", settings?.ParatextId },
                     { "SourceParatextId", settings?.SourceParatextId },
-                    { "CheckingEnabled", settings?.CheckingEnabled.ToString() }
+                    { "CheckingEnabled", settings?.CheckingEnabled.ToString() },
                 }
             );
             throw;
@@ -89,7 +89,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "CreateResourceProject" }, { "ParatextId", paratextId }, }
+                new Dictionary<string, string> { { "method", "CreateResourceProject" }, { "ParatextId", paratextId } }
             );
             throw;
         }
@@ -117,7 +117,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "Delete" }, { "projectId", projectId }, }
+                new Dictionary<string, string> { { "method", "Delete" }, { "projectId", projectId } }
             );
             throw;
         }
@@ -238,7 +238,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "GetProjectRole" }, { "projectId", projectId }, }
+                new Dictionary<string, string> { { "method", "GetProjectRole" }, { "projectId", projectId } }
             );
             throw;
         }
@@ -324,7 +324,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "UninviteUser" }, { "projectId", projectId }, }
+                new Dictionary<string, string> { { "method", "UninviteUser" }, { "projectId", projectId } }
             );
             throw;
         }
@@ -347,7 +347,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "IsAlreadyInvited" }, { "projectId", projectId }, }
+                new Dictionary<string, string> { { "method", "IsAlreadyInvited" }, { "projectId", projectId } }
             );
             throw;
         }
@@ -370,7 +370,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "InvitedUsers" }, { "projectId", projectId }, }
+                new Dictionary<string, string> { { "method", "InvitedUsers" }, { "projectId", projectId } }
             );
             throw;
         }
@@ -396,7 +396,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "shareKey", shareKey }, }
+                new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "shareKey", shareKey } }
             );
             throw;
         }
@@ -475,7 +475,7 @@ public class SFProjectsRpcController(
                 {
                     { "method", "ReserveLinkSharingKey" },
                     { "shareKey", shareKey },
-                    { "daysBeforeExpiration", daysBeforeExpiration.ToString() }
+                    { "daysBeforeExpiration", daysBeforeExpiration.ToString() },
                 }
             );
             throw;
@@ -529,7 +529,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "Sync" }, { "projectId", projectId }, }
+                new Dictionary<string, string> { { "method", "Sync" }, { "projectId", projectId } }
             );
             throw;
         }
@@ -553,7 +553,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "CancelSync" }, { "projectId", projectId }, }
+                new Dictionary<string, string> { { "method", "CancelSync" }, { "projectId", projectId } }
             );
             throw;
         }
@@ -754,7 +754,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "TransceleratorQuestions" }, { "projectId", projectId }, }
+                new Dictionary<string, string> { { "method", "TransceleratorQuestions" }, { "projectId", projectId } }
             );
             throw;
         }

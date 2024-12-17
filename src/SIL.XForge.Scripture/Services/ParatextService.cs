@@ -741,7 +741,7 @@ public class ParatextService : DisposableBase, IParatextService
             foreach (
                 ParatextProjectUser user in project.UserRoles.Keys.Select(userId => new ParatextProjectUser
                 {
-                    Id = userId
+                    Id = userId,
                 })
             )
             {
@@ -949,7 +949,7 @@ public class ParatextService : DisposableBase, IParatextService
                 TagId = t.Id,
                 Icon = t.Icon,
                 Name = t.Name,
-                CreatorResolve = t.CreatorResolve
+                CreatorResolve = t.CreatorResolve,
             });
 
         // If the copyright banner is blank or empty, make it null so it will not be displayed
@@ -1350,7 +1350,7 @@ public class ParatextService : DisposableBase, IParatextService
             {
                 Position = GetThreadTextAnchor(thread, chapterDeltas),
                 Status = thread.Status.InternalValue,
-                Assignment = GetAssignedUserRef(thread.AssignedUser, ptProjectUsers)
+                Assignment = GetAssignedUserRef(thread.AssignedUser, ptProjectUsers),
             };
             foreach (var comm in thread.Comments)
             {
@@ -1460,7 +1460,7 @@ public class ParatextService : DisposableBase, IParatextService
                     return new BiblicalTermsChanges
                     {
                         ErrorCode = BiblicalTermErrorCode.NotSynced,
-                        ErrorMessage = message
+                        ErrorMessage = message,
                     };
                 }
 
@@ -1480,7 +1480,7 @@ public class ParatextService : DisposableBase, IParatextService
                     return new BiblicalTermsChanges
                     {
                         ErrorCode = BiblicalTermErrorCode.NoPermission,
-                        ErrorMessage = message
+                        ErrorMessage = message,
                     };
                 }
 
@@ -1941,7 +1941,7 @@ public class ParatextService : DisposableBase, IParatextService
                 Id = id,
                 Version = 0,
                 Data = new TextData(chapterDelta.Delta),
-                IsValid = chapterDelta.IsValid
+                IsValid = chapterDelta.IsValid,
             };
         }
         else
@@ -1954,7 +1954,7 @@ public class ParatextService : DisposableBase, IParatextService
                 Id = snapshot.Id,
                 Version = snapshot.Version,
                 Data = snapshot.Data,
-                IsValid = chapterDelta.IsValid
+                IsValid = chapterDelta.IsValid,
             };
         }
 
@@ -2571,7 +2571,7 @@ public class ParatextService : DisposableBase, IParatextService
             Repository = sharedRepository,
             SendReceiveId = HexId.FromStr(paratextId),
             ScrText = scrText,
-            Permissions = scrText.Permissions
+            Permissions = scrText.Permissions,
         };
     }
 
@@ -2960,13 +2960,12 @@ public class ParatextService : DisposableBase, IParatextService
                         ExtraHeadingInfo = threadDoc.Data.ExtraHeadingInfo switch
                         {
                             null => null,
-                            _
-                                => new TermNoteHeadingInfo(
-                                    threadDoc.Data.ExtraHeadingInfo.Lemma,
-                                    threadDoc.Data.ExtraHeadingInfo.Language,
-                                    threadDoc.Data.ExtraHeadingInfo.Transliteration,
-                                    threadDoc.Data.ExtraHeadingInfo.Gloss
-                                ),
+                            _ => new TermNoteHeadingInfo(
+                                threadDoc.Data.ExtraHeadingInfo.Lemma,
+                                threadDoc.Data.ExtraHeadingInfo.Language,
+                                threadDoc.Data.ExtraHeadingInfo.Transliteration,
+                                threadDoc.Data.ExtraHeadingInfo.Gloss
+                            ),
                         },
                     };
 
@@ -3370,7 +3369,7 @@ public class ParatextService : DisposableBase, IParatextService
             ptProjectUser = new ParatextUserProfile
             {
                 OpaqueUserId = _guidService.NewObjectId(),
-                Username = paratextUsername
+                Username = paratextUsername,
             };
             ptProjectUsers.Add(paratextUsername, ptProjectUser);
         }

@@ -59,7 +59,7 @@ public class MockLogger<T> : ILogger<T>
                 LogLevel = logLevel,
                 EventId = eventId,
                 State = state,
-                Exception = exception
+                Exception = exception,
             }
         );
     }

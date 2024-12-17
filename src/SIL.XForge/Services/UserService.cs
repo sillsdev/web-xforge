@@ -127,7 +127,7 @@ public class UserService : IUserService
             var newPTTokens = new Tokens
             {
                 AccessToken = (string)ptIdentity["access_token"],
-                RefreshToken = (string)ptIdentity["refresh_token"]
+                RefreshToken = (string)ptIdentity["refresh_token"],
             };
             UserSecret userSecret = await _userSecrets.UpdateAsync(
                 curUserId,
@@ -180,7 +180,7 @@ public class UserService : IUserService
         var ptTokens = new Tokens
         {
             AccessToken = (string)ptIdentity["access_token"],
-            RefreshToken = (string)ptIdentity["refresh_token"]
+            RefreshToken = (string)ptIdentity["refresh_token"],
         };
         await _userSecrets.UpdateAsync(primaryUserId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
 

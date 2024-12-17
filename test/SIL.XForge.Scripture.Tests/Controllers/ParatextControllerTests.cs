@@ -389,7 +389,7 @@ public class ParatextControllerTests
             Data = new TextData(),
             Id = "textId",
             Version = 1,
-            IsValid = true
+            IsValid = true,
         };
 
         public readonly byte[] ZipHeader = [80, 75, 05, 06];

@@ -81,7 +81,7 @@ public class Json0OpBuilder<T>
                 {
                     Path = CreateJson0Path(path),
                     DeleteItem = oldItem,
-                    InsertItem = newItem
+                    InsertItem = newItem,
                 }
             );
         }
@@ -113,7 +113,7 @@ public class Json0OpBuilder<T>
                 {
                     Path = CreateJson0Path(path),
                     DeleteItem = oldItem,
-                    InsertItem = newItem
+                    InsertItem = newItem,
                 }
             );
         }
@@ -138,7 +138,7 @@ public class Json0OpBuilder<T>
                 {
                     Path = CreateJson0Path(objectPath.Items),
                     DeleteProp = hasOldValue ? (object)oldValue : null,
-                    InsertProp = value
+                    InsertProp = value,
                 }
             );
         }
@@ -163,7 +163,7 @@ public class Json0OpBuilder<T>
                 {
                     Path = CreateJson0Path(objectPath.Items),
                     DeleteProp = oldValue,
-                    InsertProp = newValue
+                    InsertProp = newValue,
                 }
             );
         }

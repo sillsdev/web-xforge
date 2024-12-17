@@ -25,7 +25,7 @@ public class ExceptionHandler : IExceptionHandler
                     "Response:",
                     response.ToString(),
                     "Response content begins with:",
-                    responseContent
+                    responseContent,
                 }
             )
             .Replace("\n", "\n    ");
@@ -69,7 +69,7 @@ public class ExceptionHandler : IExceptionHandler
     {
         if (!string.IsNullOrWhiteSpace(userId))
         {
-            _bugsnag.BeforeNotify(report => report.Event.User = new Bugsnag.Payload.User { Id = userId, });
+            _bugsnag.BeforeNotify(report => report.Event.User = new Bugsnag.Payload.User { Id = userId });
         }
     }
 }

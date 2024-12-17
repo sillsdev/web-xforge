@@ -66,7 +66,7 @@ public class UsersRpcController : RpcControllerBase
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "PushAuthUserProfile" }, { "userId", userId }, }
+                new Dictionary<string, string> { { "method", "PushAuthUserProfile" }, { "userId", userId } }
             );
             throw;
         }
@@ -119,7 +119,7 @@ public class UsersRpcController : RpcControllerBase
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "UpdateAvatarFromDisplayName" }, }
+                new Dictionary<string, string> { { "method", "UpdateAvatarFromDisplayName" } }
             );
             throw;
         }
@@ -135,7 +135,7 @@ public class UsersRpcController : RpcControllerBase
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "UpdateInterfaceLanguage" }, { "language", language }, }
+                new Dictionary<string, string> { { "method", "UpdateInterfaceLanguage" }, { "language", language } }
             );
             throw;
         }
@@ -155,7 +155,7 @@ public class UsersRpcController : RpcControllerBase
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "Delete" }, { "userId", userId }, }
+                new Dictionary<string, string> { { "method", "Delete" }, { "userId", userId } }
             );
 
             throw;

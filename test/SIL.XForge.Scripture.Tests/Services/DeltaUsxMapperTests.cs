@@ -370,7 +370,7 @@ public class DeltaUsxMapperTests
                     new List<CharAttr>
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
-                        new CharAttr { Style = "sup", CharID = sup1CharID }
+                        new CharAttr { Style = "sup", CharID = sup1CharID },
                     },
                     "verse_1_1"
                 )
@@ -380,7 +380,7 @@ public class DeltaUsxMapperTests
                     new List<CharAttr>
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
-                        new CharAttr { Style = "sup", CharID = sup2CharID }
+                        new CharAttr { Style = "sup", CharID = sup2CharID },
                     },
                     "verse_1_1"
                 )
@@ -390,7 +390,7 @@ public class DeltaUsxMapperTests
                     new List<CharAttr>
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
-                        new CharAttr { Style = "sup", CharID = sup3CharID }
+                        new CharAttr { Style = "sup", CharID = sup3CharID },
                     },
                     "verse_1_1"
                 )
@@ -435,7 +435,7 @@ public class DeltaUsxMapperTests
                     new List<CharAttr>
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
-                        new CharAttr { Style = "sup", CharID = sup1CharID }
+                        new CharAttr { Style = "sup", CharID = sup1CharID },
                     },
                     "verse_1_1"
                 )
@@ -444,7 +444,7 @@ public class DeltaUsxMapperTests
                     new List<CharAttr>
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
-                        new CharAttr { Style = "sup", CharID = sup2CharID }
+                        new CharAttr { Style = "sup", CharID = sup2CharID },
                     },
                     "verse_1_1"
                 )
@@ -453,7 +453,7 @@ public class DeltaUsxMapperTests
                     new List<CharAttr>
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
-                        new CharAttr { Style = "sup", CharID = sup3CharID }
+                        new CharAttr { Style = "sup", CharID = sup3CharID },
                     },
                     "verse_1_1"
                 )
@@ -500,7 +500,7 @@ public class DeltaUsxMapperTests
                     new List<CharAttr>
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
-                        new CharAttr { Style = "sup", CharID = sup1CharID }
+                        new CharAttr { Style = "sup", CharID = sup1CharID },
                     },
                     "verse_1_1"
                 )
@@ -510,7 +510,7 @@ public class DeltaUsxMapperTests
                     new List<CharAttr>
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
-                        new CharAttr { Style = "no", CharID = noCharID }
+                        new CharAttr { Style = "no", CharID = noCharID },
                     },
                     "verse_1_1"
                 )
@@ -520,7 +520,7 @@ public class DeltaUsxMapperTests
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
                         new CharAttr { Style = "no", CharID = noCharID },
-                        new CharAttr { Style = "sup", CharID = sup2CharID }
+                        new CharAttr { Style = "sup", CharID = sup2CharID },
                     },
                     "verse_1_1"
                 )
@@ -530,7 +530,7 @@ public class DeltaUsxMapperTests
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
                         new CharAttr { Style = "no", CharID = noCharID },
-                        new CharAttr { Style = "sup", CharID = sup3CharID }
+                        new CharAttr { Style = "sup", CharID = sup3CharID },
                     },
                     "verse_1_1"
                 )
@@ -540,7 +540,7 @@ public class DeltaUsxMapperTests
                     new List<CharAttr>
                     {
                         new CharAttr { Style = "bd", CharID = bdCharID },
-                        new CharAttr { Style = "sup", CharID = sup4CharID }
+                        new CharAttr { Style = "sup", CharID = sup4CharID },
                     },
                     "verse_1_1"
                 )
@@ -1050,7 +1050,7 @@ public class DeltaUsxMapperTests
                     .InsertVerse("2")
                     .InsertBlank("verse_2_2")
                     .Insert("\n")
-            )
+            ),
         };
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
@@ -1202,7 +1202,7 @@ public class DeltaUsxMapperTests
                     .InsertVerse("2")
                     .InsertBlank("verse_2_2")
                     .Insert("\n")
-            )
+            ),
         };
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
@@ -1366,7 +1366,7 @@ public class DeltaUsxMapperTests
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_3_1")
                     .InsertPara("p")
-            )
+            ),
         };
 
         var oldUsxDoc = Usx(
@@ -1438,7 +1438,7 @@ public class DeltaUsxMapperTests
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_3_1")
                     .InsertPara("p")
-            )
+            ),
         };
 
         var oldUsxDoc = Usx(
@@ -1510,7 +1510,7 @@ public class DeltaUsxMapperTests
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_3_1")
                     .InsertPara("bad", true)
-            )
+            ),
         };
 
         var oldUsxDoc = Usx(
@@ -1744,7 +1744,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "tei", CharID = _testGuidService.Generate() },
-                    new CharAttr { Style = "ver", CharID = _testGuidService.Generate() }
+                    new CharAttr { Style = "ver", CharID = _testGuidService.Generate() },
                 },
                 "verse_1_1",
                 invalid: true
@@ -2170,7 +2170,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
-                    new CharAttr { Style = "sup", CharID = sup1CharID }
+                    new CharAttr { Style = "sup", CharID = sup1CharID },
                 },
                 "verse_1_1"
             )
@@ -2180,7 +2180,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
-                    new CharAttr { Style = "sup", CharID = sup2CharID }
+                    new CharAttr { Style = "sup", CharID = sup2CharID },
                 },
                 "verse_1_1"
             )
@@ -2190,7 +2190,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
-                    new CharAttr { Style = "sup", CharID = sup3CharID }
+                    new CharAttr { Style = "sup", CharID = sup3CharID },
                 },
                 "verse_1_1"
             )
@@ -2234,7 +2234,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
-                    new CharAttr { Style = "sup", CharID = sup1CharID }
+                    new CharAttr { Style = "sup", CharID = sup1CharID },
                 },
                 "verse_1_1"
             )
@@ -2243,7 +2243,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
-                    new CharAttr { Style = "sup", CharID = sup2CharID }
+                    new CharAttr { Style = "sup", CharID = sup2CharID },
                 },
                 "verse_1_1"
             )
@@ -2252,7 +2252,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
-                    new CharAttr { Style = "sup", CharID = sup3CharID }
+                    new CharAttr { Style = "sup", CharID = sup3CharID },
                 },
                 "verse_1_1"
             )
@@ -2305,7 +2305,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
-                    new CharAttr { Style = "sup", CharID = sup1CharID }
+                    new CharAttr { Style = "sup", CharID = sup1CharID },
                 },
                 "verse_1_1"
             )
@@ -2315,7 +2315,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
-                    new CharAttr { Style = "no", CharID = noCharID }
+                    new CharAttr { Style = "no", CharID = noCharID },
                 },
                 "verse_1_1"
             )
@@ -2325,7 +2325,7 @@ public class DeltaUsxMapperTests
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
                     new CharAttr { Style = "no", CharID = noCharID },
-                    new CharAttr { Style = "sup", CharID = sup2CharID }
+                    new CharAttr { Style = "sup", CharID = sup2CharID },
                 },
                 "verse_1_1"
             )
@@ -2335,7 +2335,7 @@ public class DeltaUsxMapperTests
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
                     new CharAttr { Style = "no", CharID = noCharID },
-                    new CharAttr { Style = "sup", CharID = sup3CharID }
+                    new CharAttr { Style = "sup", CharID = sup3CharID },
                 },
                 "verse_1_1"
             )
@@ -2345,7 +2345,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bd", CharID = bdCharID },
-                    new CharAttr { Style = "sup", CharID = sup4CharID }
+                    new CharAttr { Style = "sup", CharID = sup4CharID },
                 },
                 "verse_1_1"
             )
@@ -2389,7 +2389,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bad", CharID = badCharID },
-                    new CharAttr { Style = "sup", CharID = sup1CharID }
+                    new CharAttr { Style = "sup", CharID = sup1CharID },
                 },
                 "verse_1_1",
                 true
@@ -2400,7 +2400,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bad", CharID = badCharID },
-                    new CharAttr { Style = "sup", CharID = sup2CharID }
+                    new CharAttr { Style = "sup", CharID = sup2CharID },
                 },
                 "verse_1_1",
                 true
@@ -2411,7 +2411,7 @@ public class DeltaUsxMapperTests
                 new List<CharAttr>
                 {
                     new CharAttr { Style = "bad", CharID = badCharID },
-                    new CharAttr { Style = "sup", CharID = sup3CharID }
+                    new CharAttr { Style = "sup", CharID = sup3CharID },
                 },
                 "verse_1_1",
                 true

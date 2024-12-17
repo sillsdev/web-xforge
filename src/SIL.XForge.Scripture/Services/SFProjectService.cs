@@ -941,7 +941,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             Project = project,
             ProjectSecret = projectSecret,
-            ShareKey = projectSecretShareKey
+            ShareKey = projectSecretShareKey,
         };
     }
 
@@ -1578,11 +1578,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 {
                     TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
                     TextInfoPermission.Read => Attempt.Success(SFProjectRole.PTObserver),
-                    _
-                        => throw new ArgumentException(
-                            $"Unknown resource permission: '{permission}'",
-                            nameof(permission)
-                        ),
+                    _ => throw new ArgumentException(
+                        $"Unknown resource permission: '{permission}'",
+                        nameof(permission)
+                    ),
                 };
             }
             else

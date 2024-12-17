@@ -1561,7 +1561,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             {
                 TagId = NoteTag.notSetId,
                 Icon = NoteTag.sfNoteTagIcon,
-                Name = NoteTag.sfNoteTagName
+                Name = NoteTag.sfNoteTagName,
             };
             // Note: If we introduce a new note tag and the remote PT repo also introduces a note tag,
             // the tag introduced here will get overwritten
@@ -1579,7 +1579,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             TagId = NoteTag.notSetId,
             Icon = NoteTag.checkingTagIcon,
-            Name = NoteTag.checkingTagName
+            Name = NoteTag.checkingTagName,
         };
         noteTagId = _paratextService.UpdateCommentTag(_userSecret, targetParatextId, newNoteTag);
         await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.CheckingConfig.NoteTagId, noteTagId));
@@ -2133,7 +2133,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         1.0 / _numberOfPhases * (double)syncPhase
                         + (progress > 1.0 ? progress / 100.0 : progress) * 1.0 / _numberOfPhases,
                     SyncPhase = syncPhase,
-                    SyncProgress = progress
+                    SyncProgress = progress,
                 }
             );
         }

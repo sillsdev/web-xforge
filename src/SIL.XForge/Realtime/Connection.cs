@@ -191,7 +191,7 @@ public class Connection : DisposableBase, IConnection
             );
 
             // Return a snapshot
-            return new Snapshot<T> { Data = data, Version = 1, };
+            return new Snapshot<T> { Data = data, Version = 1 };
         }
         else
         {

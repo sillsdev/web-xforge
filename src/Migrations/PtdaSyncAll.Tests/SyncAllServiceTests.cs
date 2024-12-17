@@ -347,8 +347,8 @@ namespace PtdaSyncAll
                             ParatextTokens = new Tokens
                             {
                                 AccessToken = CreateAccessToken(DateTime.Now),
-                                RefreshToken = "test_refresh_token1"
-                            }
+                                RefreshToken = "test_refresh_token1",
+                            },
                         },
                         new UserSecret
                         {
@@ -356,9 +356,9 @@ namespace PtdaSyncAll
                             ParatextTokens = new Tokens
                             {
                                 AccessToken = CreateAccessToken(DateTime.Now),
-                                RefreshToken = "test_refresh_token2"
-                            }
-                        }
+                                RefreshToken = "test_refresh_token2",
+                            },
+                        },
                     }
                 );
 
@@ -426,7 +426,7 @@ namespace PtdaSyncAll
                         {
                             new User { Id = "user01", ParatextId = "pt01" },
                             new User { Id = "user02", ParatextId = "pt02" },
-                            new User { Id = "user03", ParatextId = "pt03" }
+                            new User { Id = "user03", ParatextId = "pt03" },
                         }
                     )
                 );
@@ -445,7 +445,7 @@ namespace PtdaSyncAll
                                 {
                                     { "user01", SFProjectRole.Administrator },
                                     { "user02", SFProjectRole.Translator },
-                                    { "user03", SFProjectRole.Administrator }
+                                    { "user03", SFProjectRole.Administrator },
                                 },
                                 ParatextId = "target",
                                 TranslateConfig = new TranslateConfig
@@ -456,11 +456,11 @@ namespace PtdaSyncAll
                                         ParatextId = "source",
                                         Name = "Source",
                                         ShortName = "SRC",
-                                        WritingSystem = new WritingSystem { Tag = "en" }
-                                    }
+                                        WritingSystem = new WritingSystem { Tag = "en" },
+                                    },
                                 },
                                 CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
-                                Sync = new Sync { QueuedCount = 1 }
+                                Sync = new Sync { QueuedCount = 1 },
                             },
                             new SFProject
                             {
@@ -471,7 +471,7 @@ namespace PtdaSyncAll
                                 {
                                     { "user01", SFProjectRole.Administrator },
                                     { "user02", SFProjectRole.Translator },
-                                    { "user03", SFProjectRole.Administrator }
+                                    { "user03", SFProjectRole.Administrator },
                                 },
                                 ParatextId = "target",
                                 TranslateConfig = new TranslateConfig
@@ -482,12 +482,12 @@ namespace PtdaSyncAll
                                         ParatextId = "source",
                                         Name = "Source",
                                         ShortName = "SR2",
-                                        WritingSystem = new WritingSystem { Tag = "en" }
-                                    }
+                                        WritingSystem = new WritingSystem { Tag = "en" },
+                                    },
                                 },
                                 CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
-                                Sync = new Sync { QueuedCount = 1 }
-                            }
+                                Sync = new Sync { QueuedCount = 1 },
+                            },
                         }
                     )
                 );
@@ -505,7 +505,7 @@ namespace PtdaSyncAll
                     new[]
                     {
                         new Claim(JwtClaimTypes.Subject, "paratext01"),
-                        new Claim(JwtClaimTypes.IssuedAt, EpochTime.GetIntDate(issuedAt).ToString())
+                        new Claim(JwtClaimTypes.IssuedAt, EpochTime.GetIntDate(issuedAt).ToString()),
                     },
                     expires: issuedAt + TimeSpan.FromMinutes(5)
                 );
