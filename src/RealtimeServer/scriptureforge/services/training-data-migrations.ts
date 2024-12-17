@@ -1,3 +1,3 @@
-import { MigrationConstructor } from '../../common/migration';
+import { MigrationConstructor, monotonicallyIncreasingMigrationList } from '../../common/migration';
 
-export const TRAINING_DATA_MIGRATIONS: MigrationConstructor[] = [];
+export const TRAINING_DATA_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([]);
