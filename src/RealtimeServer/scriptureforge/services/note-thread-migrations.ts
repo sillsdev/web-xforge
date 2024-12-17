@@ -1,5 +1,5 @@
 import { Doc, Op } from 'sharedb/lib/client';
-import { DocMigration, MigrationConstructor } from '../../common/migration';
+import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationList } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 
 class NoteThreadMigration1 extends DocMigration {
@@ -69,9 +69,9 @@ class NoteThreadMigration4 extends DocMigration {
   }
 }
 
-export const NOTE_THREAD_MIGRATIONS: MigrationConstructor[] = [
+export const NOTE_THREAD_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([
   NoteThreadMigration1,
   NoteThreadMigration2,
   NoteThreadMigration3,
   NoteThreadMigration4
-];
+]);

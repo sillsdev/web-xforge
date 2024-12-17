@@ -1,5 +1,5 @@
 import { Doc, Op } from 'sharedb/lib/client';
-import { DocMigration, MigrationConstructor } from '../../common/migration';
+import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationList } from '../../common/migration';
 import { Operation } from '../../common/models/project-rights';
 import { submitMigrationOp } from '../../common/realtime-server';
 import { NoteTag } from '../models/note-tag';
@@ -387,7 +387,7 @@ class SFProjectMigration21 extends DocMigration {
   }
 }
 
-export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
+export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([
   SFProjectMigration1,
   SFProjectMigration2,
   SFProjectMigration3,
@@ -409,4 +409,4 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration19,
   SFProjectMigration20,
   SFProjectMigration21
-];
+]);
