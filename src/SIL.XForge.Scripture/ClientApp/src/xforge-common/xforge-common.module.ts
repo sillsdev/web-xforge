@@ -7,6 +7,7 @@ import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER, TranslocoModule } from '@ngneat/tra
 import { ngfModule } from 'angular-file';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { ProjectSelectComponent } from '../app/project-select/project-select.component';
+import { MobileNotSupportedComponent } from '../app/shared/mobile-not-supported/mobile-not-supported.component';
 import { PageNotFoundComponent } from '../app/shared/page-not-found/page-not-found.component';
 import { SyncProgressComponent } from '../app/sync/sync-progress/sync-progress.component';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
@@ -38,7 +39,16 @@ const componentExports = [
 ];
 
 @NgModule({
-  imports: [CommonModule, ngfModule, RouterModule, UICommonModule, TranslocoModule, MatDialogModule, AvatarComponent],
+  imports: [
+    CommonModule,
+    ngfModule,
+    RouterModule,
+    UICommonModule,
+    TranslocoModule,
+    MatDialogModule,
+    AvatarComponent,
+    MobileNotSupportedComponent
+  ],
   declarations: componentExports,
   exports: componentExports,
   providers: [
