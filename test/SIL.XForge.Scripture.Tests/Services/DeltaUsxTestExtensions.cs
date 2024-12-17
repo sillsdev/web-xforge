@@ -160,7 +160,7 @@ public static class DeltaUsxTestExtensions
     }
 
     public static Delta InsertOptBreak(this Delta delta, string segRef = null) =>
-        delta.InsertEmbed("optbreak", new JObject(), segRef);
+        delta.InsertEmbed("optbreak", [], segRef);
 
     public static Delta InsertMilestone(this Delta delta, string style, string segRef = null, bool invalid = false)
     {

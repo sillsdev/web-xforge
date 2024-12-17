@@ -115,8 +115,8 @@ public class MemoryUpdateBuilderTests
     {
         public string Id { get; set; }
         public int TestNumber { get; set; }
-        public List<TestEntity> TestChildCollection { get; set; } = new List<TestEntity>();
-        public List<string> TestStringCollection { get; set; } = new List<string>();
+        public List<TestEntity> TestChildCollection { get; set; } = [];
+        public List<string> TestStringCollection { get; set; } = [];
         public string TestStringField { get; set; }
     }
 
@@ -128,9 +128,9 @@ public class MemoryUpdateBuilderTests
             TestEntity = new TestEntity
             {
                 Id = "test_id_1",
-                TestChildCollection = new List<TestEntity> { new TestEntity { Id = "test_id_2" }, },
+                TestChildCollection = [new TestEntity { Id = "test_id_2" }],
                 TestNumber = 1,
-                TestStringCollection = new List<string> { "test_value_1", "test_value_2", },
+                TestStringCollection = ["test_value_1", "test_value_2"],
                 TestStringField = "test_value",
             };
 

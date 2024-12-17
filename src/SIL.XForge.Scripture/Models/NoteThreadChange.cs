@@ -28,12 +28,12 @@ public class NoteThreadChange
     public BiblicalTermNoteHeadingInfo? ExtraHeadingInfo { get; set; }
 
     public bool ThreadUpdated { get; set; }
-    public List<Note> NotesAdded { get; set; } = new List<Note>();
-    public List<Note> NotesUpdated { get; set; } = new List<Note>();
-    public List<Note> NotesDeleted { get; set; } = new List<Note>();
+    public List<Note> NotesAdded { get; set; } = [];
+    public List<Note> NotesUpdated { get; set; } = [];
+    public List<Note> NotesDeleted { get; set; } = [];
 
     /// <summary> IDs for notes that have been permanently removed. </summary>
-    public List<string> NoteIdsRemoved { get; set; } = new List<string>();
+    public List<string> NoteIdsRemoved { get; set; } = [];
 
     public bool HasChange
     {

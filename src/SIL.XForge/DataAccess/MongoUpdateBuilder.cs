@@ -16,7 +16,7 @@ public class MongoUpdateBuilder<T> : IUpdateBuilder<T>
     public MongoUpdateBuilder()
     {
         _builder = Builders<T>.Update;
-        _defs = new List<UpdateDefinition<T>>();
+        _defs = [];
     }
 
     public IUpdateBuilder<T> Set<TField>(Expression<Func<T, TField>> field, TField value)

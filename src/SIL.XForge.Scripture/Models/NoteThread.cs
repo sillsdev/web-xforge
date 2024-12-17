@@ -10,7 +10,7 @@ public class NoteThread : ProjectData
     public string DataId { get; set; }
     public string ThreadId { get; set; }
     public VerseRefData VerseRef { get; set; }
-    public List<Note> Notes { get; set; } = new List<Note>();
+    public List<Note> Notes { get; set; } = [];
     public string OriginalSelectedText { get; set; }
     public string OriginalContextBefore { get; set; }
     public string OriginalContextAfter { get; set; }

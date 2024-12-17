@@ -9,7 +9,7 @@ namespace SIL.XForge.Scripture.Services;
 /// <summary> Simple alert implementation for Paratext Data to use when running in dotnet core. </summary>
 class DotNetCoreAlert : PtxUtils.Alert
 {
-    private readonly List<Action<string>> _listeners = new List<Action<String>>();
+    private readonly List<Action<string>> _listeners = [];
     private readonly ILogger _logger;
 
     public DotNetCoreAlert(ILogger logger) => _logger = logger;

@@ -86,8 +86,8 @@ namespace PTDDCloneAll
                         ParatextTokens = new Tokens
                         {
                             AccessToken = "test_access_token1",
-                            RefreshToken = "test_refresh_token1"
-                        }
+                            RefreshToken = "test_refresh_token1",
+                        },
                     },
                     new UserSecret
                     {
@@ -95,9 +95,9 @@ namespace PTDDCloneAll
                         ParatextTokens = new Tokens
                         {
                             AccessToken = "test_access_token2",
-                            RefreshToken = "test_refresh_token2"
-                        }
-                    }
+                            RefreshToken = "test_refresh_token2",
+                        },
+                    },
                 }
             );
 
@@ -131,7 +131,7 @@ namespace PTDDCloneAll
                     {
                         new User { Id = "user01", ParatextId = "pt01" },
                         new User { Id = "user02", ParatextId = "pt02" },
-                        new User { Id = "user03", ParatextId = "pt03" }
+                        new User { Id = "user03", ParatextId = "pt03" },
                     }
                 )
             );
@@ -150,7 +150,7 @@ namespace PTDDCloneAll
                             {
                                 { "user01", SFProjectRole.Administrator },
                                 { "user02", SFProjectRole.Translator },
-                                { "user03", SFProjectRole.Administrator }
+                                { "user03", SFProjectRole.Administrator },
                             },
                             ParatextId = "target01",
                             TranslateConfig = new TranslateConfig
@@ -161,11 +161,11 @@ namespace PTDDCloneAll
                                     ParatextId = "source01",
                                     Name = "Source",
                                     ShortName = "SRC",
-                                    WritingSystem = new WritingSystem { Tag = "en" }
-                                }
+                                    WritingSystem = new WritingSystem { Tag = "en" },
+                                },
                             },
                             CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
-                            Sync = new Sync { QueuedCount = 1 }
+                            Sync = new Sync { QueuedCount = 1 },
                         },
                         new SFProject
                         {
@@ -176,7 +176,7 @@ namespace PTDDCloneAll
                             {
                                 { "user01", SFProjectRole.Administrator },
                                 { "user02", SFProjectRole.Translator },
-                                { "user03", SFProjectRole.Administrator }
+                                { "user03", SFProjectRole.Administrator },
                             },
                             ParatextId = "target02",
                             TranslateConfig = new TranslateConfig
@@ -187,12 +187,12 @@ namespace PTDDCloneAll
                                     ParatextId = "source02",
                                     Name = "Source",
                                     ShortName = "SR2",
-                                    WritingSystem = new WritingSystem { Tag = "en" }
-                                }
+                                    WritingSystem = new WritingSystem { Tag = "en" },
+                                },
                             },
                             CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
-                            Sync = new Sync { QueuedCount = 1 }
-                        }
+                            Sync = new Sync { QueuedCount = 1 },
+                        },
                     }
                 )
             );

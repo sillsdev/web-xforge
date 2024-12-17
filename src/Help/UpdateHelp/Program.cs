@@ -71,7 +71,7 @@ class Program
         {
             { "es", "9f727aa1dd179dd6d" },
             { "fr", "7da597faaebed6cc7" },
-            { "pt_BR", "40bf11d4080246d99" }
+            { "pt_BR", "40bf11d4080246d99" },
         };
 
         Console.WriteLine("Update Help files.\n");
@@ -152,7 +152,7 @@ class Program
 
             string[] htmlFiles = Directory.GetFiles(targetPath, "*.htm", SearchOption.AllDirectories);
             // auxiliary html files with titles or headings that can be ignored
-            string[] ignoreFiles = { "index1.htm", "csh-redirect.htm" };
+            string[] ignoreFiles = ["index1.htm", "csh-redirect.htm"];
             IEnumerable<string> targetFiles = htmlFiles.Where(t => !ignoreFiles.Contains(Path.GetFileName(t)));
             foreach (string file in targetFiles)
             {

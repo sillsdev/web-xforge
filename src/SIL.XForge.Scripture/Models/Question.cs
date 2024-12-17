@@ -10,7 +10,7 @@ public class Question : ProjectData
     public VerseRefData VerseRef { get; set; }
     public string Text { get; set; }
     public string AudioUrl { get; set; }
-    public List<Answer> Answers { get; set; } = new List<Answer>();
+    public List<Answer> Answers { get; set; } = [];
     public bool IsArchived { get; set; }
     public DateTime? DateArchived { get; set; }
     public DateTime DateModified { get; set; }

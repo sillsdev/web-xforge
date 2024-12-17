@@ -467,8 +467,8 @@ namespace PtdaSyncAll
                                 Arguments = $"-u {tempOldUsxFile} {tempNewUsxFile}",
                                 UseShellExecute = false,
                                 CreateNoWindow = true,
-                                RedirectStandardOutput = true
-                            }
+                                RedirectStandardOutput = true,
+                            },
                         }
                     )
                     {
@@ -545,7 +545,7 @@ namespace PtdaSyncAll
                     {
                         Number = incomingChapter.Key,
                         LastVerse = incomingChapter.Value.LastVerse,
-                        IsValid = incomingChapter.Value.IsValid
+                        IsValid = incomingChapter.Value.IsValid,
                     }
                 );
             }
@@ -669,7 +669,7 @@ namespace PtdaSyncAll
                     {
                         Number = kvp.Key,
                         LastVerse = kvp.Value.LastVerse,
-                        IsValid = kvp.Value.IsValid
+                        IsValid = kvp.Value.IsValid,
                     }
                 );
             }

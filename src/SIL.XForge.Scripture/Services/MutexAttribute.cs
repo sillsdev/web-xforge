@@ -123,7 +123,7 @@ public class MutexAttribute(string? resource = null) : JobFilterAttribute, IElec
     public void OnStateUnapplied(ApplyStateContext context, IWriteOnlyTransaction transaction) { }
 
     private static DeletedState CreateDeletedState(string blockedBy) =>
-        new DeletedState { Reason = $"Execution was blocked by background job {blockedBy}, all attempts exhausted", };
+        new DeletedState { Reason = $"Execution was blocked by background job {blockedBy}, all attempts exhausted" };
 
     private ScheduledState CreateScheduledState(string blockedBy, int currentAttempt)
     {

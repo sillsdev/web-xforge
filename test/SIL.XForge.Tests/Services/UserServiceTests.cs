@@ -259,7 +259,7 @@ public class UserServiceTests
             { "U Name", "N" },
             { "1 Number", "N" },
             { "11 Number", "N" },
-            { "U", "example" } // Should not change from what is already set
+            { "U", "example" }, // Should not change from what is already set
         };
         var expectedAvatarUrl = "";
         User user;
@@ -318,12 +318,8 @@ public class UserServiceTests
     public void DeleteAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Service.DeleteAsync(null, new string[] { "systemRole" }, "userId")
-        );
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Service.DeleteAsync("curUserId", new string[] { "systemRole" }, null)
-        );
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync(null, ["systemRole"], "userId"));
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync("curUserId", ["systemRole"], null));
     }
 
     [Test]
@@ -332,7 +328,7 @@ public class UserServiceTests
         var env = new TestEnvironment();
         string curUserId = "user01";
         // Role is not a system admin
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user02";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
@@ -348,7 +344,7 @@ public class UserServiceTests
         var env = new TestEnvironment();
         string curUserId = "user01";
         // Role is not a system admin
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user01";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
@@ -361,7 +357,7 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.SystemAdmin };
+        string[] curUserSystemRoles = [SystemRole.SystemAdmin];
         string userIdToDelete = "user02";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
@@ -374,7 +370,7 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.SystemAdmin };
+        string[] curUserSystemRoles = [SystemRole.SystemAdmin];
         string userIdToDelete = "user01";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
@@ -387,7 +383,7 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user01";
         // SUT
         await env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete);
@@ -399,7 +395,7 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user01";
         Assert.That(env.UserSecrets.Contains(userIdToDelete), Is.True);
         // SUT
@@ -415,7 +411,7 @@ public class UserServiceTests
         // page.
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string[] curUserSystemRoles = { SystemRole.User };
+        string[] curUserSystemRoles = [SystemRole.User];
         string userIdToDelete = "user01";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
@@ -444,9 +440,9 @@ public class UserServiceTests
                         ParatextTokens = new Tokens
                         {
                             AccessToken = TokenHelper.CreateAccessToken(IssuedAt),
-                            RefreshToken = "refresh_token"
-                        }
-                    }
+                            RefreshToken = "refresh_token",
+                        },
+                    },
                 }
             );
 
@@ -462,26 +458,26 @@ public class UserServiceTests
                             Id = "user01",
                             AvatarUrl = "http://example.com/avatar.png",
                             AuthId = "auth01",
-                            ParatextId = "paratext01"
+                            ParatextId = "paratext01",
                         },
                         new User
                         {
                             Id = "user02",
                             AvatarUrl = "http://example.com/avatar2.png",
-                            AuthId = "auth02"
+                            AuthId = "auth02",
                         },
                         new User
                         {
                             Id = "user04",
                             AvatarUrl = "https://cdn.auth0.com/avatars/example.png",
-                            AuthId = "auth04"
-                        }
+                            AuthId = "auth04",
+                        },
                     }
                 )
             );
 
             var options = Substitute.For<IOptions<SiteOptions>>();
-            options.Value.Returns(new SiteOptions { Id = "xf", });
+            options.Value.Returns(new SiteOptions { Id = "xf" });
 
             Service = new UserService(RealtimeService, options, UserSecrets, AuthService, ProjectService, Logger);
         }
@@ -543,13 +539,14 @@ public class UserServiceTests
         roleType switch
         {
             RoleType.None => new JObject(new JProperty("xf_user_id", userId)),
-            RoleType.String
-                => new JObject(new JProperty("xf_user_id", userId), new JProperty("xf_role", SystemRole.User)),
-            RoleType.Array
-                => new JObject(
-                    new JProperty("xf_user_id", userId),
-                    new JProperty("xf_role", new JArray(new List<string> { SystemRole.User }))
-                ),
+            RoleType.String => new JObject(
+                new JProperty("xf_user_id", userId),
+                new JProperty("xf_role", SystemRole.User)
+            ),
+            RoleType.Array => new JObject(
+                new JProperty("xf_user_id", userId),
+                new JProperty("xf_role", new JArray(new List<string> { SystemRole.User }))
+            ),
             _ => throw new ArgumentOutOfRangeException(nameof(roleType)),
         };
 

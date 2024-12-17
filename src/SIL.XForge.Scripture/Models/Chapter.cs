@@ -13,7 +13,7 @@ public class Chapter
     /// it will not be editable in SF.
     /// </summary>
     public bool IsValid { get; set; }
-    public Dictionary<string, string> Permissions { get; set; } = new Dictionary<string, string>();
+    public Dictionary<string, string> Permissions { get; set; } = [];
     public bool? HasAudio { get; set; }
     public bool? HasDraft { get; set; }
     public bool? DraftApplied { get; set; }

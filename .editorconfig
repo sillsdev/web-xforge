@@ -91,6 +91,7 @@ csharp_style_prefer_primary_constructors = true:suggestion
 csharp_style_prefer_readonly_struct_member = true:suggestion
 csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = true:silent
 csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = true:silent
+csharp_prefer_system_threading_lock = true:suggestion
 
 [*.{cs,vb}]
 tab_width = 4
@@ -174,7 +175,7 @@ dotnet_style_qualification_for_field = false:silent
 dotnet_style_qualification_for_property = false:silent
 dotnet_style_qualification_for_method = false:silent
 dotnet_style_qualification_for_event = false:silent
-dotnet_style_prefer_collection_expression = true:suggestion
+dotnet_style_prefer_collection_expression = when_types_exactly_match:warning
 dotnet_sort_system_directives_first = true
 
 # Define the 'private_fields' symbol group:
@@ -214,7 +215,6 @@ dotnet_diagnostic.CA1829.severity = warning # Use the Count or Length property i
 dotnet_diagnostic.CA1834.severity = warning # Use 'StringBuilder.Append(char)' instead of 'StringBuilder.Append(string)'
 dotnet_diagnostic.CA2016.severity = warning # Forward the 'token' parameter to the async method
 
-# Downgrade the following code style diagnostic messages so dotnet format does not fix them automatically.]]
-# NOTE: Consider changing to warning when migrating from .NET 6.
-# The following diagnostic is automatically fixed in .NET SDK 7.0.304 or higher - older versions will cause variance.
-dotnet_diagnostic.IDE0270.severity = suggestion # Null check can be simplified
+# This rule conflicts with CSharpier
+# See https://csharpier.com/docs/IntegratingWithLinters
+dotnet_diagnostic.IDE0055.severity = none

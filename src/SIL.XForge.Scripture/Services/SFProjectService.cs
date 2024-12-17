@@ -274,7 +274,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             if (FileSystemService.DirectoryExists(trainingDataDir))
                 FileSystemService.DeleteDirectory(trainingDataDir);
 
-            string[] projectUserIds = projectDoc.Data.UserRoles.Keys.ToArray();
+            string[] projectUserIds = [.. projectDoc.Data.UserRoles.Keys];
             await projectDoc.DeleteAsync();
             async Task removeUser(string projectUserId)
             {
@@ -941,7 +941,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             Project = project,
             ProjectSecret = projectSecret,
-            ShareKey = projectSecretShareKey
+            ShareKey = projectSecretShareKey,
         };
     }
 
@@ -1578,11 +1578,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 {
                     TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
                     TextInfoPermission.Read => Attempt.Success(SFProjectRole.PTObserver),
-                    _
-                        => throw new ArgumentException(
-                            $"Unknown resource permission: '{permission}'",
-                            nameof(permission)
-                        ),
+                    _ => throw new ArgumentException(
+                        $"Unknown resource permission: '{permission}'",
+                        nameof(permission)
+                    ),
                 };
             }
             else
@@ -1790,12 +1789,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private string[] GetProjectWithReferenceToSource(string projectId)
     {
         if (string.IsNullOrEmpty(projectId))
-            return Array.Empty<string>();
+            return [];
         IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
-        return projectQuery
-            .Where(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
-            .Select(p => p.Id)
-            .ToArray();
+        return
+        [
+            .. projectQuery
+                .Where(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
+                .Select(p => p.Id),
+        ];
     }
 
     /// <summary>

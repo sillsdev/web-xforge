@@ -10,7 +10,7 @@ namespace SIL.XForge.Realtime.Json0;
 public class Json0Op
 {
     [JsonProperty("p")]
-    public List<object> Path { get; set; } = new List<object>();
+    public List<object> Path { get; set; } = [];
 
     [JsonProperty("li")]
     public object InsertItem { get; set; }

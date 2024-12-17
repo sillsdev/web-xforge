@@ -22,11 +22,11 @@ public class RealtimeOptions
     /// Additional document types (importantly, collection names) that have project related data. Defining this
     /// helps identify and delete project data when removing a project.
     /// </summary>
-    public List<DocConfig> ProjectDataDocs { get; set; } = new List<DocConfig>();
+    public List<DocConfig> ProjectDataDocs { get; set; } = [];
 
     /// <summary>
     /// Document types (importantly, collection names) that have user information, from which to delete records
     /// when removing a user from the database.
     /// </summary>
-    public List<DocConfig> UserDataDocs { get; set; } = new List<DocConfig>();
+    public List<DocConfig> UserDataDocs { get; set; } = [];
 }

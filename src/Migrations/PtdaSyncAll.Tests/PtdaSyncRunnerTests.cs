@@ -477,7 +477,7 @@ namespace PtdaSyncAll
                 .Add(
                     new TextData(Delta.New().InsertText("old text"))
                     {
-                        Id = TextData.GetTextDocId("project01", 42, 1, TextType.Target)
+                        Id = TextData.GetTextDocId("project01", 42, 1, TextType.Target),
                     }
                 );
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
@@ -529,7 +529,7 @@ namespace PtdaSyncAll
             Book matBook = new Book("MAT", 3, 3)
             {
                 MissingTargetChapters = { 1, 2, 3 },
-                MissingSourceChapters = { 1, 2, 3 }
+                MissingSourceChapters = { 1, 2, 3 },
             };
             env.SetupSFData(true, true, false, matBook);
             env.SetupPTData(new Book("MAT", 3, true));
@@ -762,7 +762,7 @@ namespace PtdaSyncAll
             var book = new Book("MAT", numberChapters, true)
             {
                 MissingTargetChapters = missingDbChapters,
-                MissingSourceChapters = missingDbChapters
+                MissingSourceChapters = missingDbChapters,
             };
             env.SetupSFData(true, true, false, book);
 
@@ -847,7 +847,7 @@ namespace PtdaSyncAll
                 var ptUserRoles = new Dictionary<string, string>
                 {
                     { "pt01", SFProjectRole.Administrator },
-                    { "pt02", SFProjectRole.Translator }
+                    { "pt02", SFProjectRole.Translator },
                 };
                 ParatextService
                     .GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
@@ -930,7 +930,7 @@ namespace PtdaSyncAll
                         new[]
                         {
                             new User { Id = "user01", ParatextId = "pt01" },
-                            new User { Id = "user02", ParatextId = "pt02" }
+                            new User { Id = "user02", ParatextId = "pt02" },
                         }
                     )
                 );
@@ -948,7 +948,7 @@ namespace PtdaSyncAll
                                 UserRoles = new Dictionary<string, string>
                                 {
                                     { "user01", SFProjectRole.Administrator },
-                                    { "user02", SFProjectRole.Translator }
+                                    { "user02", SFProjectRole.Translator },
                                 },
                                 ParatextId = "target",
                                 TranslateConfig = new TranslateConfig
@@ -959,13 +959,13 @@ namespace PtdaSyncAll
                                         ParatextId = "source",
                                         Name = "Source",
                                         ShortName = "SRC",
-                                        WritingSystem = new WritingSystem { Tag = "en" }
-                                    }
+                                        WritingSystem = new WritingSystem { Tag = "en" },
+                                    },
                                 },
                                 CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
                                 Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                                Sync = new Sync { QueuedCount = 1 }
-                            }
+                                Sync = new Sync { QueuedCount = 1 },
+                            },
                         }
                     )
                 );
@@ -1022,10 +1022,10 @@ namespace PtdaSyncAll
                         {
                             Number = c,
                             LastVerse = 10,
-                            IsValid = !book.InvalidChapters.Contains(c)
+                            IsValid = !book.InvalidChapters.Contains(c),
                         })
                         .ToList(),
-                    HasSource = book.HighestSourceChapter > 0
+                    HasSource = book.HighestSourceChapter > 0,
                 };
             }
 
@@ -1175,8 +1175,8 @@ namespace PtdaSyncAll
                                     Id = $"project01:question{bookId}{c}",
                                     DataId = $"question{bookId}{c}",
                                     ProjectRef = "project01",
-                                    VerseRef = new VerseRefData(bookNum, c, 1)
-                                }
+                                    VerseRef = new VerseRefData(bookNum, c, 1),
+                                },
                             }
                         );
                 }

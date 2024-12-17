@@ -10,7 +10,7 @@ public class TextAudio : ProjectData
         $"{projectId}:{Canon.BookNumberToId(book)}:{chapter}:target";
 
     public string DataId { get; set; }
-    public List<AudioTiming> Timings { get; set; } = new List<AudioTiming>();
+    public List<AudioTiming> Timings { get; set; } = [];
     public string MimeType { get; set; }
     public string AudioUrl { get; set; }
 }

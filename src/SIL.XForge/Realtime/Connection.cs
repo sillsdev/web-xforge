@@ -28,7 +28,7 @@ public class Connection : DisposableBase, IConnection
     /// <remarks>
     /// These are in the form "Type.Property.Property", in lower case.
     /// </remarks>
-    private readonly List<string> _excludedProperties = new List<string>();
+    private readonly List<string> _excludedProperties = [];
 
     /// <summary>
     /// The connection handle.
@@ -191,7 +191,7 @@ public class Connection : DisposableBase, IConnection
             );
 
             // Return a snapshot
-            return new Snapshot<T> { Data = data, Version = 1, };
+            return new Snapshot<T> { Data = data, Version = 1 };
         }
         else
         {

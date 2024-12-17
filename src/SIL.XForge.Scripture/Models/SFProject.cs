@@ -13,17 +13,17 @@ public class SFProject : Project
     public TranslateConfig TranslateConfig { get; set; } = new TranslateConfig();
     public CheckingConfig CheckingConfig { get; set; } = new CheckingConfig();
     public ResourceConfig? ResourceConfig { get; set; }
-    public List<TextInfo> Texts { get; set; } = new List<TextInfo>();
+    public List<TextInfo> Texts { get; set; } = [];
     public Sync Sync { get; set; } = new Sync();
 
     /// <summary>
     /// Paratext users on this SF project that are associated with a project component (e.g. a note)
     /// </summary>
-    public List<ParatextUserProfile> ParatextUsers { get; set; } = new List<ParatextUserProfile>();
+    public List<ParatextUserProfile> ParatextUsers { get; set; } = [];
     public bool Editable { get; set; } = true;
     public int? DefaultFontSize { get; set; }
     public string? DefaultFont { get; set; }
-    public List<NoteTag> NoteTags { get; set; } = new List<NoteTag>();
+    public List<NoteTag> NoteTags { get; set; } = [];
     public BiblicalTermsConfig BiblicalTermsConfig { get; set; } = new BiblicalTermsConfig();
 
     /// <summary>

@@ -170,7 +170,7 @@ public static class DataAccessExtensions
         if (queryable is IMongoQueryable<T> mongoQueryable)
             return await IAsyncCursorSourceExtensions.ToListAsync(mongoQueryable);
         else
-            return queryable.ToList();
+            return [.. queryable];
     }
 
     public static async Task<List<TResult>> ToListAsync<TSource, TResult>(

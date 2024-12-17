@@ -280,12 +280,11 @@ public class ParatextService : DisposableBase, IParatextService
                 StartProgressReporting(progress);
 
                 string username = GetParatextUsername(userSecret);
-                using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
-                if (scrText == null)
-                    throw new Exception(
+                using ScrText scrText =
+                    ScrTextCollection.FindById(username, paratextId)
+                    ?? throw new Exception(
                         $"Failed to fetch ScrText for PT project id {paratextId} using PT username {username}"
                     );
-
                 SharedProject sharedProj = CreateSharedProject(
                     paratextId,
                     ptProject.ShortName,
@@ -638,7 +637,7 @@ public class ParatextService : DisposableBase, IParatextService
                     + $"Revisions sent: {string.Join(",", r.RevisionsSent ?? Enumerable.Empty<string>())}, "
                     + $"Revisions received: {string.Join(",", r.RevisionsReceived ?? Enumerable.Empty<string>())}, "
                     + $"Failure message: {r.FailureMessage}."
-            ) ?? Enumerable.Empty<string>()
+            ) ?? []
         );
     }
 
@@ -726,22 +725,15 @@ public class ParatextService : DisposableBase, IParatextService
 
             IEnumerable<SharedRepository> remotePtProjects = GetRepositories(ptRepoSource, contextInformation);
 
-            SharedRepository remotePtProject = remotePtProjects.SingleOrDefault(p =>
-                p.SendReceiveId.Id == project.ParatextId
-            );
-
-            // if the paratext id could not be found then the user does not have access.
-            // Throw the ForbiddenException and fail the sync.
-            if (remotePtProject is null)
-            {
-                throw new ForbiddenException();
-            }
+            SharedRepository remotePtProject =
+                remotePtProjects.SingleOrDefault(p => p.SendReceiveId.Id == project.ParatextId)
+                ?? throw new ForbiddenException();
 
             // Build a dictionary of user IDs mapped to usernames using the user secrets
             foreach (
                 ParatextProjectUser user in project.UserRoles.Keys.Select(userId => new ParatextProjectUser
                 {
-                    Id = userId
+                    Id = userId,
                 })
             )
             {
@@ -949,7 +941,7 @@ public class ParatextService : DisposableBase, IParatextService
                 TagId = t.Id,
                 Icon = t.Icon,
                 Name = t.Name,
-                CreatorResolve = t.CreatorResolve
+                CreatorResolve = t.CreatorResolve,
             });
 
         // If the copyright banner is blank or empty, make it null so it will not be displayed
@@ -999,9 +991,9 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary> Get PT book text in USX, or throw if can't. </summary>
     public string GetBookText(UserSecret userSecret, string paratextId, int bookNum)
     {
-        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-        if (scrText == null)
-            throw new DataNotFoundException("Can't get access to cloned project.");
+        using ScrText scrText =
+            ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId)
+            ?? throw new DataNotFoundException("Can't get access to cloned project.");
         string usfm = scrText.GetText(bookNum);
         return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
     }
@@ -1029,7 +1021,7 @@ public class ParatextService : DisposableBase, IParatextService
         StringBuilder log = new StringBuilder(
             $"ParatextService.PutBookText(userSecret, paratextId {paratextId}, bookNum {bookNum}, usx {usx.Root}, chapterAuthors: {(chapNumToAuthorSFUserIdMap == null ? "null" : ($"count {chapNumToAuthorSFUserIdMap.Count}"))})"
         );
-        Dictionary<string, ScrText> scrTexts = new Dictionary<string, ScrText>();
+        Dictionary<string, ScrText> scrTexts = [];
         try
         {
             log.AppendLine(
@@ -1224,15 +1216,15 @@ public class ParatextService : DisposableBase, IParatextService
     {
         CommentManager commentManager = GetCommentManager(userSecret, paratextId);
         CommentTags commentTags = GetCommentTags(userSecret, paratextId);
-        List<string> matchedThreadIds = new List<string>();
-        List<NoteThreadChange> changes = new List<NoteThreadChange>();
+        List<string> matchedThreadIds = [];
+        List<NoteThreadChange> changes = [];
         IEnumerable<IDocument<NoteThread>> activeNoteThreadDocs = noteThreadDocs.Where(nt =>
             nt.Data.Notes.Any(n => !n.Deleted)
         );
 
         foreach (var threadDoc in activeNoteThreadDocs)
         {
-            List<string> matchedCommentIds = new List<string>();
+            List<string> matchedCommentIds = [];
             NoteThreadChange threadChange = new NoteThreadChange(
                 threadDoc.Data.DataId,
                 threadDoc.Data.ThreadId,
@@ -1350,7 +1342,7 @@ public class ParatextService : DisposableBase, IParatextService
             {
                 Position = GetThreadTextAnchor(thread, chapterDeltas),
                 Status = thread.Status.InternalValue,
-                Assignment = GetAssignedUserRef(thread.AssignedUser, ptProjectUsers)
+                Assignment = GetAssignedUserRef(thread.AssignedUser, ptProjectUsers),
             };
             foreach (var comm in thread.Comments)
             {
@@ -1460,7 +1452,7 @@ public class ParatextService : DisposableBase, IParatextService
                     return new BiblicalTermsChanges
                     {
                         ErrorCode = BiblicalTermErrorCode.NotSynced,
-                        ErrorMessage = message
+                        ErrorMessage = message,
                     };
                 }
 
@@ -1480,7 +1472,7 @@ public class ParatextService : DisposableBase, IParatextService
                     return new BiblicalTermsChanges
                     {
                         ErrorCode = BiblicalTermErrorCode.NoPermission,
-                        ErrorMessage = message
+                        ErrorMessage = message,
                     };
                 }
 
@@ -1525,8 +1517,7 @@ public class ParatextService : DisposableBase, IParatextService
             )
             {
                 TermRendering termRendering = termRenderings.GetRendering(term.Id);
-                Dictionary<string, BiblicalTermDefinition> definitions =
-                    new Dictionary<string, BiblicalTermDefinition>();
+                Dictionary<string, BiblicalTermDefinition> definitions = [];
                 foreach ((string language, TermLocalizations termLocalizations) in allTermLocalizations)
                 {
                     TermLocalization termLocalization = termLocalizations.GetTermLocalization(term.Id);
@@ -1941,7 +1932,7 @@ public class ParatextService : DisposableBase, IParatextService
                 Id = id,
                 Version = 0,
                 Data = new TextData(chapterDelta.Delta),
-                IsValid = chapterDelta.IsValid
+                IsValid = chapterDelta.IsValid,
             };
         }
         else
@@ -1954,7 +1945,7 @@ public class ParatextService : DisposableBase, IParatextService
                 Id = snapshot.Id,
                 Version = snapshot.Version,
                 Data = snapshot.Data,
-                IsValid = chapterDelta.IsValid
+                IsValid = chapterDelta.IsValid,
             };
         }
 
@@ -2150,18 +2141,14 @@ public class ParatextService : DisposableBase, IParatextService
 
     private ScrText GetScrText(UserSecret userSecret, string paratextId)
     {
-        string? ptUsername = GetParatextUsername(userSecret);
-        if (ptUsername == null)
-        {
-            throw new DataNotFoundException($"Failed to get username for UserSecret id {userSecret.Id}.");
-        }
-        ScrText? scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-        if (scrText == null)
-        {
-            throw new DataNotFoundException(
+        _ =
+            GetParatextUsername(userSecret)
+            ?? throw new DataNotFoundException($"Failed to get username for UserSecret id {userSecret.Id}.");
+        ScrText? scrText =
+            ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId)
+            ?? throw new DataNotFoundException(
                 $"Could not find project for UserSecret id {userSecret.Id}, PT project id {paratextId}"
             );
-        }
         return scrText;
     }
 
@@ -2257,7 +2244,7 @@ public class ParatextService : DisposableBase, IParatextService
         if (userSecret == null)
             throw new ArgumentNullException();
 
-        List<ParatextProject> paratextProjects = new List<ParatextProject>();
+        List<ParatextProject> paratextProjects = [];
         IQueryable<SFProject> existingSfProjects = _realtimeService.QuerySnapshots<SFProject>();
 
         foreach (SharedRepository remotePtProject in remotePtProjects)
@@ -2571,7 +2558,7 @@ public class ParatextService : DisposableBase, IParatextService
             Repository = sharedRepository,
             SendReceiveId = HexId.FromStr(paratextId),
             ScrText = scrText,
-            Permissions = scrText.Permissions
+            Permissions = scrText.Permissions,
         };
     }
 
@@ -2643,7 +2630,7 @@ public class ParatextService : DisposableBase, IParatextService
         }
 
         string username = GetParatextUsername(userSecret);
-        List<string> users = new List<string>();
+        List<string> users = [];
         ScrText scrText =
             ScrTextCollection.FindById(username, paratextId)
             ?? throw new DataNotFoundException("Can't get access to cloned project.");
@@ -2873,14 +2860,13 @@ public class ParatextService : DisposableBase, IParatextService
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
-        List<List<Paratext.Data.ProjectComments.Comment>> changes =
-            new List<List<Paratext.Data.ProjectComments.Comment>>();
+        List<List<Paratext.Data.ProjectComments.Comment>> changes = [];
         IEnumerable<IDocument<NoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
         foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
         {
-            List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
+            List<Paratext.Data.ProjectComments.Comment> thread = [];
             CommentThread? existingThread = commentManager.FindThread(threadDoc.Data.ThreadId);
-            List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
+            List<(int, string)> threadNoteParatextUserRefs = [];
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
                 Note note = threadDoc.Data.Notes[i];
@@ -2960,13 +2946,12 @@ public class ParatextService : DisposableBase, IParatextService
                         ExtraHeadingInfo = threadDoc.Data.ExtraHeadingInfo switch
                         {
                             null => null,
-                            _
-                                => new TermNoteHeadingInfo(
-                                    threadDoc.Data.ExtraHeadingInfo.Lemma,
-                                    threadDoc.Data.ExtraHeadingInfo.Language,
-                                    threadDoc.Data.ExtraHeadingInfo.Transliteration,
-                                    threadDoc.Data.ExtraHeadingInfo.Gloss
-                                ),
+                            _ => new TermNoteHeadingInfo(
+                                threadDoc.Data.ExtraHeadingInfo.Lemma,
+                                threadDoc.Data.ExtraHeadingInfo.Language,
+                                threadDoc.Data.ExtraHeadingInfo.Transliteration,
+                                threadDoc.Data.ExtraHeadingInfo.Gloss
+                            ),
                         },
                     };
 
@@ -3192,9 +3177,9 @@ public class ParatextService : DisposableBase, IParatextService
         comment.TagsAdded =
             note.TagId == null
                 ? isFirstComment
-                    ? new[] { sfNoteTagId.ToString() }
+                    ? [sfNoteTagId.ToString()]
                     : null
-                : new[] { note.TagId.ToString() };
+                : [note.TagId.ToString()];
         comment.VersionNumber = note.VersionNumber ?? 1;
 
         if (note.Status == NoteStatus.Todo.InternalValue)
@@ -3370,7 +3355,7 @@ public class ParatextService : DisposableBase, IParatextService
             ptProjectUser = new ParatextUserProfile
             {
                 OpaqueUserId = _guidService.NewObjectId(),
-                Username = paratextUsername
+                Username = paratextUsername,
             };
             ptProjectUsers.Add(paratextUsername, ptProjectUser);
         }

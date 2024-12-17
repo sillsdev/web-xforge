@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NSubstitute;
@@ -34,7 +33,7 @@ public class AnonymousServiceTests
                     {
                         Project = project,
                         ProjectSecret = projectSecret,
-                        ShareKey = projectSecretShareKey
+                        ShareKey = projectSecretShareKey,
                     }
                 )
             );
@@ -73,7 +72,7 @@ public class AnonymousServiceTests
                     {
                         Project = project,
                         ProjectSecret = projectSecret,
-                        ShareKey = projectSecretShareKey
+                        ShareKey = projectSecretShareKey,
                     }
                 )
             );
@@ -147,7 +146,7 @@ public class AnonymousServiceTests
                     {
                         Project = project,
                         ProjectSecret = projectSecret,
-                        ShareKey = projectSecretShareKey
+                        ShareKey = projectSecretShareKey,
                     }
                 )
             );
@@ -175,7 +174,7 @@ public class AnonymousServiceTests
             Projects = new MemoryRepository<SFProject>(
                 new[]
                 {
-                    new SFProject { Id = Project01, Name = "Test Project 1" }
+                    new SFProject { Id = Project01, Name = "Test Project 1" },
                 }
             );
 
@@ -185,20 +184,20 @@ public class AnonymousServiceTests
                     new SFProjectSecret
                     {
                         Id = Project01,
-                        ShareKeys = new List<ShareKey>
-                        {
+                        ShareKeys =
+                        [
                             new ShareKey
                             {
                                 Key = "key01",
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient
+                                ShareLinkType = ShareLinkType.Recipient,
                             },
                             new ShareKey
                             {
                                 Key = "key02",
                                 RecipientUserId = "user01",
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient
+                                ShareLinkType = ShareLinkType.Recipient,
                             },
                             new ShareKey
                             {
@@ -206,10 +205,10 @@ public class AnonymousServiceTests
                                 RecipientUserId = "user01",
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                UsersGenerated = MaxUsers
-                            }
-                        }
-                    }
+                                UsersGenerated = MaxUsers,
+                            },
+                        ],
+                    },
                 }
             );
         }

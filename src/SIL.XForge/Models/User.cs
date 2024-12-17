@@ -6,7 +6,7 @@ public class User : Json0Snapshot
 {
     public string Name { get; set; }
     public string Email { get; set; }
-    public List<string> Roles { get; set; } = new List<string>();
+    public List<string> Roles { get; set; } = [];
     public string AvatarUrl { get; set; }
 
     /// <summary>PT user id, as determined from auth0 profile, from authenticating with Paratext.</summary>
@@ -22,5 +22,5 @@ public class User : Json0Snapshot
     /// is authenticating with Paratext.
     /// </summary>
     public string AuthId { get; set; }
-    public Dictionary<string, Site> Sites { get; set; } = new Dictionary<string, Site>();
+    public Dictionary<string, Site> Sites { get; set; } = [];
 }

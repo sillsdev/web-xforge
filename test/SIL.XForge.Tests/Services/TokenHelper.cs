@@ -19,7 +19,7 @@ public class TokenHelper
             new[]
             {
                 new Claim(JwtClaimTypes.Subject, paratextUserId),
-                new Claim(JwtClaimTypes.IssuedAt, EpochTime.GetIntDate(issuedAt).ToString())
+                new Claim(JwtClaimTypes.IssuedAt, EpochTime.GetIntDate(issuedAt).ToString()),
             },
             expires: expiration
         );

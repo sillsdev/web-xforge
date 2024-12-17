@@ -795,7 +795,7 @@ namespace SourceTargetSplitting
                     {
                         Number = kvp.Key,
                         LastVerse = kvp.Value.LastVerse,
-                        IsValid = kvp.Value.IsValid
+                        IsValid = kvp.Value.IsValid,
                     }
                 );
             }

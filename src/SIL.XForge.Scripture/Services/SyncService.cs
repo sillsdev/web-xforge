@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
@@ -370,8 +369,8 @@ public class SyncService(
                 projectSecret.Id,
                 u =>
                 {
-                    u.Set(p => p.JobIds, new List<string>());
-                    u.Set(p => p.SyncMetricsIds, new List<string>());
+                    u.Set(p => p.JobIds, []);
+                    u.Set(p => p.SyncMetricsIds, []);
                 }
             );
 

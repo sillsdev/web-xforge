@@ -67,13 +67,13 @@ public class ConnectionTests
         string otTypeName = OTType.Json0;
         var snapshot = new Snapshot<TestProject>
         {
-            Data = new TestProject() { Id = id, SyncDisabled = false, },
+            Data = new TestProject() { Id = id, SyncDisabled = false },
             Version = 1,
         };
         var builder = new Json0OpBuilder<TestProject>(snapshot.Data);
         builder.Set(p => p.SyncDisabled, true);
         List<Json0Op> op = builder.Op;
-        var updatedData = new TestProject() { Id = id, SyncDisabled = true, };
+        var updatedData = new TestProject() { Id = id, SyncDisabled = true };
 
         env.RealtimeService.Server.FetchDocAsync<TestProject>(Arg.Any<int>(), collection, id)
             .Returns(Task.FromResult(snapshot));
@@ -118,7 +118,7 @@ public class ConnectionTests
         var env = new TestEnvironment();
         string collection = "test_project";
         string id = "id1";
-        var data = new TestProject { Id = id, Name = "Test Project 1", };
+        var data = new TestProject { Id = id, Name = "Test Project 1" };
         string otTypeName = OTType.Json0;
 
         // SUT
@@ -151,7 +151,7 @@ public class ConnectionTests
         var env = new TestEnvironment();
         string collection = "test_project";
         string id = "id1";
-        var data = new TestProject { Id = id, Name = "Test Project 1", };
+        var data = new TestProject { Id = id, Name = "Test Project 1" };
         string otTypeName = OTType.Json0;
 
         // SUT
@@ -331,11 +331,10 @@ public class ConnectionTests
         // Setup
         var env = new TestEnvironment();
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
-        string[] ids = { "id1", "id2" };
+        string[] ids = ["id1", "id2"];
         env.RealtimeService.Server.FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
             .Returns(
-                new Snapshot<Project>[]
-                {
+                [
                     new Snapshot<Project>
                     {
                         Data = null,
@@ -348,7 +347,7 @@ public class ConnectionTests
                         Id = "id2",
                         Version = 2,
                     },
-                }
+                ]
             );
 
         // SUT
@@ -367,18 +366,17 @@ public class ConnectionTests
         // Setup
         var env = new TestEnvironment(documentCacheDisabled: true);
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
-        string[] ids = { "id1" };
+        string[] ids = ["id1"];
         env.RealtimeService.Server.FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
             .Returns(
-                new Snapshot<Project>[]
-                {
+                [
                     new Snapshot<Project>
                     {
                         Data = new TestProject(),
                         Id = "id1",
                         Version = 1,
                     },
-                }
+                ]
             );
 
         // SUT
@@ -444,7 +442,7 @@ public class ConnectionTests
             Data = new TestProject { Id = id, SyncDisabled = true },
             Version = 2,
         };
-        var expected = new Snapshot<TestProject> { Data = snapshot.Data, Version = 3, };
+        var expected = new Snapshot<TestProject> { Data = snapshot.Data, Version = 3 };
         var builder = new Json0OpBuilder<TestProject>(data);
         builder.Set(p => p.SyncDisabled, true);
         List<Json0Op> op = builder.Op;
@@ -484,13 +482,13 @@ public class ConnectionTests
         string otTypeName = OTType.Json0;
         var snapshot = new Snapshot<TestProject>
         {
-            Data = new TestProject() { Id = id, SyncDisabled = false, },
+            Data = new TestProject() { Id = id, SyncDisabled = false },
             Version = 1,
         };
         var builder = new Json0OpBuilder<TestProject>(snapshot.Data);
         builder.Set(p => p.SyncDisabled, true);
         List<Json0Op> op = builder.Op;
-        var updatedData = new TestProject() { Id = id, SyncDisabled = true, };
+        var updatedData = new TestProject() { Id = id, SyncDisabled = true };
 
         env.RealtimeService.Server.FetchDocAsync<TestProject>(Arg.Any<int>(), collection, id)
             .Returns(Task.FromResult(snapshot));
@@ -540,7 +538,7 @@ public class ConnectionTests
         string id = "id1";
         var snapshot = new Snapshot<TestProject>
         {
-            Data = new TestProject() { Id = id, SyncDisabled = false, },
+            Data = new TestProject() { Id = id, SyncDisabled = false },
             Version = 1,
         };
         var builder = new Json0OpBuilder<TestProject>(snapshot.Data);
@@ -626,8 +624,8 @@ public class ConnectionTests
                 new RealtimeOptions()
                 {
                     ProjectDoc = new DocConfig("some_projects", typeof(Project)),
-                    ProjectDataDocs = new List<DocConfig>(),
-                    UserDataDocs = new List<DocConfig>(),
+                    ProjectDataDocs = [],
+                    UserDataDocs = [],
                 }
             );
             var authOptions = Options.Create(Substitute.For<AuthOptions>());

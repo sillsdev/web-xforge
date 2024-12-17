@@ -18,7 +18,7 @@ enum DirtyStatus
 {
     CLEAN,
     DIRTY,
-    MATCHES_NEW
+    MATCHES_NEW,
 }
 
 /// <summary>
@@ -413,8 +413,12 @@ public class Migrator : DisposableBase
     )
     {
         IDocument<TextData> chapterTextDocInSFDB = bookChapterTextDocsInSFDB[chapter.Number];
-        ChapterDelta chapterDeltaInSFDB =
-            new(chapter.Number, chapter.LastVerse, chapter.IsValid, chapterTextDocInSFDB.Data);
+        ChapterDelta chapterDeltaInSFDB = new(
+            chapter.Number,
+            chapter.LastVerse,
+            chapter.IsValid,
+            chapterTextDocInSFDB.Data
+        );
 
         // The chapter text in SF DB came from USX originally, and would have been parsed by the older parsing
         // method. Has it been untouched since that time?
@@ -546,7 +550,7 @@ public class Migrator : DisposableBase
             .GroupBy(row => new
             {
                 SFProjectId = row.Field<string>("SFProjectId"),
-                DirtyStatus = row.Field<DirtyStatus>("DirtyStatus")
+                DirtyStatus = row.Field<DirtyStatus>("DirtyStatus"),
             })
             .OrderBy(group => group.Key.SFProjectId);
 

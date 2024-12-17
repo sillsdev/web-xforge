@@ -3780,8 +3780,11 @@ public class MachineProjectServiceTests
             int expected = options switch
             {
                 { PreTranslate: false } => 1,
-                { PreTranslate: true, AlternateTrainingSource: true, AlternateTrainingSourceAndSourceAreTheSame: true }
-                    => 2,
+                {
+                    PreTranslate: true,
+                    AlternateTrainingSource: true,
+                    AlternateTrainingSourceAndSourceAreTheSame: true
+                } => 2,
                 { PreTranslate: true, AlternateTrainingSource: true, AlternateSource: true } => 0,
                 { PreTranslate: true, AlternateTrainingSource: true } => 1,
                 { PreTranslate: true, AlternateSource: true } => 1,

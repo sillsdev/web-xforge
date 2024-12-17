@@ -974,7 +974,7 @@ public class ParatextNotesMapperTests
             var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
             var localizer = new StringLocalizer<SharedResource>(factory);
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions.Value.Returns(new SiteOptions { Name = "xForge", });
+            siteOptions.Value.Returns(new SiteOptions { Name = "xForge" });
             Mapper = new ParatextNotesMapper(
                 UserSecrets,
                 ParatextService,
@@ -1087,9 +1087,9 @@ public class ParatextNotesMapperTests
                                             OwnerRef = "user03",
                                             SyncUserRef = commentSyncUserId1,
                                             DateCreated = new DateTime(2019, 1, 3, 9, 0, 0, DateTimeKind.Utc),
-                                            Text = "Test comment 4."
-                                        }
-                                    }
+                                            Text = "Test comment 4.",
+                                        },
+                                    },
                                 },
                                 new Answer
                                 {
@@ -1162,7 +1162,7 @@ public class ParatextNotesMapperTests
                     {
                         Id = "user03",
                         ParatextId = "ptuser03",
-                        Role = SFProjectRole.Translator
+                        Role = SFProjectRole.Translator,
                     }
                 );
             return ptUsers;

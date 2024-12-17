@@ -41,7 +41,7 @@ public class TokensTests
         var tokens = new Tokens()
         {
             AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration, "paratext01"),
-            RefreshToken = null
+            RefreshToken = null,
         };
 
         // SUT
@@ -56,7 +56,7 @@ public class TokensTests
         var tokens = new Tokens()
         {
             AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration, "paratext01"),
-            RefreshToken = null
+            RefreshToken = null,
         };
 
         // SUT

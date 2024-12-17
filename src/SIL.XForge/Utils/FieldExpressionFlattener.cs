@@ -7,7 +7,7 @@ namespace SIL.XForge.Utils;
 internal class FieldExpressionFlattener : ExpressionVisitor
 {
     private readonly Stack<Expression> _nodes = new Stack<Expression>();
-    private readonly HashSet<Expression> _argExprs = new HashSet<Expression>();
+    private readonly HashSet<Expression> _argExprs = [];
 
     public IEnumerable<Expression> Nodes => _nodes;
 

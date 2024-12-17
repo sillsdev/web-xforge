@@ -67,8 +67,8 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
 
         // Get bundle
         string guid = Guid.NewGuid().ToString();
-        List<string> query = new List<string>
-        {
+        List<string> query =
+        [
             "guid",
             guid,
             "proj",
@@ -76,19 +76,19 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
             "projid",
             pullRepo.SendReceiveId.Id,
             "type",
-            "zstd-v2"
-        };
+            "zstd-v2",
+        ];
         if (baseRev != null)
         {
             query.Add("base1");
             query.Add(baseRev);
         }
 
-        byte[] bundle = client.GetStreaming("pullbundle", query.ToArray());
+        byte[] bundle = client.GetStreaming("pullbundle", [.. query]);
         // Finish bundle
         client.Get("pullbundlefinish", "guid", guid);
         if (bundle.Length == 0)
-            return Array.Empty<string>();
+            return [];
 
         // Use bundle
         string[] changeSets = HgWrapper.Pull(repository, bundle);
@@ -205,7 +205,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         JArray licenses = GetJson<JArray>("my/licenses");
         if (licenses == null)
             return null;
-        List<ProjectLicense> result = new List<ProjectLicense>();
+        List<ProjectLicense> result = [];
         foreach (JObject license in licenses.Cast<JObject>())
         {
             var projLicense = new ProjectLicense(license);

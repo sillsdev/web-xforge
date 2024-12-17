@@ -38,15 +38,15 @@ public class NotesFormatterTests
             Thread = "Answer_dataId0123",
             VerseRefStr = "RUT 1:1",
         };
-        List<CommentThread> commentThreads = new List<CommentThread>
-        {
+        List<CommentThread> commentThreads =
+        [
             new CommentThread
             {
                 ContextScrTextName = env.ProjectScrText?.Name,
                 ScrText = env.ProjectScrText,
-                Comments = new List<Comment> { comment },
+                Comments = [comment],
             },
-        };
+        ];
 
         // We use StringBuilder so we can have the environment specific new line
         StringBuilder sb = new StringBuilder();
@@ -90,15 +90,15 @@ public class NotesFormatterTests
             Type = NoteType.Conflict,
             VerseRefStr = "RUT 1:1",
         };
-        List<CommentThread> commentThreads = new List<CommentThread>
-        {
+        List<CommentThread> commentThreads =
+        [
             new CommentThread
             {
                 ContextScrTextName = env.ProjectScrText?.Name,
                 ScrText = env.ProjectScrText,
-                Comments = new List<Comment> { comment },
+                Comments = [comment],
             },
-        };
+        ];
 
         // We use StringBuilder so we can have the environment specific new line
         StringBuilder sb = new StringBuilder();
@@ -132,14 +132,14 @@ public class NotesFormatterTests
 
         // Setup the test data
         const string expected = "<notes version=\"1.1\" />";
-        List<CommentThread> commentThreads = new List<CommentThread>
-        {
+        List<CommentThread> commentThreads =
+        [
             new CommentThread
             {
                 ContextScrTextName = env.ProjectScrText?.Name,
                 ScrText = env.ProjectScrText,
-                Comments = new List<Comment>
-                {
+                Comments =
+                [
                     new Comment(associatedPtUser)
                     {
                         DateTime = DateTimeOffset.Now,
@@ -147,9 +147,9 @@ public class NotesFormatterTests
                         Thread = "Answer_dataId0123",
                         VerseRefStr = "RUT 1:1",
                     },
-                },
+                ],
             },
-        };
+        ];
 
         // SUT
         string actual = NotesFormatter.FormatNotes(commentThreads);
@@ -176,15 +176,15 @@ public class NotesFormatterTests
             Thread = "Answer_dataId0123",
             VerseRefStr = "RUT 1:1",
         };
-        List<CommentThread> commentThreads = new List<CommentThread>
-        {
+        List<CommentThread> commentThreads =
+        [
             new CommentThread
             {
                 ContextScrTextName = env.ProjectScrText?.Name,
                 ScrText = env.ProjectScrText,
-                Comments = new List<Comment> { comment },
+                Comments = [comment],
             },
-        };
+        ];
 
         // We use StringBuilder so we can have the environment specific new line
         StringBuilder sb = new StringBuilder();
@@ -246,17 +246,17 @@ public class NotesFormatterTests
             DateTime = commentDate,
             Thread = thread,
             VerseRefStr = verseRefStr,
-            Contents = doc.DocumentElement
+            Contents = doc.DocumentElement,
         };
-        List<CommentThread> commentThreads = new List<CommentThread>
-        {
+        List<CommentThread> commentThreads =
+        [
             new CommentThread
             {
                 ContextScrTextName = env.ProjectScrText?.Name,
                 ScrText = env.ProjectScrText,
-                Comments = new List<Comment> { comment }
-            }
-        };
+                Comments = [comment],
+            },
+        ];
 
         // SUT
         string actual = NotesFormatter.FormatNotes(commentThreads);
@@ -289,23 +289,23 @@ public class NotesFormatterTests
         sb.AppendLine("  </thread>");
         sb.Append("</notes>");
         string expected = sb.ToString();
-        List<CommentThread> commentThreads = new List<CommentThread>
-        {
+        List<CommentThread> commentThreads =
+        [
             new CommentThread
             {
                 ContextScrTextName = env.ProjectScrText?.Name,
                 ScrText = env.ProjectScrText,
-                Comments = new List<Comment>
-                {
+                Comments =
+                [
                     new Comment(associatedPtUser)
                     {
                         DateTime = commentDate,
                         Thread = thread,
                         VerseRefStr = verseRefStr,
                     },
-                },
+                ],
             },
-        };
+        ];
 
         // SUT
         string actual = NotesFormatter.FormatNotes(commentThreads);
@@ -348,14 +348,14 @@ public class NotesFormatterTests
         sb.AppendLine("  </thread>");
         sb.Append("</notes>");
         string expected = sb.ToString();
-        List<CommentThread> commentThreads = new List<CommentThread>
-        {
+        List<CommentThread> commentThreads =
+        [
             new CommentThread
             {
                 ContextScrTextName = env.ProjectScrText?.Name,
                 ScrText = env.ProjectScrText,
-                Comments = new List<Comment>
-                {
+                Comments =
+                [
                     new Comment(firstPtUser)
                     {
                         DateTime = firstCommentDate,
@@ -369,9 +369,9 @@ public class NotesFormatterTests
                         VerseRefStr = verseRefStr,
                         Contents = doc.DocumentElement,
                     },
-                },
+                ],
             },
-        };
+        ];
 
         // SUT
         string actual = NotesFormatter.FormatNotes(commentThreads);
@@ -388,10 +388,10 @@ public class NotesFormatterTests
 
         // Setup the test data
         const string expected = "<notes version=\"1.1\" />";
-        List<CommentThread> commentThreads = new List<CommentThread>
-        {
+        List<CommentThread> commentThreads =
+        [
             new CommentThread { ContextScrTextName = env.ProjectScrText?.Name, ScrText = env.ProjectScrText },
-        };
+        ];
 
         // SUT
         string actual = NotesFormatter.FormatNotes(commentThreads);

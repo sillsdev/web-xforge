@@ -28,13 +28,13 @@ public enum SpaDevServerStartup
 {
     None,
     Start,
-    Listen
+    Listen,
 }
 
 public class Startup
 {
-    private static readonly HashSet<string> DevelopmentSpaGetRoutes = new HashSet<string>
-    {
+    private static readonly HashSet<string> DevelopmentSpaGetRoutes =
+    [
         "runtime.js",
         "runtime.js.map",
         "polyfills.js",
@@ -49,22 +49,22 @@ public class Startup
         "main.js.map",
         "manifest.json",
         "sockjs-node",
-        "3rdpartylicenses.txt"
-    };
+        "3rdpartylicenses.txt",
+    ];
 
     // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
-    private static readonly HashSet<string> ProductionSpaGetRoutes = new HashSet<string>
-    {
+    private static readonly HashSet<string> ProductionSpaGetRoutes =
+    [
         "polyfills-es2015",
         "polyfills-es5",
         "runtime-es2015",
         "runtime-es5",
         "main-es2015",
         "main-es5",
-        "styles"
-    };
-    private static readonly HashSet<string> SpaGetRoutes = new HashSet<string>
-    {
+        "styles",
+    ];
+    private static readonly HashSet<string> SpaGetRoutes =
+    [
         "callback",
         "connect-project",
         "login",
@@ -73,12 +73,12 @@ public class Startup
         "serval-administration",
         "system-administration",
         "favicon.ico",
-        "assets"
-    };
+        "assets",
+    ];
 
-    private static readonly HashSet<string> DevelopmentSpaPostRoutes = new HashSet<string> { "sockjs-node" };
-    private static readonly HashSet<string> ProductionSpaPostRoutes = new HashSet<string>();
-    private static readonly HashSet<string> SpaPostRoutes = new HashSet<string>();
+    private static readonly HashSet<string> DevelopmentSpaPostRoutes = ["sockjs-node"];
+    private static readonly HashSet<string> ProductionSpaPostRoutes = [];
+    private static readonly HashSet<string> SpaPostRoutes = [];
 
     public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
     {
@@ -230,7 +230,7 @@ public class Startup
             new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SiteDir, "audio")),
-                RequestPath = "/assets/audio"
+                RequestPath = "/assets/audio",
             }
         );
         app.UseStaticFiles(

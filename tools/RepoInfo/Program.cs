@@ -200,8 +200,7 @@ foreach (var revision in revisions)
                 or ProjectFileType.StatusCheckBoxes
                 or ProjectFileType.StudyBibleAdditions
                 or ProjectFileType.StudyBibleAdditionBooks
-                or ProjectFileType.Unspecified
-                    => "NA",
+                or ProjectFileType.Unspecified => "NA",
                 ProjectFileType.RolesPermissions => "PE",
                 ProjectFileType.Notes or ProjectFileType.NoteLanguages or ProjectFileType.NoteTags => "NT",
                 ProjectFileType.BookNames
@@ -211,8 +210,7 @@ foreach (var revision in revisions)
                 or ProjectFileType.ProjectUpdate
                 or ProjectFileType.Stylesheet
                 or ProjectFileType.Versification
-                or ProjectFileType.XmlResourceProject
-                    => "PR",
+                or ProjectFileType.XmlResourceProject => "PR",
                 _ => string.Empty,
             };
 

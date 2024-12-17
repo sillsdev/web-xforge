@@ -18,15 +18,14 @@ public class ExceptionHandler : IExceptionHandler
         string responseContent = string.Join("\n", (await response.Content.ReadAsStringAsync()).Split('\n').Take(10));
         return string.Join(
                 "\n",
-                new string[]
-                {
+                [
                     "HTTP Request error:",
                     $"{response.RequestMessage.Method} {response.RequestMessage.RequestUri}",
                     "Response:",
                     response.ToString(),
                     "Response content begins with:",
-                    responseContent
-                }
+                    responseContent,
+                ]
             )
             .Replace("\n", "\n    ");
     }
@@ -69,7 +68,7 @@ public class ExceptionHandler : IExceptionHandler
     {
         if (!string.IsNullOrWhiteSpace(userId))
         {
-            _bugsnag.BeforeNotify(report => report.Event.User = new Bugsnag.Payload.User { Id = userId, });
+            _bugsnag.BeforeNotify(report => report.Event.User = new Bugsnag.Payload.User { Id = userId });
         }
     }
 }

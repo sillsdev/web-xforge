@@ -54,7 +54,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
         _configuration = configuration;
 
         RealtimeOptions options = _realtimeOptions.Value;
-        _docConfigs = new Dictionary<Type, DocConfig>();
+        _docConfigs = [];
         AddDocConfig(options.UserDoc);
         AddDocConfig(options.ProjectDoc);
         foreach (DocConfig projectDataDoc in options.ProjectDataDocs)

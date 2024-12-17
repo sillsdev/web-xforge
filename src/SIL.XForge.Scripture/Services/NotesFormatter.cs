@@ -154,7 +154,7 @@ public static class NotesFormatter
     #region Private helper methods for parsing
     private static List<Comment> ParseThread(XElement threadElem, ParatextUser ptUser)
     {
-        List<Comment> result = new List<Comment>();
+        List<Comment> result = [];
         Comment comment = null;
         foreach (var commentElem in threadElem.Elements("comment"))
         {
@@ -225,7 +225,7 @@ public static class NotesFormatter
                 XElement elem = (XElement)node;
                 if (elem.Name == "span")
                 {
-                    string[] styles = { "bold", "italic" };
+                    string[] styles = ["bold", "italic"];
                     var style = styles.SingleOrDefault(s => s == elem.Attribute("style")?.Value) ?? "span";
                     p.Add(new XElement(style, elem.GetInnerText()));
                 }

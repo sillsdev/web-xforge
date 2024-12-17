@@ -2623,7 +2623,7 @@ public class SFProjectServiceTests
             new SFProjectSettings
             {
                 SourceParatextId = SFProjectService.ProjectSettingValueUnset,
-                TranslationSuggestionsEnabled = false
+                TranslationSuggestionsEnabled = false,
             }
         );
 
@@ -4223,7 +4223,6 @@ public class SFProjectServiceTests
                             {
                                 {
                                     User03,
-
                                     [
                                         SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Create),
                                         SFProjectRights.JoinRight(SFProjectDomain.TextAudio, Operation.Delete),

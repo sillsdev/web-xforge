@@ -53,7 +53,7 @@ public class AnonymousControllerTests
         var expectedCookie = new Cookie
         {
             Name = CookieConstants.TransparentAuthentication,
-            Value = Uri.EscapeDataString(Newtonsoft.Json.JsonConvert.SerializeObject(credentials))
+            Value = Uri.EscapeDataString(Newtonsoft.Json.JsonConvert.SerializeObject(credentials)),
         };
         env.AnonymousService.GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
             .Returns(Task.FromResult(credentials));
@@ -207,7 +207,7 @@ public class AnonymousControllerTests
             // Add the body to a new request message
             var request = new HttpRequestMessage
             {
-                Content = new StringContent(body, Encoding.UTF8, "application/json")
+                Content = new StringContent(body, Encoding.UTF8, "application/json"),
             };
 
             // Set up the HTTP context with this data

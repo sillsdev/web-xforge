@@ -524,7 +524,7 @@ namespace PTDDCloneAll
                             Number = kvp.Key,
                             LastVerse = kvp.Value.LastVerse,
                             IsValid = kvp.Value.IsValid,
-                            Permissions = { }
+                            Permissions = { },
                         }
                     );
                 }

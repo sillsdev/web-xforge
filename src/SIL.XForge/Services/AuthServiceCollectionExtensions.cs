@@ -50,7 +50,7 @@ public static class AuthServiceCollectionExtensions
                         if (!scopes.Contains(authOptions.Scope))
                             context.Fail("A required scope has not been granted.");
                         return Task.CompletedTask;
-                    }
+                    },
                 };
             })
             .AddBasic(options =>
@@ -62,8 +62,8 @@ public static class AuthServiceCollectionExtensions
                         var authService = context.HttpContext.RequestServices.GetService<IAuthService>();
                         if (authService.ValidateWebhookCredentials(context.Username, context.Password))
                         {
-                            Claim[] claims = new[]
-                            {
+                            Claim[] claims =
+                            [
                                 new Claim(
                                     ClaimTypes.NameIdentifier,
                                     context.Username,
@@ -75,14 +75,14 @@ public static class AuthServiceCollectionExtensions
                                     context.Username,
                                     ClaimValueTypes.String,
                                     context.Options.ClaimsIssuer
-                                )
-                            };
+                                ),
+                            ];
 
                             context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
                             context.Success();
                         }
                         return Task.CompletedTask;
-                    }
+                    },
                 };
             });
         return services;
