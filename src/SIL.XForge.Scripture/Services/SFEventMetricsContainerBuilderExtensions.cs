@@ -18,6 +18,7 @@ public static class SFEventMetricsContainerBuilderExtensions
     public static void RegisterSFEventMetrics(this ContainerBuilder containerBuilder)
     {
         containerBuilder.RegisterEventMetrics();
+        containerBuilder.RegisterEventMetrics<IMachineApiService, MachineApiService>();
         containerBuilder.RegisterEventMetrics<ISFProjectService, SFProjectService>();
         containerBuilder.RegisterEventMetrics<ISyncService, SyncService>();
     }
