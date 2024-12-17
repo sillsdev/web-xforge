@@ -510,14 +510,11 @@ public class Delta
     }
 
     /// <summary>Provides methods to process ops for text that may have attribute changes</summary>
-    private class DeltaOpsAttributeHelper
+    private class DeltaOpsAttributeHelper(bool retainCharIdsOnAttributes)
     {
-        private List<int> opLengths = [];
-        private List<JObject> originalDeltaOps = [];
-        private List<JObject> newDeltaOps = [];
-        private bool retainCharIdsOnAttributes;
-
-        public DeltaOpsAttributeHelper(bool retainCharIds) => retainCharIdsOnAttributes = retainCharIds;
+        private readonly List<int> opLengths = [];
+        private readonly List<JObject> originalDeltaOps = [];
+        private readonly List<JObject> newDeltaOps = [];
 
         public void Add(int length, JToken originalOp, JToken newOp)
         {
