@@ -15,18 +15,21 @@
   pre_tasks:
     - name: Add apt key for mongodb server version {{ mongodb_version }}
       ansible.builtin.get_url:
-        url: https://pgp.mongodb.com/server-{{ mongodb_version }}.asc
-        dest: /etc/apt/trusted.gpg.d/mongodb-server-{{ mongodb_version }}.asc
+        url: https://www.mongodb.org/static/pgp/server-{{ mongodb_version }}.asc
+        dest: /usr/share/keyrings/mongodb-server-{{ mongodb_version }}.asc
         mode: "0644"
     - name: Add Mongo repository for version {{ mongodb_version }}
-      ansible.builtin.apt_repository:
-        repo: >
-          deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/mongodb-server-{{ mongodb_version }}.asc]
-          https://repo.mongodb.org/apt/{{ base_distribution_release }}
-          {{ base_distribution_release }}/mongodb-org/{{ mongodb_version }}
-          {{ 'multiverse' if base_distribution == 'ubuntu' else 'main' }}
-        filename: mongodb-org
-        update_cache: true
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/mongodb-org.sources
+        mode: "0644"
+        content: |
+          Enabled: yes
+          Types: deb
+          URIs: https://repo.mongodb.org/apt/{{ base_distribution }}
+          Suites: {{ base_distribution_release }}/mongodb-org/{{ mongodb_version }}
+          Components: {{ 'multiverse' if base_distribution == 'ubuntu' else 'main' }}
+          Architectures: amd64
+          Signed-By: /usr/share/keyrings/mongodb-server-{{ mongodb_version }}.asc
   tasks:
     - name: Install packages
       ansible.builtin.apt:
