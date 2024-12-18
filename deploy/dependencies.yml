@@ -3,7 +3,6 @@
   hosts: all
   become: yes
   vars_files:
-    - "vars/config_{{config}}.yml"
     # conditional import
     - - "vars/{{ansible_distribution}}-{{ansible_distribution_major_version | int}}.yml"
       - "vars/{{ansible_distribution}}.yml"
@@ -87,13 +86,6 @@
           - mercurial
       when: ansible_distribution_major_version|int >= 20
 
-    - name: update the mongo config file
-      lineinfile:
-        path: /etc/mongod.conf
-        regexp: '^(\s*dbPath: ).*$'
-        line: '\1{{mongo_path}}'
-        backrefs: yes
-      notify: restart mongod
     - name: ensure mongod service is running (and enable it at boot)
       # Note that the mongodb-org packages install a service named "mongod", not "mongodb"
       service:
