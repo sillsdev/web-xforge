@@ -1,6 +1,9 @@
 <ng-container *transloco="let t; read: 'book_select'">
-  @if (availableBooks.length > 0 && !readonly) {
-    <div>
+  @if (availableBooks.length > 0 && !readonly && !basicMode) {
+    <div class="scope-selection">
+      @if (projectName != null) {
+        <span class="project-name">{{ projectName }}</span>
+      }
       <mat-checkbox
         class="ot-checkbox"
         value="OT"
@@ -44,14 +47,20 @@
         [disabled]="readonly"
         (change)="onChipListChange(book)"
       >
-        <mat-chip-option
-          [value]="book"
-          [selected]="book.selected"
-          [matTooltip]="t('book_progress', { percent: getPercentage(book) | l10nPercent })"
-        >
-          {{ "canon.book_names." + book.bookId | transloco }}
-          <div class="border-fill" [style.width]="book.progressPercentage + '%'"></div>
-        </mat-chip-option>
+        @if (!basicMode) {
+          <mat-chip-option
+            [value]="book"
+            [selected]="book.selected"
+            [matTooltip]="t('book_progress', { percent: getPercentage(book) | l10nPercent })"
+          >
+            {{ "canon.book_names." + book.bookId | transloco }}
+            <div class="border-fill" [style.width]="book.progressPercentage + '%'"></div>
+          </mat-chip-option>
+        } @else {
+          <mat-chip-option [value]="book" [selected]="book.selected">
+            {{ "canon.book_names." + book.bookId | transloco }}
+          </mat-chip-option>
+        }
       </mat-chip-listbox>
     }
   </div>

@@ -50,9 +50,16 @@ describe('BookMultiSelectComponent', () => {
     fixture.detectChanges();
   });
 
+  it('supports providing project name', async () => {
+    await component.ngOnChanges();
+    expect(fixture.nativeElement.querySelector('.project-name')).toBeNull();
+    component.projectName = 'Test Project';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.project-name')).not.toBeNull();
+  });
+
   it('should initialize book options on ngOnChanges', async () => {
     await component.ngOnChanges();
-
     expect(component.bookOptions).toEqual([
       { bookNum: 1, bookId: 'GEN', selected: true, progressPercentage: 0 },
       { bookNum: 2, bookId: 'EXO', selected: false, progressPercentage: 15 },
@@ -136,5 +143,16 @@ describe('BookMultiSelectComponent', () => {
     expect(component.partialOT).toBe(false);
     expect(component.partialOT).toBe(false);
     expect(component.partialDC).toBe(true);
+  });
+
+  it('can hide checkboxes and progress in basic mode', async () => {
+    await component.ngOnChanges();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.book-multi-select .border-fill')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.scope-selection')).not.toBeNull();
+    component.basicMode = true;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.book-multi-select .border-fill')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.scope-selection')).toBeNull();
   });
 });

@@ -41,10 +41,8 @@ describe('DraftGenerationService', () => {
   const projectId = 'testProjectId';
   const buildConfig: BuildConfig = {
     projectId,
-    trainingBooks: [],
     trainingDataFiles: [],
     translationScriptureRanges: [],
-    translationBooks: [],
     trainingScriptureRanges: [],
     fastTraining: false
   };
