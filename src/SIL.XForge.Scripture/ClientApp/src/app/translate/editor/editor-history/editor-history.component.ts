@@ -10,13 +10,13 @@ import {
   ViewChild
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeltaStatic } from 'quill';
+import { Delta } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { Delta, TextDoc } from '../../../core/models/text-doc';
+import { TextDoc } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -90,14 +90,14 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(async ([e, showDiff]: [RevisionSelectEvent, boolean]) => {
-        let snapshotContents: DeltaStatic = new Delta(e.snapshot?.data.ops);
+        let snapshotContents: Delta = new Delta(e.snapshot?.data.ops);
         this.snapshotText?.setContents(snapshotContents, 'api');
         this.loadedRevision = e.revision;
 
         // Show the diff, if requested
         if (showDiff && this.diffText?.id != null) {
           const textDoc: TextDoc = await this.projectService.getText(this.diffText.id);
-          const targetContents: DeltaStatic = new Delta(textDoc.data?.ops);
+          const targetContents: Delta = new Delta(textDoc.data?.ops);
           const diff = this.editorHistoryService.processDiff(snapshotContents, targetContents);
 
           this.snapshotText?.editor?.updateContents(diff, 'api');

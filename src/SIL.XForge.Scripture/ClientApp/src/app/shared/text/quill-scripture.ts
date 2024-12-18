@@ -1,19 +1,17 @@
-import cloneDeep from 'lodash-es/cloneDeep';
-import Parchment from 'parchment';
-import Quill, {
-  Clipboard,
-  DeltaOperation,
-  DeltaStatic,
-  History,
-  HistoryStackType,
-  QuillOptionsStatic,
-  StringMap
-} from 'quill';
+import { cloneDeep } from 'lodash-es';
+import { Attributor, Formattable, Scope } from 'parchment';
+import Quill, { Delta, Parchment, Range } from 'quill';
 import QuillCursors from 'quill-cursors';
+import QuillBlockBlot, { BlockEmbed as QuillBlockEmbedBlot } from 'quill/blots/block';
+import QuillEmbedBlot from 'quill/blots/embed';
+import QuillInlineBlot from 'quill/blots/inline';
+import QuillScrollBlot from 'quill/blots/scroll';
+import QuillTextBlot from 'quill/blots/text';
+import QuillClipboard from 'quill/modules/clipboard';
+import QuillHistory, { StackItem } from 'quill/modules/history';
+import { DeltaOperation, StringMap } from 'rich-text';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
-
-const Delta: new () => DeltaStatic = Quill.import('delta');
 
 export function getAttributesAtPosition(editor: Quill, editorPosition: number): StringMap {
   // The format of the insertion point may only contain the block level formatting,
@@ -29,6 +27,20 @@ export function getAttributesAtPosition(editor: Quill, editorPosition: number): 
     }
   }
   return insertionFormat;
+}
+
+export function getRetainCount(op: DeltaOperation): number | undefined {
+  if (op?.retain != null) {
+    if (typeof op.retain === 'number') {
+      return op.retain;
+    }
+
+    if (typeof op.retain.length === 'number') {
+      return op.retain.length;
+    }
+  }
+
+  return undefined;
 }
 
 function customAttributeName(key: string): string {
@@ -104,18 +116,17 @@ interface Unmatched {
   marker: string;
 }
 
-export function registerScripture(): string[] {
-  const QuillClipboard = Quill.import('modules/clipboard') as typeof Clipboard;
-  const QuillHistory = Quill.import('modules/history') as typeof History;
-  const QuillParchment = Quill.import('parchment') as typeof Parchment;
-  const Inline = Quill.import('blots/inline') as typeof Parchment.Inline;
-  const Block = Quill.import('blots/block') as typeof Parchment.Block;
-  const Scroll = Quill.import('blots/scroll') as typeof Parchment.Scroll;
-  const Embed = Quill.import('blots/embed') as typeof Parchment.Embed;
-  const BlockEmbed = Quill.import('blots/block/embed') as typeof Parchment.Embed;
-  const Text = Quill.import('blots/text') as typeof Parchment.Text;
+interface FormattableBlotClass {
+  new (...args: any[]): Formattable;
+  blotName: string;
+}
 
-  const formats: any[] = [];
+function isAttributor(blot: any): blot is Attributor {
+  return blot instanceof Attributor;
+}
+
+export function registerScripture(): string[] {
+  const formats: (FormattableBlotClass | Attributor)[] = [];
 
   // zero width space
   const ZWSP = '\u200b';
@@ -126,13 +137,13 @@ export function registerScripture(): string[] {
    * This class overrides the "value" method so that it does not normalize text to NFC. This avoids a bug where Quill
    * does not properly handle NFD data (https://github.com/quilljs/quill/issues/1976).
    */
-  class NotNormalizedText extends Text {
+  class NotNormalizedText extends QuillTextBlot {
     static value(domNode: Text): string {
       return domNode.data;
     }
   }
 
-  class VerseEmbed extends Embed {
+  class VerseEmbed extends QuillEmbedBlot {
     static blotName = 'verse';
     static tagName = 'usx-verse';
 
@@ -163,7 +174,7 @@ export function registerScripture(): string[] {
   }
   formats.push(VerseEmbed);
 
-  class BlankEmbed extends Embed {
+  class BlankEmbed extends QuillEmbedBlot {
     static blotName = 'blank';
     static tagName = 'usx-blank';
 
@@ -192,9 +203,8 @@ export function registerScripture(): string[] {
     }
   }
   formats.push(BlankEmbed);
-  formats.push('initial');
 
-  class EmptyEmbed extends Embed {
+  class EmptyEmbed extends QuillEmbedBlot {
     static blotName = 'empty';
     static tagName = 'usx-empty';
 
@@ -217,12 +227,12 @@ export function registerScripture(): string[] {
   formats.push(EmptyEmbed);
 
   /** Span of characters or elements, that can have formatting. */
-  class CharInline extends Inline {
+  class CharInline extends QuillInlineBlot {
     static blotName = 'char';
     static tagName = 'usx-char';
 
-    static create(value: UsxStyle | UsxStyle[]): Node {
-      const node = super.create(value) as HTMLElement;
+    static create(value: UsxStyle | UsxStyle[]): HTMLElement {
+      const node = super.create(value);
       if (value == null) {
         return node;
       }
@@ -268,12 +278,12 @@ export function registerScripture(): string[] {
   }
   formats.push(CharInline);
 
-  class RefInline extends Inline {
+  class RefInline extends QuillInlineBlot {
     static blotName = 'ref';
     static tagName = 'usx-ref';
 
-    static create(value: Ref): Node {
-      const node = super.create(value) as HTMLElement;
+    static create(value: Ref): HTMLElement {
+      const node = super.create(value);
       node.setAttribute(customAttributeName('loc'), value.loc);
       setUsxValue(node, value);
       return node;
@@ -300,7 +310,7 @@ export function registerScripture(): string[] {
   }
   formats.push(RefInline);
 
-  class NoteEmbed extends Embed {
+  class NoteEmbed extends QuillEmbedBlot {
     static blotName = 'note';
     static tagName = 'usx-note';
 
@@ -330,7 +340,7 @@ export function registerScripture(): string[] {
   }
   formats.push(NoteEmbed);
 
-  class NoteThreadEmbed extends Embed {
+  class NoteThreadEmbed extends QuillEmbedBlot {
     static blotName = 'note-thread-embed';
     static tagName = 'display-note';
 
@@ -369,7 +379,7 @@ export function registerScripture(): string[] {
   }
   formats.push(NoteThreadEmbed);
 
-  class OptBreakEmbed extends Embed {
+  class OptBreakEmbed extends QuillEmbedBlot {
     static blotName = 'optbreak';
     static tagName = 'usx-optbreak';
 
@@ -386,7 +396,7 @@ export function registerScripture(): string[] {
   }
   formats.push(OptBreakEmbed);
 
-  class FigureEmbed extends Embed {
+  class FigureEmbed extends QuillEmbedBlot {
     static blotName = 'figure';
     static tagName = 'usx-figure';
 
@@ -429,7 +439,7 @@ export function registerScripture(): string[] {
   }
   formats.push(FigureEmbed);
 
-  class UnmatchedEmbed extends Embed {
+  class UnmatchedEmbed extends QuillEmbedBlot {
     static blotName = 'unmatched';
     static tagName = 'usx-unmatched';
 
@@ -446,12 +456,12 @@ export function registerScripture(): string[] {
   }
   formats.push(UnmatchedEmbed);
 
-  class ParaBlock extends Block {
+  class ParaBlock extends QuillBlockBlot {
     static blotName = 'para';
     static tagName = 'usx-para';
 
-    static create(value: Para): Node {
-      const node = super.create(value) as HTMLElement;
+    static create(value: Para): HTMLElement {
+      const node = super.create(value);
       if (value != null && value.style != null) {
         node.setAttribute(customAttributeName('style'), value.style);
         setUsxValue(node, value);
@@ -480,7 +490,7 @@ export function registerScripture(): string[] {
   }
   formats.push(ParaBlock);
 
-  class ParaInline extends Inline {
+  class ParaInline extends QuillInlineBlot {
     static blotName = 'para-contents';
     static tagName = 'usx-para-contents';
 
@@ -509,7 +519,7 @@ export function registerScripture(): string[] {
         if (child != null) {
           const after = child.split(offset);
           const node = VerseEmbed.create(def);
-          const blot = new VerseEmbed(node);
+          const blot = new VerseEmbed(this.scroll as QuillScrollBlot, node);
           this.insertBefore(blot, after);
           return;
         }
@@ -519,12 +529,12 @@ export function registerScripture(): string[] {
   }
   formats.push(ParaInline);
 
-  class SegmentInline extends Inline {
+  class SegmentInline extends QuillInlineBlot {
     static blotName = 'segment';
     static tagName = 'usx-segment';
 
-    static create(value: string): Node {
-      const node = super.create(value) as HTMLElement;
+    static create(value: string): HTMLElement {
+      const node = super.create(value);
       node.setAttribute(customAttributeName('segment'), value);
       return node;
     }
@@ -547,7 +557,7 @@ export function registerScripture(): string[] {
   }
   formats.push(SegmentInline);
 
-  class TextAnchorInline extends Inline {
+  class TextAnchorInline extends QuillInlineBlot {
     static blotName = 'text-anchor';
     static tagName = 'display-text-anchor';
   }
@@ -555,12 +565,12 @@ export function registerScripture(): string[] {
 
   // Lower index means deeper in the DOM tree i.e. text-anchor will be nested inside of char. If char doesn't exist
   // then it will nest inside the next available element higher up the DOM
-  (Inline as any).order.push('text-anchor');
-  (Inline as any).order.push('char');
-  (Inline as any).order.push('segment');
-  (Inline as any).order.push('para-contents');
+  QuillInlineBlot.order.push('text-anchor');
+  QuillInlineBlot.order.push('char');
+  QuillInlineBlot.order.push('segment');
+  QuillInlineBlot.order.push('para-contents');
 
-  class ChapterEmbed extends BlockEmbed {
+  class ChapterEmbed extends QuillBlockEmbedBlot {
     static blotName = 'chapter';
     static tagName = 'usx-chapter';
 
@@ -579,10 +589,10 @@ export function registerScripture(): string[] {
     }
   }
   formats.push(ChapterEmbed);
-  Scroll.allowedChildren.push(ParaBlock);
-  Scroll.allowedChildren.push(ChapterEmbed);
+  QuillScrollBlot.allowedChildren.push(ParaBlock);
+  QuillScrollBlot.allowedChildren.push(ChapterEmbed);
 
-  class ClassAttributor extends QuillParchment.Attributor.Class {
+  class ClassAttributor extends Parchment.ClassAttributor {
     add(node: HTMLElement, value: any): boolean {
       if (value === true) {
         this.remove(node);
@@ -630,22 +640,14 @@ export function registerScripture(): string[] {
   });
   formats.push(CheckingQuestionSegmentClass);
 
-  const CheckingQuestionCountAttribute = new QuillParchment.Attributor.Attribute(
-    'question-count',
-    'data-question-count',
-    {
-      scope: Parchment.Scope.INLINE
-    }
-  );
+  const CheckingQuestionCountAttribute = new Parchment.Attributor('question-count', 'data-question-count', {
+    scope: Parchment.Scope.INLINE
+  });
   formats.push(CheckingQuestionCountAttribute);
 
-  const ParaStyleDescriptionAttribute = new QuillParchment.Attributor.Attribute(
-    'style-description',
-    'data-style-description',
-    {
-      scope: Parchment.Scope.INLINE
-    }
-  );
+  const ParaStyleDescriptionAttribute = new Parchment.Attributor('style-description', 'data-style-description', {
+    scope: Parchment.Scope.INLINE
+  });
   formats.push(ParaStyleDescriptionAttribute);
 
   const NoteThreadSegmentClass = new ClassAttributor('note-thread-segment', 'note-thread-segment', {
@@ -680,12 +682,12 @@ export function registerScripture(): string[] {
   class DisableHtmlClipboard extends QuillClipboard {
     private _textComponent: TextComponent;
 
-    constructor(quill: Quill, options: QuillOptionsStatic) {
+    constructor(quill: Quill, options: StringMap) {
       super(quill, options);
-      this._textComponent = (options as any).textComponent;
+      this._textComponent = options.textComponent;
     }
 
-    onPaste(e: ClipboardEvent): void {
+    onCapturePaste(e: ClipboardEvent): void {
       if (e.defaultPrevented || !this.quill.isEnabled() || e.clipboardData == null) {
         return;
       }
@@ -694,71 +696,91 @@ export function registerScripture(): string[] {
       // happen anyway even if we stop processing here.
       e.preventDefault();
 
-      const range = this.quill.getSelection();
+      const range: Range = this.quill.getSelection(true);
       if (range == null) {
         return;
       }
+
       if (!this._textComponent.isValidSelectionForCurrentSegment(range)) {
         return;
       }
-      let delta = new Delta().retain(range.index);
-      const scrollTop = this.quill.scrollingContainer.scrollTop;
-      this.container.focus();
-      this.quill.selection.update('silent');
 
-      let text = e.clipboardData.getData('text/plain');
-      // do not allow pasting new lines
-      text = text.replace(/(?:\r?\n)+/, ' ');
-      // do not allow pasting backslashes
-      text = text.replace(/\\/g, '');
-      setTimeout(() => {
-        this.container.innerHTML = text;
-        const pasteDelta: DeltaStatic = this.convert();
-        if (pasteDelta.ops != null) {
-          for (const op of pasteDelta.ops) {
-            // add the attributes to the paste delta which should just be 1 insert op
-            op.attributes = getAttributesAtPosition(this.quill, range.index);
-          }
-        }
-        delta = delta.concat(pasteDelta).delete(range.length);
-        this.quill.updateContents(delta, 'user');
-        // range.length contributes to delta.length()
-        this.quill.setSelection(delta.length() - range.length, 'silent');
-        this.quill.scrollingContainer.scrollTop = scrollTop;
-        this.quill.focus();
-      }, 1);
+      let delta = new Delta().retain(range.index);
+
+      const text = e.clipboardData.getData('text/plain');
+      const cleanedText = text
+        .replace(/(?:\r?\n)+/, ' ') // Replace new lines with spaces
+        .replace(/\\/g, ''); // Remove backslashes
+
+      const pasteDelta = this.convert({ text: cleanedText });
+
+      // add the attributes to the paste delta which should just be 1 insert op
+      for (const op of pasteDelta.ops ?? []) {
+        op.attributes = getAttributesAtPosition(this.quill, range.index);
+      }
+
+      delta = delta.concat(pasteDelta).delete(range.length);
+      this.quill.updateContents(delta, 'user');
+      this.quill.setSelection(delta.length() - range.length, 'silent');
     }
   }
 
+  type HistoryStackType = 'undo' | 'redo';
+
   class FixSelectionHistory extends QuillHistory {
     /**
-     * Performs undo/redo. Override this method, so that we can fix the selection logic. This method was copied from
+     * Performs undo/redo. Override this method so that we can fix the selection logic. This method was copied from
      * the Quill history module.
      *
-     * @param {string} source The source stack type.
-     * @param {string} dest The destination stack type.
+     * @param {HistoryStackType} source The source stack type.
+     * @param {HistoryStackType} dest The destination stack type.
      */
     change(source: HistoryStackType, dest: HistoryStackType): void {
-      const delta = this.stack[source].pop();
-      if (delta == null) {
+      if (this.stack[source].length === 0) {
         return;
       }
-      this.stack[dest].push(delta);
+      const stackItem: StackItem = this.stack[source].pop();
+      if (stackItem == null) {
+        return;
+      }
+      const base = this.quill.getContents();
+      const inverseDelta = stackItem.delta.invert(base);
+      this.stack[dest].push({
+        delta: inverseDelta,
+        range: transformRange(stackItem.range, inverseDelta)
+      });
       this.lastRecorded = 0;
       this.ignoreChange = true;
       // during undo/redo, segments can be incorrectly highlighted, so explicitly remove incorrect highlighting
-      this.quill.updateContents(removeObsoleteSegmentAttrs(delta[source]), 'user');
+      this.quill.updateContents(removeObsoleteSegmentAttrs(stackItem.delta), Quill.sources.USER);
       this.ignoreChange = false;
-      const index = getLastChangeIndex(delta[source]);
+      const index = getLastChangeIndex(this.quill.scroll, stackItem.delta);
       this.quill.setSelection(index);
     }
+  }
+
+  /**
+   * Transforms a range based on a delta. This function was copied from the Quill history module.
+   */
+  function transformRange(range: Range | null, delta: Delta): Range {
+    if (!range) {
+      return range;
+    }
+
+    const start: number = delta.transformPosition(range.index);
+    const end: number = delta.transformPosition(range.index + range.length);
+
+    return {
+      index: start,
+      length: end - start
+    };
   }
 
   /**
    * Updates delta to remove segment highlights from segments that are not explicitly highlighted
    * and strips away formatting from embeds, excluding blanks.
    */
-  function removeObsoleteSegmentAttrs(delta: DeltaStatic): DeltaStatic {
+  function removeObsoleteSegmentAttrs(delta: Delta): Delta {
     const updatedDelta = new Delta();
     if (delta.ops != null) {
       for (const op of delta.ops) {
@@ -790,11 +812,8 @@ export function registerScripture(): string[] {
   /**
    * Checks if the delta ends with a newline insert. This function was copied from the Quill history module.
    */
-  function endsWithNewlineChange(delta: DeltaStatic): boolean {
-    if (delta.ops == null) {
-      return false;
-    }
-    const lastOp = delta.ops[delta.ops.length - 1];
+  function endsWithNewlineChange(scroll: QuillScrollBlot, delta: Delta): boolean {
+    const lastOp = delta.ops?.[delta.ops.length - 1];
     if (lastOp == null) {
       return false;
     }
@@ -802,8 +821,8 @@ export function registerScripture(): string[] {
       return typeof lastOp.insert === 'string' && lastOp.insert.endsWith('\n');
     }
     if (lastOp.attributes != null) {
-      return Object.keys(lastOp.attributes).some(function (attr) {
-        return Parchment.query(attr, Parchment.Scope.BLOCK) != null;
+      return Object.keys(lastOp.attributes).some(attr => {
+        return scroll.query(attr, Scope.BLOCK) != null;
       });
     }
     return false;
@@ -813,10 +832,11 @@ export function registerScripture(): string[] {
    * Finds the index where the last insert/delete occurs in the delta. This function has been modified from the
    * original in the Quill history module.
    *
-   * @param {DeltaStatic} delta The undo/redo delta.
+   * @param {QuillScrollBlot} scroll The Quill scroll.
+   * @param {Delta} delta The undo/redo delta.
    * @returns {number} The index where the last insert/delete occurs.
    */
-  function getLastChangeIndex(delta: DeltaStatic): number {
+  function getLastChangeIndex(scroll: QuillScrollBlot, delta: Delta): number {
     if (delta.ops == null) {
       return 0;
     }
@@ -832,11 +852,12 @@ export function registerScripture(): string[] {
           curIndex++;
         }
       } else if (op.retain != null) {
-        curIndex += op.retain;
+        const retainCount: number = getRetainCount(op);
+        curIndex += retainCount;
         changeIndex = curIndex;
       }
     }
-    if (endsWithNewlineChange(delta)) {
+    if (endsWithNewlineChange(scroll, delta)) {
       changeIndex -= 1;
     }
     return changeIndex;
@@ -844,17 +865,16 @@ export function registerScripture(): string[] {
 
   const formatNames: string[] = [];
   for (const format of formats) {
-    if (typeof format === 'string') {
-      formatNames.push(format);
-    } else if (format.blotName != null) {
-      Quill.register(`blots/${format.blotName}`, format);
-      formatNames.push(format.blotName);
-    } else {
+    if (isAttributor(format)) {
       Quill.register(`formats/${format.attrName}`, format);
       formatNames.push(format.attrName);
+    } else {
+      Quill.register(`blots/${format.blotName}`, format);
+      formatNames.push(format.blotName);
     }
   }
-  Quill.register('blots/scroll', Scroll, true);
+
+  Quill.register('blots/scroll', QuillScrollBlot, true);
   Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
   Quill.register('modules/cursors', QuillCursors);
