@@ -1,7 +1,8 @@
 ---
 - name: Scripture Forge local server for development and testing
   hosts: all
-  become: yes
+  become: true
   tasks: []
 
-- import_playbook: dependencies.yml
+- name: Import dependencies playbook
+  import_playbook: dependencies.yml
