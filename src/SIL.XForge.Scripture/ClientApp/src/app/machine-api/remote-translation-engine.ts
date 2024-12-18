@@ -132,7 +132,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
           if (err.status === 404) {
             return of(undefined);
           } else {
-            return throwError(err);
+            return throwError(() => err);
           }
         })
       )
@@ -156,7 +156,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
           if (err.status === 404) {
             return of({ confidence: 0.0, trainedSegmentCount: 0 });
           } else {
-            return throwError(err);
+            return throwError(() => err);
           }
         })
       )
