@@ -2,7 +2,7 @@ import { OverlayRef } from '@angular/cdk/overlay';
 import { ComponentType } from '@angular/cdk/portal';
 import { Injectable } from '@angular/core';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { Observable } from 'rxjs';
+import { lastValueFrom, Observable } from 'rxjs';
 import { hasObjectProp } from '../type-utils';
 import {
   GenericDialogComponent,
@@ -43,7 +43,7 @@ export class DialogService {
 
     return {
       dialogRef,
-      result: dialogRef.afterClosed().toPromise()
+      result: lastValueFrom(dialogRef.afterClosed())
     };
   }
 

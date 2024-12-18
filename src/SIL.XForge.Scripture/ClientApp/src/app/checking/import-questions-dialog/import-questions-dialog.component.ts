@@ -6,6 +6,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { lastValueFrom } from 'rxjs';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
@@ -475,7 +476,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       ImportQuestionsConfirmationDialogComponent,
       data
     ) as MatDialogRef<ImportQuestionsConfirmationDialogComponent, ImportQuestionsConfirmationDialogResult>;
-    (await dialogRef.afterClosed().toPromise())!.forEach(
+    (await lastValueFrom(dialogRef.afterClosed())).forEach(
       (checked, index) => (changesToConfirm[index].checked = checked)
     );
     this.updateSelectAllCheckbox();
