@@ -209,8 +209,11 @@ public static class NotesFormatter
             contents = sb.ToString();
         }
 
-        comment.AddTextToContent(string.Empty, false);
-        comment.Contents.InnerXml = contents;
+        // Since PTX-23738 we must create the contents node,
+        // as the setter for Contents reads and stores the OuterXml
+        XmlElement contentsElement = comment.GetOrCreateCommentNode();
+        contentsElement.InnerXml = contents;
+        comment.Contents = contentsElement;
     }
 
     private static void ParseParagraph(XElement paraElem, StringBuilder sb)
