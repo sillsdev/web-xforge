@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="NLipsum" Version="1.1.0" />
-    <PackageReference Include="ParatextData" Version="9.5.0.5" />
+    <PackageReference Include="ParatextData" Version="9.5.0.8" />
   </ItemGroup>
 
 </Project>
