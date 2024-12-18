@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { lastValueFrom, Observable, Subject } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { CONSOLE, ConsoleInterface } from './browser-globals';
 import { CommandErrorCode, CommandService } from './command.service';
@@ -96,7 +96,7 @@ export class RetryingRequest<T> {
 
   private async invoke(options: FetchOptions): Promise<T | undefined> {
     while (!this.canceled && this.status !== 'complete') {
-      const online = await this.online$.pipe(take(1)).toPromise();
+      const online = await lastValueFrom(this.online$.pipe(take(1)));
       if (online !== true) {
         this.status = 'offline';
         await this.uponOnline();
@@ -124,12 +124,12 @@ export class RetryingRequest<T> {
   }
 
   private async uponOnline(): Promise<void> {
-    await this.online$
-      .pipe(
+    await lastValueFrom(
+      this.online$.pipe(
         filter(isOnline => isOnline),
         take(1)
       )
-      .toPromise();
+    );
   }
 
   private isNetworkError(error: unknown): boolean {

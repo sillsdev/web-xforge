@@ -5,7 +5,7 @@ import { escapeRegExp } from 'lodash-es';
 import merge from 'lodash-es/merge';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { combineLatest, from, Observable } from 'rxjs';
+import { combineLatest, from, lastValueFrom, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
@@ -116,7 +116,7 @@ export class UserService {
       disableClose: isConfirmation,
       width: '280px'
     }) as MatDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>;
-    const result = await dialogRef.afterClosed().toPromise();
+    const result = await lastValueFrom(dialogRef.afterClosed());
     if (result != null && result !== 'close') {
       await currentUserDoc.submitJson0Op(op => {
         op.set(u => u.displayName, result.displayName);
