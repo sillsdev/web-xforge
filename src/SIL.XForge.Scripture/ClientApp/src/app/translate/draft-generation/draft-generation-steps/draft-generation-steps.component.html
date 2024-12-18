@@ -75,7 +75,7 @@
           </button>
         </div>
       </mat-step>
-      <mat-step [completed]="!isTrainingOptional || userSelectedSourceTrainingBooks.length > 0">
+      <mat-step [completed]="isTrainingOptional || trainingSourceBooksSelected">
         <ng-template matStepLabel>
           {{ t("choose_books_for_training_label") }}
         </ng-template>

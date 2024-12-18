@@ -116,6 +116,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     super();
   }
 
+  get trainingSourceBooksSelected(): boolean {
+    return this.userSelectedSourceTrainingBooks.length > 0 || this.userSelectedAdditionalSourceTrainingBooks.length > 0;
+  }
+
   ngOnInit(): void {
     this.subscribe(
       this.draftSourcesService.getDraftProjectSources().pipe(
@@ -314,12 +318,18 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         return;
       }
       this.isStepsCompleted = true;
-      const trainingScriptureRange: ProjectScriptureRange = this.convertToScriptureRange(
-        this.draftSourceProjectIds!.trainingAlternateSourceId ?? this.draftSourceProjectIds!.trainingSourceId,
-        this.userSelectedSourceTrainingBooks
-      );
+      const trainingScriptureRange: ProjectScriptureRange | undefined =
+        this.userSelectedSourceTrainingBooks.length > 0
+          ? this.convertToScriptureRange(
+              this.draftSourceProjectIds!.trainingAlternateSourceId ?? this.draftSourceProjectIds!.trainingSourceId,
+              this.userSelectedSourceTrainingBooks
+            )
+          : undefined;
 
-      const trainingScriptureRanges: ProjectScriptureRange[] = [trainingScriptureRange];
+      const trainingScriptureRanges: ProjectScriptureRange[] = [];
+      if (trainingScriptureRange != null) {
+        trainingScriptureRanges.push(trainingScriptureRange);
+      }
       // Use the additional training range if selected
       const useAdditionalTranslateRange: boolean = this.userSelectedAdditionalSourceTrainingBooks.length > 0;
       if (useAdditionalTranslateRange) {
