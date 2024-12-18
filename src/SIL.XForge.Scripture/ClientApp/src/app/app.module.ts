@@ -8,6 +8,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { TranslocoModule } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
+import { QuillModule } from 'ngx-quill';
 import {
   defaultTranslocoMarkupTranspilers,
   provideTranslationMarkupTranspiler,
@@ -82,7 +83,8 @@ import { UsersModule } from './users/users.module';
     SharedModule,
     AvatarComponent,
     MatRipple,
-    GlobalNoticesComponent
+    GlobalNoticesComponent,
+    QuillModule.forRoot()
   ],
   providers: [
     CookieService,

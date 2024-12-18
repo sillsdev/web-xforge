@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Delta } from 'rich-text';
+import { Delta } from 'quill';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
