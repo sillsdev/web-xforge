@@ -9,8 +9,8 @@
     - "vars/{{ ansible_os_family }}.yml"
     - "vars/os_defaults.yml"
   vars:
-    node_version: 18.20.2
-    mongodb_version: 7.0
+    node_version: "18.20.2"
+    mongodb_version: "8.0"
     repo_path: "{{ playbook_dir }}/.."
   pre_tasks:
     - name: Add apt key for mongodb server version {{ mongodb_version }}
@@ -33,14 +33,38 @@
   tasks:
     - name: Install packages
       ansible.builtin.apt:
+        update_cache: true
+        # Using 'latest' so we upgrade mongo.
+        state: latest
         name:
           - "dotnet-sdk-8.0"
           - ffmpeg
           - "mongodb-org"
           - nodejs
           - npm
-        update_cache: true
-      tags: ["packages"]
+
+    - name: Restart and enable mongod service
+      # Note that the mongodb-org packages install a service named "mongod", not "mongodb"
+      ansible.builtin.service:
+        name: mongod
+        state: restarted
+        enabled: true
+
+    - name: Wait for mongod to start
+      # We don't want to try to connect using mongosh until the service is running.
+      ansible.builtin.wait_for:
+        port: 27017
+        delay: 1
+        timeout: 300
+
+    - name: Get current mongod feature compatibility version
+      ansible.builtin.command: "mongosh --eval 'db.adminCommand( { getParameter: 1, featureCompatibilityVersion: 1 } )'"
+      register: current_fcv
+      changed_when: false
+
+    - name: Set mongod feature compatibility version
+      ansible.builtin.command: 'mongosh --eval ''db.adminCommand( { setFeatureCompatibilityVersion: "{{ mongodb_version }}", confirm: true } )'''
+      when: mongodb_version not in current_fcv.stdout
 
     - name: Get npm prefix
       ansible.builtin.command: "npm config get prefix"
@@ -85,13 +109,6 @@
           - mercurial
       when: ansible_distribution_major_version | int >= 20
 
-    - name: Ensure mongod service is running (and enable it at boot)
-      # Note that the mongodb-org packages install a service named "mongod", not "mongodb"
-      ansible.builtin.service:
-        name: mongod
-        state: started
-        enabled: true
-
     - name: Add folders
       ansible.builtin.file:
         path: "{{ item }}"
@@ -119,7 +136,6 @@
         - "address=/localhost/::1"
       when: inventory_hostname == "localhost" and base_distribution_release == 'xenial'
       notify: restart network
-      tags: ["network"]
 
     - name: Enable convenient access to ng from commandline | bin dir
       become: false
@@ -162,11 +178,6 @@
         mode: "0644"
 
   handlers:
-    - name: Restart mongod
-      ansible.builtin.service:
-        name: mongod
-        state: restarted
-
     - name: Restart network
       ansible.builtin.service:
         name: network-manager
