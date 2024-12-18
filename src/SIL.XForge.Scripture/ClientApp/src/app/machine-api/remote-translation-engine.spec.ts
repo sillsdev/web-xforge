@@ -112,16 +112,16 @@ describe('RemoteTranslationEngine', () => {
     env.addBuildProgress();
 
     let expectedStep = -1;
-    env.client.train().subscribe(
-      progress => {
+    env.client.train().subscribe({
+      next: progress => {
         expectedStep++;
         expect(progress.percentCompleted).toEqual(expectedStep / 10);
       },
-      () => {},
-      () => {
+      error: () => {},
+      complete: () => {
         expect(expectedStep).toEqual(10);
       }
-    );
+    });
   });
 
   it('train with error while starting build', () => {
@@ -130,10 +130,10 @@ describe('RemoteTranslationEngine', () => {
       throwError(() => new Error('Error while creating build.'))
     );
 
-    env.client.train().subscribe(
-      () => {},
-      err => expect(err.message).toEqual('Error while creating build.')
-    );
+    env.client.train().subscribe({
+      next: () => {},
+      error: err => expect(err.message).toEqual('Error while creating build.')
+    });
   });
 
   it('train with 404 error during build', () => {
@@ -143,10 +143,10 @@ describe('RemoteTranslationEngine', () => {
       throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' }))
     );
 
-    env.client.train().subscribe(
-      progress => expect(progress.percentCompleted).toEqual(0),
-      err => expect(err.message).toContain('404 Not Found')
-    );
+    env.client.train().subscribe({
+      next: progress => expect(progress.percentCompleted).toEqual(0),
+      error: err => expect(err.message).toContain('404 Not Found')
+    });
   });
 
   it('train with error during build', () => {
@@ -168,10 +168,10 @@ describe('RemoteTranslationEngine', () => {
       })
     );
 
-    env.client.train().subscribe(
-      progress => expect(progress.percentCompleted).toEqual(0),
-      err => expect(err.message).toEqual('Error occurred during build: broken')
-    );
+    env.client.train().subscribe({
+      next: progress => expect(progress.percentCompleted).toEqual(0),
+      error: err => expect(err.message).toEqual('Error occurred during build: broken')
+    });
   });
 
   it('train segment executes successfully', async () => {
@@ -345,10 +345,10 @@ describe('RemoteTranslationEngine', () => {
       throwError(() => new HttpErrorResponse({ status: 404 }));
     });
 
-    env.client.listenForTrainingStatus().subscribe(
-      progress => throwError(() => new Error(`This should not be called. Progress: ${progress}`)),
-      err => throwError(() => err)
-    );
+    env.client.listenForTrainingStatus().subscribe({
+      next: progress => throwError(() => new Error(`This should not be called. Progress: ${progress}`)),
+      error: err => throwError(() => err)
+    });
     expect(errorThrown).toBe(true);
   });
 
@@ -372,16 +372,16 @@ describe('RemoteTranslationEngine', () => {
     env.addBuildProgress();
 
     let expectedStep = -1;
-    env.client.listenForTrainingStatus().subscribe(
-      progress => {
+    env.client.listenForTrainingStatus().subscribe({
+      next: progress => {
         expectedStep++;
         expect(progress.percentCompleted).toEqual(expectedStep / 10);
       },
-      () => {},
-      () => {
+      error: () => {},
+      complete: () => {
         expect(expectedStep).toEqual(10);
       }
-    );
+    });
   });
 
   it('sends notice when getWordGraph has error', async function () {
