@@ -1,7 +1,7 @@
 ---
 - name: Deploy development environment for scriptureforge.org
   hosts: all
-  become: yes
+  become: true
   vars_files:
     # conditional import
     - "vars/{{ ansible_distribution }}-{{ ansible_distribution_major_version | int }}.yml"
@@ -14,90 +14,99 @@
     repo_path: "{{ playbook_dir }}/.."
   pre_tasks:
     - name: "Add .NET Core | add key"
-      get_url:
+      ansible.builtin.get_url:
         # key id BC528686B50D79E339D3721CEB3E94ADBE1229CF
         url: https://packages.microsoft.com/keys/microsoft.asc
         dest: /etc/apt/trusted.gpg.d/microsoft.asc
+        mode: "0644"
     - name: "Add .NET Core | add source"
-      apt_repository:
-        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-{{ base_distribution_release }}-{{ base_distribution_release }}-prod {{ base_distribution_release }} main"
+      ansible.builtin.apt_repository:
+        repo: >
+          deb [arch=amd64]
+          https://packages.microsoft.com/repos/microsoft-{{ base_distribution_release }}-{{ base_distribution_release }}-prod
+          {{ base_distribution_release }} main
         state: present
-    - name: add mongodb-server-{{ mongodb_version }} apt key
-      get_url:
+    - name: Add apt key for mongodb server version {{ mongodb_version }}
+      ansible.builtin.get_url:
         url: https://pgp.mongodb.com/server-{{ mongodb_version }}.asc
         dest: /etc/apt/trusted.gpg.d/mongodb-server-{{ mongodb_version }}.asc
-    - name: add Mongo {{ mongodb_version }} repository
-      apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/mongodb-server-{{ mongodb_version }}.asc] https://repo.mongodb.org/apt/{{ base_distribution_release }} {{ base_distribution_release }}/mongodb-org/{{ mongodb_version }} {{ 'multiverse' if base_distribution == 'ubuntu' else 'main' }}"
+        mode: "0644"
+    - name: Add Mongo repository for version {{ mongodb_version }}
+      ansible.builtin.apt_repository:
+        repo: >
+          deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/mongodb-server-{{ mongodb_version }}.asc]
+          https://repo.mongodb.org/apt/{{ base_distribution_release }}
+          {{ base_distribution_release }}/mongodb-org/{{ mongodb_version }}
+          {{ 'multiverse' if base_distribution == 'ubuntu' else 'main' }}
         filename: mongodb-org
-        update_cache: yes
+        update_cache: true
   tasks:
-    - name: install packages
-      apt:
+    - name: Install packages
+      ansible.builtin.apt:
         name:
           - "dotnet-sdk-8.0"
           - ffmpeg
           - "mongodb-org"
           - nodejs
           - npm
-        update_cache: yes
+        update_cache: true
       tags: ["packages"]
 
     - name: Get npm prefix
-      command: "npm config get prefix"
+      ansible.builtin.command: "npm config get prefix"
       register: npm_prefix
-      changed_when: False
+      changed_when: false
 
     - name: Set npm prefix
-      command: "npm config set prefix /usr/local"
+      ansible.builtin.command: "npm config set prefix /usr/local"
       when: npm_prefix.stdout != "/usr/local"
 
-    - name: install n
-      npm:
+    - name: Install n
+      community.general.npm:
         name: n
         path: "{{ repo_path }}/src/SIL.XForge.Scripture/ClientApp"
         state: latest
-        global: yes
+        global: true
 
-    - name: check current node version
-      shell: node --version || echo error
+    - name: Check current node version
+      ansible.builtin.shell: node --version || echo error
       register: node_version_installed
-      changed_when: False
+      changed_when: false
 
-    - name: set node version
-      command: "n {{ node_version }}"
+    - name: Set node version
+      ansible.builtin.command: "n {{ node_version }}"
       when: "node_version_installed.stdout != 'v' + node_version"
 
     # Install mercurial 4.7+ from system or pip
-    - name: install pip mercurial dependencies
-      apt:
+    - name: Install pip mercurial dependencies
+      ansible.builtin.apt:
         name:
           - python-pip
           - python2.7
       when: ansible_distribution_major_version | int < 20
-    - name: install pip mercurial
-      pip:
+    - name: Install pip mercurial
+      ansible.builtin.pip:
         name: mercurial
         version: 4.8.2
       when: ansible_distribution_major_version | int < 20
-    - name: install system package mercurial
-      apt:
+    - name: Install system package mercurial
+      ansible.builtin.apt:
         name:
           - mercurial
       when: ansible_distribution_major_version | int >= 20
 
-    - name: ensure mongod service is running (and enable it at boot)
+    - name: Ensure mongod service is running (and enable it at boot)
       # Note that the mongodb-org packages install a service named "mongod", not "mongodb"
-      service:
+      ansible.builtin.service:
         name: mongod
         state: started
-        enabled: yes
+        enabled: true
 
     - name: Add folders
-      file:
+      ansible.builtin.file:
         path: "{{ item }}"
         state: directory
-        owner: "{{ lookup('env','USER') }}"
+        owner: "{{ lookup('env', 'USER') }}"
         mode: "u=rwX,g=rX,o=rX"
       with_items:
         - "/var/lib/scriptureforge"
@@ -106,14 +115,14 @@
         - "/var/lib/scriptureforge/training-data"
         - "/var/lib/xforge"
         - "/var/lib/xforge/avatars"
-        - "{{ lookup('env','HOME') }}/.local/share/SIL/WritingSystemRepository/3"
+        - "{{ lookup('env', 'HOME') }}/.local/share/SIL/WritingSystemRepository/3"
 
-    - name: add localhost to dnsmasq
-      lineinfile:
+    - name: Add localhost to dnsmasq
+      ansible.builtin.lineinfile:
         path: /etc/NetworkManager/dnsmasq.d/localhost-domain
         line: "{{ item }}"
         state: present
-        create: yes
+        create: true
         mode: "u=rw,g=r,o=r"
       with_items:
         - "address=/localhost/127.0.0.1"
@@ -123,45 +132,52 @@
       tags: ["network"]
 
     - name: Enable convenient access to ng from commandline | bin dir
-      become: no
-      file:
-        path: "{{ lookup('env','HOME') }}/bin"
+      become: false
+      ansible.builtin.file:
+        path: "{{ lookup('env', 'HOME') }}/bin"
         state: directory
+        mode: "0755"
       when: inventory_hostname == "localhost"
     - name: Enable convenient access to ng from commandline | symlink
-      become: no
-      file:
+      become: false
+      ansible.builtin.file:
         src: "{{ repo_path }}/src/SIL.XForge.Scripture/ClientApp/node_modules/.bin/ng"
-        path: "{{ lookup('env','HOME') }}/bin/ng"
+        path: "{{ lookup('env', 'HOME') }}/bin/ng"
         state: link
-        force: yes
-        follow: no
+        force: true
+        follow: false
       when: inventory_hostname == "localhost"
 
     - name: Use chromium for unit tests
-      become: no
-      lineinfile:
-        path: "{{ lookup('env','HOME') }}/.pam_environment"
+      become: false
+      ansible.builtin.lineinfile:
+        path: "{{ lookup('env', 'HOME') }}/.pam_environment"
         line: "CHROME_BIN=chromium-browser"
-        create: yes
+        create: true
+        mode: "0644"
 
-    - name: Install reportgenerator
-      become: no
-      shell: dotnet tool update --global dotnet-reportgenerator-globaltool
+    - name: Install or update reportgenerator
+      become: false
+      ansible.builtin.command: dotnet tool update --global dotnet-reportgenerator-globaltool
 
-    - name: Install csharpier
-      become: no
-      shell: dotnet tool update csharpier
+    - name: Install or update csharpier
+      become: false
+      ansible.builtin.command: dotnet tool update csharpier
 
     - name: Set initial PT connection settings
-      become: no
-      copy:
+      become: false
+      ansible.builtin.copy:
         src: InternetSettings.xml
         dest: ~/.local/share/Paratext95/
+        mode: "0644"
 
   handlers:
-    - name: restart mongod
-      service: name=mongod state=restarted
+    - name: Restart mongod
+      ansible.builtin.service:
+        name: mongod
+        state: restarted
 
-    - name: restart network
-      service: name=network-manager state=restarted
+    - name: Restart network
+      ansible.builtin.service:
+        name: network-manager
+        state: restarted
