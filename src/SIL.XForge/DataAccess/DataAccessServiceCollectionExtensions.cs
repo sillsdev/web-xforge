@@ -45,10 +45,14 @@ public static class DataAccessServiceCollectionExtensions
         DataAccessClassMap.RegisterClass<Json0Snapshot>(cm => cm.MapIdProperty(e => e.Id));
         DataAccessClassMap.RegisterClass<ProjectSecret>(cm => cm.MapIdProperty(e => e.Id));
 
+        // DataAccessClassMap.RegisterClass<HelpVideo>(cm => cm.MapIdProperty(hv => hv.Id));
+
         services.AddSingleton<IMongoClient>(sp => new MongoClient(options.ConnectionString));
         services.AddSingleton(sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
 
         services.AddMongoRepository<UserSecret>("user_secrets", cm => cm.MapIdProperty(us => us.Id));
+
+        services.AddMongoRepository<HelpVideo>("help_videos", cm => cm.MapIdProperty(hv => hv.Id));
 
         return services;
     }

@@ -7,4 +7,5 @@ public static class UrlConstants
     public const string Users = "users";
     public const string Projects = "projects";
     public const string ProjectNotifications = "project-notifications";
+    public const string SystemAdministration = "system-administration";
 }
