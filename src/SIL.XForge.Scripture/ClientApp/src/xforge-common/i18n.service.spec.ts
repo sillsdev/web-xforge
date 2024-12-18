@@ -203,6 +203,26 @@ describe('I18nService', () => {
       expect(service.getLanguageDisplayName('123')).toBe('123');
     });
   });
+
+  describe('getPluralRule', () => {
+    it('should return rule for zero, one and other', () => {
+      const service = getI18nService();
+      service.setLocale('en');
+      expect(service.getPluralRule(0)).toEqual('other');
+      expect(service.getPluralRule(1)).toEqual('one');
+      expect(service.getPluralRule(2)).toEqual('other');
+    });
+
+    it('supports arabic plural rules', () => {
+      const service = getI18nService();
+      service.setLocale('ar');
+      expect(service.getPluralRule(0)).toEqual('zero');
+      expect(service.getPluralRule(1)).toEqual('one');
+      expect(service.getPluralRule(2)).toEqual('two');
+      expect(service.getPluralRule(6)).toEqual('few');
+      expect(service.getPluralRule(18)).toEqual('many');
+    });
+  });
 });
 
 function getI18nService(): I18nService {
