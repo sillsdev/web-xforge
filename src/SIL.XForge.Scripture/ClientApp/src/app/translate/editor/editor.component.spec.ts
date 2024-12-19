@@ -4,13 +4,14 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { MatTooltipHarness } from '@angular/material/tooltip/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params, Route, Router, RouterModule } from '@angular/router';
 import {
+  createRange,
   InteractiveTranslatorFactory,
   LatinWordDetokenizer,
   LatinWordTokenizer,
@@ -18,8 +19,7 @@ import {
   TranslationSources,
   WordAlignmentMatrix,
   WordGraph,
-  WordGraphArc,
-  createRange
+  WordGraphArc
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { merge } from 'lodash-es';
@@ -38,29 +38,29 @@ import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   AssignedUsers,
+  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType,
-  getNoteThreadDocId
+  NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectRole, isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   createTestProject,
   createTestProjectProfile
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
-  SFProjectUserConfig,
-  getSFProjectUserConfigDocId
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, Observable, Subject, defer, firstValueFrom, of, take } from 'rxjs';
+import { BehaviorSubject, defer, firstValueFrom, Observable, of, Subject, take } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -75,7 +75,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { isBlink } from 'xforge-common/utils';
@@ -204,6 +204,8 @@ describe('EditorComponent', () => {
     env.wait();
 
     const dialogMessage = spyOn((env.component as any).dialogService, 'message').and.callThrough();
+    env.setupDialogRef();
+
     const textDocId = new TextDocId('project02', 40, 1, 'target');
     env.deleteText(textDocId.toString());
     expect(dialogMessage).toHaveBeenCalledTimes(1);
@@ -3666,6 +3668,8 @@ describe('EditorComponent', () => {
 
       // SUT
       const dialogMessage = spyOn((env.component as any).dialogService, 'openGenericDialog').and.callThrough();
+      env.setupDialogRef();
+
       expect(env.copyrightBanner).not.toBeNull();
       env.copyrightMoreInfo.nativeElement.click();
       tick();
@@ -4734,6 +4738,12 @@ class TestEnvironment {
     const user5Config = cloneDeep(userConfig);
     user5Config.ownerRef = 'user05';
     this.addProjectUserConfig(user5Config as SFProjectUserConfig);
+  }
+
+  setupDialogRef(): void {
+    const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+    mockDialogRef.afterClosed.and.returnValue(of(undefined));
+    spyOn((this.component as any).dialogService.matDialog, 'open').and.returnValue(mockDialogRef);
   }
 
   getProjectUserConfigDoc(userId: string = 'user01'): SFProjectUserConfigDoc {

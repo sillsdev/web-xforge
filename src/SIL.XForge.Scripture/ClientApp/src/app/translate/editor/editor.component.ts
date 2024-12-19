@@ -39,14 +39,14 @@ import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/mod
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
+  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType,
-  getNoteThreadDocId
+  NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -56,16 +56,17 @@ import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
 import {
-  BehaviorSubject,
-  Observable,
-  Subject,
-  Subscription,
   asyncScheduler,
+  BehaviorSubject,
   combineLatest,
   firstValueFrom,
   fromEvent,
+  lastValueFrom,
   merge,
+  Observable,
   of,
+  Subject,
+  Subscription,
   timer
 } from 'rxjs';
 import { debounceTime, filter, first, map, repeat, retry, switchMap, take, tap, throttleTime } from 'rxjs/operators';
@@ -87,7 +88,7 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { browserLinks, getLinkHTML, isBlink, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
-import { NoteThreadDoc, NoteThreadIcon, defaultNoteThreadIcon } from '../../core/models/note-thread-doc';
+import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -111,15 +112,15 @@ import {
   TextComponent
 } from '../../shared/text/text.component';
 import {
-  RIGHT_TO_LEFT_MARK,
-  VERSE_REGEX,
-  XmlUtils,
   canInsertNote,
   formatFontSizeToRems,
   getUnsupportedTags,
   getVerseRefFromSegmentRef,
+  RIGHT_TO_LEFT_MARK,
   threadIdFromMouseEvent,
-  verseRefFromMouseEvent
+  VERSE_REGEX,
+  verseRefFromMouseEvent,
+  XmlUtils
 } from '../../shared/utils';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { EditorHistoryService } from './editor-history/editor-history.service';
@@ -1551,7 +1552,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     const currentVerseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
     this.setNoteFabVisibility('hidden');
-    const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
+    const result: NoteDialogResult | undefined = await lastValueFrom(dialogRef.afterClosed());
 
     if (result != null) {
       if (result.noteContent != null || result.status != null) {

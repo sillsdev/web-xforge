@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, lastValueFrom, Observable, Subject } from 'rxjs';
 import { ConsoleInterface } from './browser-globals';
 import { FetchOptions, JsonRpcInvocable, RetryingRequest } from './retrying-request.service';
 
@@ -12,7 +12,7 @@ export class TestingRetryingRequestService {
     cancel$ = new Subject<void>()
   ): RetryingRequest<T> {
     const invocable = {
-      onlineInvoke: (_url: string, _method: string, _params: string) => invoke.toPromise()
+      onlineInvoke: (_url: string, _method: string, _params: string) => lastValueFrom(invoke)
     } as JsonRpcInvocable;
     const mockConsole = { log: () => {}, error: () => {} } as ConsoleInterface;
     return new RetryingRequest<T>(invocable, online, cancel$, {} as FetchOptions, mockConsole);

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { timer } from 'rxjs';
+import { lastValueFrom, timer } from 'rxjs';
 import { map, takeWhile } from 'rxjs/operators';
 
 // All times in milliseconds
@@ -20,7 +20,7 @@ export class PageNotFoundComponent {
   );
 
   constructor(readonly router: Router) {
-    this.progress.toPromise().then(() => {
+    lastValueFrom(this.progress).then(() => {
       this.router.navigateByUrl('/projects');
     });
   }
