@@ -27,6 +27,7 @@ public static class SFServiceCollectionExtensions
         services.AddSingleton<ISFRestClientFactory, SFDblRestClientFactory>();
         services.AddSingleton<IHgWrapper, HgWrapper>();
         services.AddSingleton<ISFProjectRights, SFProjectRights>();
+        services.AddSingleton<ISystemAdministrationService, SystemAdministrationService>();
         return services;
     }
 }
