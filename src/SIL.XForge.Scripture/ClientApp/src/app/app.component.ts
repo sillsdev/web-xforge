@@ -52,11 +52,13 @@ declare function gtag(...args: any): void;
 export class AppComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   version: string = versionData.version;
   issueEmail: string = environment.issueEmail;
-  isAppOnline: boolean = false;
-  isExpanded: boolean = false;
   versionNumberClickCount = 0;
 
   hasUpdate: boolean = false;
+
+  protected isAppOnline: boolean = false;
+  protected isExpanded: boolean = false;
+  protected isScreenTiny = false;
 
   private currentUserDoc?: UserDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -91,6 +93,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.subscribe(
       this.breakpointObserver.observe(this.breakpointService.width('>', Breakpoint.LG)),
       (value: BreakpointState) => (this.isDrawerPermanent = value.matches)
+    );
+
+    this.subscribe(
+      this.breakpointObserver.observe(this.breakpointService.width('<', Breakpoint.SM)),
+      (state: BreakpointState) => (this.isScreenTiny = state.matches)
     );
 
     // Check full online status changes
