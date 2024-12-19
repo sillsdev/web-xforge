@@ -924,7 +924,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.syncScrollRequested$.next();
     }
 
-    if (this.target.commenterSelection.length === 0 && this.commenterSelectedVerseRef != null) {
+    if (this.commenterSelectedVerseRef != null && this.target.commenterSelection.length === 0) {
       // if we're here, the state hasn't been updated, and we need to re-toggle the selected verse
       const correctVerseRef = this.commenterSelectedVerseRef;
       this.commenterSelectedVerseRef = undefined;
