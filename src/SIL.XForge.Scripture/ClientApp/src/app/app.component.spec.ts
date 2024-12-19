@@ -699,6 +699,7 @@ class TestEnvironment {
     when(mockedNmtDraftAuthGuard.allowTransition(anything())).thenReturn(this.canSeeGenerateDraft$);
     when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
     when(mockedI18nService.localeCode).thenReturn('en');
+    when(mockedI18nService.locale).thenReturn({} as any);
     when(mockedUrlService.helps).thenReturn('helps');
     when(mockedUrlService.announcementPage).thenReturn('community-announcements');
     when(mockedUrlService.communitySupport).thenReturn('community-support');
