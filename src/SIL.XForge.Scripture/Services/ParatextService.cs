@@ -347,17 +347,9 @@ public class ParatextService : DisposableBase, IParatextService
                 if (
                     !noErrors
                     || !success
-                    || (
-                        results != null
-                        && results.Any(r =>
-                            r
-                                is {
-                                    Result: SendReceiveResultEnum.Failed
-                                        or SendReceiveResultEnum.NotUpgraded
-                                        or SendReceiveResultEnum.ProjectVersionUpgraded,
-                                }
-                        )
-                    )
+                    || results is null
+                    || results.Any(r => r == null)
+                    || results.Any(r => r.Result != SendReceiveResultEnum.Succeeded)
                 )
                 {
                     string resultsInfo = ExplainSRResults(results);
