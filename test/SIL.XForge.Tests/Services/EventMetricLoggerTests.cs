@@ -32,7 +32,8 @@ public class EventMetricLoggerTests
                 eventType: nameof(TestClass.NoArguments),
                 EventScope.None,
                 Arg.Any<Dictionary<string, object>>(),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             )
             .ThrowsAsync(ex);
 
@@ -48,7 +49,7 @@ public class EventMetricLoggerTests
     [Test]
     public void EventMetrics_NoTaskStartedEventHandler()
     {
-        var env = new TestEnvironment(new TestEnvironmentOptions { UseTaskCompletionSource = false });
+        var env = new TestEnvironment(useTaskCompletionSource: false);
 
         // SUT 1
         bool actual = env.TestClass.NoArguments();
@@ -57,6 +58,9 @@ public class EventMetricLoggerTests
         // SUT 2
         actual = env.TestClass.NoLogEventMetric();
         Assert.IsTrue(actual);
+
+        // SUT 4
+        Assert.Throws<ArgumentException>(() => env.TestClass.ThrowNonAsyncException(Project01, User01));
     }
 
     [Test]
@@ -78,7 +82,8 @@ public class EventMetricLoggerTests
                 eventType: nameof(TestClass.NoArguments),
                 eventScope: EventScope.None,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a => a.Count == 0),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -102,7 +107,8 @@ public class EventMetricLoggerTests
                 eventType: nameof(TestClass.NoArguments),
                 eventScope: EventScope.None,
                 argumentsWithNames: Arg.Any<Dictionary<string, object>>(),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -133,7 +139,8 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -164,7 +171,8 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -195,7 +203,8 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -226,7 +235,8 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -268,7 +278,8 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -328,7 +339,8 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -359,7 +371,8 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -391,7 +404,8 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: expected
+                result: expected,
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -421,7 +435,8 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: Arg.Any<object>()
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -453,21 +468,136 @@ public class EventMetricLoggerTests
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
-                result: expected
+                result: expected,
+                exception: Arg.Any<Exception>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
-    private class TestEnvironmentOptions
+    [Test]
+    public async Task ThrowNonAsyncException_Success()
     {
-        public bool UseTaskCompletionSource { get; init; } = true;
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
+        {
+            { "projectId", Project01 },
+            { "userId", User01 },
+        };
+        const string exceptionParamName = "userId";
+
+        // SUT
+        try
+        {
+            env.TestClass.ThrowNonAsyncException(Project01, User01);
+        }
+        catch (ArgumentException e)
+        {
+            Assert.AreEqual(exceptionParamName, e.ParamName);
+        }
+
+        await env.TaskCompletionSource.Task;
+
+        // Verify the event metric and log
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ThrowNonAsyncException),
+                eventScope: EventScope.Settings,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                ),
+                result: Arg.Any<object>(),
+                exception: Arg.Is<ArgumentException>(e => e.ParamName == exceptionParamName)
+            );
+        Assert.Zero(env.MockLogger.LogEvents.Count);
+    }
+
+    [Test]
+    public async Task ThrowExceptionAsync_Success()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
+        {
+            { "projectId", Project01 },
+            { "userId", User01 },
+        };
+        const string exceptionParamName = "userId";
+
+        // SUT
+        try
+        {
+            await env.TestClass.ThrowExceptionAsync(Project01, User01);
+        }
+        catch (ArgumentException e)
+        {
+            Assert.AreEqual(exceptionParamName, e.ParamName);
+        }
+
+        await env.TaskCompletionSource.Task;
+
+        // Verify the event metric and log
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ThrowExceptionAsync),
+                eventScope: EventScope.Settings,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                ),
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
+            );
+        Assert.Zero(env.MockLogger.LogEvents.Count);
+    }
+
+    [Test]
+    public async Task ThrowExceptionWithReturnValueAsync_Success()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
+        {
+            { "projectId", Project01 },
+            { "userId", User01 },
+        };
+        const string exceptionParamName = "userId";
+
+        // SUT
+        try
+        {
+            await env.TestClass.ThrowExceptionWithReturnValueAsync(Project01, User01);
+        }
+        catch (ArgumentException e)
+        {
+            Assert.AreEqual(exceptionParamName, e.ParamName);
+        }
+
+        await env.TaskCompletionSource.Task;
+
+        // Verify the event metric and log
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ThrowExceptionWithReturnValueAsync),
+                eventScope: EventScope.Settings,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                ),
+                result: Arg.Any<object>(),
+                exception: Arg.Any<Exception>()
+            );
+        Assert.Zero(env.MockLogger.LogEvents.Count);
     }
 
     private class TestEnvironment
     {
-        public TestEnvironment(TestEnvironmentOptions? options = null)
+        public TestEnvironment(bool useTaskCompletionSource = true)
         {
-            options ??= new TestEnvironmentOptions();
             var services = new ServiceCollection();
             services.AddSingleton<TestClass>();
             services.AddSingleton<EventMetricLogger>();
@@ -479,7 +609,7 @@ public class EventMetricLoggerTests
             containerBuilder.RegisterInstance<ILogger<EventMetric>>(MockLogger);
             var container = containerBuilder.Build();
             var eventMetricLogger = container.Resolve<EventMetricLogger>();
-            if (options.UseTaskCompletionSource)
+            if (useTaskCompletionSource)
             {
                 eventMetricLogger.TaskStarted += task =>
                     task.ContinueWith(t =>
@@ -573,5 +703,17 @@ public class EventMetricLoggerTests
         [LogEventMetric(EventScope.Settings, captureReturnValue: true)]
         public virtual Task<string> ReturnTaskGenericAsync(string projectId, string userId) =>
             Task.FromResult(projectId + userId);
+
+        [LogEventMetric(EventScope.Settings)]
+        public virtual void ThrowNonAsyncException(string projectId, string userId) =>
+            throw new ArgumentException(projectId + userId, nameof(userId));
+
+        [LogEventMetric(EventScope.Settings)]
+        public virtual Task ThrowExceptionAsync(string projectId, string userId) =>
+            Task.FromException(new ArgumentException(projectId + userId, nameof(userId)));
+
+        [LogEventMetric(EventScope.Settings, captureReturnValue: true)]
+        public virtual Task<string> ThrowExceptionWithReturnValueAsync(string projectId, string userId) =>
+            Task.FromException<string>(new ArgumentException(projectId + userId, nameof(userId)));
     }
 }

@@ -86,7 +86,8 @@ public class EventMetricServiceTests
             EventType01,
             EventScope01,
             argumentsWithNames: [],
-            result: null
+            result: null,
+            exception: null
         );
 
         // Verify the saved event metric
@@ -123,7 +124,8 @@ public class EventMetricServiceTests
             EventType01,
             EventScope01,
             argumentsWithNames,
-            result
+            result,
+            exception: null
         );
 
         // Verify the saved event metric
@@ -137,7 +139,7 @@ public class EventMetricServiceTests
     }
 
     [Test]
-    public async Task SaveEventMetricAsync_ComplexObject()
+    public async Task SaveEventMetricAsync_ComplexObjectAndThrowsException()
     {
         var env = new TestEnvironment();
         var complexObject = new TestComplexObject
@@ -163,6 +165,8 @@ public class EventMetricServiceTests
         {
             { "complexObject", complexObjectBson },
         };
+        var exception = new InvalidOperationException("A test error occurred");
+        string expectedException = exception.ToString();
 
         // SUT
         await env.Service.SaveEventMetricAsync(
@@ -171,7 +175,8 @@ public class EventMetricServiceTests
             EventType01,
             EventScope01,
             argumentsWithNames,
-            complexObject
+            complexObject,
+            exception
         );
 
         // Verify the saved event metric
@@ -182,6 +187,7 @@ public class EventMetricServiceTests
         Assert.AreEqual(EventType01, eventMetric.EventType);
         Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
         Assert.AreEqual(complexObjectBson, eventMetric.Result);
+        Assert.AreEqual(expectedException, eventMetric.Exception);
     }
 
     [Test]
@@ -234,7 +240,8 @@ public class EventMetricServiceTests
             EventType01,
             EventScope01,
             argumentsWithNames,
-            result
+            result,
+            exception: null
         );
 
         // Verify the saved event metric
@@ -270,7 +277,8 @@ public class EventMetricServiceTests
             EventType01,
             EventScope01,
             argumentsWithNames,
-            result: null
+            result: null,
+            exception: null
         );
 
         // Verify the saved event metric
