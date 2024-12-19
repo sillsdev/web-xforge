@@ -743,7 +743,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     for (const segment of this.viewModel.segments) {
       const range = segment[1];
       const formats = getAttributesAtPosition(this.editor, range.index);
-      if (formats['commenter-selection'] != null && formats['commenter-selection'] === true) {
+      if (formats['commenter-selection'] === true) {
         ret.push(range);
       }
     }
