@@ -344,21 +344,7 @@ public class ParatextService : DisposableBase, IParatextService
                 }
                 string srResultDescriptions = ExplainSRResults(results);
                 _logger.LogInformation($"SendReceive results: {srResultDescriptions}");
-                if (
-                    !noErrors
-                    || !success
-                    || (
-                        results != null
-                        && results.Any(r =>
-                            r
-                                is {
-                                    Result: SendReceiveResultEnum.Failed
-                                        or SendReceiveResultEnum.NotUpgraded
-                                        or SendReceiveResultEnum.ProjectVersionUpgraded,
-                                }
-                        )
-                    )
-                )
+                if (!noErrors || !success || (results?.Any(r => r.Result != SendReceiveResultEnum.Succeeded) == true))
                 {
                     string resultsInfo = ExplainSRResults(results);
                     throw new InvalidOperationException(
