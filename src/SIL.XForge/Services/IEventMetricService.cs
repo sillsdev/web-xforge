@@ -12,6 +12,7 @@ public interface IEventMetricService
         string? userId,
         string eventType,
         EventScope eventScope,
-        Dictionary<string, object> argumentsWithNames
+        Dictionary<string, object> argumentsWithNames,
+        object? result
     );
 }
