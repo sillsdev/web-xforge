@@ -33,7 +33,8 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         string? userId,
         string eventType,
         EventScope eventScope,
-        Dictionary<string, object> argumentsWithNames
+        Dictionary<string, object> argumentsWithNames,
+        object? result
     )
     {
         // Process the arguments into a MongoDB format for the payload
@@ -41,35 +42,45 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         var payload = new Dictionary<string, BsonValue>();
         foreach (var kvp in argumentsWithNames.Where(kvp => kvp.Value is not CancellationToken))
         {
-            payload[kvp.Key] = kvp.Value switch
-            {
-                int value => new BsonInt32(value),
-                long value => new BsonInt64(value),
-                bool value => new BsonBoolean(value),
-                Array array => new BsonArray(array),
-                double value => new BsonDouble(value),
-                float value => new BsonDouble(value),
-                string value => new BsonString(value),
-                decimal value => new BsonDecimal128(value),
-                DateTime value => new BsonDateTime(value),
-                null => BsonNull.Value,
-                _ => BsonValue.Create(
-                    JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(kvp.Value))
-                ),
-            };
+            payload[kvp.Key] = GetBsonValue(kvp.Value);
+        }
+
+        // Generate the event metric
+        var eventMetric = new EventMetric
+        {
+            Id = ObjectId.GenerateNewId().ToString(),
+            EventType = eventType,
+            Payload = payload,
+            ProjectId = projectId,
+            Scope = eventScope,
+            UserId = userId,
+        };
+
+        // Do not set Result if it is null, or the document will contain "result: null"
+        if (result is not null)
+        {
+            eventMetric.Result = GetBsonValue(result);
         }
 
         // Write the event metric
-        await eventMetrics.InsertAsync(
-            new EventMetric
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                EventType = eventType,
-                Payload = payload,
-                ProjectId = projectId,
-                Scope = eventScope,
-                UserId = userId,
-            }
-        );
+        await eventMetrics.InsertAsync(eventMetric);
     }
+
+    private static BsonValue GetBsonValue(object? objectValue) =>
+        objectValue switch
+        {
+            int value => new BsonInt32(value),
+            long value => new BsonInt64(value),
+            bool value => new BsonBoolean(value),
+            Array array => new BsonArray(array),
+            double value => new BsonDouble(value),
+            float value => new BsonDouble(value),
+            string value => new BsonString(value),
+            decimal value => new BsonDecimal128(value),
+            DateTime value => new BsonDateTime(value),
+            null => BsonNull.Value,
+            _ => BsonValue.Create(
+                JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(objectValue))
+            ),
+        };
 }
