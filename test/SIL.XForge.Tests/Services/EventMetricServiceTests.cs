@@ -85,7 +85,8 @@ public class EventMetricServiceTests
             userId: null,
             EventType01,
             EventScope01,
-            argumentsWithNames: []
+            argumentsWithNames: [],
+            result: null
         );
 
         // Verify the saved event metric
@@ -95,6 +96,7 @@ public class EventMetricServiceTests
         Assert.IsNull(eventMetric.UserId);
         Assert.AreEqual(EventType01, eventMetric.EventType);
         Assert.IsEmpty(eventMetric.Payload);
+        Assert.AreEqual(BsonNull.Value, eventMetric.Result);
     }
 
     [Test]
@@ -111,9 +113,18 @@ public class EventMetricServiceTests
             { "projectId", BsonValue.Create(Project01) },
             { "userId", BsonValue.Create(User01) },
         };
+        const string result = "buildId";
+        BsonString expectedResult = BsonString.Create(result);
 
         // SUT
-        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+        await env.Service.SaveEventMetricAsync(
+            Project01,
+            User01,
+            EventType01,
+            EventScope01,
+            argumentsWithNames,
+            result
+        );
 
         // Verify the saved event metric
         EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
@@ -122,6 +133,7 @@ public class EventMetricServiceTests
         Assert.AreEqual(User01, eventMetric.UserId);
         Assert.AreEqual(EventType01, eventMetric.EventType);
         Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        Assert.AreEqual(expectedResult, eventMetric.Result);
     }
 
     [Test]
@@ -140,24 +152,27 @@ public class EventMetricServiceTests
             SingleFloat = 90.12F,
             UserId = User01,
         };
+        BsonValue complexObjectBson = BsonValue.Create(
+            JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(complexObject))
+        );
         Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
             { "complexObject", complexObject },
         };
         Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
         {
-            {
-                "complexObject",
-                BsonValue.Create(
-                    JsonConvert.DeserializeObject<Dictionary<string, object>>(
-                        JsonConvert.SerializeObject(complexObject)
-                    )
-                )
-            },
+            { "complexObject", complexObjectBson },
         };
 
         // SUT
-        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+        await env.Service.SaveEventMetricAsync(
+            Project01,
+            User01,
+            EventType01,
+            EventScope01,
+            argumentsWithNames,
+            complexObject
+        );
 
         // Verify the saved event metric
         EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
@@ -166,6 +181,7 @@ public class EventMetricServiceTests
         Assert.AreEqual(User01, eventMetric.UserId);
         Assert.AreEqual(EventType01, eventMetric.EventType);
         Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        Assert.AreEqual(complexObjectBson, eventMetric.Result);
     }
 
     [Test]
@@ -208,9 +224,18 @@ public class EventMetricServiceTests
             { "stringArray", BsonArray.Create(stringArray) },
             { "nullValue", BsonNull.Value },
         };
+        const bool result = true;
+        BsonBoolean expectedResult = BsonBoolean.Create(result);
 
         // SUT
-        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+        await env.Service.SaveEventMetricAsync(
+            Project01,
+            User01,
+            EventType01,
+            EventScope01,
+            argumentsWithNames,
+            result
+        );
 
         // Verify the saved event metric
         EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
@@ -219,6 +244,7 @@ public class EventMetricServiceTests
         Assert.AreEqual(User01, eventMetric.UserId);
         Assert.AreEqual(EventType01, eventMetric.EventType);
         Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        Assert.AreEqual(expectedResult, eventMetric.Result);
     }
 
     [Test]
@@ -238,7 +264,14 @@ public class EventMetricServiceTests
         };
 
         // SUT
-        await env.Service.SaveEventMetricAsync(Project01, User01, EventType01, EventScope01, argumentsWithNames);
+        await env.Service.SaveEventMetricAsync(
+            Project01,
+            User01,
+            EventType01,
+            EventScope01,
+            argumentsWithNames,
+            result: null
+        );
 
         // Verify the saved event metric
         EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
@@ -247,6 +280,7 @@ public class EventMetricServiceTests
         Assert.AreEqual(User01, eventMetric.UserId);
         Assert.AreEqual(EventType01, eventMetric.EventType);
         Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        Assert.AreEqual(BsonNull.Value, eventMetric.Result);
     }
 
     private class TestEnvironment

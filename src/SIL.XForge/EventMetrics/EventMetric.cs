@@ -38,6 +38,11 @@ public class EventMetric : IIdentifiable
     public string? ProjectId { get; set; }
 
     /// <summary>
+    /// Gets or sets the result from the function that recorded this metric.
+    /// </summary>
+    public BsonValue? Result { get; set; }
+
+    /// <summary>
     /// Gets or sets the scope of the event.
     /// </summary>
     /// <remarks>
