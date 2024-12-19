@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
+using Paratext.Data;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 
@@ -24,6 +25,7 @@ public class DeltaUsxMapperTests
     private IGuidService _testGuidService;
     private ILogger<DeltaUsxMapper> _logger;
     private IExceptionHandler _exceptionHandler;
+    private ScrText _scrText;
 
     [SetUp]
     public void Init()
@@ -32,6 +34,7 @@ public class DeltaUsxMapperTests
         _testGuidService = new TestGuidService();
         _logger = Substitute.For<ILogger<DeltaUsxMapper>>();
         _exceptionHandler = Substitute.For<IExceptionHandler>();
+        _scrText = new MockScrText(new SFParatextUser("ptUser01"), new ProjectName());
     }
 
     [Test]
@@ -2825,8 +2828,9 @@ public class DeltaUsxMapperTests
 \p E
 \v 2 F \nd ND\nd*
 """;
-        XmlDocument usfmToUsxLoading = Paratext.Data.UsfmToUsx.ConvertToXmlDocument(
-            new Paratext.Data.MockScrStylesheet("usfm.sty"),
+        XmlDocument usfmToUsxLoading = UsfmToUsx.ConvertToXmlDocument(
+            _scrText,
+            new MockScrStylesheet("usfm.sty"),
             bookUsfm
         );
         using XmlNodeReader nodeReader = new(usfmToUsxLoading);
@@ -3703,8 +3707,9 @@ public class DeltaUsxMapperTests
     {
         string bookCode = ExtractBookCode(bookUsfm);
 
-        XmlDocument bookUsxLoading = Paratext.Data.UsfmToUsx.ConvertToXmlDocument(
-            new Paratext.Data.MockScrStylesheet("usfm.sty"),
+        XmlDocument bookUsxLoading = UsfmToUsx.ConvertToXmlDocument(
+            _scrText,
+            new MockScrStylesheet("usfm.sty"),
             bookUsfm
         );
         using XmlNodeReader nodeReader = new(bookUsxLoading);
