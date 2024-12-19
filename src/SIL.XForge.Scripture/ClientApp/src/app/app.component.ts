@@ -59,7 +59,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   protected isAppOnline: boolean = false;
   protected isExpanded: boolean = false;
   protected isScreenTiny = false;
-  protected closeDrawerRequested = false;
 
   private currentUserDoc?: UserDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -399,22 +398,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   collapseDrawer(): void {
     this.isExpanded = false;
-    this.closeDrawerRequested = true;
   }
 
   openDrawer(): void {
     this.isExpanded = true;
-    this.closeDrawerRequested = false;
   }
 
   toggleDrawer(): void {
     this.isExpanded = !this.isExpanded;
-    this.closeDrawerRequested = !this.isExpanded;
   }
 
   drawerCollapsed(): void {
     this.isExpanded = false;
-    this.closeDrawerRequested = false;
   }
 
   reloadWithUpdates(): void {
