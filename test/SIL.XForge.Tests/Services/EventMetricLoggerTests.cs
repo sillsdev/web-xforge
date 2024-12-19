@@ -31,7 +31,8 @@ public class EventMetricLoggerTests
                 userId: null,
                 eventType: nameof(TestClass.NoArguments),
                 EventScope.None,
-                Arg.Any<Dictionary<string, object>>()
+                Arg.Any<Dictionary<string, object>>(),
+                result: Arg.Any<object>()
             )
             .ThrowsAsync(ex);
 
@@ -76,7 +77,8 @@ public class EventMetricLoggerTests
                 userId: null,
                 eventType: nameof(TestClass.NoArguments),
                 eventScope: EventScope.None,
-                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a => a.Count == 0)
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a => a.Count == 0),
+                result: Arg.Any<object>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -99,7 +101,8 @@ public class EventMetricLoggerTests
                 userId: null,
                 eventType: nameof(TestClass.NoArguments),
                 eventScope: EventScope.None,
-                argumentsWithNames: Arg.Any<Dictionary<string, object>>()
+                argumentsWithNames: Arg.Any<Dictionary<string, object>>(),
+                result: Arg.Any<object>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -129,7 +132,8 @@ public class EventMetricLoggerTests
                 eventScope: EventScope.Settings,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
-                )
+                ),
+                result: Arg.Any<object>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -159,7 +163,8 @@ public class EventMetricLoggerTests
                 eventScope: EventScope.Sync,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
-                )
+                ),
+                result: Arg.Any<object>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -189,7 +194,8 @@ public class EventMetricLoggerTests
                 eventScope: EventScope.Drafting,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
-                )
+                ),
+                result: Arg.Any<object>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -219,7 +225,8 @@ public class EventMetricLoggerTests
                 eventScope: EventScope.Checking,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
-                )
+                ),
+                result: Arg.Any<object>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -260,7 +267,8 @@ public class EventMetricLoggerTests
                 eventScope: EventScope.None,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
-                )
+                ),
+                result: Arg.Any<object>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -319,7 +327,8 @@ public class EventMetricLoggerTests
                 eventScope: EventScope.None,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
-                )
+                ),
+                result: Arg.Any<object>()
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -349,7 +358,102 @@ public class EventMetricLoggerTests
                 eventScope: EventScope.None,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
-                )
+                ),
+                result: Arg.Any<object>()
+            );
+        Assert.Zero(env.MockLogger.LogEvents.Count);
+    }
+
+    [Test]
+    public async Task ReturnString_Success()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
+        {
+            { "projectId", Project01 },
+            { "userId", User01 },
+        };
+        const string expected = Project01 + User01;
+
+        // SUT
+        string actual = env.TestClass.ReturnString(Project01, User01);
+        Assert.AreEqual(expected, actual);
+        await env.TaskCompletionSource.Task;
+
+        // Verify the event metric and log
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ReturnString),
+                eventScope: EventScope.Settings,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                ),
+                result: expected
+            );
+        Assert.Zero(env.MockLogger.LogEvents.Count);
+    }
+
+    [Test]
+    public async Task ReturnTaskAsync_Success()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
+        {
+            { "projectId", Project01 },
+            { "userId", User01 },
+        };
+
+        // SUT
+        await env.TestClass.ReturnTaskAsync(Project01, User01);
+        await env.TaskCompletionSource.Task;
+
+        // Verify the event metric and log
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ReturnTaskAsync),
+                eventScope: EventScope.Settings,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                ),
+                result: Arg.Any<object>()
+            );
+        Assert.Zero(env.MockLogger.LogEvents.Count);
+    }
+
+    [Test]
+    public async Task ReturnTaskGenericAsync_Success()
+    {
+        var env = new TestEnvironment();
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
+        {
+            { "projectId", Project01 },
+            { "userId", User01 },
+        };
+        const string expected = Project01 + User01;
+
+        // SUT
+        string actual = await env.TestClass.ReturnTaskGenericAsync(Project01, User01);
+        Assert.AreEqual(expected, actual);
+        await env.TaskCompletionSource.Task;
+
+        // Verify the event metric and log
+        await env
+            .EventMetrics.Received()
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                eventType: nameof(TestClass.ReturnTaskGenericAsync),
+                eventScope: EventScope.Settings,
+                argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
+                    env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
+                ),
+                result: expected
             );
         Assert.Zero(env.MockLogger.LogEvents.Count);
     }
@@ -458,5 +562,16 @@ public class EventMetricLoggerTests
         [LogEventMetric(EventScope.None, userId: "simpleObject.User.Id", projectId: "simpleObject.Project.Id")]
         public virtual bool MisconfiguredProperty(TestSimpleObject simpleObject) =>
             !string.IsNullOrWhiteSpace(simpleObject.ProjectId) && !string.IsNullOrWhiteSpace(simpleObject.UserId);
+
+        [LogEventMetric(EventScope.Settings, captureReturnValue: true)]
+        public virtual string ReturnString(string projectId, string userId) => projectId + userId;
+
+        [LogEventMetric(EventScope.Settings, captureReturnValue: true)]
+        public virtual Task ReturnTaskAsync(string projectId, string userId) =>
+            Task.FromResult(!string.IsNullOrWhiteSpace(projectId) && !string.IsNullOrWhiteSpace(userId));
+
+        [LogEventMetric(EventScope.Settings, captureReturnValue: true)]
+        public virtual Task<string> ReturnTaskGenericAsync(string projectId, string userId) =>
+            Task.FromResult(projectId + userId);
     }
 }

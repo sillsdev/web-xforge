@@ -19,34 +19,19 @@ namespace SIL.XForge.EventMetrics;
 /// This interceptor can be added to interfaces or classes via <c>[Intercept(typeof(EventMetricLogger))]</c>.
 /// </para>
 /// <para>
-/// Any methods you want logged must have the <c>[LogEventMetric]</c> attribute. After doing that, you need to register the interceptor:
+/// Any methods you want logged must have the <c>[LogEventMetric]</c> attribute.
+/// After doing that, you need to register the interceptor:
 /// </para>
 /// <code>containerBuilder.RegisterEventMetrics&lt;IMyService, MyService&gt;();</code>
 /// <para>Or if your class does not have an interface:</para>
 /// <code>containerBuilder.RegisterEventMetrics&lt;MyService&gt;();</code>
-/// <para>See https://autofac.readthedocs.io/en/latest/advanced/interceptors.html for information on interceptors.</para>
+/// <para>
+/// See https://github.com/sillsdev/web-xforge/wiki/Event-Metric-Logging for examples on how to use this class.
+/// </para>
+/// <para>
+/// See https://autofac.readthedocs.io/en/latest/advanced/interceptors.html for information on interceptors.
+/// </para>
 /// </remarks>
-/// <example>
-/// <code>
-/// [Intercept(typeof(EventMetricLogger))]
-/// public interface IMyService
-/// {
-///     [LogEventMetric(EventScope.Settings)]
-///     void ThisMethodWillBeLogged();
-///
-///     void ThisMethodWillNot();
-///
-///     [LogEventMetric(EventScope.Settings)]
-///     void ThisMethodUsesDefaultParameterNames(string userId, string projectId);
-///
-///     [LogEventMetric(EventScope.Settings, nameof(curUserId), nameof(targetProjectId))]
-///     void ThisMethodUsesDifferentParameterNames(string curUserId, string targetProjectId);
-///
-///     [LogEventMetric(EventScope.Sync, userId: "syncConfig.UserId", projectId: "syncConfig.ProjectId")]
-///     void ThisMethodUsesAnObject(SyncConfig syncConfiguration);
-/// }
-/// </code>
-/// </example>
 public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<EventMetric> logger) : IInterceptor
 {
     /// <summary>
@@ -64,13 +49,18 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
     public void Intercept(IInvocation invocation)
     {
         // We only log event metrics for methods with the LogEventMetric attribute
+        bool captureReturnValue = false;
         if (
             invocation.Method.GetCustomAttributes(typeof(LogEventMetricAttribute), inherit: true).FirstOrDefault()
             is LogEventMetricAttribute logEventMetricAttribute
         )
         {
+            // See if we are to invoke the method in the Task.Run below, or at the end of the Intercept
+            captureReturnValue = logEventMetricAttribute.CaptureReturnValue;
+
             // Run as a separate task so we do not slow down the method execution
-            var task = Task.Run(async () =>
+            // Unless we want the return value, in which case we will not write the metric until the method returns
+            async Task SaveEventMetricAsync()
             {
                 string methodName = invocation.Method.Name;
                 try
@@ -122,13 +112,35 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
                         projectId = GetProperty(value, logEventMetricAttribute.ProjectId);
                     }
 
+                    // Capture the return value, if we are required to
+                    object result = null;
+                    if (captureReturnValue)
+                    {
+                        if (invocation.ReturnValue is Task task)
+                        {
+                            // Method is asynchronous
+                            var taskType = task.GetType();
+                            if (taskType.IsGenericType)
+                            {
+                                // The only async Tasks to return a value we want are generics
+                                result = taskType.GetProperty("Result")?.GetValue(task);
+                            }
+                        }
+                        else
+                        {
+                            // Method is synchronous
+                            result = invocation.ReturnValue;
+                        }
+                    }
+
                     // Save the event metric
                     await eventMetricService.SaveEventMetricAsync(
                         projectId,
                         userId,
                         eventType: methodName,
                         logEventMetricAttribute.Scope,
-                        argumentsWithNames
+                        argumentsWithNames,
+                        result
                     );
                 }
                 catch (Exception e)
@@ -136,7 +148,30 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
                     // Just log any errors rather than throwing
                     logger.LogError(e, "Error logging event metric for {methodName}", methodName);
                 }
-            });
+            }
+
+            // We must await this task if we are invoking the method in the task
+            Task task;
+            if (captureReturnValue)
+            {
+                // Invoke the asynchronous method, then save the event metric
+                invocation.Proceed();
+                if (invocation.ReturnValue is Task methodTask)
+                {
+                    // Save the event metric after the task has run
+                    task = methodTask.ContinueWith(_ => SaveEventMetricAsync());
+                }
+                else
+                {
+                    // Save the event metric asynchronously to the method execution
+                    task = Task.Run(SaveEventMetricAsync);
+                }
+            }
+            else
+            {
+                // Save the event metric, and we will invoke the method below
+                task = Task.Run(SaveEventMetricAsync);
+            }
 
             // Notify observers of the task
             TaskStarted?.Invoke(task);
@@ -147,8 +182,11 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
             TaskStarted?.Invoke(Task.CompletedTask);
         }
 
-        // Invoke the method
-        invocation.Proceed();
+        // Invoke the method in the intercept
+        if (!captureReturnValue)
+        {
+            invocation.Proceed();
+        }
     }
 
     /// <summary>
