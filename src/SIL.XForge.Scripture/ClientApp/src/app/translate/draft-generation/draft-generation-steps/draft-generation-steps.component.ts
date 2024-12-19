@@ -4,6 +4,7 @@ import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
+import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { merge, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -18,22 +19,20 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { SharedModule } from '../../../shared/shared.module';
+import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
-import { ProjectScriptureRange } from '../draft-generation';
-import { DraftSource, DraftSourcesService } from '../draft-sources.service';
+import { DraftSource, DraftSourceIds, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataUploadDialogComponent } from '../training-data/training-data-upload-dialog.component';
 import { TrainingDataService } from '../training-data/training-data.service';
 
 export interface DraftGenerationStepsResult {
-  trainingBooks: number[];
   trainingDataFiles: string[];
   trainingScriptureRange?: string;
   trainingScriptureRanges: ProjectScriptureRange[];
-  translationBooks: number[];
   translationScriptureRange?: string;
-  translationScriptureRanges: ProjectScriptureRange[];
+  translationScriptureRanges?: ProjectScriptureRange[];
   fastTraining: boolean;
 }
 
@@ -60,6 +59,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   availableTranslateBooks?: number[] = undefined;
   availableTrainingBooks: number[] = [];
+  selectableSourceTrainingBooks: number[] = [];
+  selectableAdditionalSourceTrainingBooks: number[] = [];
   availableTrainingData: Readonly<TrainingData>[] = [];
 
   // Unusable books do not exist in the target or corresponding drafting/training source project
@@ -72,14 +73,14 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   initialSelectedTranslateBooks: number[] = [];
   userSelectedTrainingBooks: number[] = [];
   userSelectedTranslateBooks: number[] = [];
+  userSelectedSourceTrainingBooks: number[] = [];
+  userSelectedAdditionalSourceTrainingBooks: number[] = [];
 
   selectedTrainingDataIds: string[] = [];
 
-  // When translate books are selected, they will be filtered out from this list
-  initialAvailableTrainingBooks: number[] = [];
-
   draftingSourceProjectName?: string;
   trainingSourceProjectName?: string;
+  trainingAdditionalSourceProjectName?: string;
   targetProjectName?: string;
 
   showBookSelectionError = false;
@@ -95,6 +96,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   protected languagesVerified = false;
   protected nextClickedOnLanguageVerification = false;
 
+  // When translate books are selected, they will be filtered out from this list
+  private initialAvailableTrainingBooks: number[] = [];
+  private availableAdditionalTrainingBooks: number[] = [];
+  private draftSourceProjectIds?: DraftSourceIds;
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataSub?: Subscription;
 
@@ -111,16 +116,32 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     super();
   }
 
+  get trainingSourceBooksSelected(): boolean {
+    return this.userSelectedSourceTrainingBooks.length > 0 || this.userSelectedAdditionalSourceTrainingBooks.length > 0;
+  }
+
   ngOnInit(): void {
     this.subscribe(
       this.draftSourcesService.getDraftProjectSources().pipe(
-        filter(({ target, source, alternateSource, alternateTrainingSource }) => {
-          this.setProjectDisplayNames(target, alternateSource ?? source, alternateTrainingSource);
+        filter(({ target, source, alternateSource, alternateTrainingSource, additionalTrainingSource }) => {
+          this.setProjectDisplayNames(
+            target,
+            alternateSource ?? source,
+            alternateTrainingSource,
+            additionalTrainingSource
+          );
           return target != null && source != null;
         })
       ),
       // Build book lists
-      async ({ target, source, alternateSource, alternateTrainingSource }) => {
+      async ({
+        target,
+        source,
+        alternateSource,
+        alternateTrainingSource,
+        additionalTrainingSource,
+        draftSourceIds
+      }) => {
         // The null values will have been filtered above
         target = target!;
         // Use the alternate source if specified, otherwise use the source
@@ -132,21 +153,20 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
           (await this.nllbLanguageService.isNllbLanguageAsync(draftingSource.writingSystem.tag));
 
         const draftingSourceBooks = new Set<number>();
-        let trainingSourceBooks = new Set<number>();
-
         for (const text of draftingSource.texts) {
           draftingSourceBooks.add(text.bookNum);
         }
 
-        if (alternateTrainingSource != null) {
-          for (const text of alternateTrainingSource.texts) {
-            trainingSourceBooks.add(text.bookNum);
-          }
-        } else {
-          // If no training source project, use drafting source project books
-          trainingSourceBooks = draftingSourceBooks;
-        }
+        let trainingSourceBooks: Set<number> =
+          alternateTrainingSource != null
+            ? new Set<number>(alternateTrainingSource.texts.map(t => t.bookNum))
+            : draftingSourceBooks;
+        let additionalTrainingSourceBooks: Set<number> | undefined =
+          additionalTrainingSource != null
+            ? new Set<number>(additionalTrainingSource?.texts.map(t => t.bookNum))
+            : undefined;
 
+        this.draftSourceProjectIds = draftSourceIds;
         this.availableTranslateBooks = [];
 
         // If book exists in both target and source, add to available books.
@@ -175,6 +195,9 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
           } else {
             this.unusableTrainingSourceBooks.push(bookNum);
           }
+          if (additionalTrainingSourceBooks != null && additionalTrainingSourceBooks.has(bookNum)) {
+            this.availableAdditionalTrainingBooks.push(bookNum);
+          }
         }
 
         // Store initially available training books that will be filtered to remove user selected translate books
@@ -201,7 +224,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
           // Query for all training data files in the project
           this.trainingDataQuery?.dispose();
           this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id);
-
           let projectChanged: boolean = true;
 
           // Subscribe to this query, and show these
@@ -232,12 +254,44 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   onTrainingBookSelect(selectedBooks: number[]): void {
-    this.userSelectedTrainingBooks = selectedBooks;
+    const newBookSelections: number[] = selectedBooks.filter(b => !this.userSelectedTrainingBooks.includes(b));
+    this.userSelectedTrainingBooks = [...selectedBooks];
+    this.selectableSourceTrainingBooks = [...selectedBooks];
+    this.selectableAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
+      selectedBooks.includes(b)
+    );
+
+    // remove selected books that are no longer selectable
+    this.userSelectedSourceTrainingBooks = this.userSelectedSourceTrainingBooks.filter(b => selectedBooks.includes(b));
+    this.userSelectedAdditionalSourceTrainingBooks = this.userSelectedAdditionalSourceTrainingBooks.filter(b =>
+      selectedBooks.includes(b)
+    );
+
+    // automatically select books that are newly selected as training books
+    for (const bookNum of newBookSelections) {
+      this.userSelectedSourceTrainingBooks.push(bookNum);
+      if (this.selectableAdditionalSourceTrainingBooks.includes(bookNum)) {
+        this.userSelectedAdditionalSourceTrainingBooks.push(bookNum);
+      }
+    }
+
     this.clearErrorMessage();
   }
 
   onTrainingDataSelect(selectedTrainingDataIds: string[]): void {
     this.selectedTrainingDataIds = selectedTrainingDataIds;
+    this.clearErrorMessage();
+  }
+
+  onSourceTrainingBookSelect(selectedBooks: number[]): void {
+    this.userSelectedSourceTrainingBooks = this.selectableSourceTrainingBooks.filter(b => selectedBooks.includes(b));
+    this.clearErrorMessage();
+  }
+
+  onAdditionalSourceTrainingBookSelect(selectedBooks: number[]): void {
+    this.userSelectedAdditionalSourceTrainingBooks = this.selectableAdditionalSourceTrainingBooks.filter(b =>
+      selectedBooks.includes(b)
+    );
     this.clearErrorMessage();
   }
 
@@ -264,12 +318,32 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         return;
       }
       this.isStepsCompleted = true;
+      const trainingScriptureRange: ProjectScriptureRange | undefined =
+        this.userSelectedSourceTrainingBooks.length > 0
+          ? this.convertToScriptureRange(
+              this.draftSourceProjectIds!.trainingAlternateSourceId ?? this.draftSourceProjectIds!.trainingSourceId,
+              this.userSelectedSourceTrainingBooks
+            )
+          : undefined;
+
+      const trainingScriptureRanges: ProjectScriptureRange[] = [];
+      if (trainingScriptureRange != null) {
+        trainingScriptureRanges.push(trainingScriptureRange);
+      }
+      // Use the additional training range if selected
+      const useAdditionalTranslateRange: boolean = this.userSelectedAdditionalSourceTrainingBooks.length > 0;
+      if (useAdditionalTranslateRange) {
+        trainingScriptureRanges.push(
+          this.convertToScriptureRange(
+            this.draftSourceProjectIds!.trainingAdditionalSourceId,
+            this.userSelectedAdditionalSourceTrainingBooks
+          )
+        );
+      }
       this.done.emit({
-        trainingBooks: this.userSelectedTrainingBooks,
-        trainingScriptureRanges: [],
+        trainingScriptureRanges,
         trainingDataFiles: this.selectedTrainingDataIds,
-        translationBooks: this.userSelectedTranslateBooks,
-        translationScriptureRanges: [],
+        translationScriptureRange: this.userSelectedTranslateBooks.map(b => Canon.bookNumberToId(b)).join(';'),
         fastTraining: this.fastTraining
       });
     }
@@ -277,7 +351,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   /**
    * Filter selected translate books from available/selected training books.
-   * Currently, training books cannot in the set of translate books,
+   * Currently, training books cannot be in the set of translate books,
    * but this requirement may be removed in the future.
    */
   updateTrainingBooks(): void {
@@ -292,11 +366,23 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     );
 
     this.initialSelectedTrainingBooks = newSelectedTrainingBooks;
-    this.userSelectedTrainingBooks = newSelectedTrainingBooks;
+    this.userSelectedTrainingBooks = [...newSelectedTrainingBooks];
+    this.selectableSourceTrainingBooks = [...newSelectedTrainingBooks];
+    this.userSelectedSourceTrainingBooks = [...newSelectedTrainingBooks];
+    this.selectableAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
+      newSelectedTrainingBooks.includes(b)
+    );
+    this.userSelectedAdditionalSourceTrainingBooks = this.selectableAdditionalSourceTrainingBooks.filter(b =>
+      newSelectedTrainingBooks.includes(b)
+    );
   }
 
   bookNames(books: number[]): string {
     return this.i18n.enumerateList(books.map(bookNum => this.i18n.localizeBook(bookNum)));
+  }
+
+  private convertToScriptureRange(projectId: string, books: number[]): ProjectScriptureRange {
+    return { projectId: projectId, scriptureRange: books.map(b => Canon.bookNumberToId(b)).join(';') };
   }
 
   private validateCurrentStep(): boolean {
@@ -311,30 +397,43 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   private setInitialTranslateBooks(availableBooks: number[]): void {
     // Get the previously selected translation books from the target project
-    const previousBooks: Set<number> = new Set<number>(
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationBooks ?? []
-    );
+    const previousTranslationRange: string =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange ?? '';
+    const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTranslationRange));
 
     // The intersection is all of the available books in the source project that match the target's previous books
-    const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
+    const intersection: number[] = availableBooks.filter(bookNum => previousBooks.has(bookNum));
 
     // Set the selected books to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTranslateBooks = intersection.length > 0 ? intersection : [];
-    this.userSelectedTranslateBooks = this.initialSelectedTranslateBooks;
+    this.userSelectedTranslateBooks = [...this.initialSelectedTranslateBooks];
   }
 
   private setInitialTrainingBooks(availableBooks: number[]): void {
     // Get the previously selected training books from the target project
-    const previousBooks: Set<number> = new Set<number>(
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingBooks ?? []
-    );
+    const trainingSourceId =
+      this.draftSourceProjectIds?.trainingAlternateSourceId ?? this.draftSourceProjectIds?.trainingSourceId;
+    let previousTrainingRange: string =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges?.find(
+        r => r.projectId === trainingSourceId
+      )?.scriptureRange ?? '';
+    const trainingScriptureRange: string | undefined =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange;
+    if (previousTrainingRange === '' && trainingScriptureRange != null) {
+      previousTrainingRange = trainingScriptureRange;
+    }
+    const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTrainingRange));
 
     // The intersection is all of the available books in the source project that match the target's previous books
-    const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
+    const intersection: number[] = availableBooks.filter(bookNum => previousBooks.has(bookNum));
 
     // Set the selected books to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTrainingBooks = intersection.length > 0 ? intersection : [];
-    this.userSelectedTrainingBooks = this.initialSelectedTrainingBooks;
+    this.userSelectedTrainingBooks = [...this.initialSelectedTrainingBooks];
+    this.userSelectedSourceTrainingBooks = [...this.initialSelectedTrainingBooks];
+    this.userSelectedAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
+      this.initialSelectedTrainingBooks.includes(b)
+    );
   }
 
   private setInitialTrainingDataFiles(availableDataFiles: string[]): void {
@@ -355,12 +454,14 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   private setProjectDisplayNames(
     target: DraftSource | undefined,
     draftingSource: DraftSource | undefined,
-    trainingSource: DraftSource | undefined
+    trainingSource: DraftSource | undefined,
+    additionalTrainingSource: DraftSource | undefined
   ): void {
-    this.targetProjectName = target != null ? `${target.shortName} - ${target.name}` : '';
-    this.draftingSourceProjectName =
-      draftingSource != null ? `${draftingSource.shortName} - ${draftingSource.name}` : '';
+    this.targetProjectName = target != null ? projectLabel(target) : '';
+    this.draftingSourceProjectName = draftingSource != null ? projectLabel(draftingSource) : '';
     this.trainingSourceProjectName =
-      trainingSource != null ? `${trainingSource.shortName} - ${trainingSource.name}` : this.draftingSourceProjectName;
+      trainingSource != null ? projectLabel(trainingSource) : this.draftingSourceProjectName;
+    this.trainingAdditionalSourceProjectName =
+      additionalTrainingSource != null ? projectLabel(additionalTrainingSource) : '';
   }
 }

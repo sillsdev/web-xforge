@@ -9,6 +9,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SelectableProject } from '../core/paratext.service';
+import { DraftSource } from '../translate/draft-generation/draft-sources.service';
 
 // Regular expression for getting the verse from a segment ref
 // Some projects will have the right to left marker in the segment attribute which we need to account for
@@ -190,7 +191,7 @@ export function checkAppAccess(
   }
 }
 
-export function projectLabel(project: SelectableProject | undefined): string {
+export function projectLabel(project: SelectableProject | DraftSource | undefined): string {
   if (project == null || (!project.shortName && !project.name)) {
     return '';
   }
@@ -263,6 +264,11 @@ export function getUnsupportedTags(deltaOp: DeltaOperation): string[] {
   }
 
   return [...invalidTags];
+}
+
+export function booksFromScriptureRange(scriptureRange: string): number[] {
+  if (scriptureRange === '') return [];
+  return scriptureRange.split(';').map(book => Canon.bookIdToNumber(book));
 }
 
 export class XmlUtils {

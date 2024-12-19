@@ -28,6 +28,8 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
   @Input() availableBooks: number[] = [];
   @Input() selectedBooks: number[] = [];
   @Input() readonly: boolean = false;
+  @Input() projectName?: string;
+  @Input() basicMode: boolean = false;
   @Output() bookSelect = new EventEmitter<number[]>();
 
   protected loaded = false;
