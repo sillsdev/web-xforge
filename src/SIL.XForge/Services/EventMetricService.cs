@@ -34,7 +34,8 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         string eventType,
         EventScope eventScope,
         Dictionary<string, object> argumentsWithNames,
-        object? result
+        object? result,
+        Exception? exception
     )
     {
         // Process the arguments into a MongoDB format for the payload
@@ -60,6 +61,12 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         if (result is not null)
         {
             eventMetric.Result = GetBsonValue(result);
+        }
+
+        // Set the exception, if one was thrown
+        if (exception is not null)
+        {
+            eventMetric.Exception = exception.ToString();
         }
 
         // Write the event metric

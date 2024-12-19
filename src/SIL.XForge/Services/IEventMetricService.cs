@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SIL.XForge.EventMetrics;
@@ -13,6 +14,7 @@ public interface IEventMetricService
         string eventType,
         EventScope eventScope,
         Dictionary<string, object> argumentsWithNames,
-        object? result
+        object? result,
+        Exception? exception
     );
 }

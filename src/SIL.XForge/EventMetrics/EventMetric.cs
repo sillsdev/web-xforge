@@ -19,6 +19,11 @@ public class EventMetric : IIdentifiable
     public string EventType { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the details of an exception that occurred executing the method (if it happened).
+    /// </summary>
+    public string? Exception { get; set; }
+
+    /// <summary>
     /// Gets or sets the identifier.
     /// </summary>
     public string Id { get; set; } = string.Empty;
