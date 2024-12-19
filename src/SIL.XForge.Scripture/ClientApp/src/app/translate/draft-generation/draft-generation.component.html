@@ -260,13 +260,18 @@
             @if (draftJob != null) {
               @if (isDraftQueued(draftJob)) {
                 <section>
-                  <h3>{{ t("draft_queued_header") }}</h3>
-                  @if (!hasDraftQueueDepth(draftJob)) {
-                    <p>{{ t("draft_queued_detail") }}</p>
+                  @if (isSyncing()) {
+                    <h3>{{ t("draft_syncing") }}</h3>
+                    <p>{{ t("draft_syncing_detail") }}</p>
                   } @else {
-                    <p>
-                      {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
-                    </p>
+                    <h3>{{ t("draft_queued_header") }}</h3>
+                    @if (!hasDraftQueueDepth(draftJob)) {
+                      <p>{{ t("draft_queued_detail") }}</p>
+                    } @else {
+                      <p>
+                        {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
+                      </p>
+                    }
                   }
                   <app-working-animated-indicator></app-working-animated-indicator>
                   <div class="button-strip">
