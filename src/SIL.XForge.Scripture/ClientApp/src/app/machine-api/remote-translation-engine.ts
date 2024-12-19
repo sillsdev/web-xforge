@@ -113,9 +113,9 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
 
   async trainSegment(sourceSegment: string, targetSegment: string, sentenceStart: boolean = true): Promise<void> {
     const pairDto: SegmentPairDto = { sourceSegment, targetSegment, sentenceStart };
-    await this.httpClient
-      .post(`translation/engines/project:${this.projectId}/actions/trainSegment`, pairDto)
-      .toPromise();
+    await lastValueFrom(
+      this.httpClient.post(`translation/engines/project:${this.projectId}/actions/trainSegment`, pairDto)
+    );
   }
 
   train(): Observable<ProgressStatus> {
@@ -126,8 +126,8 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   async startTraining(): Promise<BuildDto | undefined> {
-    return this.createBuild(this.projectId)
-      .pipe(
+    return lastValueFrom(
+      this.createBuild(this.projectId).pipe(
         catchError(err => {
           if (err.status === 404) {
             return of(undefined);
@@ -136,7 +136,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
           }
         })
       )
-      .toPromise();
+    );
   }
 
   listenForTrainingStatus(): Observable<ProgressStatus> {

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { Observable } from 'rxjs';
+import { lastValueFrom, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -138,7 +138,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
   private async navigateToChecking(projectId: string, task: TaskType = 'checking'): Promise<void> {
     const defaultCheckingLink: string[] = ['/projects', projectId, task];
-    const link = await this.resumeCheckingService.checkingLink$.pipe(first()).toPromise();
+    const link = await lastValueFrom(this.resumeCheckingService.checkingLink$.pipe(first()));
 
     this.router.navigate(link ?? defaultCheckingLink, { replaceUrl: true });
   }
