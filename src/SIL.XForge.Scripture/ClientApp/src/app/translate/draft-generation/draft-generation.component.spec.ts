@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
@@ -10,12 +10,12 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, of, Subject, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -2095,6 +2095,49 @@ describe('DraftGenerationComponent', () => {
       });
       verify(mockDialogRef.close()).once();
     });
+
+    it('should track whether the current project is not syncing', fakeAsync(() => {
+      let env = new TestEnvironment();
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isSyncing()).toBe(false);
+    }));
+
+    it('should track whether the current project is syncing', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'xyz'
+          },
+          translateConfig: {
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'en'
+              }
+            }
+          },
+          sync: {
+            queuedCount: 1
+          }
+        })
+      } as SFProjectProfileDoc;
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: projectId,
+          projectId$: of(projectId),
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
+        });
+      });
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isSyncing()).toBe(true);
+    }));
 
     it('should display the Paratext credentials update prompt when startBuild throws a forbidden error', fakeAsync(() => {
       let env = new TestEnvironment(() => {
