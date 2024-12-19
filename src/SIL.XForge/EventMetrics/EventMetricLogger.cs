@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
@@ -49,18 +50,46 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
     public void Intercept(IInvocation invocation)
     {
         // We only log event metrics for methods with the LogEventMetric attribute
-        bool captureReturnValue = false;
         if (
             invocation.Method.GetCustomAttributes(typeof(LogEventMetricAttribute), inherit: true).FirstOrDefault()
             is LogEventMetricAttribute logEventMetricAttribute
         )
         {
-            // See if we are to invoke the method in the Task.Run below, or at the end of the Intercept
-            captureReturnValue = logEventMetricAttribute.CaptureReturnValue;
+            // Invoke the method, then record its event metrics
+            Task task;
+            try
+            {
+                invocation.Proceed();
+                if (invocation.ReturnValue is Task methodTask)
+                {
+                    // Save the event metric after the task has run
+                    task = methodTask.ContinueWith(t => SaveEventMetricAsync(t.Exception));
+                }
+                else
+                {
+                    // Save the event metric in another thread after the method has executed
+                    task = Task.Run(() => SaveEventMetricAsync());
+                }
+            }
+            catch (Exception e)
+            {
+                // Save the error in the event metric, as the Proceed() will have faulted
+                task = Task.Run(() => SaveEventMetricAsync(e));
+
+                // Notify observers of the task of immediate completion
+                TaskStarted?.Invoke(task);
+
+                // Rethrow the exception
+                throw;
+            }
+
+            // Notify observers of the task
+            TaskStarted?.Invoke(task);
+            return;
 
             // Run as a separate task so we do not slow down the method execution
             // Unless we want the return value, in which case we will not write the metric until the method returns
-            async Task SaveEventMetricAsync()
+            async Task SaveEventMetricAsync(Exception? exception = null)
             {
                 string methodName = invocation.Method.Name;
                 try
@@ -114,16 +143,23 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
 
                     // Capture the return value, if we are required to
                     object result = null;
-                    if (captureReturnValue)
+                    if (logEventMetricAttribute.CaptureReturnValue)
                     {
-                        if (invocation.ReturnValue is Task task)
+                        if (invocation.ReturnValue is Task returnTask)
                         {
                             // Method is asynchronous
-                            var taskType = task.GetType();
+                            var taskType = returnTask.GetType();
                             if (taskType.IsGenericType)
                             {
                                 // The only async Tasks to return a value we want are generics
-                                result = taskType.GetProperty("Result")?.GetValue(task);
+                                try
+                                {
+                                    result = taskType.GetProperty("Result")!.GetValue(returnTask);
+                                }
+                                catch (TargetInvocationException)
+                                {
+                                    // This exception will have been captured
+                                }
                             }
                         }
                         else
@@ -140,7 +176,8 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
                         eventType: methodName,
                         logEventMetricAttribute.Scope,
                         argumentsWithNames,
-                        result
+                        result,
+                        exception
                     );
                 }
                 catch (Exception e)
@@ -149,44 +186,13 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
                     logger.LogError(e, "Error logging event metric for {methodName}", methodName);
                 }
             }
-
-            // We must await this task if we are invoking the method in the task
-            Task task;
-            if (captureReturnValue)
-            {
-                // Invoke the asynchronous method, then save the event metric
-                invocation.Proceed();
-                if (invocation.ReturnValue is Task methodTask)
-                {
-                    // Save the event metric after the task has run
-                    task = methodTask.ContinueWith(_ => SaveEventMetricAsync());
-                }
-                else
-                {
-                    // Save the event metric asynchronously to the method execution
-                    task = Task.Run(SaveEventMetricAsync);
-                }
-            }
-            else
-            {
-                // Save the event metric, and we will invoke the method below
-                task = Task.Run(SaveEventMetricAsync);
-            }
-
-            // Notify observers of the task
-            TaskStarted?.Invoke(task);
         }
-        else
-        {
-            // Notify observers of the task of immediate completion
-            TaskStarted?.Invoke(Task.CompletedTask);
-        }
+
+        // Notify observers of the task of immediate completion
+        TaskStarted?.Invoke(Task.CompletedTask);
 
         // Invoke the method in the intercept
-        if (!captureReturnValue)
-        {
-            invocation.Proceed();
-        }
+        invocation.Proceed();
     }
 
     /// <summary>
