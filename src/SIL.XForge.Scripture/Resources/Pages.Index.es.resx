@@ -124,28 +124,28 @@
     <value>Los proyectos de escritura involucran a grupos de hablantes que son cada vez más diversos geográficamente.</value>
   </data>
   <data name="AboutDrafting" xml:space="preserve">
-    <value>2 Utilize advanced Artificial Intelligence to generate preliminary drafts from existing translations. This reduces the workload and speeds up the translation process, giving translators a head start.</value>
+    <value>2 Utilizar Inteligencia Artificial avanzada para generar borradores preliminares a partir de traducciones existentes. Esto reduce la carga de trabajo y acelera el proceso de traducción, dando ventaja a los traductores.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>Acerca de Scripture Forge</value>
   </data>
   <data name="AboutCollaborate" xml:space="preserve">
-    <value>1 Collaborative editing allows teams to draft and edit translations together efficiently. No more worrying about reconciling multiple versions—our platform ensures everyone stays on the same page.</value>
+    <value>1 La edición colaborativa permite a los equipos redactar y editar traducciones de forma conjunta y eficaz. Ya no tendrás que preocuparte por conciliar varias versiones: nuestra plataforma garantiza que todo el mundo esté de acuerdo.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Extienda su alcance con la verificación de las Escrituras</value>
   </data>
   <data name="AboutChecking" xml:space="preserve">
-    <value>3 Launch modular Community Checking campaigns to gather extensive feedback quickly. This tool ensures that translations are thorough and accurate by involving community members in the verification process.</value>
+    <value>3 Ponga en marcha campañas modulares de verificación comunitaria para recabar amplias opiniones rápidamente. Esta herramienta garantiza que las traducciones sean exhaustivas y precisas al implicar a los miembros de la comunidad en el proceso de verificación.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>An online app for team-based translation, featuring AI help and tools for community review</value>
+    <value>Una aplicación en línea para la traducción en equipo, con ayuda de inteligencia artificial y herramientas de revisión comunitaria</value>
   </data>
   <data name="EngageDrafting" xml:space="preserve">
-    <value>Draft Generation</value>
+    <value>Generación de borradores</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
-    <value>Collaborative Editing</value>
+    <value>Edición colaborativa</value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
     <value>Comprobación por la comunidad</value>

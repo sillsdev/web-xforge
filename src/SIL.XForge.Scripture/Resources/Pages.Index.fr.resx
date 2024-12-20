@@ -142,7 +142,7 @@
     <value>Une application en ligne pour la traduction en équipe, avec l'aide d'IA et des outils pour la revue de la communauté</value>
   </data>
   <data name="EngageDrafting" xml:space="preserve">
-    <value>Génération du brouillon</value>
+    <value>Génération d'une ébauche</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
     <value>Édition collaborative</value>

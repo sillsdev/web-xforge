@@ -194,7 +194,6 @@
     "generate_draft_button": "Buat konsep",
     "generate_forward_translation_drafts_header": "Membuat konsep terjemahan",
     "generate_new_draft": "Draf baru",
-    "go_to_draft_viewer": "Buka [link:draftViewerUrl] penampil draf[/link] untuk melihat pratinjau dan menerapkan konsep yang dihasilkan ke pasal yang Anda pilih.",
     "improved_learning_rate_notice": "Drafting is now much faster! Most drafts will now take about {1}{2} hours to complete instead of {3}{4}. Draft quality should be about the same as before, but please {5}contact us{6} if you notice any issues.",
     "info_alert_different_additional_training_and_source_language": "Bahasa untuk teks pelatihan tambahan Anda ({{ additionalTrainingSourceLanguageDisplayName }}) harus sama dengan bahasa sumber pelatihan ({{ alternateTrainingSourceLanguageDisplayName }}). Pilih teks pelatihan tambahan yang berbeda pada [link:projectSettingsUrl]halaman pengaturan[/link].",
     "info_alert_different_training_and_source_language": "Bahasa untuk teks pelatihan alternatif ({{ alternateTrainingSourceLanguageDisplayName }}) harus sama dengan bahasa sumber ({{ sourceLanguageDisplayName }}). Pilih teks pelatihan alternatif yang berbeda pada [link:projectSettingsUrl]halaman pengaturan[/link].",
@@ -252,8 +251,11 @@
     "next": "Berikutnya",
     "no_available_books": "Anda tidak memiliki kitab yang tersedia untuk menyusun konsep.",
     "overview": "Ringkasan",
+    "reference_books": "Reference books",
     "these_source_books_cannot_be_used_for_training": "Kitab-kitab berikut ini tidak dapat digunakan untuk pelatihan karena tidak ada dalam teks sumber pelatihan ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "Kitab-kitab berikut ini tidak dapat diterjemahkan karena tidak ada dalam teks sumber draf ({{ draftingSourceProjectName }}).",
+    "training_books_will_appear": "Training books will appear as you select books under translated books",
+    "translated_books": "Translated books",
     "unusable_target_books": "Tidak dapat menemukan kitab yang Anda cari? Pastikan kitab tersebut dibuat di Paratext, lalu sinkronkan proyek Anda."
   },
   "draft_preview_books": {

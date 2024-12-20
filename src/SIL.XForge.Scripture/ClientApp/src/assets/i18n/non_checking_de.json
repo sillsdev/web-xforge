@@ -194,7 +194,6 @@
     "generate_draft_button": "Entwurf generieren",
     "generate_forward_translation_drafts_header": "Übersetzungsentwurf generieren",
     "generate_new_draft": "Neuer Entwurf",
-    "go_to_draft_viewer": "Gehe zu [link:draftViewerUrl]Entwurfsansicht[/link], um eine Vorschau zu erstellen und den generierten Entwurf auf Kapitel Deiner Wahl anzuwenden.",
     "improved_learning_rate_notice": "Das Erstellen von Entwürfen ist jetzt viel schneller! Die meisten Entwürfe werden nun in etwa {1}{2} Stunden statt {3}{4}fertiggestellt. Die Qualität der Entwürfe sollte in etwa die gleiche sein wie vorher, aber bitte {5}kontaktiere uns{6}, wenn Du Probleme feststellst.",
     "info_alert_different_additional_training_and_source_language": "Die Sprache für Deinen zusätzlichen Schulungstext ({{ additionalTrainingSourceLanguageDisplayName }}) muss die gleiche sein wie die Sprache der Schulungsquelle ({{ alternateTrainingSourceLanguageDisplayName }}). Wähle einen anderen zusätzlichen Schulungstext auf der [link:projectSettingsUrl]Einstellungsseite[/link].",
     "info_alert_different_training_and_source_language": "Die Sprache für Deinen alternativen Schulungstext ({{ alternateTrainingSourceLanguageDisplayName }}) muss dieselbe sein wie die Ausgangssprache ({{ sourceLanguageDisplayName }}). Wähle einen anderen alternativen Schulungstext auf der [link:projectSettingsUrl]Einstellungsseite[/link].",
@@ -252,8 +251,11 @@
     "next": "Weiter",
     "no_available_books": "Du hast keine Bücher für die Erstellung von Entwürfen verfügbar.",
     "overview": "Übersicht",
+    "reference_books": "Reference books",
     "these_source_books_cannot_be_used_for_training": "Die folgenden Bücher können nicht für Schulungen verwendet werden, da sie nicht im Ausgangstext für die Schulung ({{ trainingSourceProjectName }}) enthalten sind.",
     "these_source_books_cannot_be_used_for_translating": "Die folgenden Bücher können nicht übersetzt werden, da sie nicht im Ausgangstext für Entwürfe ({{ draftingSourceProjectName }}) enthalten sind.",
+    "training_books_will_appear": "Training books will appear as you select books under translated books",
+    "translated_books": "Translated books",
     "unusable_target_books": "Du kannst das Buch nicht finden? Stelle sicher, dass das Buch in Paratext erstellt wurde und synchronisiere Dein Projekt."
   },
   "draft_preview_books": {

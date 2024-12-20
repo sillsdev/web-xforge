@@ -379,7 +379,7 @@
     "connected": "Connecté",
     "dbl_resource": "Bibliothèque Biblique Numérique",
     "dbl_resources": "Ressources de la bibliothèque biblique numérique",
-    "drafting": "Brouillon en cours",
+    "drafting": "Ébauche en cours",
     "failed_to_connect_to_pt_server": "Il y a eu un problème de connexion à Paratext pour obtenir vos projets. Veuillez réessayer plus tard. Si le problème persiste après plusieurs heures, veuillez signaler le problème pour obtenir de l'aide.",
     "failed_to_join_project": "Échec d'accès au projet. Veuillez vérifier votre connexion internet et réessayer plus tard.",
     "join": "Rejoindre",
