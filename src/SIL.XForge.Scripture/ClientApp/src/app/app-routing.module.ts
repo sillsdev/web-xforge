@@ -14,10 +14,12 @@ import { SettingsComponent } from './settings/settings.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
 import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
 import { SyncComponent } from './sync/sync.component';
+import { HelpVideosComponent } from './shared/help-videos/help-videos.component';
 
 const routes: Routes = [
   { path: 'callback/auth0', component: MyProjectsComponent, canActivate: [AuthGuard] },
   { path: 'connect-project', component: ConnectProjectComponent, canActivate: [AuthGuard] },
+  { path: 'help-videos', component: HelpVideosComponent },
   { path: 'login', redirectTo: 'projects', pathMatch: 'full' },
   { path: 'join/:shareKey', component: JoinComponent },
   { path: 'join/:shareKey/:locale', component: JoinComponent },

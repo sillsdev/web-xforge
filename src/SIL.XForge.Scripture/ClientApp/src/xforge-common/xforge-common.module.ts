@@ -24,6 +24,7 @@ import { SaUsersComponent } from './system-administration/sa-users.component';
 import { SystemAdministrationComponent } from './system-administration/system-administration.component';
 import { UICommonModule } from './ui-common.module';
 import { WriteStatusComponent } from './write-status/write-status.component';
+import { SaHelpVideosComponent } from './system-administration/sa-help-video-tab/sa-help-videos.component';
 
 const componentExports = [
   GenericDialogComponent,
@@ -35,7 +36,8 @@ const componentExports = [
   WriteStatusComponent,
   OwnerComponent,
   ProjectSelectComponent,
-  SyncProgressComponent
+  SyncProgressComponent,
+  SaHelpVideosComponent
 ];
 
 @NgModule({
