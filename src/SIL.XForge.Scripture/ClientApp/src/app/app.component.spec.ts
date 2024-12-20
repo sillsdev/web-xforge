@@ -199,18 +199,18 @@ describe('AppComponent', () => {
     // The user opens the drawer again.
     env.click(env.hamburgerMenuButton);
     expect(env.isDrawerVisible).toBe(true);
-    expect(env.component.isExpanded).toBe(true);
+    expect(env.component['isExpanded']).toBe(true);
     // The user clicks to navigate to the translate overview page.
     env.click(env.menuListItems[1]);
     // The drawer disappears, but is still in the dom.
     expect(env.isDrawerVisible).toBe(false);
     expect(env.menuDrawer).not.toBeNull();
-    expect(env.component.isExpanded).toBe(false);
+    expect(env.component['isExpanded']).toBe(false);
 
     // The user opens the drawer.
     env.click(env.hamburgerMenuButton);
     expect(env.isDrawerVisible).toBe(true);
-    expect(env.component.isExpanded).toBe(true);
+    expect(env.component['isExpanded']).toBe(true);
     // The user navigates to the My projects page by clicking the SF logo in the
     // toolbar (or from the My projects item in the avatar menu).
     env.click(env.sfLogoButton);
@@ -218,12 +218,12 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toBe(false);
     expect(env.menuDrawer).toBeNull();
     expect(env.hamburgerMenuButton).toBeNull();
-    expect(env.component.isExpanded).toBe(false);
+    expect(env.component['isExpanded']).toBe(false);
     // The user clicks in the My projects component to open another project.
     env.navigateFully(['projects', 'project02']);
     // The drawer should not be showing, but is in the dom.
     expect(env.isDrawerVisible).toBe(false);
-    expect(env.component.isExpanded).toBe(false);
+    expect(env.component['isExpanded']).toBe(false);
     expect(env.menuDrawer).not.toBeNull();
     expect(env.hamburgerMenuButton).not.toBeNull();
   }));
@@ -427,12 +427,12 @@ describe('AppComponent', () => {
     const env = new TestEnvironment('offline');
     env.init();
 
-    expect(env.component.isAppOnline).toBe(false);
+    expect(env.component['isAppOnline']).toBe(false);
     verify(mockedAuthService.checkOnlineAuth()).never();
 
     env.setBrowserOnlineStatus(true);
     tick();
-    expect(env.component.isAppOnline).toBe(false);
+    expect(env.component['isAppOnline']).toBe(false);
     verify(mockedAuthService.checkOnlineAuth()).once();
   }));
 
