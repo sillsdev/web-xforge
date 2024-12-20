@@ -1,0 +1,18 @@
+@if (!isLoading) {
+  <table mat-table id="event-metrics-log-table" [dataSource]="rows">
+    <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
+    <ng-container matColumnDef="timestamp">
+      <th mat-header-cell *matHeaderCellDef>Date</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.timestamp }}
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="scope">
+      <th mat-header-cell *matHeaderCellDef>Scope</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.scope }}
+      </td>
+    </ng-container>
+  </table>
+}

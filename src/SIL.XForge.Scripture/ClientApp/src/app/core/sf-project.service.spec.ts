@@ -50,6 +50,18 @@ describe('SFProjectService', () => {
     }));
   });
 
+  describe('onlineEventMetrics', () => {
+    it('should invoke the command service', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      const projectId = 'project01';
+      const pageIndex = 0;
+      const pageSize = 20;
+      await env.service.onlineEventMetrics(projectId, pageIndex, pageSize);
+      verify(mockedCommandService.onlineInvoke(anything(), 'eventMetrics', anything())).once();
+      expect().nothing();
+    }));
+  });
+
   class TestEnvironment {
     readonly httpTestingController: HttpTestingController;
     readonly service: SFProjectService;
