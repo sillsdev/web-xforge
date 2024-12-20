@@ -119,6 +119,9 @@ describe('I18nService', () => {
 
     service.setLocale('az');
     expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
+
+    service.setLocale('npi');
+    expect(service.formatDate(date)).toEqual('१९९१-११-२५, १७:२८');
   });
 
   it('should support including the timezone in the date', () => {

@@ -1,6 +1,6 @@
 import { Doc, Op } from 'sharedb/lib/client';
 import { submitMigrationOp } from '../../common/realtime-server';
-import { DocMigration, MigrationConstructor } from '../migration';
+import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationList } from '../migration';
 
 class UserMigration1 extends DocMigration {
   static readonly VERSION = 1;
@@ -21,4 +21,4 @@ class UserMigration1 extends DocMigration {
   }
 }
 
-export const USER_MIGRATIONS: MigrationConstructor[] = [UserMigration1];
+export const USER_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([UserMigration1]);

@@ -1,5 +1,5 @@
 import { Doc, Op } from 'sharedb/lib/client';
-import { DocMigration, MigrationConstructor } from '../../common/migration';
+import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationList } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 
 class QuestionMigration1 extends DocMigration {
@@ -24,4 +24,4 @@ class QuestionMigration1 extends DocMigration {
   }
 }
 
-export const QUESTION_MIGRATIONS: MigrationConstructor[] = [QuestionMigration1];
+export const QUESTION_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([QuestionMigration1]);

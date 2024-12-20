@@ -14,9 +14,10 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
+import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
-import { projectLabel } from '../shared/utils';
+import { booksFromScriptureRange, projectLabel } from '../shared/utils';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
@@ -38,7 +39,14 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
   selector: 'app-serval-project',
   templateUrl: './serval-project.component.html',
   styleUrls: ['./serval-project.component.scss'],
-  imports: [CommonModule, NoticeComponent, SharedModule, UICommonModule, DraftInformationComponent],
+  imports: [
+    CommonModule,
+    NoticeComponent,
+    SharedModule,
+    UICommonModule,
+    DraftInformationComponent,
+    MobileNotSupportedComponent
+  ],
   standalone: true
 })
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
@@ -142,13 +150,13 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           this.rows = rows;
 
           // Setup the books
-          this.trainingBooks = project.translateConfig.draftConfig.lastSelectedTrainingBooks.map(bookNum =>
-            Canon.bookNumberToEnglishName(bookNum)
-          );
+          this.trainingBooks = booksFromScriptureRange(
+            project.translateConfig.draftConfig.lastSelectedTrainingScriptureRange ?? ''
+          ).map(bookNum => Canon.bookNumberToEnglishName(bookNum));
           this.trainingFiles = project.translateConfig.draftConfig.lastSelectedTrainingDataFiles;
-          this.translationBooks = project.translateConfig.draftConfig.lastSelectedTranslationBooks.map(bookNum =>
-            Canon.bookNumberToEnglishName(bookNum)
-          );
+          this.translationBooks = booksFromScriptureRange(
+            project.translateConfig.draftConfig.lastSelectedTranslationScriptureRange ?? ''
+          ).map(bookNum => Canon.bookNumberToEnglishName(bookNum));
 
           this.draftConfig = project.translateConfig.draftConfig;
           this.draftJob$ = SFProjectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);

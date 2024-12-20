@@ -1,5 +1,5 @@
 import { Doc, ObjectDeleteOp, ObjectInsertOp } from 'sharedb/lib/client';
-import { DocMigration, MigrationConstructor } from '../../common/migration';
+import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationList } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 
 class SFProjectUserConfigMigration1 extends DocMigration {
@@ -85,7 +85,7 @@ class SFProjectUserConfigMigration7 extends DocMigration {
   }
 }
 
-export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = [
+export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([
   SFProjectUserConfigMigration1,
   SFProjectUserConfigMigration2,
   SFProjectUserConfigMigration3,
@@ -93,4 +93,4 @@ export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = [
   SFProjectUserConfigMigration5,
   SFProjectUserConfigMigration6,
   SFProjectUserConfigMigration7
-];
+]);

@@ -252,6 +252,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     return this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
   }
 
+  get userOpenedChapterAudio(): boolean {
+    return this.showScriptureAudioPlayer && !this.hideChapterText;
+  }
+
+  get textboxIsShown(): boolean {
+    const isAnswering = this.answersPanel?.answerInput != null;
+    const isCommenting = this.answersPanel?.allComments?.find(c => c.inputComponent != null) != null;
+    return isAnswering || isCommenting;
+  }
+
+  get textboxIsShownMobile(): boolean {
+    return this.textboxIsShown && this.isScreenSmall;
+  }
+
   get isRightToLeft(): boolean {
     if (this.projectDoc?.data?.isRightToLeft != null) {
       return this.projectDoc.data.isRightToLeft;
@@ -1080,12 +1094,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       // Reset filter, but don't update visible questions yet if navigating
       this.activeQuestionFilter = QuestionFilter.None;
     }
-  }
-
-  get textHasFocus(): boolean {
-    const isAnswering = this.answersPanel?.answerInput != null;
-    const isCommenting = this.answersPanel?.allComments?.find(c => c.inputComponent != null) != null;
-    return isAnswering || isCommenting;
   }
 
   /**

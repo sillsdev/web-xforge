@@ -1,3 +1,3 @@
-import { MigrationConstructor } from '../../common/migration';
+import { MigrationConstructor, monotonicallyIncreasingMigrationList } from '../../common/migration';
 
-export const BIBLICAL_TERM_MIGRATIONS: MigrationConstructor[] = [];
+export const BIBLICAL_TERM_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([]);

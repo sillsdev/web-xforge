@@ -3,8 +3,9 @@ import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { lastValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -38,7 +39,7 @@ export class QuestionDialogService {
     >;
     // ENHANCE: Put the audio upload logic into QuestionDialogComponent so we can detect if the upload
     // fails and notify the user without discarding the question. For example, see chapter-audio-dialog.component.ts.
-    const result: QuestionDialogResult | 'close' | undefined = await dialogRef.afterClosed().toPromise();
+    const result: QuestionDialogResult | 'close' | undefined = await lastValueFrom(dialogRef.afterClosed());
     if (result == null || result === 'close') {
       return questionDoc;
     }

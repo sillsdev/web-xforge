@@ -570,6 +570,28 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.translateConfig.shareEnabled).not.toBeDefined();
     });
   });
+
+  describe('version 22', () => {
+    it('copies selected training and translation books to scripture ranges', async () => {
+      const env = new TestEnvironment(21);
+      const conn = env.server.connect();
+
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { lastSelectedTrainingBooks: [1, 2, 3], lastSelectedTranslationBooks: [4, 5] } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingBooks).toEqual([1, 2, 3]);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).toEqual([4, 5]);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingBooks).toEqual([1, 2, 3]);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).toEqual([4, 5]);
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingScriptureRange).toEqual('GEN;EXO;LEV');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toEqual('NUM;DEU');
+    });
+  });
 });
 
 class TestEnvironment {

@@ -28,6 +28,6 @@ export abstract class SubscriptionDisposable implements OnDestroy {
     error?: (error: any) => void,
     complete?: () => void
   ): Subscription {
-    return observable.pipe(takeUntil(this.ngUnsubscribe)).subscribe(next, error, complete);
+    return observable.pipe(takeUntil(this.ngUnsubscribe)).subscribe({ next, error, complete });
   }
 }
