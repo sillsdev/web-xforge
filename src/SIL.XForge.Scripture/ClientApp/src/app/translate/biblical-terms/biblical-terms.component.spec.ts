@@ -27,7 +27,10 @@ import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -51,12 +54,19 @@ const mockedUserService = mock(UserService);
 
 describe('BiblicalTermsComponent', () => {
   configureTestingModule(() => ({
-    imports: [NoopAnimationsModule, TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      NoopAnimationsModule,
+      TestOnlineStatusModule.forRoot(),
+      TestTranslocoModule,
+      UICommonModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: I18nService, useMock: mockedI18nService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -376,6 +386,14 @@ describe('BiblicalTermsComponent', () => {
     expect(env.notFoundMessage.length).toBe(1);
   }));
 
+  it('should show the offline message if not connected to internet', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '4');
+    env.setupProjectData('en');
+    env.onlineStatus = false;
+    env.wait();
+    expect(env.offlineMessage.length).toBe(1);
+  }));
+
   it('should not show the not found message when loading the component', fakeAsync(() => {
     const env = new TestEnvironment(undefined, 1, 1, '4');
     env.wait();
@@ -391,6 +409,9 @@ class TestEnvironment {
   readonly mockedDialogRef = mock<MatDialogRef<GenericDialogComponent<any>, GenericDialogOptions<any>>>(MatDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly locale$: BehaviorSubject<Locale> = new BehaviorSubject<Locale>({} as Locale);
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   private openNoteDialogs: MockNoteDialogRef[] = [];
 
@@ -424,6 +445,7 @@ class TestEnvironment {
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
     when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
+    this.testOnlineStatusService.setIsOnline(true);
 
     this.fixture = TestBed.createComponent(BiblicalTermsComponent);
     this.component = this.fixture.componentInstance;
@@ -465,6 +487,16 @@ class TestEnvironment {
 
   get notFoundMessage(): NodeList {
     return this.fixture.nativeElement.querySelectorAll('.not-found');
+  }
+
+  get offlineMessage(): NodeList {
+    return this.fixture.nativeElement.querySelectorAll('.offline-message');
+  }
+
+  set onlineStatus(hasConnection: boolean) {
+    this.testOnlineStatusService.setIsOnline(hasConnection);
+    tick();
+    this.fixture.detectChanges();
   }
 
   getBiblicalTermDoc(projectId: string, dataId: string): BiblicalTermDoc {
