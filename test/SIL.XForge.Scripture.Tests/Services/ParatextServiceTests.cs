@@ -3885,8 +3885,10 @@ public class ParatextServiceTests
         Assert.That(ex.Message, Does.Contain("PT projects with the following PT ids were requested"));
     }
 
-    [Test]
-    public void SendReceiveAsync_ShareChangesErrors_InResultsOnly()
+    [TestCase(SendReceiveResultEnum.Failed)]
+    [TestCase(SendReceiveResultEnum.NotUpgraded)]
+    [TestCase(SendReceiveResultEnum.ProjectVersionUpgraded)]
+    public void SendReceiveAsync_ShareChangesErrors_InResultsOnly(SendReceiveResultEnum sendReceiveResult)
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
@@ -3907,7 +3909,7 @@ public class ParatextServiceTests
             {
                 x[2] = new List<SendReceiveResult>
                 {
-                    new SendReceiveResult(new SharedProject()) { Result = SendReceiveResultEnum.Failed },
+                    new SendReceiveResult(new SharedProject()) { Result = sendReceiveResult },
                 };
                 return true;
             });

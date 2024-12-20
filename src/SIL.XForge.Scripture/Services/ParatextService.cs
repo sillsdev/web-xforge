@@ -22,7 +22,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using MongoDB.Driver.Linq;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
@@ -348,7 +347,9 @@ public class ParatextService : DisposableBase, IParatextService
                 if (
                     !noErrors
                     || !success
-                    || (results != null && results.Any(r => r != null && r.Result == SendReceiveResultEnum.Failed))
+                    || results is null
+                    || results.Any(r => r == null)
+                    || results.Any(r => r.Result != SendReceiveResultEnum.Succeeded)
                 )
                 {
                     string resultsInfo = ExplainSRResults(results);
@@ -627,7 +628,7 @@ public class ParatextService : DisposableBase, IParatextService
         return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
     }
 
-    private static string ExplainSRResults(IEnumerable<SendReceiveResult> srResults)
+    private static string ExplainSRResults(IEnumerable<SendReceiveResult>? srResults)
     {
         return string.Join(
             ";",
@@ -1040,7 +1041,8 @@ public class ParatextService : DisposableBase, IParatextService
                 scrText.ScrStylesheet(bookNum),
                 usx.CreateNavigator(),
                 XPathExpression.Compile("*[false()]"),
-                out string usfm
+                out string usfm,
+                scrText.Settings.AllowInvisibleChars
             );
             log.AppendLine($"Created usfm of {usfm}");
             // Among other things, normalizing the USFM will remove trailing spaces at the end of verses,
@@ -2901,9 +2903,11 @@ public class ParatextService : DisposableBase, IParatextService
                         {
                             try
                             {
-                                if (comment.Contents == null)
-                                    comment.AddTextToContent(string.Empty, false);
-                                comment.Contents!.InnerXml = xml;
+                                // Since PTX-23738 we must create the contents node,
+                                // as the setter for Contents reads and stores the OuterXml
+                                XmlElement contentsElement = comment.GetOrCreateCommentNode();
+                                contentsElement.InnerXml = xml;
+                                comment.Contents = contentsElement;
                                 comment.VersionNumber++;
                                 commentUpdated = true;
                             }
@@ -3171,7 +3175,14 @@ public class ParatextService : DisposableBase, IParatextService
         comment.Deleted = note.Deleted;
 
         if (!string.IsNullOrEmpty(note.Content))
-            comment.GetOrCreateCommentNode().InnerXml = GetCommentContentsFromNote(note, displayNames, ptProjectUsers);
+        {
+            // Since PTX-23738 we must create the contents node,
+            // as the setter for Contents reads and stores the OuterXml
+            XmlElement contentsElement = comment.GetOrCreateCommentNode();
+            contentsElement.InnerXml = GetCommentContentsFromNote(note, displayNames, ptProjectUsers) ?? string.Empty;
+            comment.Contents = contentsElement;
+        }
+
         if (!_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
             comment.ExternalUser = note.OwnerRef;
         comment.TagsAdded =
