@@ -1,9 +1,0 @@
----
-- name: Scripture Forge local server for development and testing, for Ubuntu 16.04 thru 20.04 (focal)
-  hosts: all
-  become: yes
-  tasks: []
-
-- import_playbook: dependencies.yml
-  vars:
-    config: palaso
