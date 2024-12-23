@@ -76,6 +76,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   userSelectedSourceTrainingBooks: number[] = [];
   userSelectedAdditionalSourceTrainingBooks: number[] = [];
 
+  refBooksSelectedTrainingBooks: number[] = [];
   selectedTrainingDataIds: string[] = [];
 
   draftingSourceProjectName?: string;
@@ -270,6 +271,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     // automatically select books that are newly selected as training books
     for (const bookNum of newBookSelections) {
       this.userSelectedSourceTrainingBooks.push(bookNum);
+      this.refBooksSelectedTrainingBooks.push(bookNum);
       if (this.selectableAdditionalSourceTrainingBooks.includes(bookNum)) {
         this.userSelectedAdditionalSourceTrainingBooks.push(bookNum);
       }
@@ -284,7 +286,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   onSourceTrainingBookSelect(selectedBooks: number[]): void {
-    this.userSelectedSourceTrainingBooks = this.selectableSourceTrainingBooks.filter(b => selectedBooks.includes(b));
+    this.refBooksSelectedTrainingBooks = this.selectableSourceTrainingBooks.filter(b => selectedBooks.includes(b));
     this.clearErrorMessage();
   }
 
@@ -319,10 +321,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       }
       this.isStepsCompleted = true;
       const trainingScriptureRange: ProjectScriptureRange | undefined =
-        this.userSelectedSourceTrainingBooks.length > 0
+        this.refBooksSelectedTrainingBooks.length > 0
           ? this.convertToScriptureRange(
               this.draftSourceProjectIds!.trainingAlternateSourceId ?? this.draftSourceProjectIds!.trainingSourceId,
-              this.userSelectedSourceTrainingBooks
+              this.refBooksSelectedTrainingBooks
             )
           : undefined;
 
@@ -370,9 +372,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     this.selectableSourceTrainingBooks = [...newSelectedTrainingBooks];
     this.userSelectedSourceTrainingBooks = [...newSelectedTrainingBooks];
     this.selectableAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
-      newSelectedTrainingBooks.includes(b)
-    );
-    this.userSelectedAdditionalSourceTrainingBooks = this.selectableAdditionalSourceTrainingBooks.filter(b =>
       newSelectedTrainingBooks.includes(b)
     );
   }
@@ -434,6 +433,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     this.userSelectedAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
       this.initialSelectedTrainingBooks.includes(b)
     );
+    this.refBooksSelectedTrainingBooks = [...this.userSelectedSourceTrainingBooks];
   }
 
   private setInitialTrainingDataFiles(availableDataFiles: string[]): void {
