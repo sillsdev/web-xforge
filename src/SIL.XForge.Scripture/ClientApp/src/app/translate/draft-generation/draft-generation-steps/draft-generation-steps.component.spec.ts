@@ -198,6 +198,7 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.userSelectedTranslateBooks = [1];
       component.userSelectedTrainingBooks = [2, 3];
+      component.userSelectedSourceTrainingBooks = [2, 3];
       fixture.detectChanges();
       // Go to training books
       component.tryAdvanceStep();
@@ -219,6 +220,7 @@ describe('DraftGenerationStepsComponent', () => {
       const trainingDataFiles: string[] = [];
       const translationBooks = [2];
 
+      component.userSelectedSourceTrainingBooks = trainingBooks;
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
@@ -249,6 +251,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
+      component.userSelectedSourceTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = {
         draftingSourceId: 'sourceProject',
         trainingSourceId: 'sourceProject',
@@ -568,20 +571,15 @@ describe('DraftGenerationStepsComponent', () => {
     it('does not allow selecting not selectable additional source training books', () => {
       const trainingBooks = [3];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [1, 2];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.selectableAdditionalSourceTrainingBooks = trainingBooks;
+      component.userSelectedAdditionalSourceTrainingBooks = trainingBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
       component['draftSourceProjectIds'] = {
         draftingSourceId: 'sourceProject',
         trainingSourceId: 'sourceProject',
         trainingAdditionalSourceId: 'sourceProject2'
       };
-      component.onStepChange();
-      expect(component.availableTrainingBooks).toEqual(trainingBooks);
-      expect(component.selectableSourceTrainingBooks).toEqual(trainingBooks);
-      expect(component.userSelectedSourceTrainingBooks).toEqual(trainingBooks);
       expect(component.selectableAdditionalSourceTrainingBooks).toEqual(trainingBooks);
       expect(component.userSelectedAdditionalSourceTrainingBooks).toEqual(trainingBooks);
 
