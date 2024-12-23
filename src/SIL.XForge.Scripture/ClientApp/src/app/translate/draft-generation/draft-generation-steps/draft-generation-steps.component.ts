@@ -526,6 +526,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       source: this.trainingSources[0].shortName,
       target: this.trainingTargets[0].shortName
     }));
+    this.userSelectedSourceTrainingBooks = [...this.initialSelectedTrainingBooks];
+    this.userSelectedAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
+      this.initialSelectedTrainingBooks.includes(b)
+    );
   }
 
   private setInitialTrainingDataFiles(availableDataFiles: string[]): void {
