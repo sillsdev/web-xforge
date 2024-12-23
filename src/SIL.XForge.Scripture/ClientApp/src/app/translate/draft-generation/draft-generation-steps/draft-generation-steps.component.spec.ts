@@ -23,12 +23,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { TrainingDataService } from '../training-data/training-data.service';
-import {
-  Book,
-  DraftGenerationStepsComponent,
-  DraftGenerationStepsResult,
-  TrainingBook
-} from './draft-generation-steps.component';
+import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
 
 describe('DraftGenerationStepsComponent', () => {
   let component: DraftGenerationStepsComponent;
@@ -146,7 +141,11 @@ describe('DraftGenerationStepsComponent', () => {
             source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'xyz' } },
             draftConfig: {
               alternateTrainingSourceEnabled: true,
-              alternateTrainingSource: { projectRef: 'alternateTrainingProject', writingSystem: { tag: 'xyz' } }
+              alternateTrainingSource: {
+                projectRef: 'alternateTrainingProject',
+                shortName: 'alt',
+                writingSystem: { tag: 'xyz' }
+              }
             }
           },
           writingSystem: { tag: 'eng' }
@@ -199,7 +198,7 @@ describe('DraftGenerationStepsComponent', () => {
       // Go to translation books
       component.tryAdvanceStep();
       fixture.detectChanges();
-      component.userSelectedTranslateBooks = [{ number: 1 } as any];
+      component.onTranslateBookSelect([1]);
       fixture.detectChanges();
       // Go to training books
       component.tryAdvanceStep();
@@ -207,7 +206,7 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       verify(mockNoticeService.show(anything())).never();
       expect(component.stepper.selectedIndex).toBe(2);
-      component.userSelectedTrainingBooks = [{ number: 2 } as any, { number: 3 } as any];
+      component.onTrainingBookSelect([2, 3]);
       tick();
       fixture.detectChanges();
       component.tryAdvanceStep();
@@ -220,13 +219,13 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should allow selecting books from the alternate training source project', () => {
-      const trainingBooks = [{ number: 3 } as any];
+      const trainingBooks = [3];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [{ number: 2 } as any];
+      const translationBooks = [2];
 
-      component.userSelectedSourceTrainingBooks = trainingBooks;
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedSourceTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component['draftSourceProjectIds'] = {
         draftingSourceId: 'sourceProject',
@@ -248,12 +247,12 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('does not allow selecting not selectable source training books', () => {
-      const trainingBooks = [{ number: 3 } as any];
+      const trainingBooks = [3];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [{ number: 2 } as any];
+      const translationBooks = [2];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = {
@@ -337,14 +336,14 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('should emit the correct selected books when done', () => {
-      const trainingBooks: TrainingBook[] = [{ number: 2 } as any, { number: 3 } as any];
+      const trainingBooks = [2, 3];
       const trainingDataFiles: string[] = [];
-      const translationBooks: Book[] = [{ number: 1 } as any];
+      const translationBooks = [1];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
-      component.userSelectedSourceTrainingBooks = trainingBooks.map(b => b.number);
+      component.userSelectedSourceTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = { draftingSourceId: 'sourceProject', trainingSourceId: 'sourceProject' };
 
       spyOn(component.done, 'emit');
@@ -363,8 +362,8 @@ describe('DraftGenerationStepsComponent', () => {
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
-        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'LEV' }],
-        translationScriptureRange: 'GEN;EXO',
+        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'EXO;LEV' }],
+        translationScriptureRange: 'GEN',
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
@@ -418,6 +417,8 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
       expect(component.isStepsCompleted).toBe(true);
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
@@ -461,7 +462,12 @@ describe('DraftGenerationStepsComponent', () => {
         data: createTestProjectProfile({
           texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
           translateConfig: {
-            source: { projectRef: 'sourceProject', writingSystem: { tag: 'xyz' }, paratextId: 'sourcePT1' },
+            source: {
+              projectRef: 'sourceProject',
+              shortName: 'sp',
+              writingSystem: { tag: 'xyz' },
+              paratextId: 'sourcePT1'
+            },
             draftConfig: {
               additionalTrainingSourceEnabled: true,
               additionalTrainingSource: {
@@ -494,12 +500,12 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should show and hide selectable training source books when training books selected', () => {
-      const trainingBooks = [{ number: 3 } as any];
+      const trainingBooks = [3];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [{ number: 1 } as any, { number: 2 } as any];
+      const translationBooks = [1, 2];
 
       component.userSelectedTrainingBooks = [];
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = [];
       component.userSelectedAdditionalSourceTrainingBooks = [];
@@ -536,12 +542,12 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('should correctly emit the selected books when done', fakeAsync(() => {
-      const trainingBooks = [{ number: 3 } as any];
+      const trainingBooks = [3];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [{ number: 1 } as any, { number: 2 } as any];
+      const translationBooks = [1, 2];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = trainingBooks;
       component.userSelectedAdditionalSourceTrainingBooks = trainingBooks;
@@ -563,6 +569,8 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
@@ -577,12 +585,12 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('does not allow selecting not selectable additional source training books', () => {
-      const trainingBooks = [{ number: 3 } as any];
+      const trainingBooks = [3];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [{ number: 1 } as any, { number: 2 } as any];
+      const translationBooks = [1, 2];
 
-      component.selectableAdditionalSourceTrainingBooks = trainingBooks;
-      component.userSelectedAdditionalSourceTrainingBooks = trainingBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component['draftSourceProjectIds'] = {
         draftingSourceId: 'sourceProject',
@@ -598,12 +606,12 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('should allow advancing if one source has no books selected', () => {
-      const trainingBooks = [{ number: 3 } as any];
+      const trainingBooks = [3];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [{ number: 1 } as any, { number: 2 } as any];
+      const translationBooks = [1, 2];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = trainingBooks;
       component.userSelectedAdditionalSourceTrainingBooks = trainingBooks;
@@ -628,10 +636,15 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
-        trainingScriptureRanges: [{ projectId: 'sourceProject2', scriptureRange: 'LEV' }],
+        trainingScriptureRanges: [
+          { projectId: 'sourceProject', scriptureRange: 'LEV' },
+          { projectId: 'sourceProject2', scriptureRange: 'LEV' }
+        ],
         translationScriptureRange: 'GEN;EXO',
         fastTraining: false
       } as DraftGenerationStepsResult);
@@ -657,14 +670,15 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should emit the fast training value if checked', () => {
-      const trainingBooks: TrainingBook[] = [{ number: 2 } as any, { number: 3 } as any];
+      const trainingBooks = [2, 3];
       const trainingDataFiles: string[] = [];
-      const translationBooks: Book[] = [{ number: 1 } as any];
+      const translationBooks = [1];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
+
       component.selectedTrainingDataIds = trainingDataFiles;
-      component.userSelectedSourceTrainingBooks = trainingBooks.map(b => b.number);
+      component.userSelectedSourceTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = { draftingSourceId: 'sourceProject', trainingSourceId: 'sourceProject' };
 
       spyOn(component.done, 'emit');
@@ -689,8 +703,8 @@ describe('DraftGenerationStepsComponent', () => {
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
-        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
-        translationScriptureRange: 'LEV;NUM',
+        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'EXO;LEV' }],
+        translationScriptureRange: 'GEN',
         fastTraining: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
@@ -749,11 +763,11 @@ describe('DraftGenerationStepsComponent', () => {
         ],
         writingSystem: { tag: 'eng' },
         translateConfig: {
-          source: { projectRef: 'test', writingSystem: { tag: 'eng' } },
+          source: { projectRef: 'test', writingSystem: { tag: 'eng' }, shortName: 'test' },
           draftConfig: {
-            lastSelectedTrainingBooks: [1, 6, 3, 4, 5],
             lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [1, 2, 7]
+            lastSelectedTranslationScriptureRange: 'GEN;EXO',
+            lastSelectedTrainingScriptureRanges: [{ projectId: 'test', scriptureRange: 'GEN;LEV;NUM;DEU' }]
           }
         }
       })
