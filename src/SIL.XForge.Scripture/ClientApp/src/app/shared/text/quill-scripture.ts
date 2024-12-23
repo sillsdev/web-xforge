@@ -35,9 +35,8 @@ export function getRetainCount(op: DeltaOperation): number | undefined {
       return op.retain;
     }
 
-    if (typeof op.retain.length === 'number') {
-      return op.retain.length;
-    }
+    // The type definition allows it, but we shouldn't encounter an object 'retain'
+    throw new Error(`Invalid 'retain' operation`);
   }
 
   return undefined;
@@ -852,8 +851,7 @@ export function registerScripture(): string[] {
           curIndex++;
         }
       } else if (op.retain != null) {
-        const retainCount: number = getRetainCount(op);
-        curIndex += retainCount;
+        curIndex += op.retain as number;
         changeIndex = curIndex;
       }
     }
