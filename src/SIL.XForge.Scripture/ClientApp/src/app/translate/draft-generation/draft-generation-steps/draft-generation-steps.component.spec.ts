@@ -219,6 +219,7 @@ describe('DraftGenerationStepsComponent', () => {
       const trainingDataFiles: string[] = [];
       const translationBooks = [2];
 
+      component.refBooksSelectedTrainingBooks = trainingBooks;
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
@@ -231,13 +232,13 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       expect(component.availableTrainingBooks).toEqual(trainingBooks);
       expect(component.selectableSourceTrainingBooks).toEqual(trainingBooks);
-      expect(component.userSelectedSourceTrainingBooks).toEqual(trainingBooks);
+      expect(component.refBooksSelectedTrainingBooks).toEqual(trainingBooks);
       expect(fixture.nativeElement.querySelector('.books-appear-notice')).toBeNull();
 
       component.onSourceTrainingBookSelect([]);
       fixture.detectChanges();
       expect(component.selectableSourceTrainingBooks).toEqual(trainingBooks);
-      expect(component.userSelectedSourceTrainingBooks).toEqual([]);
+      expect(component.refBooksSelectedTrainingBooks).toEqual([]);
       expect(fixture.nativeElement.querySelector('.books-appear-notice')).toBeNull();
     });
 
@@ -335,7 +336,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
-      component.userSelectedSourceTrainingBooks = trainingBooks;
+      component.refBooksSelectedTrainingBooks = trainingBooks.filter(book => !translationBooks.includes(book));
       component['draftSourceProjectIds'] = { draftingSourceId: 'sourceProject', trainingSourceId: 'sourceProject' };
 
       spyOn(component.done, 'emit');
@@ -532,7 +533,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
-      component.userSelectedSourceTrainingBooks = trainingBooks;
+      component.refBooksSelectedTrainingBooks = trainingBooks;
       component.userSelectedAdditionalSourceTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = {
         draftingSourceId: 'sourceProject',
@@ -598,7 +599,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.userSelectedTrainingBooks = trainingBooks;
       component.userSelectedTranslateBooks = translationBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
-      component.userSelectedSourceTrainingBooks = trainingBooks;
+      component.refBooksSelectedTrainingBooks = trainingBooks;
       component.userSelectedAdditionalSourceTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = {
         draftingSourceId: 'sourceProject',
@@ -656,6 +657,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.userSelectedTranslateBooks = translationBooks;
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = trainingBooks;
+      component.refBooksSelectedTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = { draftingSourceId: 'sourceProject', trainingSourceId: 'sourceProject' };
 
       spyOn(component.done, 'emit');
