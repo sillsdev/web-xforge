@@ -9,7 +9,6 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -40,7 +39,6 @@ describe('DraftGenerationStepsComponent', () => {
   const mockProgressService = mock(ProgressService);
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
-  const mockI18nService = mock(I18nService);
 
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
@@ -116,8 +114,7 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: ProgressService, useMock: mockProgressService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
-      { provide: NoticeService, useMock: mockNoticeService },
-      { provide: I18nService, useMock: mockI18nService }
+      { provide: NoticeService, useMock: mockNoticeService }
     ]
   }));
 
@@ -133,7 +130,6 @@ describe('DraftGenerationStepsComponent', () => {
       { text: { bookNum: 7 } } as TextProgress
     ]);
     when(mockOnlineStatusService.isOnline).thenReturn(true);
-    when(mockI18nService.localeCode).thenReturn('en');
   }));
 
   describe('alternate training source project', async () => {
@@ -142,10 +138,14 @@ describe('DraftGenerationStepsComponent', () => {
         data: createTestProjectProfile({
           texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
           translateConfig: {
-            source: { projectRef: 'sourceProject', writingSystem: { tag: 'xyz' } },
+            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'xyz' } },
             draftConfig: {
               alternateTrainingSourceEnabled: true,
-              alternateTrainingSource: { projectRef: 'alternateTrainingProject', writingSystem: { tag: 'xyz' } }
+              alternateTrainingSource: {
+                projectRef: 'alternateTrainingProject',
+                shortName: 'alt',
+                writingSystem: { tag: 'xyz' }
+              }
             }
           },
           writingSystem: { tag: 'eng' }
@@ -196,8 +196,7 @@ describe('DraftGenerationStepsComponent', () => {
       // Go to translation books
       component.tryAdvanceStep();
       fixture.detectChanges();
-      component.userSelectedTranslateBooks = [1];
-      component.userSelectedTrainingBooks = [2, 3];
+      component.onTranslateBookSelect([1]);
       fixture.detectChanges();
       // Go to training books
       component.tryAdvanceStep();
@@ -205,13 +204,16 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       verify(mockNoticeService.show(anything())).never();
       expect(component.stepper.selectedIndex).toBe(2);
+      component.onTrainingBookSelect([2, 3]);
       tick();
+      fixture.detectChanges();
+      component.tryAdvanceStep();
       fixture.detectChanges();
       // Attempt to generate draft
       component.tryAdvanceStep();
       fixture.detectChanges();
       verify(mockNoticeService.show(anything())).once();
-      expect(component.stepper.selectedIndex).toBe(2);
+      expect(component.stepper.selectedIndex).toBe(3);
     }));
 
     it('should allow selecting books from the alternate training source project', () => {
@@ -219,8 +221,8 @@ describe('DraftGenerationStepsComponent', () => {
       const trainingDataFiles: string[] = [];
       const translationBooks = [2];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component['draftSourceProjectIds'] = {
         draftingSourceId: 'sourceProject',
@@ -246,8 +248,8 @@ describe('DraftGenerationStepsComponent', () => {
       const trainingDataFiles: string[] = [];
       const translationBooks = [2];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component['draftSourceProjectIds'] = {
         draftingSourceId: 'sourceProject',
@@ -330,10 +332,10 @@ describe('DraftGenerationStepsComponent', () => {
     it('should emit the correct selected books when done', () => {
       const trainingBooks = [2, 3];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [1, 2];
+      const translationBooks = [1];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = { draftingSourceId: 'sourceProject', trainingSourceId: 'sourceProject' };
@@ -344,7 +346,7 @@ describe('DraftGenerationStepsComponent', () => {
 
       clickConfirmLanguages(fixture);
       const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
-      test[2].nativeElement.click(); //click the last step
+      test[3].nativeElement.click(); //click the last step
       fixture.detectChanges();
 
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
@@ -354,8 +356,8 @@ describe('DraftGenerationStepsComponent', () => {
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
-        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'LEV' }],
-        translationScriptureRange: 'GEN;EXO',
+        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'EXO;LEV' }],
+        translationScriptureRange: 'GEN',
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
@@ -393,7 +395,7 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
       fixture.detectChanges();
       expect(component.isTrainingOptional).toBe(true);
-      const translateBooks = [1, 2];
+      const translateBooks = [{ number: 1 } as any, { number: 2 } as any];
       const trainingBooks = [];
       const trainingDataFiles = [];
       spyOn(component.done, 'emit');
@@ -402,6 +404,8 @@ describe('DraftGenerationStepsComponent', () => {
       component.userSelectedTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = { draftingSourceId: 'sourceProject', trainingSourceId: 'sourceProject' };
       clickConfirmLanguages(fixture);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
@@ -419,13 +423,13 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should update training books when a step changes', fakeAsync(() => {
-      component.userSelectedTranslateBooks = [3, 4]; //complete the first step
+      component.userSelectedTranslateBooks = [{} as any]; //complete the first step
       fixture.detectChanges();
       spyOn(component, 'updateTrainingBooks');
 
       clickConfirmLanguages(fixture);
-      const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
-      test[2].nativeElement.click(); //click the next step
+      const steps = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      steps[2].nativeElement.click(); //click the next step
       fixture.detectChanges();
 
       expect(component.updateTrainingBooks).toHaveBeenCalledTimes(1);
@@ -452,7 +456,12 @@ describe('DraftGenerationStepsComponent', () => {
         data: createTestProjectProfile({
           texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
           translateConfig: {
-            source: { projectRef: 'sourceProject', writingSystem: { tag: 'xyz' }, paratextId: 'sourcePT1' },
+            source: {
+              projectRef: 'sourceProject',
+              shortName: 'sp',
+              writingSystem: { tag: 'xyz' },
+              paratextId: 'sourcePT1'
+            },
             draftConfig: {
               additionalTrainingSourceEnabled: true,
               additionalTrainingSource: {
@@ -488,7 +497,7 @@ describe('DraftGenerationStepsComponent', () => {
       const translationBooks = [1, 2];
 
       component.userSelectedTrainingBooks = [];
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = [];
       component.userSelectedAdditionalSourceTrainingBooks = [];
@@ -529,8 +538,8 @@ describe('DraftGenerationStepsComponent', () => {
       const trainingDataFiles: string[] = [];
       const translationBooks = [1, 2];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = trainingBooks;
       component.userSelectedAdditionalSourceTrainingBooks = trainingBooks;
@@ -545,6 +554,8 @@ describe('DraftGenerationStepsComponent', () => {
       clickConfirmLanguages(fixture);
       expect(component.isStepsCompleted).toBe(false);
       // Advance to the next step when at last step should emit books result
+      fixture.detectChanges();
+      component.tryAdvanceStep();
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
@@ -570,8 +581,8 @@ describe('DraftGenerationStepsComponent', () => {
       const trainingDataFiles: string[] = [];
       const translationBooks = [1, 2];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component['draftSourceProjectIds'] = {
         draftingSourceId: 'sourceProject',
@@ -595,8 +606,8 @@ describe('DraftGenerationStepsComponent', () => {
       const trainingDataFiles: string[] = [];
       const translationBooks = [1, 2];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = trainingBooks;
       component.userSelectedAdditionalSourceTrainingBooks = trainingBooks;
@@ -621,10 +632,15 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
-        trainingScriptureRanges: [{ projectId: 'sourceProject2', scriptureRange: 'LEV' }],
+        trainingScriptureRanges: [
+          { projectId: 'sourceProject', scriptureRange: 'LEV' },
+          { projectId: 'sourceProject2', scriptureRange: 'LEV' }
+        ],
         translationScriptureRange: 'GEN;EXO',
         fastTraining: false
       } as DraftGenerationStepsResult);
@@ -648,12 +664,13 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should emit the fast training value if checked', () => {
-      const trainingBooks = [1, 2];
+      const trainingBooks = [2, 3];
       const trainingDataFiles: string[] = [];
-      const translationBooks = [3, 4];
+      const translationBooks = [1];
 
-      component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTranslateBooks = translationBooks;
+      component.userSelectedTrainingBooks = trainingBooks.map(b => ({ number: b }) as any);
+      component.userSelectedTranslateBooks = translationBooks.map(b => ({ number: b }) as any);
+
       component.selectedTrainingDataIds = trainingDataFiles;
       component.userSelectedSourceTrainingBooks = trainingBooks;
       component['draftSourceProjectIds'] = { draftingSourceId: 'sourceProject', trainingSourceId: 'sourceProject' };
@@ -665,6 +682,7 @@ describe('DraftGenerationStepsComponent', () => {
       const test = fixture.debugElement.queryAll(By.css('mat-step-header'));
       test[3].nativeElement.click(); //click the next step
       fixture.detectChanges();
+      component.tryAdvanceStep();
 
       // Tick the checkbox
       const fastTrainingCheckbox = fixture.nativeElement.querySelector('mat-checkbox.fast-training input');
@@ -679,8 +697,8 @@ describe('DraftGenerationStepsComponent', () => {
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles,
-        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'GEN;EXO' }],
-        translationScriptureRange: 'LEV;NUM',
+        trainingScriptureRanges: [{ projectId: 'sourceProject', scriptureRange: 'EXO;LEV' }],
+        translationScriptureRange: 'GEN',
         fastTraining: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
@@ -718,6 +736,61 @@ describe('DraftGenerationStepsComponent', () => {
     it('should restore previously selected ranges', () => {
       expect(component.initialSelectedTrainingBooks).toEqual([3]);
       expect(component.initialSelectedTranslateBooks).toEqual([1, 2]);
+    });
+  });
+
+  describe('confirm step', () => {
+    const mockTargetProjectDoc = {
+      data: createTestProjectProfile({
+        // Include an 'extra material' book (100) that should be excluded
+        texts: [
+          { bookNum: 2 },
+          { bookNum: 1 },
+          { bookNum: 3 },
+          { bookNum: 4 },
+          { bookNum: 5 },
+          { bookNum: 6 },
+          { bookNum: 7 },
+          { bookNum: 100 }
+        ],
+        writingSystem: { tag: 'eng' },
+        translateConfig: {
+          source: { projectRef: 'test', writingSystem: { tag: 'eng' }, shortName: 'test' },
+          draftConfig: {
+            lastSelectedTrainingDataFiles: [],
+            lastSelectedTranslationScriptureRange: 'GEN;EXO',
+            lastSelectedTrainingScriptureRanges: [{ projectId: 'test', scriptureRange: 'GEN;LEV;NUM;DEU' }]
+          }
+        }
+      })
+    } as SFProjectProfileDoc;
+
+    beforeEach(fakeAsync(() => {
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc)
+      );
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
+      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataQuery.docs).thenReturn([]);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
+
+    it('should localize and concatenate the books to translate', () => {
+      expect(component.selectedTranslateBooks()).toEqual('Genesis and Exodus');
+    });
+
+    it('should localize, group, and collapse the books to use in training', () => {
+      const trainingGroups = component.selectedTrainingBooksCollapsed();
+      expect(trainingGroups.length).toEqual(1);
+      expect(trainingGroups[0].ranges.length).toEqual(2);
+      expect(trainingGroups[0].ranges[0]).toEqual('Genesis');
+      expect(trainingGroups[0].ranges[1]).toEqual('Leviticus - Deuteronomy');
     });
   });
 
