@@ -126,7 +126,7 @@
         } @else {
           <app-book-multi-select
             [availableBooks]="selectableSourceTrainingBooks"
-            [selectedBooks]="userSelectedSourceTrainingBooks"
+            [selectedBooks]="refBooksSelectedTrainingBooks"
             [basicMode]="true"
             (bookSelect)="onSourceTrainingBookSelect($event)"
           ></app-book-multi-select>
