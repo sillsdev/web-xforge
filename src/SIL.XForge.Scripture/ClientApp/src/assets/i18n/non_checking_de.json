@@ -37,7 +37,7 @@
     "loading": "Wird geladen...",
     "not_found": "Keine biblischen Begriffe entsprechen Deinen Kriterien.",
     "notes": "Notizen",
-    "offline": "Currently unavailable offline. Please connect to the internet, once loaded you can continue viewing them offline.",
+    "offline": "Derzeit offline nicht verfügbar. Bitte verbinde Dich mit dem Internet, sobald es geladen ist, kannst Du es weiter offline sehen.",
     "renderings": "Übersetzungsmöglichkeiten",
     "settings": "Einstellungen",
     "show": "Anzeigen",
@@ -253,11 +253,11 @@
     "next": "Weiter",
     "no_available_books": "Du hast keine Bücher für die Erstellung von Entwürfen verfügbar.",
     "overview": "Übersicht",
-    "reference_books": "Reference books",
+    "reference_books": "Referenzbücher",
     "these_source_books_cannot_be_used_for_training": "Die folgenden Bücher können nicht für Schulungen verwendet werden, da sie nicht im Ausgangstext für die Schulung ({{ trainingSourceProjectName }}) enthalten sind.",
     "these_source_books_cannot_be_used_for_translating": "Die folgenden Bücher können nicht übersetzt werden, da sie nicht im Ausgangstext für Entwürfe ({{ draftingSourceProjectName }}) enthalten sind.",
-    "training_books_will_appear": "Training books will appear as you select books under translated books",
-    "translated_books": "Translated books",
+    "training_books_will_appear": "Bücher für die Schulung werden angezeigt, wenn Du Bücher unter übersetzten Büchern auswählst",
+    "translated_books": "Übersetzte Bücher",
     "unusable_target_books": "Du kannst das Buch nicht finden? Stelle sicher, dass das Buch in Paratext erstellt wurde und synchronisiere Dein Projekt."
   },
   "draft_preview_books": {
