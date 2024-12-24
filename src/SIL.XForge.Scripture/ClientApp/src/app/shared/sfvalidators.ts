@@ -16,6 +16,7 @@ export enum CustomValidatorState {
   InvalidProject,
   BookNotFound,
   NoWritePermissions,
+  MissingChapters,
   None
 }
 
@@ -87,6 +88,8 @@ export class SFValidators {
           return { bookNotFound: true };
         case CustomValidatorState.NoWritePermissions:
           return { noWritePermissions: true };
+        case CustomValidatorState.MissingChapters:
+          return { missingChapters: true };
         default:
           return null;
       }
