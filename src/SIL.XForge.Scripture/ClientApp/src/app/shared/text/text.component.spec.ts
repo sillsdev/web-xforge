@@ -3,7 +3,7 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
-import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import Quill, { Delta, EmitterSource, Range as QuillRange } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -30,7 +30,7 @@ import { UserService } from 'xforge-common/user.service';
 import { isGecko } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getEmptyChapterDoc, getPoetryVerseTextDoc, getTextDoc } from '../test-utils';
@@ -414,7 +414,7 @@ describe('TextComponent', () => {
     env.id = new TextDocId('project01', 43, 1);
     env.waitForEditor();
 
-    const range: RangeStatic = env.component.getSegmentRange('s_3')!;
+    const range: QuillRange = env.component.getSegmentRange('s_3')!;
     env.component.editor!.setSelection(range.index + 1, 'user');
     tick();
     env.fixture.detectChanges();
@@ -422,7 +422,7 @@ describe('TextComponent', () => {
 
     // SUT
     env.triggerUndo();
-    const rangePostUndo: RangeStatic | undefined = env.component.getSegmentRange('s_3');
+    const rangePostUndo: QuillRange | undefined = env.component.getSegmentRange('s_3');
     expect(rangePostUndo).toBeTruthy();
 
     TestEnvironment.waitForPresenceTimer();
@@ -434,20 +434,20 @@ describe('TextComponent', () => {
     env.id = new TextDocId('project01', 43, 1);
     env.waitForEditor();
 
-    const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    const range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
     env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
     env.component.editor!.setSelection(range.index + 1, 'user');
     tick();
     env.fixture.detectChanges();
-    let contents: DeltaStatic = env.component.getSegmentContents('verse_1_1')!;
+    let contents: Delta = env.component.getSegmentContents('verse_1_1')!;
     expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
-    expect(contents.ops![0].insert.blank).toBe(true);
+    expect((contents.ops![0].insert as any).blank).toBe(true);
     const formats = getAttributesAtPosition(env.component.editor!, range.index);
     // use apply delta to control the formatting
     env.applyDelta(new Delta().retain(range.index).insert('text', formats).delete(1), 'user');
     contents = env.component.getSegmentContents('verse_1_1')!;
     expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
-    const verse2Range: RangeStatic = env.component.getSegmentRange('verse_1_2')!;
+    const verse2Range: QuillRange = env.component.getSegmentRange('verse_1_2')!;
     env.component.editor!.setSelection(verse2Range.index + 1, 'user');
     env.component.toggleVerseSelection(new VerseRef('JHN 1:2'));
     env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
@@ -462,7 +462,7 @@ describe('TextComponent', () => {
     env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
     contents = env.component.getSegmentContents('verse_1_1')!;
     expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
-    expect(contents.ops![0].insert.blank).toBe(true);
+    expect((contents.ops![0].insert as any).blank).toBe(true);
 
     TestEnvironment.waitForPresenceTimer();
   }));
@@ -476,14 +476,14 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    const range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
     env.component.editor!.setSelection(range.index, 0, 'user');
     tick();
     env.fixture.detectChanges();
     let segmentElement: HTMLElement = env.getSegment('verse_1_1')!;
     expect(segmentElement.classList).toContain('note-thread-segment');
     const pasteText = 'paste text';
-    let contents: DeltaStatic = env.component.getSegmentContents('verse_1_1')!;
+    let contents: Delta = env.component.getSegmentContents('verse_1_1')!;
     expect(contents.ops![0].insert).toEqual('target: ');
     const dataTransfer = new DataTransfer();
     dataTransfer.setData('text/plain', pasteText);
@@ -513,7 +513,7 @@ describe('TextComponent', () => {
     env.waitForEditor();
 
     for (const ref of testSegmentRefs) {
-      const range: RangeStatic = env.component.getSegmentRange(ref)!;
+      const range: QuillRange = env.component.getSegmentRange(ref)!;
 
       // Set segment as current segment
       env.component.editor?.setSelection(range.index, 0, 'user');
@@ -552,7 +552,7 @@ describe('TextComponent', () => {
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
       env.waitForEditor();
-      const cursors: QuillCursors = env.component.editor!.getModule('cursors');
+      const cursors: QuillCursors = env.component.editor!.getModule('cursors') as QuillCursors;
       const cursorRemoveSpy = spyOn<any>(cursors, 'removeCursor').and.callThrough();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
       const localPresenceSubmitSpy = spyOn<any>(env.localPresenceDoc, 'submit').and.callThrough();
@@ -560,7 +560,7 @@ describe('TextComponent', () => {
       env.component.editor?.setSelection(1, 1, 'user');
 
       // ShareDB will trigger a presence "submit" event on the doc, so we need to simulate that event
-      const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+      const range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
       (env.component as any).onPresenceDocReceive('presenceId', range);
 
       tick();
@@ -584,7 +584,7 @@ describe('TextComponent', () => {
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
       verify(mockedUserService.getCurrentUser()).once();
 
-      env.component.onSelectionChanged(null as unknown as RangeStatic);
+      env.component.onSelectionChanged(null as unknown as QuillRange);
 
       tick();
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(2);
@@ -672,7 +672,7 @@ describe('TextComponent', () => {
       env.waitForEditor();
       const presenceChannelSubmit = spyOn<any>(env.localPresenceChannel, 'submit');
 
-      const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+      const range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
       env.component.editor!.setSelection(range.index + 1, 'user');
       tick();
       env.fixture.detectChanges();
@@ -696,7 +696,7 @@ describe('TextComponent', () => {
       env.waitForEditor();
 
       const presenceDocSubmit = spyOn<any>(env.localPresenceDoc, 'submit');
-      const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+      const range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
       env.component.editor!.setSelection(range.index + 1, 'user');
       tick();
       env.fixture.detectChanges();
@@ -724,7 +724,7 @@ describe('TextComponent', () => {
 
       const remotePresence = 'remote-person-1';
       const remoteSegmentRef = 'verse_1_1';
-      const remoteRange: RangeStatic | undefined = env.component.getSegmentRange(remoteSegmentRef);
+      const remoteRange: QuillRange | undefined = env.component.getSegmentRange(remoteSegmentRef);
       env.addRemotePresence(remotePresence, remoteRange);
       expect(env.component.editor!.root.scrollTop).toEqual(0);
       const presenceData: PresenceData = {
@@ -784,13 +784,13 @@ describe('TextComponent', () => {
       expect(env.component.getSegmentText(targetSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
       expect(env.component.editor!.getText()).withContext('setup').toContain(initialTextInDoc);
 
-      const targetSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      const targetSegmentRange: QuillRange | undefined = env.component.getSegmentRange(targetSegmentRef);
       if (targetSegmentRange == null) throw Error('setup');
       const selectionStart: number = targetSegmentRange.index + 'ta'.length;
       const selectionLength: number = 'rg'.length;
       // A couple characters in the segment are selected.
       env.component.editor?.setSelection(selectionStart, selectionLength);
-      const originalSelection: RangeStatic | null = env.component.editor!.getSelection();
+      const originalSelection: QuillRange | null = env.component.editor!.getSelection();
       if (originalSelection == null) throw Error('setup');
 
       // When the user drops text into their browser, a DropEvent gives details on the data being dropped, as well as
@@ -832,7 +832,7 @@ describe('TextComponent', () => {
       // event.preventDefault() should have been called to prevent the browser from doing its own drag-and-drop.
       expect(cancelled).toBeTrue();
 
-      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      const resultingSelection: QuillRange | null = env.component.editor!.getSelection();
       if (resultingSelection == null) throw Error();
       expect(resultingSelection)
         .withContext('canceled drop should not have made the selection change')
@@ -917,7 +917,7 @@ describe('TextComponent', () => {
     env.waitForEditor();
     env.component.setSegment(segmentRef);
     tick();
-    const segmentRange: RangeStatic | undefined = env.component.getSegmentRange(segmentRef);
+    const segmentRange: QuillRange | undefined = env.component.getSegmentRange(segmentRef);
     if (segmentRange == null) {
       fail('setup');
       return;
@@ -925,7 +925,7 @@ describe('TextComponent', () => {
 
     // Is a given selection range valid for the current segment (segmentRef)?
 
-    const cases: { description: string; range: RangeStatic; shouldBeValid: boolean }[] = [
+    const cases: { description: string; range: QuillRange; shouldBeValid: boolean }[] = [
       { description: 'entire segment', range: segmentRange, shouldBeValid: true },
       { description: 'at first char', range: { index: segmentRange.index, length: 0 }, shouldBeValid: true },
       { description: 'at second char', range: { index: segmentRange.index + 1, length: 0 }, shouldBeValid: true },
@@ -991,7 +991,7 @@ describe('TextComponent', () => {
         shouldBeValid: false
       }
     ];
-    cases.forEach((testCase: { description: string; range: RangeStatic; shouldBeValid: boolean }) => {
+    cases.forEach((testCase: { description: string; range: QuillRange; shouldBeValid: boolean }) => {
       expect((env.component as any).isValidSelectionForCurrentSegment(testCase.range))
         .withContext(testCase.description)
         .toEqual(testCase.shouldBeValid);
@@ -999,7 +999,7 @@ describe('TextComponent', () => {
   }));
 
   it('does not cancel in beforeinput when valid selection', fakeAsync(() => {
-    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
     const beforeinputEvent: InputEvent = new InputEvent('beforeinput', {
       cancelable: true
@@ -1019,7 +1019,7 @@ describe('TextComponent', () => {
   }));
 
   it('cancels in beforeinput when invalid selection', fakeAsync(() => {
-    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
     const beforeinputEvent: InputEvent = new InputEvent('beforeinput', {
       cancelable: true
@@ -1039,7 +1039,7 @@ describe('TextComponent', () => {
   }));
 
   it('allows backspace when valid selection', fakeAsync(() => {
-    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
     // When asked, the current selection will be called valid.
     const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
@@ -1054,7 +1054,7 @@ describe('TextComponent', () => {
   }));
 
   it('disallows backspace when invalid selection', fakeAsync(() => {
-    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
     // When asked, the current selection will be called invalid.
     const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
@@ -1069,15 +1069,15 @@ describe('TextComponent', () => {
   }));
 
   it('can backspace a word at a time', fakeAsync(() => {
-    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
     let initialText = 'quick brown fox';
     let resultTexts = ['quick brown ', 'quick ', '', ''];
-    env.performDeleteWordTest('backspace', segmentRange.index, initialText, resultTexts);
+    env.performDeleteWordTest('Backspace', segmentRange.index, initialText, resultTexts);
     TestEnvironment.waitForPresenceTimer();
   }));
 
   it('allows delete when valid selection', fakeAsync(() => {
-    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
     // When asked, the current selection will be called valid.
     const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
@@ -1092,7 +1092,7 @@ describe('TextComponent', () => {
   }));
 
   it('disallows delete when invalid selection', fakeAsync(() => {
-    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
     // When asked, the current selection will be called invalid.
     const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
@@ -1107,10 +1107,10 @@ describe('TextComponent', () => {
   }));
 
   it('can delete a word at a time', fakeAsync(() => {
-    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
     let initialText = 'quick brown fox';
     const resultTexts = [' brown fox', ' fox', '', ''];
-    env.performDeleteWordTest('delete', segmentRange.index, initialText, resultTexts);
+    env.performDeleteWordTest('Delete', segmentRange.index, initialText, resultTexts);
     TestEnvironment.waitForPresenceTimer();
   }));
 
@@ -1120,7 +1120,7 @@ describe('TextComponent', () => {
     env.component.id = new TextDocId('project01', 40, 1);
     env.waitForEditor();
 
-    const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    const range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
     const initialContents: string = env.component.getSegmentText('verse_1_1');
     env.component.editor!.setSelection(range.index, 'user');
     tick();
@@ -1128,12 +1128,14 @@ describe('TextComponent', () => {
     const backslashKeyCode = 220;
     const backslashBindings = env.component.editor!.keyboard['bindings'][backslashKeyCode];
     expect(backslashBindings.length).withContext('should have a backslash key handler').toEqual(1);
-    backslashBindings[0].handler();
+    const backslashBinding = backslashBindings[0];
+    // Call the handler with the correct `this` context
+    (backslashBinding.handler as any).call({ quill: env.component.editor }, range, {});
     tick();
     env.fixture.detectChanges();
 
     // the selection should not have changed
-    const currentSelection: RangeStatic = env.component.editor!.getSelection()!;
+    const currentSelection: QuillRange = env.component.editor!.getSelection()!;
     expect(currentSelection.index).toEqual(range.index);
     const currentContents: string = env.component.getSegmentText('verse_1_1');
     expect(currentContents).withContext('document text should not have changed').toEqual(initialContents);
@@ -1145,12 +1147,12 @@ describe('TextComponent', () => {
     env.component.id = new TextDocId('project01', 40, 1);
     env.waitForEditor();
 
-    const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    const range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
     env.component.editor!.setSelection(range.index, 0, 'user');
     tick();
     env.fixture.detectChanges();
     const pasteText = '\\back\\slash';
-    let contents: DeltaStatic = env.component.getSegmentContents('verse_1_1')!;
+    let contents: Delta = env.component.getSegmentContents('verse_1_1')!;
     expect(contents.ops![0].insert).toEqual('target: chapter 1, verse 1.');
     const dataTransfer = new DataTransfer();
     dataTransfer.setData('text/plain', pasteText);
@@ -1169,7 +1171,7 @@ describe('TextComponent', () => {
   }));
 
   it('does not cancel paste when valid selection', fakeAsync(() => {
-    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
     const payload: string = 'abcd';
     const clipboardData = new DataTransfer();
@@ -1193,9 +1195,9 @@ describe('TextComponent', () => {
     // I haven't been able to trigger quill's onPaste by dispatching a ClipboardEvent. So directly call it.
 
     // SUT
-    (env.component.editor!.clipboard as any).onPaste(pasteEvent);
+    (env.component.editor!.clipboard as any).onCapturePaste(pasteEvent);
     flush();
-    expect(pasteEvent.defaultPrevented).withContext('the quill onPaste cancels further processing').toBeTrue();
+    expect(pasteEvent.defaultPrevented).withContext('the quill onCapturePaste cancels further processing').toBeTrue();
 
     expect(quillUpdateContentsSpy).withContext('quill is edited').toHaveBeenCalled();
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
@@ -1204,7 +1206,7 @@ describe('TextComponent', () => {
   }));
 
   it('cancels paste when invalid selection', fakeAsync(() => {
-    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    const { env }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
     const payload: string = 'abcd';
     const clipboardData = new DataTransfer();
@@ -1228,9 +1230,9 @@ describe('TextComponent', () => {
     // I haven't been able to trigger quill's onPaste by dispatching a ClipboardEvent. So directly call it.
 
     // SUT
-    (env.component.editor!.clipboard as any).onPaste(pasteEvent);
+    (env.component.editor!.clipboard as any).onCapturePaste(pasteEvent);
     flush();
-    expect(pasteEvent.defaultPrevented).withContext('the quill onPaste cancels further processing').toBeTrue();
+    expect(pasteEvent.defaultPrevented).withContext('the quill onCapturePaste cancels further processing').toBeTrue();
 
     expect(quillUpdateContentsSpy).withContext('quill contents are not modified').not.toHaveBeenCalled();
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
@@ -1243,8 +1245,8 @@ describe('TextComponent', () => {
     env.onlineStatus = false;
     env.waitForEditor();
 
-    let range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
-    let verse1Contents: DeltaStatic = env.component.getSegmentContents('verse_1_1')!;
+    let range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
+    let verse1Contents: Delta = env.component.getSegmentContents('verse_1_1')!;
     expect(verse1Contents.ops!.length).toBe(1);
     env.component.editor!.setSelection(range.index + range.length, 'user');
     tick();
@@ -1261,7 +1263,7 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     range = env.component.getSegmentRange('verse_1_3')!;
-    let verse3Contents: DeltaStatic = env.component.getSegmentContents('verse_1_3')!;
+    let verse3Contents: Delta = env.component.getSegmentContents('verse_1_3')!;
     expect(verse3Contents.ops!.length).toBe(1);
     // delete all the text in the verse
     env.applyDelta(new Delta().retain(range.index).delete(range.length), 'user');
@@ -1758,7 +1760,7 @@ class TestEnvironment {
     return (this.component as any).presenceChannel.remotePresences;
   }
 
-  get remoteDocPresences(): Record<string, RangeStatic | null> {
+  get remoteDocPresences(): Record<string, QuillRange | null> {
     return (this.component as any).presenceDoc.remotePresences;
   }
 
@@ -1766,7 +1768,7 @@ class TestEnvironment {
     return (this.component as any).localPresenceChannel;
   }
 
-  get localPresenceDoc(): LocalPresence<RangeStatic | null> {
+  get localPresenceDoc(): LocalPresence<QuillRange | null> {
     return (this.component as any).localPresenceDoc;
   }
 
@@ -1802,7 +1804,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  applyDelta(delta: DeltaStatic, source: Sources): void {
+  applyDelta(delta: Delta, source: EmitterSource): void {
     this.component.editor!.updateContents(delta, source);
     tick();
     this.fixture.detectChanges();
@@ -1826,7 +1828,7 @@ class TestEnvironment {
   }
 
   performDeleteWordTest(
-    type: 'backspace' | 'delete',
+    type: 'Backspace' | 'Delete',
     segmentStartIndex: number,
     initialText: string,
     resultTexts: string[]
@@ -1834,20 +1836,20 @@ class TestEnvironment {
     for (let i = 0; i < resultTexts.length; i++) {
       let content = this.component.editor!.getContents();
       expect(content.ops!.length).toEqual(4);
-      expect(content.ops![1].insert!.verse.number).toEqual('1');
+      expect((content.ops![1].insert as any).verse.number).toEqual('1');
       expect(this.component.getSegmentText('verse_2_1')).toEqual(initialText);
 
       const blankSegmentLength = 1;
       let selectionIndex: number = segmentStartIndex;
-      if (type === 'backspace') {
+      if (type === 'Backspace') {
         selectionIndex += initialText.length === 0 ? blankSegmentLength : initialText.length;
         // put the selection at the end of the segment
-        const selection: RangeStatic = { index: selectionIndex, length: 0 };
+        const selection: QuillRange = { index: selectionIndex, length: 0 };
         this.quillWordDeletion(type, selection);
       } else {
         // put the selection at the beginning of the segment
         selectionIndex += initialText.length === 0 ? blankSegmentLength : 0;
-        const selection: RangeStatic = { index: selectionIndex, length: 0 };
+        const selection: QuillRange = { index: selectionIndex, length: 0 };
         this.quillWordDeletion(type, selection);
       }
       tick();
@@ -1855,7 +1857,7 @@ class TestEnvironment {
 
       content = this.component.editor!.getContents();
       expect(content.ops!.length).toEqual(4);
-      expect(content.ops![1].insert!.verse.number).toEqual('1');
+      expect((content.ops![1].insert as any).verse.number).toEqual('1');
       expect(this.component.getSegmentText('verse_2_1')).toEqual(resultTexts[i]);
       initialText = resultTexts[i];
     }
@@ -1863,7 +1865,7 @@ class TestEnvironment {
 
   /** Write a presence into the sharedb remote presence list, and notify that a new remote presence has
    * appeared on the textdoc. */
-  addRemotePresence(remotePresenceId: string, range?: RangeStatic | null): void {
+  addRemotePresence(remotePresenceId: string, range?: QuillRange | null): void {
     const presenceData: PresenceData = {
       viewer: {
         activeInEditor: false,
@@ -1873,7 +1875,7 @@ class TestEnvironment {
       }
     };
     if (range == null) {
-      range = mock<RangeStatic>();
+      range = mock<QuillRange>();
     }
     // Write the presence right into the area that would be being provided by the sharedb.
     this.remoteChannelPresences[remotePresenceId] = presenceData;
@@ -1884,27 +1886,28 @@ class TestEnvironment {
     tick(400);
   }
 
-  /** Dispatching a 'keydown' KeyboardEvent in the test doesn't seem to
+  /**
+   * Dispatching a 'keydown' KeyboardEvent in the test doesn't seem to
    * trigger the quill backspace handler. Crudely go find the desired handler
    * method in quill keyboard's list of handlers for backspace and call it.
-   * */
-  quillHandleBackspace(range: RangeStatic): boolean {
-    const backspaceKeyCode = 8;
+   */
+  quillHandleBackspace(range: QuillRange): boolean {
+    const backspaceKeyCode = 'Backspace';
     const matchingBindings = (this.component.editor!.keyboard as any).bindings[backspaceKeyCode].filter(
       (bindingItem: any) => bindingItem.handler.toString().includes('isBackspaceAllowed')
     );
     expect(matchingBindings.length)
       .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
       .toEqual(1);
-    return matchingBindings[0].handler(range);
+    return matchingBindings[0].handler.call({ quill: this.component.editor }, range, {});
   }
 
   /** Crudely find backspace or delete word handler. */
-  quillWordDeletion(type: 'backspace' | 'delete', range: RangeStatic): void {
-    let keyCode = 8;
+  quillWordDeletion(type: 'Backspace' | 'Delete', range: QuillRange): void {
+    let keyCode = 'Backspace';
     let handler = 'handleBackspaceWord';
-    if (type === 'delete') {
-      keyCode = 46;
+    if (type === 'Delete') {
+      keyCode = 'Delete';
       handler = 'handleDeleteWord';
     }
     const matchingBindings = (this.component.editor!.keyboard as any).bindings[keyCode].filter((bindingItem: any) =>
@@ -1913,21 +1916,21 @@ class TestEnvironment {
     expect(matchingBindings.length)
       .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
       .toEqual(1);
-    return matchingBindings[0].handler(range);
+    return matchingBindings[0].handler.call({ quill: this.component.editor }, range, {});
   }
 
   /** Crudely go find the desired handler
    * method in quill keyboard's list of handlers for delete and call it.
    * */
-  quillHandleDelete(range: RangeStatic): boolean {
-    const deleteKeyCode = 46;
+  quillHandleDelete(range: QuillRange): boolean {
+    const deleteKeyCode = 'Delete';
     const matchingBindings = (this.component.editor!.keyboard as any).bindings[deleteKeyCode].filter(
       (bindingItem: any) => bindingItem.handler.toString().includes('isDeleteAllowed')
     );
     expect(matchingBindings.length)
       .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
       .toEqual(1);
-    return matchingBindings[0].handler(range);
+    return matchingBindings[0].handler.call({ quill: this.component.editor }, range, {});
   }
 
   triggerUndo(): void {
@@ -1972,7 +1975,7 @@ class TestEnvironment {
   }
 }
 
-function basicSimpleText(): { env: TestEnvironment; segmentRange: RangeStatic } {
+function basicSimpleText(): { env: TestEnvironment; segmentRange: QuillRange } {
   const chapterNum = 2;
   const segmentRef: string = `verse_${chapterNum}_1`;
   const textDocOps: RichText.DeltaOperation[] = [
@@ -1991,7 +1994,7 @@ function basicSimpleText(): { env: TestEnvironment; segmentRange: RangeStatic } 
   env.waitForEditor();
   env.component.setSegment(segmentRef);
   tick();
-  const segmentRange: RangeStatic | undefined = env.component.getSegmentRange(segmentRef);
+  const segmentRange: QuillRange | undefined = env.component.getSegmentRange(segmentRef);
   if (segmentRange == null) {
     fail('setup: problem with segment ref');
     throw Error();

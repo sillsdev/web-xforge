@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
-import { DeltaStatic } from 'quill';
+import { Delta } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { Delta } from 'rich-text';
 import { Observable, Subject } from 'rxjs';
 import { UserService } from 'xforge-common/user.service';
 import { TextDoc, TextDocId, TextDocSource } from './models/text-doc';
@@ -26,18 +25,18 @@ export class TextDocService {
   /**
    * Overwrites the specified text doc with the specified delta and then notifies listeners of the changes.
    * @param {TextDocId} textDocId The id for text doc.
-   * @param {DeltaStatic} newDelta The ops to overwrite the text doc with.
+   * @param {Delta} newDelta The ops to overwrite the text doc with.
    * @param {TextDocSource} source The source of the op. This is sent to the server.
    */
-  async overwrite(textDocId: TextDocId, newDelta: DeltaStatic, source: TextDocSource): Promise<void> {
+  async overwrite(textDocId: TextDocId, newDelta: Delta, source: TextDocSource): Promise<void> {
     const textDoc: TextDoc = await this.projectService.getText(textDocId);
 
     if (textDoc.data?.ops == null) {
       throw new Error(`No TextDoc data for ${textDocId}`);
     }
 
-    const origDelta: DeltaStatic = new Delta(textDoc.data.ops);
-    const diff: DeltaStatic = origDelta.diff(newDelta);
+    const origDelta: Delta = new Delta(textDoc.data.ops);
+    const diff: Delta = origDelta.diff(newDelta);
 
     // Update text doc directly
     await textDoc.submit(diff, source);

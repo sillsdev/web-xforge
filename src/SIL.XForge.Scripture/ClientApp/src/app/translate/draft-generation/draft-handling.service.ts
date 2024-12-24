@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
-import { DeltaOperation, DeltaStatic } from 'quill';
+import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DeltaOperation } from 'rich-text';
 import { catchError, Observable, throwError } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { isString } from '../../../type-utils';
-import { Delta, TextDocId } from '../../core/models/text-doc';
+import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { getVerseRefFromSegmentRef, isBadDelta, verseSlug } from '../../shared/utils';
@@ -18,7 +19,7 @@ export interface DraftMappingOptions {
 
 export interface DraftDiff {
   id: TextDocId;
-  ops: DeltaStatic;
+  ops: Delta;
 }
 
 @Injectable({
@@ -48,12 +49,13 @@ export class DraftHandlingService {
         return false;
       }
 
-      const draftSegmentText: string | undefined = draft[op.attributes?.segment];
+      const draftSegmentText: string | undefined = draft[op.attributes?.segment as string];
       const isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
 
       // Can populate draft if insert is a blank string OR insert is object that has 'blank: true' property.
       // Other objects are not draftable (e.g. 'note-thread-embed').
-      const isInsertBlank = (isString(op.insert) && op.insert.trim().length === 0) || op.insert.blank === true;
+      const isInsertBlank =
+        (isString(op.insert) && op.insert.trim().length === 0) || (!isString(op.insert) && op.insert.blank === true);
 
       return isSegmentDraftAvailable && isInsertBlank;
     });
@@ -74,7 +76,7 @@ export class DraftHandlingService {
     const overwrite = options?.overwrite ?? false;
 
     return targetOps.map(op => {
-      const segmentRef: string | undefined = op.attributes?.segment;
+      const segmentRef: string | undefined = op.attributes?.segment as string | undefined;
       if (segmentRef == null) return op;
       let draftSegmentText: string | undefined = draft[segmentRef];
       let isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
@@ -187,7 +189,7 @@ export class DraftHandlingService {
    * @param textDocId The text doc identifier.
    * @param draftDelta The draft delta to overwrite the current text document with.
    */
-  async applyChapterDraftAsync(textDocId: TextDocId, draftDelta: DeltaStatic): Promise<void> {
+  async applyChapterDraftAsync(textDocId: TextDocId, draftDelta: Delta): Promise<void> {
     await this.projectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true);
     await this.projectService.onlineSetIsValid(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true);
     await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
@@ -222,7 +224,7 @@ export class DraftHandlingService {
           } else {
             ops = draft;
           }
-          const draftDelta: DeltaStatic = new Delta(ops);
+          const draftDelta: Delta = new Delta(ops);
           await this.applyChapterDraftAsync(targetTextDocId, draftDelta).catch(err => {
             // report the error to bugsnag
             this.errorReportingService.silentError('Error applying a draft', ErrorReportingService.normalizeError(err));

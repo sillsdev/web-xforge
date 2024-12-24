@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, Simpl
 import { MatSelectChange } from '@angular/material/select';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { DeltaStatic } from 'quill';
+import { Delta } from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import {
   BehaviorSubject,
@@ -21,7 +21,7 @@ import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
-import { Delta, TextDocId } from '../../../../core/models/text-doc';
+import { TextDocId } from '../../../../core/models/text-doc';
 import { ParatextService, Revision } from '../../../../core/paratext.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { TextDocService } from '../../../../core/text-doc.service';
@@ -157,7 +157,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     }
 
     // Revert to the snapshot
-    const delta: DeltaStatic = new Delta(this.selectedSnapshot.data.ops);
+    const delta: Delta = new Delta(this.selectedSnapshot.data.ops);
     const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
     await this.textDocService.overwrite(textDocId, delta, 'History');
     await this.projectService.onlineSetIsValid(

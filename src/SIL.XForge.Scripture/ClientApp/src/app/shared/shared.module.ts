@@ -28,14 +28,7 @@ const componentExports = [
 ];
 
 @NgModule({
-  imports: [
-    CommonModule,
-    QuillModule.forRoot(),
-    UICommonModule,
-    TranslocoModule,
-    NoticeComponent,
-    TranslocoMarkupModule
-  ],
+  imports: [CommonModule, QuillModule, UICommonModule, TranslocoModule, NoticeComponent, TranslocoMarkupModule],
   declarations: componentExports,
   exports: [...componentExports, NoticeComponent]
 })

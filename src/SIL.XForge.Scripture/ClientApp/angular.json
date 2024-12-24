@@ -52,7 +52,7 @@
               "mnemonist/heap",
               "mingo",
               "papaparse",
-              "quill",
+              "quill-delta",
               "tinycolor2",
               "ts-md5"
             ],
