@@ -189,6 +189,8 @@
     "draft_active_detail": "Generating draft; this usually takes at least {{ count }} hours.",
     "draft_active_header": "Draft in progress",
     "draft_is_ready": "Your draft is ready",
+    "draft_syncing": "Draft initializing",
+    "draft_syncing_detail": "Your project is being synced before queuing the draft.",
     "draft_queued_detail_multiple": "The translation draft generation is number {{ count }} in the queue, and will begin once the server is finished with other projects. Please check back later.",
     "draft_queued_detail": "Generation of the translation draft has been queued, and will begin once the server is finished with another project. Please check back later.",
     "draft_queued_header": "Draft queued",
