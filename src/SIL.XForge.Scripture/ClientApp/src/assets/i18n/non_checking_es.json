@@ -37,7 +37,7 @@
     "loading": "Cargando...",
     "not_found": "Ningún término bíblico coincide con sus criterios.",
     "notes": "Notas",
-    "offline": "Currently unavailable offline. Please connect to the internet, once loaded you can continue viewing them offline.",
+    "offline": "Actualmente no disponible sin conexión. Por favor, conéctese a Internet, una vez cargados podrá seguir viéndolos sin conexión.",
     "renderings": "Traducciones",
     "settings": "Configuración",
     "show": "Mostrar",
@@ -253,11 +253,11 @@
     "next": "Siguiente",
     "no_available_books": "No tiene libros disponibles para la redacción.",
     "overview": "Panorama general",
-    "reference_books": "Reference books",
+    "reference_books": "Libros de referencia",
     "these_source_books_cannot_be_used_for_training": "Los siguientes libros no pueden utilizarse para la formación, ya que no se encuentran en el texto fuente de formación ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "Los siguientes libros no pueden traducirse porque no se encuentran en el texto fuente de redacción ({{ draftingSourceProjectName }}).",
-    "training_books_will_appear": "Training books will appear as you select books under translated books",
-    "translated_books": "Translated books",
+    "training_books_will_appear": "Los libros de formación aparecerán cuando selecciones los libros traducidos",
+    "translated_books": "Libros traducidos",
     "unusable_target_books": "¿No encuentras el libro que buscas? Asegúrate de que el libro se ha creado en Paratext y, a continuación, sincroniza tu proyecto."
   },
   "draft_preview_books": {
