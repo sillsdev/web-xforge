@@ -32,23 +32,6 @@
           </span>
         }
         <span class="toolbar-spacer"></span>
-        @if (isAppOnline) {
-          <button mat-icon-button [title]="t('language')" [matMenuTriggerFor]="localeMenu">
-            <mat-icon>translate</mat-icon>
-          </button>
-        }
-        <mat-menu #localeMenu="matMenu" class="locale-menu">
-          @for (locale of i18n.locales; track locale.canonicalTag) {
-            <button
-              mat-menu-item
-              [class.active-locale]="locale.canonicalTag === i18n.localeCode"
-              (click)="setLocale(locale.canonicalTag)"
-            >
-              <mat-icon>check</mat-icon>
-              <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
-            </button>
-          }
-        </mat-menu>
 
         <button mat-icon-button [title]="t('help')" [matMenuTriggerFor]="helpMenu">
           <mat-icon class="mirror-rtl">help</mat-icon>
@@ -157,6 +140,11 @@
               <div class="install-button"><mat-icon>install_mobile</mat-icon> {{ t("install_on_device") }}</div>
             </button>
           }
+          @if (isAppOnline) {
+            <button mat-menu-item [matMenuTriggerFor]="localeMenu">
+              <mat-icon>translate</mat-icon> {{ i18n.locale.localName }}
+            </button>
+          }
           <button mat-menu-item (click)="logOut()" id="log-out-link">
             <mat-icon>logout</mat-icon> {{ t("log_out") }}
           </button>
@@ -170,6 +158,19 @@
               {{ t("offline") }}
             }
           </div>
+        </mat-menu>
+
+        <mat-menu #localeMenu="matMenu" class="locale-menu">
+          @for (locale of i18n.locales; track locale.canonicalTag) {
+            <button
+              mat-menu-item
+              [class.active-locale]="locale.canonicalTag === i18n.localeCode"
+              (click)="setLocale(locale.canonicalTag)"
+            >
+              <mat-icon>check</mat-icon>
+              <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
+            </button>
+          }
         </mat-menu>
       </mat-toolbar-row>
       @if (hasUpdate) {
