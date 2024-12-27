@@ -851,7 +851,8 @@ export function registerScripture(): string[] {
           curIndex++;
         }
       } else if (op.retain != null) {
-        curIndex += op.retain as number;
+        const retainCount: number = getRetainCount(op);
+        curIndex += retainCount;
         changeIndex = curIndex;
       }
     }

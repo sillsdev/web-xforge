@@ -2356,7 +2356,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         return curIndex;
       }
 
-      const retainCount: number | undefined = getRetainCount(op);
+      const retainCount: number | undefined = getRetainCount(op) ?? 0;
       curIndex += retainCount;
     }
     return undefined;

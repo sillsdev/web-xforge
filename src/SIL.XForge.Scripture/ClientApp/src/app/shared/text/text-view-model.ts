@@ -768,11 +768,7 @@ export class TextViewModel implements OnDestroy {
         curIndex += retainCount;
 
         // remove from the retain op the number of embedded elements contained in its content
-        if (typeof cloneOp.retain === 'number') {
-          cloneOp.retain -= embedsInRange;
-        } else if (typeof cloneOp.retain.length === 'number') {
-          cloneOp.retain.length -= embedsInRange;
-        }
+        (cloneOp.retain as number) -= embedsInRange;
       } else if (cloneOp.delete != null) {
         const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, cloneOp.delete);
         curIndex += cloneOp.delete;
@@ -822,11 +818,7 @@ export class TextViewModel implements OnDestroy {
           embedsToRetain -= editorRange.leadingEmbedCount;
         }
         // add to the retain op the number of embedded elements contained in its content
-        if (typeof cloneOp.retain === 'number') {
-          cloneOp.retain += embedsToRetain;
-        } else if (typeof cloneOp.retain.length === 'number') {
-          cloneOp.retain.length += embedsToRetain;
-        }
+        (cloneOp.retain as number) += embedsToRetain;
         previousOp = 'retain';
       } else if (cloneOp.delete != null) {
         const editorRange: EditorRange = this.getEditorContentRange(editorStartPos, cloneOp.delete);

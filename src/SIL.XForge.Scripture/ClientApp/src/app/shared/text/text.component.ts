@@ -1568,7 +1568,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         curIndex += op.delete;
       } else {
         // increase the current index by the value in the retain
-        curIndex += getRetainCount(op);
+        curIndex += getRetainCount(op) ?? 0;
       }
     }
     return editPositions;
