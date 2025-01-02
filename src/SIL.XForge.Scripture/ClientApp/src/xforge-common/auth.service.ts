@@ -75,6 +75,8 @@ interface LoginParams {
 
 interface xForgeAuth0Parameters extends AuthorizationParams {
   mode?: string;
+  useBranding?: boolean;
+  logo?: string;
   login_hint?: string;
   language?: string;
   enablePasswordless?: boolean;
@@ -243,11 +245,15 @@ export class AuthService {
     const state: AuthState = { returnUrl };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const ui_locales: string = language;
+    const useBranding: boolean =
+      this.locationService.origin.includes('scriptureforge.org') || this.locationService.origin.includes('localhost');
     const auth0Parameters: xForgeAuth0Parameters = {
       ui_locales: language,
       enablePasswordless: true,
       language,
-      login_hint: ui_locales
+      login_hint: ui_locales,
+      useBranding,
+      logo: 'https://auth0.languagetechnology.org/assets/sf.svg'
     };
 
     if (signUp || this.isJoining) {
