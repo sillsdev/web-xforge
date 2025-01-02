@@ -212,7 +212,7 @@ export function projectLabel(project: SelectableProject | DraftSource | undefine
  * @param ops An array of ops to check.
  */
 export function isBadDelta(ops: DeltaOperation[]): boolean {
-  const chapterInsertsCount = ops.filter(op => op.insert?.chapter != null).length;
+  const chapterInsertsCount = ops.filter(op => (op?.insert as any)?.chapter != null).length;
   const containsBadOp = ops.some(
     op =>
       // insert must be defined for any op, and can't be nullish
@@ -249,18 +249,18 @@ export function getUnsupportedTags(deltaOp: DeltaOperation): string[] {
     deltaOp.forEach(t => getUnsupportedTags(t).forEach(s => invalidTags.add(s)));
   } else if (deltaOp && typeof deltaOp === 'object') {
     if (deltaOp.attributes?.['invalid-block'] !== undefined || deltaOp.attributes?.['invalid-inline'] !== undefined) {
-      let style = deltaOp.attributes?.char?.style;
+      let style = (deltaOp.attributes?.char as any)?.style;
       if (style !== undefined) {
         invalidTags.add(style);
       } else {
-        style = deltaOp.attributes?.para?.style;
+        style = (deltaOp.attributes?.para as any)?.style;
         if (style !== undefined) {
           invalidTags.add(style);
         }
       }
     }
 
-    Object.values(deltaOp).forEach(v => getUnsupportedTags(v).forEach(s => invalidTags.add(s)));
+    Object.values(deltaOp).forEach(v => getUnsupportedTags(v as any).forEach(s => invalidTags.add(s)));
   }
 
   return [...invalidTags];

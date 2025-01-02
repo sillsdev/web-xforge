@@ -22,11 +22,12 @@ import {
   WordGraphArc
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
+import userEvent, { UserEvent } from '@testing-library/user-event';
 import { merge } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
-import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
+import Quill, { Delta, EmitterSource, Range } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
@@ -60,6 +61,7 @@ import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
+import { DeltaOperation, StringMap } from 'rich-text';
 import { BehaviorSubject, defer, firstValueFrom, Observable, of, Subject, take } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -85,7 +87,7 @@ import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { ParatextService } from '../../core/paratext.service';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -398,14 +400,14 @@ describe('EditorComponent', () => {
       let segmentRange = env.component.target!.segment!.range;
       let segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
       let op = segmentContents.ops![0];
-      expect(op.insert.blank).toBe(true);
+      expect((op.insert as any).blank).toBe(true);
       expect(op.attributes!.segment).toEqual('p_1');
 
       const index = env.typeCharacters('t');
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
       op = segmentContents.ops![0];
-      expect(op.insert.blank).toBeUndefined();
+      expect((op.insert as any).blank).toBeUndefined();
       expect(op.attributes!.segment).toEqual('p_1');
 
       env.targetEditor.setSelection(index - 2, 1, 'user');
@@ -413,7 +415,7 @@ describe('EditorComponent', () => {
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
       op = segmentContents.ops![0];
-      expect(op.insert.blank).toBe(true);
+      expect((op.insert as any).blank).toBe(true);
       expect(op.attributes!.segment).toEqual('p_1');
 
       env.dispose();
@@ -434,7 +436,7 @@ describe('EditorComponent', () => {
         }
       });
       op = segmentContents.ops![1];
-      expect(op.insert.blank).toBeUndefined();
+      expect((op.insert as any).blank).toBeUndefined();
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
       let index = env.targetEditor.getSelection()!.index;
@@ -454,7 +456,7 @@ describe('EditorComponent', () => {
         }
       });
       op = segmentContents.ops![1];
-      expect(op.insert.blank).toBeUndefined();
+      expect((op.insert as any).blank).toBeUndefined();
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
       env.targetEditor.setSelection(index - 1, 1, 'user');
@@ -472,7 +474,7 @@ describe('EditorComponent', () => {
         }
       });
       op = segmentContents.ops![1];
-      expect(op.insert.blank).toBe(true);
+      expect((op.insert as any).blank).toBe(true);
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
       env.dispose();
@@ -1334,7 +1336,7 @@ describe('EditorComponent', () => {
       expect(env.targetEditor.history['stack']['undo'].length).withContext('setup').toEqual(0);
       let range = env.component.target!.getSegmentRange('verse_1_2')!;
       let contents = env.targetEditor.getContents(range.index, 1);
-      expect(contents.ops![0].insert.blank).toBeDefined();
+      expect((contents.ops![0].insert as any).blank).toBeDefined();
 
       // set selection on a blank segment
       env.targetEditor.setSelection(range.index, 'user');
@@ -1348,7 +1350,7 @@ describe('EditorComponent', () => {
       env.pressKey('delete');
       expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
       contents = env.targetEditor.getContents(range.index, 1);
-      expect(contents.ops![0].insert.blank).toBeDefined();
+      expect((contents.ops![0].insert as any).blank).toBeDefined();
 
       // set selection at segment boundaries
       range = env.component.target!.getSegmentRange('verse_1_4')!;
@@ -1366,12 +1368,12 @@ describe('EditorComponent', () => {
       env.targetEditor.insertEmbed(range.index, 'note', { caller: 'a', style: 'ft' }, 'api');
       env.wait();
       contents = env.targetEditor.getContents(range.index, 1);
-      expect(contents.ops![0].insert.note).toBeDefined();
+      expect((contents.ops![0].insert as any).note).toBeDefined();
       env.targetEditor.setSelection(range.index + 1, 'user');
       env.pressKey('backspace');
       expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
       contents = env.targetEditor.getContents(range.index, 1);
-      expect(contents.ops![0].insert.note).toBeDefined();
+      expect((contents.ops![0].insert as any).note).toBeDefined();
       env.dispose();
     }));
 
@@ -1457,7 +1459,7 @@ describe('EditorComponent', () => {
 
       // Keep track of operations triggered in Quill
       let textChangeOps: RichText.DeltaOperation[] = [];
-      env.targetEditor.on('text-change', (delta: DeltaStatic, _oldContents: DeltaStatic, _source: Sources) => {
+      env.targetEditor.on('text-change', (delta: Delta, _oldContents: Delta, _source: EmitterSource) => {
         if (delta.ops != null) {
           textChangeOps = textChangeOps.concat(
             delta.ops.map(op => {
@@ -1650,7 +1652,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_3')!;
+      const range: Range = env.component.target!.getSegmentRange('verse_1_3')!;
       const contents = env.targetEditor.getContents(range.index, range.length);
       // The footnote starts after a note thread in the segment
       expect(contents.ops![1].insert).toEqual({ note: { caller: '*' } });
@@ -1689,7 +1691,7 @@ describe('EditorComponent', () => {
 
       // SUT
       env.wait();
-      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_4')!;
+      const range: Range = env.component.target!.getSegmentRange('verse_1_4')!;
       const note4Position: number = env.getNoteThreadEditorPosition('dataid04');
       const note4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04')!;
       const note4Anchor: TextAnchor = note4Doc.data!.position;
@@ -1708,7 +1710,7 @@ describe('EditorComponent', () => {
 
       // SUT
       env.wait();
-      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_3')!;
+      const range: Range = env.component.target!.getSegmentRange('verse_1_3')!;
       const note4Position: number = env.getNoteThreadEditorPosition('dataid04');
       const note4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04')!;
       expect(note4Position).toEqual(range.index + 1);
@@ -1932,7 +1934,7 @@ describe('EditorComponent', () => {
       // $target: chapter 1, |->$$verse 3<-|.
       env.targetEditor.setSelection(position, length, 'api');
       env.deleteCharacters();
-      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_3')!;
+      const range: Range = env.component.target!.getSegmentRange('verse_1_3')!;
       expect(env.getNoteThreadEditorPosition('dataid02')).toEqual(range.index);
       expect(env.getNoteThreadEditorPosition('dataid03')).toEqual(range.index + 1);
       expect(env.getNoteThreadEditorPosition('dataid04')).toEqual(range.index + 2);
@@ -2162,7 +2164,7 @@ describe('EditorComponent', () => {
       //  target: $chapter 1, verse 1.
       // move this ----    here ^
       const deleteOps: DeltaOperation[] = [{ retain: deleteStart }, { delete: text.length }];
-      const deleteDelta: DeltaStatic = new Delta(deleteOps);
+      const deleteDelta: Delta = new Delta(deleteOps);
       env.targetEditor.setSelection(deleteStart, text.length);
       // simulate a drag and drop operation, which include a delete and an insert operation
       env.targetEditor.updateContents(deleteDelta, 'user');
@@ -2170,7 +2172,7 @@ describe('EditorComponent', () => {
       env.fixture.detectChanges();
       const insertStart: number = notePosition + 'ter 1, ver'.length;
       const insertOps: DeltaOperation[] = [{ retain: insertStart }, { insert: text }];
-      const insertDelta: DeltaStatic = new Delta(insertOps);
+      const insertDelta: Delta = new Delta(insertOps);
       env.targetEditor.updateContents(insertDelta, 'user');
 
       env.wait();
@@ -2195,14 +2197,14 @@ describe('EditorComponent', () => {
       env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       const textBeforeNote = 'Text in ';
-      let range: RangeStatic = env.component.target!.getSegmentRange('s_2')!;
+      let range: Range = env.component.target!.getSegmentRange('s_2')!;
       let notePosition: number = env.getNoteThreadEditorPosition('dataid06');
       expect(range.index + textBeforeNote.length).toEqual(notePosition);
       const thread06Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid06');
       let textAnchor: TextAnchor = thread06Doc.data!.position;
       expect(textAnchor).toEqual(origThread06Pos);
 
-      const verse2_3Range: RangeStatic = env.component.target!.getSegmentRange('verse_1_2-3')!;
+      const verse2_3Range: Range = env.component.target!.getSegmentRange('verse_1_2-3')!;
       env.targetEditor.setSelection(verse2_3Range.index + verse2_3Range.length);
       env.wait();
       env.typeCharacters('T');
@@ -2289,7 +2291,7 @@ describe('EditorComponent', () => {
       // $ represents a note thread embed
       // target: $chap|ter 1, verse 1.
       const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
-      const insertDelta: DeltaStatic = new Delta();
+      const insertDelta: Delta = new Delta();
       (insertDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       (insertDelta as any).push({ insert: 'abc' } as DeltaOperation);
       // Simulate remote changes coming in
@@ -2315,7 +2317,7 @@ describe('EditorComponent', () => {
       // $*targ|->et: cha<-|pter 1, $$verse 3.
       //          ------- 7 characters get replaced locally by the text 'defgh'
       const selectionLength: number = 'et: cha'.length;
-      const insertDeleteDelta: DeltaStatic = new Delta();
+      const insertDeleteDelta: Delta = new Delta();
       (insertDeleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       (insertDeleteDelta as any).push({ insert: 'defgh' } as DeltaOperation);
       (insertDeleteDelta as any).push({ delete: selectionLength } as DeltaOperation);
@@ -2330,7 +2332,7 @@ describe('EditorComponent', () => {
       remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
       // $*targdefghpter |->1, $$v<-|erse 3.
       //                    ------ editor range deleted
-      const deleteDelta: DeltaStatic = new Delta();
+      const deleteDelta: Delta = new Delta();
       (deleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       // the remote edit deletes 4, but locally it is expanded to 6 to include the 2 note embeds
       (deleteDelta as any).push({ delete: 4 } as DeltaOperation);
@@ -2418,7 +2420,7 @@ describe('EditorComponent', () => {
       // SUT 3
       env.wait();
       expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: ' + insert + 'cdefhapter 1, verse 1.');
-      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_1')!;
+      const range: Range = env.component.target!.getSegmentRange('verse_1_1')!;
       expect(env.getNoteThreadEditorPosition('dataid01')).toEqual(range.index + anchor.start);
       const contents = env.targetEditor.getContents(range.index, range.length);
       expect(contents.ops![0].insert).toEqual('target: ' + insert);
@@ -2449,11 +2451,11 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_2')!;
+      const range: Range = env.component.target!.getSegmentRange('verse_1_2')!;
       env.targetEditor.setSelection(range.index);
       env.wait();
       env.typeCharacters('t');
-      let contents: DeltaStatic = env.targetEditor.getContents(range.index, 3);
+      let contents: Delta = env.targetEditor.getContents(range.index, 3);
       expect(contents.length()).toEqual(3);
       expect(contents.ops![0].insert).toEqual('t');
       expect(contents.ops![1].insert['verse']).toBeDefined();
@@ -2462,7 +2464,7 @@ describe('EditorComponent', () => {
       env.backspace();
       contents = env.targetEditor.getContents(range.index, 3);
       expect(contents.length()).toEqual(3);
-      expect(contents.ops![0].insert.blank).toBeDefined();
+      expect((contents.ops![0].insert as any).blank).toBeDefined();
       expect(contents.ops![1].insert['verse']).toBeDefined();
       expect(contents.ops![2].insert['note-thread-embed']).toBeDefined();
       env.dispose();
@@ -4925,9 +4927,10 @@ class TestEnvironment {
   }
 
   backspace(): void {
-    const selection = this.targetEditor.getSelection()!;
-    const delta = new Delta([{ retain: selection.index - 1 }, { delete: 1 }]);
-    this.targetEditor.updateContents(delta, 'user');
+    const selection: Range = this.targetEditor.getSelection();
+    const testUserEvent: UserEvent = userEvent.setup();
+    const [leaf] = this.targetEditor.getLeaf(selection.index);
+    testUserEvent.type(leaf.parent.domNode, '{Backspace}'); // This will trigger the 'isBackspaceAllowed' check
     this.wait();
   }
 
