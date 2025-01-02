@@ -416,6 +416,22 @@ describe('AuthService', () => {
     }
   }));
 
+  it('should login with defined logo', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
+
+    env.service.logIn({ returnUrl: 'test-returnUrl' });
+
+    verify(mockedWebAuth.loginWithRedirect(anything())).once();
+    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
+      mockedWebAuth.loginWithRedirect
+    ).last()[0];
+    expect(authOptions).toBeDefined();
+    if (authOptions != null) {
+      expect(authOptions.authorizationParams!.logo).toBeDefined();
+    }
+  }));
+
   it('should link with Paratext', fakeAsync(() => {
     const env = new TestEnvironment({ isOnline: true, isLoggedIn: true });
     const returnUrl = 'test-returnUrl';
