@@ -1,7 +1,8 @@
+import { Delta } from 'quill';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { Delta, TextDocId } from '../core/models/text-doc';
+import { TextDocId } from '../core/models/text-doc';
 import { RIGHT_TO_LEFT_MARK } from './utils';
 
 export function getTextDoc(id: TextDocId): TextData {
