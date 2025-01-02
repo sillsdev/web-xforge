@@ -2938,7 +2938,7 @@ public class ParatextService : DisposableBase, IParatextService
                         continue;
                     if (!string.IsNullOrEmpty(note.SyncUserRef))
                         throw new DataNotFoundException(
-                            "Could not find the matching comment for a note containing a sync user."
+                            $"Could not find the matching comment for note {note.DataId} in thread {note.ThreadId} containing sync user {note.SyncUserRef}."
                         );
 
                     // new comment added
