@@ -13,12 +13,11 @@ import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
-import Quill, { Delta, EmitterSource, Range } from 'quill';
+import Quill, { DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
-import { StringMap } from 'rich-text';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
@@ -30,10 +29,9 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { getBrowserEngine, objectId } from 'xforge-common/utils';
-import { isString } from '../../../type-utils';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { TextDoc, TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
@@ -44,7 +42,7 @@ import {
   getVerseStrFromSegmentRef,
   VERSE_REGEX
 } from '../utils';
-import { getAttributesAtPosition, getRetainCount, registerScripture } from './quill-scripture';
+import { getAttributesAtPosition, registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
 import { EditorRange, TextViewModel } from './text-view-model';
@@ -56,7 +54,7 @@ export const EDITOR_READY_TIMEOUT = 100;
 const USX_FORMATS = registerScripture();
 
 export interface TextUpdatedEvent {
-  delta?: Delta;
+  delta?: DeltaStatic;
   prevSegment?: Segment;
   segment?: Segment;
   affectedEmbeds?: EmbedsByVerse[];
@@ -86,7 +84,7 @@ export interface RemotePresences {
 
 /** A verse's range and the embeds located within the range. */
 export interface EmbedsByVerse {
-  verseRange: Range;
+  verseRange: RangeStatic;
   embeds: Map<string, number>;
 }
 
@@ -137,29 +135,29 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         'embed right shift': null,
 
         'disable backspace': {
-          key: 'Backspace',
+          key: 'backspace',
           altKey: null,
           ctrlKey: null,
           metaKey: null,
           shiftKey: null,
-          handler: (range: Range) => this.isBackspaceAllowed(range)
+          handler: (range: RangeStatic) => this.isBackspaceAllowed(range)
         },
         'disable backspace word': {
-          key: 'Backspace',
+          key: 'backspace',
           ctrlKey: true,
-          handler: (range: Range) => this.handleBackspaceWord(range)
+          handler: (range: RangeStatic) => this.handleBackspaceWord(range)
         },
         'disable delete': {
-          key: 'Delete',
-          handler: (range: Range) => this.isDeleteAllowed(range)
+          key: 'delete',
+          handler: (range: RangeStatic) => this.isDeleteAllowed(range)
         },
         'disable delete word': {
-          key: 'Delete',
+          key: 'delete',
           ctrlKey: true,
-          handler: (range: Range) => this.handleDeleteWord(range)
+          handler: (range: RangeStatic) => this.handleDeleteWord(range)
         },
         'disable enter': {
-          key: 'Enter',
+          key: 'enter',
           shiftKey: null,
           handler: () => false
         },
@@ -169,7 +167,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           handler: () => false
         },
         'move next, tab': {
-          key: 'Tab',
+          key: 'tab',
           shiftKey: false,
           handler: () => {
             if (this.isRtl && this.isSelectionAtSegmentEnd) {
@@ -181,12 +179,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           }
         },
         'move prev, tab': {
-          key: 'Tab',
+          key: 'tab',
           shiftKey: true,
           handler: () => this.movePrevSegment()
         },
         'move next, segment end, right arrow': {
-          key: 'ArrowRight',
+          key: 'right',
           handler: () => {
             if (this.isLtr && this.isSelectionAtSegmentEnd) {
               this.moveNextSegment(false);
@@ -199,7 +197,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           }
         },
         'move next, segment end, left arrow': {
-          key: 'ArrowLeft',
+          key: 'left',
           handler: () => {
             if (this.isRtl && this.isSelectionAtSegmentEnd) {
               this.moveNextSegment(false);
@@ -211,7 +209,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           }
         },
         redo: {
-          key: 'y',
+          key: 'Y',
           shortKey: true,
           handler: () => {
             if (this.editor != null) {
@@ -249,13 +247,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private readonly cursorColorStorageKey = 'cursor_color';
   private isDestroyed: boolean = false;
   private localPresenceChannel?: LocalPresence<PresenceData>;
-  private localPresenceDoc?: LocalPresence<Range | null>;
+  private localPresenceDoc?: LocalPresence<RangeStatic | null>;
   private readonly presenceId: string = objectId();
   /** The ShareDB presence information for the TextDoc that the quill is bound to. */
-  private presenceDoc?: Presence<Range>;
+  private presenceDoc?: Presence<RangeStatic>;
   private presenceChannel?: Presence<PresenceData>;
   private presenceActiveEditor$: Subject<boolean> = new Subject<boolean>();
-  private onPresenceDocReceive = (_presenceId: string, _range: Range | null): void => {};
+  private onPresenceDocReceive = (_presenceId: string, _range: RangeStatic | null): void => {};
   private onPresenceChannelReceive = (_presenceId: string, _presenceData: PresenceData | null): void => {};
 
   constructor(
@@ -393,7 +391,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this._segment;
   }
 
-  get segments(): IterableIterator<[string, Range]> {
+  get segments(): IterableIterator<[string, RangeStatic]> {
     return this.viewModel.segments;
   }
 
@@ -494,7 +492,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
       this.changeDetector.detectChanges();
       if (!isOnline && this._editor != null) {
-        const cursors: QuillCursors = this._editor.getModule('cursors') as QuillCursors;
+        const cursors: QuillCursors = this._editor.getModule('cursors');
         cursors.clearCursors();
       }
     });
@@ -552,7 +550,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return false;
   }
 
-  getSegmentRange(ref: string): Range | undefined {
+  getSegmentRange(ref: string): RangeStatic | undefined {
     return this.viewModel.getSegmentRange(ref);
   }
 
@@ -560,7 +558,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.getSegmentText(ref);
   }
 
-  getSegmentContents(ref: string): Delta | undefined {
+  getSegmentContents(ref: string): DeltaStatic | undefined {
     return this.viewModel.getSegmentContents(ref);
   }
 
@@ -588,7 +586,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.editor == null ? null : this.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
   }
 
-  getViewerPosition(presenceId: string): Range | undefined {
+  getViewerPosition(presenceId: string): RangeStatic | undefined {
     return Object.entries(this.presenceDoc?.remotePresences ?? {}).find(([id, _data]) => id === presenceId)?.[1];
   }
 
@@ -661,7 +659,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (verseSegments.length === 0) {
       return undefined;
     }
-    let editorPosOfSegmentToModify: Range | undefined = this.getSegmentRange(verseSegments[0]);
+    let editorPosOfSegmentToModify: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let startTextPosInVerse: number = textAnchor.start;
     if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
       return undefined;
@@ -671,7 +669,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const nextSegmentMarkerLength = 1;
     const blankSegmentLength = 1;
     for (const vs of verseSegments) {
-      const editorPosOfSomeSegment: Range | undefined = this.getSegmentRange(vs);
+      const editorPosOfSomeSegment: RangeStatic | undefined = this.getSegmentRange(vs);
       if (editorPosOfSomeSegment == null) {
         break;
       }
@@ -740,7 +738,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  get commenterSelection(): Range[] {
+  get commenterSelection(): RangeStatic[] {
     const ret = [];
     for (const segment of this.viewModel.segments) {
       const range = segment[1];
@@ -756,7 +754,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   toggleVerseSelection(verseRef: VerseRef): boolean {
     if (this.editor == null) return false;
     const verseSegments: string[] = this.filterSegments(this.getCompatibleSegments(verseRef));
-    const verseRange: Range | undefined = this.getSegmentRange(verseSegments[0]);
+    const verseRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let selectionValue: true | null = true;
     if (verseRange != null) {
       const formats: StringMap = getAttributesAtPosition(this.editor, verseRange.index);
@@ -768,7 +766,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     for (const segment of verseSegments) {
       // only underline the selection if it is part of the verse text i.e. not a section heading
       if (!VERSE_REGEX.test(segment)) continue;
-      const range: Range | undefined = this.getSegmentRange(segment);
+      const range: RangeStatic | undefined = this.getSegmentRange(segment);
       if (range != null) {
         if (!verseEmbedFormatted) {
           // add the formatting to the verse embed on the first iteration
@@ -782,10 +780,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   /** Respond to text changes in the quill editor. */
-  onContentChanged(delta: Delta, source: string): void {
-    const preDeltaSegmentCache: IterableIterator<[string, Range]> = this.viewModel.segmentsSnapshot;
+  onContentChanged(delta: DeltaStatic, source: string): void {
+    const preDeltaSegmentCache: IterableIterator<[string, RangeStatic]> = this.viewModel.segmentsSnapshot;
     const preDeltaEmbedCache: Readonly<Map<string, number>> = this.viewModel.embeddedElementsSnapshot;
-    this.viewModel.update(delta, source as EmitterSource, this.onlineStatusService.isOnline);
+    this.viewModel.update(delta, source as Sources, this.onlineStatusService.isOnline);
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       const isUserEdit: boolean = source === 'user';
@@ -793,7 +791,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  async onSelectionChanged(range: Range | null): Promise<void> {
+  async onSelectionChanged(range: RangeStatic | null): Promise<void> {
     this.update();
 
     this.submitLocalPresenceDoc(range);
@@ -865,7 +863,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (presenceId == null) {
       return;
     }
-    const range: Range | undefined = this.getViewerPosition(presenceId);
+    const range: RangeStatic | undefined = this.getViewerPosition(presenceId);
     if (range == null) {
       this.editor.root.scrollTop = 0;
       return;
@@ -884,12 +882,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   isSegmentBlank(ref: string): boolean {
-    const segmentDelta: Delta | undefined = this.getSegmentContents(ref);
+    const segmentDelta: DeltaStatic | undefined = this.getSegmentContents(ref);
     if (segmentDelta?.ops == null) {
       return false;
     }
     for (const op of segmentDelta.ops) {
-      if (!isString(op.insert) && op.insert?.blank != null) {
+      if (op.insert != null && op.insert.blank != null) {
         return true;
       }
     }
@@ -897,8 +895,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   /** Is a given selection range valid for editing the current segment? */
-  isValidSelectionForCurrentSegment(sel: Range): boolean {
-    const newSel: Range | null = this.conformToValidSelectionForCurrentSegment(sel);
+  isValidSelectionForCurrentSegment(sel: RangeStatic): boolean {
+    const newSel: RangeStatic | null = this.conformToValidSelectionForCurrentSegment(sel);
     return !(newSel == null || sel.index !== newSel.index || sel.length !== newSel.length);
   }
 
@@ -909,7 +907,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.focused.emit(focus);
   }
 
-  setContents(delta: Delta, source?: EmitterSource): void {
+  setContents(delta: DeltaStatic, source?: Sources): void {
     if (this._editor != null) {
       this._editor.setContents(delta, source);
       this.contentSet = true;
@@ -944,16 +942,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (!this.isPresenceEnabled || this.editor == null) {
       return;
     }
-    const cursors: QuillCursors = this.editor.getModule('cursors') as QuillCursors;
+    const cursors: QuillCursors = this.editor.getModule('cursors');
 
-    // Subscribe to TextDoc specific presence changes - these only include Range updates from ShareDB
+    // Subscribe to TextDoc specific presence changes - these only include RangeStatic updates from ShareDB
     this.presenceDoc = textDoc.docPresence;
     this.presenceDoc.subscribe(error => {
       if (error) throw error;
     });
     this.localPresenceDoc = this.presenceDoc.create(this.presenceId);
 
-    this.onPresenceDocReceive = (presenceId: string, range: Range | null) => {
+    this.onPresenceDocReceive = (presenceId: string, range: RangeStatic | null) => {
       if (range == null || !this.isPresenceActive) {
         cursors.removeCursor(presenceId);
         return;
@@ -1075,7 +1073,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     await this.submitLocalPresenceChannel(null);
     await this.submitLocalPresenceDoc(null);
     if (this.editor != null) {
-      const cursors: QuillCursors = this.editor.getModule('cursors') as QuillCursors;
+      const cursors: QuillCursors = this.editor.getModule('cursors');
       cursors.clearCursors();
     }
     this.presenceChannel?.unsubscribe(error => {
@@ -1112,7 +1110,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this.editor == null || this.segment == null) {
       return false;
     }
-    const selection: Range | null = this.editor.getSelection();
+    const selection: RangeStatic | null = this.editor.getSelection();
     if (selection == null) {
       return false;
     }
@@ -1123,14 +1121,15 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     // Strip embeds from the segment range so we can get can an accurate index and length
-    const segmentRange: Range = this.conformToValidSelectionForCurrentSegment(this.segment.range) ?? this.segment.range;
+    const segmentRange: RangeStatic =
+      this.conformToValidSelectionForCurrentSegment(this.segment.range) ?? this.segment.range;
 
     const selectionEndIndex = selection.index + (end ? selection.length : 0);
     const segmentEndIndex = segmentRange.index + (end ? segmentRange.length : 0);
     return selectionEndIndex === segmentEndIndex;
   }
 
-  private isBackspaceAllowed(range: Range): boolean {
+  private isBackspaceAllowed(range: RangeStatic): boolean {
     if (this._editor == null) {
       return false;
     }
@@ -1149,26 +1148,26 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return isTextDeletion && this._segment != null && range.index !== this._segment.range.index;
   }
 
-  private handleBackspaceWord(range: Range): boolean {
+  private handleBackspaceWord(range: RangeStatic): boolean {
     if (range.length > 0 || this._editor == null) return false;
 
-    const wordRange: Range | undefined = this.getRangeForWordBeforeIndex(range.index);
+    const wordRange: RangeStatic | undefined = this.getRangeForWordBeforeIndex(range.index);
     if (wordRange != null) {
       this._editor.deleteText(wordRange.index, wordRange.length, 'user');
     }
     return false;
   }
 
-  private handleDeleteWord(range: Range): boolean {
+  private handleDeleteWord(range: RangeStatic): boolean {
     if (range.length > 0 || this._editor == null) return false;
-    const wordRange: Range | undefined = this.getRangeForWordAfterIndex(range.index);
+    const wordRange: RangeStatic | undefined = this.getRangeForWordAfterIndex(range.index);
     if (wordRange != null) {
       this._editor.deleteText(wordRange.index, wordRange.length, 'user');
     }
     return false;
   }
 
-  private isDeleteAllowed(range: Range): boolean {
+  private isDeleteAllowed(range: RangeStatic): boolean {
     if (this._editor == null) {
       return false;
     }
@@ -1189,13 +1188,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     );
   }
 
-  private getRangeForWordBeforeIndex(selectionIndex: number): Range | undefined {
+  private getRangeForWordBeforeIndex(selectionIndex: number): RangeStatic | undefined {
     if (this.segment == null || this._editor == null) return undefined;
-    const segmentRange: Range | undefined = this.getSegmentRange(this.segment.ref);
+    const segmentRange: RangeStatic | undefined = this.getSegmentRange(this.segment.ref);
     if (segmentRange == null) return undefined;
 
     const lengthFromSegmentStartToSelection: number = selectionIndex - segmentRange.index;
-    const contents: Delta = this._editor.getContents(segmentRange.index, lengthFromSegmentStartToSelection);
+    const contents: DeltaStatic = this._editor.getContents(segmentRange.index, lengthFromSegmentStartToSelection);
     if (contents.ops == null) return undefined;
 
     const lastOp: any = contents.ops[contents.ops.length - 1].insert;
@@ -1216,13 +1215,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return { index: startOfWordIndex, length: wordLength };
   }
 
-  private getRangeForWordAfterIndex(selectionIndex: number): Range | undefined {
+  private getRangeForWordAfterIndex(selectionIndex: number): RangeStatic | undefined {
     if (this.segment == null || this._editor == null) return undefined;
-    const segmentRange: Range | undefined = this.getSegmentRange(this.segment.ref);
+    const segmentRange: RangeStatic | undefined = this.getSegmentRange(this.segment.ref);
     if (segmentRange == null) return undefined;
 
     const lengthToSegmentEnd: number = segmentRange.index + segmentRange.length - selectionIndex;
-    const contents: Delta = this._editor.getContents(selectionIndex, lengthToSegmentEnd);
+    const contents: DeltaStatic = this._editor.getContents(selectionIndex, lengthToSegmentEnd);
     if (contents.ops == null || contents.ops.length < 1) return undefined;
 
     const firstOp = contents.ops[0].insert;
@@ -1298,7 +1297,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     });
   }
 
-  private async submitLocalPresenceDoc(range: Range | null): Promise<void> {
+  private async submitLocalPresenceDoc(range: RangeStatic | null): Promise<void> {
     if (
       !this.isPresenceActive ||
       this.localPresenceDoc == null ||
@@ -1313,8 +1312,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   private update(
-    delta?: Delta,
-    preDeltaSegmentCache?: IterableIterator<[string, Range]>,
+    delta?: DeltaStatic,
+    preDeltaSegmentCache?: IterableIterator<[string, RangeStatic]>,
     preDeltaEmbedCache?: Readonly<Map<string, number>>,
     isUserEdit?: boolean
   ): void {
@@ -1345,8 +1344,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         // Embedding notes into quill makes quill emit deltas when it registers that content has changed
         // but quill incorrectly interprets the change when the selection is within the updated segment.
         // Content coming after the selection gets moved before the selection. This moves the selection back.
-        const curSegmentRange: Range = this.segment.range;
-        const insertionPoint: number = getRetainCount(delta.ops[0]) ?? 0;
+        const curSegmentRange: RangeStatic = this.segment.range;
+        const insertionPoint: number = delta.ops[0].retain;
         const segmentEndPoint: number = curSegmentRange.index + curSegmentRange.length - 1;
         if (insertionPoint >= curSegmentRange.index && insertionPoint <= segmentEndPoint) {
           this._editor.setSelection(segmentEndPoint);
@@ -1464,7 +1463,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const segmentRange: Range | undefined = this.viewModel.getSegmentRange(this._segment.ref);
+    const segmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(this._segment.ref);
     if (segmentRange == null) {
       return;
     }
@@ -1495,8 +1494,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Gets the embeds affected */
   private getEmbedsAffectedByDelta(
-    delta?: Delta,
-    preDeltaSegmentCache?: IterableIterator<[string, Range]>,
+    delta?: DeltaStatic,
+    preDeltaSegmentCache?: IterableIterator<[string, RangeStatic]>,
     preDeltaEmbedCache?: Readonly<Map<string, number>>
   ): EmbedsByVerse[] {
     if (delta?.ops == null || preDeltaSegmentCache == null || preDeltaEmbedCache == null) {
@@ -1504,7 +1503,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     let verseIsEdited = false;
     let currentVerse: string = '';
-    let currentVerseRange: Range = { index: 0, length: 0 };
+    let currentVerseRange: RangeStatic = { index: 0, length: 0 };
     let embedsByVerse = new Map<string, number>();
     const editPositions: number[] = this.getEditPositionsInDelta(delta);
     const embedsByEditedVerse: EmbedsByVerse[] = [];
@@ -1553,7 +1552,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return embedsByEditedVerse;
   }
 
-  private getEditPositionsInDelta(delta: Delta): number[] {
+  private getEditPositionsInDelta(delta: DeltaStatic): number[] {
     let curIndex = 0;
     const editPositions: number[] = [];
     if (delta.ops == null) {
@@ -1568,7 +1567,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         curIndex += op.delete;
       } else {
         // increase the current index by the value in the retain
-        curIndex += getRetainCount(op) ?? 0;
+        curIndex += op.retain == null ? 0 : op.retain;
       }
     }
     return editPositions;
@@ -1579,12 +1578,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._editor == null) {
       return;
     }
-    const sel: Range | null = this._editor.getSelection();
+    const sel: RangeStatic | null = this._editor.getSelection();
     if (sel == null) {
       return;
     }
 
-    const newSel: Range | null = this.conformToValidSelectionForCurrentSegment(sel);
+    const newSel: RangeStatic | null = this.conformToValidSelectionForCurrentSegment(sel);
     if (newSel != null && (sel.index !== newSel.index || sel.length !== newSel.length)) {
       this._editor.setSelection(newSel, 'user');
     }
@@ -1592,11 +1591,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Given a selection, return a possibly modified selection that is a valid for editing the current segment.
    * For example, a selection over a segment boundary is sometimes not valid. */
-  private conformToValidSelectionForCurrentSegment(sel: Range): Range | null {
+  private conformToValidSelectionForCurrentSegment(sel: RangeStatic): RangeStatic | null {
     if (this._editor == null || this._segment == null) {
       return null;
     }
-    let newSel: Range | undefined;
+    let newSel: RangeStatic | undefined;
     if (this._segment.text === '') {
       // always select at the end of blank so the cursor is inside the segment and not between the segment and verse
       newSel = { index: this._segment.range.index + this._segment.range.length, length: 0 };
@@ -1635,7 +1634,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._editor == null) {
       return;
     }
-    const sel: Range | null = this._editor.getSelection();
+    const sel: RangeStatic | null = this._editor.getSelection();
     if (sel == null) {
       return;
     }
@@ -1676,9 +1675,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.highlightMarker.style.marginTop = -this._selectionBoundsTop + 'px';
       const height = this.highlightMarkerHeight + offsetTop;
       this.highlightMarker.style.height = Math.max(height, 0) + 'px';
-    } else if (offsetBottom > this._editor.root.clientHeight) {
+    } else if (offsetBottom > this._editor.scrollingContainer.clientHeight) {
       this.highlightMarker.style.marginTop = marginTop + 'px';
-      const height = this._editor.root.clientHeight - offsetTop;
+      const height = this._editor.scrollingContainer.clientHeight - offsetTop;
       this.highlightMarker.style.height = Math.max(height, 0) + 'px';
     } else {
       this.highlightMarker.style.marginTop = marginTop + 'px';

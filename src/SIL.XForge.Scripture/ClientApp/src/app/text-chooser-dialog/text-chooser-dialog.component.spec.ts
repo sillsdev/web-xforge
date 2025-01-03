@@ -7,7 +7,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
-import { Delta } from 'quill';
+import { DeltaStatic } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -32,7 +32,7 @@ import { UserService } from 'xforge-common/user.service';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
-import { TextDoc } from '../core/models/text-doc';
+import { Delta, TextDoc } from '../core/models/text-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
@@ -384,7 +384,7 @@ class TestEnvironment {
   static segmentLen(verseNumber: number): number {
     return TestEnvironment.delta.filter(
       op => op.attributes != null && op.attributes.segment === 'verse_1_' + verseNumber
-    )[0].insert.length as number;
+    )[0].insert.length;
   }
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
@@ -537,7 +537,7 @@ class TestEnvironment {
     return div.firstChild! as Element;
   }
 
-  static get delta(): Delta {
+  static get delta(): DeltaStatic {
     const delta = new Delta();
     delta.insert({ chapter: { number: '1', style: 'c' } });
     delta.insert('heading text', { para: { style: 'p' } });

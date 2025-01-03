@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Delta } from 'quill';
+import { DeltaStatic } from 'quill';
 import { I18nService } from 'xforge-common/i18n.service';
 
 const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
@@ -37,12 +37,12 @@ export class EditorHistoryService {
     return 'Invalid Date';
   }
 
-  processDiff(deltaA: Delta, deltaB: Delta): Delta {
+  processDiff(deltaA: DeltaStatic, deltaB: DeltaStatic): DeltaStatic {
     // Remove the cid whenever it is found, as this is confusing the diff
     deltaA.forEach(obj => this.removeCid(obj));
     deltaB.forEach(obj => this.removeCid(obj));
 
-    let diff: Delta = deltaA.diff(deltaB);
+    let diff: DeltaStatic = deltaA.diff(deltaB);
 
     // Process each op in the diff
     for (const op of diff.ops ?? []) {

@@ -1,11 +1,11 @@
 import * as crc from 'crc-32';
-import { Range } from 'quill';
+import { RangeStatic } from 'quill';
 
 export class Segment {
   initialChecksum?: number;
 
   private _text: string = '';
-  private _range: Range = { index: 0, length: 0 };
+  private _range: RangeStatic = { index: 0, length: 0 };
   private _checksum?: number;
   private initialTextLen: number = -1;
 
@@ -19,7 +19,7 @@ export class Segment {
     return this._text;
   }
 
-  get range(): Range {
+  get range(): RangeStatic {
     return this._range;
   }
 
@@ -43,7 +43,7 @@ export class Segment {
     this.initialChecksum = this.checksum;
   }
 
-  update(text: string, range: Range): void {
+  update(text: string, range: RangeStatic): void {
     this._text = text;
     this._range = range;
     this._checksum = undefined;

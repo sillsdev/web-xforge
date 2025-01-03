@@ -47,7 +47,7 @@ describe('shared utils', () => {
     it('requires op.insert to be a string or object', () => {
       expect(isBadDelta([{}])).toBeTrue();
       expect(isBadDelta([{ insert: null }])).toBeTrue();
-      expect(isBadDelta([{ insert: 1 as any }])).toBeTrue();
+      expect(isBadDelta([{ insert: 1 }])).toBeTrue();
       // this isn't actually a good op, but isBadDelta won't see a problem with it
       // it's looking for known issues, not proving validity
       expect(isBadDelta([{ insert: {} }])).toBeFalse();

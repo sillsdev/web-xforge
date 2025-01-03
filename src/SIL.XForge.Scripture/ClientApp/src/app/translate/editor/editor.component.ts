@@ -31,7 +31,7 @@ import {
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
-import Quill, { Bounds, Delta, Range } from 'quill';
+import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { EditorTabGroupType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
@@ -88,13 +88,12 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { browserLinks, getLinkHTML, isBlink, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
-import { isString } from '../../../type-utils';
 import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDocId } from '../../core/models/text-doc';
 import { Revision } from '../../core/paratext.service';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -104,7 +103,6 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
 import { TabAddRequestService } from '../../shared/sf-tab-group/base-services/tab-add-request.service';
-import { getRetainCount } from '../../shared/text/quill-scripture';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,
@@ -832,7 +830,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   async onTargetUpdated(
     segment?: Segment,
-    delta?: Delta,
+    delta?: DeltaStatic,
     prevSegment?: Segment,
     preDeltaAffectedEmbeds?: EmbedsByVerse[],
     isLocalUpdate?: boolean
@@ -891,19 +889,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.source.setSegment(this.target.segmentRef);
       }
 
-      if (delta?.ops != null) {
-        const retainCount: number = getRetainCount(delta.ops[0]);
-        const insertText: string | undefined = isString(delta.ops[1]?.insert) ? delta.ops[1].insert : undefined;
+      if (delta != null && delta.ops != null) {
         // insert a space if the user just inserted a suggestion and started typing
         if (
           delta.ops.length === 2 &&
-          retainCount === this.insertSuggestionEnd &&
-          insertText != null &&
-          insertText.length > 0 &&
-          !PUNCT_SPACE_REGEX.test(insertText)
+          delta.ops[0].retain === this.insertSuggestionEnd &&
+          delta.ops[1].insert != null &&
+          delta.ops[1].insert.length > 0 &&
+          !PUNCT_SPACE_REGEX.test(delta.ops[1].insert)
         ) {
           this.target.editor.insertText(this.insertSuggestionEnd, ' ', 'user');
-          const selectIndex = this.insertSuggestionEnd + insertText.length + 1;
+          const selectIndex = this.insertSuggestionEnd + delta.ops[1].insert.length + 1;
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
@@ -972,11 +968,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     switch (textType) {
       case 'source':
         this.sourceLoaded = true;
-        this.sourceScrollContainer = this.source?.editor?.root;
+        this.sourceScrollContainer = this.source?.editor?.scrollingContainer;
         break;
       case 'target':
         this.targetLoaded = true;
-        this.targetScrollContainer = this.target?.editor?.root;
+        this.targetScrollContainer = this.target?.editor?.scrollingContainer;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
 
@@ -1833,7 +1829,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private skipInitialWhitespace(editor: Quill, range: Range): Range {
+  private skipInitialWhitespace(editor: Quill, range: RangeStatic): RangeStatic {
     let i: number;
     for (i = range.index; i < range.index + range.length; i++) {
       const ch = editor.getText(i, 1);
@@ -1994,7 +1990,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     component: ComponentType<T>,
     dialogConfig: MatDialogConfig<D>
   ): MatDialogRef<T, R> {
-    const selection: Range | null | undefined = this.target?.editor?.getSelection();
+    const selection: RangeStatic | null | undefined = this.target?.editor?.getSelection();
     const targetScrollTop: number | undefined = this.targetScrollContainer?.scrollTop;
     const dialogRef: MatDialogRef<T, R> = this.dialogService.openMatDialog(component, dialogConfig);
 
@@ -2004,7 +2000,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     const subscription: Subscription = dialogRef.afterClosed().subscribe(() => {
       if (this.target?.editor != null && this.dialogService.openDialogCount === 0) {
-        const currentSelection: Range | null | undefined = this.target.editor.getSelection();
+        const currentSelection: RangeStatic | null | undefined = this.target.editor.getSelection();
 
         if (currentSelection?.index !== selection.index) {
           this.target.editor.setSelection(selection.index, 0, 'user');
@@ -2055,7 +2051,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Update the text anchors for the note threads in the current segment. */
-  private async updateVerseNoteThreadAnchors(affectedEmbeds: EmbedsByVerse[], delta: Delta): Promise<void> {
+  private async updateVerseNoteThreadAnchors(affectedEmbeds: EmbedsByVerse[], delta: DeltaStatic): Promise<void> {
     if (this.target == null || this.noteThreadQuery == null || this.noteThreadQuery.docs.length < 1) {
       return;
     }
@@ -2072,7 +2068,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
     const reinsertedNoteIds: string[] = [];
     reinsertedNoteEmbeds.forEach(n => {
-      if (isString(n.attributes?.['threadid'])) {
+      if (n.attributes != null && n.attributes['threadid'] != null) {
         reinsertedNoteIds.push(n.attributes['threadid']);
       }
     });
@@ -2146,7 +2142,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private positionInsertNoteFab(): void {
     if (this.insertNoteFab == null || this.target?.editor == null || this.addingMobileNote) return;
     // getSelection can steal the focus, so we should not call this if the add mobile note bottom sheet is open
-    const selection: Range | null | undefined = this.target.editor.getSelection();
+    const selection: RangeStatic | null | undefined = this.target.editor.getSelection();
     if (selection != null) {
       this.insertNoteFab.nativeElement.style.top = `${this.target.selectionBoundsTop}px`;
       this.insertNoteFab.nativeElement.style.marginTop = `-${this.target.scrollPosition}px`;
@@ -2249,8 +2245,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     oldTextAnchor: TextAnchor,
     oldVerseEmbedPositions: Map<string, number>,
     noteIndex: number,
-    verseRange: Range,
-    delta: Delta
+    verseRange: RangeStatic,
+    delta: DeltaStatic
   ): TextAnchor | undefined {
     if (oldTextAnchor.start === 0 && oldTextAnchor.length === 0) {
       return oldTextAnchor;
@@ -2279,8 +2275,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private getAnchorChanges(
     embedPosition: number,
     noteAnchorEndIndex: number,
-    verseRange: Range,
-    delta: Delta,
+    verseRange: RangeStatic,
+    delta: DeltaStatic,
     embedPositions: Set<number>
   ): [number, number] {
     let startChange: number = 0;
@@ -2293,9 +2289,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     for (const op of delta.ops) {
       const insertOp: any = op.insert;
       const deleteOp: number | undefined = op.delete;
-      const retainCount: number | undefined = getRetainCount(op);
-      if (retainCount != null) {
-        curIndex += retainCount;
+      const retainOp: number | undefined = op.retain;
+      if (retainOp != null) {
+        curIndex += retainOp;
         continue;
       }
 
@@ -2343,7 +2339,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Gets the first edit position within the given range. */
-  private getEditPositionWithinRange(range: Range, delta: Delta): number | undefined {
+  private getEditPositionWithinRange(range: RangeStatic, delta: DeltaStatic): number | undefined {
     if (delta.ops == null) {
       return undefined;
     }
@@ -2356,8 +2352,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         return curIndex;
       }
 
-      const retainCount: number | undefined = getRetainCount(op) ?? 0;
-      curIndex += retainCount;
+      const retainOp: number | undefined = op.retain;
+      curIndex += retainOp == null ? 0 : retainOp;
     }
     return undefined;
   }
@@ -2467,11 +2463,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const targetRange: Range = this.target.segment.range;
-    const targetSelectionBounds: DOMRect | Bounds = this.target.editor.selection.getBounds(targetRange.index);
+    const targetRange: RangeStatic = this.target.segment.range;
+    const targetSelectionBounds: DOMRect = this.target.editor.selection.getBounds(targetRange.index);
 
-    const sourceRange: Range = this.source.segment.range;
-    const sourceSelectionBounds: DOMRect | Bounds = this.source.editor.selection.getBounds(
+    const sourceRange: RangeStatic = this.source.segment.range;
+    const sourceSelectionBounds: DOMRect = this.source.editor.selection.getBounds(
       sourceRange.index,
       sourceRange.length
     );
