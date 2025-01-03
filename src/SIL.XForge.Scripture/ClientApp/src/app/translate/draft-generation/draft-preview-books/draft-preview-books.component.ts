@@ -16,7 +16,11 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
-import { DraftApplyDialogComponent, DraftApplyDialogResult } from '../draft-apply-dialog/draft-apply-dialog.component';
+import {
+  DraftApplyDialogComponent,
+  DraftApplyDialogConfig as DraftApplyDialogData,
+  DraftApplyDialogResult
+} from '../draft-apply-dialog/draft-apply-dialog.component';
 import {
   DraftApplyProgress,
   DraftApplyProgressDialogComponent
@@ -104,9 +108,13 @@ export class DraftPreviewBooksComponent {
   }
 
   async chooseAlternateProjectToAddDraft(bookWithDraft: BookWithDraft): Promise<void> {
+    const dialogData: DraftApplyDialogData = {
+      bookNum: bookWithDraft.bookNumber,
+      chapters: bookWithDraft.chaptersWithDrafts
+    };
     const dialogRef: MatDialogRef<DraftApplyDialogComponent, DraftApplyDialogResult> = this.dialogService.openMatDialog(
       DraftApplyDialogComponent,
-      { data: { bookNum: bookWithDraft.bookNumber }, width: '600px' }
+      { data: dialogData, width: '600px' }
     );
     const result: DraftApplyDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
     if (result == null || result.projectId == null) {
