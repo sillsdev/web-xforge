@@ -1,13 +1,17 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac.Extras.DynamicProxy;
 using Serval.Client;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 
+[Intercept(typeof(EventMetricLogger))]
 public interface IMachineApiService
 {
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]
     Task CancelPreTranslationBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task ExecuteWebhookAsync(string json, string signature);
     Task<ServalBuildDto?> GetBuildAsync(
@@ -71,7 +75,11 @@ public interface IMachineApiService
     );
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
     Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
+
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]
     Task StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId), projectId: "buildConfig.ProjectId")]
     Task StartPreTranslationBuildAsync(string curUserId, BuildConfig buildConfig, CancellationToken cancellationToken);
     Task TrainSegmentAsync(
         string curUserId,

@@ -13,10 +13,10 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 
-abstract class RouterGuard {
+export abstract class RouterGuard {
   constructor(
-    protected authGuard: AuthGuard,
-    protected projectService: SFProjectService
+    protected readonly authGuard: AuthGuard,
+    protected readonly projectService: SFProjectService
   ) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
