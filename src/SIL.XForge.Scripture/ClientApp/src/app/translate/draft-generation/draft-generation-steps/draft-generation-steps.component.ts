@@ -367,13 +367,15 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     this.initialSelectedTrainingBooks = newSelectedTrainingBooks;
     this.userSelectedTrainingBooks = [...newSelectedTrainingBooks];
-    this.selectableSourceTrainingBooks = [...newSelectedTrainingBooks];
-    this.userSelectedSourceTrainingBooks = [...newSelectedTrainingBooks];
+    this.selectableSourceTrainingBooks = this.availableTrainingBooks.filter(b => newSelectedTrainingBooks.includes(b));
     this.selectableAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
       newSelectedTrainingBooks.includes(b)
     );
+    this.userSelectedSourceTrainingBooks = this.selectableSourceTrainingBooks.filter(b =>
+      this.userSelectedSourceTrainingBooks.includes(b)
+    );
     this.userSelectedAdditionalSourceTrainingBooks = this.selectableAdditionalSourceTrainingBooks.filter(b =>
-      newSelectedTrainingBooks.includes(b)
+      this.userSelectedAdditionalSourceTrainingBooks.includes(b)
     );
   }
 
