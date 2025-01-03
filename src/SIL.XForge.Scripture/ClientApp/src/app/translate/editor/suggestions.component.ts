@@ -226,7 +226,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     // root.scrollTop should be 0 if scrollContainer !== root
     this.top = reference.bottom + this.editor.root.scrollTop + 5;
     const suggestionBounds = this.root.getBoundingClientRect();
-    const editorBounds = this.editor.root.getBoundingClientRect();
+    const editorBounds = this.editor.scrollingContainer.getBoundingClientRect();
 
     let newLeft: number | undefined = reference.left + 1;
     let newRight: number | undefined = editorBounds.width - reference.left - 1;
@@ -244,7 +244,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     const marginTop = -this.editor.root.scrollTop;
     const offsetTop = marginTop + this.top;
     const offsetBottom = offsetTop + this.root.clientHeight - 10;
-    if (offsetTop < 0 || offsetBottom > this.editor.root.clientHeight) {
+    if (offsetTop < 0 || offsetBottom > this.editor.scrollingContainer.clientHeight) {
       if (this.root.style.visibility !== 'hidden') {
         this.root.style.visibility = 'hidden';
         this.root.style.marginTop = -this.top + 'px';

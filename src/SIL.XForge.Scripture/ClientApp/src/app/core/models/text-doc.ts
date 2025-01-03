@@ -1,5 +1,5 @@
 import { VerseRef } from '@sillsdev/scripture';
-import { Range } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, RangeStatic } from 'quill';
 import {
   getTextDocId,
   TEXT_INDEX_PATHS,
@@ -11,6 +11,8 @@ import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { RealtimeDocAdapter } from 'xforge-common/realtime-remote-store';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { getVerseStrFromSegmentRef } from '../../shared/utils';
+
+export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
 export type TextDocSource = 'Draft' | 'Editor' | 'History' | 'Paratext';
 
@@ -39,7 +41,7 @@ export class TextDocId {
  * This is the real-time doc for a text doc. Texts contain the textual data for one particular Scripture book
  * and chapter.
  */
-export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
+export class TextDoc extends RealtimeDoc<TextData, TextData, RangeStatic> {
   static readonly COLLECTION = TEXTS_COLLECTION;
   static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
 
@@ -59,12 +61,12 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
         const op = this.data.ops[i];
         const nextOp = i < this.data.ops.length - 1 ? this.data.ops[i + 1] : undefined;
         if (op.attributes != null && op.attributes.segment != null) {
-          if ((op.insert as any).blank != null) {
-            const segRef: string = op.attributes.segment as string;
+          if (op.insert.blank != null) {
+            const segRef = op.attributes.segment;
             if (
               nextOp == null ||
               nextOp.insert == null ||
-              (nextOp.insert as any).verse == null ||
+              nextOp.insert.verse == null ||
               (segRef.startsWith('verse_') && !segRef.includes('/'))
             ) {
               blank++;
@@ -82,8 +84,8 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
     let verses: string[] = [];
     if (this.data != null && this.data.ops != null) {
       for (const op of this.data.ops) {
-        if (op.attributes != null && op.attributes.segment != null && (op.insert as any).blank == null) {
-          const segRef: string = op.attributes.segment as string;
+        if (op.attributes != null && op.attributes.segment != null && op.insert.blank == null) {
+          const segRef = op.attributes.segment;
           if (segRef.startsWith('verse_')) {
             const verse: string | undefined = getVerseStrFromSegmentRef(segRef);
             if (verse != null && !verses.includes(verse)) {
@@ -136,7 +138,7 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
         continue;
       }
       // Locate range of ops that match the verse segments
-      const opSegmentRef: string = (op.attributes?.segment as string) ?? '';
+      const opSegmentRef: string = op.attributes?.segment ?? '';
       const segmentVerse: string | undefined = getVerseStrFromSegmentRef(opSegmentRef);
       if (segmentVerse === verseStr) {
         text += textBetweenRelatedSegments + op.insert;

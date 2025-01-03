@@ -1,13 +1,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
-import Quill, { Delta, EmitterSource, Range } from 'quill';
-import { DeltaOperation, StringMap } from 'rich-text';
+import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { Subscription } from 'rxjs';
-import { isString } from '../../../type-utils';
-import { TextDoc, TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
-import { getAttributesAtPosition, getRetainCount } from './quill-scripture';
+import { getAttributesAtPosition } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
 /** See also DeltaUsxMapper.cs ParagraphPoetryListStyles. */
@@ -126,7 +124,7 @@ class SegmentInfo {
 export class TextViewModel implements OnDestroy {
   editor?: Quill;
 
-  private readonly _segments: Map<string, Range> = new Map<string, Range>();
+  private readonly _segments: Map<string, RangeStatic> = new Map<string, RangeStatic>();
   private changesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
@@ -137,11 +135,11 @@ export class TextViewModel implements OnDestroy {
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
 
-  get segments(): IterableIterator<[string, Range]> {
+  get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
   }
 
-  get segmentsSnapshot(): IterableIterator<[string, Range]> {
+  get segmentsSnapshot(): IterableIterator<[string, RangeStatic]> {
     return cloneDeep(this._segments).entries();
   }
 
@@ -190,19 +188,19 @@ export class TextViewModel implements OnDestroy {
 
     this.textDocId = textDocId;
     this.textDoc = textDoc;
-    editor.setContents(this.textDoc.data as Delta);
+    editor.setContents(this.textDoc.data as DeltaStatic);
     editor.history.clear();
 
     if (subscribeToUpdates) {
       this.changesSub = this.textDoc.remoteChanges$.subscribe(ops => {
-        const deltaWithEmbeds: Delta = this.addEmbeddedElementsToDelta(ops as Delta);
+        const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
         editor.updateContents(deltaWithEmbeds, 'api');
       });
     }
 
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
-        editor.setContents(textDoc.data as Delta);
+        editor.setContents(textDoc.data as DeltaStatic);
       }
       editor.history.clear();
     });
@@ -223,11 +221,11 @@ export class TextViewModel implements OnDestroy {
    * Updates the view model (textDoc), segment ranges, and slightly the Quill contents, such as in response to text
    * changing in the quill editor.
    *
-   * @param {Delta} delta The view model delta.
-   * @param {EmitterSource} source The source of the change.
+   * @param {DeltaStatic} delta The view model delta.
+   * @param {Sources} source The source of the change.
    * @param {boolean} isOnline Whether the user is online.
    */
-  update(delta: Delta, source: EmitterSource, isOnline: boolean): void {
+  update(delta: DeltaStatic, source: Sources, isOnline: boolean): void {
     const editor = this.checkEditor();
     if (this.textDoc == null) {
       return;
@@ -252,7 +250,7 @@ export class TextViewModel implements OnDestroy {
         editor.updateContents(updateDelta, source);
       }
 
-      const removeDuplicateDelta: Delta = this.fixDeltaForDuplicateEmbeds();
+      const removeDuplicateDelta: DeltaStatic = this.fixDeltaForDuplicateEmbeds();
       if (removeDuplicateDelta.ops && removeDuplicateDelta.ops.length > 0) {
         editor.updateContents(removeDuplicateDelta, 'api');
       }
@@ -270,7 +268,7 @@ export class TextViewModel implements OnDestroy {
         const len = typeof op.insert === 'string' ? op.insert.length : 1;
         const attrs = op.attributes;
         let newAttrs: StringMap | undefined;
-        if (isString(attrs?.['segment'])) {
+        if (attrs != null && attrs['segment'] != null) {
           if (refs.has(attrs['segment'])) {
             // highlight segment
             newAttrs = { 'highlight-segment': true };
@@ -318,13 +316,11 @@ export class TextViewModel implements OnDestroy {
     }
 
     const highlightedSegmentIndex = delta.ops.findIndex(op => op.attributes?.['highlight-segment'] === true);
-    const styleOpIndexes = delta.ops
-      .map((op, i) => ((op.attributes?.para as any)?.style ? i : -1))
-      .filter(i => i !== -1);
+    const styleOpIndexes = delta.ops.map((op, i) => (op.attributes?.para?.style ? i : -1)).filter(i => i !== -1);
 
     // This may be -1 if there is no style specified
     const indexOfParagraphStyle = Math.min(...styleOpIndexes.filter(i => i > highlightedSegmentIndex));
-    const style = (delta.ops[indexOfParagraphStyle]?.attributes?.para as any)?.style;
+    const style = delta.ops[indexOfParagraphStyle]?.attributes?.para?.style;
     const description = USFM_STYLE_DESCRIPTIONS[style];
     if (typeof description !== 'string' || style === 'p') {
       return;
@@ -384,7 +380,7 @@ export class TextViewModel implements OnDestroy {
     return segmentsInVerseRef;
   }
 
-  getSegmentRange(ref: string): Range | undefined {
+  getSegmentRange(ref: string): RangeStatic | undefined {
     return this._segments.get(ref);
   }
 
@@ -394,9 +390,9 @@ export class TextViewModel implements OnDestroy {
     return range == null ? '' : editor.getText(range.index, range.length);
   }
 
-  getSegmentContents(ref: string): Delta | undefined {
+  getSegmentContents(ref: string): DeltaStatic | undefined {
     const editor: Quill = this.checkEditor();
-    const range: Range | undefined = this.getSegmentRange(ref);
+    const range: RangeStatic | undefined = this.getSegmentRange(ref);
     return range == null ? undefined : editor.getContents(range.index, range.length);
   }
 
@@ -404,7 +400,7 @@ export class TextViewModel implements OnDestroy {
    * Returns the segment reference with the most overlap of given range.
    * Preference is given to the specified segment if it is wholly contained within the range.
    */
-  getSegmentRef(range: Range, preferRef?: string): string | undefined {
+  getSegmentRef(range: RangeStatic, preferRef?: string): string | undefined {
     let segmentRef: string | undefined;
     let maxOverlap = -1;
 
@@ -495,7 +491,7 @@ export class TextViewModel implements OnDestroy {
     return leadingEmbedCount;
   }
 
-  private viewToData(delta: Delta): Delta {
+  private viewToData(delta: DeltaStatic): DeltaStatic {
     let modelDelta = new Delta();
     if (delta.ops != null) {
       for (const op of delta.ops) {
@@ -531,7 +527,7 @@ export class TextViewModel implements OnDestroy {
    * Re-generate segment boundaries from quill editor ops. Return ops to clean up where and whether blanks are
    * represented.
    */
-  private updateSegments(editor: Quill, isOnline: boolean): Delta {
+  private updateSegments(editor: Quill, isOnline: boolean): DeltaStatic {
     const convertDelta = new Delta();
     let fixDelta = new Delta();
     let fixOffset = 0;
@@ -549,11 +545,11 @@ export class TextViewModel implements OnDestroy {
     for (const op of delta.ops) {
       const attrs: StringMap = {};
       const len = typeof op.insert === 'string' ? op.insert.length : 1;
-      if (op.insert === '\n' || op.attributes?.para != null) {
-        const style: string = op.attributes?.para == null ? null : ((op.attributes.para as any).style as string);
+      if (op.insert === '\n' || (op.attributes != null && op.attributes.para != null)) {
+        const style = op.attributes == null || op.attributes.para == null ? null : (op.attributes.para.style as string);
         if (style == null || canParaContainVerseText(style)) {
           // paragraph
-          for (const _ch of op.insert as any) {
+          for (const _ch of op.insert) {
             if (curSegment != null) {
               paraSegments.push(curSegment);
               curIndex += curSegment.length;
@@ -607,12 +603,12 @@ export class TextViewModel implements OnDestroy {
           curIndex += curSegment.length + len;
           curSegment = undefined;
         }
-      } else if ((op.insert as any).chapter != null) {
+      } else if (op.insert.chapter != null) {
         // chapter
-        chapter = (op.insert as any).chapter.number;
+        chapter = op.insert.chapter.number;
         curIndex += len;
         curSegment = undefined;
-      } else if ((op.insert as any).verse != null) {
+      } else if (op.insert.verse != null) {
         // verse
         if (curSegment != null) {
           curSegment.isVerseNext = true;
@@ -623,28 +619,28 @@ export class TextViewModel implements OnDestroy {
         }
         setAttribute(op, attrs, 'para-contents', true);
         curIndex += len;
-        curSegment = new SegmentInfo('verse_' + chapter + '_' + (op.insert as any).verse.number, curIndex);
+        curSegment = new SegmentInfo('verse_' + chapter + '_' + op.insert.verse.number, curIndex);
       } else {
         // segment
         setAttribute(op, attrs, 'para-contents', true);
         if (curSegment == null) {
           curSegment = new SegmentInfo('', curIndex);
         }
-        const opSegRef: string = op.attributes?.['segment'] != null ? (op.attributes['segment'] as string) : '';
+        const opSegRef = op.attributes != null && op.attributes['segment'] != null ? op.attributes['segment'] : '';
         if (curSegment.origRef == null) {
           curSegment.origRef = opSegRef;
         } else if (curSegment.origRef !== opSegRef) {
           curSegment.origRef = '';
         }
         curSegment.length += len;
-        if ((op.insert as any)?.blank != null) {
+        if (op.insert != null && op.insert.blank != null) {
           curSegment.containsBlank = true;
           if (op.attributes != null && op.attributes['initial'] === true) {
             curSegment.hasInitialFormat = true;
           }
         } else if (op.insert['note-thread-embed'] != null) {
           // record the presence of an embedded note in the segment
-          const id: string | undefined = op.attributes?.['threadid'] as string | undefined;
+          const id = op.attributes != null && op.attributes['threadid'];
           let embedPosition: EmbedPosition | undefined = this._embeddedElements.get(id);
           const position: number = curIndex + curSegment.length - 1;
           if (embedPosition == null) {
@@ -672,10 +668,10 @@ export class TextViewModel implements OnDestroy {
   private fixSegment(
     editor: Quill,
     segment: SegmentInfo,
-    fixDelta: Delta,
+    fixDelta: DeltaStatic,
     fixOffset: number,
     isOnline: boolean
-  ): [Delta, number] {
+  ): [DeltaStatic, number] {
     // inserting blank embeds onto text docs while offline creates a scenario where quill misinterprets
     // the diff delta and can cause merge issues when returning online and duplicating verse segments
     if (segment.length - segment.notesCount === 0 && isOnline) {
@@ -729,7 +725,7 @@ export class TextViewModel implements OnDestroy {
     return result;
   }
 
-  private fixDeltaForDuplicateEmbeds(): Delta {
+  private fixDeltaForDuplicateEmbeds(): DeltaStatic {
     let delta = new Delta();
     const duplicatePositions: EmbedPosition[] = Array.from(this._embeddedElements.values()).filter(
       ep => ep.duplicatePosition != null
@@ -754,7 +750,7 @@ export class TextViewModel implements OnDestroy {
    * Strip off the embedded elements displayed in quill from the delta. This can be used to convert a delta from
    * user edits to apply to a text doc.
    */
-  private removeEmbeddedElementsFromDelta(modelDelta: Delta): Delta {
+  private removeEmbeddedElementsFromDelta(modelDelta: DeltaStatic): DeltaStatic {
     if (modelDelta.ops == null || modelDelta.ops.length < 1) {
       return new Delta();
     }
@@ -763,12 +759,10 @@ export class TextViewModel implements OnDestroy {
     for (const op of modelDelta.ops) {
       let cloneOp: DeltaOperation | undefined = cloneDeep(op);
       if (cloneOp.retain != null) {
-        const retainCount: number = getRetainCount(cloneOp);
-        const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, retainCount);
-        curIndex += retainCount;
-
+        const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, cloneOp.retain);
+        curIndex += cloneOp.retain;
         // remove from the retain op the number of embedded elements contained in its content
-        (cloneOp.retain as number) -= embedsInRange;
+        cloneOp.retain -= embedsInRange;
       } else if (cloneOp.delete != null) {
         const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, cloneOp.delete);
         curIndex += cloneOp.delete;
@@ -793,7 +787,7 @@ export class TextViewModel implements OnDestroy {
    * Add in the embedded elements displayed in quill to the delta. This can be used to convert a delta from a remote
    * edit to apply to the current editor content.
    */
-  private addEmbeddedElementsToDelta(modelDelta: Delta): Delta {
+  private addEmbeddedElementsToDelta(modelDelta: DeltaStatic): DeltaStatic {
     if (modelDelta.ops == null || modelDelta.ops.length < 1) {
       return new Delta();
     }
@@ -806,11 +800,10 @@ export class TextViewModel implements OnDestroy {
       let cloneOp: DeltaOperation = cloneDeep(op);
       editorStartPos = curIndex + embedsUpToIndex;
       if (cloneOp.retain != null) {
-        const retainCount: number = getRetainCount(cloneOp);
         // editorStartPos must be the current index plus the number of embeds previous
-        const editorRange: EditorRange = this.getEditorContentRange(editorStartPos, retainCount);
+        const editorRange: EditorRange = this.getEditorContentRange(editorStartPos, cloneOp.retain);
         embedsUpToIndex += editorRange.embedsWithinRange;
-        curIndex += retainCount;
+        curIndex += cloneOp.retain;
         let embedsToRetain: number = editorRange.embedsWithinRange;
         // remove any embeds subsequent to the previous insert so they can be redrawn in the right place
         if (editorRange.leadingEmbedCount > 0 && previousOp === 'insert') {
@@ -818,7 +811,7 @@ export class TextViewModel implements OnDestroy {
           embedsToRetain -= editorRange.leadingEmbedCount;
         }
         // add to the retain op the number of embedded elements contained in its content
-        (cloneOp.retain as number) += embedsToRetain;
+        cloneOp.retain += embedsToRetain;
         previousOp = 'retain';
       } else if (cloneOp.delete != null) {
         const editorRange: EditorRange = this.getEditorContentRange(editorStartPos, cloneOp.delete);

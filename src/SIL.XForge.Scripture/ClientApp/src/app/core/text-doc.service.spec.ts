@@ -1,5 +1,5 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Delta } from 'quill';
+import { DeltaStatic } from 'quill';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -31,7 +31,7 @@ describe('TextDocService', () => {
 
   it('should overwrite text doc', fakeAsync(() => {
     const env = new TestEnvironment();
-    const newDelta: Delta = getCombinedVerseTextDoc(env.textDocId) as Delta;
+    const newDelta: DeltaStatic = getCombinedVerseTextDoc(env.textDocId) as DeltaStatic;
 
     env.textDocService.overwrite(env.textDocId, newDelta, 'Editor');
     tick();
@@ -41,9 +41,9 @@ describe('TextDocService', () => {
 
   it('should emit diff', fakeAsync(() => {
     const env = new TestEnvironment();
-    const origDelta: Delta = env.getTextDoc(env.textDocId).data as Delta;
-    const newDelta: Delta = getPoetryVerseTextDoc(env.textDocId) as Delta;
-    const diff: Delta = origDelta.diff(newDelta);
+    const origDelta: DeltaStatic = env.getTextDoc(env.textDocId).data as DeltaStatic;
+    const newDelta: DeltaStatic = getPoetryVerseTextDoc(env.textDocId) as DeltaStatic;
+    const diff: DeltaStatic = origDelta.diff(newDelta);
 
     env.textDocService.getLocalSystemChanges$(env.textDocId).subscribe(emittedDiff => {
       expect(emittedDiff.ops).toEqual(diff.ops);
@@ -55,7 +55,7 @@ describe('TextDocService', () => {
 
   it('should submit the source', fakeAsync(() => {
     const env = new TestEnvironment();
-    const newDelta: Delta = getPoetryVerseTextDoc(env.textDocId) as Delta;
+    const newDelta: DeltaStatic = getPoetryVerseTextDoc(env.textDocId) as DeltaStatic;
 
     const textDoc = env.getTextDoc(env.textDocId);
     textDoc.adapter.changes$.subscribe(() => {

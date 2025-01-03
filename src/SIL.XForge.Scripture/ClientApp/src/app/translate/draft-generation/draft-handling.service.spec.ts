@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { DeltaOperation } from 'rich-text';
+import { Delta, DeltaOperation } from 'rich-text';
 import { of, throwError } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
