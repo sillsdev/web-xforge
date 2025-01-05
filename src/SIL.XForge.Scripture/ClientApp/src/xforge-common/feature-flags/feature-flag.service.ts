@@ -306,7 +306,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly updatedLearningRateForServal: FeatureFlag = new ServerOnlyFeatureFlag(
+  private readonly updatedLearningRateForServal: FeatureFlag = new ServerOnlyFeatureFlag(
     'UpdatedLearningRateForServal',
     'Updated Learning Rate For Serval',
     14,

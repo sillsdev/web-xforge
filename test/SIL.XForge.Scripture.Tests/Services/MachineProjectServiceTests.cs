@@ -528,29 +528,6 @@ public class MachineProjectServiceTests
                 Arg.Is<TranslationBuildConfig>(b => ((int)((JObject)b.Options)["max_steps"]) == 35),
                 CancellationToken.None
             );
-        await env.FeatureManager.DidNotReceive().IsEnabledAsync(FeatureFlags.UpdatedLearningRateForServal);
-    }
-
-    [Test]
-    public async Task BuildProjectAsync_UsesTheUpdatedLearningRateForServal()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.UpdatedLearningRateForServal).Returns(Task.FromResult(true));
-        // SUT
-        await env.Service.BuildProjectAsync(
-            User01,
-            new BuildConfig { ProjectId = Project01, FastTraining = true },
-            preTranslate: true,
-            CancellationToken.None
-        );
-        await env
-            .TranslationEnginesClient.Received()
-            .StartBuildAsync(
-                TranslationEngine01,
-                Arg.Is<TranslationBuildConfig>(b => ((int)((JObject)b.Options)["train_params"]["max_steps"]) == 5000),
-                CancellationToken.None
-            );
     }
 
     [Test]

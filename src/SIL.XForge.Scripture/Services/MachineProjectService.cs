@@ -571,21 +571,6 @@ public class MachineProjectService(
             // Load the Serval Config from the Draft Config
             servalConfig = projectDoc.Data.TranslateConfig.DraftConfig.ServalConfig;
         }
-        else if (await featureManager.IsEnabledAsync(FeatureFlags.UpdatedLearningRateForServal))
-        {
-            // Specify the updated learning rate
-            servalConfig = """
-                {
-                    "train_params":
-                    {
-                        "warmup_steps": 1000,
-                        "learning_rate": 0.0002,
-                        "lr_scheduler_type": "cosine",
-                        "max_steps": 5000
-                    }
-                }
-                """;
-        }
 
         // Get the appropriate translation engine
         TranslationBuildConfig translationBuildConfig;

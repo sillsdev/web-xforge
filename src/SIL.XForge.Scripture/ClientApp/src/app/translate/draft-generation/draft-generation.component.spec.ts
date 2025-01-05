@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
@@ -10,12 +10,12 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, of, Subject, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -129,8 +129,7 @@ describe('DraftGenerationComponent', () => {
         'FeatureFlagService',
         {},
         {
-          allowForwardTranslationNmtDrafting: createTestFeatureFlag(false),
-          updatedLearningRateForServal: createTestFeatureFlag(true)
+          allowForwardTranslationNmtDrafting: createTestFeatureFlag(false)
         }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
@@ -226,10 +225,6 @@ describe('DraftGenerationComponent', () => {
 
     get downloadSpinner(): HTMLElement | null {
       return this.getElementByTestId('download-spinner');
-    }
-
-    get draftingRateNotice(): HTMLElement | null {
-      return this.getElementByTestId('drafting-rate-notice');
     }
 
     get offlineTextElement(): HTMLElement | null {
@@ -342,55 +337,6 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
       expect(env.component.isPreTranslationApproved).toBe(true);
       expect(env.warningSourceTargetSame).not.toBeNull();
-    }));
-
-    it('should show draft speed notice if back translation or pre-translate approved', fakeAsync(() => {
-      let env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            updatedLearningRateForServal: createTestFeatureFlag(true)
-          }
-        );
-      });
-      env.component.isBackTranslation = true;
-      env.component.isPreTranslationApproved = false;
-      env.fixture.detectChanges();
-      tick();
-
-      expect(env.component.isBackTranslation).toBe(true);
-      expect(env.component.isPreTranslationApproved).toBe(false);
-      expect(env.draftingRateNotice).not.toBeNull();
-
-      env.component.isBackTranslation = false;
-      env.component.isPreTranslationApproved = true;
-      env.fixture.detectChanges();
-      tick();
-
-      expect(env.component.isBackTranslation).toBe(false);
-      expect(env.component.isPreTranslationApproved).toBe(true);
-      expect(env.draftingRateNotice).not.toBeNull();
-    }));
-
-    it('should not show drafting speed notice if not back translation nor pre-translate approved.', fakeAsync(() => {
-      let env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            updatedLearningRateForServal: createTestFeatureFlag(true)
-          }
-        );
-      });
-      env.component.isBackTranslation = false;
-      env.component.isPreTranslationApproved = false;
-      env.fixture.detectChanges();
-      tick();
-
-      expect(env.draftingRateNotice).toBeNull();
     }));
 
     it('should detect alternate training source language when different to alternate source language', fakeAsync(() => {
@@ -698,8 +644,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            updatedLearningRateForServal: createTestFeatureFlag(true)
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
           }
         );
       });
@@ -1013,8 +958,7 @@ describe('DraftGenerationComponent', () => {
             'FeatureFlagService',
             {},
             {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-              updatedLearningRateForServal: createTestFeatureFlag(true)
+              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
             }
           );
         });
@@ -1171,8 +1115,7 @@ describe('DraftGenerationComponent', () => {
             'FeatureFlagService',
             {},
             {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-              updatedLearningRateForServal: createTestFeatureFlag(true)
+              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
             }
           );
         });
@@ -1349,8 +1292,7 @@ describe('DraftGenerationComponent', () => {
             'FeatureFlagService',
             {},
             {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-              updatedLearningRateForServal: createTestFeatureFlag(true)
+              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
             }
           );
         });
@@ -1549,8 +1491,7 @@ describe('DraftGenerationComponent', () => {
             'FeatureFlagService',
             {},
             {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-              updatedLearningRateForServal: createTestFeatureFlag(true)
+              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
             }
           );
         });
@@ -1804,8 +1745,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            updatedLearningRateForServal: createTestFeatureFlag(true)
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
           }
         );
       });
@@ -1825,8 +1765,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            updatedLearningRateForServal: createTestFeatureFlag(true)
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
           }
         );
       });
@@ -1846,8 +1785,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            updatedLearningRateForServal: createTestFeatureFlag(true)
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
           }
         );
       });
@@ -1885,8 +1823,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            updatedLearningRateForServal: createTestFeatureFlag(true)
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
           }
         );
 
@@ -1924,8 +1861,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            updatedLearningRateForServal: createTestFeatureFlag(true)
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
           }
         );
 

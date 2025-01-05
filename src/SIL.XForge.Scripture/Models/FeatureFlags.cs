@@ -5,6 +5,5 @@ namespace SIL.XForge.Scripture.Models;
 /// </summary>
 public static class FeatureFlags
 {
-    public const string UpdatedLearningRateForServal = "UpdatedLearningRateForServal";
     public const string UseEchoForPreTranslation = "UseEchoForPreTranslation";
 }

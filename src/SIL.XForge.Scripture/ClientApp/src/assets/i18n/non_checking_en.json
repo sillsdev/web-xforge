@@ -196,7 +196,6 @@
     "generate_draft_button": "Generate draft",
     "generate_forward_translation_drafts_header": "Generate translation drafts",
     "generate_new_draft": "New draft",
-    "improved_learning_rate_notice": "Drafting is now much faster! Most drafts will now take about {1}{2} hours to complete instead of {3}{4}. Draft quality should be about the same as before, but please {5}contact us{6} if you notice any issues.",
     "info_alert_different_additional_training_and_source_language": "The language for your additional training text ({{ additionalTrainingSourceLanguageDisplayName }}) must be the same as the training source language ({{ alternateTrainingSourceLanguageDisplayName }}). Select a different additional training text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_different_training_and_source_language": "The language for your alternate training text ({{ alternateTrainingSourceLanguageDisplayName }}) must be the same as the source language ({{ sourceLanguageDisplayName }}). Select a different alternate training text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_last_sync_failed": "Your project failed to synchronize. It will be synchronized when you next generate a draft.",
