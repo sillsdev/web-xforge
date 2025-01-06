@@ -1,6 +1,8 @@
+import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
+import { AvatarComponent } from '../avatar/avatar.component';
 import { I18nService } from '../i18n.service';
 import { UserProfileDoc } from '../models/user-profile-doc';
 import { UserService } from '../user.service';
@@ -8,7 +10,9 @@ import { UserService } from '../user.service';
 @Component({
   selector: 'app-owner',
   templateUrl: './owner.component.html',
-  styleUrls: ['./owner.component.scss']
+  styleUrls: ['./owner.component.scss'],
+  standalone: true,
+  imports: [AvatarComponent, CommonModule]
 })
 export class OwnerComponent implements OnInit {
   @Input() ownerRef?: string;
