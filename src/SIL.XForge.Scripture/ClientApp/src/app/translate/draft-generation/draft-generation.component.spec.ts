@@ -2032,6 +2032,49 @@ describe('DraftGenerationComponent', () => {
       verify(mockDialogRef.close()).once();
     });
 
+    it('should track whether the current project is not syncing', fakeAsync(() => {
+      let env = new TestEnvironment();
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isSyncing()).toBe(false);
+    }));
+
+    it('should track whether the current project is syncing', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'xyz'
+          },
+          translateConfig: {
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'en'
+              }
+            }
+          },
+          sync: {
+            queuedCount: 1
+          }
+        })
+      } as SFProjectProfileDoc;
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: projectId,
+          projectId$: of(projectId),
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
+        });
+      });
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isSyncing()).toBe(true);
+    }));
+
     it('should display the Paratext credentials update prompt when startBuild throws a forbidden error', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(

@@ -460,6 +460,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return activeBuildStates.includes(job?.state as BuildStates);
   }
 
+  isSyncing(): boolean {
+    return this.activatedProject.projectDoc.data.sync.queuedCount > 0;
+  }
+
   isDraftQueued(job?: BuildDto): boolean {
     return [BuildStates.Queued, BuildStates.Pending].includes(job?.state as BuildStates);
   }
