@@ -949,7 +949,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         };
     }
 
-    public async Task<IEnumerable<EventMetric>> GetEventMetricsAsync(
+    public async Task<QueryResults<EventMetric>> GetEventMetricsAsync(
         string curUserId,
         string[] systemRoles,
         string projectId,
@@ -991,7 +991,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // Return the event metrics
-        return _eventMetricService.GetEventMetrics(projectId, pageIndex, pageSize);
+        return await _eventMetricService.GetEventMetricsAsync(projectId, pageIndex, pageSize);
     }
 
     public SFProjectSecret GetProjectSecretByShareKey(string shareKey)

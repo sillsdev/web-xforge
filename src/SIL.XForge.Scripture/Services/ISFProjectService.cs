@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Autofac.Extras.DynamicProxy;
 using SIL.XForge.EventMetrics;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
@@ -36,7 +37,7 @@ public interface ISFProjectService : IProjectService
         int daysBeforeExpiration
     );
     Task<ValidShareKey> CheckShareKeyValidity(string shareKey);
-    Task<IEnumerable<EventMetric>> GetEventMetricsAsync(
+    Task<QueryResults<EventMetric>> GetEventMetricsAsync(
         string curUserId,
         string[] systemRoles,
         string projectId,
