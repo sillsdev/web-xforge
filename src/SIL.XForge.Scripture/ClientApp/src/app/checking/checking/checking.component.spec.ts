@@ -151,7 +151,6 @@ describe('CheckingComponent', () => {
       CheckingCommentsComponent,
       CheckingComponent,
       CheckingScriptureAudioPlayerComponent,
-      OwnerComponent,
       CheckingQuestionsComponent,
       CheckingTextComponent,
       TextAndAudioComponent,
@@ -166,6 +165,7 @@ describe('CheckingComponent', () => {
       SharedModule,
       UICommonModule,
       AvatarComponent,
+      OwnerComponent,
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
