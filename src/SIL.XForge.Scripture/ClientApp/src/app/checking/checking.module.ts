@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
+import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { AudioPlayerComponent } from '../shared/audio/audio-player/audio-player.component';
@@ -55,6 +56,7 @@ import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component
     SharedModule,
     UICommonModule,
     XForgeCommonModule,
+    OwnerComponent,
     AngularSplitModule,
     ngfModule,
     TranslocoModule

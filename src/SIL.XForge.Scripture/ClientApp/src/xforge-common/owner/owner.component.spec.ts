@@ -1,7 +1,7 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, DebugElement, ViewChild } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
@@ -102,8 +102,8 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, OwnerComponent],
-      imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), AvatarComponent],
+      declarations: [HostComponent],
+      imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), AvatarComponent, OwnerComponent],
       providers: [
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         { provide: BugsnagService, useFactory: () => instance(this.mockedBugsnagService) },
