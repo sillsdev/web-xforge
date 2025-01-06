@@ -10,7 +10,7 @@ import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { Subscription, combineLatest, of } from 'rxjs';
+import { combineLatest, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -33,7 +33,7 @@ import { ServalProjectComponent } from '../../serval-administration/serval-proje
 import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
-import { BuildConfig, DraftZipProgress, activeBuildStates } from './draft-generation';
+import { activeBuildStates, BuildConfig, DraftZipProgress } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
   DraftGenerationStepsResult
@@ -133,13 +133,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   cancelDialogRef?: MatDialogRef<any>;
 
-  readonly legacyDraftDurationHours = 8;
-  readonly adjustedLearningRateDraftDurationHours = 2.5;
-  get draftDurationHours(): number {
-    return this.featureFlags.updatedLearningRateForServal.enabled
-      ? this.adjustedLearningRateDraftDurationHours
-      : this.legacyDraftDurationHours;
-  }
+  readonly draftDurationHours = 2.5;
 
   get draftEnabled(): boolean {
     return this.isBackTranslationMode || this.isPreTranslationApproved;
@@ -149,8 +143,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return environment.issueEmail;
   }
 
-  readonly learningRateNotice = this.i18n.interpolate('draft_generation.improved_learning_rate_notice');
-
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -159,7 +151,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftSourcesService: DraftSourcesService,
-    readonly featureFlags: FeatureFlagService,
+    private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -168,16 +160,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly urlService: ExternalUrlService
   ) {
     super(noticeService);
-  }
-
-  // Stop showing learning rate notice 60 days after it went live
-  // TODO Remove the notice entirely after it's expired
-  readonly learningRateNoticeExpired = new Date() > new Date('2025-01-06');
-
-  get showAdjustedLearningRateNotice(): boolean {
-    return (
-      this.draftEnabled && this.featureFlags.updatedLearningRateForServal.enabled && !this.learningRateNoticeExpired
-    );
   }
 
   get downloadProgress(): number {
