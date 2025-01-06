@@ -16,5 +16,6 @@ public interface IRepository<T>
     Task<bool> ReplaceAsync(T entity, bool upsert = false);
     Task<T> UpdateAsync(Expression<Func<T, bool>> filter, Action<IUpdateBuilder<T>> update, bool upsert = false);
     Task<T> DeleteAsync(Expression<Func<T, bool>> filter);
-    Task<int> DeleteAllAsync(Expression<Func<T, bool>> filter);
+    Task<long> DeleteAllAsync(Expression<Func<T, bool>> filter);
+    Task<long> CountDocumentsAsync(Expression<Func<T, bool>> filter);
 }
