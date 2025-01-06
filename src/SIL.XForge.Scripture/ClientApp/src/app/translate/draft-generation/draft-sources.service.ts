@@ -15,6 +15,7 @@ interface DraftTextInfo {
 }
 export interface DraftSource {
   name: string;
+  projectRef: string;
   shortName: string;
   texts: DraftTextInfo[];
   writingSystem: WritingSystem;
@@ -24,21 +25,12 @@ interface DraftSourceDoc {
   data: DraftSource;
 }
 
-export interface DraftSourceIds {
-  trainingSourceId?: string;
-  trainingAlternateSourceId?: string;
-  trainingAdditionalSourceId?: string;
-  draftingSourceId?: string;
-  draftingAlternateSourceId?: string;
-}
-
 export interface DraftSources {
   target?: Readonly<DraftSource>;
   source?: Readonly<DraftSource>;
   alternateSource?: Readonly<DraftSource>;
   alternateTrainingSource?: Readonly<DraftSource>;
   additionalTrainingSource?: Readonly<DraftSource>;
-  draftSourceIds?: DraftSourceIds;
 }
 
 @Injectable({
@@ -123,17 +115,16 @@ export class DraftSourcesService {
         ).pipe(
           map(([sourceDoc, alternateSourceDoc, alternateTrainingSourceDoc, additionalTrainingSourceProjectDoc]) => {
             return {
-              target: targetDoc?.data,
-              source: sourceDoc?.data,
-              alternateSource: alternateSourceDoc?.data,
-              alternateTrainingSource: alternateTrainingSourceDoc?.data,
-              additionalTrainingSource: additionalTrainingSourceProjectDoc?.data,
-              draftSourceIds: {
-                trainingSourceId: sourceProjectId,
-                trainingAlternateSourceId: alternateTrainingSourceProjectId,
-                trainingAdditionalSourceId: additionalTrainingSourceProjectId,
-                draftingSourceId: sourceProjectId,
-                draftingAlternateSourceId: alternateSourceProjectId
+              target: { ...targetDoc?.data, projectRef: this.activatedProject.projectId },
+              source: { ...sourceDoc?.data, projectRef: sourceProjectId },
+              alternateSource: { ...alternateSourceDoc?.data, projectRef: alternateSourceProjectId },
+              alternateTrainingSource: {
+                ...alternateTrainingSourceDoc?.data,
+                projectRef: alternateTrainingSourceProjectId
+              },
+              additionalTrainingSource: {
+                ...additionalTrainingSourceProjectDoc?.data,
+                projectRef: additionalTrainingSourceProjectId
               }
             };
           })
@@ -166,6 +157,7 @@ export class DraftSourcesService {
         data: {
           name: translateSource.name,
           shortName: translateSource.shortName,
+          projectRef: projectId,
           texts: texts?.slice() ?? [],
           writingSystem: translateSource.writingSystem,
           noAccess: true
