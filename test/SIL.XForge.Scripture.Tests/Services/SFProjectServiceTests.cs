@@ -4133,11 +4133,11 @@ public class SFProjectServiceTests
     public async Task GetEventMetrics_ProjectAdmin()
     {
         var env = new TestEnvironment();
-        IEnumerable<EventMetric> expected = [new EventMetric()];
-        env.EventMetricService.GetEventMetrics(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
+        var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
+        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
 
         // SUT
-        IEnumerable<EventMetric> actual = await env.Service.GetEventMetricsAsync(
+        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             User01,
             systemRoles: [SystemRole.User],
             Project01,
@@ -4145,18 +4145,18 @@ public class SFProjectServiceTests
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
-        env.EventMetricService.Received().GetEventMetrics(Project01, pageIndex: 0, pageSize: 10);
+        await env.EventMetricService.Received().GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10);
     }
 
     [Test]
     public async Task GetEventMetrics_ServalAdmin()
     {
         var env = new TestEnvironment();
-        IEnumerable<EventMetric> expected = [new EventMetric()];
-        env.EventMetricService.GetEventMetrics(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
+        var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
+        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
 
         // SUT
-        IEnumerable<EventMetric> actual = await env.Service.GetEventMetricsAsync(
+        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             User06,
             systemRoles: [SystemRole.ServalAdmin],
             Project01,
@@ -4164,18 +4164,18 @@ public class SFProjectServiceTests
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
-        env.EventMetricService.Received().GetEventMetrics(Project01, pageIndex: 0, pageSize: 10);
+        await env.EventMetricService.Received().GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10);
     }
 
     [Test]
     public async Task GetEventMetrics_SystemAdmin()
     {
         var env = new TestEnvironment();
-        IEnumerable<EventMetric> expected = [new EventMetric()];
-        env.EventMetricService.GetEventMetrics(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
+        var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
+        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
 
         // SUT
-        IEnumerable<EventMetric> actual = await env.Service.GetEventMetricsAsync(
+        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             User06,
             systemRoles: [SystemRole.SystemAdmin],
             Project01,
@@ -4183,7 +4183,7 @@ public class SFProjectServiceTests
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
-        env.EventMetricService.Received().GetEventMetrics(Project01, pageIndex: 0, pageSize: 10);
+        await env.EventMetricService.Received().GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10);
     }
 
     [Test]

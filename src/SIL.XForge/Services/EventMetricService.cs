@@ -7,25 +7,30 @@ using MongoDB.Bson;
 using Newtonsoft.Json;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Services;
 
 public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventMetricService
 {
-    public IEnumerable<EventMetric> GetEventMetrics(string? projectId, int pageIndex, int pageSize)
+    public async Task<QueryResults<EventMetric>> GetEventMetricsAsync(string? projectId, int pageIndex, int pageSize)
     {
         // Do not allow querying of event metrics without a project identifier
         if (projectId is null)
         {
-            return [];
+            return new QueryResults<EventMetric> { Results = [], UnpagedCount = 0 };
         }
 
-        return eventMetrics
-            .Query()
-            .Where(m => m.ProjectId == projectId)
-            .OrderByDescending(m => m.TimeStamp)
-            .Skip(pageIndex * pageSize)
-            .Take(pageSize);
+        return new QueryResults<EventMetric>
+        {
+            Results = eventMetrics
+                .Query()
+                .Where(m => m.ProjectId == projectId)
+                .OrderByDescending(m => m.TimeStamp)
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize),
+            UnpagedCount = await eventMetrics.CountDocumentsAsync(m => m.ProjectId == projectId),
+        };
     }
 
     public async Task SaveEventMetricAsync(

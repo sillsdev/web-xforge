@@ -36,42 +36,53 @@ public class EventMetricServiceTests
     }
 
     [Test]
-    public void GetEventMetrics_DoNotGetNullProjectIds()
+    public async Task GetEventMetricsAsync_DoNotGetNullProjectIds()
     {
         var env = new TestEnvironment();
         Assert.AreEqual(4, env.EventMetrics.Query().Count());
 
         // SUT
-        IEnumerable<EventMetric> actual = env.Service.GetEventMetrics(projectId: null, pageIndex: 0, pageSize: 10);
+        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
+            projectId: null,
+            pageIndex: 0,
+            pageSize: 10
+        );
 
         // Do not retrieve any projects, even the metric with no project identifier
-        Assert.IsEmpty(actual);
+        Assert.IsEmpty(actual.Results);
+        Assert.Zero(actual.UnpagedCount);
     }
 
     [Test]
-    public void GetEventMetrics_GetAllForProject()
+    public async Task GetEventMetricsAsync_GetAllForProject()
     {
         var env = new TestEnvironment();
         Assert.AreEqual(4, env.EventMetrics.Query().Count());
 
         // SUT
-        IEnumerable<EventMetric> actual = env.Service.GetEventMetrics(Project01, pageIndex: 0, pageSize: 10);
+        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
+            Project01,
+            pageIndex: 0,
+            pageSize: 10
+        );
 
         // Skip the one event metric without a project identifier
-        Assert.AreEqual(3, actual.Count());
+        Assert.AreEqual(3, actual.Results.Count());
+        Assert.AreEqual(3, actual.UnpagedCount);
     }
 
     [Test]
-    public void GetEventMetrics_SupportsPagination()
+    public async Task GetEventMetricsAsync_SupportsPagination()
     {
         var env = new TestEnvironment();
         Assert.AreEqual(4, env.EventMetrics.Query().Count());
 
         // SUT
-        IEnumerable<EventMetric> actual = env.Service.GetEventMetrics(Project01, pageIndex: 1, pageSize: 2);
+        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(Project01, pageIndex: 1, pageSize: 2);
 
-        // The first page has 2 event metric, the second page just 1 event metric
-        Assert.AreEqual(1, actual.Count());
+        // The first page has 2 event metrics, the second page just 1 event metric
+        Assert.AreEqual(1, actual.Results.Count());
+        Assert.AreEqual(3, actual.UnpagedCount);
     }
 
     [Test]
