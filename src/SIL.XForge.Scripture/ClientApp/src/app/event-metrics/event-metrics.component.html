@@ -1,1 +1,4 @@
-<h1>Event Log</h1>
+<ng-container *transloco="let t; read: 'event_metrics'">
+  <h1>{{ t("event_log") }}</h1>
+  <app-event-metrics-log></app-event-metrics-log>
+</ng-container>

@@ -318,6 +318,11 @@
     "default_resource_tab_header": "Resource",
     "draft_tab_header": "Auto Draft"
   },
+  "event_metrics": {
+    "event_log": "Event Log",
+    "failed": "Failed",
+    "successful": "Successful"
+  },
   "font_unsupported_message": {
     "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or { 1 }contact us for help.{ 2 }",
     "contact_for_help": "If this does not meet the needs of this project, please { 1 }contact us for help.{ 2 }",

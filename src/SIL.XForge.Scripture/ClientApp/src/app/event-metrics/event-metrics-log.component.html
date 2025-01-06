@@ -1,0 +1,37 @@
+<ng-container *transloco="let t; read: 'event_metrics'">
+  @if (!isLoading) {
+    <table mat-table id="event-metrics-log-table" [dataSource]="rows">
+      <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
+      <ng-container matColumnDef="scope">
+        <th mat-header-cell *matHeaderCellDef>Scope</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.scope }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="eventType">
+        <th mat-header-cell *matHeaderCellDef>Event</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.eventType }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="successful">
+        <th mat-header-cell *matHeaderCellDef>Successful</th>
+        <td mat-cell *matCellDef="let row">
+          {{ t(row.successful ? "successful" : "failed") }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="author">
+        <th mat-header-cell *matHeaderCellDef>Author</th>
+        <td mat-cell *matCellDef="let row">
+          <app-owner
+            [ownerRef]="row.userId"
+            [includeAvatar]="true"
+            [layoutStacked]="false"
+            [dateTime]="row.timeStamp"
+          ></app-owner>
+        </td>
+      </ng-container>
+    </table>
+  }
+</ng-container>
