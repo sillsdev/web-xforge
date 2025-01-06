@@ -1600,7 +1600,7 @@ public class SFProjectServiceTests
         Assert.IsTrue(env.GetProject(projectId).UserRoles.ContainsKey(userToRemove));
 
         // Delete the project user config
-        int deleted = await env
+        long deleted = await env
             .RealtimeService.GetRepository<SFProjectUserConfig>()
             .DeleteAllAsync(p => p.Id == projectUserConfigId);
         Assert.AreEqual(1, deleted);

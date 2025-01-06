@@ -7,27 +7,18 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.DataAccess;
 
-public class MongoRepository<T> : IRepository<T>
+public class MongoRepository<T>(IMongoCollection<T> collection, Action<IMongoCollection<T>> init) : IRepository<T>
     where T : IIdentifiable
 {
-    private readonly IMongoCollection<T> _collection;
-    private readonly Action<IMongoCollection<T>> _init;
+    public void Init() => init(collection);
 
-    public MongoRepository(IMongoCollection<T> collection, Action<IMongoCollection<T>> init)
-    {
-        _collection = collection;
-        _init = init;
-    }
-
-    public void Init() => _init(_collection);
-
-    public IQueryable<T> Query() => _collection.AsQueryable();
+    public IQueryable<T> Query() => collection.AsQueryable();
 
     public async Task InsertAsync(T entity)
     {
         try
         {
-            await _collection.InsertOneAsync(entity);
+            await collection.InsertOneAsync(entity);
         }
         catch (MongoWriteException e)
         {
@@ -41,7 +32,7 @@ public class MongoRepository<T> : IRepository<T>
     {
         try
         {
-            ReplaceOneResult result = await _collection.ReplaceOneAsync(
+            ReplaceOneResult result = await collection.ReplaceOneAsync(
                 e => e.Id == entity.Id,
                 entity,
                 new ReplaceOptions { IsUpsert = upsert }
@@ -69,7 +60,7 @@ public class MongoRepository<T> : IRepository<T>
             var updateBuilder = new MongoUpdateBuilder<T>();
             update(updateBuilder);
             UpdateDefinition<T> updateDef = updateBuilder.Build();
-            return await _collection.FindOneAndUpdateAsync(
+            return await collection.FindOneAndUpdateAsync(
                 filter,
                 updateDef,
                 new FindOneAndUpdateOptions<T> { IsUpsert = upsert, ReturnDocument = ReturnDocument.After }
@@ -83,11 +74,13 @@ public class MongoRepository<T> : IRepository<T>
         }
     }
 
-    public Task<T> DeleteAsync(Expression<Func<T, bool>> filter) => _collection.FindOneAndDeleteAsync(filter);
+    public Task<T> DeleteAsync(Expression<Func<T, bool>> filter) => collection.FindOneAndDeleteAsync(filter);
 
-    public async Task<int> DeleteAllAsync(Expression<Func<T, bool>> filter)
+    public async Task<long> DeleteAllAsync(Expression<Func<T, bool>> filter)
     {
-        DeleteResult result = await _collection.DeleteManyAsync(filter);
-        return (int)result.DeletedCount;
+        DeleteResult result = await collection.DeleteManyAsync(filter);
+        return result.DeletedCount;
     }
+
+    public Task<long> CountDocumentsAsync(Expression<Func<T, bool>> filter) => collection.CountDocumentsAsync(filter);
 }

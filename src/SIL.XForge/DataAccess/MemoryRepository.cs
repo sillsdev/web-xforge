@@ -169,13 +169,16 @@ public class MemoryRepository<T> : IRepository<T>
         return Task.FromResult(entity);
     }
 
-    public Task<int> DeleteAllAsync(Expression<Func<T, bool>> filter)
+    public Task<long> DeleteAllAsync(Expression<Func<T, bool>> filter)
     {
         T[] entities = [.. Query().Where(filter)];
         foreach (T entity in entities)
             Remove(entity);
-        return Task.FromResult(entities.Length);
+        return Task.FromResult(entities.LongLength);
     }
+
+    public Task<long> CountDocumentsAsync(Expression<Func<T, bool>> filter) =>
+        Task.FromResult(Query().Where(filter).LongCount());
 
     /// <param name="entity">the new or updated entity to be upserted</param>
     /// <param name="original">the original entity, if this is an update (or replacement)</param>
