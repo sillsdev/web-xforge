@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SIL.XForge.EventMetrics;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Services;
 
 public interface IEventMetricService
 {
-    IEnumerable<EventMetric> GetEventMetrics(string? projectId, int pageIndex, int pageSize);
+    Task<QueryResults<EventMetric>> GetEventMetricsAsync(string? projectId, int pageIndex, int pageSize);
     Task SaveEventMetricAsync(
         string? projectId,
         string? userId,
