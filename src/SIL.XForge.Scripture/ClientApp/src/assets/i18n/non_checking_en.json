@@ -318,6 +318,25 @@
     "default_resource_tab_header": "Resource",
     "draft_tab_header": "Auto Draft"
   },
+  "event_metric_dialog": {
+    "close": "Close",
+    "event_type": "Event Type",
+    "exception": "Exception",
+    "parameters": "Parameters",
+    "result": "Result",
+    "technical_details": "Technical Details"
+  },
+  "event_metrics": {
+    "author": "Author",
+    "event": "Event",
+    "event_log": "Event Log",
+    "failed": "Failed",
+    "not_found": "No log entries found",
+    "scope": "Scope",
+    "status": "Status",
+    "successful": "Successful",
+    "technical_details": "Technical Details"
+  },
   "font_unsupported_message": {
     "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or { 1 }contact us for help.{ 2 }",
     "contact_for_help": "If this does not meet the needs of this project, please { 1 }contact us for help.{ 2 }",

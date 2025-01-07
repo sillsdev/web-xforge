@@ -26,6 +26,9 @@
     ></app-info>
   </div>
   <div class="admin-tool-control">
+    <a mat-flat-button color="primary" [appRouterLink]="eventLogLink">View Event Log</a>
+  </div>
+  <div class="admin-tool-control">
     <button
       (click)="downloadDraft()"
       mat-flat-button
