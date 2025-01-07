@@ -37,7 +37,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
   rows: Row[] = [];
 
   private pageIndex$ = new BehaviorSubject<number>(0);
-  private pageSize$ = new BehaviorSubject<number>(50);
+  private pageSize$ = new BehaviorSubject<number>(10);
   length: number = 0;
 
   get pageIndex(): number {
@@ -125,7 +125,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
     for (const eventMetric of this.eventMetrics) {
       rows.push({
         dialogData: eventMetric,
-        eventType: this.getEventType(eventMetric.eventType),
+        eventType: this.getEventType(eventMetric),
         scope: eventMetric.scope,
         successful: eventMetric.exception == null,
         timeStamp: this.i18n.formatDate(new Date(eventMetric.timeStamp), { showTimeZone: true }),
@@ -135,7 +135,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
     this.rows = rows;
   }
 
-  private getEventType(eventType: string): string {
+  private getEventType(eventMetric: EventMetric): string {
     // These values are the functions that have the LogEventMetric attribute, where:
     //  - The case is the name of the method
     //  - The return value is a user friendly description of what the method does
@@ -153,6 +153,22 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
       StartPreTranslationBuildAsync: 'Start draft generation',
       SyncAsync: 'Start synchronization with Paratext'
     };
-    return eventTypeMap[eventType] || eventType;
+
+    // Allow specific cases based on payload values
+    if (eventMetric.eventType === 'SetIsValidAsync' && eventMetric.payload['isValid'] === true) {
+      return 'Marked chapter as valid';
+    } else if (eventMetric.eventType === 'SetIsValidAsync' && eventMetric.payload['isValid'] === false) {
+      return 'Marked chapter as invalid';
+    } else if (eventMetric.eventType === 'SetDraftAppliedAsync' && eventMetric.payload['draftApplied'] === true) {
+      return 'Marked chapter as having draft applied';
+    } else if (eventMetric.eventType === 'SetDraftAppliedAsync' && eventMetric.payload['draftApplied'] === false) {
+      return 'Marked chapter as not having a draft applied';
+    } else if (eventMetric.eventType === 'SetPreTranslateAsync' && eventMetric.payload['preTranslate'] === true) {
+      return 'Set drafting as enabled for the project';
+    } else if (eventMetric.eventType === 'SetPreTranslateAsync' && eventMetric.payload['preTranslate'] === false) {
+      return 'Set drafting as disabled for the project';
+    } else {
+      return eventTypeMap[eventMetric.eventType] || eventMetric.eventType;
+    }
   }
 }

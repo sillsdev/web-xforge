@@ -233,7 +233,7 @@ public class MemoryRepository<T> : IRepository<T>
                 var bsonArray = new BsonArray();
                 while (reader.Read() && reader.TokenType != JsonToken.EndArray)
                 {
-                    bsonArray.Add(BsonValue.Create(reader.Value));
+                    bsonArray.Add(ReadJson(reader, typeof(BsonValue), null, false, serializer));
                 }
 
                 return bsonArray;
