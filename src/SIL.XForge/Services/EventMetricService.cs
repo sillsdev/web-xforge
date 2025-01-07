@@ -91,8 +91,6 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             decimal value => new BsonDecimal128(value),
             DateTime value => new BsonDateTime(value),
             null => BsonNull.Value,
-            _ => BsonValue.Create(
-                JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(objectValue))
-            ),
+            _ => BsonDocument.Parse(JsonConvert.SerializeObject(objectValue)),
         };
 }

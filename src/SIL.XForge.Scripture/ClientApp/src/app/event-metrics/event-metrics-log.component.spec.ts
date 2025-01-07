@@ -132,6 +132,25 @@ describe('EventMetricsLogComponent', () => {
     expect(env.nextButton.nativeElement.disabled).toBeTrue();
     expect(env.rows.length).toEqual(2);
   }));
+
+  it('should show custom event type calculations', fakeAsync(() => {
+    const env = new TestEnvironment();
+    // This list is to ensure complete test coverage of the custom cases in EventMetricsLogComponent.getEventType()
+    let eventMetrics: Partial<EventMetric>[] = [
+      { eventType: 'SetIsValidAsync', payload: { isValid: true } },
+      { eventType: 'SetIsValidAsync', payload: { isValid: false } },
+      { eventType: 'SetDraftAppliedAsync', payload: { draftApplied: true } },
+      { eventType: 'SetDraftAppliedAsync', payload: { draftApplied: false } },
+      { eventType: 'SetPreTranslateAsync', payload: { preTranslate: true } },
+      { eventType: 'SetPreTranslateAsync', payload: { preTranslate: false } }
+    ];
+
+    env.populateEventMetrics(eventMetrics);
+    env.wait();
+    env.wait();
+
+    expect(env.rows.length).toEqual(eventMetrics.length);
+  }));
 });
 
 class TestEnvironment {
@@ -179,14 +198,15 @@ class TestEnvironment {
     this.wait();
   }
 
-  populateEventMetrics(): void {
+  populateEventMetrics(eventMetrics: Partial<EventMetric>[] | undefined = undefined): void {
+    eventMetrics ??= [
+      { scope: EventScope.Sync, timeStamp: new Date().toISOString(), eventType: 'SyncAsync' } as EventMetric,
+      { scope: EventScope.Settings, timeStamp: new Date().toISOString(), eventType: 'UnknownType' } as EventMetric
+    ];
     when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenReturn(
       Promise.resolve({
-        results: [
-          { scope: EventScope.Sync, timeStamp: new Date().toISOString(), eventType: 'SyncAsync' } as EventMetric,
-          { scope: EventScope.Settings, timeStamp: new Date().toISOString(), eventType: 'UnknownType' } as EventMetric
-        ],
-        unpagedCount: 4
+        results: eventMetrics,
+        unpagedCount: eventMetrics.length * 2
       } as QueryResults<EventMetric>)
     );
   }
