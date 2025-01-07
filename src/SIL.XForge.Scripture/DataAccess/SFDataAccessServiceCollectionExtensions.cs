@@ -36,7 +36,14 @@ public static class SFDataAccessServiceCollectionExtensions
                     ]
                 )
         );
-        services.AddMongoRepository<SyncMetrics>("sync_metrics", cm => cm.MapIdProperty(sm => sm.Id));
+        services.AddMongoRepository<SyncMetrics>(
+            "sync_metrics",
+            cm => cm.MapIdProperty(sm => sm.Id),
+            im =>
+                im.CreateOne(
+                    new CreateIndexModel<SyncMetrics>(Builders<SyncMetrics>.IndexKeys.Ascending(sm => sm.ProjectRef))
+                )
+        );
 
         return services;
     }
