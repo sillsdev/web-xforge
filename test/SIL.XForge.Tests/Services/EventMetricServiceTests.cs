@@ -302,6 +302,41 @@ public class EventMetricServiceTests
         Assert.AreEqual(BsonNull.Value, eventMetric.Result);
     }
 
+    [Test]
+    public async Task SaveEventMetricAsync_ArraysOfObjects()
+    {
+        var env = new TestEnvironment();
+        var objectValue = new TestClass { Records = [new TestRecord { ProjectId = Project01, UserId = User01 }] };
+        Dictionary<string, object> argumentsWithNames = new Dictionary<string, object> { { "myObject", objectValue } };
+        string expectedJson = JsonConvert.SerializeObject(objectValue);
+        Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
+        {
+            { "myObject", BsonDocument.Parse(expectedJson) },
+        };
+
+        // SUT
+        await env.Service.SaveEventMetricAsync(
+            Project01,
+            User01,
+            EventType01,
+            EventScope01,
+            argumentsWithNames,
+            result: null,
+            exception: null
+        );
+
+        // Verify the saved event metric
+        EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
+        Assert.AreEqual(EventScope01, eventMetric.Scope);
+        Assert.AreEqual(Project01, eventMetric.ProjectId);
+        Assert.AreEqual(User01, eventMetric.UserId);
+        Assert.AreEqual(EventType01, eventMetric.EventType);
+        Assert.IsTrue(env.PayloadEqualityComparer.Equals(expectedPayload, eventMetric.Payload));
+        string actualJson = eventMetric.Payload["myObject"].ToJson().Replace(" ", string.Empty);
+        Assert.AreEqual(expectedJson, actualJson);
+        Assert.AreEqual(BsonNull.Value, eventMetric.Result);
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
@@ -356,5 +391,16 @@ public class EventMetricServiceTests
             Substitute.For<IMongoIndexManager<EventMetric>>();
         public IRepository<EventMetric> EventMetrics { get; }
         public IEventMetricService Service { get; }
+    }
+
+    public class TestClass
+    {
+        public HashSet<TestRecord> Records = [];
+    }
+
+    public record TestRecord
+    {
+        public string ProjectId { get; set; } = string.Empty;
+        public string UserId { get; set; } = string.Empty;
     }
 }

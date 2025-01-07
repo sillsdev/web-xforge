@@ -23,6 +23,7 @@ public class BsonValueConverter : JsonConverter<BsonValue>
             {
                 bsonArray.Add(Read(ref reader, typeof(BsonValue), options));
             }
+
             return bsonArray;
         }
 
