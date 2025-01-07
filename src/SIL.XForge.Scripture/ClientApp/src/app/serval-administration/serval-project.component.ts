@@ -4,7 +4,7 @@ import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { Observable, Subscription, catchError, lastValueFrom, of, switchMap, throwError } from 'rxjs';
+import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -79,6 +79,10 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService);
+  }
+
+  get eventLogLink(): string[] {
+    return ['/projects', this.activatedProjectService.projectId, 'event-log'];
   }
 
   get isOnline(): boolean {
