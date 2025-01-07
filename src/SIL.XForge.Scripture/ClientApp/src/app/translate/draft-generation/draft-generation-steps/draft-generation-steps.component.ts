@@ -3,7 +3,6 @@ import { MatStepper } from '@angular/material/stepper';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { merge, Subscription } from 'rxjs';
@@ -23,8 +22,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
-import { DraftSource, DraftSourcesService } from '../draft-sources.service';
-import { DraftSourcesAsArrays, projectToDraftSources } from '../draft-utils';
+import { DraftSource, DraftSourcesService, TranslateSourcesAsArrays } from '../draft-sources.service';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataService } from '../training-data/training-data.service';
 
@@ -104,7 +102,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   private trainingDataSub?: Subscription;
 
   readonly trainingSources: TranslateSource[] = [];
-  readonly trainingTargets: SFProjectProfile[] = [];
+  readonly trainingTargets: TranslateSource[] = [];
 
   constructor(
     protected readonly activatedProject: ActivatedProjectService,
@@ -118,7 +116,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   ) {
     super();
 
-    const sources: DraftSourcesAsArrays = projectToDraftSources(activatedProject.projectDoc.data);
+    const sources: TranslateSourcesAsArrays = draftSourcesService.getTranslateSources();
     this.trainingSources = sources.trainingSources;
     this.trainingTargets = sources.trainingTargets;
   }

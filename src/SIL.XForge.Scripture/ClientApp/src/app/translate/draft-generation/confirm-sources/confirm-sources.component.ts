@@ -4,10 +4,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSourcesAsArrays, projectToDraftSources } from '../draft-utils';
+import { DraftSourcesService, TranslateSourcesAsArrays } from '../draft-sources.service';
 
 @Component({
   selector: 'app-confirm-sources',
@@ -20,14 +19,14 @@ export class ConfirmSourcesComponent {
   @Output() languageCodesVerified = new EventEmitter<boolean>(false);
 
   trainingSources: TranslateSource[] = [];
-  trainingTargets: SFProjectProfile[] = [];
+  trainingTargets: TranslateSource[] = [];
   draftingSources: TranslateSource[] = [];
 
   constructor(
     private readonly i18nService: I18nService,
-    activatedProjectService: ActivatedProjectService
+    draftSourcesService: DraftSourcesService
   ) {
-    const sources: DraftSourcesAsArrays = projectToDraftSources(activatedProjectService.projectDoc.data);
+    const sources: TranslateSourcesAsArrays = draftSourcesService.getTranslateSources();
 
     this.trainingSources = sources.trainingSources;
     this.trainingTargets = sources.trainingTargets;
