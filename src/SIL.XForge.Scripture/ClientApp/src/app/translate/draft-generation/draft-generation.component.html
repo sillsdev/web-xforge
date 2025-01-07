@@ -151,23 +151,13 @@
               }"
             ></transloco>
           </app-notice>
-        } @else if (!canAccessDraftSourceIfAvailable(alternateSource)) {
+        } @else if (!canAccessDraftSourceIfAvailable(trainingSource)) {
           <app-notice type="warning" icon="warning" data-test-id="warning-alternate-source-no-access">
             <transloco
               key="draft_generation.info_alert_no_alternate_source_access"
               [params]="{
                 connectProjectUrl: { route: '/connect-project' },
-                name: alternateSource?.name
-              }"
-            ></transloco>
-          </app-notice>
-        } @else if (!canAccessDraftSourceIfAvailable(alternateTrainingSource)) {
-          <app-notice type="warning" icon="warning" data-test-id="warning-alternate-training-source-no-access">
-            <transloco
-              key="draft_generation.info_alert_no_alternate_training_source_access"
-              [params]="{
-                connectProjectUrl: { route: '/connect-project' },
-                name: alternateTrainingSource?.name
+                name: trainingSource?.name
               }"
             ></transloco>
           </app-notice>
