@@ -9,6 +9,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -40,6 +41,10 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
   private pageSize$ = new BehaviorSubject<number>(10);
   length: number = 0;
 
+  get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
+  }
+
   get pageIndex(): number {
     return this.pageIndex$.value;
   }
@@ -60,10 +65,11 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
 
   constructor(
     noticeService: NoticeService,
-    private readonly authService: AuthService,
-    private readonly i18n: I18nService,
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly authService: AuthService,
     private readonly dialogService: DialogService,
+    private readonly i18n: I18nService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService
   ) {
     super(noticeService);
