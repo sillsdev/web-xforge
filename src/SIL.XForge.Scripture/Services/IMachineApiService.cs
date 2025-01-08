@@ -63,6 +63,13 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
+    Task<string> GetPreTranslationUsxAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    );
     Task<WordGraph> GetWordGraphAsync(
         string curUserId,
         string sfProjectId,

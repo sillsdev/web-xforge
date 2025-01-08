@@ -511,6 +511,30 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void GetBookText_OverrideUSFM()
+    {
+        const string ruthBookUsfm =
+            "\\id RUT - ProjectNameHere\n \\c 1\n"
+            + "\\v 1 Updated Verse 1 here.\n"
+            + "\\v 2 Updated Verse 2 here.\n"
+            + "\\v 3 New Verse 3 here.";
+        const string ruthBookUsx =
+            "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere"
+            + "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />"
+            + "Updated Verse 1 here. <verse number=\"2\" style=\"v\" />Updated Verse 2 here. "
+            + "<verse number=\"3\" style=\"v\" />New Verse 3 here.</usx>";
+
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        string result = env.Service.GetBookText(null, ptProjectId, 8, ruthBookUsfm);
+        Assert.That(result, Is.EqualTo(ruthBookUsx));
+    }
+
+    [Test]
     public void GetBookText_Works()
     {
         string ruthBookUsx =

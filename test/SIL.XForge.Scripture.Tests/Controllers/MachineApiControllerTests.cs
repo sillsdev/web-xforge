@@ -1047,6 +1047,123 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetPreTranslationUsxAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.GetPreTranslationUsxAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsxAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.GetPreTranslationUsxAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsxAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new DataNotFoundException(string.Empty));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.GetPreTranslationUsxAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsxAsync_NotBuilt()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new InvalidOperationException());
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.GetPreTranslationUsxAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ConflictResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsxAsync_NotSupported()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new NotSupportedException());
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.GetPreTranslationUsxAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<IStatusCodeActionResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status405MethodNotAllowed, (actual.Result as IStatusCodeActionResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsxAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(string.Empty));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.GetPreTranslationUsxAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
     public async Task GetWordGraphAsync_MachineApiDown()
     {
         // Set up test environment

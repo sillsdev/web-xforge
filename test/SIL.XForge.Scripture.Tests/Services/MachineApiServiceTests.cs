@@ -15,6 +15,7 @@ using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.XForge.DataAccess;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
@@ -34,6 +35,7 @@ public class MachineApiServiceTests
     private const string TranslationEngine01 = "translationEngine01";
     private const string User01 = "user01";
     private const string User02 = "user02";
+    private const string ParatextUserId01 = "paratext01";
     private const string Segment = "segment";
     private const string TargetSegment = "targetSegment";
     private const string JobId = "jobId";
@@ -1262,6 +1264,51 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetPreTranslationUsxAsync_CorpusDoesNotSupportUsfm()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Throws(ServalApiExceptions.InvalidCorpus);
+
+        // SUT
+        Assert.ThrowsAsync<NotSupportedException>(
+            () => env.Service.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsxAsync_MissingUserSecret()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.UserSecrets.DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsxAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string usfm = "\\c 1 \\v1 Verse 1";
+        const string expected =
+            "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
+            + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(usfm));
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(expected);
+
+        // SUT
+        string usx = await env.Service.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None);
+        Assert.AreEqual(expected, usx);
+    }
+
+    [Test]
     public void GetWordGraphAsync_NoPermission()
     {
         // Set up test environment
@@ -2427,8 +2474,8 @@ public class MachineApiServiceTests
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
             ExceptionHandler = Substitute.For<IExceptionHandler>();
 
-            MachineProjectService = Substitute.For<IMachineProjectService>();
-            MachineProjectService
+            var machineProjectService = Substitute.For<IMachineProjectService>();
+            machineProjectService
                 .GetTranslationEngineTypeAsync(preTranslate: true)
                 .Returns(Task.FromResult(Services.MachineProjectService.Nmt));
             MockLogger = new MockLogger<MachineApiService>();
@@ -2493,11 +2540,28 @@ public class MachineApiServiceTests
                 .Returns(Task.FromResult(new TranslationEngine()));
             TranslationEngineTypesClient = Substitute.For<ITranslationEngineTypesClient>();
 
+            // Build the user secrets
+            DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
+            string accessToken1 = TokenHelper.CreateAccessToken(
+                issuedAt: aSecondAgo - TimeSpan.FromMinutes(20),
+                expiration: aSecondAgo,
+                ParatextUserId01
+            );
+            UserSecrets = new MemoryRepository<UserSecret>(
+                [
+                    new UserSecret
+                    {
+                        Id = User01,
+                        ParatextTokens = new Tokens { AccessToken = accessToken1, RefreshToken = "refresh_token_1234" },
+                    },
+                ]
+            );
+
             Service = new MachineApiService(
                 BackgroundJobClient,
                 ExceptionHandler,
                 MockLogger,
-                MachineProjectService,
+                machineProjectService,
                 ParatextService,
                 PreTranslationService,
                 ProjectSecrets,
@@ -2506,13 +2570,13 @@ public class MachineApiServiceTests
                 servalOptions,
                 SyncService,
                 TranslationEnginesClient,
-                TranslationEngineTypesClient
+                TranslationEngineTypesClient,
+                UserSecrets
             );
         }
 
         public IBackgroundJobClient BackgroundJobClient { get; }
         public IExceptionHandler ExceptionHandler { get; }
-        public IMachineProjectService MachineProjectService { get; }
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
         public IPreTranslationService PreTranslationService { get; }
@@ -2523,6 +2587,7 @@ public class MachineApiServiceTests
         public ISyncService SyncService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public ITranslationEngineTypesClient TranslationEngineTypesClient { get; }
+        public MemoryRepository<UserSecret> UserSecrets { get; }
 
         public async Task QueueBuildAsync(bool preTranslate, DateTime? dateTime = null, string? errorMessage = null) =>
             await ProjectSecrets.UpdateAsync(
