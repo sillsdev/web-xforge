@@ -246,7 +246,7 @@ export class AuthService {
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const ui_locales: string = language;
     const useBranding: boolean =
-      this.locationService.origin.includes('scriptureforge.org') || this.locationService.origin.includes('localhost');
+      this.locationService.origin.includes('scriptureforge') || this.locationService.origin.includes('localhost');
     const auth0Parameters: xForgeAuth0Parameters = {
       ui_locales: language,
       enablePasswordless: true,
