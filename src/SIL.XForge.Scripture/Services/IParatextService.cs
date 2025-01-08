@@ -42,7 +42,7 @@ public interface IParatextService
     bool ResourceDocsNeedUpdating(SFProject project, ParatextResource resource);
 
     IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
-    string GetBookText(UserSecret userSecret, string paratextId, int bookNum);
+    string GetBookText(UserSecret userSecret, string paratextId, int bookNum, string? usfm = null);
     Task<int> PutBookText(
         UserSecret userSecret,
         string paratextId,

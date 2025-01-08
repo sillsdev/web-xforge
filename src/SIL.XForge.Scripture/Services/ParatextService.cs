@@ -989,13 +989,22 @@ public class ParatextService : DisposableBase, IParatextService
         return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
     }
 
-    /// <summary> Get PT book text in USX, or throw if can't. </summary>
-    public string GetBookText(UserSecret userSecret, string paratextId, int bookNum)
+    /// <summary>
+    /// Gets a book's text in USX, with the option of overriding the USFM.
+    /// </summary>
+    /// <param name="userSecret">The user secret.</param>
+    /// <param name="paratextId">The Paratext project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="usfm">Optional. Override the USFM.</param>
+    /// <returns>The book's contents as USX.</returns>
+    /// <exception cref="DataNotFoundException">The project cannot be accessed.</exception>
+    /// <remarks>Specify the USFM if you are parsing USFM from another source (i.e. Serval) for this book.</remarks>
+    public string GetBookText(UserSecret userSecret, string paratextId, int bookNum, string? usfm = null)
     {
         using ScrText scrText =
             ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId)
             ?? throw new DataNotFoundException("Can't get access to cloned project.");
-        string usfm = scrText.GetText(bookNum);
+        usfm ??= scrText.GetText(bookNum);
         return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
     }
 

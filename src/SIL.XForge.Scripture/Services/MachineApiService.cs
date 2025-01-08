@@ -14,6 +14,7 @@ using Serval.Client;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
@@ -38,7 +39,8 @@ public class MachineApiService(
     IOptions<ServalOptions> servalOptions,
     ISyncService syncService,
     ITranslationEnginesClient translationEnginesClient,
-    ITranslationEngineTypesClient translationEngineTypesClient
+    ITranslationEngineTypesClient translationEngineTypesClient,
+    IRepository<UserSecret> userSecrets
 ) : IMachineApiService
 {
     /// <summary>
@@ -548,6 +550,41 @@ public class MachineApiService(
                 chapterNum,
                 cancellationToken
             );
+        }
+        catch (ServalApiException e)
+        {
+            ProcessServalApiException(e);
+            throw;
+        }
+    }
+
+    public async Task<string> GetPreTranslationUsxAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+
+        // Retrieve the user secret
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user does not exist.");
+        }
+
+        try
+        {
+            string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                cancellationToken
+            );
+            return paratextService.GetBookText(userSecret, project.ParatextId, bookNum, usfm);
         }
         catch (ServalApiException e)
         {
@@ -1083,7 +1120,7 @@ public class MachineApiService(
         return engineDto;
     }
 
-    private async Task EnsureProjectPermissionAsync(string curUserId, string sfProjectId)
+    private async Task<SFProject> EnsureProjectPermissionAsync(string curUserId, string sfProjectId)
     {
         // Load the project from the realtime service
         Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
@@ -1094,6 +1131,9 @@ public class MachineApiService(
 
         // Check for permission
         MachineApi.EnsureProjectPermission(curUserId, project);
+
+        // Return the project, in case the caller needs it
+        return project;
     }
 
     private async Task<string> GetTranslationIdAsync(
