@@ -13,7 +13,10 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryResults } from 'xforge-common/query-parameters';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -37,15 +40,17 @@ describe('EventMetricsLogComponent', () => {
       EventMetricsLogComponent,
       NoopAnimationsModule,
       RouterModule.forRoot([]),
-      UICommonModule,
+      TestOnlineStatusModule.forRoot(),
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      UICommonModule
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DialogService, useMock: mockDialogService },
       { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       provideHttpClient(withInterceptorsFromDi()),
@@ -108,6 +113,20 @@ describe('EventMetricsLogComponent', () => {
     expect(env.table).toBeNull();
   }));
 
+  it('should not display table if offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.populateEventMetrics();
+    env.wait();
+
+    env.setBrowserOnlineStatus(true);
+    env.wait();
+    expect(env.rows.length).toEqual(2);
+
+    env.setBrowserOnlineStatus(false);
+    env.wait();
+    expect(env.table).toBeNull();
+  }));
+
   it('should not display the details dialog to project admin', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedAuthService.currentUserRoles).thenReturn([]);
@@ -157,6 +176,9 @@ class TestEnvironment {
   readonly component: EventMetricsLogComponent;
   readonly fixture: ComponentFixture<EventMetricsLogComponent>;
   dialogRef = mock(MatDialogRef<EventMetricDialogComponent>);
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   mockProjectId = 'project01';
 
@@ -209,6 +231,10 @@ class TestEnvironment {
         unpagedCount: eventMetrics.length * 2
       } as QueryResults<EventMetric>)
     );
+  }
+
+  setBrowserOnlineStatus(status: boolean): void {
+    this.testOnlineStatusService.setIsOnline(status);
   }
 
   wait(): void {
