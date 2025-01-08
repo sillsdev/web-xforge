@@ -638,7 +638,7 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    public async Task SyncAsync_SetsUserPermissions()
+    public async Task SyncAsync_UpdatesPermissionsForProjects()
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
@@ -650,6 +650,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<CancellationToken>()
             )
             .Returns([TestEnvironment.ParatextProjectUser01 with { Role = SFProjectRole.Translator }]);
+        env.ParatextService.IsResource(Arg.Any<string>()).Returns(false);
 
         // SUT
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -658,9 +659,8 @@ public class ParatextSyncRunnerTests
             .SFProjectService.Received()
             .UpdatePermissionsAsync(
                 "user01",
-                Arg.Is<IDocument<SFProject>>(
-                    (IDocument<SFProject> sfProjDoc) =>
-                        sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"
+                Arg.Is<IDocument<SFProject>>(sfProjDoc =>
+                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"
                 ),
                 Arg.Any<IReadOnlyList<ParatextProjectUser>>(),
                 Arg.Any<CancellationToken>()
@@ -2382,6 +2382,18 @@ public class ParatextSyncRunnerTests
         // Check that the resource users metrics have been updated
         SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
         Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(2, 0, 0)));
+
+        // Check that the permissions were updated
+        await env
+            .SFProjectService.Received()
+            .UpdatePermissionsAsync(
+                "user01",
+                Arg.Is<IDocument<SFProject>>(sfProjDoc =>
+                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"
+                ),
+                Arg.Any<IReadOnlyList<ParatextProjectUser>>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     [Test]
@@ -2419,6 +2431,18 @@ public class ParatextSyncRunnerTests
         Assert.IsNull(env.GetProject().ResourceConfig);
         Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
         Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
+
+        // Ensure that the permissions were not updated
+        await env
+            .SFProjectService.DidNotReceive()
+            .UpdatePermissionsAsync(
+                "user01",
+                Arg.Is<IDocument<SFProject>>(sfProjDoc =>
+                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"
+                ),
+                Arg.Any<IReadOnlyList<ParatextProjectUser>>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     [Test]
