@@ -128,7 +128,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _guidService = guidService;
     }
 
-    private bool TranslationSuggestionsEnabled => _projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
     private bool CheckingEnabled => _projectDoc.Data.CheckingConfig.CheckingEnabled;
 
     /// <summary>
@@ -327,8 +326,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Update user resource access, if this project has a source resource
             // The updating of a source project's permissions is done when that project is synced.
             if (
-                TranslationSuggestionsEnabled
-                && !string.IsNullOrWhiteSpace(sourceParatextId)
+                !string.IsNullOrWhiteSpace(sourceParatextId)
                 && !string.IsNullOrWhiteSpace(sourceProjectRef)
                 && _paratextService.IsResource(sourceParatextId)
             )
@@ -440,9 +438,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 await UpdateResourceConfig(paratextProject);
             }
 
-            // We will always update permissions, even if this is a resource project
-            LogMetric("Updating permissions");
-            await _projectService.UpdatePermissionsAsync(userId, _projectDoc, _paratextUsers, token);
+            // Update permissions if not a resource, or if it is a resource and needs updating.
+            // A resource will need updating if its text or permissions have changed on the DBL.
+            // Source resources have their permissions updated above in the section "Updating user resource access".
+            if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
+            {
+                LogMetric("Updating permissions");
+                await _projectService.UpdatePermissionsAsync(userId, _projectDoc, _paratextUsers, token);
+            }
 
             await NotifySyncProgress(SyncPhase.Phase9, 40.0);
 
