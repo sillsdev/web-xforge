@@ -34,7 +34,7 @@ interface Row {
   imports: [OwnerComponent, TranslocoModule, UICommonModule]
 })
 export class EventMetricsLogComponent extends DataLoadingComponent implements OnInit {
-  columnsToDisplay: string[] = ['scope', 'eventType', 'successful', 'author'];
+  columnsToDisplay: string[] = ['successful', 'scope', 'eventType', 'author'];
   rows: Row[] = [];
 
   private pageIndex$ = new BehaviorSubject<number>(0);
