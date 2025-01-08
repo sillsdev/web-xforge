@@ -26,7 +26,9 @@
     ></app-info>
   </div>
   <div class="admin-tool-control">
-    <a mat-flat-button color="primary" [appRouterLink]="eventLogLink">View Event Log</a>
+    <a id="view-event-log" mat-flat-button color="primary" [appRouterLink]="eventLogLink" [disabled]="!isOnline"
+      >View Event Log</a
+    >
   </div>
   <div class="admin-tool-control">
     <button

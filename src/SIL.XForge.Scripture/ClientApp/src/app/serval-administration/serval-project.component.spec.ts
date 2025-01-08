@@ -92,6 +92,20 @@ describe('ServalProjectComponent', () => {
     }));
   });
 
+  describe('view event log button', () => {
+    it('should disable the view event log button when offline', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      env.onlineStatus = false;
+      expect(env.viewEventLogButton.ariaDisabled).toBe('true');
+    }));
+
+    it('should not disable the view event log button when online', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      env.onlineStatus = true;
+      expect(env.viewEventLogButton.ariaDisabled).toBeNull();
+    }));
+  });
+
   describe('download button', () => {
     it('should disable the download button when offline', fakeAsync(() => {
       const env = new TestEnvironment(true);
@@ -261,6 +275,10 @@ describe('ServalProjectComponent', () => {
 
     get runWebhookButton(): HTMLInputElement {
       return this.fixture.nativeElement.querySelector('#run-webhook');
+    }
+
+    get viewEventLogButton(): HTMLAnchorElement {
+      return this.fixture.nativeElement.querySelector('#view-event-log');
     }
 
     get firstDownloadButton(): HTMLInputElement {
