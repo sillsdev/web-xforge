@@ -2,52 +2,56 @@
   @if (isOnline) {
     @if (!isLoading) {
       @if (length > 0) {
-        <table mat-table id="event-metrics-log-table" [dataSource]="rows">
-          <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
-          <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
-          <ng-container matColumnDef="scope">
-            <th mat-header-cell *matHeaderCellDef>{{ t("scope") }}</th>
-            <td mat-cell *matCellDef="let row">
-              {{ row.scope }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="eventType">
-            <th mat-header-cell *matHeaderCellDef>{{ t("event") }}</th>
-            <td mat-cell *matCellDef="let row">
-              {{ row.eventType }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="successful">
-            <th mat-header-cell *matHeaderCellDef>{{ t("status") }}</th>
-            <td mat-cell *matCellDef="let row">
-              {{ t(row.successful ? "successful" : "failed") }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="author">
-            <th mat-header-cell *matHeaderCellDef>{{ t("author") }}</th>
-            <td mat-cell *matCellDef="let row">
-              <app-owner
-                [ownerRef]="row.userId"
-                [includeAvatar]="true"
-                [layoutStacked]="false"
-                [dateTime]="row.timeStamp"
-              ></app-owner>
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="details">
-            <th mat-header-cell *matHeaderCellDef>{{ t("technical_details") }}</th>
-            <td mat-cell *matCellDef="let row">
-              <button
-                mat-flat-button
-                (click)="openDetailsDialog(row.dialogData)"
-                color="primary"
-                class="button-with-text"
-              >
-                <mat-icon class="mirror-rtl">open_in_new</mat-icon> {{ t("technical_details") }}
-              </button>
-            </td>
-          </ng-container>
-        </table>
+        <div class="table-wrapper">
+          <table mat-table id="event-metrics-log-table" [dataSource]="rows">
+            <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
+            <ng-container matColumnDef="scope">
+              <th mat-header-cell *matHeaderCellDef>{{ t("scope") }}</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.scope }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="eventType">
+              <th mat-header-cell *matHeaderCellDef>{{ t("event") }}</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.eventType }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="successful">
+              <th mat-header-cell *matHeaderCellDef>{{ t("status") }}</th>
+              <td mat-cell *matCellDef="let row">
+                <mat-icon class="status-icon" [class.successful]="row.successful">
+                  {{ row.successful ? "check_circle" : "error" }}
+                </mat-icon>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="author">
+              <th mat-header-cell *matHeaderCellDef>{{ t("author") }}</th>
+              <td mat-cell *matCellDef="let row">
+                <app-owner
+                  [ownerRef]="row.userId"
+                  [includeAvatar]="true"
+                  [layoutStacked]="false"
+                  [dateTime]="row.timeStamp"
+                ></app-owner>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="details">
+              <th mat-header-cell *matHeaderCellDef>{{ t("technical_details") }}</th>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  mat-flat-button
+                  (click)="openDetailsDialog(row.dialogData)"
+                  color="primary"
+                  class="details-button"
+                >
+                  <mat-icon class="mirror-rtl">open_in_new</mat-icon> {{ t("technical_details") }}
+                </button>
+              </td>
+            </ng-container>
+          </table>
+        </div>
         <mat-paginator
           [pageIndex]="pageIndex"
           [length]="length"
