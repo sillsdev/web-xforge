@@ -17,18 +17,22 @@
           </button>
         }
         @if (isLoggedIn | async) {
-          <a id="sf-logo-button" mat-icon-button class="hide-lt-sm" [routerLink]="appIconLink">
+          <a id="sf-logo-button" mat-icon-button [routerLink]="appIconLink">
             <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
           </a>
         } @else {
-          <a id="sf-logo-button" mat-icon-button class="hide-lt-sm" href="/">
+          <a id="sf-logo-button" mat-icon-button href="/">
             <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
           </a>
         }
         @if (isProjectSelected) {
-          <span class="project-name-wrapper hide-lt-sm">
-            <span class="project-name">{{ selectedProjectDoc?.data?.name }}</span>
-            <span class="project-short-name">{{ selectedProjectDoc?.data?.shortName }}</span>
+          <span class="project-name-wrapper" [routerLink]="appIconLink">
+            @if (isScreenTiny) {
+              <span class="project-name">{{ selectedProjectDoc?.data?.shortName }}</span>
+            } @else {
+              <span class="project-name">{{ selectedProjectDoc?.data?.name }}</span>
+              <span class="project-short-name">{{ selectedProjectDoc?.data?.shortName }}</span>
+            }
           </span>
         }
         <span class="toolbar-spacer"></span>
