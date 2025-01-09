@@ -145,7 +145,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
           draftingSourceBooks.add(text.bookNum);
         }
 
-        let trainingSourceBooks: Set<number> = new Set<number>(trainingSources[0].texts.map(t => t.bookNum));
+        let trainingSourceBooks: Set<number> = new Set<number>(trainingSources[0]?.texts.map(t => t.bookNum));
         let additionalTrainingSourceBooks: Set<number> = new Set<number>(trainingSources[1]?.texts.map(t => t.bookNum));
 
         this.availableTranslateBooks = [];
@@ -175,14 +175,19 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
           }
 
           // Training books
-          this.availableTrainingBooks[this.activatedProject.projectId].push({ number: bookNum, selected: false });
+          let isPresentInASource = false;
           if (trainingSourceBooks.has(bookNum)) {
             this.availableTrainingBooks[trainingSources[0].projectRef].push({ number: bookNum, selected: false });
+            isPresentInASource = true;
           } else {
             this.unusableTrainingSourceBooks.push(bookNum);
           }
           if (additionalTrainingSourceBooks != null && additionalTrainingSourceBooks.has(bookNum)) {
             this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: false });
+            isPresentInASource = true;
+          }
+          if (isPresentInASource) {
+            this.availableTrainingBooks[this.activatedProject.projectId].push({ number: bookNum, selected: false });
           }
         }
 
@@ -353,16 +358,14 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       book.selected = selectedBooks.includes(book.number);
     }
 
-    //update selections in sources (first is selected by default)
-    for (const source of this.trainingSources) {
-      for (const book of this.availableTrainingBooks[source.projectRef]) {
-        if (book !== undefined) {
-          const isTranslated = selectedBooks.includes(book.number);
-          if (source === this.trainingSources[0] && isTranslated) {
-            book.selected = true;
-          } else {
-            book.selected = false;
-          }
+    //for each selected book, select the matching book in the first source possible
+    for (const selectedBook of selectedBooks) {
+      for (const projectRef in this.availableTrainingBooks) {
+        if (projectRef === this.activatedProject.projectId) continue;
+        const sourceBook = this.availableTrainingBooks[projectRef].find(b => b.number === selectedBook);
+        if (sourceBook !== undefined) {
+          sourceBook.selected = true;
+          break;
         }
       }
     }
@@ -468,7 +471,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   private setInitialTrainingBooks(): void {
     // Get the previously selected training books from the target project
-    const trainingSourceId = this.trainingSources[0].projectRef;
+    const trainingSourceId = this.trainingSources[0]?.projectRef;
     let previousTrainingRange: string =
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges?.find(
         r => r.projectId === trainingSourceId
