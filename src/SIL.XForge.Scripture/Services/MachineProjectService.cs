@@ -281,6 +281,7 @@ public class MachineProjectService(
         // Build the list of files, corpora, and parallel corpora to remove
         List<string?> fileIdsToRemove = [];
         List<string?> corpusIdsToRemove = [];
+        bool removeAdditionalTrainingData = false;
         if (preTranslate)
         {
             // Remove the additional training data
@@ -291,6 +292,7 @@ public class MachineProjectService(
                 fileIdsToRemove.AddRange(
                     projectSecret.ServalData.AdditionalTrainingData.CorpusFiles.Select(f => f.FileId)
                 );
+                removeAdditionalTrainingData = true;
             }
 
             // If there is no SMT training engine, remove all files and corpora
@@ -361,15 +363,32 @@ public class MachineProjectService(
             logger.LogInformation(e, message);
         }
 
-        // Remove the translation engine identifier
-        if (preTranslate)
-        {
-            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationEngineId));
-        }
-        else
-        {
-            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.TranslationEngineId));
-        }
+        // Remove the translation engine identifier, and other related information
+        await projectSecrets.UpdateAsync(
+            sfProjectId,
+            u =>
+            {
+                if (preTranslate)
+                {
+                    u.Unset(p => p.ServalData.PreTranslationEngineId);
+                    u.Unset(p => p.ServalData.ParallelCorpusIdForPreTranslate);
+                    u.Unset(p => p.ServalData.ParallelCorpusIdForTrainOn);
+                    u.Unset(p => p.ServalData.PreTranslationsRetrieved);
+                    if (removeAdditionalTrainingData)
+                    {
+                        u.Unset(p => p.ServalData.AdditionalTrainingData);
+                    }
+                }
+                else
+                {
+                    u.Unset(p => p.ServalData.TranslationEngineId);
+                    u.Unset(p => p.ServalData.ParallelCorpusIdForSmt);
+                }
+
+                // Remove all corpora that were deleted
+                u.RemoveAll(p => p.ServalData.CorpusFiles, p => corpusIdsToRemove.Contains(p.CorpusId));
+            }
+        );
     }
 
     /// <summary>
