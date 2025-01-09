@@ -433,7 +433,7 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should login with branding', fakeAsync(() => {
+  it('should login without branding', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedLocationService.origin).thenReturn('https://alternatename.org');
 
