@@ -75,7 +75,6 @@ interface LoginParams {
 
 interface xForgeAuth0Parameters extends AuthorizationParams {
   mode?: string;
-  useBranding?: boolean;
   logo?: string;
   login_hint?: string;
   language?: string;
