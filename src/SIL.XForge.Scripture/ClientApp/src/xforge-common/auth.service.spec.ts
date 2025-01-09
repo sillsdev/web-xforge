@@ -416,7 +416,7 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should login with branding', fakeAsync(() => {
+  it('should login with defined logo', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
 
@@ -428,24 +428,6 @@ describe('AuthService', () => {
     ).last()[0];
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
-      expect(authOptions.authorizationParams!.useBranding).toEqual(true);
-      expect(authOptions.authorizationParams!.logo).toBeDefined();
-    }
-  }));
-
-  it('should login without branding', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedLocationService.origin).thenReturn('https://alternatename.org');
-
-    env.service.logIn({ returnUrl: 'test-returnUrl' });
-
-    verify(mockedWebAuth.loginWithRedirect(anything())).once();
-    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
-      mockedWebAuth.loginWithRedirect
-    ).last()[0];
-    expect(authOptions).toBeDefined();
-    if (authOptions != null) {
-      expect(authOptions.authorizationParams!.useBranding).toEqual(false);
       expect(authOptions.authorizationParams!.logo).toBeDefined();
     }
   }));

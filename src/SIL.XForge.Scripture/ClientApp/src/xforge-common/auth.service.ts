@@ -245,15 +245,11 @@ export class AuthService {
     const state: AuthState = { returnUrl };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const ui_locales: string = language;
-    const allowedHosts = ['scriptureforge.org', 'qa.scriptureforge.org', 'localhost:5000'];
-    const url = new URL(this.locationService.origin);
-    const useBranding: boolean = allowedHosts.includes(url.host);
     const auth0Parameters: xForgeAuth0Parameters = {
       ui_locales: language,
       enablePasswordless: true,
       language,
       login_hint: ui_locales,
-      useBranding,
       logo: 'https://auth0.languagetechnology.org/assets/sf.svg'
     };
 
