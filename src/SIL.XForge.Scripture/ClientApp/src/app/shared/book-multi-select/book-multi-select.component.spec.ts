@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { Book } from '../../translate/draft-generation/draft-generation-steps/draft-generation-steps.component';
 import { ProgressService, TextProgress } from '../progress-service/progress.service';
 import { BookMultiSelectComponent } from './book-multi-select.component';
 
@@ -16,8 +17,8 @@ describe('BookMultiSelectComponent', () => {
   let component: BookMultiSelectComponent;
   let fixture: ComponentFixture<BookMultiSelectComponent>;
 
-  let mockBooks: number[];
-  let mockSelectedBooks: number[];
+  let mockBooks: Book[];
+  let mockSelectedBooks: Book[];
 
   configureTestingModule(() => ({
     imports: [MatChipsModule, TestTranslocoModule],
@@ -27,9 +28,16 @@ describe('BookMultiSelectComponent', () => {
     ]
   }));
 
+  function book(bookNum: number): Book {
+    return { number: bookNum, selected: false };
+  }
+
   beforeEach(() => {
-    mockBooks = [1, 2, 3, 40, 42, 67, 70];
-    mockSelectedBooks = [1, 3];
+    mockBooks = [book(1), book(2), book(3), book(40), book(42), book(67), book(70)];
+    mockSelectedBooks = [
+      { number: 1, selected: true },
+      { number: 3, selected: true }
+    ];
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedProgressService.isLoaded$).thenReturn(of(true));
     when(mockedProgressService.texts).thenReturn([
@@ -118,7 +126,7 @@ describe('BookMultiSelectComponent', () => {
 
   it('should show checkboxes for OT, NT, and DC as indeterminate when only some books from that category are selected', async () => {
     await component.select('OT', false);
-    component.selectedBooks = [1];
+    component.selectedBooks = [{ number: 1, selected: true }];
     await component.ngOnChanges();
     fixture.detectChanges();
 
@@ -127,7 +135,7 @@ describe('BookMultiSelectComponent', () => {
     expect(component.partialDC).toBe(false);
 
     await component.select('OT', false);
-    component.selectedBooks = [40];
+    component.selectedBooks = [{ number: 40, selected: true }];
     await component.ngOnChanges();
     fixture.detectChanges();
 
@@ -136,7 +144,7 @@ describe('BookMultiSelectComponent', () => {
     expect(component.partialDC).toBe(false);
 
     await component.select('NT', false);
-    component.selectedBooks = [67];
+    component.selectedBooks = [{ number: 67, selected: true }];
     await component.ngOnChanges();
     fixture.detectChanges();
 
