@@ -23,7 +23,7 @@ export class ExternalUrlService {
   }
 
   get autoDrafts(): string {
-    return this.helps + '/generating-drafts';
+    return this.helps + '/understanding-drafts';
   }
 
   get rolesHelpPage(): string {
