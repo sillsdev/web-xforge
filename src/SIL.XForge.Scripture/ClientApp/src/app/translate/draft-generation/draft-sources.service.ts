@@ -121,18 +121,25 @@ export class DraftSourcesService {
           ])
         ).pipe(
           map(([sourceDoc, alternateSourceDoc, alternateTrainingSourceDoc, additionalTrainingSourceProjectDoc]) => {
-            const draftingSource: DraftSource = alternateSourceDoc
+            let draftingSource: DraftSource = alternateSourceDoc
               ? { ...alternateSourceDoc?.data, projectRef: alternateSourceProjectId }
               : { ...sourceDoc?.data, projectRef: sourceProjectId };
-            const trainingSource: DraftSource = alternateTrainingSourceDoc
+            let trainingSource: DraftSource = alternateTrainingSourceDoc
               ? { ...alternateTrainingSourceDoc?.data, projectRef: alternateTrainingSourceProjectId }
               : { ...sourceDoc?.data, projectRef: sourceProjectId };
-            const additionalTrainingSource: DraftSource = additionalTrainingSourceProjectDoc
+            let additionalTrainingSource: DraftSource = additionalTrainingSourceProjectDoc
               ? { ...additionalTrainingSourceProjectDoc?.data, projectRef: additionalTrainingSourceProjectId }
               : undefined;
+            let target = { ...targetDoc?.data, projectRef: this.activatedProject.projectId };
+
+            if (!draftingSource?.projectRef) draftingSource = undefined;
+            if (!trainingSource?.projectRef) trainingSource = undefined;
+            if (!additionalTrainingSource?.projectRef) additionalTrainingSource = undefined;
+            if (!target?.projectRef) target = undefined;
+
             return {
               trainingSources: [trainingSource, additionalTrainingSource] as [DraftSource?, DraftSource?],
-              trainingTargets: [{ ...targetDoc?.data, projectRef: this.activatedProject.projectId }] as [DraftSource],
+              trainingTargets: [target] as [DraftSource],
               draftingSources: [draftingSource] as [DraftSource]
             };
           })
