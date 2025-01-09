@@ -60,8 +60,6 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
   }
 
   async initBookOptions(): Promise<void> {
-    const selectedSet = new Set<Book>(this.selectedBooks);
-
     await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
     this.loaded = true;
     const progress = this.progressService.texts;
@@ -69,7 +67,7 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
     this.bookOptions = this.availableBooks.map((book: Book) => ({
       bookNum: book.number,
       bookId: Canon.bookNumberToId(book.number),
-      selected: selectedSet.has(book),
+      selected: this.selectedBooks.find(b => book.number === b.number) !== undefined,
       progressPercentage: progress.find(p => p.text.bookNum === book.number)?.percentage ?? 0
     }));
 
@@ -109,7 +107,9 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
   async select(scope: Scope, value: boolean): Promise<void> {
     if (value) {
       this.selectedBooks.push(
-        ...this.availableBooks.filter(n => this.isBookInScope(n.number, scope) && !this.selectedBooks.includes(n))
+        ...this.availableBooks.filter(
+          n => this.isBookInScope(n.number, scope) && !this.selectedBooks.find(b => b.number === n.number)
+        )
       );
     } else {
       this.selectedBooks = this.selectedBooks.filter(n => !this.isBookInScope(n.number, scope));
