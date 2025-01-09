@@ -2023,6 +2023,9 @@ public class MachineProjectServiceTests
             new ServalData
             {
                 PreTranslationEngineId = TranslationEngine01,
+                ParallelCorpusIdForPreTranslate = ParallelCorpus01,
+                ParallelCorpusIdForTrainOn = ParallelCorpus02,
+                PreTranslationsRetrieved = true,
                 CorpusFiles =
                 [
                     new ServalCorpusFile { CorpusId = Corpus01, FileId = File01 },
@@ -2054,6 +2057,15 @@ public class MachineProjectServiceTests
         await env.DataFilesClient.Received(1).DeleteAsync(File02);
         await env.DataFilesClient.Received(1).DeleteAsync(File03);
         await env.DataFilesClient.Received(1).DeleteAsync(File04);
+
+        // Verify that the project secret is correct
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+        Assert.IsNull(projectSecret.ServalData!.AdditionalTrainingData);
+        Assert.IsNull(projectSecret.ServalData!.PreTranslationEngineId);
+        Assert.IsNull(projectSecret.ServalData!.PreTranslationsRetrieved);
+        Assert.IsNull(projectSecret.ServalData!.ParallelCorpusIdForPreTranslate);
+        Assert.IsNull(projectSecret.ServalData!.ParallelCorpusIdForTrainOn);
+        Assert.IsEmpty(projectSecret.ServalData!.CorpusFiles);
     }
 
     [Test]
@@ -2066,7 +2078,11 @@ public class MachineProjectServiceTests
             new ServalData
             {
                 PreTranslationEngineId = TranslationEngine01,
+                ParallelCorpusIdForPreTranslate = ParallelCorpus01,
+                ParallelCorpusIdForTrainOn = ParallelCorpus02,
+                PreTranslationsRetrieved = true,
                 TranslationEngineId = TranslationEngine02,
+                ParallelCorpusIdForSmt = ParallelCorpus03,
                 CorpusFiles =
                 [
                     new ServalCorpusFile { CorpusId = Corpus01, FileId = File01 },
@@ -2105,6 +2121,17 @@ public class MachineProjectServiceTests
         await env.CorporaClient.DidNotReceive().DeleteAsync(Corpus02);
         await env.DataFilesClient.DidNotReceive().DeleteAsync(File01);
         await env.DataFilesClient.DidNotReceive().DeleteAsync(File02);
+
+        // Verify that the project secret is correct
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+        Assert.IsNull(projectSecret.ServalData!.AdditionalTrainingData);
+        Assert.IsNull(projectSecret.ServalData!.PreTranslationEngineId);
+        Assert.IsNull(projectSecret.ServalData!.PreTranslationsRetrieved);
+        Assert.IsNull(projectSecret.ServalData!.ParallelCorpusIdForPreTranslate);
+        Assert.IsNull(projectSecret.ServalData!.ParallelCorpusIdForTrainOn);
+        Assert.IsNotEmpty(projectSecret.ServalData!.CorpusFiles);
+        Assert.AreEqual(TranslationEngine02, projectSecret.ServalData!.TranslationEngineId);
+        Assert.AreEqual(ParallelCorpus03, projectSecret.ServalData!.ParallelCorpusIdForSmt);
     }
 
     [Test]
@@ -2117,6 +2144,7 @@ public class MachineProjectServiceTests
             new ServalData
             {
                 TranslationEngineId = TranslationEngine02,
+                ParallelCorpusIdForSmt = ParallelCorpus03,
                 CorpusFiles =
                 [
                     new ServalCorpusFile { CorpusId = Corpus01, FileId = File01 },
@@ -2134,6 +2162,12 @@ public class MachineProjectServiceTests
         await env.CorporaClient.Received(1).DeleteAsync(Corpus02);
         await env.DataFilesClient.Received(1).DeleteAsync(File01);
         await env.DataFilesClient.Received(1).DeleteAsync(File02);
+
+        // Verify that the project secret is correct
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+        Assert.IsEmpty(projectSecret.ServalData!.CorpusFiles);
+        Assert.IsNull(projectSecret.ServalData!.TranslationEngineId);
+        Assert.IsNull(projectSecret.ServalData!.ParallelCorpusIdForSmt);
     }
 
     [Test]
@@ -2146,7 +2180,11 @@ public class MachineProjectServiceTests
             new ServalData
             {
                 PreTranslationEngineId = TranslationEngine01,
+                ParallelCorpusIdForPreTranslate = ParallelCorpus01,
+                ParallelCorpusIdForTrainOn = ParallelCorpus02,
+                PreTranslationsRetrieved = true,
                 TranslationEngineId = TranslationEngine02,
+                ParallelCorpusIdForSmt = ParallelCorpus03,
                 CorpusFiles =
                 [
                     new ServalCorpusFile { CorpusId = Corpus01, FileId = File01 },
@@ -2185,6 +2223,17 @@ public class MachineProjectServiceTests
         await env.DataFilesClient.DidNotReceive().DeleteAsync(File04);
         await env.DataFilesClient.DidNotReceive().DeleteAsync(File05);
         await env.DataFilesClient.DidNotReceive().DeleteAsync(File06);
+
+        // Verify that the project secret is correct
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+        Assert.IsNotNull(projectSecret.ServalData!.AdditionalTrainingData);
+        Assert.AreEqual(TranslationEngine01, projectSecret.ServalData!.PreTranslationEngineId);
+        Assert.IsTrue(projectSecret.ServalData!.PreTranslationsRetrieved);
+        Assert.AreEqual(ParallelCorpus01, projectSecret.ServalData!.ParallelCorpusIdForPreTranslate);
+        Assert.AreEqual(ParallelCorpus02, projectSecret.ServalData!.ParallelCorpusIdForTrainOn);
+        Assert.IsNotEmpty(projectSecret.ServalData!.CorpusFiles);
+        Assert.IsNull(projectSecret.ServalData!.TranslationEngineId);
+        Assert.IsNull(projectSecret.ServalData!.ParallelCorpusIdForSmt);
     }
 
     [Test]
