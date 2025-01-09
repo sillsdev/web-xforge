@@ -50,7 +50,7 @@ export class DraftSourcesService {
    *
    * Currently this method provides guarantees via the type system that there will be at most 2 training sources,
    * exactly 1 training target, and at most 1 drafting source. Consumers of this method that cannot accept an arbitrary
-   * length for each of these arrays are encouraged to write there code in such a way that it will noticeably break
+   * length for each of these arrays are encouraged to write their code in such a way that it will noticeably break
    * (preferably at build time) if these guarantees are changed, to make it easier to find code that relies on the
    * current limit on the number of sources in each category.
    * @returns An object with three arrays: trainingSources, trainingTargets, and draftingSources
