@@ -1,0 +1,82 @@
+use('xforge')
+
+const results = db.sync_metrics.aggregate([
+  {
+    $match: {
+      status: 'Successful',
+    }
+  },
+  {
+    $project: {
+      dateQueued: 1,
+      queueTime: {
+        $subtract: ["$dateStarted", "$dateQueued"]
+      },
+      runTime: {
+        $subtract: ["$dateFinished", "$dateStarted"]
+      },
+    }
+  },
+  {
+    $group: {
+      _id: {
+        $dateToString: {
+          format: "%Y-%m",
+          date: "$dateQueued"
+        }
+      },
+      queuePercentiles: {
+        $percentile: {
+          input: "$queueTime",
+          p: [0.1, 0.5, 0.9, 0.95],
+          method: 'approximate'
+        }
+      },
+      runtimePercentiles: {
+        $percentile: {
+          input: "$runTime",
+          p: [0.1, 0.5, 0.9, 0.95],
+          method: 'approximate'
+        }
+      },
+    }
+  },
+  {
+    $sort: {
+      _id: 1,
+    }
+  },
+]).toArray()
+
+print([
+  '',
+  'Queue times',
+  '',
+  '',
+  '',
+  'Run times',
+  '',
+  '',
+  '',
+  'All times are in seconds. Only successful runs are included.',
+].join('\t'))
+
+print([
+  'Month',
+  '10th',
+  '50th',
+  '90th',
+  '95th',
+  '10th',
+  '50th',
+  '90th',
+  '95th',
+].join('\t'))
+
+for (const result of results) {
+  print([
+    result._id,
+    ...result.queuePercentiles.map(n => n / 1000),
+    ...result.runtimePercentiles.map(n => n / 1000),
+  ].join('\t'))
+}
