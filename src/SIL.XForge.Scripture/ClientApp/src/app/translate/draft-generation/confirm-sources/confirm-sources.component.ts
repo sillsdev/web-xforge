@@ -1,13 +1,13 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { SubscriptionDisposable } from '../../../../xforge-common/subscription-disposable';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSourcesAsArrays, projectToDraftSources } from '../draft-utils';
+import { DraftSourcesService } from '../draft-sources.service';
 
 @Component({
   selector: 'app-confirm-sources',
@@ -16,22 +16,29 @@ import { DraftSourcesAsArrays, projectToDraftSources } from '../draft-utils';
   templateUrl: './confirm-sources.component.html',
   styleUrl: './confirm-sources.component.scss'
 })
-export class ConfirmSourcesComponent {
+export class ConfirmSourcesComponent extends SubscriptionDisposable implements OnInit {
   @Output() languageCodesVerified = new EventEmitter<boolean>(false);
 
   trainingSources: TranslateSource[] = [];
-  trainingTargets: SFProjectProfile[] = [];
+  trainingTargets: TranslateSource[] = [];
   draftingSources: TranslateSource[] = [];
 
   constructor(
     private readonly i18nService: I18nService,
-    activatedProjectService: ActivatedProjectService
+    private readonly draftSourcesService: DraftSourcesService
   ) {
-    const sources: DraftSourcesAsArrays = projectToDraftSources(activatedProjectService.projectDoc.data);
+    super();
+  }
 
-    this.trainingSources = sources.trainingSources;
-    this.trainingTargets = sources.trainingTargets;
-    this.draftingSources = sources.draftingSources;
+  ngOnInit(): void {
+    this.subscribe(
+      this.draftSourcesService.getDraftProjectSources(),
+      async ({ trainingTargets, trainingSources, draftingSources }) => {
+        this.trainingSources = trainingSources.filter(s => s !== undefined);
+        this.trainingTargets = trainingTargets.filter(t => t !== undefined);
+        this.draftingSources = draftingSources.filter(s => s !== undefined);
+      }
+    );
   }
 
   confirmationChanged(change: MatCheckboxChange): void {

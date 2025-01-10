@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -11,7 +10,7 @@ import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { DraftSource, DraftSources, DraftSourcesService } from './draft-sources.service';
+import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
 
 describe('DraftSourcesService', () => {
   let service: DraftSourcesService;
@@ -29,11 +28,13 @@ describe('DraftSourcesService', () => {
 
   beforeEach(() => {
     when(mockUserService.getCurrentUser()).thenResolve({ data: undefined } as UserDoc);
+    when(mockActivatedProjectService.projectId).thenReturn('project01');
     service = TestBed.inject(DraftSourcesService);
   });
 
   describe('getDraftProjectSources', () => {
     it('should pass undefined properties if no projects loaded', done => {
+      when(mockActivatedProjectService.projectId).thenReturn(undefined);
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({ data: undefined } as SFProjectProfileDoc)
       );
@@ -41,19 +42,10 @@ describe('DraftSourcesService', () => {
       // SUT
       service.getDraftProjectSources().subscribe(result => {
         expect(result).toEqual({
-          target: undefined,
-          source: undefined,
-          alternateSource: undefined,
-          alternateTrainingSource: undefined,
-          additionalTrainingSource: undefined,
-          draftSourceIds: {
-            draftingSourceId: undefined,
-            draftingAlternateSourceId: undefined,
-            trainingSourceId: undefined,
-            trainingAlternateSourceId: undefined,
-            trainingAdditionalSourceId: undefined
-          }
-        } as DraftSources);
+          trainingSources: [undefined, undefined],
+          trainingTargets: [undefined],
+          draftingSources: [undefined]
+        } as DraftSourcesAsArrays);
         done();
       });
     });
@@ -112,51 +104,45 @@ describe('DraftSourcesService', () => {
 
       service.getDraftProjectSources().subscribe(result => {
         expect(result).toEqual({
-          target: targetProject,
-          source: {
-            name: 'Source Project',
-            shortName: 'SP',
-            texts: [{ bookNum: 2, hasSource: true } as TextInfo],
-            writingSystem: {
-              tag: 'en_US'
-            },
-            noAccess: true
-          },
-          alternateSource: {
-            name: 'Alternate Source Project',
-            shortName: 'ASP',
-            texts: [],
-            writingSystem: {
-              tag: 'en_NZ'
-            },
-            noAccess: true
-          },
-          alternateTrainingSource: {
-            name: 'Alternate Training Source Project',
-            shortName: 'ATSP',
-            texts: [],
-            writingSystem: {
-              tag: 'en_AU'
-            },
-            noAccess: true
-          },
-          additionalTrainingSource: {
-            name: 'Additional Training Source Project',
-            shortName: 'ADSP',
-            texts: [],
-            writingSystem: {
-              tag: 'en_UK'
-            },
-            noAccess: true
-          },
-          draftSourceIds: {
-            draftingSourceId: 'source_project',
-            draftingAlternateSourceId: 'alternate_source_project',
-            trainingSourceId: 'source_project',
-            trainingAlternateSourceId: 'alternate_training_source_project',
-            trainingAdditionalSourceId: 'additional_training_source_project'
-          }
-        } as DraftSources);
+          trainingTargets: [{ ...targetProject, projectRef: 'project01' }],
+          draftingSources: [
+            {
+              name: 'Alternate Source Project',
+              projectRef: 'alternate_source_project',
+              shortName: 'ASP',
+              paratextId: undefined,
+              texts: [],
+              writingSystem: {
+                tag: 'en_NZ'
+              },
+              noAccess: true
+            } as DraftSource
+          ],
+          trainingSources: [
+            {
+              name: 'Alternate Training Source Project',
+              projectRef: 'alternate_training_source_project',
+              shortName: 'ATSP',
+              paratextId: undefined,
+              texts: [],
+              writingSystem: {
+                tag: 'en_AU'
+              },
+              noAccess: true
+            } as DraftSource,
+            {
+              name: 'Additional Training Source Project',
+              projectRef: 'additional_training_source_project',
+              shortName: 'ADSP',
+              paratextId: undefined,
+              texts: [],
+              writingSystem: {
+                tag: 'en_UK'
+              },
+              noAccess: true
+            } as DraftSource
+          ]
+        } as DraftSourcesAsArrays);
         done();
       });
     });
@@ -252,19 +238,13 @@ describe('DraftSourcesService', () => {
 
       service.getDraftProjectSources().subscribe(result => {
         expect(result).toEqual({
-          target: targetProject,
-          source: sourceProject,
-          alternateSource: alternateSourceProject,
-          alternateTrainingSource: alternateTrainingSourceProject,
-          additionalTrainingSource: additionalTrainingSourceProject,
-          draftSourceIds: {
-            draftingSourceId: 'source_project',
-            draftingAlternateSourceId: 'alternate_source_project',
-            trainingSourceId: 'source_project',
-            trainingAlternateSourceId: 'alternate_training_source_project',
-            trainingAdditionalSourceId: 'additional_training_source_project'
-          }
-        } as DraftSources);
+          trainingTargets: [{ ...targetProject, projectRef: 'project01' }],
+          draftingSources: [{ ...alternateSourceProject, projectRef: 'alternate_source_project' }],
+          trainingSources: [
+            { ...alternateTrainingSourceProject, projectRef: 'alternate_training_source_project' },
+            { ...additionalTrainingSourceProject, projectRef: 'additional_training_source_project' }
+          ]
+        } as DraftSourcesAsArrays);
         done();
       });
     });
@@ -292,7 +272,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly(targetProject, result);
+        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
         done();
       });
     });
@@ -312,7 +292,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly(targetProject, result);
+        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
         done();
       });
     });
@@ -340,7 +320,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly(targetProject, result);
+        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
         done();
       });
     });
@@ -360,7 +340,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly(targetProject, result);
+        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
         done();
       });
     });
@@ -388,7 +368,7 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly(targetProject, result);
+        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
         done();
       });
     });
@@ -408,26 +388,17 @@ describe('DraftSourcesService', () => {
       );
 
       service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly(targetProject, result);
+        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
         done();
       });
     });
   });
 
-  function expectTargetOnly(targetProject: DraftSource, result: DraftSources): void {
+  function expectTargetOnly(targetProject: DraftSource, result: DraftSourcesAsArrays): void {
     expect(result).toEqual({
-      target: targetProject,
-      source: undefined,
-      alternateSource: undefined,
-      alternateTrainingSource: undefined,
-      additionalTrainingSource: undefined,
-      draftSourceIds: {
-        draftingSourceId: undefined,
-        draftingAlternateSourceId: undefined,
-        trainingSourceId: undefined,
-        trainingAlternateSourceId: undefined,
-        trainingAdditionalSourceId: undefined
-      }
-    } as DraftSources);
+      trainingSources: [undefined, undefined],
+      trainingTargets: [targetProject],
+      draftingSources: [undefined]
+    } as DraftSourcesAsArrays);
   }
 });
