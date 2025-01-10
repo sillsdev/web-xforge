@@ -583,7 +583,7 @@ describe('DraftGenerationStepsComponent', () => {
     });
   });
 
-  fdescribe('confirm step', () => {
+  describe('confirm step', () => {
     const availableBooks = [
       { bookNum: 1 },
       { bookNum: 2 },
