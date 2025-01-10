@@ -35,7 +35,7 @@ import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
-import { DraftSource, DraftSourcesService } from './draft-sources.service';
+import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
@@ -163,7 +163,13 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
       mockDraftGenerationService.getGeneratedDraftUsfm.and.returnValue(of('\\id Test USFM \\c 1 \\v 1 Test'));
       mockDraftSourcesService = jasmine.createSpyObj<DraftSourcesService>(['getDraftProjectSources']);
-      mockDraftSourcesService.getDraftProjectSources.and.returnValue(of({}));
+      mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+        of({
+          draftingSources: [undefined],
+          trainingSources: [undefined, undefined],
+          trainingTargets: [undefined]
+        } as DraftSourcesAsArrays)
+      );
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
 
@@ -929,16 +935,20 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                name: 'source',
-                shortName: 'SRC',
-                texts: [],
-                writingSystem: {
-                  tag: 'es'
-                },
-                noAccess: true
-              }
-            })
+              draftingSources: [
+                {
+                  name: 'source',
+                  shortName: 'SRC',
+                  texts: [],
+                  writingSystem: {
+                    tag: 'es'
+                  },
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [undefined, undefined],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isPreTranslationApproved = true;
@@ -953,16 +963,20 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                name: 'source',
-                shortName: 'SRC',
-                texts: [],
-                writingSystem: {
-                  tag: 'es'
-                },
-                noAccess: true
-              }
-            })
+              draftingSources: [
+                {
+                  name: 'source',
+                  shortName: 'SRC',
+                  texts: [],
+                  writingSystem: {
+                    tag: 'es'
+                  },
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [undefined, undefined],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
           mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
             'FeatureFlagService',
@@ -986,10 +1000,14 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [undefined, undefined],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1004,10 +1022,14 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [undefined, undefined],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = false;
@@ -1022,10 +1044,14 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [undefined, undefined],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1040,10 +1066,14 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [undefined, undefined],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1058,10 +1088,14 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [undefined, undefined],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1077,10 +1111,14 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                noAccess: false
-              } as DraftSource
-            })
+              draftingSources: [
+                {
+                  noAccess: false
+                } as DraftSource
+              ],
+              trainingSources: [undefined, undefined],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1092,15 +1130,20 @@ describe('DraftGenerationComponent', () => {
       });
     });
 
-    describe('user must have access to alternate source project', () => {
-      it('should show warning when no access to alternate source project', () => {
+    describe('user must have access to training source project', () => {
+      it('should show warning when no access to training source project', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isPreTranslationApproved = true;
@@ -1109,194 +1152,22 @@ describe('DraftGenerationComponent', () => {
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-source-no-access')).not.toBeNull();
+        expect(env.getElementByTestId('warning-training-source-no-access')).not.toBeNull();
       });
 
       it('should not show warning when no access to alternate source project and not back translation nor pre-translate approved', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateSource: {
-                noAccess: true
-              } as DraftSource
-            })
-          );
-          mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-            'FeatureFlagService',
-            {},
-            {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-            }
-          );
-        });
-        env.component.isBackTranslation = false;
-        env.component.isPreTranslationApproved = false;
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              alternateSource: {
-                noAccess: true
-              } as DraftSource
-            })
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
-        env.component.isTargetLanguageSupported = false;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              alternateSource: {
-                noAccess: true
-              } as DraftSource
-            })
-          );
-        });
-        env.component.isSourceProjectSet = false;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              alternateSource: {
-                noAccess: true
-              } as DraftSource
-            })
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = false;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when source and alternate training source language are different', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              alternateSource: {
-                noAccess: true
-              } as DraftSource
-            })
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = false;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when source and additional training source language are different', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              alternateSource: {
-                noAccess: true
-              } as DraftSource
-            })
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when no access to source project', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              source: {
-                noAccess: true
-              } as DraftSource,
-              alternateSource: {
-                noAccess: true
-              } as DraftSource
-            })
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when access to alternate source project', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              alternateSource: {
-                noAccess: false
-              } as DraftSource
-            })
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-training-source-no-access')).toBeNull();
-      });
-    });
-
-    describe('user must have access to alternate training source project', () => {
-      it('should show warning when no access to alternate source project', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-training-source-no-access')).not.toBeNull();
-      });
-
-      it('should not show warning when no access to alternate source project and not back translation nor pre-translate approved', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
           mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
             'FeatureFlagService',
@@ -1320,10 +1191,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1338,10 +1214,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = false;
@@ -1356,10 +1237,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1374,10 +1260,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1392,10 +1283,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1411,13 +1307,19 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                noAccess: true
-              } as DraftSource,
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1432,13 +1334,19 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateSource: {
-                noAccess: true
-              } as DraftSource,
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1453,10 +1361,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateTrainingSource: {
-                noAccess: false
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                undefined
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1473,10 +1386,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                undefined,
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1492,10 +1410,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                undefined,
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
           mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
             'FeatureFlagService',
@@ -1520,10 +1443,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                undefined,
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1539,10 +1467,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                undefined,
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = false;
@@ -1558,10 +1491,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                undefined,
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1577,10 +1515,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                undefined,
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1596,10 +1539,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                undefined,
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1615,13 +1563,19 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              source: {
-                noAccess: true
-              } as DraftSource,
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingSources: [
+                undefined,
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1633,39 +1587,21 @@ describe('DraftGenerationComponent', () => {
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
       });
 
-      it('should not show warning when no access to alternate source project', () => {
+      it('should not show warning when no access to training source project', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              alternateSource: {
-                noAccess: true
-              } as DraftSource,
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when no access to alternate training source project', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              alternateTrainingSource: {
-                noAccess: true
-              } as DraftSource,
-              additionalTrainingSource: {
-                noAccess: true
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                {
+                  noAccess: true
+                } as DraftSource,
+                {
+                  noAccess: true
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;
@@ -1681,10 +1617,15 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              additionalTrainingSource: {
-                noAccess: false
-              } as DraftSource
-            })
+              draftingSources: [undefined],
+              trainingSources: [
+                undefined,
+                {
+                  noAccess: false
+                } as DraftSource
+              ],
+              trainingTargets: [undefined]
+            } as DraftSourcesAsArrays)
           );
         });
         env.component.isSourceProjectSet = true;

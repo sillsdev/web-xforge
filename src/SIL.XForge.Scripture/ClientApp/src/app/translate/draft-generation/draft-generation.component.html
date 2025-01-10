@@ -152,9 +152,9 @@
             ></transloco>
           </app-notice>
         } @else if (!canAccessDraftSourceIfAvailable(trainingSource)) {
-          <app-notice type="warning" icon="warning" data-test-id="warning-alternate-source-no-access">
+          <app-notice type="warning" icon="warning" data-test-id="warning-training-source-no-access">
             <transloco
-              key="draft_generation.info_alert_no_alternate_source_access"
+              key="draft_generation.info_alert_no_training_source_access"
               [params]="{
                 connectProjectUrl: { route: '/connect-project' },
                 name: trainingSource?.name
