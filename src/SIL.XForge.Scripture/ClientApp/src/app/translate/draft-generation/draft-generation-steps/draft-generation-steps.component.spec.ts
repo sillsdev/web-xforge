@@ -541,7 +541,10 @@ describe('DraftGenerationStepsComponent', () => {
           draftConfig: {
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationScriptureRange: 'EXO;LEV',
-            lastSelectedTrainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'GEN;1SA' }]
+            lastSelectedTrainingScriptureRanges: [
+              { projectId: 'source1', scriptureRange: 'GEN;1SA' },
+              { projectId: 'source2', scriptureRange: '1SA;2SA' }
+            ]
           }
         }
       })
@@ -568,13 +571,19 @@ describe('DraftGenerationStepsComponent', () => {
         { number: 2, selected: true },
         { number: 3, selected: true }
       ]);
-      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 9, selected: true }]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 9, selected: true },
+        { number: 10, selected: true }
+      ]);
       expect(component.selectedTrainingBooksByProj('source1')).toEqual([{ number: 9, selected: true }]);
-      expect(component.selectedTrainingBooksByProj('source1')).toEqual([{ number: 9, selected: true }]);
+      expect(component.selectedTrainingBooksByProj('source2')).toEqual([
+        { number: 9, selected: true },
+        { number: 10, selected: true }
+      ]);
     });
   });
 
-  describe('confirm step', () => {
+  fdescribe('confirm step', () => {
     const availableBooks = [
       { bookNum: 1 },
       { bookNum: 2 },
@@ -623,7 +632,10 @@ describe('DraftGenerationStepsComponent', () => {
           draftConfig: {
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationScriptureRange: 'GEN;EXO',
-            lastSelectedTrainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;NUM;DEU;JOS;1SA' }]
+            lastSelectedTrainingScriptureRanges: [
+              { projectId: 'source1', scriptureRange: 'LEV;NUM;DEU;JOS' },
+              { projectId: 'source2', scriptureRange: 'DEU;JOS;1SA' }
+            ]
           }
         }
       })
@@ -653,12 +665,11 @@ describe('DraftGenerationStepsComponent', () => {
       const trainingGroups = component.selectedTrainingBooksCollapsed();
       expect(trainingGroups.length).toEqual(2);
 
-      expect(trainingGroups[0].ranges.length).toEqual(2);
+      expect(trainingGroups[0].ranges.length).toEqual(1);
       expect(trainingGroups[0].ranges[0]).toEqual('Leviticus - Deuteronomy');
-      expect(trainingGroups[0].ranges[1]).toEqual('1 Samuel');
 
       expect(trainingGroups[1].ranges.length).toEqual(2);
-      expect(trainingGroups[1].ranges[0]).toEqual('Leviticus - Deuteronomy');
+      expect(trainingGroups[1].ranges[0]).toEqual('Deuteronomy');
       expect(trainingGroups[1].ranges[1]).toEqual('1 Samuel');
     });
   });

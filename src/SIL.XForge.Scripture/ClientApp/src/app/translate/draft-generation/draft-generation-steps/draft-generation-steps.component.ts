@@ -475,23 +475,32 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   private setInitialTrainingBooks(): void {
     // Get the previously selected training books from the target project
-    const trainingSourceId = this.trainingSources[0]?.projectRef;
-    let previousTrainingRange: string =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges?.find(
-        r => r.projectId === trainingSourceId
-      )?.scriptureRange ?? '';
-    const trainingScriptureRange: string | undefined =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange;
-    if (previousTrainingRange === '' && trainingScriptureRange != null) {
-      previousTrainingRange = trainingScriptureRange;
-    }
-    const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTrainingRange));
+    const previousTraining =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges ?? [];
 
-    for (const bookNum of previousBooks) {
-      for (const projRef in this.availableTrainingBooks) {
-        const book = this.availableTrainingBooks[projRef].find(b => b.number === bookNum);
-        if (book !== undefined) {
-          book.selected = true;
+    // Support old format
+    const oldStyleRange: string | undefined =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRange;
+    if (previousTraining.length === 0 && oldStyleRange !== undefined) {
+      previousTraining.push({ projectId: this.trainingSources[0].projectRef, scriptureRange: oldStyleRange });
+    }
+
+    for (const range of previousTraining) {
+      const source = this.trainingSources.find(s => s.projectRef === range.projectId);
+      if (source !== undefined) {
+        for (const bookNum of booksFromScriptureRange(range.scriptureRange)) {
+          //select in the source
+          const sourceBook = this.availableTrainingBooks[source.projectRef].find(b => b.number === bookNum);
+          if (sourceBook !== undefined) {
+            sourceBook.selected = true;
+          }
+          //select in the target
+          const targetBook = this.availableTrainingBooks[this.activatedProject.projectId].find(
+            b => b.number === bookNum
+          );
+          if (targetBook !== undefined) {
+            targetBook.selected = true;
+          }
         }
       }
     }
