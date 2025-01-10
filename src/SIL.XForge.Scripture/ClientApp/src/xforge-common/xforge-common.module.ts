@@ -5,7 +5,6 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { RouterModule } from '@angular/router';
 import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER, TranslocoModule } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
-import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { ProjectSelectComponent } from '../app/project-select/project-select.component';
 import { MobileNotSupportedComponent } from '../app/shared/mobile-not-supported/mobile-not-supported.component';
 import { PageNotFoundComponent } from '../app/shared/page-not-found/page-not-found.component';
@@ -16,6 +15,7 @@ import { GenericDialogComponent } from './generic-dialog/generic-dialog.componen
 import { I18nService, TranslationLoader } from './i18n.service';
 import { IndexeddbOfflineStore } from './indexeddb-offline-store';
 import { OfflineStore } from './offline-store';
+import { OwnerComponent } from './owner/owner.component';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialog.component';
@@ -33,7 +33,6 @@ const componentExports = [
   SystemAdministrationComponent,
   PageNotFoundComponent,
   WriteStatusComponent,
-  OwnerComponent,
   ProjectSelectComponent,
   SyncProgressComponent
 ];
@@ -47,6 +46,7 @@ const componentExports = [
     TranslocoModule,
     MatDialogModule,
     AvatarComponent,
+    OwnerComponent,
     MobileNotSupportedComponent
   ],
   declarations: componentExports,

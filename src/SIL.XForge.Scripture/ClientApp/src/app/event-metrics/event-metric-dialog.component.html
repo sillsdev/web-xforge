@@ -1,0 +1,32 @@
+<ng-container *transloco="let t; read: 'event_metric_dialog'">
+  <mat-dialog [dir]="i18n.direction">
+    <h2 mat-dialog-title>
+      {{ t("technical_details") }}
+    </h2>
+    <mat-dialog-content>
+      <h3>{{ t("event_type") }}</h3>
+      <div>
+        <pre>{{ data.eventType }}</pre>
+      </div>
+      <h3>{{ t("parameters") }}</h3>
+      <div>
+        <pre>{{ data.payload | json }}</pre>
+      </div>
+      @if (data.result != null) {
+        <h3>{{ t("result") }}</h3>
+        <div>
+          <pre>{{ data.result }}</pre>
+        </div>
+      }
+      @if (data.exception != null) {
+        <h3>{{ t("exception") }}</h3>
+        <div>
+          <pre>{{ data.exception }}</pre>
+        </div>
+      }
+    </mat-dialog-content>
+    <mat-dialog-actions [align]="'end'">
+      <button mat-button id="close-btn" [mat-dialog-close]="'cancel'">{{ t("close") }}</button>
+    </mat-dialog-actions>
+  </mat-dialog>
+</ng-container>
