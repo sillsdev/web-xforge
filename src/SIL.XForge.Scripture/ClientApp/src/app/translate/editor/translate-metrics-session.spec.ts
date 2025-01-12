@@ -478,6 +478,13 @@ class TestEnvironment {
     );
 
     this.sourceFixture = TestBed.createComponent(TextComponent);
+
+    // Initialize the source text component.
+    // When run for the first time in a test run, this will load Quill
+    this.sourceFixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    this.sourceFixture.detectChanges();
+
     this.source = this.sourceFixture.componentInstance;
     this.source.id = new TextDocId('project02', 40, 1, 'target');
     this.source.segmentRef = 'verse_1_1';
@@ -495,7 +502,6 @@ class TestEnvironment {
       this.testOnlineStatusService,
       instance(mockedReportingService)
     );
-    this.sourceFixture.detectChanges();
     this.targetFixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
   }
