@@ -531,6 +531,42 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task CorpusExistsAsync_Null()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        string actual = await env.Service.CorpusExistsAsync(corpusId: null, CancellationToken.None);
+        Assert.IsNull(actual);
+    }
+
+    [Test]
+    public async Task CorpusExistsAsync_Missing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.CorporaClient.GetAsync(Corpus01, CancellationToken.None).ThrowsAsync(ServalApiExceptions.NotFound);
+
+        // SUT
+        string actual = await env.Service.CorpusExistsAsync(Corpus01, CancellationToken.None);
+        Assert.IsNull(actual);
+    }
+
+    [Test]
+    public async Task CorpusExistsAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.CorporaClient.GetAsync(Corpus01, CancellationToken.None)
+            .Returns(Task.FromResult(new Corpus { Id = Corpus01 }));
+
+        // SUT
+        string actual = await env.Service.CorpusExistsAsync(Corpus01, CancellationToken.None);
+        Assert.AreEqual(Corpus01, actual);
+    }
+
+    [Test]
     public async Task CreateOrUpdateParallelCorpusAsync_CreatesParallelCorpus()
     {
         // Set up test environment
@@ -552,10 +588,43 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task CreateOrUpdateParallelCorpusAsync_RecreatesDeletedParallelCorpus()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetParallelCorpusAsync(
+                TranslationEngine01,
+                ParallelCorpus01,
+                CancellationToken.None
+            )
+            .ThrowsAsync(ServalApiExceptions.NotFound);
+
+        // SUT
+        string actual = await env.Service.CreateOrUpdateParallelCorpusAsync(
+            TranslationEngine01,
+            ParallelCorpus01,
+            string.Empty,
+            [],
+            [],
+            CancellationToken.None
+        );
+        Assert.AreEqual(ParallelCorpus01, actual);
+        await env
+            .TranslationEnginesClient.Received(1)
+            .AddParallelCorpusAsync(TranslationEngine01, Arg.Any<TranslationParallelCorpusConfig>());
+    }
+
+    [Test]
     public async Task CreateOrUpdateParallelCorpusAsync_UpdatesParallelCorpus()
     {
         // Set up test environment
         var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetParallelCorpusAsync(
+                TranslationEngine01,
+                ParallelCorpus01,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(new TranslationParallelCorpus { Id = ParallelCorpus01 }));
 
         // SUT
         string actual = await env.Service.CreateOrUpdateParallelCorpusAsync(
@@ -2392,6 +2461,43 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SyncAdditionalTrainingData_RemoveAdditionalTrainingDataWithMissingParallelCorpus()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var project = new SFProject { Id = Project01 };
+        var buildConfig = new BuildConfig();
+        var additionalTrainingData = new ServalAdditionalTrainingData { ParallelCorpusId = ParallelCorpus01 };
+        env.Service.Configure()
+            .DeleteAllCorporaAndFilesAsync(Arg.Any<IEnumerable<ServalCorpusFile>>(), Project01, CancellationToken.None)
+            .Returns(Task.CompletedTask);
+        env.TranslationEnginesClient.DeleteParallelCorpusAsync(
+                TranslationEngine01,
+                ParallelCorpus01,
+                CancellationToken.None
+            )
+            .ThrowsAsync(ServalApiExceptions.NotFound);
+
+        // SUT
+        ServalAdditionalTrainingData actual = await env.Service.SyncAdditionalTrainingData(
+            User01,
+            project,
+            TranslationEngine01,
+            buildConfig,
+            additionalTrainingData,
+            CancellationToken.None
+        );
+        Assert.IsNull(actual);
+        await env
+            .TranslationEnginesClient.Received(1)
+            .DeleteParallelCorpusAsync(TranslationEngine01, ParallelCorpus01, CancellationToken.None);
+        await env
+            .Service.Received(1)
+            .DeleteAllCorporaAndFilesAsync(Arg.Any<IEnumerable<ServalCorpusFile>>(), Project01, CancellationToken.None);
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
+    }
+
+    [Test]
     public async Task SyncAdditionalTrainingData_RemoveAdditionalTrainingDataWithParallelCorpus()
     {
         // Set up test environment
@@ -2609,6 +2715,7 @@ public class MachineProjectServiceTests
                 HasTranslationEngineForSmt = !options.PreTranslate,
             }
         );
+        env.Service.Configure().CorpusExistsAsync(Corpus01, CancellationToken.None).Returns(Task.FromResult(Corpus01));
         env.Service.Configure()
             .UploadParatextFileAsync(Arg.Any<ServalCorpusFile>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.CompletedTask);
@@ -3187,6 +3294,7 @@ public class MachineProjectServiceTests
         env.Service.Configure()
             .UploadTextFileAsync(servalCorpusFile, text, CancellationToken.None)
             .Returns(Task.FromResult(false));
+        env.Service.Configure().CorpusExistsAsync(Corpus01, CancellationToken.None).Returns(Task.FromResult(Corpus01));
 
         string actual = await env.Service.UploadAdditionalTrainingDataAsync(
             Project01,
@@ -3244,6 +3352,48 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task UploadAdditionalTrainingDataAsync_RecreatesCorpusIfLanguageChangesAndCorpusIsMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // Set up the test data
+        const string oldLanguageCode = "en";
+        const string newLanguageCode = "de";
+        var servalCorpusFile = new ServalCorpusFile
+        {
+            CorpusId = Corpus01,
+            LanguageCode = oldLanguageCode,
+            TextId = Data01,
+        };
+        List<ServalCorpusFile> servalCorpusFiles = [servalCorpusFile];
+        ISFText text = TestEnvironment.GetMockTrainingData();
+        List<ISFText> texts = [text];
+
+        // Set up other API calls
+        env.CorporaClient.CreateAsync(Arg.Any<CorpusConfig>()).Returns(Task.FromResult(new Corpus { Id = Corpus02 }));
+        env.CorporaClient.DeleteAsync(Corpus01).ThrowsAsync(ServalApiExceptions.NotFound);
+        env.Service.Configure()
+            .UploadTextFileAsync(servalCorpusFile, text, CancellationToken.None)
+            .Returns(Task.FromResult(true));
+
+        string actual = await env.Service.UploadAdditionalTrainingDataAsync(
+            Project01,
+            Corpus01,
+            newLanguageCode,
+            servalCorpusFiles,
+            texts,
+            CancellationToken.None
+        );
+        Assert.AreEqual(Corpus02, actual);
+        Assert.AreEqual(Corpus02, servalCorpusFiles.First().CorpusId);
+        Assert.AreEqual(Project01, servalCorpusFiles.First().ProjectId);
+        Assert.AreEqual(newLanguageCode, servalCorpusFiles.First().LanguageCode);
+        await env.CorporaClient.Received(1).DeleteAsync(Corpus01);
+        await env.CorporaClient.Received(1).CreateAsync(Arg.Any<CorpusConfig>());
+    }
+
+    [Test]
     public async Task UploadAdditionalTrainingDataAsync_UpdatesTheCorpus()
     {
         // Set up test environment
@@ -3265,6 +3415,7 @@ public class MachineProjectServiceTests
         env.Service.Configure()
             .UploadTextFileAsync(Arg.Any<ServalCorpusFile>(), text, CancellationToken.None)
             .Returns(Task.FromResult(true));
+        env.Service.Configure().CorpusExistsAsync(Corpus01, CancellationToken.None).Returns(Task.FromResult(Corpus01));
 
         string actual = await env.Service.UploadAdditionalTrainingDataAsync(
             Project01,

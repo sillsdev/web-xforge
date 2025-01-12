@@ -661,6 +661,25 @@ public class MachineProjectService(
         CancellationToken cancellationToken
     )
     {
+        // Check that the parallel corpus exists on Serval, and that we have access to it
+        if (!string.IsNullOrWhiteSpace(parallelCorpusId))
+        {
+            try
+            {
+                TranslationParallelCorpus parallelCorpus = await translationEnginesClient.GetParallelCorpusAsync(
+                    translationEngineId,
+                    parallelCorpusId,
+                    cancellationToken
+                );
+                parallelCorpusId = parallelCorpus.Id;
+            }
+            catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+            {
+                // The parallel corpus does not exist or is inaccessible
+                parallelCorpusId = null;
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(parallelCorpusId))
         {
             // Create a new parallel corpus
@@ -1457,11 +1476,22 @@ public class MachineProjectService(
             // Remove the parallel corpora
             if (!string.IsNullOrWhiteSpace(additionalTrainingData.ParallelCorpusId))
             {
-                await translationEnginesClient.DeleteParallelCorpusAsync(
-                    translationEngineId,
-                    additionalTrainingData.ParallelCorpusId,
-                    cancellationToken
-                );
+                try
+                {
+                    await translationEnginesClient.DeleteParallelCorpusAsync(
+                        translationEngineId,
+                        additionalTrainingData.ParallelCorpusId,
+                        cancellationToken
+                    );
+                }
+                catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+                {
+                    // If the parallel corpus was already deleted, just log a message
+                    string message =
+                        $"Parallel Corpus {additionalTrainingData.ParallelCorpusId.Sanitize()}"
+                        + $" in project {project.Id.Sanitize()} was missing or already deleted.";
+                    logger.LogInformation(e, message);
+                }
             }
 
             // Remove the corpora and files
@@ -1607,7 +1637,10 @@ public class MachineProjectService(
             ServalCorpusFile servalCorpusFile = projectSecret.ServalData.CorpusFiles.SingleOrDefault(f =>
                 f.ProjectId == projectId
             );
-            if (servalCorpusFile is null || servalCorpusFile.LanguageCode != languageCode)
+
+            // Ensure that the corpus exists - if it does not, corpusId will be null
+            string corpusId = await CorpusExistsAsync(servalCorpusFile?.CorpusId, cancellationToken);
+            if (string.IsNullOrWhiteSpace(corpusId) || servalCorpusFile.LanguageCode != languageCode)
             {
                 // Create the corpus if it does not exist or the language code has changed
                 Corpus corpus = await corporaClient.CreateAsync(
@@ -1766,6 +1799,36 @@ public class MachineProjectService(
     }
 
     /// <summary>
+    /// Determines where the specified corpus exists on Serval, and we have access to it.
+    /// </summary>
+    /// <param name="corpusId">The corpus identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The corpus identifier if it exists; otherwise <c>null</c>.</returns>
+    protected internal virtual async Task<string?> CorpusExistsAsync(
+        string? corpusId,
+        CancellationToken cancellationToken
+    )
+    {
+        // Null or blank identifiers do not exist
+        if (string.IsNullOrWhiteSpace(corpusId))
+        {
+            return null;
+        }
+
+        try
+        {
+            // Check that the corpus exists on Serval, and we have access to it
+            Corpus corpus = await corporaClient.GetAsync(corpusId, cancellationToken);
+            return corpus.Id;
+        }
+        catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+        {
+            // The corpus does not exist
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Determines whether a translation engine exists for the specified project.
     /// </summary>
     /// <param name="projectId">The Scripture Forge project identifier.</param>
@@ -1841,9 +1904,23 @@ public class MachineProjectService(
             && !string.IsNullOrWhiteSpace(corpusId)
         )
         {
-            await corporaClient.DeleteAsync(corpusId, cancellationToken);
+            try
+            {
+                await corporaClient.DeleteAsync(corpusId, cancellationToken);
+            }
+            catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+            {
+                // If the corpus was already deleted, just log a message
+                string message =
+                    $"Corpus {corpusId.Sanitize()} in project {projectId.Sanitize()}"
+                    + " was missing or already deleted.";
+                logger.LogInformation(e, message);
+            }
             corpusId = null;
         }
+
+        // Ensure that the corpus exists - if it does not, corpusId will be null
+        corpusId = await CorpusExistsAsync(corpusId, cancellationToken);
 
         // If there is no corpus, create it
         if (string.IsNullOrWhiteSpace(corpusId))
