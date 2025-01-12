@@ -84,6 +84,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { manageQuery } from 'xforge-common/util/realtime-query-util';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { browserLinks, getLinkHTML, isBlink, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
@@ -828,6 +829,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.onTargetDeleteSub?.unsubscribe();
     this.bottomSheet?.dismiss();
     this.resizeObserver?.disconnect();
+    this.noteThreadQuery?.dispose();
   }
 
   async onTargetUpdated(
@@ -1940,7 +1942,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private async loadNoteThreadDocs(sfProjectId: string, bookNum: number, chapterNum: number): Promise<void> {
     this.noteThreadQuery?.dispose();
-    this.noteThreadQuery = await this.projectService.queryNoteThreads(sfProjectId, bookNum, chapterNum);
+    this.noteThreadQuery = await manageQuery(
+      this.projectService.queryNoteThreads(sfProjectId, bookNum, chapterNum),
+      this.destroyRef
+    );
+
     this.toggleNoteThreadSub?.unsubscribe();
     this.toggleNoteThreadSub = this.subscribe(
       merge(

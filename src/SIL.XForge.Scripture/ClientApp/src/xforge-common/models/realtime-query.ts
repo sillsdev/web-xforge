@@ -14,6 +14,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private unsubscribe$ = new Subject<void>();
   private _count: number = 0;
   private _unpagedCount: number = 0;
+  private isDisposed = false;
   private readonly _localChanges$ = new Subject<void>();
   private readonly _remoteChanges$ = new Subject<void>();
   private readonly _ready$ = new BehaviorSubject<boolean>(false);
@@ -90,6 +91,11 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   }
 
   dispose(): void {
+    // Ensure dispose is idempotent
+    if (this.isDisposed) {
+      return;
+    }
+
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
     if (this.subscribed) {
@@ -104,6 +110,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       sub.unsubscribe();
     }
     this.adapter.destroy();
+    this.isDisposed = true;
   }
 
   async localUpdate(): Promise<void> {

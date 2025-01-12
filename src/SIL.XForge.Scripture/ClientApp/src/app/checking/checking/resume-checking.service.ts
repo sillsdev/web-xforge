@@ -3,7 +3,7 @@ import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { from, merge, Observable, of } from 'rxjs';
-import { distinctUntilChanged, filter, map, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, finalize, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -125,7 +125,10 @@ export class ResumeCheckingService {
           query.remoteChanges$,
           query.localChanges$,
           query.remoteDocChanges$
-        ).pipe(map(() => query?.docs[0]))
+        ).pipe(
+          map(() => query?.docs[0]),
+          finalize(() => query?.dispose())
+        )
       )
     );
   }

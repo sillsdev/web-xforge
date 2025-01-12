@@ -1,17 +1,28 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { TextAudio, getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import {
-  VerseRefData,
   toStartAndEndVerseRefs,
-  toVerseRef
+  toVerseRef,
+  VerseRefData
 } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { manageQuery } from 'xforge-common/util/realtime-query-util';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -50,8 +61,10 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   private projectId?: string;
   private _versesListenedTo = new Set<string>();
   private questionDocSub?: Subscription;
+  private isDestroyed = false;
 
   constructor(
+    private readonly destroyRef: DestroyRef,
     private readonly projectService: SFProjectService,
     private readonly i18n: I18nService
   ) {
@@ -169,7 +182,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     }
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
+  async ngOnChanges(changes: SimpleChanges): Promise<void> {
     if (changes['questionDoc']) {
       this.dispose();
 
@@ -179,23 +192,30 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
         return;
       }
       this.projectId = projectId;
-      this.projectService.queryAudioText(this.projectId).then(audioQuery => {
-        this.audioQuery = audioQuery;
-        if (this._audioChangeSub != null) {
-          this._audioChangeSub.unsubscribe();
-        }
+
+      this.audioQuery = await manageQuery(this.projectService.queryAudioText(this.projectId), this.destroyRef);
+
+      // If the component is destroyed before the query is ready, don't subscribe to remote changes
+      if (this.isDestroyed) {
+        return;
+      }
+
+      if (this._audioChangeSub != null) {
+        this._audioChangeSub.unsubscribe();
+      }
+      this.updateScriptureAudio();
+      this._audioChangeSub = this.audioQuery?.remoteChanges$?.subscribe(() => {
         this.updateScriptureAudio();
-        this._audioChangeSub = audioQuery?.remoteChanges$?.subscribe(() => {
-          this.updateScriptureAudio();
-        });
       });
     }
   }
 
   ngOnDestroy(): void {
+    this.isDestroyed = true;
     super.ngOnDestroy();
     this._audioChangeSub?.unsubscribe();
     this.questionDocSub?.unsubscribe();
+    this.audioQuery?.dispose();
   }
 
   private setDefaultFocus(): void {
