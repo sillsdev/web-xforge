@@ -451,10 +451,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       this.getCSSFloatPropertyOf(this.answersPanelContainerElement, 'padding-top') +
       this.getCSSFloatPropertyOf(this.answersPanelContainerElement, 'padding-bottom');
 
+    const addAnswerButton = document.querySelector('#add-answer') as Element;
+    const addAnswerButtonHeight = addAnswerButton == null ? 0 : addAnswerButton.getBoundingClientRect().height;
+
     return (
       Math.max(distanceFromTopToTotalAnswersMessageBottom, distanceFromTopToAddAnswerButtonBottom) +
       answersPanelVerticalPadding +
-      showUnreadsBannerHeight
+      showUnreadsBannerHeight +
+      addAnswerButtonHeight
     );
   }
 
