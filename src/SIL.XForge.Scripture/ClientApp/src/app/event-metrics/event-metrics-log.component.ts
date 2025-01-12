@@ -92,18 +92,21 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
       combineLatest([
         this.activatedProjectService.projectId$.pipe(filterNullish()),
         this.pageIndex$,
-        this.pageSize$
+        this.pageSize$,
+        this.onlineStatusService.onlineStatus$
       ]).pipe(
-        switchMap(async ([projectId, pageIndex, pageSize]) => {
+        switchMap(async ([projectId, pageIndex, pageSize, isOnline]) => {
           this.loadingStarted();
-          var queryResults = await this.projectService.onlineEventMetrics(projectId, pageIndex, pageSize);
-          this.length = queryResults.unpagedCount;
-          if (Array.isArray(queryResults.results)) {
-            this.eventMetrics = queryResults.results as EventMetric[];
-          } else {
-            this.eventMetrics = [];
+          if (isOnline) {
+            var queryResults = await this.projectService.onlineEventMetrics(projectId, pageIndex, pageSize);
+            this.length = queryResults.unpagedCount;
+            if (Array.isArray(queryResults.results)) {
+              this.eventMetrics = queryResults.results as EventMetric[];
+            } else {
+              this.eventMetrics = [];
+            }
+            this.generateRows();
           }
-          this.generateRows();
           this.loadingFinished();
         })
       )

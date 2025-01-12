@@ -138,6 +138,23 @@ describe('EventMetricsLogComponent', () => {
     expect(env.cell(0, 4)).toBeUndefined();
   }));
 
+  it('should not download event metrics if offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.populateEventMetrics();
+    env.setBrowserOnlineStatus(false);
+    env.wait();
+    env.wait();
+
+    verify(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).never();
+    expect(env.table).toBeNull();
+
+    env.setBrowserOnlineStatus(true);
+    env.wait();
+    env.wait();
+    verify(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).once();
+    expect(env.rows.length).toEqual(2);
+  }));
+
   it('should page event metrics', fakeAsync(() => {
     const env = new TestEnvironment();
     env.populateEventMetrics();
