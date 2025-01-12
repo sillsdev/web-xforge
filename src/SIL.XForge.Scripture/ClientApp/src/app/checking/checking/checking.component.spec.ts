@@ -2495,6 +2495,7 @@ class TestEnvironment {
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));
     when(query.localChanges$).thenReturn(new BehaviorSubject<void>(undefined));
+    when(query.ready$).thenReturn(new BehaviorSubject<boolean>(true));
     const doc = mock(TextAudioDoc);
     const textAudio = mock<TextAudio>();
     when(textAudio.audioUrl).thenReturn('test-audio-short.webm');
