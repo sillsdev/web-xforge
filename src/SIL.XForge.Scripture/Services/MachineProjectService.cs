@@ -281,7 +281,6 @@ public class MachineProjectService(
         // Build the list of files, corpora, and parallel corpora to remove
         List<string?> fileIdsToRemove = [];
         List<string?> corpusIdsToRemove = [];
-        bool removeAdditionalTrainingData = false;
         if (preTranslate)
         {
             // Remove the additional training data
@@ -292,7 +291,6 @@ public class MachineProjectService(
                 fileIdsToRemove.AddRange(
                     projectSecret.ServalData.AdditionalTrainingData.CorpusFiles.Select(f => f.FileId)
                 );
-                removeAdditionalTrainingData = true;
             }
 
             // If there is no SMT training engine, remove all files and corpora
@@ -374,10 +372,7 @@ public class MachineProjectService(
                     u.Unset(p => p.ServalData.ParallelCorpusIdForPreTranslate);
                     u.Unset(p => p.ServalData.ParallelCorpusIdForTrainOn);
                     u.Unset(p => p.ServalData.PreTranslationsRetrieved);
-                    if (removeAdditionalTrainingData)
-                    {
-                        u.Unset(p => p.ServalData.AdditionalTrainingData);
-                    }
+                    u.Unset(p => p.ServalData.AdditionalTrainingData);
                 }
                 else
                 {
@@ -1639,10 +1634,9 @@ public class MachineProjectService(
             );
 
             // Ensure that the corpus exists - if it does not, corpusId will be null
-            string corpusId = servalCorpusFile is null
-                ? null
-                : await CorpusExistsAsync(servalCorpusFile.CorpusId, cancellationToken);
-            if (string.IsNullOrWhiteSpace(corpusId) || servalCorpusFile.LanguageCode != languageCode)
+            string corpusId = await GetCorpusIdFromServalAsync(servalCorpusFile?.CorpusId, cancellationToken);
+            bool isCorpusMissing = servalCorpusFile is null || string.IsNullOrWhiteSpace(corpusId);
+            if (isCorpusMissing || servalCorpusFile.LanguageCode != languageCode)
             {
                 // Create the corpus if it does not exist or the language code has changed
                 Corpus corpus = await corporaClient.CreateAsync(
@@ -1801,12 +1795,12 @@ public class MachineProjectService(
     }
 
     /// <summary>
-    /// Determines where the specified corpus exists on Serval, and we have access to it.
+    /// Determines whether the specified corpus exists on Serval, and we have access to it returns the identifier.
     /// </summary>
     /// <param name="corpusId">The corpus identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The corpus identifier if it exists; otherwise <c>null</c>.</returns>
-    protected internal virtual async Task<string?> CorpusExistsAsync(
+    protected internal virtual async Task<string?> GetCorpusIdFromServalAsync(
         string? corpusId,
         CancellationToken cancellationToken
     )
@@ -1922,7 +1916,7 @@ public class MachineProjectService(
         }
 
         // Ensure that the corpus exists - if it does not, corpusId will be null
-        corpusId = await CorpusExistsAsync(corpusId, cancellationToken);
+        corpusId = await GetCorpusIdFromServalAsync(corpusId, cancellationToken);
 
         // If there is no corpus, create it
         if (string.IsNullOrWhiteSpace(corpusId))
