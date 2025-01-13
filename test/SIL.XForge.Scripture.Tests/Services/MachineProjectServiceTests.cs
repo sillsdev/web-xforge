@@ -531,42 +531,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task CorpusExistsAsync_Null()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        string actual = await env.Service.CorpusExistsAsync(corpusId: null, CancellationToken.None);
-        Assert.IsNull(actual);
-    }
-
-    [Test]
-    public async Task CorpusExistsAsync_Missing()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.CorporaClient.GetAsync(Corpus01, CancellationToken.None).ThrowsAsync(ServalApiExceptions.NotFound);
-
-        // SUT
-        string actual = await env.Service.CorpusExistsAsync(Corpus01, CancellationToken.None);
-        Assert.IsNull(actual);
-    }
-
-    [Test]
-    public async Task CorpusExistsAsync_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.CorporaClient.GetAsync(Corpus01, CancellationToken.None)
-            .Returns(Task.FromResult(new Corpus { Id = Corpus01 }));
-
-        // SUT
-        string actual = await env.Service.CorpusExistsAsync(Corpus01, CancellationToken.None);
-        Assert.AreEqual(Corpus01, actual);
-    }
-
-    [Test]
     public async Task CreateOrUpdateParallelCorpusAsync_CreatesParallelCorpus()
     {
         // Set up test environment
@@ -1149,6 +1113,42 @@ public class MachineProjectServiceTests
                     CancellationToken.None
                 )
         );
+    }
+
+    [Test]
+    public async Task GetCorpusIdFromServalAsync_Null()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        string actual = await env.Service.GetCorpusIdFromServalAsync(corpusId: null, CancellationToken.None);
+        Assert.IsNull(actual);
+    }
+
+    [Test]
+    public async Task GetCorpusIdFromServalAsync_Missing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.CorporaClient.GetAsync(Corpus01, CancellationToken.None).ThrowsAsync(ServalApiExceptions.NotFound);
+
+        // SUT
+        string actual = await env.Service.GetCorpusIdFromServalAsync(Corpus01, CancellationToken.None);
+        Assert.IsNull(actual);
+    }
+
+    [Test]
+    public async Task GetCorpusIdFromServalAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.CorporaClient.GetAsync(Corpus01, CancellationToken.None)
+            .Returns(Task.FromResult(new Corpus { Id = Corpus01 }));
+
+        // SUT
+        string actual = await env.Service.GetCorpusIdFromServalAsync(Corpus01, CancellationToken.None);
+        Assert.AreEqual(Corpus01, actual);
     }
 
     [Test]
@@ -2715,7 +2715,9 @@ public class MachineProjectServiceTests
                 HasTranslationEngineForSmt = !options.PreTranslate,
             }
         );
-        env.Service.Configure().CorpusExistsAsync(Corpus01, CancellationToken.None).Returns(Task.FromResult(Corpus01));
+        env.Service.Configure()
+            .GetCorpusIdFromServalAsync(Corpus01, CancellationToken.None)
+            .Returns(Task.FromResult(Corpus01));
         env.Service.Configure()
             .UploadParatextFileAsync(Arg.Any<ServalCorpusFile>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.CompletedTask);
@@ -3294,7 +3296,9 @@ public class MachineProjectServiceTests
         env.Service.Configure()
             .UploadTextFileAsync(servalCorpusFile, text, CancellationToken.None)
             .Returns(Task.FromResult(false));
-        env.Service.Configure().CorpusExistsAsync(Corpus01, CancellationToken.None).Returns(Task.FromResult(Corpus01));
+        env.Service.Configure()
+            .GetCorpusIdFromServalAsync(Corpus01, CancellationToken.None)
+            .Returns(Task.FromResult(Corpus01));
 
         string actual = await env.Service.UploadAdditionalTrainingDataAsync(
             Project01,
@@ -3415,7 +3419,9 @@ public class MachineProjectServiceTests
         env.Service.Configure()
             .UploadTextFileAsync(Arg.Any<ServalCorpusFile>(), text, CancellationToken.None)
             .Returns(Task.FromResult(true));
-        env.Service.Configure().CorpusExistsAsync(Corpus01, CancellationToken.None).Returns(Task.FromResult(Corpus01));
+        env.Service.Configure()
+            .GetCorpusIdFromServalAsync(Corpus01, CancellationToken.None)
+            .Returns(Task.FromResult(Corpus01));
 
         string actual = await env.Service.UploadAdditionalTrainingDataAsync(
             Project01,
