@@ -250,13 +250,13 @@
         <h2>
           <transloco
             key="draft_generation_steps.summary_translate_title"
-            [params]="{ firstTrainingSource }"
+            [params]="{ draftingSourceProjectName }"
           ></transloco>
         </h2>
         <mat-card class="confirm-section mat-elevation-z2">
           <span class="explanation">{{ t("summary_translate") }}</span>
           <div class="confirm-translate confirm-books">
-            {{ selectedTranslateBooks() }}
+            {{ selectedTranslateBooksAsString() }}
           </div>
         </mat-card>
 

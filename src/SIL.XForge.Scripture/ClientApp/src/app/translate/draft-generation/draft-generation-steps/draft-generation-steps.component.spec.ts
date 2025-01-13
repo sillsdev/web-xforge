@@ -566,7 +566,7 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should restore previously selected ranges', () => {
-      expect(component.selectedTranslateBooks()).toEqual('Exodus and Leviticus');
+      expect(component.selectedTranslateBooksAsString()).toEqual('Exodus and Leviticus');
       expect(component.booksToTranslate()).toEqual([
         { number: 2, selected: true },
         { number: 3, selected: true }
@@ -658,7 +658,7 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should localize and concatenate the books to translate', () => {
-      expect(component.selectedTranslateBooks()).toEqual('Genesis and Exodus');
+      expect(component.selectedTranslateBooksAsString()).toEqual('Genesis and Exodus');
     });
 
     it('should localize, group, and collapse the books to use in training', () => {

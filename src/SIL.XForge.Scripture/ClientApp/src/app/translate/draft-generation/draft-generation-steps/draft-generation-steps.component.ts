@@ -99,11 +99,11 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   protected nextClickedOnLanguageVerification = false;
   protected hasLoaded = false;
 
-  private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
-  private trainingDataSub?: Subscription;
-
   protected trainingSources: DraftSource[] = [];
   protected trainingTargets: DraftSource[] = [];
+
+  private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
+  private trainingDataSub?: Subscription;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -256,6 +256,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     return false;
   }
 
+  get firstTrainingSource(): string {
+    return this.trainingSources[0].shortName;
+  }
+
   private _booksToTranslate: Book[];
   booksToTranslate(): Book[] {
     const value = this.availableTranslateBooks?.filter(b => b.selected) ?? [];
@@ -265,7 +269,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     return this._booksToTranslate;
   }
 
-  selectedTranslateBooks(): string {
+  selectedTranslateBooksAsString(): string {
     return this.i18n.enumerateList(this.booksToTranslate().map(b => this.i18n.localizeBook(b.number)));
   }
 
@@ -364,7 +368,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     //for each selected book, select the matching book in the first source possible
     for (const selectedBook of selectedBooks) {
-      for (const projectRef in this.availableTrainingBooks) {
+      for (const projectRef of Object.keys(this.availableTrainingBooks)) {
         if (projectRef === this.activatedProject.projectId) continue;
         const sourceBook = this.availableTrainingBooks[projectRef].find(b => b.number === selectedBook);
         if (sourceBook !== undefined) {
@@ -435,10 +439,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         fastTraining: this.fastTraining
       });
     }
-  }
-
-  get firstTrainingSource(): string {
-    return this.trainingSources[0].shortName;
   }
 
   bookNames(books: number[]): string {
