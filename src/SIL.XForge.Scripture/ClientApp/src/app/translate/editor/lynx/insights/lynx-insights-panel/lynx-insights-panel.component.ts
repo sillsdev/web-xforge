@@ -5,13 +5,12 @@ import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree'
 import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { groupBy } from 'lodash-es';
-import { RangeStatic } from 'quill';
+import { Delta, Range } from 'quill';
 import {
   LynxInsightSortOrder,
   LynxInsightType,
   LynxInsightTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
-import { Delta } from 'rich-text';
 import { combineLatest, map, switchMap, tap } from 'rxjs';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -29,7 +28,7 @@ interface InsightPanelNode {
   type: LynxInsightType;
   children?: InsightPanelNode[];
   insight?: LynxInsight;
-  range: RangeStatic;
+  range: Range;
   count?: number;
   isDismissed?: boolean;
 }

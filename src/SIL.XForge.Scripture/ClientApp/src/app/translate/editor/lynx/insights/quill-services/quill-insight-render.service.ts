@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import Quill, { DeltaStatic, StringMap } from 'quill';
+import Quill, { Delta } from 'quill';
 import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
-import { DeltaOperation } from 'rich-text';
+import { StringMap } from 'rich-text';
 import { take, takeUntil } from 'rxjs';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxEditor } from '../lynx-editor';
@@ -9,8 +9,6 @@ import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { getLeadingInsight, getMostNestedInsight } from '../lynx-insight-util';
 import { LynxInsightBlot } from './blots/lynx-insight-blot';
-
-const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
 @Injectable({
   providedIn: 'root'
@@ -57,7 +55,7 @@ export class QuillInsightRenderService extends InsightRenderService {
    * This avoids multiple calls to quill `formatText`, which will re-render the DOM after each call.
    */
   private refreshInsightFormatting(insights: LynxInsight[], editor: Quill): void {
-    let delta: DeltaStatic = editor.getContents();
+    let delta: Delta = editor.getContents();
     const formatsToRemove: StringMap = {};
 
     // Prepare formats to remove

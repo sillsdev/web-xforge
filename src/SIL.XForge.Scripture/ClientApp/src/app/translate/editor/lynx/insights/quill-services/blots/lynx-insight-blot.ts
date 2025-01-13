@@ -1,11 +1,8 @@
 import { kebabCase } from 'lodash-es';
-import Parchment from 'parchment';
-import Quill from 'quill';
+import QuillInlineBlot from 'quill/blots/inline';
 import { LynxInsight } from '../../lynx-insight';
 
-const Inline = Quill.import('blots/inline') as typeof Parchment.Inline;
-
-export class LynxInsightBlot extends Inline {
+export class LynxInsightBlot extends QuillInlineBlot {
   static tagName = 'span';
   static idDatasetPropName = 'insightId';
   static idAttributeName = kebabCase(LynxInsightBlot.idDatasetPropName);
@@ -18,7 +15,7 @@ export class LynxInsightBlot extends Inline {
    */
   static superClassName = 'lynx-insight';
 
-  static create(value: LynxInsight): Node {
+  static create(value: LynxInsight): HTMLElement {
     const node = super.create(value) as HTMLElement;
     LynxInsightBlot.formatNode(node, value);
     return node;
