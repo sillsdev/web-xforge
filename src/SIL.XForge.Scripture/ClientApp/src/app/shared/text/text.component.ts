@@ -1085,7 +1085,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   private createLocalCursor(): void {
     if (this.editor != null) {
-      const cursors: QuillCursors = this.editor.getModule('cursors');
+      const cursors: QuillCursors = this.editor.getModule('cursors') as QuillCursors;
       cursors.createCursor(this.presenceId, '', '');
 
       this.localCursorElement = document.querySelector(`#ql-cursor-${this.presenceId}`);
@@ -1114,8 +1114,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.localCursorElement.classList.add('hidden');
     } else {
       this.localCursorElement.classList.remove('hidden');
-      const parchment = Quill.import('parchment');
-      const blot = parchment.find(sel.anchorNode);
+      const blot = this._editor.scroll.find(sel.anchorNode);
 
       if (blot == null) {
         return;
@@ -1131,7 +1130,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const cursors: QuillCursors = this._editor.getModule('cursors');
+    const cursors: QuillCursors = this._editor.getModule('cursors') as QuillCursors;
     cursors.moveCursor(this.presenceId, { index, length: 0 });
 
     // Set 'moving' class on caret that clears after a period of non-movement
@@ -1148,7 +1147,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   private clearCursors(includeLocal: boolean): void {
     if (this.editor != null) {
-      const cursors: QuillCursors = this.editor.getModule('cursors');
+      const cursors: QuillCursors = this.editor.getModule('cursors') as QuillCursors;
 
       if (includeLocal) {
         cursors.clearCursors();

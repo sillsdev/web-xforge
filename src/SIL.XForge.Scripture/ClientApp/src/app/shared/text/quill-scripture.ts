@@ -31,7 +31,7 @@ export function rangeComparer(a: { range: Range }, b: { range: Range }): number 
 /**
  * Extracts text from a delta within a range.
  */
-export function getText(delta: DeltaStatic, range: RangeStatic): string {
+export function getText(delta: Delta, range: Range): string {
   const { index, length } = range;
   return delta
     .slice(index, index + length)
@@ -142,7 +142,11 @@ interface Unmatched {
   marker: string;
 }
 
-interface FormattableBlotClass {
+interface DataModelAttrFlag {
+  isDataModelAttr?: boolean;
+}
+
+interface FormattableBlotClass extends DataModelAttrFlag {
   new (...args: any[]): Formattable;
   blotName: string;
 }
@@ -157,7 +161,7 @@ function isAttributor(blot: any): blot is Attributor {
 }
 
 export function registerScripture(): RegisteredFormatNames {
-  const formats: (FormattableBlotClass | Attributor)[] = [];
+  const formats: (FormattableBlotClass | (Attributor & DataModelAttrFlag))[] = [];
 
   // zero width space
   const ZWSP = '\u200b';
@@ -923,7 +927,6 @@ export function registerScripture(): RegisteredFormatNames {
     } else {
       name = format.blotName;
       Quill.register(`blots/${format.blotName}`, format);
-
     }
     formatNames.push(name);
 

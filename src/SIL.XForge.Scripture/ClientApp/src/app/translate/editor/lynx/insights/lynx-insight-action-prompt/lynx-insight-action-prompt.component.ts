@@ -1,7 +1,7 @@
 import { Directionality } from '@angular/cdk/bidi';
 import { Component, DestroyRef, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { BoundsStatic } from 'quill';
+import { Bounds } from 'quill';
 import { combineLatest, debounceTime, EMPTY, filter, fromEvent, iif, map, startWith, switchMap, tap } from 'rxjs';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { LynxableEditor, LynxEditor } from '../lynx-editor';
@@ -68,7 +68,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        const offsetBounds: BoundsStatic | undefined = this.getPromptOffset();
+        const offsetBounds: Bounds | undefined = this.getPromptOffset();
 
         if (offsetBounds != null) {
           const boundsEnd: number = this.isLtr ? offsetBounds.right : offsetBounds.left;
@@ -93,7 +93,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
     this.editorInsightState.toggleDisplayState(['actionOverlayActive']);
   }
 
-  private getPromptOffset(): BoundsStatic | undefined {
+  private getPromptOffset(): Bounds | undefined {
     if (this.lynxEditor != null) {
       const insight: LynxInsight | undefined = getMostNestedInsight(this.activeInsights);
 

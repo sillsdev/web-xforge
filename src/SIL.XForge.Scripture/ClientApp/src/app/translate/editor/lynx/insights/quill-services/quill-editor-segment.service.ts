@@ -17,10 +17,10 @@ export class QuillEditorSegmentService extends EditorSegmentService {
 
     for (const op of ops) {
       if (isString(op.insert)) {
-        const length = op.insert.length;
-        const segment = op.attributes?.segment;
+        const length: number = op.insert.length;
+        const segment: string | undefined = op.attributes?.segment as string | undefined;
 
-        if (segment) {
+        if (isString(segment)) {
           if (segmentMap.has(segment)) {
             const existingRange = segmentMap.get(segment)!;
             existingRange.length += length;
@@ -46,10 +46,10 @@ export class QuillEditorSegmentService extends EditorSegmentService {
     const segmentRefs: string[] = [];
 
     if (range != null) {
-      const rangeEnd = range.index + range.length;
+      const rangeEnd: number = range.index + range.length;
 
       for (const [ref, segmentRange] of segments) {
-        const segEnd = segmentRange.index + segmentRange.length;
+        const segEnd: number = segmentRange.index + segmentRange.length;
 
         if (range.index < segEnd) {
           if (rangeEnd > segmentRange.index) {

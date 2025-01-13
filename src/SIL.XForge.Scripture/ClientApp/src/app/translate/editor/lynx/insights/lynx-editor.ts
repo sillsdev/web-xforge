@@ -1,4 +1,4 @@
-import Quill, { Sources } from 'quill';
+import Quill, { EmitterSource } from 'quill';
 
 export type LynxableEditor = Quill; // Add future editor as union type
 
@@ -48,7 +48,7 @@ export class LynxEditor {
     }
   }
 
-  setContents(delta: any, source: Sources): void {
+  setContents(delta: any, source: EmitterSource): void {
     switch (true) {
       case this.isQuill(this.editor):
         this.editor.setContents(delta, source);
@@ -58,7 +58,7 @@ export class LynxEditor {
     }
   }
 
-  setSelection(index: number, length: number, source: Sources): void {
+  setSelection(index: number, length: number, source: EmitterSource): void {
     switch (true) {
       case this.isQuill(this.editor):
         this.editor.setSelection(index, length, source);
@@ -71,7 +71,7 @@ export class LynxEditor {
   getScrollingContainer(): Element {
     switch (true) {
       case this.isQuill(this.editor):
-        return this.editor.scrollingContainer;
+        return this.editor.root; // TODO: is there a way to get scrolling container in Quill v2?
       default:
         throw new Error('Unsupported editor type');
     }
