@@ -599,7 +599,7 @@
     "confirm_delete": "Are you sure you want to permanently delete this training data?",
     "delete": "Delete",
     "file_information": "The file should be a spreadsheet that has two columns of text: the first column in {{ sourceLanguage }}, the second in {{ targetLanguage }}.",
-    "upload_csv": "Upload CSV"
+    "upload_spreadsheet": "Upload spreadsheet"
   },
   "training_data_upload_dialog": {
     "browse_files": "Browse Files",
