@@ -160,8 +160,12 @@ export class DraftApplyDialogComponent implements OnInit {
     this.canEditProject =
       this.textDocService.userHasGeneralEditRight(project) &&
       targetBook?.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
+
+    // also check if this is an empty book
+    const bookIsEmpty: boolean = targetBook?.chapters.length === 1 && targetBook?.chapters[0].lastVerse < 1;
     const targetBookChapters: number[] = targetBook?.chapters.map(c => c.number) ?? [];
-    this.projectHasMissingChapters = this.data.chapters.filter(c => !targetBookChapters.includes(c)).length > 0;
+    this.projectHasMissingChapters =
+      bookIsEmpty || this.data.chapters.filter(c => !targetBookChapters.includes(c)).length > 0;
     // emit the project profile document
     if (this.canEditProject && !this.projectHasMissingChapters) {
       this.targetProject$.next(project);
