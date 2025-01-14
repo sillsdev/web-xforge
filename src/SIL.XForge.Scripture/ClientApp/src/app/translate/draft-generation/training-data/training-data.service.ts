@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -29,10 +29,10 @@ export class TrainingDataService {
     await trainingDataDoc.delete();
   }
 
-  queryTrainingDataAsync(projectId: string): Promise<RealtimeQuery<TrainingDataDoc>> {
+  queryTrainingDataAsync(projectId: string, destroyRef: DestroyRef): Promise<RealtimeQuery<TrainingDataDoc>> {
     const queryParams: QueryParameters = {
       [obj<TrainingData>().pathStr(t => t.projectRef)]: projectId
     };
-    return this.realtimeService.subscribeQuery(TrainingDataDoc.COLLECTION, queryParams);
+    return this.realtimeService.subscribeQuery(TrainingDataDoc.COLLECTION, queryParams, destroyRef);
   }
 }

@@ -26,7 +26,6 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { manageQuery } from 'xforge-common/util/realtime-query-util';
 import { objectId } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
@@ -500,8 +499,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
 
     // Get the Biblical Terms and Notes
     [this.biblicalTermQuery, this.noteThreadQuery] = await Promise.all([
-      manageQuery(this.projectService.queryBiblicalTerms(sfProjectId), this.destroyRef),
-      manageQuery(this.projectService.queryBiblicalTermNoteThreads(sfProjectId), this.destroyRef)
+      this.projectService.queryBiblicalTerms(sfProjectId, this.destroyRef),
+      this.projectService.queryBiblicalTermNoteThreads(sfProjectId, this.destroyRef)
     ]);
 
     // Return a merged observable to monitor changes

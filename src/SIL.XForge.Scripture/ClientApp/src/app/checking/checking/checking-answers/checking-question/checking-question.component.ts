@@ -22,7 +22,6 @@ import { BehaviorSubject, Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { manageQuery } from 'xforge-common/util/realtime-query-util';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -193,7 +192,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       }
       this.projectId = projectId;
 
-      this.audioQuery = await manageQuery(this.projectService.queryAudioText(this.projectId), this.destroyRef);
+      this.audioQuery = await this.projectService.queryAudioText(this.projectId, this.destroyRef);
 
       // If the component is destroyed before the query is ready, don't subscribe to remote changes
       if (this.isDestroyed) {

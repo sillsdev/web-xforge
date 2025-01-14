@@ -17,6 +17,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -668,8 +669,8 @@ class TestEnvironment {
         true
       )
     ).thenResolve('audio url');
-    when(mockedSFProjectService.queryAudioText(anything())).thenReturn(
-      this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, {})
+    when(mockedSFProjectService.queryAudioText(anything(), anything())).thenReturn(
+      this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, {}, noopDestroyRef)
     );
 
     this.audioFile = {

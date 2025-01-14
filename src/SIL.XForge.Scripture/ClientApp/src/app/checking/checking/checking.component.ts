@@ -26,7 +26,6 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { manageQuery } from 'xforge-common/util/realtime-query-util';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -605,13 +604,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           ) {
             this.cleanup();
 
-            this.questionsQuery = await manageQuery(
-              this.checkingQuestionsService.queryQuestions(routeProjectId, {
+            this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
+              routeProjectId,
+              {
                 bookNum: routeScope === 'all' ? undefined : routeBookNum,
                 chapterNum: routeScope === 'chapter' ? routeChapterNum : undefined,
                 sort: true,
                 activeOnly: true
-              }),
+              },
               this.destroyRef
             );
             if (this.projectDoc != null) {
@@ -622,7 +622,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             }
 
             // TODO (scripture audio) Only fetch the timing data for the currently active chapter
-            manageQuery(this.projectService.queryAudioText(routeProjectId), this.destroyRef).then(query => {
+            this.projectService.queryAudioText(routeProjectId, this.destroyRef).then(query => {
               this.textAudioQuery = query;
               this.audioChangedSub = this.subscribe(
                 merge(this.textAudioQuery.remoteChanges$, this.textAudioQuery.localChanges$),
@@ -1160,7 +1160,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.projectDoc!.id,
         relativeTo!,
         this.activeQuestionFilter,
-        prevOrNext
+        prevOrNext,
+        this.destroyRef
       );
 
       return query.docs[0];
@@ -1582,7 +1583,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             verseNum: 0
           },
           this.activeQuestionFilter,
-          'next'
+          'next',
+          this.destroyRef
         );
 
         const firstQuestionVerseRef: VerseRefData | undefined = query.docs[0]?.data?.verseRef;

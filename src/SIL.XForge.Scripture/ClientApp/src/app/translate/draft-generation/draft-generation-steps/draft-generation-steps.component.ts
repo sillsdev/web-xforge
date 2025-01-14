@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -104,6 +104,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   private trainingDataSub?: Subscription;
 
   constructor(
+    private readonly destroyRef: DestroyRef,
     private readonly activatedProject: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
     readonly featureFlags: FeatureFlagService,
@@ -223,7 +224,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         tap(async projectDoc => {
           // Query for all training data files in the project
           this.trainingDataQuery?.dispose();
-          this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id);
+          this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(
+            projectDoc.id,
+            this.destroyRef
+          );
           let projectChanged: boolean = true;
 
           // Subscribe to this query, and show these

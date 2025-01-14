@@ -17,7 +17,6 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { manageQuery } from 'xforge-common/util/realtime-query-util';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -212,8 +211,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
         this.projectUserConfigDoc.submitJson0Op(op => op.set<string>(puc => puc.selectedTask!, 'checking'));
         this.questionsQuery?.dispose();
-        this.questionsQuery = await manageQuery(
-          this.checkingQuestionsService.queryQuestions(projectId, { sort: true }),
+        this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
+          projectId,
+          { sort: true },
           this.destroyRef
         );
         this.initTexts();

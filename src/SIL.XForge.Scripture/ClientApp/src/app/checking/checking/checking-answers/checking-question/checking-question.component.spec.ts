@@ -85,7 +85,9 @@ describe('CheckingQuestionComponent', () => {
 
   it('selects question when scripture audio absent', async () => {
     const env = new TestEnvironment();
-    when(mockedSFProjectService.queryAudioText('project01')).thenResolve(instance(mock(RealtimeQuery<TextAudioDoc>)));
+    when(mockedSFProjectService.queryAudioText('project01', anything())).thenResolve(
+      instance(mock(RealtimeQuery<TextAudioDoc>))
+    );
     await env.wait();
     await env.wait();
 
@@ -325,7 +327,7 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(false);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
-    when(mockedSFProjectService.queryAudioText('project01')).thenResolve(instance(this.query));
+    when(mockedSFProjectService.queryAudioText('project01', anything())).thenResolve(instance(this.query));
 
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(MockComponent);

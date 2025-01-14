@@ -44,7 +44,7 @@ when(textAudioDoc.data).thenReturn(textAudio);
 when(projectUserConfigDoc.id).thenReturn(getSFProjectUserConfigDocId('project01', 'user01'));
 when(projectUserConfigDoc.data).thenReturn(projectUserConfig);
 when(query.docs).thenReturn([instance(textAudioDoc)]);
-when(mockedProjectService.queryAudioText(anything())).thenResolve(instance(query));
+when(mockedProjectService.queryAudioText(anything(), anything())).thenResolve(instance(query));
 const questionDoc: QuestionDoc = mock(QuestionDoc);
 const question: Question = {
   dataId: 'question01',
