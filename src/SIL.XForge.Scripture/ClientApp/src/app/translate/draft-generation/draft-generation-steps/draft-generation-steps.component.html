@@ -149,9 +149,6 @@
           >
             {{ t("next") }}
           </button>
-          @if (isStepsCompleted) {
-            <mat-spinner diameter="24"></mat-spinner>
-          }
         </div>
       </mat-step>
       @if (trainingDataFilesAvailable) {
@@ -177,9 +174,6 @@
             >
               {{ t("next") }}
             </button>
-            @if (isStepsCompleted) {
-              <mat-spinner diameter="24"></mat-spinner>
-            }
           </div>
         </mat-step>
       }
@@ -206,9 +200,6 @@
             >
               {{ t("next") }}
             </button>
-            @if (isStepsCompleted) {
-              <mat-spinner diameter="24"></mat-spinner>
-            }
           </div>
         </mat-step>
       }
@@ -265,6 +256,9 @@
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
             {{ t("generate_draft") }}
           </button>
+          @if (isStepsCompleted) {
+            <mat-spinner diameter="24"></mat-spinner>
+          }
         </div>
       </mat-step>
     </mat-stepper>

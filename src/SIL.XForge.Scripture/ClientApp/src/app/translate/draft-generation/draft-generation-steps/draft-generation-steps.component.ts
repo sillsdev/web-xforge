@@ -253,7 +253,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   get firstTrainingSource(): string {
-    return this.trainingSources[0].shortName;
+    return this.trainingSources[0]?.shortName ?? '';
   }
 
   private _booksToTranslate: Book[];
@@ -362,14 +362,13 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       book.selected = selectedBooks.includes(book.number);
     }
 
-    //for each selected book, select the matching book in the first source possible
+    //for each selected book, select the matching book in the sources
     for (const selectedBook of selectedBooks) {
-      for (const projectRef of Object.keys(this.availableTrainingBooks)) {
+      for (const [projectRef, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
         if (projectRef === this.activatedProject.projectId) continue;
-        const sourceBook = this.availableTrainingBooks[projectRef].find(b => b.number === selectedBook);
+        const sourceBook = trainingBooks.find(b => b.number === selectedBook);
         if (sourceBook !== undefined) {
           sourceBook.selected = true;
-          break;
         }
       }
     }
