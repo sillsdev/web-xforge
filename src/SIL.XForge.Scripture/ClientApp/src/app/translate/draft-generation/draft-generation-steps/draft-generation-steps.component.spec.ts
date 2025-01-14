@@ -337,7 +337,10 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
 
       expect(component.selectedTrainingBooksByProj('source1')).toEqual([{ number: 2, selected: true }]);
-      expect(component.selectedTrainingBooksByProj('source2')).toEqual([{ number: 6, selected: true }]);
+      expect(component.selectedTrainingBooksByProj('source2')).toEqual([
+        { number: 2, selected: true },
+        { number: 6, selected: true }
+      ]);
     }));
 
     it('should correctly emit the selected books when done', fakeAsync(() => {
@@ -575,6 +578,7 @@ describe('DraftGenerationStepsComponent', () => {
         { number: 9, selected: true },
         { number: 10, selected: true }
       ]);
+      //for source1, Genesis was previously selected, but it's no longer present on both source and target
       expect(component.selectedTrainingBooksByProj('source1')).toEqual([{ number: 9, selected: true }]);
       expect(component.selectedTrainingBooksByProj('source2')).toEqual([
         { number: 9, selected: true },
