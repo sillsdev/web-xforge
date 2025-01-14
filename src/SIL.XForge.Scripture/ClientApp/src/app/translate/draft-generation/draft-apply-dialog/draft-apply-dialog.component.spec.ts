@@ -147,7 +147,7 @@ describe('DraftApplyDialogComponent', () => {
     expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.InvalidProject);
   }));
 
-  it('notifies user if books has missing chapters', fakeAsync(() => {
+  it('notifies user if book has missing chapters', fakeAsync(() => {
     const projectDoc = {
       id: 'project03',
       data: createTestProjectProfile({
@@ -156,7 +156,30 @@ describe('DraftApplyDialogComponent', () => {
         texts: [
           {
             bookNum: 1,
-            chapters: [{ number: 1, permissions: { user01: TextInfoPermission.Write } }],
+            chapters: [{ number: 1, permissions: { user01: TextInfoPermission.Write }, lastVerse: 31 }],
+            permissions: { user01: TextInfoPermission.Write }
+          }
+        ]
+      })
+    } as SFProjectProfileDoc;
+    env = new TestEnvironment({ projectDoc });
+    env.selectParatextProject('paratextId3');
+    expect(env.component['targetProjectId']).toBe('project03');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.MissingChapters);
+  }));
+
+  it('notifies user if book is empty', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project03',
+      data: createTestProjectProfile({
+        paratextId: 'paratextId3',
+        userRoles: { user01: SFProjectRole.ParatextAdministrator },
+        texts: [
+          {
+            bookNum: 1,
+            chapters: [{ number: 1, permissions: { user01: TextInfoPermission.Write }, lastVerse: 0 }],
             permissions: { user01: TextInfoPermission.Write }
           }
         ]
@@ -272,8 +295,8 @@ class TestEnvironment {
               {
                 bookNum: 1,
                 chapters: [
-                  { number: 1, permissions: { user01: permission } },
-                  { number: 2, permissions: { user01: permission } }
+                  { number: 1, permissions: { user01: permission }, lastVerse: 31 },
+                  { number: 2, permissions: { user01: permission }, lastVerse: 25 }
                 ],
                 permissions: { user01: permission }
               }
