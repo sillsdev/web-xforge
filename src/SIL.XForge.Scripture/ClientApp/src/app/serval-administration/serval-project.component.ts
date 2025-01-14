@@ -3,7 +3,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -29,6 +29,11 @@ interface Row {
   name: string;
   category: string;
   fileName: string;
+}
+
+interface ProjectAndRange {
+  source: string;
+  scriptureRange: string;
 }
 
 function projectType(project: TranslateSource | SFProjectProfile): string {
@@ -58,7 +63,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   columnsToDisplay = ['category', 'type', 'name', 'id'];
   rows: Row[] = [];
 
-  trainingBooks: string[] = [];
+  trainingBooksByProject: ProjectAndRange[];
   trainingFiles: string[] = [];
   translationBooks: string[] = [];
 
@@ -122,31 +127,37 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             });
           }
 
+          const draftConfig: DraftConfig = project.translateConfig.draftConfig;
           // Add the alternate source
-          if (project.translateConfig.draftConfig.alternateSource != null) {
+          if (draftConfig.alternateSource != null) {
             rows.push({
-              id: project.translateConfig.draftConfig.alternateSource.projectRef,
-              type: projectType(project.translateConfig.draftConfig.alternateSource),
-              name:
-                project.translateConfig.draftConfig.alternateSource.shortName +
-                ' - ' +
-                project.translateConfig.draftConfig.alternateSource.name,
+              id: draftConfig.alternateSource.projectRef,
+              type: projectType(draftConfig.alternateSource),
+              name: draftConfig.alternateSource.shortName + ' - ' + draftConfig.alternateSource.name,
               category: 'Alternate Source',
-              fileName: project.translateConfig.draftConfig.alternateSource.shortName + '.zip'
+              fileName: draftConfig.alternateSource.shortName + '.zip'
             });
           }
 
           // Add the alternate training source
-          if (project.translateConfig.draftConfig.alternateTrainingSource != null) {
+          if (draftConfig.alternateTrainingSource != null) {
             rows.push({
-              id: project.translateConfig.draftConfig.alternateTrainingSource.projectRef,
-              type: projectType(project.translateConfig.draftConfig.alternateTrainingSource),
-              name:
-                project.translateConfig.draftConfig.alternateTrainingSource.shortName +
-                ' - ' +
-                project.translateConfig.draftConfig.alternateTrainingSource.name,
+              id: draftConfig.alternateTrainingSource.projectRef,
+              type: projectType(draftConfig.alternateTrainingSource),
+              name: draftConfig.alternateTrainingSource.shortName + ' - ' + draftConfig.alternateTrainingSource.name,
               category: 'Alternate Training Source',
-              fileName: project.translateConfig.draftConfig.alternateTrainingSource.shortName + '.zip'
+              fileName: draftConfig.alternateTrainingSource.shortName + '.zip'
+            });
+          }
+
+          // Add the additional training source
+          if (draftConfig.additionalTrainingSource != null) {
+            rows.push({
+              id: draftConfig.additionalTrainingSource.projectRef,
+              type: projectType(draftConfig.additionalTrainingSource),
+              name: draftConfig.additionalTrainingSource.shortName + ' - ' + draftConfig.additionalTrainingSource.name,
+              category: 'Additional Training Source',
+              fileName: draftConfig.additionalTrainingSource.shortName + '.zip'
             });
           }
 
@@ -154,15 +165,31 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           this.rows = rows;
 
           // Setup the books
-          this.trainingBooks = booksFromScriptureRange(
-            project.translateConfig.draftConfig.lastSelectedTrainingScriptureRange ?? ''
-          ).map(bookNum => Canon.bookNumberToEnglishName(bookNum));
-          this.trainingFiles = project.translateConfig.draftConfig.lastSelectedTrainingDataFiles;
-          this.translationBooks = booksFromScriptureRange(
-            project.translateConfig.draftConfig.lastSelectedTranslationScriptureRange ?? ''
-          ).map(bookNum => Canon.bookNumberToEnglishName(bookNum));
+          this.trainingBooksByProject = [];
+          if (draftConfig.lastSelectedTrainingScriptureRange != null) {
+            this.trainingBooksByProject.push({
+              source: 'Source 1',
+              scriptureRange: booksFromScriptureRange(draftConfig.lastSelectedTrainingScriptureRange ?? '')
+                .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
+                .join(', ')
+            });
+          } else if (draftConfig.lastSelectedTrainingScriptureRanges != null) {
+            let sourceCount = 1;
+            for (const range of draftConfig.lastSelectedTrainingScriptureRanges) {
+              this.trainingBooksByProject.push({
+                source: `Source ${sourceCount++}`,
+                scriptureRange: booksFromScriptureRange(range.scriptureRange)
+                  .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
+                  .join(', ')
+              });
+            }
+          }
+          this.trainingFiles = draftConfig.lastSelectedTrainingDataFiles;
+          this.translationBooks = booksFromScriptureRange(draftConfig.lastSelectedTranslationScriptureRange ?? '').map(
+            bookNum => Canon.bookNumberToEnglishName(bookNum)
+          );
 
-          this.draftConfig = project.translateConfig.draftConfig;
+          this.draftConfig = draftConfig;
           this.draftJob$ = SFProjectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
 
           // Get the last completed build
