@@ -733,6 +733,8 @@ class TestEnvironment {
       );
     }
     when(mockedRealtimeQuery.docs).thenReturn(this.existingQuestions);
-    when(mockedQuestionsService.queryQuestions('project01')).thenResolve(instance(mockedRealtimeQuery));
+    when(mockedQuestionsService.queryQuestions('project01', anything(), anything())).thenResolve(
+      instance(mockedRealtimeQuery)
+    );
   }
 }

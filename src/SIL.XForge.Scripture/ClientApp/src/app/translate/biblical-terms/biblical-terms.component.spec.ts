@@ -29,6 +29,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -417,18 +418,18 @@ class TestEnvironment {
 
   constructor(projectId: string | undefined, bookNum: number, chapter: number, verse: string = '0') {
     when(mockedI18nService.locale$).thenReturn(this.locale$);
-    when(mockedProjectService.queryBiblicalTerms(anything())).thenCall(sfProjectId => {
+    when(mockedProjectService.queryBiblicalTerms(anything(), anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
         [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
       };
-      return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, parameters);
+      return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, parameters, noopDestroyRef);
     });
-    when(mockedProjectService.queryBiblicalTermNoteThreads(anything())).thenCall(sfProjectId => {
+    when(mockedProjectService.queryBiblicalTermNoteThreads(anything(), anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
         [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
       };
-      return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters);
+      return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters, noopDestroyRef);
     });
     when(mockedProjectService.getBiblicalTerm(anything())).thenCall(id =>
       this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id)

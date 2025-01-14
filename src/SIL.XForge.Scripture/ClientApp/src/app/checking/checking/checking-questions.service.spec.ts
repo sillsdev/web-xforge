@@ -4,6 +4,7 @@ import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scripturefor
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -191,7 +192,11 @@ describe('CheckingQuestionsService', () => {
         sort: true
       };
 
-      const query: RealtimeQuery<QuestionDoc> = await questionsService.queryQuestions(projectId, options);
+      const query: RealtimeQuery<QuestionDoc> = await questionsService.queryQuestions(
+        projectId,
+        options,
+        noopDestroyRef
+      );
       tick();
       expect(query.docs.length).toEqual(50);
       expect(query.docs[0].data!.dataId).toEqual('question-m1-0');
@@ -205,7 +210,11 @@ describe('CheckingQuestionsService', () => {
         sort: true
       };
 
-      const query: RealtimeQuery<QuestionDoc> = await questionsService.queryQuestions(projectId, options);
+      const query: RealtimeQuery<QuestionDoc> = await questionsService.queryQuestions(
+        projectId,
+        options,
+        noopDestroyRef
+      );
       tick();
       tick();
       expect(query.docs.length).toEqual(20);
@@ -221,7 +230,11 @@ describe('CheckingQuestionsService', () => {
         sort: true
       };
 
-      const query: RealtimeQuery<QuestionDoc> = await questionsService.queryQuestions(projectId, options);
+      const query: RealtimeQuery<QuestionDoc> = await questionsService.queryQuestions(
+        projectId,
+        options,
+        noopDestroyRef
+      );
       tick();
       expect(query.docs.length).toEqual(10);
       expect(query.docs[0].data!.dataId).toEqual('question-m1-0');
@@ -234,7 +247,11 @@ describe('CheckingQuestionsService', () => {
         sort: true
       };
 
-      const query: RealtimeQuery<QuestionDoc> = await questionsService.queryQuestions(projectId, options);
+      const query: RealtimeQuery<QuestionDoc> = await questionsService.queryQuestions(
+        projectId,
+        options,
+        noopDestroyRef
+      );
       tick();
       expect(query.docs.length).toEqual(40);
       expect(query.docs[0].data!.dataId).toEqual('question-m1-0');
@@ -249,7 +266,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[0].data!,
         QuestionFilter.None,
-        'next'
+        'next',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-1');
@@ -260,7 +278,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[1].data!,
         QuestionFilter.None,
-        'prev'
+        'prev',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-0');
@@ -271,7 +290,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[9].data!,
         QuestionFilter.None,
-        'next'
+        'next',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-0');
@@ -282,7 +302,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[10].data!,
         QuestionFilter.None,
-        'prev'
+        'prev',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-9');
@@ -293,7 +314,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[19].data!,
         QuestionFilter.None,
-        'next'
+        'next',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-j1-0');
@@ -304,7 +326,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[20].data!,
         QuestionFilter.None,
-        'prev'
+        'prev',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-9');
@@ -315,7 +338,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[49].data!,
         QuestionFilter.None,
-        'next'
+        'next',
+        noopDestroyRef
       );
       tick();
       expect(question.docs.length).toBe(0);
@@ -326,7 +350,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[0].data!,
         QuestionFilter.None,
-        'prev'
+        'prev',
+        noopDestroyRef
       );
       tick();
       expect(question.docs.length).toBe(0);
@@ -337,7 +362,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[19].data!,
         QuestionFilter.HasAnswers,
-        'next'
+        'next',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-j2-0');
@@ -348,7 +374,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[40].data!,
         QuestionFilter.HasAnswers,
-        'prev'
+        'prev',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-9');
@@ -359,7 +386,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[9].data!,
         QuestionFilter.NoAnswers,
-        'next'
+        'next',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-j1-0');
@@ -370,7 +398,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[20].data!,
         QuestionFilter.NoAnswers,
-        'prev'
+        'prev',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-9');
@@ -381,7 +410,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[19].data!,
         QuestionFilter.StatusNone,
-        'next'
+        'next',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-j2-0');
@@ -392,7 +422,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[40].data!,
         QuestionFilter.StatusNone,
-        'prev'
+        'prev',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-9');
@@ -403,7 +434,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[17].data!,
         QuestionFilter.StatusExport,
-        'next'
+        'next',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-j2-1');
@@ -414,7 +446,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[41].data!,
         QuestionFilter.StatusExport,
-        'prev'
+        'prev',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-7');
@@ -425,7 +458,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[18].data!,
         QuestionFilter.StatusResolved,
-        'next'
+        'next',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-j2-2');
@@ -436,7 +470,8 @@ describe('CheckingQuestionsService', () => {
         projectId,
         questions[42].data!,
         QuestionFilter.StatusResolved,
-        'prev'
+        'prev',
+        noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-8');

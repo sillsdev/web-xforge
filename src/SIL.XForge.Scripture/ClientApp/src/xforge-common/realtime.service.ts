@@ -1,4 +1,5 @@
-import { Injectable, Optional } from '@angular/core';
+import { DestroyRef, Injectable, Optional } from '@angular/core';
+import { filter, race, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
 import { FileService } from './file.service';
 import { RealtimeDoc } from './models/realtime-doc';
@@ -11,6 +12,14 @@ import { TypeRegistry } from './type-registry';
 function getDocKey(collection: string, id: string): string {
   return `${collection}:${id}`;
 }
+
+/**
+ * A no-op DestroyRef that is not associated with any component.
+ * This may be useful to satisfy a subscribe query in testing or if a query is not associated with a component.
+ */
+export const noopDestroyRef: DestroyRef = {
+  onDestroy: _callback => () => {}
+};
 
 /**
  * The realtime service is responsible for retrieving and mutating realtime data models. This service transparently
@@ -133,15 +142,19 @@ export class RealtimeService {
    * @param {string} collection The collection name.
    * @param {QueryParameters} parameters The query parameters.
    * See https://github.com/share/sharedb-mongo#queries.
-   * @returns {Promise<RealtimeQuery<T>>} The query.
+   * @param {DestroyRef} destroyRef The reference to destroy the query when the component gets destroyed.
+   * @returns {Promise<RealtimeQuery<T>>} A promise for the query.
    */
   async subscribeQuery<T extends RealtimeDoc>(
     collection: string,
-    parameters: QueryParameters
+    parameters: QueryParameters,
+    destroyRef: DestroyRef
   ): Promise<RealtimeQuery<T>> {
     const query = this.createQuery<T>(collection, parameters);
-    await query.subscribe();
-    return query;
+    return this.manageQuery(
+      query.subscribe().then(() => query),
+      destroyRef
+    );
   }
 
   /**
@@ -190,5 +203,39 @@ export class RealtimeService {
       await this.offlineStore.delete(doc.collection, doc.id);
       this.docs.delete(getDocKey(doc.collection, doc.id));
     }
+  }
+
+  /**
+   * Ensures query is disposed when the component associated with DestroyRef is destroyed.
+   * This will handle the case where the component is destroyed before `queryPromise` resolves.
+   * @param queryPromise The Promise for the RealtimeQuery.
+   * @param destroyRef The DestroyRef associated with the component.
+   * @returns The passed in `queryPromise`.
+   */
+  private manageQuery<T extends RealtimeDoc>(
+    queryPromise: Promise<RealtimeQuery<T>>,
+    destroyRef: DestroyRef
+  ): Promise<RealtimeQuery<T>> {
+    try {
+      destroyRef.onDestroy(() =>
+        queryPromise.then(query => {
+          // Call dispose when the query is ready or after 5 seconds (query will not emit 'ready' when offline)
+          race([
+            query.ready$.pipe(
+              filter(ready => ready),
+              take(1)
+            ),
+            timer(5000)
+          ])
+            .pipe(take(1))
+            .subscribe(() => query.dispose());
+        })
+      );
+    } catch {
+      // If 'onDestroy' callback registration fails (view already destroyed), dispose immediately
+      queryPromise.then(query => query.dispose());
+    }
+
+    return queryPromise;
   }
 }

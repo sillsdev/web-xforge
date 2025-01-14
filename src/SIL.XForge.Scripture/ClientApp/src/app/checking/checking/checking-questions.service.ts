@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { merge } from 'lodash-es';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -52,7 +52,8 @@ export class CheckingQuestionsService {
    */
   queryQuestions(
     projectId: string,
-    options: { bookNum?: number; chapterNum?: number; activeOnly?: boolean; sort?: boolean } = {}
+    options: { bookNum?: number; chapterNum?: number; activeOnly?: boolean; sort?: boolean } = {},
+    destroyRef: DestroyRef
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const queryParams: QueryParameters = {
       [obj<Question>().pathStr(q => q.projectRef)]: projectId
@@ -74,7 +75,7 @@ export class CheckingQuestionsService {
       queryParams.$sort = this.getQuestionSortParams('ascending');
     }
 
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
+    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
   }
 
   /**
@@ -83,12 +84,14 @@ export class CheckingQuestionsService {
    * @param relativeTo The question or verse to use as a reference point
    * @param questionFilter The filter to apply to the results
    * @param prevOrNext Whether to query the question before or after the reference point
+   * @param destroyRef The reference to destroy the query when the component gets destroyed.
    */
   queryAdjacentQuestion(
     projectId: string,
     relativeTo: Question | VerseRefData,
     questionFilter: QuestionFilter,
-    prevOrNext: 'prev' | 'next'
+    prevOrNext: 'prev' | 'next',
+    destroyRef: DestroyRef
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const verseRef: VerseRefData = this.isVerseRefData(relativeTo) ? relativeTo : relativeTo.verseRef;
     const currentQuestion: Question | undefined = this.isVerseRefData(relativeTo) ? undefined : relativeTo;
@@ -147,11 +150,16 @@ export class CheckingQuestionsService {
 
     return this.realtimeService.subscribeQuery(
       QuestionDoc.COLLECTION,
-      merge(queryParams, this.getFilterForQuestionFilter(questionFilter))
+      merge(queryParams, this.getFilterForQuestionFilter(questionFilter)),
+      destroyRef
     );
   }
 
-  async queryFirstUnansweredQuestion(projectId: string, userId: string): Promise<RealtimeQuery<QuestionDoc>> {
+  async queryFirstUnansweredQuestion(
+    projectId: string,
+    userId: string,
+    destroyRef: DestroyRef
+  ): Promise<RealtimeQuery<QuestionDoc>> {
     const queryParams: QueryParameters = {
       [obj<Question>().pathStr(q => q.projectRef)]: projectId,
       [obj<Question>().pathStr(q => q.isArchived)]: false,
@@ -166,7 +174,7 @@ export class CheckingQuestionsService {
       $sort: this.getQuestionSortParams('ascending'),
       $limit: 1
     };
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
+    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
   }
 
   async createQuestion(

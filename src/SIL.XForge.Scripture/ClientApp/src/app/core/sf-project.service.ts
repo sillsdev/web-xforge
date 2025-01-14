@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -133,36 +133,41 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return url;
   }
 
-  queryNoteThreads(sfProjectId: string, bookNum: number, chapterNum: number): Promise<RealtimeQuery<NoteThreadDoc>> {
+  queryNoteThreads(
+    sfProjectId: string,
+    bookNum: number,
+    chapterNum: number,
+    destroyRef: DestroyRef
+  ): Promise<RealtimeQuery<NoteThreadDoc>> {
     const queryParams: QueryParameters = {
       [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
       [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
       [obj<NoteThread>().pathStr(t => t.verseRef.bookNum)]: bookNum,
       [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
     };
-    return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams);
+    return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams, destroyRef);
   }
 
-  queryAudioText(sfProjectId: string): Promise<RealtimeQuery<TextAudioDoc>> {
+  queryAudioText(sfProjectId: string, destroyRef: DestroyRef): Promise<RealtimeQuery<TextAudioDoc>> {
     const queryParams: QueryParameters = {
       [obj<TextAudio>().pathStr(t => t.projectRef)]: sfProjectId
     };
-    return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams);
+    return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams, destroyRef);
   }
 
-  queryBiblicalTerms(sfProjectId: string): Promise<RealtimeQuery<BiblicalTermDoc>> {
+  queryBiblicalTerms(sfProjectId: string, destroyRef: DestroyRef): Promise<RealtimeQuery<BiblicalTermDoc>> {
     const queryParams: QueryParameters = {
       [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
     };
-    return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, queryParams);
+    return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, queryParams, destroyRef);
   }
 
-  queryBiblicalTermNoteThreads(sfProjectId: string): Promise<RealtimeQuery<NoteThreadDoc>> {
+  queryBiblicalTermNoteThreads(sfProjectId: string, destroyRef: DestroyRef): Promise<RealtimeQuery<NoteThreadDoc>> {
     const parameters: QueryParameters = {
       [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
       [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
     };
-    return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters);
+    return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters, destroyRef);
   }
 
   onlineSync(id: string): Promise<void> {

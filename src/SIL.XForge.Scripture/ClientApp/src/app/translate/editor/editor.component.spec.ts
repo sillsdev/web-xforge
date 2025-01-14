@@ -72,6 +72,7 @@ import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/gene
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -4384,25 +4385,37 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
-    when(mockedSFProjectService.queryNoteThreads(anything(), anything(), anything())).thenCall(
+    when(mockedSFProjectService.queryNoteThreads(anything(), anything(), anything(), anything())).thenCall(
       (id, bookNum, chapterNum, _) =>
-        this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
+        this.realtimeService.subscribeQuery(
+          NoteThreadDoc.COLLECTION,
+          {
+            [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+            [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
+            [obj<NoteThread>().pathStr(t => t.verseRef.bookNum)]: bookNum,
+            [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
+          },
+          noopDestroyRef
+        )
+    );
+    when(mockedSFProjectService.queryBiblicalTermNoteThreads(anything(), anything())).thenCall(id =>
+      this.realtimeService.subscribeQuery(
+        NoteThreadDoc.COLLECTION,
+        {
           [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
-          [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
-          [obj<NoteThread>().pathStr(t => t.verseRef.bookNum)]: bookNum,
-          [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
-        })
+          [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
+        },
+        noopDestroyRef
+      )
     );
-    when(mockedSFProjectService.queryBiblicalTermNoteThreads(anything())).thenCall(id =>
-      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
-        [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
-        [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
-      })
-    );
-    when(mockedSFProjectService.queryBiblicalTerms(anything())).thenCall(id =>
-      this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, {
-        [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: id
-      })
+    when(mockedSFProjectService.queryBiblicalTerms(anything(), anything())).thenCall(id =>
+      this.realtimeService.subscribeQuery(
+        BiblicalTermDoc.COLLECTION,
+        {
+          [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: id
+        },
+        noopDestroyRef
+      )
     );
     when(mockedSFProjectService.createNoteThread(anything(), anything())).thenCall(
       (projectId: string, noteThread: NoteThread) => {
@@ -4622,15 +4635,19 @@ class TestEnvironment {
   }
   setCommenterUser(userId: 'user02' | 'user05' = 'user05'): void {
     this.setCurrentUser(userId);
-    when(mockedSFProjectService.queryNoteThreads('project01', anything(), anything())).thenCall(
+    when(mockedSFProjectService.queryNoteThreads('project01', anything(), anything(), anything())).thenCall(
       (id, bookNum, chapterNum, _) =>
-        this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
-          [obj<NoteThread>().pathStr(t => t.publishedToSF)]: userId === 'user05',
-          [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
-          [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
-          [obj<NoteThread>().pathStr(t => t.verseRef.bookNum)]: bookNum,
-          [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
-        })
+        this.realtimeService.subscribeQuery(
+          NoteThreadDoc.COLLECTION,
+          {
+            [obj<NoteThread>().pathStr(t => t.publishedToSF)]: userId === 'user05',
+            [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
+            [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+            [obj<NoteThread>().pathStr(t => t.verseRef.bookNum)]: bookNum,
+            [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
+          },
+          noopDestroyRef
+        )
     );
   }
 

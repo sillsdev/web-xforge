@@ -6,6 +6,7 @@ import { from, merge, Observable, of } from 'rxjs';
 import { distinctUntilChanged, filter, finalize, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { areStringArraysEqual } from 'xforge-common/util/string-util';
@@ -114,7 +115,8 @@ export class ResumeCheckingService {
       return of(undefined);
     }
 
-    return from(this.questionService.queryFirstUnansweredQuestion(projectDoc.id, userId)).pipe(
+    // This query is not associated with a component, so provide a no-op destroy ref
+    return from(this.questionService.queryFirstUnansweredQuestion(projectDoc.id, userId, noopDestroyRef)).pipe(
       switchMap(query =>
         merge(
           query.ready$.pipe(

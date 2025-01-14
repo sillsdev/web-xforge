@@ -159,7 +159,9 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockProjectService.getProfile('alternateTrainingProject')).thenResolve(
         mockAlternateTrainingSourceProjectDoc
       );
-      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
       when(mockTrainingDataQuery.docs).thenReturn([]);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
 
@@ -276,7 +278,9 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
       when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
-      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
       when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -476,7 +480,9 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockProjectService.getProfile('sourceProject2')).thenResolve(mockAdditionalTrainingSourceProjectDoc);
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
       when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
-      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
       when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -636,7 +642,9 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
-      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
       when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -704,7 +712,9 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
-      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
       when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
