@@ -16,9 +16,9 @@
         </mat-chip-option>
       </mat-chip-listbox>
     }
-    <button mat-flat-button (click)="openUploadDialog()" color="accent">
+    <button mat-flat-button (click)="openUploadDialog()" color="primary">
       <mat-icon matChipAvatar>file_upload</mat-icon>
-      {{ t("upload_csv") }}
+      {{ t("upload_spreadsheet") }}
     </button>
     <app-info [text]="t('file_information', { sourceLanguage, targetLanguage })"></app-info>
   </div>
