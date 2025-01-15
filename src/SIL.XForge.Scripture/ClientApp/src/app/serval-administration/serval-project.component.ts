@@ -82,7 +82,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   get eventLogLink(): string[] {
-    return ['/projects', this.activatedProjectService.projectId, 'event-log'];
+    return ['/projects', this.activatedProjectService.projectId!, 'event-log'];
   }
 
   get isOnline(): boolean {
