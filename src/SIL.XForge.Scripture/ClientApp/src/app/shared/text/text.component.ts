@@ -1406,6 +1406,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return false;
     }
 
+    const originalSegmentRefRequest: string = segmentRef;
+
+    // One project's chapter may have verses combined (eg "1-2"), or a verse split in paragraphs, differently than the
+    // same chapter in another project. When the user clicks in a verse range, or in a paragraph of a verse, the segment
+    // reference they clicked in in one TextComponent may or may not directly correspond to a segment in another
+    // TextComponent's viewModel.
     if (!this.viewModel.hasSegmentRange(segmentRef)) {
       let resetSegment = true;
 
@@ -1453,8 +1459,23 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     this.updateSegment();
     this.segmentRefChange.emit(this.segmentRef);
+
     if (this.highlightSegment) {
-      this.highlight();
+      if (this.viewModel.hasSegmentRange(originalSegmentRefRequest)) {
+        this.highlight();
+      } else {
+        // If the requested segment was a verse range, highlight all segments in the range.
+        const verseStr: string | undefined = getVerseStrFromSegmentRef(originalSegmentRefRequest);
+        if (verseStr != null && this.id != null) {
+          const verseRef: VerseRef = new VerseRef(
+            Canon.bookNumberToId(this.id.bookNum),
+            this.id.chapterNum.toString(),
+            verseStr
+          );
+          const segmentsInVerseRange: string[] = this.getVerseSegments(verseRef);
+          this.highlight(segmentsInVerseRange);
+        }
+      }
     }
     return true;
   }

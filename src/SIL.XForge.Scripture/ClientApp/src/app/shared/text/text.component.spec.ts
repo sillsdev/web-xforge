@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import Quill, { Delta, EmitterSource, Range as QuillRange } from 'quill';
@@ -24,7 +24,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { isGecko } from 'xforge-common/utils';
@@ -1529,6 +1529,30 @@ describe('TextComponent', () => {
       env.component.projectHasText();
       tick();
     }).toThrowError();
+  }));
+
+  it('highlights individual segments when a verse range is requested that does not directly correspond to a segment', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    // Suppose we have a text with separate segments for verse 2 and verse 3.
+    env.id = new TextDocId('project01', 40, 1);
+    env.component.highlightSegment = true;
+    env.waitForEditor();
+
+    // Suppose in the target text, there is a single segment for the verse range of verse 2-3, and that the user clicks
+    // in that segment. This segment does not directly correspond to a segment in our source text.
+    env.component.setSegment('verse_1_2-3');
+    tick();
+    env.fixture.detectChanges();
+    // Because there is not a 'verse_1_2-3 segment, only verse 2 is set as the current segment.
+    expect(env.component.segment!.ref).toEqual('verse_1_2');
+
+    // Both the segment for verse 2 and the segment for verse 3 should be highlighted.
+    expect(env.isSegmentHighlighted(1, '2')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '3')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '1')).toBe(false);
+
+    TestEnvironment.waitForPresenceTimer();
   }));
 });
 
