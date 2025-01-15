@@ -467,7 +467,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get canShare(): boolean {
     return (
-      this.projectDoc != null &&
+      this.projectDoc?.data != null &&
       SF_PROJECT_RIGHTS.hasRight(
         this.projectDoc.data,
         this.userService.currentUserId,
@@ -892,7 +892,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
 
       if (delta?.ops != null) {
-        const retainCount: number = getRetainCount(delta.ops[0]);
+        const retainCount: number | undefined = getRetainCount(delta.ops[0]);
         const insertText: string | undefined = isString(delta.ops[1]?.insert) ? delta.ops[1].insert : undefined;
         // insert a space if the user just inserted a suggestion and started typing
         if (
@@ -2356,7 +2356,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         return curIndex;
       }
 
-      const retainCount: number | undefined = getRetainCount(op) ?? 0;
+      const retainCount: number = getRetainCount(op) ?? 0;
       curIndex += retainCount;
     }
     return undefined;
@@ -2468,13 +2468,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const targetRange: Range = this.target.segment.range;
-    const targetSelectionBounds: DOMRect | Bounds = this.target.editor.selection.getBounds(targetRange.index);
+    const targetSelectionBounds: DOMRect | Bounds = this.target.editor.selection.getBounds(targetRange.index)!;
 
     const sourceRange: Range = this.source.segment.range;
     const sourceSelectionBounds: DOMRect | Bounds = this.source.editor.selection.getBounds(
       sourceRange.index,
       sourceRange.length
-    );
+    )!;
 
     let newScrollTop: number =
       this.sourceScrollContainer.scrollTop + sourceSelectionBounds.top - targetSelectionBounds.top;

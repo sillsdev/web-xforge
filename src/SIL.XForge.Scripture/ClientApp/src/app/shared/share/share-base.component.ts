@@ -62,6 +62,7 @@ export abstract class ShareBaseComponent extends SubscriptionDisposable {
       .filter(
         info =>
           info.permission &&
+          this.projectDoc?.data != null &&
           SF_PROJECT_RIGHTS.hasRight(
             this.projectDoc.data,
             this.userService.currentUserId,

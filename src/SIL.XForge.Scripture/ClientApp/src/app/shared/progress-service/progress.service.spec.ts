@@ -2,7 +2,7 @@ import { NgZone } from '@angular/core';
 import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -232,7 +232,7 @@ class TestEnvironment {
   createTexts(): TextInfo[] {
     const texts: TextInfo[] = [];
     for (let book = 0; book < this.numBooks; book++) {
-      const chapters = [];
+      const chapters: Chapter[] = [];
       for (let chapter = 0; chapter < this.numChapters; chapter++) {
         chapters.push({ isValid: true, lastVerse: 1, number: chapter, permissions: {}, hasAudio: false });
       }

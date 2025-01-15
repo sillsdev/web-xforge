@@ -550,7 +550,7 @@ export class TextViewModel implements OnDestroy {
       const attrs: StringMap = {};
       const len = typeof op.insert === 'string' ? op.insert.length : 1;
       if (op.insert === '\n' || op.attributes?.para != null) {
-        const style: string = op.attributes?.para == null ? null : ((op.attributes.para as any).style as string);
+        const style: string | null = op.attributes?.para == null ? null : ((op.attributes.para as any).style as string);
         if (style == null || canParaContainVerseText(style)) {
           // paragraph
           for (const _ch of op.insert as any) {
@@ -642,21 +642,23 @@ export class TextViewModel implements OnDestroy {
           if (op.attributes != null && op.attributes['initial'] === true) {
             curSegment.hasInitialFormat = true;
           }
-        } else if (op.insert['note-thread-embed'] != null) {
+        } else if (op.insert != null && op.insert['note-thread-embed'] != null) {
           // record the presence of an embedded note in the segment
           const id: string | undefined = op.attributes?.['threadid'] as string | undefined;
-          let embedPosition: EmbedPosition | undefined = this._embeddedElements.get(id);
+          let embedPosition: EmbedPosition | undefined = id == null ? undefined : this._embeddedElements.get(id);
           const position: number = curIndex + curSegment.length - 1;
-          if (embedPosition == null) {
+          if (embedPosition == null && id != null) {
             embedPosition = { position };
             this._embeddedElements.set(id, embedPosition);
           } else {
-            if (embedPosition.duplicatePosition != null) {
-              console.warn(
-                'Warning: text-view-model.updateSegments() did not expect to encounter an embed with >2 positions'
-              );
+            if (embedPosition != null) {
+              if (embedPosition.duplicatePosition != null) {
+                console.warn(
+                  'Warning: text-view-model.updateSegments() did not expect to encounter an embed with >2 positions'
+                );
+              }
+              embedPosition.duplicatePosition = position;
             }
-            embedPosition.duplicatePosition = position;
           }
           curSegment.notesCount++;
         }
@@ -763,7 +765,7 @@ export class TextViewModel implements OnDestroy {
     for (const op of modelDelta.ops) {
       let cloneOp: DeltaOperation | undefined = cloneDeep(op);
       if (cloneOp.retain != null) {
-        const retainCount: number = getRetainCount(cloneOp);
+        const retainCount: number = getRetainCount(cloneOp)!;
         const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, retainCount);
         curIndex += retainCount;
 
@@ -806,7 +808,7 @@ export class TextViewModel implements OnDestroy {
       let cloneOp: DeltaOperation = cloneDeep(op);
       editorStartPos = curIndex + embedsUpToIndex;
       if (cloneOp.retain != null) {
-        const retainCount: number = getRetainCount(cloneOp);
+        const retainCount: number = getRetainCount(cloneOp)!;
         // editorStartPos must be the current index plus the number of embeds previous
         const editorRange: EditorRange = this.getEditorContentRange(editorStartPos, retainCount);
         embedsUpToIndex += editorRange.embedsWithinRange;

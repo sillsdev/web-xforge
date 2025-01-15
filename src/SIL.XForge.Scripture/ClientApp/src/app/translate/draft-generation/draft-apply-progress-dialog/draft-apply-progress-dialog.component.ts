@@ -48,7 +48,7 @@ export class DraftApplyProgressDialogComponent {
   get failedToApplyChapters(): string | undefined {
     if (this.draftApplyProgress == null || !this.draftApplyProgress.completed) return undefined;
     const chapters: string[] = this.draftApplyProgress.chapters
-      .filter(c => !this.draftApplyProgress.chaptersApplied.includes(c))
+      .filter(c => !this.draftApplyProgress?.chaptersApplied.includes(c))
       .map(c => c.toString());
     return chapters.length > 0 ? this.i18n.enumerateList(chapters) : undefined;
   }

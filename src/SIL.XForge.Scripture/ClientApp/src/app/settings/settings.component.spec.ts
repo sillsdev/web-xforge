@@ -14,7 +14,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
@@ -1007,12 +1007,15 @@ describe('SettingsComponent', () => {
 
       it('should show Translation Suggestions when Based On is set', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            translationSuggestionsEnabled: false,
-            source: null
-          }
-        });
+        env.setupProject(
+          {
+            translateConfig: {
+              translationSuggestionsEnabled: false,
+              source: undefined
+            }
+          },
+          true
+        );
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
         expect(env.basedOnSelectValue).toEqual('');
@@ -1101,12 +1104,14 @@ describe('SettingsComponent', () => {
 
       it('Translation Suggestions should remain unchanged when Based On is changed', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            translationSuggestionsEnabled: false,
-            source: null
-          }
-        });
+        env.setupProject(
+          {
+            translateConfig: {
+              translationSuggestionsEnabled: false
+            }
+          },
+          true
+        );
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
         expect(env.basedOnSelectValue).toEqual('');
@@ -1948,10 +1953,13 @@ class TestEnvironment {
     }
   });
 
-  setupProject(data: RecursivePartial<SFProject> = {}): void {
+  setupProject(data: RecursivePartial<SFProject> = {}, noSource = false): void {
     const projectData = cloneDeep(this.testProject);
     if (data.translateConfig != null) {
       projectData.translateConfig = merge(projectData.translateConfig, data.translateConfig);
+      if (noSource) {
+        projectData.translateConfig.source = undefined;
+      }
     }
     if (data.checkingConfig != null) {
       projectData.checkingConfig = merge(projectData.checkingConfig, data.checkingConfig);
@@ -1963,7 +1971,11 @@ class TestEnvironment {
       projectData.sync = merge(projectData.sync, data.sync);
     }
     if (data.rolePermissions != null) {
-      projectData.rolePermissions = data.rolePermissions;
+      const rolePermissions: { [key: string]: string[] } = {};
+      for (const [role, permissions] of Object.entries(data.rolePermissions)) {
+        rolePermissions[role] = permissions?.filter(p => p != null) ?? [];
+      }
+      projectData.rolePermissions = rolePermissions;
     }
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',

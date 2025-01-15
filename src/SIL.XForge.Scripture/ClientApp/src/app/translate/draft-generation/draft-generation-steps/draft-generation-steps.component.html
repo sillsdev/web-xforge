@@ -131,7 +131,7 @@
             (bookSelect)="onSourceTrainingBookSelect($event)"
           ></app-book-multi-select>
         }
-        @if (trainingAdditionalSourceProjectName?.length > 0) {
+        @if (trainingAdditionalSourceProjectName != null && trainingAdditionalSourceProjectName.length > 0) {
           <p class="reference-project-label">{{ trainingAdditionalSourceProjectName }}</p>
           @if (selectableAdditionalSourceTrainingBooks.length === 0) {
             <app-notice mode="basic" type="light" class="books-appear-notice">{{

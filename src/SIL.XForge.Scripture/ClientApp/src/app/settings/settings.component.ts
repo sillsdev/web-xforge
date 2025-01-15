@@ -478,7 +478,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   ): void {
     if (this.settingChanged(newValue, setting)) {
       const right = SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create);
-      const permissions = new Set(this.projectDoc.data.rolePermissions[role] ?? []);
+      const permissions = new Set(this.projectDoc!.data!.rolePermissions[role] ?? []);
       if (newValue[setting] === true) {
         permissions.add(right);
       } else {
@@ -487,7 +487,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
       this.checkUpdateStatus(
         setting,
-        this.projectService.onlineSetRoleProjectPermissions(this.projectDoc.id, role, Array.from(permissions))
+        this.projectService.onlineSetRoleProjectPermissions(this.projectDoc!.id, role, Array.from(permissions))
       );
       this.previousFormValues = this.form.value;
     }

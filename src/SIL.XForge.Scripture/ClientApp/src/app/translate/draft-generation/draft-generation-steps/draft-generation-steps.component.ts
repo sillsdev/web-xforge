@@ -321,7 +321,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       const trainingScriptureRange: ProjectScriptureRange | undefined =
         this.userSelectedSourceTrainingBooks.length > 0
           ? this.convertToScriptureRange(
-              this.draftSourceProjectIds!.trainingAlternateSourceId ?? this.draftSourceProjectIds!.trainingSourceId,
+              this.draftSourceProjectIds!.trainingAlternateSourceId ?? this.draftSourceProjectIds!.trainingSourceId!,
               this.userSelectedSourceTrainingBooks
             )
           : undefined;
@@ -335,7 +335,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       if (useAdditionalTranslateRange) {
         trainingScriptureRanges.push(
           this.convertToScriptureRange(
-            this.draftSourceProjectIds!.trainingAdditionalSourceId,
+            this.draftSourceProjectIds!.trainingAdditionalSourceId!,
             this.userSelectedAdditionalSourceTrainingBooks
           )
         );

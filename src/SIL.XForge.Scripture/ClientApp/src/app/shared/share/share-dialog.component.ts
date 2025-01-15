@@ -122,12 +122,14 @@ export class ShareDialogComponent extends ShareBaseComponent {
 
   get shareLinkUsageOptions(): ShareLinkType[] {
     const options: ShareLinkType[] = [];
-    const canShare = SF_PROJECT_RIGHTS.hasRight(
-      this.projectDoc.data,
-      this.userService.currentUserId,
-      SFProjectDomain.UserInvites,
-      Operation.Create
-    );
+    const canShare =
+      this.projectDoc?.data != null &&
+      SF_PROJECT_RIGHTS.hasRight(
+        this.projectDoc.data,
+        this.userService.currentUserId,
+        SFProjectDomain.UserInvites,
+        Operation.Create
+      );
     if (this.isProjectAdmin) {
       options.push(ShareLinkType.Anyone);
       options.push(ShareLinkType.Recipient);

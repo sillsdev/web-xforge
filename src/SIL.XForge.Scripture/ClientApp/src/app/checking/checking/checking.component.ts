@@ -11,12 +11,12 @@ import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subscription, asyncScheduler, combineLatest, merge } from 'rxjs';
+import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { asyncScheduler, combineLatest, merge, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -39,7 +39,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { getVerseStrFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { BookChapter, CheckingUtils, QuestionScope, isQuestionScope } from '../checking.utils';
+import { BookChapter, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -300,7 +300,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   get canShare(): boolean {
     return (
-      this.projectDoc != null &&
+      this.projectDoc?.data != null &&
       SF_PROJECT_RIGHTS.hasRight(
         this.projectDoc.data,
         this.userService.currentUserId,
@@ -599,7 +599,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             routeProjectId !== prevProjectId ||
             routeScope !== prevScope ||
             (routeScope !== 'all' && routeBookNum !== prevBookNum) ||
-            (routeScope === 'chapter' && parseInt(routeChapter) !== prevChapterNum)
+            (routeScope === 'chapter' && (routeChapter == null ? undefined : parseInt(routeChapter)) !== prevChapterNum)
           ) {
             this.cleanup();
 

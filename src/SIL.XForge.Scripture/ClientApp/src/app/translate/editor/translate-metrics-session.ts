@@ -322,7 +322,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
 
   private incrementMetric(metric: Extract<keyof TranslateMetrics, string>, amount: number = 1): void {
     if (this.metrics[metric] == null) {
-      (this.metrics[metric] as number) = 0;
+      (this.metrics[metric] as unknown as number) = 0;
     }
     (this.metrics[metric] as number) += amount;
   }

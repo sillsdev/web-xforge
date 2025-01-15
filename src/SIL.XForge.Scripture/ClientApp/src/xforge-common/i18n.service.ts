@@ -415,7 +415,7 @@ export class I18nService {
   static getHumanReadableTimeZoneOffset(localeCode: string, date: Date): string {
     return new Intl.DateTimeFormat(localeCode, { timeZoneName: 'short' })
       .formatToParts(date)
-      .find(e => e.type === 'timeZoneName').value;
+      .find(e => e.type === 'timeZoneName')!.value;
   }
 
   private getTranslation(key: I18nKey): string {
