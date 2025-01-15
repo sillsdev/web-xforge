@@ -738,7 +738,7 @@ export function registerScripture(): string[] {
       if (this.stack[source].length === 0) {
         return;
       }
-      const stackItem: StackItem = this.stack[source].pop();
+      const stackItem: StackItem = this.stack[source].pop()!;
       if (stackItem == null) {
         return;
       }
@@ -761,7 +761,7 @@ export function registerScripture(): string[] {
   /**
    * Transforms a range based on a delta. This function was copied from the Quill history module.
    */
-  function transformRange(range: Range | null, delta: Delta): Range {
+  function transformRange(range: Range | null, delta: Delta): Range | null {
     if (!range) {
       return range;
     }
@@ -851,7 +851,7 @@ export function registerScripture(): string[] {
           curIndex++;
         }
       } else if (op.retain != null) {
-        const retainCount: number = getRetainCount(op);
+        const retainCount: number = getRetainCount(op)!;
         curIndex += retainCount;
         changeIndex = curIndex;
       }

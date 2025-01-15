@@ -224,12 +224,12 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     }
     const reference = this.editor.getBounds(selection.index, selection.length);
     // root.scrollTop should be 0 if scrollContainer !== root
-    this.top = reference.bottom + this.editor.root.scrollTop + 5;
+    this.top = reference!.bottom + this.editor.root.scrollTop + 5;
     const suggestionBounds = this.root.getBoundingClientRect();
     const editorBounds = this.editor.root.getBoundingClientRect();
 
-    let newLeft: number | undefined = reference.left + 1;
-    let newRight: number | undefined = editorBounds.width - reference.left - 1;
+    let newLeft: number | undefined = reference!.left + 1;
+    let newRight: number | undefined = editorBounds.width - reference!.left - 1;
     const leftExceedsBounds = newLeft + suggestionBounds.width > editorBounds.width;
     const rightExceedsBounds = newRight + suggestionBounds.width > editorBounds.width;
     if ((this.text?.isRtl && !rightExceedsBounds) || (leftExceedsBounds && newRight < newLeft)) {

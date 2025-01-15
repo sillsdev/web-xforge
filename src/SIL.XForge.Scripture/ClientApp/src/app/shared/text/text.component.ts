@@ -741,7 +741,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get commenterSelection(): Range[] {
-    const ret = [];
+    const ret: Range[] = [];
+    if (this.editor == null) return ret;
     for (const segment of this.viewModel.segments) {
       const range = segment[1];
       const formats = getAttributesAtPosition(this.editor, range.index);
@@ -1657,7 +1658,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
     const range = this._segment.range;
-    const bounds = this._editor.getBounds(range.index, range.length);
+    const bounds = this._editor.getBounds(range.index, range.length)!;
     this._selectionBoundsTop = bounds.top + this._editor.root.scrollTop;
     this.highlightMarkerHeight = bounds.height;
     this.highlightMarker.style.top = this._selectionBoundsTop + 'px';

@@ -382,9 +382,9 @@ class TestEnvironment {
   };
 
   static segmentLen(verseNumber: number): number {
-    return TestEnvironment.delta.filter(
+    return TestEnvironment.delta!.filter(
       op => op.attributes != null && op.attributes.segment === 'verse_1_' + verseNumber
-    )[0].insert.length as number;
+    )[0].insert!.length as number;
   }
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import Quill, { Delta, EmitterSource, Range as QuillRange } from 'quill';
@@ -24,7 +24,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { isGecko } from 'xforge-common/utils';
@@ -291,7 +291,7 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.isSegmentHighlighted(1, '2-3')).toBe(true);
-    expect(env.getSegment('s_2').classList.contains('highlight-segment')).toBe(false);
+    expect(env.getSegment('s_2')!.classList.contains('highlight-segment')).toBe(false);
 
     // segments overlaps on verse 3
     env.component.setSegment('verse_1_3');
@@ -301,13 +301,13 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.isSegmentHighlighted(1, '2-3')).toBe(true);
-    expect(env.getSegment('s_2').classList.contains('highlight-segment')).toBe(false);
+    expect(env.getSegment('s_2')!.classList.contains('highlight-segment')).toBe(false);
 
     env.component.setSegment('s_2');
     tick();
     env.fixture.detectChanges();
     expect(env.component.segment!.ref).toEqual('s_2');
-    expect(env.getSegment('s_2').classList.contains('highlight-segment')).toBe(true);
+    expect(env.getSegment('s_2')!.classList.contains('highlight-segment')).toBe(true);
     expect(env.isSegmentHighlighted(1, '2-3')).toBe(false);
 
     TestEnvironment.waitForPresenceTimer();

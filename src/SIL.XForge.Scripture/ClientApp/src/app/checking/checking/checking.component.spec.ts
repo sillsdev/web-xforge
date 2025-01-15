@@ -460,7 +460,7 @@ describe('CheckingComponent', () => {
       expect(question.isArchived).toBe(true);
       expect(env.component.questionDocs.length).toEqual(13);
       expect(env.component.questionVerseRefs.length).toEqual(13);
-      expect(env.component.questionsList.activeQuestionDoc.id).toBe('project01:q3Id');
+      expect(env.component.questionsList!.activeQuestionDoc!.id).toBe('project01:q3Id');
     }));
 
     it('opens a dialog when edit question is clicked', fakeAsync(() => {
@@ -1209,7 +1209,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
-      env.component.answersPanel.submit({ text: 'Answer 6 on question', audio: { status: 'reset' } });
+      env.component.answersPanel!.submit({ text: 'Answer 6 on question', audio: { status: 'reset' } });
       env.waitForSliderUpdate();
       verify(
         mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)

@@ -78,7 +78,6 @@ export class FontService {
       project = project.data;
     }
 
-    // @ts-expect-error the update to TS ~5.5.4 throws TS2339:
     // Property 'defaultFont' does not exist on type 'SFProjectProfileDoc'
     // SFProjectProfileDoc ultimately extends SFProjectProfile, which has the defaultFont property
     return this.getCSSFontName(project?.defaultFont);

@@ -110,8 +110,8 @@ describe('DraftPreviewBooks', () => {
     env.component.confirmAndAddToProjectAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
-    expect(env.draftApplyProgress.chaptersApplied).toEqual([2]);
-    expect(env.draftApplyProgress.completed).toBe(true);
+    expect(env.draftApplyProgress!.chaptersApplied).toEqual([2]);
+    expect(env.draftApplyProgress!.completed).toBe(true);
     verify(mockedDialogService.confirmWithOptions(anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(3);
     verify(mockedErrorReportingService.silentError(anything(), anything())).once();
@@ -139,8 +139,8 @@ describe('DraftPreviewBooks', () => {
     env.component.confirmAndAddToProjectAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
-    expect(env.draftApplyProgress.chaptersApplied).toEqual([1, 2, 3]);
-    expect(env.draftApplyProgress.completed).toBe(true);
+    expect(env.draftApplyProgress!.chaptersApplied).toEqual([1, 2, 3]);
+    expect(env.draftApplyProgress!.completed).toBe(true);
     verify(mockedDialogService.confirmWithOptions(anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(3);
   }));

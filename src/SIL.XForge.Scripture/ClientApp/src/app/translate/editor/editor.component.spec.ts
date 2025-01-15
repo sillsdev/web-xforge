@@ -1588,10 +1588,10 @@ describe('EditorComponent', () => {
       });
       const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
       const textOps = textDoc.data!.ops!;
-      expect(textOps[2].insert['verse']['number']).toBe('1');
+      expect(textOps[2].insert!['verse']['number']).toBe('1');
       expect(textOps[3].insert).toBe('target: chapter 1, verse 1.');
       expect(textOps[5].insert).toBe('t');
-      expect(contents.ops![verse1EmbedIndex]!.insert['verse']['number']).toBe('1');
+      expect(contents.ops![verse1EmbedIndex]!.insert!['verse']['number']).toBe('1');
       expect(contents.ops![verse1SegmentIndex].insert).toBe('target: ');
       expect(contents.ops![verse1NoteIndex]!.attributes!['iconsrc']).toBe(
         '--icon-file: url(/assets/icons/TagIcons/01flag1.png);'
@@ -2459,15 +2459,15 @@ describe('EditorComponent', () => {
       let contents: Delta = env.targetEditor.getContents(range.index, 3);
       expect(contents.length()).toEqual(3);
       expect(contents.ops![0].insert).toEqual('t');
-      expect(contents.ops![1].insert['verse']).toBeDefined();
-      expect(contents.ops![2].insert['note-thread-embed']).toBeDefined();
+      expect(contents.ops![1].insert!['verse']).toBeDefined();
+      expect(contents.ops![2].insert!['note-thread-embed']).toBeDefined();
 
       env.backspace();
       contents = env.targetEditor.getContents(range.index, 3);
       expect(contents.length()).toEqual(3);
       expect((contents.ops![0].insert as any).blank).toBeDefined();
-      expect(contents.ops![1].insert['verse']).toBeDefined();
-      expect(contents.ops![2].insert['note-thread-embed']).toBeDefined();
+      expect(contents.ops![1].insert!['verse']).toBeDefined();
+      expect(contents.ops![2].insert!['note-thread-embed']).toBeDefined();
       env.dispose();
     }));
 
@@ -3878,7 +3878,9 @@ describe('EditorComponent', () => {
 
       it('should exclude deleted resource tabs (tabs that have "projectDoc" but not "projectDoc.data")', fakeAsync(async () => {
         const absentProjectId = 'absentProjectId';
-        when(mockedSFProjectService.getProfile(absentProjectId)).thenResolve({ data: null } as SFProjectProfileDoc);
+        when(mockedSFProjectService.getProfile(absentProjectId)).thenResolve({
+          data: undefined
+        } as SFProjectProfileDoc);
         const env = new TestEnvironment();
         env.setProjectUserConfig({
           editorTabsOpen: [{ tabType: 'project-resource', groupId: 'target', projectId: absentProjectId }]
@@ -4944,10 +4946,10 @@ class TestEnvironment {
   }
 
   backspace(): void {
-    const selection: Range = this.targetEditor.getSelection();
+    const selection: Range = this.targetEditor.getSelection()!;
     const testUserEvent: UserEvent = userEvent.setup();
     const [leaf] = this.targetEditor.getLeaf(selection.index);
-    testUserEvent.type(leaf.parent.domNode, '{Backspace}'); // This will trigger the 'isBackspaceAllowed' check
+    testUserEvent.type(leaf!.parent.domNode, '{Backspace}'); // This will trigger the 'isBackspaceAllowed' check
     this.wait();
   }
 
