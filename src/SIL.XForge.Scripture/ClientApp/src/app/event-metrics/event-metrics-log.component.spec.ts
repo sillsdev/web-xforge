@@ -94,7 +94,7 @@ describe('EventMetricsLogComponent', () => {
   it('should not display table if invalid results', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenReturn(
-      Promise.resolve({ results: null, unpagedCount: 0 } as QueryResults<EventMetric>)
+      Promise.resolve({ results: null as unknown, unpagedCount: 0 } as QueryResults<EventMetric>)
     );
     env.wait();
     env.wait();
@@ -206,7 +206,7 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedAuthService.currentUserRoles).thenReturn([]);
     when(mockDialogService.openMatDialog(EventMetricDialogComponent, anything())).thenReturn(instance(this.dialogRef));
-    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenReturn(null);
+    when(mockedProjectService.onlineEventMetrics(anything(), anything(), anything())).thenResolve(undefined);
 
     this.fixture = TestBed.createComponent(EventMetricsLogComponent);
     this.component = this.fixture.componentInstance;
