@@ -2,12 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac.Extras.DynamicProxy;
+using SIL.XForge.EventMetrics;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
 
+[Intercept(typeof(EventMetricLogger))]
 public interface ISFProjectService : IProjectService
 {
     Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings);
@@ -33,6 +37,13 @@ public interface ISFProjectService : IProjectService
         int daysBeforeExpiration
     );
     Task<ValidShareKey> CheckShareKeyValidity(string shareKey);
+    Task<QueryResults<EventMetric>> GetEventMetricsAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        int pageIndex,
+        int pageSize
+    );
     Task<SFProject> GetProjectAsync(string projectId);
     SFProjectSecret GetProjectSecretByShareKey(string shareKey);
     Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey, int daysBeforeExpiration);
@@ -59,10 +70,18 @@ public interface ISFProjectService : IProjectService
         string audioUrl
     );
     Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter);
+
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId))]
     Task SetPreTranslateAsync(string curUserId, string[] systemRoles, string projectId, bool preTranslate);
+
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId))]
     Task SetServalConfigAsync(string curUserId, string[] systemRoles, string projectId, string? servalConfig);
+
+    [LogEventMetric(EventScope.Drafting)]
     Task SetDraftAppliedAsync(string userId, string projectId, int book, int chapter, bool draftApplied);
-    Task SetIsValidAsync(string userId, string projectId, int book, int chapter, bool draftApplied);
+
+    [LogEventMetric(EventScope.Drafting)]
+    Task SetIsValidAsync(string userId, string projectId, int book, int chapter, bool isValid);
     Task SetRoleProjectPermissionsAsync(string curUserId, string projectId, string role, string[] permissions);
     Task SetUserProjectPermissionsAsync(string curUserId, string projectId, string userId, string[] permissions);
 }

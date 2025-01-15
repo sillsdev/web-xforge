@@ -18,10 +18,11 @@ import { CommandService } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
-import { QueryParameters } from 'xforge-common/query-parameters';
+import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
+import { EventMetric } from '../event-metrics/event-metric';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
@@ -308,5 +309,9 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       chapter,
       isValid
     });
+  }
+
+  async onlineEventMetrics(projectId: string, pageIndex: number, pageSize: number): Promise<QueryResults<EventMetric>> {
+    return await this.onlineInvoke<QueryResults<EventMetric>>('eventMetrics', { projectId, pageIndex, pageSize });
   }
 }

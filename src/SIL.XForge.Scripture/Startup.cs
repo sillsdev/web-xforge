@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using SIL.XForge.Configuration;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
@@ -187,7 +188,14 @@ public class Startup
 
         services.AddSFMachine(Configuration, Environment);
 
+        // Add the event metrics service
+        services.AddEventMetrics();
+
+        // Populate the services in the Autofac container builder
         containerBuilder.Populate(services);
+
+        // Register the event metrics interceptor
+        containerBuilder.RegisterSFEventMetrics();
 
         ApplicationContainer = containerBuilder.Build();
         return new AutofacServiceProvider(ApplicationContainer);

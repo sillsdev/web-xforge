@@ -1,0 +1,23 @@
+@use 'src/variables' as sfColors;
+
+.no-event-metrics-label {
+  padding-top: 14px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  display: block;
+}
+
+app-owner,
+.details-button {
+  white-space: nowrap;
+}
+
+.status-icon.successful {
+  color: sfColors.$greenDark;
+}
+
+.status-icon:not(.successful) {
+  color: sfColors.$red;
+}
