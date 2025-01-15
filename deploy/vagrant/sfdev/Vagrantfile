@@ -45,11 +45,7 @@ Vagrant.configure("2") do |config|
 
     # Update code repo
     cd ~/code/web-xforge
-    git pull --ff-only --recurse-submodules
-
-    # Use the latest configuration and dependencies
-    cd ~/code/web-xforge/deploy
-    tryharderto ansible-playbook playbook_focal.yml --limit localhost
+    git fetch
 
     cd ~/code/web-xforge/
     sudo npm install --global npm@10.9
