@@ -155,7 +155,7 @@
                         <mat-selection-list [multiple]="false">
                           @for (
                             questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number));
-                            track questionDoc.data.dataId
+                            track questionDoc.data!.dataId
                           ) {
                             <mat-list-item disableRipple>
                               <div class="flex">
@@ -349,7 +349,7 @@
                       <mat-selection-list [multiple]="false">
                         @for (
                           questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number), true);
-                          track questionDoc.data.dataId
+                          track questionDoc.data!.dataId
                         ) {
                           <mat-list-item disableRipple>
                             <div class="flex">

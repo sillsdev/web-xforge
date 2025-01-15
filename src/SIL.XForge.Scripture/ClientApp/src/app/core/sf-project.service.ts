@@ -316,7 +316,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     });
   }
 
-  async onlineEventMetrics(projectId: string, pageIndex: number, pageSize: number): Promise<QueryResults<EventMetric>> {
+  async onlineEventMetrics(
+    projectId: string,
+    pageIndex: number,
+    pageSize: number
+  ): Promise<QueryResults<EventMetric> | undefined> {
     return await this.onlineInvoke<QueryResults<EventMetric>>('eventMetrics', { projectId, pageIndex, pageSize });
   }
 }

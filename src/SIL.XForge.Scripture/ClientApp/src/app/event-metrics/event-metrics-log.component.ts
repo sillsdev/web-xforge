@@ -22,7 +22,7 @@ interface Row {
   eventType: string;
   scope: string;
   timeStamp: string;
-  userId: string;
+  userId?: string;
   successful: boolean;
 }
 
@@ -98,9 +98,9 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
         switchMap(async ([projectId, pageIndex, pageSize, isOnline]) => {
           this.loadingStarted();
           if (isOnline) {
-            var queryResults = await this.projectService.onlineEventMetrics(projectId, pageIndex, pageSize);
-            this.length = queryResults.unpagedCount;
-            if (Array.isArray(queryResults.results)) {
+            const queryResults = await this.projectService.onlineEventMetrics(projectId, pageIndex, pageSize);
+            this.length = queryResults?.unpagedCount ?? 0;
+            if (Array.isArray(queryResults?.results)) {
               this.eventMetrics = queryResults.results as EventMetric[];
             } else {
               this.eventMetrics = [];
@@ -131,6 +131,10 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
 
   private generateRows(): void {
     const rows: Row[] = [];
+    if (this.eventMetrics == null) {
+      this.rows = rows;
+      return;
+    }
     for (const eventMetric of this.eventMetrics) {
       rows.push({
         dialogData: eventMetric,
