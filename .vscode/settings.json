@@ -83,6 +83,9 @@
   "[csharp]": {
     "editor.defaultFormatter": "csharpier.csharpier-vscode"
   },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
   "editor.rulers": [120],
   "editor.tabSize": 2,
   "editor.wordWrapColumn": 120,

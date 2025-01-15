@@ -3,10 +3,6 @@
   hosts: all
   become: true
   vars_files:
-    # conditional import
-    - "vars/{{ ansible_distribution }}-{{ ansible_distribution_major_version | int }}.yml"
-    - "vars/{{ ansible_distribution }}.yml"
-    - "vars/{{ ansible_os_family }}.yml"
     - "vars/os_defaults.yml"
   vars:
     node_version: "18.20.2"

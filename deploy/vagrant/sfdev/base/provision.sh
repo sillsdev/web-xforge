@@ -6,9 +6,14 @@ set -xueo pipefail
 exec &> >(tee "$(mktemp --tmpdir "provision-$(date +"%F-%H%M%S")-XXXXXXXXXX.log")")
 
 # Helper method to avoid failing from a network hiccup during provision
-function tryharderto() { i=0; until "$@"; do ((++i <= 3))
-  echo >&2 "Retrying ${i}"; sleep 2m; done }
-
+function tryharderto() {
+  i=0
+  until "$@"; do
+    ((++i <= 3))
+    echo >&2 "Retrying ${i}"
+    sleep 2m
+  done
+}
 
 # Vagrant Ubuntu setup
 # --------------------
@@ -19,12 +24,9 @@ sudo perl -pi -e 's#/...archive.ubuntu.com#/archive.ubuntu.com#g' /etc/apt/sourc
 # Enable multiverse repository
 sudo perl -pi -e '/multiverse/ and !/backports/ and s/^# //' /etc/apt/sources.list
 
-# Turn off automatic updates, so that a user won't turn off the machine during
-# updates, which may make a mess.
+# Turn off applying automatic updates, so that a user won't turn off the
+# machine during updates, which may make a mess.
 sudo tee /etc/apt/apt.conf.d/90disable-auto-updates >/dev/null <<END
-APT::Periodic::Update-Package-Lists "0";
-APT::Periodic::Download-Upgradeable-Packages "0";
-APT::Periodic::AutocleanInterval "0";
 APT::Periodic::Unattended-Upgrade "0";
 END
 
@@ -50,13 +52,19 @@ PermitRootLogin no
 END
 
 # Passwordless sudo
-sudo tee /etc/sudoers.d/passwordless >/dev/null <<< 'vagrant ALL=(ALL) NOPASSWD: ALL'
+sudo tee /etc/sudoers.d/passwordless >/dev/null <<<'vagrant ALL=(ALL) NOPASSWD: ALL'
 
 sudo tee /etc/sudoers.d/stars >/dev/null <<END
 # Show stars when typing sudo password.
 Defaults pwfeedback
 END
 sudo chmod 0400 /etc/sudoers.d/stars
+
+# Reveal boot information for investigating problems, rather than being pretty.
+sudo perl -pi -e '/GRUB_CMDLINE_LINUX_DEFAULT/ and s/quiet//' /etc/default/grub
+sudo perl -pi -e '/GRUB_CMDLINE_LINUX_DEFAULT/ and s/splash//' /etc/default/grub
+sudo perl -pi -e '/GRUB_TIMEOUT_STYLE=/ and s/=hidden/=menu/' /etc/default/grub
+sudo perl -pi -e '/GRUB_TIMEOUT=/ and s/=0$/=5/' /etc/default/grub
 
 # Turn off error reporting from hogging memory
 sudo perl -pi -e 's/enabled=1/enabled=0/' /etc/default/apport
@@ -75,13 +83,13 @@ mv vagrant.pub ~/.ssh/authorized_keys
 chmod 0600 ~/.ssh/authorized_keys
 
 # Prepare for ssh host keys to be re-generated uniquely by users
-sudo tee /root/regenerate-ssh-host-keys >/dev/null << END
+sudo tee /root/regenerate-ssh-host-keys >/dev/null <<END
 #!/bin/bash
 # Regenerate ssh host keys if not present
 test -f /etc/ssh/ssh_host_rsa_key || dpkg-reconfigure --frontend=noninteractive openssh-server
 END
 sudo chmod +x /root/regenerate-ssh-host-keys
-sudo tee /etc/systemd/system/regenerate-ssh-host-keys.service >/dev/null << END
+sudo tee /etc/systemd/system/regenerate-ssh-host-keys.service >/dev/null <<END
 [Unit]
 Description=regenerate-ssh-host-keys
 
@@ -121,7 +129,7 @@ tee ~/.config/terminator/config >/dev/null <<END
 	scrollback_infinite = True
 END
 
-tryharderto sudo apt-get --assume-yes install flatpak
+tryharderto sudo apt-get --assume-yes install gnome-software-plugin-flatpak
 sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 # Don't report developer or tester usage to analytics
@@ -131,7 +139,7 @@ WESAY_TRACK_AS_DEVELOPER=1
 END
 
 # Record some base box version info, to help with diagnosis
-tee ~/machine-info.txt >/dev/null << END
+tee ~/machine-info.txt >/dev/null <<END
 Vagrant base box information
 Name: sfdev
 Version:
@@ -146,7 +154,7 @@ gsettings set org.gnome.desktop.input-sources sources \
   "[('xkb', 'us'), ('xkb', 'us+dvorak'), ('xkb', 'il'), ('xkb', 'ru'), ('ibus', 'libpinyin'), ('ibus', 'table:thai'), ('xkb', 'ara')]"
 
 # Set unique background
-IMAGE_CODE="4JUscQ_9UrA" # Turtle
+IMAGE_CODE="6Ym4iEGFqzQ" # Hippo
 mkdir --parents ~/.local/share/backgrounds
 wget -O "${HOME}/.local/share/backgrounds/${IMAGE_CODE}-unsplash.jpg" \
   "https://unsplash.com/photos/${IMAGE_CODE}/download?force=true"
@@ -217,7 +225,6 @@ dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6
 dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/palette \
   "['rgb(46,52,54)', 'rgb(204,0,0)', 'rgb(78,154,6)', 'rgb(196,160,0)', 'rgb(52,101,164)', 'rgb(117,80,123)', 'rgb(6,152,154)', 'rgb(211,215,207)', 'rgb(85,87,83)', 'rgb(239,41,41)', 'rgb(138,226,52)', 'rgb(252,233,79)', 'rgb(114,159,207)', 'rgb(173,127,168)', 'rgb(52,226,226)', 'rgb(238,238,236)']"
 
-
 # Configure desktop for development
 # ---------------------------------
 
@@ -244,7 +251,7 @@ tryharderto sudo apt-get --assume-yes install \
   byobu \
   mercurial \
   meld \
-  kdiff3-qt \
+  kdiff3 \
   ;
 
 # For now, still install chromium-browser to set up /usr/bin/chromium-browser executable.
@@ -255,7 +262,7 @@ sudo snap install chromium
 sudo snap install chromium-ffmpeg
 
 # Ideally, application specific signing keys would be stored in
-# /etc/apt/keyrings/, with the repo source specifying signed-by it. But Chrome
+# /usr/share/keyrings/, with the repo source specifying signed-by it. But Chrome
 # and Edge have daily cron jobs that re-establish their own settings, even
 # putting the key in the globally trusted area. And Code gives an error during
 # installation if its key isn't in the globally trusted area. Not fighting with
@@ -265,7 +272,7 @@ sudo snap install chromium-ffmpeg
 cd $(mktemp -d)
 curl --silent --location --fail --show-error \
   https://dl.google.com/linux/linux_signing_key.pub |
-  gpg --dearmor > google-chrome.gpg
+  gpg --dearmor >google-chrome.gpg
 sudo install --owner root --group root --mode 644 \
   google-chrome.gpg /etc/apt/trusted.gpg.d/
 sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null <<< \
@@ -277,7 +284,7 @@ tryharderto sudo apt-get --assume-yes install google-chrome-stable
 cd $(mktemp -d)
 curl --silent --location --fail --show-error \
   https://packages.microsoft.com/keys/microsoft.asc |
-  gpg --dearmor > microsoft.gpg
+  gpg --dearmor >microsoft.gpg
 sudo install --owner root --group root --mode 644 \
   microsoft.gpg /etc/apt/trusted.gpg.d/
 sudo tee /etc/apt/sources.list.d/microsoft-edge.list >/dev/null <<< \
@@ -313,8 +320,8 @@ sudo snap install --classic gitkraken
 cd "$(mktemp -d)"
 curl --silent --location --fail --show-error \
   https://packages.microsoft.com/keys/microsoft.asc |
-  gpg --dearmor > microsoft.gpg
-sha512sum --check <<< '467cb24244b845d46257ae17af70ead505cc4d9064d4ab0c65dc528170e5faa8d3cb948160036e05ccb574922f0a481d8ddf086c9a278506854c924d6beada5a  microsoft.gpg'
+  gpg --dearmor >microsoft.gpg
+sha512sum --check <<<'467cb24244b845d46257ae17af70ead505cc4d9064d4ab0c65dc528170e5faa8d3cb948160036e05ccb574922f0a481d8ddf086c9a278506854c924d6beada5a  microsoft.gpg'
 sudo install --owner root --group root --mode 644 \
   microsoft.gpg /etc/apt/trusted.gpg.d/
 sudo tee /etc/apt/sources.list.d/vscode.list >/dev/null <<< \
@@ -348,7 +355,7 @@ sudo sysctl -p
 tryharderto sudo apt-get --assume-yes install mono-complete
 
 # Mercurial settings
-tee ~/.hgrc > /dev/null <<END
+tee ~/.hgrc >/dev/null <<END
 [extensions]
 purge =
 END
@@ -383,7 +390,7 @@ git config --global cola.theme flat-dark-blue
 git config --global cola.icontheme dark
 # Arrange diff, commit, status, actions, branches, and console areas.
 mkdir -p "${HOME}/.config/git-cola"
-tee "${HOME}/.config/git-cola/settings" >/dev/null << END
+tee "${HOME}/.config/git-cola/settings" >/dev/null <<END
 {
     "gui_state": {
         "mainview": {
@@ -400,7 +407,7 @@ tee "${HOME}/.config/git-cola/settings" >/dev/null << END
 END
 # gitk solarized dark colour scheme
 mkdir -p "${HOME}/.config/git"
-tee "${HOME}/.config/git/gitk" >/dev/null << END
+tee "${HOME}/.config/git/gitk" >/dev/null <<END
 set mainfont {sans 9}
 set textfont {monospace 9}
 set uifont {sans 9 bold}
@@ -494,7 +501,6 @@ perl -pi -e 's#\${SNAP}#/snap/chromium/current#' "${TOOLSDIR}"/chromium.desktop
 perl -pi -e '/Icon/ and s#.*#Icon=/snap/gitkraken/current/usr/share/gitkraken/gitkraken.png#' \
   "${TOOLSDIR}"/gitkraken.desktop
 
-
 # SF Development machine setup
 # ------------------------------------
 
@@ -505,7 +511,7 @@ sudo snap install paratextlite
 BASEDIR="${HOME}"
 
 OUTPUTFILE="${TOOLSDIR}/sf-git-cola.desktop"
-tee "${OUTPUTFILE}" >/dev/null << ENDOFOUTPUTFILE
+tee "${OUTPUTFILE}" >/dev/null <<ENDOFOUTPUTFILE
 #!/usr/bin/env xdg-open
 
 [Desktop Entry]
@@ -519,7 +525,7 @@ ENDOFOUTPUTFILE
 chmod +x "${OUTPUTFILE}"
 
 OUTPUTFILE="${TOOLSDIR}/sf-gitk.desktop"
-tee "${OUTPUTFILE}" >/dev/null << ENDOFOUTPUTFILE
+tee "${OUTPUTFILE}" >/dev/null <<ENDOFOUTPUTFILE
 #!/usr/bin/env xdg-open
 
 [Desktop Entry]
@@ -551,22 +557,22 @@ gsettings set org.gnome.shell favorite-apps \
 
 ## SF repo and dev dependencies setup
 
-tryharderto sudo apt-get -y install ansible git
+tryharderto sudo apt-get --assume-yes install ansible git
 
 mkdir --parents ~/code
 ln --symbolic --no-target-directory --force code ~/src
 cd ~/code
 if [ ! -d "web-xforge" ]; then
-  git clone --recurse-submodules https://github.com/sillsdev/web-xforge.git
+  git clone --branch ${XF_BRANCH-master} https://github.com/sillsdev/web-xforge.git
   cd web-xforge
   git config --add remote.origin.fetch +refs/notes/*:refs/notes/*
 else
   cd web-xforge
-  git pull --ff-only --recurse-submodules
+  git pull --ff-only
 fi
 
 cd ~/code/web-xforge/deploy/
-ansible-playbook playbook_focal.yml --limit localhost
+ansible-playbook dev-server.playbook.yml --limit localhost --diff
 
 # Install workspace-recommended extensions
 perl -n -e 'print unless /^ *\/\//' ~/code/web-xforge/.vscode/extensions.json |
@@ -591,10 +597,10 @@ cd ~/code/web-xforge && dotnet build
 cd ~/code/web-xforge && find test src -name obj -print0 | xargs -0 rm -vrf
 cd ~/code/web-xforge && dotnet clean
 # Undo temporary changes and/or clean up
-cd ~/code/web-xforge && git checkout -- deploy/dependencies.yml .config/dotnet-tools.json
+cd ~/code/web-xforge && git checkout -- .config/dotnet-tools.json
 
 # Use system hg.
-tee --append ~/.pam_environment >/dev/null <<< 'HG_PATH=/usr/bin/hg'
+tee --append ~/.pam_environment >/dev/null <<<'HG_PATH=/usr/bin/hg'
 
 # Docker
 
@@ -627,7 +633,7 @@ mkdir --parents ~/.vsdbg
 # /Docker
 
 # Create readme
-sudo tee ~/Desktop/machine-instructions.txt >/dev/null << END
+sudo tee ~/Desktop/machine-instructions.txt >/dev/null <<END
 Scripture Forge Development Machine
 
 Verify that your git author info was copied in from your
