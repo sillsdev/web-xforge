@@ -66,11 +66,11 @@ describe('DraftGenerationStepsComponent', () => {
     when(mockActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockProgressService.isLoaded$).thenReturn(of(true));
     when(mockProgressService.texts).thenReturn([
-      { text: { bookNum: 1 } } as TextProgress,
-      { text: { bookNum: 2 } } as TextProgress,
-      { text: { bookNum: 3 } } as TextProgress,
-      { text: { bookNum: 6 } } as TextProgress,
-      { text: { bookNum: 7 } } as TextProgress
+      { text: { bookNum: 1 }, translated: 100 } as TextProgress,
+      { text: { bookNum: 2 }, translated: 100 } as TextProgress,
+      { text: { bookNum: 3 }, translated: 0 } as TextProgress,
+      { text: { bookNum: 6 }, translated: 20 } as TextProgress,
+      { text: { bookNum: 7 }, translated: 0 } as TextProgress
     ]);
     when(mockOnlineStatusService.isOnline).thenReturn(true);
   }));
@@ -178,6 +178,8 @@ describe('DraftGenerationStepsComponent', () => {
     it('should set "unusableTranslateSourceBooks" and "unusableTrainingSourceBooks" correctly', fakeAsync(() => {
       expect(component.unusableTranslateSourceBooks).toEqual([6]);
       expect(component.unusableTrainingSourceBooks).toEqual([6]);
+      // warn when translated book has no source
+      expect(fixture.nativeElement.querySelector('.warn-source-books-missing')).not.toBeNull();
     }));
 
     it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
@@ -255,7 +257,7 @@ describe('DraftGenerationStepsComponent', () => {
         {
           projectRef: mockActivatedProjectService.projectId,
           shortName: 'tT',
-          writingSystem: { tag: 'nllb' },
+          writingSystem: { tag: 'xyz' },
           texts: allBooks
         }
       ] as [DraftSource],
@@ -423,6 +425,32 @@ describe('DraftGenerationStepsComponent', () => {
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
+    });
+
+    it('show warning when both source books missing translated books', () => {
+      component.onTranslateBookSelect([7]);
+      component.onTranslatedBookSelect([2, 6]);
+      component.onSourceTrainingBookSelect([2, 6], config.trainingSources[0]);
+      component.onSourceTrainingBookSelect([], config.trainingSources[1]);
+      fixture.detectChanges();
+
+      spyOn(component.done, 'emit');
+      fixture.detectChanges();
+      clickConfirmLanguages(fixture);
+      // Advance to the next step when at last step should emit books result
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+
+      expect(component.stepper.selectedIndex).toBe(2);
+      component.onSourceTrainingBookSelect([2], config.trainingSources[0]);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.warn-translated-books-unselected')).not.toBeNull();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.stepper.selectedIndex).toBe(3);
     });
   });
 
