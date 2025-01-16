@@ -98,24 +98,24 @@ using it.
   The `--base` argument is the name of the base machine in virtualbox manager.
   Edit the value VERSION in the first line below before running.
 
-  ```
-  export BOX="sfdev" && export VERSION="1.2.0" &&
-    date && vagrant package --base ${BOX}-base --output ${BOX}-${VERSION}.box &&
-    date && ls -lh ${BOX}-${VERSION}.box &&
-    sha256sum ${BOX}-${VERSION}.box | tee --append "${BOX}".json &&
-    date && mkdir test && tee test/Vagrantfile <<END &&
+```
+export BOX="sfdev" && export VERSION="1.2.0" &&
+  date && vagrant package --base ${BOX}-base --output ${BOX}-${VERSION}.box &&
+  date && ls -lh ${BOX}-${VERSION}.box &&
+  sha256sum ${BOX}-${VERSION}.box | tee --append "${BOX}".json &&
+  date && mkdir test && tee test/Vagrantfile <<END &&
   Vagrant.configure("2") do |config|
     config.vm.box = "../${BOX}-${VERSION}.box"
     config.vm.provider "virtualbox" do |vb|
       vb.gui = true
       vb.cpus = 2
-      vb.memory = "6000"
+      vb.memory = "14000"
     end
   end
-  END
-    cd test &&
-    vagrant up; date
-  ```
+END
+  cd test &&
+  vagrant up; date
+```
 
 - Test the result. Such as by adding secrets,
   [launching](https://github.com/sillsdev/web-xforge/wiki/Debugging) backend,
