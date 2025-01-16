@@ -88,11 +88,18 @@
 
 <h2>Last Draft Settings</h2>
 <h3>Training books</h3>
-<p>{{ trainingBooks.join(", ") || "None" }}</p>
+@for (book of trainingBooksByProject; track book.source) {
+  <div class="training">
+    <p>{{ book.source }}</p>
+    <p class="training-source-range">{{ book.scriptureRange }}</p>
+  </div>
+} @empty {
+  <p class="training">None</p>
+}
 <h3>Training data files</h3>
 <p>{{ trainingFiles.join(", ") || "None" }}</p>
 <h3>Translation books</h3>
-<p>{{ translationBooks.join(", ") || "None" }}</p>
+<p class="translation-range">{{ translationBooks.join(", ") || "None" }}</p>
 
 @if (draftJob$ | async; as draftJob) {
   <h3>Diagnostic Information</h3>
