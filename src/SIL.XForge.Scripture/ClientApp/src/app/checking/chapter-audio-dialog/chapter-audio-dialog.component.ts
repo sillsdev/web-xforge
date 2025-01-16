@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Canon } from '@sillsdev/scripture';
 import { reject } from 'lodash-es';
@@ -66,6 +66,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private _loadingAudio: boolean = false;
 
   constructor(
+    private readonly destroyRef: DestroyRef,
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: ChapterAudioDialogData,
     private readonly csvService: CsvService,
@@ -223,7 +224,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       }
       this.processUploadedFiles(e.dataTransfer.files);
     });
-    this.projectService.queryAudioText(this.data.projectId).then(query => {
+    this.projectService.queryAudioText(this.data.projectId, this.destroyRef).then(query => {
       this.textAudioQuery = query;
       this.populateExistingData();
     });

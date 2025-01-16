@@ -14,7 +14,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
@@ -28,6 +28,7 @@ import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -1586,11 +1587,11 @@ class TestEnvironment {
     when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(true));
     when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
 
-    when(mockedSFProjectService.queryAudioText(anything())).thenCall(sfProjectId => {
+    when(mockedSFProjectService.queryAudioText(anything(), anything())).thenCall(sfProjectId => {
       const queryParams: QueryParameters = {
         [obj<TextAudio>().pathStr(t => t.projectRef)]: sfProjectId
       };
-      return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams);
+      return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams, noopDestroyRef);
     });
 
     this.fixture = TestBed.createComponent(SettingsComponent);

@@ -33,6 +33,7 @@ import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -317,8 +318,8 @@ describe('CheckingOverviewComponent', () => {
     it('should not show import questions button until list of texts have loaded', fakeAsync(() => {
       const env = new TestEnvironment();
       const delayPromise = new Promise<void>(resolve => setTimeout(resolve, 10 * 1000));
-      when(mockedQuestionsService.queryQuestions(anything(), anything())).thenReturn(
-        delayPromise.then(() => env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}))
+      when(mockedQuestionsService.queryQuestions(anything(), anything(), anything())).thenReturn(
+        delayPromise.then(() => env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}, noopDestroyRef))
       );
 
       env.waitForQuestions();
@@ -1054,8 +1055,8 @@ class TestEnvironment {
     when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
       this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
     );
-    when(mockedQuestionsService.queryQuestions('project01', anything())).thenCall(() =>
-      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {})
+    when(mockedQuestionsService.queryQuestions('project01', anything(), anything())).thenCall(() =>
+      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}, noopDestroyRef)
     );
     when(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).thenCall(
       (projectId, book, chapter) => {

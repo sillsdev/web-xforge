@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Sort } from '@angular/material/sort';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -8,15 +8,15 @@ import { getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/mod
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { BIBLICAL_TERM_TAG_ID } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
+  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType,
-  getNoteThreadDocId
+  NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { BehaviorSubject, Observable, Subscription, combineLatest, firstValueFrom, merge } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, merge, Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -33,7 +33,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { XmlUtils, getVerseNumbers } from '../../shared/utils';
+import { getVerseNumbers, XmlUtils } from '../../shared/utils';
 import { SaveNoteParameters } from '../editor/editor.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from '../editor/note-dialog/note-dialog.component';
 import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
@@ -201,6 +201,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   @ViewChild('biblicalTerms', { read: ElementRef }) biblicalTerms?: ElementRef;
 
   constructor(
+    private readonly destroyRef: DestroyRef,
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly dialogService: DialogService,
@@ -302,6 +303,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   ngOnDestroy(): void {
     super.ngOnDestroy();
     this.biblicalTermQuery?.dispose();
+    this.noteThreadQuery?.dispose();
     this.biblicalTermSub?.unsubscribe();
   }
 
@@ -497,8 +499,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
 
     // Get the Biblical Terms and Notes
     [this.biblicalTermQuery, this.noteThreadQuery] = await Promise.all([
-      this.projectService.queryBiblicalTerms(sfProjectId),
-      this.projectService.queryBiblicalTermNoteThreads(sfProjectId)
+      this.projectService.queryBiblicalTerms(sfProjectId, this.destroyRef),
+      this.projectService.queryBiblicalTermNoteThreads(sfProjectId, this.destroyRef)
     ]);
 
     // Return a merged observable to monitor changes

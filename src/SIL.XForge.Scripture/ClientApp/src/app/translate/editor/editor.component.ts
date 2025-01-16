@@ -828,6 +828,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.onTargetDeleteSub?.unsubscribe();
     this.bottomSheet?.dismiss();
     this.resizeObserver?.disconnect();
+    this.noteThreadQuery?.dispose();
   }
 
   async onTargetUpdated(
@@ -1940,7 +1941,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private async loadNoteThreadDocs(sfProjectId: string, bookNum: number, chapterNum: number): Promise<void> {
     this.noteThreadQuery?.dispose();
-    this.noteThreadQuery = await this.projectService.queryNoteThreads(sfProjectId, bookNum, chapterNum);
+    this.noteThreadQuery = await this.projectService.queryNoteThreads(
+      sfProjectId,
+      bookNum,
+      chapterNum,
+      this.destroyRef
+    );
+
     this.toggleNoteThreadSub?.unsubscribe();
     this.toggleNoteThreadSub = this.subscribe(
       merge(

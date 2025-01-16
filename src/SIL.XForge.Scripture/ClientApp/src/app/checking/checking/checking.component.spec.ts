@@ -1,7 +1,7 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
-import { DebugElement, NgZone } from '@angular/core';
+import { DebugElement, DestroyRef, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialogRef } from '@angular/material/dialog';
@@ -2495,6 +2495,7 @@ class TestEnvironment {
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));
     when(query.localChanges$).thenReturn(new BehaviorSubject<void>(undefined));
+    when(query.ready$).thenReturn(new BehaviorSubject<boolean>(true));
     const doc = mock(TextAudioDoc);
     const textAudio = mock<TextAudio>();
     when(textAudio.audioUrl).thenReturn('test-audio-short.webm');
@@ -2502,7 +2503,7 @@ class TestEnvironment {
     when(doc.id).thenReturn('project01:43:1:target');
     when(doc.data).thenReturn(instance(textAudio));
     when(query.docs).thenReturn([instance(doc)]);
-    when(mockedProjectService.queryAudioText('project01')).thenResolve(instance(query));
+    when(mockedProjectService.queryAudioText('project01', anything())).thenResolve(instance(query));
     when(mockedMediaBreakpointService.width(anything(), anything())).thenReturn('(width < 576px)');
     when(mockedMediaBreakpointService.width(anything(), anything(), anything())).thenReturn('(width > 576px)');
 
@@ -2526,13 +2527,15 @@ class TestEnvironment {
 
       spyOn(checkingQuestionsService, 'queryQuestions').and.callFake((...args: any[]) =>
         // Call real function
-        realQueryQuestions.apply(checkingQuestionsService, args as [projectId: string, options?: any]).then(
-          // Then alter `query.ready$` to emit false and complete
-          (query: RealtimeQuery<QuestionDoc>) => {
-            Object.assign(query.ready$, of(false));
-            return query;
-          }
-        )
+        realQueryQuestions
+          .apply(checkingQuestionsService, args as [projectId: string, options: any, destroyRef: DestroyRef])
+          .then(
+            // Then alter `query.ready$` to emit false and complete
+            (query: RealtimeQuery<QuestionDoc>) => {
+              Object.assign(query.ready$, of(false));
+              return query;
+            }
+          )
       );
     }
 

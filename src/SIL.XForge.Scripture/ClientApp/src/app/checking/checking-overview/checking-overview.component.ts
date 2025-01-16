@@ -1,12 +1,12 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Subscription, asyncScheduler, merge } from 'rxjs';
+import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -52,6 +52,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
 
   constructor(
+    private readonly destroyRef: DestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly dialogService: DialogService,
     readonly featureFlags: FeatureFlagService,
@@ -209,10 +210,12 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         this.projectDoc = await projectDocPromise;
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
         this.projectUserConfigDoc.submitJson0Op(op => op.set<string>(puc => puc.selectedTask!, 'checking'));
-        if (this.questionsQuery != null) {
-          this.questionsQuery.dispose();
-        }
-        this.questionsQuery = await this.checkingQuestionsService.queryQuestions(projectId, { sort: true });
+        this.questionsQuery?.dispose();
+        this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
+          projectId,
+          { sort: true },
+          this.destroyRef
+        );
         this.initTexts();
       } finally {
         this.loadingFinished();
@@ -240,12 +243,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.dataChangesSub != null) {
-      this.dataChangesSub.unsubscribe();
-    }
-    if (this.questionsQuery != null) {
-      this.questionsQuery.dispose();
-    }
+    this.dataChangesSub?.unsubscribe();
+    this.questionsQuery?.dispose();
   }
 
   async deleteChapterAudio(text: TextInfo, chapter: Chapter): Promise<void> {

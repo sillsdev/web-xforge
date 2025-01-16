@@ -5,6 +5,7 @@ import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -113,7 +114,10 @@ describe('TrainingDataService', () => {
   }));
 
   it('should query training data docs', fakeAsync(async () => {
-    const query: RealtimeQuery<TrainingDataDoc> = await trainingDataService.queryTrainingDataAsync('project01');
+    const query: RealtimeQuery<TrainingDataDoc> = await trainingDataService.queryTrainingDataAsync(
+      'project01',
+      noopDestroyRef
+    );
     tick();
 
     expect(trainingData.length).toEqual(2);
