@@ -6,35 +6,35 @@
   <h2 mat-dialog-title>{{ t("select_alternate_project") }}</h2>
   <div mat-dialog-content>
     <form [formGroup]="addToProjectForm">
-      <app-project-select
-        [projects]="projects"
-        [placeholder]="t('choose_project')"
-        [isDisabled]="projects.length === 0"
-        [invalidMessageMapper]="invalidMessageMapper"
-        (projectSelect)="projectSelected($event.paratextId)"
-        formControlName="targetParatextId"
-      ></app-project-select>
+      @if (!isLoading) {
+        <app-project-select
+          [projects]="projects"
+          [placeholder]="t('choose_project')"
+          [isDisabled]="projects.length === 0"
+          [invalidMessageMapper]="invalidMessageMapper"
+          (projectSelect)="projectSelected($event.paratextId)"
+          formControlName="targetParatextId"
+        ></app-project-select>
+      }
       @if (!isAppOnline) {
         <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
       }
-      @if (targetProject$ | async; as project) {
+      @if (projectSelectValid && canEditProject) {
         <div class="target-project-content">
           @if (targetChapters$ | async; as chapters) {
             <app-notice icon="warning" type="warning"
               >{{
                 i18n.getPluralRule(chapters) !== "one"
-                  ? t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name })
-                  : t("project_has_text_in_one_chapter", { bookName, projectName: project.name })
+                  ? t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName })
+                  : t("project_has_text_in_one_chapter", { bookName, projectName })
               }}
             </app-notice>
           } @else {
-            <app-notice [icon]="'verified'">{{
-              t("book_is_empty", { bookName, projectName: project.name })
-            }}</app-notice>
+            <app-notice [icon]="'verified'">{{ t("book_is_empty", { bookName, projectName }) }}</app-notice>
           }
         </div>
         <mat-checkbox class="overwrite-content" formControlName="overwrite">{{
-          t("i_understand_overwrite_book", { projectName: project.name, bookName })
+          t("i_understand_overwrite_book", { projectName, bookName })
         }}</mat-checkbox>
         <mat-error class="form-error" [ngClass]="{ visible: addToProjectClicked && !overwriteConfirmed }">{{
           t("confirm_overwrite")

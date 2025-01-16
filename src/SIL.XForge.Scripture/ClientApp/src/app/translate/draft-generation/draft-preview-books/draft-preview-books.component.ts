@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Router, RouterModule } from '@angular/router';
-import { TranslocoModule, translate } from '@ngneat/transloco';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { BehaviorSubject, Observable, firstValueFrom, map } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, map, Observable, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -64,6 +64,8 @@ export class DraftPreviewBooksComponent {
     DraftApplyProgress | undefined
   >(undefined);
 
+  protected projectParatextId: string;
+
   private applyChapters: number[] = [];
   private draftApplyBookNum: number = 0;
   private chaptersApplied: number[] = [];
@@ -81,6 +83,7 @@ export class DraftPreviewBooksComponent {
   get isProjectAdmin$(): Observable<boolean> {
     return this.activatedProjectService.changes$.pipe(
       filterNullish(),
+      tap(p => (this.projectParatextId = p.data.paratextId)),
       map(p => p.data?.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator)
     );
   }
@@ -107,8 +110,9 @@ export class DraftPreviewBooksComponent {
     return this.i18n.localizeBook(bookNumber);
   }
 
-  async chooseAlternateProjectToAddDraft(bookWithDraft: BookWithDraft): Promise<void> {
+  async chooseProjectToAddDraft(bookWithDraft: BookWithDraft, paratextId?: string): Promise<void> {
     const dialogData: DraftApplyDialogData = {
+      initialParatextId: paratextId,
       bookNum: bookWithDraft.bookNumber,
       chapters: bookWithDraft.chaptersWithDrafts
     };
@@ -120,30 +124,11 @@ export class DraftPreviewBooksComponent {
     if (result == null || result.projectId == null) {
       return;
     }
+
     await this.applyBookDraftAsync(bookWithDraft, result.projectId);
   }
 
-  async confirmAndAddToProjectAsync(bookWithDraft: BookWithDraft): Promise<void> {
-    if (!bookWithDraft.canEdit) {
-      await this.dialogService.message(translate('draft_preview_books.no_permission_to_edit_book'));
-      return;
-    }
-
-    const bookName: string = this.bookNumberToName(bookWithDraft.bookNumber);
-    const confirmed = await this.dialogService.confirmWithOptions({
-      title: bookWithDraft.draftApplied
-        ? this.i18n.translate('draft_add_dialog.readd_book_to_project', { bookName })
-        : this.i18n.translate('draft_add_dialog.add_book_to_project', { bookName }),
-      message: this.i18n.translate('draft_add_dialog.book_contents_will_be_overwritten', { bookName }),
-      affirmative: bookWithDraft.draftApplied ? 'draft_add_dialog.readd_to_project' : 'draft_add_dialog.add_to_project'
-    });
-
-    if (!confirmed) return;
-
-    await this.applyBookDraftAsync(bookWithDraft);
-  }
-
-  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, alternateProjectId?: string): Promise<void> {
+  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, projectId: string): Promise<void> {
     this.applyChapters = bookWithDraft.chaptersWithDrafts;
     this.draftApplyBookNum = bookWithDraft.bookNumber;
     this.chaptersApplied = [];
@@ -153,11 +138,7 @@ export class DraftPreviewBooksComponent {
     const project: SFProjectProfile = this.activatedProjectService.projectDoc!.data!;
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
       const draftTextDocId = new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter);
-      const targetTextDocId = new TextDocId(
-        alternateProjectId ?? this.activatedProjectService.projectId!,
-        bookWithDraft.bookNumber,
-        chapter
-      );
+      const targetTextDocId = new TextDocId(projectId, bookWithDraft.bookNumber, chapter);
       promises.push(this.applyAndReportChapter(project, draftTextDocId, targetTextDocId));
     }
 
