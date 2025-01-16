@@ -1,7 +1,7 @@
 ARG ARCHITECTURE=amd64
 ARG DOTNET_VERSION=8.0
 ARG UBUNTU_NAME=jammy # 22.04
-ARG NODE_VERSION=18.20.2 # From dependencies.yml
+ARG NODE_VERSION=22.13.0
 
 # Build Jering node web server to RealtimeServer
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-${ARCHITECTURE} AS jering-build

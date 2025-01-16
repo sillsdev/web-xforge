@@ -5,7 +5,7 @@
   vars_files:
     - "vars/os_defaults.yml"
   vars:
-    node_version: "18.20.2"
+    node_version: "22.13.0"
     mongodb_version: "8.0"
     repo_path: "{{ playbook_dir }}/.."
   pre_tasks:

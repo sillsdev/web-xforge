@@ -11,9 +11,9 @@ jobs:
     name: "Deploy Storybook to Chromatic"
     strategy:
       matrix:
-        os: ["ubuntu-20.04"]
-        node_version: ["18.20.2"]
-        npm_version: ["10.9.0"]
+        os: ["ubuntu-22.04"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
