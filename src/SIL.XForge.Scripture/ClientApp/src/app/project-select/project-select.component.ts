@@ -94,12 +94,14 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   }
 
   @Input() set value(id: string) {
-    const project =
-      this.projects?.find(p => p.paratextId === id) ||
-      this.resources?.find(r => r.paratextId === id) ||
-      this.nonSelectableProjects?.find(p => p.paratextId === id);
-    if (project != null) {
-      this.paratextIdControl.setValue(project);
+    if (this.paratextIdControl?.value.paratextId !== id) {
+      const project =
+        this.projects?.find(p => p.paratextId === id) ||
+        this.resources?.find(r => r.paratextId === id) ||
+        this.nonSelectableProjects?.find(p => p.paratextId === id);
+      if (project != null) {
+        this.paratextIdControl.setValue(project);
+      }
     }
   }
 
