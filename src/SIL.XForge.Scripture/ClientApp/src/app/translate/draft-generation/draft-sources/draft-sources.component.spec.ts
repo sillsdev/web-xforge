@@ -1,22 +1,230 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { of } from 'rxjs';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
+import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
+import { I18nService } from '../../../../xforge-common/i18n.service';
+import { NoticeService } from '../../../../xforge-common/notice.service';
+import { ParatextProject } from '../../../core/models/paratext-project';
+import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { ParatextService, SelectableProject } from '../../../core/paratext.service';
+import { DraftSourcesAsArrays } from '../draft-utils';
+import { draftSourceArraysToDraftSourcesConfig, DraftSourcesComponent } from './draft-sources.component';
 
-import { DraftSourcesComponent } from './draft-sources.component';
+const mockedParatextService = mock(ParatextService);
+const mockedActivatedProjectService = mock(ActivatedProjectService);
+const mockedNoticeService = mock(NoticeService);
+const mockedI18nService = mock(I18nService);
 
 describe('DraftSourcesComponent', () => {
-  let component: DraftSourcesComponent;
-  let fixture: ComponentFixture<DraftSourcesComponent>;
+  configureTestingModule(() => ({
+    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    declarations: [],
+    providers: [
+      { provide: ParatextService, useMock: mockedParatextService },
+      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: I18nService, useMock: mockedI18nService }
+    ]
+  }));
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [DraftSourcesComponent]
-    }).compileComponents();
+  it('loads projects and resources on init', fakeAsync(() => {
+    const env = new TestEnvironment();
+    verify(mockedParatextService.getProjects()).once();
+    verify(mockedParatextService.getResources()).once();
+    expect(env.component.projects).toBeDefined();
+    expect(env.component.resources).toBeDefined();
+  }));
 
-    fixture = TestBed.createComponent(DraftSourcesComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+  describe('draftSourceArraysToDraftSourcesConfig', () => {
+    const currentProjectParatextId = 'project01';
+    const mockProject1: TranslateSource = {
+      paratextId: 'pt01',
+      name: 'Project 1',
+      shortName: 'PRJ1',
+      projectRef: '',
+      writingSystem: undefined
+    };
+    const mockProject2: TranslateSource = {
+      paratextId: 'pt02',
+      name: 'Project 2',
+      shortName: 'PRJ2',
+      projectRef: '',
+      writingSystem: undefined
+    };
+    const mockTarget: SFProjectProfile = { paratextId: currentProjectParatextId } as SFProjectProfile;
+    const someOtherTarget: SFProjectProfile = { paratextId: 'some-other-id' } as SFProjectProfile;
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+    it('should handle empty sources', () => {
+      const sources: DraftSourcesAsArrays = {
+        draftingSources: [],
+        trainingSources: [],
+        trainingTargets: [mockTarget]
+      };
+
+      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
+
+      expect(result).toEqual({
+        additionalTrainingSourceEnabled: false,
+        additionalTrainingSource: undefined,
+        alternateSourceEnabled: false,
+        alternateSource: undefined,
+        alternateTrainingSourceEnabled: false,
+        alternateTrainingSource: undefined
+      });
+    });
+
+    it('should handle one training source', () => {
+      const sources: DraftSourcesAsArrays = {
+        draftingSources: [],
+        trainingSources: [mockProject1],
+        trainingTargets: [mockTarget]
+      };
+
+      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
+
+      expect(result).toEqual({
+        additionalTrainingSourceEnabled: false,
+        additionalTrainingSource: undefined,
+        alternateSourceEnabled: false,
+        alternateSource: undefined,
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSource: mockProject1
+      });
+    });
+
+    it('should handle two training sources', () => {
+      const sources: DraftSourcesAsArrays = {
+        draftingSources: [],
+        trainingSources: [mockProject1, mockProject2],
+        trainingTargets: [mockTarget]
+      };
+
+      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
+
+      expect(result).toEqual({
+        additionalTrainingSourceEnabled: true,
+        additionalTrainingSource: mockProject2,
+        alternateSourceEnabled: false,
+        alternateSource: undefined,
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSource: mockProject1
+      });
+    });
+
+    it('should handle one drafting source', () => {
+      const sources: DraftSourcesAsArrays = {
+        draftingSources: [mockProject1],
+        trainingSources: [],
+        trainingTargets: [mockTarget]
+      };
+
+      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
+
+      expect(result).toEqual({
+        additionalTrainingSourceEnabled: false,
+        additionalTrainingSource: undefined,
+        alternateSourceEnabled: true,
+        alternateSource: mockProject1,
+        alternateTrainingSourceEnabled: false,
+        alternateTrainingSource: undefined
+      });
+    });
+
+    it('should handle full configuration', () => {
+      const sources: DraftSourcesAsArrays = {
+        draftingSources: [mockProject1],
+        trainingSources: [mockProject1, mockProject2],
+        trainingTargets: [mockTarget]
+      };
+
+      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
+
+      expect(result).toEqual({
+        additionalTrainingSourceEnabled: true,
+        additionalTrainingSource: mockProject2,
+        alternateSourceEnabled: true,
+        alternateSource: mockProject1,
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSource: mockProject1
+      });
+    });
+
+    it('should throw error if training target is not current project', () => {
+      const sources: DraftSourcesAsArrays = {
+        draftingSources: [],
+        trainingSources: [],
+        trainingTargets: [someOtherTarget]
+      };
+
+      expect(() => draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId)).toThrow();
+    });
+
+    it('should handle undefined sources in arrays', () => {
+      const sources: DraftSourcesAsArrays = {
+        draftingSources: [undefined],
+        trainingSources: [undefined, undefined],
+        trainingTargets: [mockTarget]
+      };
+
+      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
+
+      expect(result).toEqual({
+        additionalTrainingSourceEnabled: false,
+        additionalTrainingSource: undefined,
+        alternateSourceEnabled: false,
+        alternateSource: undefined,
+        alternateTrainingSourceEnabled: false,
+        alternateTrainingSource: undefined
+      });
+    });
   });
 });
+
+class TestEnvironment {
+  readonly component: DraftSourcesComponent;
+  readonly fixture: ComponentFixture<DraftSourcesComponent>;
+  readonly realtimeService: TestRealtimeService;
+
+  private readonly mockProjects: SelectableProject[] = [
+    { paratextId: 'project01', name: 'Project 1', shortName: 'PRJ1' },
+    { paratextId: 'project02', name: 'Project 2', shortName: 'PRJ2' }
+  ];
+
+  private readonly mockResources: SelectableProject[] = [
+    { paratextId: 'resource01', name: 'Resource 1', shortName: 'RSC1' },
+    { paratextId: 'resource02', name: 'Resource 2', shortName: 'RSC2' }
+  ];
+
+  constructor() {
+    this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+
+    // Setup mocked responses
+    when(mockedParatextService.getProjects()).thenResolve(this.mockProjects as ParatextProject[]);
+    when(mockedParatextService.getResources()).thenResolve(this.mockResources);
+    when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
+    when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
+
+    const mockProjectDoc = mock<SFProjectDoc>();
+    when(mockedActivatedProjectService.projectDoc).thenReturn(instance(mockProjectDoc));
+    when(mockedActivatedProjectService.changes$).thenReturn(of(mockProjectDoc));
+
+    // Setup component
+    this.fixture = TestBed.createComponent(DraftSourcesComponent);
+    this.component = this.fixture.componentInstance;
+    this.fixture.detectChanges();
+    tick();
+  }
+
+  // addProject(project: Partial<SFProjectProfile>): void {
+  //   this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, {
+  //     id: project.id ?? 'project01',
+  //     data: project
+  //   });
+  // }
+}
