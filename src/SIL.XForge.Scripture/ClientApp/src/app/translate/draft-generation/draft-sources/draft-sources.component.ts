@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { DataLoadingComponent } from '../../../../xforge-common/data-loading-component';
 import { I18nService } from '../../../../xforge-common/i18n.service';
@@ -24,9 +25,9 @@ import { DraftSourcesAsArrays, projectToDraftSources } from '../draft-utils';
 export class DraftSourcesComponent extends DataLoadingComponent {
   step = 1;
 
-  trainingSources: (SelectableProject | undefined)[];
-  trainingTargets: (SFProjectProfile | undefined)[];
-  draftingSources: (SelectableProject | undefined)[];
+  trainingSources: [TranslateSource?, TranslateSource?];
+  trainingTargets: [SFProjectProfile];
+  draftingSources: [TranslateSource?];
 
   projects?: SelectableProject[];
   resources?: SelectableProject[];
@@ -59,7 +60,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   get currentProjectShortName(): string {
-    return this.activatedProject.projectDoc?.data.shortName ?? '';
+    return this.activatedProjectService.projectDoc?.data.shortName ?? '';
   }
 
   get sourceSubtitle(): string {
@@ -75,15 +76,15 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   constructor(
-    private readonly activatedProject: ActivatedProjectService,
+    private readonly activatedProjectService: ActivatedProjectService,
     private readonly destroyRef: DestroyRef,
     private readonly paratextService: ParatextService,
     private readonly i18n: I18nService,
     noticeService: NoticeService
   ) {
     super(noticeService);
-    this.activatedProject.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      const projectDoc = this.activatedProject.projectDoc;
+    this.activatedProjectService.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      const projectDoc = this.activatedProjectService.projectDoc;
       if (projectDoc != null) {
         const sources = projectToDraftSources(projectDoc.data);
         this.trainingSources = sources.trainingSources;
@@ -131,12 +132,22 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   save(): void {
     this.noticeService.showError('Save is not implemented');
 
-    saveSources({
+    const sources: DraftSourcesAsArrays = {
       trainingSources: this.trainingSources,
       trainingTargets: this.trainingTargets,
       draftingSources: this.draftingSources
-    } as DraftSourcesAsArrays);
+    };
+    saveSources(sources, this.activatedProjectService);
   }
+}
+
+export interface DraftSourcesConfig {
+  additionalTrainingSourceEnabled: boolean;
+  additionalTrainingSource?: TranslateSource;
+  alternateSourceEnabled: boolean;
+  alternateSource?: TranslateSource;
+  alternateTrainingSourceEnabled: boolean;
+  alternateTrainingSource?: TranslateSource;
 }
 
 /**
@@ -150,6 +161,46 @@ export class DraftSourcesComponent extends DataLoadingComponent {
  *
  * This method is kind of doing the opposite of projectToDraftSources, as it maps the data model back the other way
  */
-async function saveSources(sources: DraftSourcesAsArrays): Promise<void> {
-  console.log(sources);
+function saveSources(sources: DraftSourcesAsArrays, activatedProjectService: ActivatedProjectService): void {
+  const currentProjectParatextId: string = activatedProjectService.projectDoc?.data.paratextId;
+  const draftSourcesConfig: DraftSourcesConfig = draftSourceArraysToDraftSourcesConfig(
+    sources,
+    currentProjectParatextId
+  );
+  // TODO Save draft sources config to project
+}
+
+export function draftSourceArraysToDraftSourcesConfig(
+  sources: DraftSourcesAsArrays,
+  currentProjectParatextId: string
+): DraftSourcesConfig {
+  // Extra precaution on array lengths for now in case the type system is being bypassed.
+  if (sources.draftingSources.length > 1) {
+    throw new Error('Drafting sources array must contain 0 or 1 source');
+  }
+  if (sources.trainingSources.length > 2) {
+    throw new Error('Training sources array must contain 0, 1, or 2 sources');
+  }
+  if (sources.trainingTargets.length !== 1) {
+    throw new Error('Training targets array must contain exactly 1 project');
+  }
+
+  const trainingTargetParatextId = sources.trainingTargets[0].paratextId;
+  if (currentProjectParatextId !== trainingTargetParatextId) {
+    throw new Error('Training target must be the current project');
+  }
+
+  const alternateTrainingSource: TranslateSource = sources.trainingSources[0];
+  const additionalTrainingSource: TranslateSource = sources.trainingSources[1];
+  const alternateSource: TranslateSource = sources.draftingSources[0];
+
+  const config: DraftSourcesConfig = {
+    additionalTrainingSourceEnabled: additionalTrainingSource != null,
+    additionalTrainingSource: additionalTrainingSource,
+    alternateSourceEnabled: alternateSource != null,
+    alternateSource: alternateSource,
+    alternateTrainingSourceEnabled: alternateTrainingSource != null,
+    alternateTrainingSource: alternateTrainingSource
+  };
+  return config;
 }
