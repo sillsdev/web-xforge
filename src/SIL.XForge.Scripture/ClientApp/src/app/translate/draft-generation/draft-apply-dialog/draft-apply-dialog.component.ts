@@ -28,6 +28,11 @@ export interface DraftApplyDialogResult {
   projectId: string;
 }
 
+export interface DraftApplyDialogConfig {
+  bookNum: number;
+  chapters: number[];
+}
+
 @Component({
   selector: 'app-draft-apply-dialog',
   standalone: true,
@@ -48,6 +53,7 @@ export class DraftApplyDialogComponent implements OnInit {
   targetChapters$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   canEditProject: boolean = true;
   targetBookExists: boolean = true;
+  projectHasMissingChapters: boolean = false;
   addToProjectClicked: boolean = false;
   /** An observable that emits the target project profile if the user has permission to write to the book. */
   targetProject$: BehaviorSubject<SFProjectProfile | undefined> = new BehaviorSubject<SFProjectProfile | undefined>(
@@ -56,7 +62,8 @@ export class DraftApplyDialogComponent implements OnInit {
   invalidMessageMapper: { [key: string]: string } = {
     invalidProject: translate('draft_apply_dialog.please_select_valid_project'),
     bookNotFound: translate('draft_apply_dialog.book_does_not_exist', { bookName: this.bookName }),
-    noWritePermissions: translate('draft_apply_dialog.no_write_permissions')
+    noWritePermissions: translate('draft_apply_dialog.no_write_permissions'),
+    missingChapters: translate('draft_apply_dialog.project_has_chapters_missing', { bookName: this.bookName })
   };
 
   // the project id to add the draft to
@@ -64,7 +71,7 @@ export class DraftApplyDialogComponent implements OnInit {
   private paratextIdToProjectId: Map<string, string> = new Map<string, string>();
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) private data: { bookNum: number },
+    @Inject(MAT_DIALOG_DATA) private data: DraftApplyDialogConfig,
     @Inject(MatDialogRef) private dialogRef: MatDialogRef<DraftApplyDialogComponent, DraftApplyDialogResult>,
     private readonly userProjectsService: SFUserProjectsService,
     private readonly projectService: SFProjectService,
@@ -154,8 +161,13 @@ export class DraftApplyDialogComponent implements OnInit {
       this.textDocService.userHasGeneralEditRight(project) &&
       targetBook?.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
 
+    // also check if this is an empty book
+    const bookIsEmpty: boolean = targetBook?.chapters.length === 1 && targetBook?.chapters[0].lastVerse < 1;
+    const targetBookChapters: number[] = targetBook?.chapters.map(c => c.number) ?? [];
+    this.projectHasMissingChapters =
+      bookIsEmpty || this.data.chapters.filter(c => !targetBookChapters.includes(c)).length > 0;
     // emit the project profile document
-    if (this.canEditProject) {
+    if (this.canEditProject && !this.projectHasMissingChapters) {
       this.targetProject$.next(project);
     } else {
       this.targetProject$.next(undefined);
@@ -193,6 +205,9 @@ export class DraftApplyDialogComponent implements OnInit {
     }
     if (!this.canEditProject) {
       return CustomErrorState.NoWritePermissions;
+    }
+    if (this.projectHasMissingChapters) {
+      return CustomErrorState.MissingChapters;
     }
     return CustomErrorState.None;
   }

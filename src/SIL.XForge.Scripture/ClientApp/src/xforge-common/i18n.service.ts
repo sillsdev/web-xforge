@@ -418,6 +418,13 @@ export class I18nService {
       .find(e => e.type === 'timeZoneName').value;
   }
 
+  /** Takes a number and returns a rule representing the plural-related rule for the current locale.
+   * Possible values include 'zero', 'one', 'two', 'few', 'many', and 'other'.
+   */
+  getPluralRule(number: number): Intl.LDMLPluralRule {
+    return new Intl.PluralRules(this.locale.canonicalTag).select(number);
+  }
+
   private getTranslation(key: I18nKey): string {
     return (
       this.transloco.getTranslation(this.transloco.getActiveLang())[key] ??

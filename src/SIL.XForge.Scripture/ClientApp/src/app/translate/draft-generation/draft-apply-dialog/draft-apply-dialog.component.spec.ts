@@ -63,7 +63,7 @@ describe('DraftApplyDialogComponent', () => {
       { provide: I18nService, useMock: mockedI18nService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MatDialogRef, useMock: mockedDialogRef },
-      { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1 } }
+      { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1, chapters: [1, 2] } }
     ]
   }));
 
@@ -147,6 +147,52 @@ describe('DraftApplyDialogComponent', () => {
     expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.InvalidProject);
   }));
 
+  it('notifies user if book has missing chapters', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project03',
+      data: createTestProjectProfile({
+        paratextId: 'paratextId3',
+        userRoles: { user01: SFProjectRole.ParatextAdministrator },
+        texts: [
+          {
+            bookNum: 1,
+            chapters: [{ number: 1, permissions: { user01: TextInfoPermission.Write }, lastVerse: 31 }],
+            permissions: { user01: TextInfoPermission.Write }
+          }
+        ]
+      })
+    } as SFProjectProfileDoc;
+    env = new TestEnvironment({ projectDoc });
+    env.selectParatextProject('paratextId3');
+    expect(env.component['targetProjectId']).toBe('project03');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.MissingChapters);
+  }));
+
+  it('notifies user if book is empty', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project03',
+      data: createTestProjectProfile({
+        paratextId: 'paratextId3',
+        userRoles: { user01: SFProjectRole.ParatextAdministrator },
+        texts: [
+          {
+            bookNum: 1,
+            chapters: [{ number: 1, permissions: { user01: TextInfoPermission.Write }, lastVerse: 0 }],
+            permissions: { user01: TextInfoPermission.Write }
+          }
+        ]
+      })
+    } as SFProjectProfileDoc;
+    env = new TestEnvironment({ projectDoc });
+    env.selectParatextProject('paratextId3');
+    expect(env.component['targetProjectId']).toBe('project03');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.MissingChapters);
+  }));
+
   it('updates the target project info when updating the project in the selector', fakeAsync(() => {
     env.selectParatextProject('paratextId1');
     expect(env.targetProjectContent.textContent).toContain('Test project 1');
@@ -176,10 +222,10 @@ class TestEnvironment {
 
   onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
 
-  constructor() {
+  constructor(args: { projectDoc?: SFProjectProfileDoc } = {}) {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.localizeBook(anything())).thenReturn('Genesis');
-    this.setupProject();
+    this.setupProject(args.projectDoc);
     this.fixture = TestBed.createComponent(DraftApplyDialogComponent);
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);
     this.component = this.fixture.componentInstance;
@@ -230,7 +276,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private setupProject(): void {
+  private setupProject(projectDoc?: SFProjectProfileDoc): void {
     const projectPermissions = [
       { id: 'project01', permission: TextInfoPermission.Write },
       { id: 'project02', permission: TextInfoPermission.Read },
@@ -248,7 +294,10 @@ class TestEnvironment {
             texts: [
               {
                 bookNum: 1,
-                chapters: [{ number: 1, permissions: { user01: permission } }],
+                chapters: [
+                  { number: 1, permissions: { user01: permission }, lastVerse: 31 },
+                  { number: 2, permissions: { user01: permission }, lastVerse: 25 }
+                ],
                 permissions: { user01: permission }
               }
             ]
@@ -257,6 +306,9 @@ class TestEnvironment {
         )
       } as SFProjectProfileDoc;
       mockProjectDocs.push(mockedProject);
+    }
+    if (projectDoc != null) {
+      mockProjectDocs.push(projectDoc);
     }
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(mockProjectDocs));
     const mockedTextDoc = {
