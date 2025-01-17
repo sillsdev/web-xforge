@@ -45,9 +45,11 @@
           [projectDoc]="projectDoc"
         ></app-checking-text>
       </div>
-      <app-text-and-audio #input [input]="question" [textLabel]="t('question')"></app-text-and-audio>
-      <div class="attachments">
-        <app-attach-audio [textAndAudio]="input"></app-attach-audio>
+      <div>
+        <app-text-and-audio #input [input]="question" [textLabel]="t('question')"></app-text-and-audio>
+        <div class="attachments">
+          <app-attach-audio [textAndAudio]="input"></app-attach-audio>
+        </div>
       </div>
     </mat-dialog-content>
     <mat-dialog-actions [align]="'end'">

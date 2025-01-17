@@ -1,5 +1,6 @@
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
@@ -8,7 +9,6 @@ import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -41,17 +41,17 @@ export interface QuestionDialogResult {
   templateUrl: './question-dialog.component.html',
   styleUrls: ['./question-dialog.component.scss']
 })
-export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
+export class QuestionDialogComponent implements OnInit {
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
   modeLabel =
     this.data && this.data.questionDoc != null
       ? translate('question_dialog.edit_question')
       : translate('question_dialog.new_question');
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
-  versesForm: UntypedFormGroup = new UntypedFormGroup(
+  versesForm: FormGroup = new FormGroup(
     {
-      scriptureStart: new UntypedFormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBookId)]),
-      scriptureEnd: new UntypedFormControl('', [SFValidators.verseStr(this.data.textsByBookId)])
+      scriptureStart: new FormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBookId)]),
+      scriptureEnd: new FormControl('', [SFValidators.verseStr(this.data.textsByBookId)])
     },
     SFValidators.verseStartBeforeEnd
   );
@@ -63,10 +63,9 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     private readonly dialogRef: MatDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>,
     @Inject(MAT_DIALOG_DATA) private data: QuestionDialogData,
     readonly i18n: I18nService,
-    readonly dialogService: DialogService
-  ) {
-    super();
-  }
+    readonly dialogService: DialogService,
+    private readonly destroyRef: DestroyRef
+  ) {}
 
   get scriptureStart(): AbstractControl {
     return this.versesForm.controls.scriptureStart;
@@ -138,7 +137,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     // set initial enabled/disabled state for scriptureEnd
     this.updateScriptureEndEnabled();
 
-    this.subscribe(this.scriptureStart.valueChanges, () => {
+    this.scriptureStart.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.scriptureStart.valid) {
         this.updateSelection();
       } else {
@@ -147,7 +146,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       // update enabled/disabled state for scriptureEnd
       this.updateScriptureEndEnabled();
     });
-    this.subscribe(this.scriptureEnd.valueChanges, () => {
+    this.scriptureEnd.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.scriptureEnd.valid) {
         this.updateSelection();
       } else {

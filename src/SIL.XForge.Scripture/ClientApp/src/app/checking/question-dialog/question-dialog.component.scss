@@ -3,6 +3,9 @@
 
 .mat-mdc-dialog-content.content-padding {
   padding-top: 0.5em;
+  display: flex;
+  flex-direction: column;
+  row-gap: 1em;
 }
 
 .dialog-title {
@@ -15,7 +18,7 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  column-gap: 1em;
+  gap: 1em;
   justify-content: center;
 }
 
@@ -36,7 +39,7 @@ mat-form-field {
 
 .text-container {
   height: 10em;
-  margin-bottom: 3em;
+  margin-bottom: 2em;
   app-checking-text {
     position: relative;
   }
