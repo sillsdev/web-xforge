@@ -1,6 +1,4 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -10,16 +8,16 @@ import { ActivatedProjectService } from '../../../../xforge-common/activated-pro
 import { I18nService } from '../../../../xforge-common/i18n.service';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
-import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
-import { DraftSourcesAsArrays } from '../draft-utils';
+import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 import { draftSourceArraysToDraftSourcesConfig, DraftSourcesComponent } from './draft-sources.component';
 
 const mockedParatextService = mock(ParatextService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
+const mockedDraftSourcesService = mock(DraftSourcesService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
@@ -29,7 +27,8 @@ describe('DraftSourcesComponent', () => {
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: I18nService, useMock: mockedI18nService }
+      { provide: I18nService, useMock: mockedI18nService },
+      { provide: DraftSourcesService, useMock: mockedDraftSourcesService }
     ]
   }));
 
@@ -43,22 +42,38 @@ describe('DraftSourcesComponent', () => {
 
   describe('draftSourceArraysToDraftSourcesConfig', () => {
     const currentProjectParatextId = 'project01';
-    const mockProject1: TranslateSource = {
+    const mockProject1: DraftSource = {
       paratextId: 'pt01',
       name: 'Project 1',
       shortName: 'PRJ1',
       projectRef: '',
-      writingSystem: undefined
+      writingSystem: undefined,
+      texts: []
     };
-    const mockProject2: TranslateSource = {
+    const mockProject2: DraftSource = {
       paratextId: 'pt02',
       name: 'Project 2',
       shortName: 'PRJ2',
       projectRef: '',
+      writingSystem: undefined,
+      texts: []
+    };
+    const mockTarget: DraftSource = {
+      paratextId: currentProjectParatextId,
+      texts: [],
+      projectRef: '',
+      name: '',
+      shortName: '',
       writingSystem: undefined
     };
-    const mockTarget: SFProjectProfile = { paratextId: currentProjectParatextId } as SFProjectProfile;
-    const someOtherTarget: SFProjectProfile = { paratextId: 'some-other-id' } as SFProjectProfile;
+    const someOtherTarget: DraftSource = {
+      paratextId: 'some-other-id',
+      texts: [],
+      projectRef: '',
+      name: '',
+      shortName: '',
+      writingSystem: undefined
+    };
 
     it('should handle empty sources', () => {
       const sources: DraftSourcesAsArrays = {
@@ -204,27 +219,15 @@ class TestEnvironment {
   constructor() {
     this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-    // Setup mocked responses
     when(mockedParatextService.getProjects()).thenResolve(this.mockProjects as ParatextProject[]);
     when(mockedParatextService.getResources()).thenResolve(this.mockResources);
     when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
     when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
+    when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(instance(mock<DraftSourcesAsArrays>())));
 
-    const mockProjectDoc = mock<SFProjectDoc>();
-    when(mockedActivatedProjectService.projectDoc).thenReturn(instance(mockProjectDoc));
-    when(mockedActivatedProjectService.changes$).thenReturn(of(mockProjectDoc));
-
-    // Setup component
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
     tick();
   }
-
-  // addProject(project: Partial<SFProjectProfile>): void {
-  //   this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, {
-  //     id: project.id ?? 'project01',
-  //     data: project
-  //   });
-  // }
 }
