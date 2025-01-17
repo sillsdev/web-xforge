@@ -651,7 +651,9 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc)
       );
-      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
       when(mockTrainingDataQuery.docs).thenReturn([]);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
 
