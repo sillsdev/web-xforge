@@ -93,8 +93,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
 
   source?: DraftSource;
-  alternateSource?: DraftSource;
-  alternateTrainingSource?: DraftSource;
+  trainingSource?: DraftSource;
   additionalTrainingSource?: DraftSource;
 
   jobSubscription?: Subscription;
@@ -172,11 +171,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get isGenerationSupported(): boolean {
-    return (
-      this.isPreviewSupported &&
-      this.canAccessDraftSourceIfAvailable(this.alternateSource) &&
-      this.canAccessDraftSourceIfAvailable(this.alternateTrainingSource)
-    );
+    return this.isPreviewSupported && this.canAccessDraftSourceIfAvailable(this.trainingSource);
   }
 
   get isPreviewSupported(): boolean {
@@ -311,11 +306,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         ),
         this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
         this.draftSourcesService.getDraftProjectSources().pipe(
-          tap(({ source, alternateSource, alternateTrainingSource, additionalTrainingSource }) => {
-            this.source = source;
-            this.alternateSource = alternateSource;
-            this.alternateTrainingSource = alternateTrainingSource;
-            this.additionalTrainingSource = additionalTrainingSource;
+          tap(({ trainingSources, draftingSources }) => {
+            this.source = draftingSources[0];
+            this.trainingSource = trainingSources[0];
+            this.additionalTrainingSource = trainingSources[1];
           })
         )
       ]),

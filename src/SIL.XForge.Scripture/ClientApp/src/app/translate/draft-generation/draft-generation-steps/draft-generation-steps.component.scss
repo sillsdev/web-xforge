@@ -15,7 +15,12 @@
 }
 
 h1 {
-  margin: 12px 0;
+  margin: 24px 0;
+}
+
+h2 {
+  font-weight: 400;
+  margin-bottom: 0.5em;
 }
 
 h2 {
@@ -51,7 +56,7 @@ h2 {
 }
 
 .button-strip {
-  margin-top: 20px;
+  margin-top: 60px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -111,4 +116,33 @@ app-notice {
   mat-spinner {
     margin-right: 1em;
   }
+}
+
+.confirm-section {
+  row-gap: 8px;
+  padding: 1.5em;
+  margin-block: 0 2em;
+  max-width: 750px;
+}
+
+.explanation {
+  font-style: italic;
+  font-weight: 300;
+}
+
+.mat-mdc-table {
+  background-color: initial;
+}
+
+.confirm-translate {
+  padding-inline-start: 16px;
+}
+
+.cell-padding-block {
+  margin-block: 16px;
+}
+
+.confirm-books {
+  padding-block: 4px;
+  font-size: 16px;
 }

@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
-  @if (availableTranslateBooks && availableTranslateBooks.length > 0) {
+  @if (availableTranslateBooks.length > 0) {
     <mat-stepper linear (selectionChange)="onStepChange()" labelPosition="bottom" [disableRipple]="true">
       <!-- Icon overrides -->
       <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
@@ -18,14 +18,14 @@
         </div>
       </mat-step>
 
-      <mat-step [completed]="userSelectedTranslateBooks.length > 0">
+      <mat-step [completed]="booksToTranslate().length > 0">
         <ng-template matStepLabel>
-          {{ t("choose_books_to_translate_label") }}
+          {{ t("choose_books_to_translate_header") }}
         </ng-template>
-        <h1 class="mat-headline-4">{{ t("choose_books_to_translate") }}</h1>
+        <h1 class="mat-headline-4">{{ t("choose_books_to_translate_title") }}</h1>
         <app-book-multi-select
           [availableBooks]="availableTranslateBooks"
-          [selectedBooks]="initialSelectedTranslateBooks"
+          [selectedBooks]="booksToTranslate()"
           (bookSelect)="onTranslateBookSelect($event)"
           data-test-id="draft-stepper-translate-books"
         ></app-book-multi-select>
@@ -77,15 +77,15 @@
       </mat-step>
       <mat-step [completed]="isTrainingOptional || trainingSourceBooksSelected">
         <ng-template matStepLabel>
-          {{ t("choose_books_for_training_label") }}
+          {{ t("choose_books_for_training_header") }}
         </ng-template>
-        <h1 class="mat-headline-4">{{ t("choose_books_for_training") }}</h1>
+        <h1 class="mat-headline-4">{{ t("choose_books_for_training_title") }}</h1>
         <h2>{{ t("translated_books") }}</h2>
         <app-book-multi-select
-          [availableBooks]="availableTrainingBooks"
-          [selectedBooks]="initialSelectedTrainingBooks"
+          [availableBooks]="selectableTrainingBooksByProj(activatedProject.projectId)"
+          [selectedBooks]="selectedTrainingBooksByProj(activatedProject.projectId)"
           [projectName]="targetProjectName"
-          (bookSelect)="onTrainingBookSelect($event)"
+          (bookSelect)="onTranslatedBookSelect($event)"
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
         @if (unusableTrainingSourceBooks.length) {
@@ -109,7 +109,7 @@
                 <h4 class="explanation">
                   <transloco
                     key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
-                    [params]="{ trainingSourceProjectName }"
+                    [params]="{ firstTrainingSource }"
                   ></transloco>
                 </h4>
                 <span class="book-names">{{ bookNames(unusableTrainingSourceBooks) }}</span>
@@ -118,31 +118,18 @@
           </app-notice>
         }
         <h2>{{ t("reference_books") }}</h2>
-        <p class="reference-project-label">{{ trainingSourceProjectName }}</p>
-        @if (selectableSourceTrainingBooks.length === 0) {
-          <app-notice mode="basic" type="light" class="books-appear-notice">{{
-            t("training_books_will_appear")
-          }}</app-notice>
-        } @else {
-          <app-book-multi-select
-            [availableBooks]="selectableSourceTrainingBooks"
-            [selectedBooks]="userSelectedSourceTrainingBooks"
-            [basicMode]="true"
-            (bookSelect)="onSourceTrainingBookSelect($event)"
-          ></app-book-multi-select>
-        }
-        @if (trainingAdditionalSourceProjectName?.length > 0) {
-          <p class="reference-project-label">{{ trainingAdditionalSourceProjectName }}</p>
-          @if (selectableAdditionalSourceTrainingBooks.length === 0) {
+        @for (source of trainingSources; track source) {
+          <p class="reference-project-label">{{ projectLabel(source) }}</p>
+          @if (selectableTrainingBooksByProj(source.projectRef).length === 0) {
             <app-notice mode="basic" type="light" class="books-appear-notice">{{
               t("training_books_will_appear")
             }}</app-notice>
           } @else {
             <app-book-multi-select
-              [availableBooks]="selectableAdditionalSourceTrainingBooks"
-              [selectedBooks]="userSelectedAdditionalSourceTrainingBooks"
+              [availableBooks]="selectableTrainingBooksByProj(source.projectRef)"
+              [selectedBooks]="selectedTrainingBooksByProj(source.projectRef)"
               [basicMode]="true"
-              (bookSelect)="onAdditionalSourceTrainingBookSelect($event)"
+              (bookSelect)="onSourceTrainingBookSelect($event, source)"
             ></app-book-multi-select>
           }
         }
@@ -160,22 +147,19 @@
             class="advance-button"
             [disabled]="isStepsCompleted"
           >
-            {{ featureFlags.allowFastTraining.enabled || trainingDataFilesAvailable ? t("next") : t("generate_draft") }}
+            {{ t("next") }}
           </button>
-          @if (isStepsCompleted) {
-            <mat-spinner diameter="24"></mat-spinner>
-          }
         </div>
       </mat-step>
       @if (trainingDataFilesAvailable) {
         <mat-step [completed]="true">
           <ng-template matStepLabel>
-            {{ t("choose_additional_training_data_files_label") }}
+            {{ t("choose_additional_training_data_files_header") }}
           </ng-template>
-          <h1 class="mat-headline-4">{{ t("choose_additional_training_data_files") }}</h1>
+          <h1 class="mat-headline-4">{{ t("choose_additional_training_data_files_title") }}</h1>
           <app-training-data-multi-select
-            [availableTrainingData]="availableTrainingData"
-            [selectedTrainingDataIds]="selectedTrainingDataIds"
+            [availableTrainingData]="availableTrainingFiles"
+            [selectedTrainingDataIds]="selectedTrainingFileIds"
             (trainingDataSelect)="onTrainingDataSelect($event)"
             data-test-id="draft-stepper-training-data-files"
           ></app-training-data-multi-select>
@@ -188,20 +172,17 @@
               class="advance-button"
               [disabled]="isStepsCompleted"
             >
-              {{ featureFlags.allowFastTraining.enabled ? t("next") : t("generate_draft") }}
+              {{ t("next") }}
             </button>
-            @if (isStepsCompleted) {
-              <mat-spinner diameter="24"></mat-spinner>
-            }
           </div>
         </mat-step>
       }
       @if (featureFlags.allowFastTraining.enabled) {
         <mat-step [completed]="true">
           <ng-template matStepLabel>
-            {{ t("configure_advanced_settings_label") }}
+            {{ t("configure_advanced_settings_header") }}
           </ng-template>
-          <h1 class="mat-headline-4">{{ t("configure_advanced_settings") }}</h1>
+          <h1 class="mat-headline-4">{{ t("configure_advanced_settings_title") }}</h1>
           <div>
             <mat-checkbox class="fast-training" [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
           </div>
@@ -217,20 +198,75 @@
               class="advance-button"
               [disabled]="isStepsCompleted"
             >
-              {{ t("generate_draft") }}
+              {{ t("next") }}
             </button>
-            @if (isStepsCompleted) {
-              <mat-spinner diameter="24"></mat-spinner>
-            }
           </div>
         </mat-step>
       }
+      <mat-step [completed]="true">
+        <ng-template matStepLabel>
+          {{ t("summary_header") }}
+        </ng-template>
+        <h1 class="mat-headline-4">{{ t("summary_title") }}</h1>
+
+        <h2>{{ t("summary_training_title") }}</h2>
+        <mat-card class="confirm-section mat-elevation-z2">
+          <span class="explanation">{{ t("summary_training") }}</span>
+          <table mat-table class="confirm-training" [dataSource]="selectedTrainingBooksCollapsed()">
+            <ng-container matColumnDef="book">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let element">
+                <div class="confirm-books cell-padding-block">
+                  {{ i18n.enumerateList(element.ranges) }}
+                </div>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="source">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ i18n.getLanguageDisplayName(trainingSources[0].writingSystem.tag) }}
+              </th>
+              <td mat-cell *matCellDef="let element">{{ element.sourceName }}</td>
+            </ng-container>
+            <ng-container matColumnDef="target">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ i18n.getLanguageDisplayName(trainingTargets[0].writingSystem.tag) }}
+              </th>
+              <td mat-cell *matCellDef="let element">{{ trainingTargets[0].shortName }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="['book', 'source', 'target']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['book', 'source', 'target']"></tr>
+          </table>
+        </mat-card>
+
+        <h2>
+          <transloco
+            key="draft_generation_steps.summary_translate_title"
+            [params]="{ draftingSourceProjectName }"
+          ></transloco>
+        </h2>
+        <mat-card class="confirm-section mat-elevation-z2">
+          <span class="explanation">{{ t("summary_translate") }}</span>
+          <div class="confirm-translate confirm-books">
+            {{ selectedTranslateBooksAsString() }}
+          </div>
+        </mat-card>
+
+        <div class="button-strip">
+          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+            {{ t("generate_draft") }}
+          </button>
+          @if (isStepsCompleted) {
+            <mat-spinner diameter="24"></mat-spinner>
+          }
+        </div>
+      </mat-step>
     </mat-stepper>
   }
 
-  @if (availableTranslateBooks && availableTranslateBooks.length <= 0) {
+  @if (hasLoaded && availableTranslateBooks.length <= 0) {
     <p>{{ t("no_available_books") }}</p>
-  } @else if (availableTranslateBooks == null) {
+  } @else if (!hasLoaded) {
     <div class="loading">
       <mat-spinner diameter="20" color="primary"></mat-spinner>
       <div>{{ t("loading") }}</div>

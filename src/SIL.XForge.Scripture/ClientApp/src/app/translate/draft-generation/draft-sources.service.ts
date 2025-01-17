@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, defer, from, Observable } from 'rxjs';
@@ -13,32 +12,18 @@ import { SFProjectService } from '../../core/sf-project.service';
 interface DraftTextInfo {
   bookNum: number;
 }
-export interface DraftSource {
-  name: string;
-  shortName: string;
+export interface DraftSource extends TranslateSource {
   texts: DraftTextInfo[];
-  writingSystem: WritingSystem;
   noAccess?: boolean;
 }
 interface DraftSourceDoc {
   data: DraftSource;
 }
 
-export interface DraftSourceIds {
-  trainingSourceId?: string;
-  trainingAlternateSourceId?: string;
-  trainingAdditionalSourceId?: string;
-  draftingSourceId?: string;
-  draftingAlternateSourceId?: string;
-}
-
-export interface DraftSources {
-  target?: Readonly<DraftSource>;
-  source?: Readonly<DraftSource>;
-  alternateSource?: Readonly<DraftSource>;
-  alternateTrainingSource?: Readonly<DraftSource>;
-  additionalTrainingSource?: Readonly<DraftSource>;
-  draftSourceIds?: DraftSourceIds;
+export interface DraftSourcesAsArrays {
+  trainingSources: [DraftSource?, DraftSource?];
+  trainingTargets: [DraftSource];
+  draftingSources: [DraftSource?];
 }
 
 @Injectable({
@@ -54,9 +39,23 @@ export class DraftSourcesService {
   ) {}
 
   /**
-   * Gets the configured draft project sources for the activated project.
+   * Returns the training and drafting sources for the activated project as three arrays.
+   *
+   * This considers properties such as alternateTrainingSourceEnabled and alternateTrainingSource and makes sure to only
+   * include a source if it's enabled and not null. It also considers whether the project source is implicitly the
+   * training and/or drafting source.
+   *
+   * This method is also intended to be act as an abstraction layer to allow changing the data model in the future
+   * without needing to change all the places that use this method.
+   *
+   * Currently this method provides guarantees via the type system that there will be at most 2 training sources,
+   * exactly 1 training target, and at most 1 drafting source. Consumers of this method that cannot accept an arbitrary
+   * length for each of these arrays are encouraged to write their code in such a way that it will noticeably break
+   * (preferably at build time) if these guarantees are changed, to make it easier to find code that relies on the
+   * current limit on the number of sources in each category.
+   * @returns An object with three arrays: trainingSources, trainingTargets, and draftingSources
    */
-  getDraftProjectSources(): Observable<DraftSources> {
+  getDraftProjectSources(): Observable<DraftSourcesAsArrays> {
     return combineLatest([this.activatedProject.projectDoc$, this.currentUser$]).pipe(
       switchMap(([targetDoc, currentUser]) => {
         const translateConfig: TranslateConfig | undefined = targetDoc?.data?.translateConfig;
@@ -122,19 +121,26 @@ export class DraftSourcesService {
           ])
         ).pipe(
           map(([sourceDoc, alternateSourceDoc, alternateTrainingSourceDoc, additionalTrainingSourceProjectDoc]) => {
+            let draftingSource: DraftSource = alternateSourceDoc
+              ? { ...alternateSourceDoc?.data, projectRef: alternateSourceProjectId }
+              : { ...sourceDoc?.data, projectRef: sourceProjectId };
+            let trainingSource: DraftSource = alternateTrainingSourceDoc
+              ? { ...alternateTrainingSourceDoc?.data, projectRef: alternateTrainingSourceProjectId }
+              : { ...sourceDoc?.data, projectRef: sourceProjectId };
+            let additionalTrainingSource: DraftSource = additionalTrainingSourceProjectDoc
+              ? { ...additionalTrainingSourceProjectDoc?.data, projectRef: additionalTrainingSourceProjectId }
+              : undefined;
+            let target = { ...targetDoc?.data, projectRef: this.activatedProject.projectId };
+
+            if (!draftingSource?.projectRef) draftingSource = undefined;
+            if (!trainingSource?.projectRef) trainingSource = undefined;
+            if (!additionalTrainingSource?.projectRef) additionalTrainingSource = undefined;
+            if (!target?.projectRef) target = undefined;
+
             return {
-              target: targetDoc?.data,
-              source: sourceDoc?.data,
-              alternateSource: alternateSourceDoc?.data,
-              alternateTrainingSource: alternateTrainingSourceDoc?.data,
-              additionalTrainingSource: additionalTrainingSourceProjectDoc?.data,
-              draftSourceIds: {
-                trainingSourceId: sourceProjectId,
-                trainingAlternateSourceId: alternateTrainingSourceProjectId,
-                trainingAdditionalSourceId: additionalTrainingSourceProjectId,
-                draftingSourceId: sourceProjectId,
-                draftingAlternateSourceId: alternateSourceProjectId
-              }
+              trainingSources: [trainingSource, additionalTrainingSource] as [DraftSource?, DraftSource?],
+              trainingTargets: [target] as [DraftSource],
+              draftingSources: [draftingSource] as [DraftSource]
             };
           })
         );
@@ -166,6 +172,8 @@ export class DraftSourcesService {
         data: {
           name: translateSource.name,
           shortName: translateSource.shortName,
+          paratextId: translateSource.paratextId,
+          projectRef: projectId,
           texts: texts?.slice() ?? [],
           writingSystem: translateSource.writingSystem,
           noAccess: true
