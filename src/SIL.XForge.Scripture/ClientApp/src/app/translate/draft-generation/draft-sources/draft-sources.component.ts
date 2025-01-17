@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { DataLoadingComponent } from '../../../../xforge-common/data-loading-component';
@@ -13,7 +12,7 @@ import { I18nService } from '../../../../xforge-common/i18n.service';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { XForgeCommonModule } from '../../../../xforge-common/xforge-common.module';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
-import { DraftSourcesAsArrays, projectToDraftSources } from '../draft-utils';
+import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 
 @Component({
   selector: 'app-draft-sources',
@@ -25,9 +24,10 @@ import { DraftSourcesAsArrays, projectToDraftSources } from '../draft-utils';
 export class DraftSourcesComponent extends DataLoadingComponent {
   step = 1;
 
-  trainingSources: [TranslateSource?, TranslateSource?];
-  trainingTargets: [SFProjectProfile];
-  draftingSources: [TranslateSource?];
+  // TODO Rather than use these three arrays, consider just using a single DraftSourcesAsArrays object.
+  trainingSources: [DraftSource?, DraftSource?];
+  trainingTargets: [DraftSource];
+  draftingSources: [DraftSource?];
 
   projects?: SelectableProject[];
   resources?: SelectableProject[];
@@ -80,21 +80,22 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     private readonly destroyRef: DestroyRef,
     private readonly paratextService: ParatextService,
     private readonly i18n: I18nService,
+    private readonly draftSourcesService: DraftSourcesService,
     noticeService: NoticeService
   ) {
     super(noticeService);
-    this.activatedProjectService.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      const projectDoc = this.activatedProjectService.projectDoc;
-      if (projectDoc != null) {
-        const sources = projectToDraftSources(projectDoc.data);
+
+    this.draftSourcesService
+      .getDraftProjectSources()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(sources => {
         this.trainingSources = sources.trainingSources;
         this.trainingTargets = sources.trainingTargets;
         this.draftingSources = sources.draftingSources;
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
         if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
-      }
-    });
+      });
 
     this.loadProjects();
   }
