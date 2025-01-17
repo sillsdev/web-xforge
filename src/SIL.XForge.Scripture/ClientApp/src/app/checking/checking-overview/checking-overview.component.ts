@@ -75,24 +75,20 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get showQuestionsLoadingMessage(): boolean {
-    return this.questionsQuery?.ready !== true && this.allQuestionsCount === 0;
+    return !this.questionsLoaded && this.allQuestionsCount === 0;
   }
 
   get showArchivedQuestionsLoadingMessage(): boolean {
-    return (
-      this.questionsQuery?.ready !== true &&
-      (this.questionsQuery?.docs || []).filter(qd => qd.data?.isArchived).length === 0
-    );
+    return !this.questionsLoaded && (this.questionsQuery?.docs ?? []).filter(qd => qd.data?.isArchived).length === 0;
   }
 
   get showNoQuestionsMessage(): boolean {
-    return this.questionsQuery?.ready === true && this.allQuestionsCount === 0;
+    return this.questionsLoaded && this.allQuestionsCount === 0;
   }
 
   get showNoArchivedQuestionsMessage(): boolean {
     return (
-      this.questionsQuery?.ready === true &&
-      this.questionsQuery?.docs.filter(qd => qd.data != null && qd.data.isArchived).length === 0
+      this.questionsLoaded && this.questionsQuery?.docs.filter(qd => qd.data != null && qd.data.isArchived).length === 0
     );
   }
 
@@ -192,6 +188,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return [];
     }
     return this.questionsQuery.docs.filter(qd => qd.data != null && !qd.data.isArchived);
+  }
+
+  private get questionsLoaded(): boolean {
+    // if the user is offline, 'ready' will never be true, but the query will still return the offline docs
+    return !this.onlineStatusService.isOnline || this.questionsQuery?.ready === true;
   }
 
   ngOnInit(): void {
