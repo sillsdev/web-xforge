@@ -1,12 +1,10 @@
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Serval.Client;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
@@ -26,13 +24,11 @@ namespace SIL.XForge.Scripture.Controllers;
 public class HealthController(
     IOptions<AuthOptions> authOptions,
     IExceptionHandler exceptionHandler,
-    IRealtimeService realtimeService,
-    ITranslationEnginesClient translationEnginesClient
+    IRealtimeService realtimeService
 ) : ControllerBase
 {
     public const int Status531MongoDown = 531;
     public const int Status532RealtimeServerDown = 532;
-    public const int Status533ServalDown = 533;
 
     /// <summary>
     /// Executes the health check.
@@ -43,7 +39,6 @@ public class HealthController(
     /// <response code="403">You do not have permission to view the health check.</response>
     /// <response code="531">Mongo is down.</response>
     /// <response code="532">The Realtime Server is down.</response>
-    /// <response code="533">Serval is down.</response>
     [HttpPost]
     public async Task<ActionResult<HealthCheckResponse>> HealthCheckAsync(
         [FromHeader(Name = "X-Api-Key")] string apiKey
@@ -103,22 +98,6 @@ public class HealthController(
             response.RealtimeServer.Status = "The project was not retrieved from Mongo";
         }
 
-        // Third, check Serval
-        try
-        {
-            stopWatch = Stopwatch.StartNew();
-            var translationEngines = await translationEnginesClient.GetAllAsync();
-            stopWatch.Stop();
-            response.Serval.Up = translationEngines.Any();
-            response.Serval.Time = stopWatch.ElapsedMilliseconds;
-            response.Serval.Status = response.Serval.Up ? "Success" : "No translation engines were retrieved";
-        }
-        catch (Exception e)
-        {
-            response.Serval.Status = e.Message;
-            exceptionHandler.ReportException(e);
-        }
-
         // Calculate the status code and return the results
         int statusCode;
         if (!response.Mongo.Up)
@@ -128,10 +107,6 @@ public class HealthController(
         else if (!response.RealtimeServer.Up)
         {
             statusCode = Status532RealtimeServerDown;
-        }
-        else if (!response.Serval.Up)
-        {
-            statusCode = Status533ServalDown;
         }
         else
         {

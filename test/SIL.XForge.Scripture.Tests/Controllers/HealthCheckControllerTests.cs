@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using Serval.Client;
 using SIL.XForge.Configuration;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -35,6 +34,7 @@ public class HealthCheckControllerTests
         Assert.AreEqual(HealthController.Status531MongoDown, objectResult.StatusCode);
         var value = (HealthCheckResponse)objectResult.Value!;
         Assert.IsFalse(value.Mongo.Up);
+        Assert.AreEqual(HealthCheckResponse.Down, value.StatusSummary);
     }
 
     [Test]
@@ -52,23 +52,7 @@ public class HealthCheckControllerTests
         Assert.AreEqual(HealthController.Status532RealtimeServerDown, objectResult.StatusCode);
         var value = (HealthCheckResponse)objectResult.Value!;
         Assert.IsFalse(value.RealtimeServer.Up);
-    }
-
-    [Test]
-    public async Task HealthCheck_FailureWithServal()
-    {
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetAllAsync().Throws(new ArgumentException());
-
-        // SUT
-        var actual = await env.Controller.HealthCheckAsync(ApiKey);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ArgumentException>());
-        Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        var objectResult = (ObjectResult)actual.Result!;
-        Assert.AreEqual(HealthController.Status533ServalDown, objectResult.StatusCode);
-        var value = (HealthCheckResponse)objectResult.Value!;
-        Assert.IsFalse(value.Serval.Up);
+        Assert.AreEqual(HealthCheckResponse.Down, value.StatusSummary);
     }
 
     [Test]
@@ -92,6 +76,9 @@ public class HealthCheckControllerTests
         var actual = await env.Controller.HealthCheckAsync(ApiKey);
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        var objectResult = (OkObjectResult)actual.Result!;
+        var value = (HealthCheckResponse)objectResult.Value!;
+        Assert.AreEqual(HealthCheckResponse.Healthy, value.StatusSummary);
     }
 
     private class TestEnvironment
@@ -104,8 +91,7 @@ public class HealthCheckControllerTests
             var authOptions = Options.Create(new AuthOptions { HealthCheckApiKey = ApiKey });
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             RealtimeService = Substitute.For<IRealtimeService>();
-            TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
-            Controller = new HealthController(authOptions, ExceptionHandler, RealtimeService, TranslationEnginesClient);
+            Controller = new HealthController(authOptions, ExceptionHandler, RealtimeService);
 
             // Set up a default project to return from Mongo
             RealtimeService
@@ -118,16 +104,10 @@ public class HealthCheckControllerTests
             document.IsLoaded.Returns(true);
             connection.Get<SFProject>(Project01).Returns(document);
             RealtimeService.ConnectAsync().Returns(Task.FromResult(connection));
-
-            // Set up a default translation engine to return from Serval
-            TranslationEnginesClient
-                .GetAllAsync()
-                .Returns(Task.FromResult<IList<TranslationEngine>>([new TranslationEngine()]));
         }
 
         public HealthController Controller { get; }
         public IExceptionHandler ExceptionHandler { get; }
         public IRealtimeService RealtimeService { get; }
-        public ITranslationEnginesClient TranslationEnginesClient { get; }
     }
 }
