@@ -3,21 +3,36 @@ import { Component, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslocoModule } from '@ngneat/transloco';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { of } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { DataLoadingComponent } from '../../../../xforge-common/data-loading-component';
+import { DialogService } from '../../../../xforge-common/dialog.service';
 import { I18nService } from '../../../../xforge-common/i18n.service';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { XForgeCommonModule } from '../../../../xforge-common/xforge-common.module';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 
 @Component({
   selector: 'app-draft-sources',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, XForgeCommonModule, MatRippleModule, MatCardModule, CommonModule],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    XForgeCommonModule,
+    MatRippleModule,
+    MatCardModule,
+    CommonModule,
+    TranslocoModule,
+    NoticeComponent,
+    MatCheckboxModule
+  ],
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
 })
@@ -31,6 +46,9 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   projects?: SelectableProject[];
   resources?: SelectableProject[];
+
+  languageCodesConfirmed = false;
+  changesMade = false;
 
   get loading(): boolean {
     return !this.isLoaded;
@@ -81,6 +99,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     private readonly paratextService: ParatextService,
     private readonly i18n: I18nService,
     private readonly draftSourcesService: DraftSourcesService,
+    private readonly dialogService: DialogService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -113,25 +132,54 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     return project == null ? '' : `${project.shortName} - ${project.name}`;
   }
 
-  sourceSelected(array: any, index: any, paratextId: any): void {
-    const selectedProject =
+  sourceSelected(array: any, index: any, paratextId: string | undefined): void {
+    const selectedProject: SelectableProject | undefined =
       this.projects?.find(p => p.paratextId === paratextId) ??
       this.resources?.find(r => r.paratextId === paratextId) ??
       null;
 
+    // The project select component will "select" the project we programmatically set, so prevent mistakenly indicating
+    // that the user made a change
+    if (selectedProject?.paratextId === array[index]?.paratextId) return;
+
+    this.changesMade = true;
+
     if (selectedProject != null) {
       array[index] = selectedProject;
+      this.languageCodesConfirmed = false;
     } else {
       array[index] = undefined;
     }
+  }
+
+  confirmationChanged(event: MatCheckboxChange): void {
+    this.languageCodesConfirmed = event.checked;
   }
 
   get allowAddingATrainingSource(): boolean {
     return this.trainingSources.length < 2 && this.trainingSources.every(s => s != null);
   }
 
+  async cancel(): Promise<void> {
+    const leavePage =
+      !this.changesMade ||
+      (await this.dialogService.confirm(
+        of('Are you sure you want leave the page with unsaved changes?'),
+        of('Leave & discard changes'),
+        of('Stay on page')
+      ));
+    if (leavePage) {
+      this.dialogService.message(of('Not implemented.'));
+    }
+  }
+
   save(): void {
-    this.noticeService.showError('Save is not implemented');
+    if (!this.languageCodesConfirmed) {
+      this.dialogService.message(of('Please confirm that the language codes are correct before saving.'));
+      return;
+    }
+
+    this.dialogService.message(of('Saving is not yet implemented.'));
 
     const sources: DraftSourcesAsArrays = {
       trainingSources: this.trainingSources,
