@@ -48,7 +48,7 @@ Vagrant.configure("2") do |config|
     git fetch
 
     cd ~/code/web-xforge/
-    sudo npm install --global npm@10.9
+    sudo npm install --global npm@10.9.2
 
     # Remove canary
     rm ~/Desktop/warning-not-provisioned.txt

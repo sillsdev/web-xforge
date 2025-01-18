@@ -27,6 +27,10 @@ except ImportError:
 FIELDS = ['cmd', 'command', 'start', 'end', 'delta', 'msg', 'stdout',
           'stderr', 'results']
 
+# Support Python 3.x
+import sys
+if sys.version_info[0] >= 3:
+    unicode = str
 
 class CallbackModule(CallbackBase):
     def human_log(self, data):
