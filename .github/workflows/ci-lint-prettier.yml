@@ -11,7 +11,7 @@ on:
 
 jobs:
   test:
-    name: check on Ubuntu Node.js
+    name: Lint and Prettier
     runs-on: ubuntu-latest
 
     strategy:
