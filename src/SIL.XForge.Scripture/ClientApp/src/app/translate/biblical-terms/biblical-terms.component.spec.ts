@@ -367,6 +367,7 @@ describe('BiblicalTermsComponent', () => {
     env.setupProjectData('en');
     env.wait();
 
+    // SUT
     env.biblicalTermsNotesButton.click();
     env.wait();
     env.mockNoteDialogRef.close({ status: NoteStatus.Resolved });
@@ -374,8 +375,55 @@ describe('BiblicalTermsComponent', () => {
 
     verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
     const noteThread: NoteThread = env.getNoteThreadDoc(projectId, 'threadId01').data!;
-    expect(noteThread.status).toEqual(NoteStatus.Resolved);
+    expect(noteThread.status).toBe(NoteStatus.Resolved);
     expect(noteThread.notes[1].content).toBeUndefined();
+    expect(noteThread.notes[1].status).toBe(NoteStatus.Resolved);
+  }));
+
+  it('can resolve and edit a note for a biblical term', fakeAsync(async () => {
+    const projectId = 'project01';
+    const newContent = 'Updated Note Content';
+    const env = new TestEnvironment(projectId, 1, 1);
+    env.setupProjectData('en');
+    env.wait();
+
+    // Make the note editable
+    const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc(projectId, 'threadId01');
+    await noteThreadDoc.submitJson0Op(op => op.set(nt => nt.notes[0].editable, true));
+
+    // SUT
+    env.biblicalTermsNotesButton.click();
+    env.wait();
+    env.mockNoteDialogRef.close({ status: NoteStatus.Resolved, noteContent: newContent, noteDataId: 'note01' });
+    env.wait();
+
+    verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+    const noteThread: NoteThread = env.getNoteThreadDoc(projectId, 'threadId01').data!;
+    expect(noteThread.status).toBe(NoteStatus.Resolved);
+    expect(noteThread.notes[0].content).toBe(newContent);
+    expect(noteThread.notes[0].status).toBe(NoteStatus.Resolved);
+  }));
+
+  it('cannot resolve a non-editable note for a biblical term', fakeAsync(() => {
+    const projectId = 'project01';
+    const env = new TestEnvironment(projectId, 1, 1);
+    env.setupProjectData('en');
+    env.wait();
+
+    // Stub the error message display
+    const dialogMessage = spyOn((env.component as any).dialogService, 'message').and.stub();
+
+    // SUT
+    env.biblicalTermsNotesButton.click();
+    env.wait();
+    env.mockNoteDialogRef.close({ status: NoteStatus.Resolved, noteDataId: 'note01' });
+    env.wait();
+
+    verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+    const noteThread: NoteThread = env.getNoteThreadDoc(projectId, 'threadId01').data!;
+    expect(noteThread.status).toEqual(NoteStatus.Todo);
+    expect(noteThread.notes.length).toBe(1);
+    expect(dialogMessage).toHaveBeenCalledTimes(1);
   }));
 
   it('should show the not found message if no messages were found', fakeAsync(() => {

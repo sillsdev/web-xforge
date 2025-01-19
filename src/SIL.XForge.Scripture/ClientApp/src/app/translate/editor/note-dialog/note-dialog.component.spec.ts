@@ -400,6 +400,27 @@ describe('NoteDialogComponent', () => {
     expect(env.dialogResult).toEqual({ noteContent: content, noteDataId: 'note05' });
   }));
 
+  it('allows user to resolve the last note in the thread', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(undefined, undefined, true) });
+    // note03 is marked as deleted
+    expect(env.notes.length).toEqual(4);
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('dataid01');
+    expect(noteThread.data!.notes[4].content).toEqual('note05');
+    const noteNumbers = [1, 2, 3];
+    noteNumbers.forEach(n => expect(env.noteHasEditActions(n)).toBe(false));
+    expect(env.noteHasEditActions(4)).toBe(true);
+    env.clickEditNote();
+    expect(env.noteInputElement).toBeTruthy();
+    expect(env.notes.length).toEqual(3);
+    noteNumbers.forEach(n => expect(env.noteHasEditActions(n)).toBe(false));
+    expect(env.component.currentNoteContent).toEqual('note05');
+    const content = 'note 05 edited content';
+    env.enterNoteContent(content);
+    env.selectResolveOption();
+    env.submit();
+    expect(env.dialogResult).toEqual({ noteContent: content, noteDataId: 'note05', status: NoteStatus.Resolved });
+  }));
+
   it('does not allow user to edit the last note in the thread if it is not editable', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     // note03 is marked as deleted
@@ -494,7 +515,7 @@ describe('NoteDialogComponent', () => {
     env.enterNoteContent(content);
     env.selectResolveOption();
     env.submit();
-    expect(env.dialogResult).toEqual({ status: NoteStatus.Resolved, noteContent: content });
+    expect(env.dialogResult).toEqual({ status: NoteStatus.Resolved, noteContent: content, noteDataId: undefined });
   }));
 
   it('allows changing save option', fakeAsync(() => {
