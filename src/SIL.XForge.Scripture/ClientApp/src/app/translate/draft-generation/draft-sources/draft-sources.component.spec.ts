@@ -94,11 +94,11 @@ describe('DraftSourcesComponent', () => {
 
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSource: undefined,
+        additionalTrainingSourceParatextId: undefined,
         alternateSourceEnabled: false,
-        alternateSource: undefined,
+        alternateSourceParatextId: undefined,
         alternateTrainingSourceEnabled: false,
-        alternateTrainingSource: undefined
+        alternateTrainingSourceParatextId: undefined
       });
     });
 
@@ -117,11 +117,11 @@ describe('DraftSourcesComponent', () => {
       );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSource: undefined,
+        additionalTrainingSourceParatextId: undefined,
         alternateSourceEnabled: false,
-        alternateSource: undefined,
+        alternateSourceParatextId: undefined,
         alternateTrainingSourceEnabled: true,
-        alternateTrainingSource: mockProject1
+        alternateTrainingSourceParatextId: mockProject1.paratextId
       });
     });
 
@@ -140,11 +140,11 @@ describe('DraftSourcesComponent', () => {
       );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: true,
-        additionalTrainingSource: mockProject2,
+        additionalTrainingSourceParatextId: mockProject2.paratextId,
         alternateSourceEnabled: false,
-        alternateSource: undefined,
+        alternateSourceParatextId: undefined,
         alternateTrainingSourceEnabled: true,
-        alternateTrainingSource: mockProject1
+        alternateTrainingSourceParatextId: mockProject1.paratextId
       });
     });
 
@@ -163,11 +163,11 @@ describe('DraftSourcesComponent', () => {
       );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSource: undefined,
+        additionalTrainingSourceParatextId: undefined,
         alternateSourceEnabled: true,
-        alternateSource: mockProject1,
+        alternateSourceParatextId: mockProject1.paratextId,
         alternateTrainingSourceEnabled: false,
-        alternateTrainingSource: undefined
+        alternateTrainingSourceParatextId: undefined
       });
     });
 
@@ -186,11 +186,11 @@ describe('DraftSourcesComponent', () => {
       );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: true,
-        additionalTrainingSource: mockProject2,
+        additionalTrainingSourceParatextId: mockProject2.paratextId,
         alternateSourceEnabled: true,
-        alternateSource: mockProject1,
+        alternateSourceParatextId: mockProject1.paratextId,
         alternateTrainingSourceEnabled: true,
-        alternateTrainingSource: mockProject1
+        alternateTrainingSourceParatextId: mockProject1.paratextId
       });
     });
 
@@ -226,11 +226,11 @@ describe('DraftSourcesComponent', () => {
       );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSource: undefined,
+        additionalTrainingSourceParatextId: undefined,
         alternateSourceEnabled: false,
-        alternateSource: undefined,
+        alternateSourceParatextId: undefined,
         alternateTrainingSourceEnabled: false,
-        alternateTrainingSource: undefined
+        alternateTrainingSourceParatextId: undefined
       });
     });
   });
