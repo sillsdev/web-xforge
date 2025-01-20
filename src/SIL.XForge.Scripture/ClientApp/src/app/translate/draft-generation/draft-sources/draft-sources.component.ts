@@ -233,11 +233,11 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
 export interface DraftSourcesConfig {
   additionalTrainingSourceEnabled: boolean;
-  additionalTrainingSource?: TranslateSource;
+  additionalTrainingSourceParatextId?: string;
   alternateSourceEnabled: boolean;
-  alternateSource?: TranslateSource;
+  alternateSourceParatextId?: string;
   alternateTrainingSourceEnabled: boolean;
-  alternateTrainingSource?: TranslateSource;
+  alternateTrainingSourceParatextId?: string;
 }
 
 /**
@@ -253,6 +253,8 @@ export interface DraftSourcesConfig {
  */
 function saveSources(
   trainingSources: [TranslateSource?, TranslateSource?],
+  /** It may not make sense for drafting to have no drafting source. But for specifying project settings, allow an empty
+   * setting for drafting source. */
   draftingSources: [TranslateSource?],
   trainingTargets: [TranslateSource],
   activatedProjectService: ActivatedProjectService
@@ -289,17 +291,17 @@ export function draftSourceArraysToDraftSourcesConfig(
     throw new Error('Training target must be the current project');
   }
 
-  const alternateTrainingSource: TranslateSource = trainingSources[0];
-  const additionalTrainingSource: TranslateSource = trainingSources[1];
-  const alternateSource: TranslateSource = draftingSources[0];
+  const alternateTrainingSource: TranslateSource | undefined = trainingSources[0];
+  const additionalTrainingSource: TranslateSource | undefined = trainingSources[1];
+  const alternateSource: TranslateSource | undefined = draftingSources[0];
 
   const config: DraftSourcesConfig = {
     additionalTrainingSourceEnabled: additionalTrainingSource != null,
-    additionalTrainingSource: additionalTrainingSource,
+    additionalTrainingSourceParatextId: additionalTrainingSource?.paratextId,
     alternateSourceEnabled: alternateSource != null,
-    alternateSource: alternateSource,
+    alternateSourceParatextId: alternateSource?.paratextId,
     alternateTrainingSourceEnabled: alternateTrainingSource != null,
-    alternateTrainingSource: alternateTrainingSource
+    alternateTrainingSourceParatextId: alternateTrainingSource?.paratextId
   };
   return config;
 }
