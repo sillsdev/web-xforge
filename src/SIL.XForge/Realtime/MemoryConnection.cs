@@ -11,6 +11,18 @@ namespace SIL.XForge.Realtime;
 
 public class MemoryConnection : IConnection
 {
+    /// <summary>
+    /// Gets a value of the last hour, for use with op generation.
+    /// </summary>
+    private readonly DateTime _thePreviousHour = new DateTime(
+        DateTime.UtcNow.Year,
+        DateTime.UtcNow.Month,
+        DateTime.UtcNow.Day,
+        DateTime.UtcNow.Hour,
+        0,
+        0,
+        DateTimeKind.Utc
+    );
     private readonly MemoryRealtimeService _realtimeService;
     private readonly Dictionary<(string, string), object> _documents;
 
@@ -111,24 +123,25 @@ public class MemoryConnection : IConnection
             {
                 new Op
                 {
-                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow.AddMinutes(-30) },
+                    Metadata = new OpMetadata { Timestamp = _thePreviousHour.AddMinutes(-30) },
                     Version = 1,
                 },
                 new Op
                 {
-                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow.AddMinutes(-10) },
+                    Metadata = new OpMetadata { Timestamp = _thePreviousHour.AddMinutes(-10) },
                     Version = 2,
                 },
                 new Op
                 {
-                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow.AddMinutes(-1) },
+                    // This op should be combined with the next
+                    Metadata = new OpMetadata { Timestamp = _thePreviousHour.AddMinutes(-1) },
                     Version = 3,
                 },
                 new Op
                 {
                     Metadata = new OpMetadata
                     {
-                        Timestamp = DateTime.UtcNow,
+                        Timestamp = _thePreviousHour,
                         UserId = "user01",
                         Source = OpSource.Draft,
                     },
