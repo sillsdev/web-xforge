@@ -1,4 +1,4 @@
-@use 'src/material-styles';
+@use 'src/styles';
 
 ::ng-deep .history-select-panel .mdc-list-item__primary-text {
   width: 100%;
@@ -29,5 +29,5 @@
 }
 
 .history-select {
-  @include material-styles.dense_mat_select();
+  @include styles.dense_mat_select();
 }
