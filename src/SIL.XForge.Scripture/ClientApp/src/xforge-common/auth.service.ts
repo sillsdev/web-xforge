@@ -75,6 +75,7 @@ interface LoginParams {
 
 interface xForgeAuth0Parameters extends AuthorizationParams {
   mode?: string;
+  logo?: string;
   login_hint?: string;
   language?: string;
   enablePasswordless?: boolean;
@@ -247,7 +248,8 @@ export class AuthService {
       ui_locales: language,
       enablePasswordless: true,
       language,
-      login_hint: ui_locales
+      login_hint: ui_locales,
+      logo: 'https://auth0.languagetechnology.org/assets/sf.svg'
     };
 
     if (signUp || this.isJoining) {
