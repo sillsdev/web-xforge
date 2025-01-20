@@ -63,7 +63,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   columnsToDisplay = ['category', 'type', 'name', 'id'];
   rows: Row[] = [];
 
-  trainingBooksByProject: ProjectAndRange[];
+  trainingBooksByProject: ProjectAndRange[] = [];
   trainingFiles: string[] = [];
   translationBooks: string[] = [];
 

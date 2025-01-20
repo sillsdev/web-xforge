@@ -939,6 +939,8 @@ describe('DraftGenerationComponent', () => {
                 {
                   name: 'source',
                   shortName: 'SRC',
+                  projectRef: 'source',
+                  paratextId: 'PT_SRC',
                   texts: [],
                   writingSystem: {
                     tag: 'es'
@@ -967,6 +969,8 @@ describe('DraftGenerationComponent', () => {
                 {
                   name: 'source',
                   shortName: 'SRC',
+                  projectRef: 'source',
+                  paratextId: 'PT_SRC',
                   texts: [],
                   writingSystem: {
                     tag: 'es'
