@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgressBarMode } from '@angular/material/progress-bar';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { BehaviorSubject, Observable, map, merge } from 'rxjs';
+import { BehaviorSubject, map, merge, Observable } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -42,7 +42,7 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   @Input() showSyncStatus: boolean = true;
   @Output() inProgress: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  syncPhase: SyncPhase;
+  syncPhase?: SyncPhase;
   phasePercentage: number = 0;
   syncProgress: number = 0;
   activeSyncProjectName: string = '';
@@ -147,12 +147,12 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     this.phasePercentage =
       progressState.syncProgress != null ? Math.round((progressState.syncProgress - this.syncProgress) * 100) : 0;
     if (projectId === this._projectDoc?.id) {
-      this.activeSyncProjectName = this._projectDoc.data.name;
+      this.activeSyncProjectName = this._projectDoc?.data?.name ?? '';
       this.progressPercent$.next(
         hasSourceProject ? 0.5 + progressState.progressValue * 0.5 : progressState.progressValue
       );
     } else if (hasSourceProject && projectId === this.sourceProjectDoc?.id) {
-      this.activeSyncProjectName = this.sourceProjectDoc.data.name;
+      this.activeSyncProjectName = this.sourceProjectDoc?.data?.name ?? '';
       this.progressPercent$.next(progressState.progressValue * 0.5);
     }
   }

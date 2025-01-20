@@ -62,6 +62,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   beforeEach(fakeAsync(() => {
     when(mockActivatedProjectService.projectId).thenReturn('project01');
+    when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(mockActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockProgressService.isLoaded$).thenReturn(of(true));
     when(mockProgressService.texts).thenReturn([
@@ -81,12 +82,14 @@ describe('DraftGenerationStepsComponent', () => {
       trainingSources: [
         {
           projectRef: 'sourceProject',
+          paratextId: 'PT_SP',
+          name: 'Source Project',
           shortName: 'sP',
           writingSystem: { tag: 'eng' },
           texts: allBooks.filter(b => b.bookNum !== 6)
         },
         undefined
-      ] as [DraftSource, DraftSource],
+      ] as [DraftSource, DraftSource?],
       trainingTargets: [
         {
           projectRef: mockActivatedProjectService.projectId,
@@ -107,6 +110,7 @@ describe('DraftGenerationStepsComponent', () => {
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       const mockTargetProjectDoc = {
+        id: 'project01',
         data: createTestProjectProfile({
           texts: allBooks,
           translateConfig: {
@@ -427,12 +431,14 @@ describe('DraftGenerationStepsComponent', () => {
       trainingSources: [
         {
           projectRef: 'source1',
+          paratextId: 'PT_SP1',
+          name: 'Source Project 1',
           shortName: 'sP1',
           writingSystem: { tag: 'eng' },
           texts: availableBooks.concat({ bookNum: 1 })
         },
         undefined
-      ] as [DraftSource, DraftSource],
+      ] as [DraftSource, DraftSource?],
       trainingTargets: [
         {
           projectRef: mockActivatedProjectService.projectId,
@@ -538,6 +544,7 @@ describe('DraftGenerationStepsComponent', () => {
     };
 
     const mockTargetProjectDoc = {
+      id: 'project01',
       data: createTestProjectProfile({
         texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }],
         translateConfig: {

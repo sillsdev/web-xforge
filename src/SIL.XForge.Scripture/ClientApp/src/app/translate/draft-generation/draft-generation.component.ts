@@ -432,7 +432,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       trainingScriptureRange: result.trainingScriptureRange,
       trainingScriptureRanges: result.trainingScriptureRanges,
       translationScriptureRange: result.translationScriptureRange,
-      translationScriptureRanges: result.translationScriptureRanges,
+      translationScriptureRanges: result.translationScriptureRanges || [],
       fastTraining: result.fastTraining
     });
   }
@@ -455,7 +455,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   isSyncing(): boolean {
-    return this.activatedProject.projectDoc.data.sync.queuedCount > 0;
+    return this.activatedProject.projectDoc?.data != null && this.activatedProject.projectDoc.data.sync.queuedCount > 0;
   }
 
   isDraftQueued(job?: BuildDto): boolean {

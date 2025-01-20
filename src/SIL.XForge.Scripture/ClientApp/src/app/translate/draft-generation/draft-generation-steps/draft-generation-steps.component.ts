@@ -1,11 +1,12 @@
 import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatStepper } from '@angular/material/stepper';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { merge, Subscription } from 'rxjs';
+import { combineLatest, merge, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -13,7 +14,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
@@ -65,7 +65,7 @@ interface TrainingPair {
     ConfirmSourcesComponent
   ]
 })
-export class DraftGenerationStepsComponent extends SubscriptionDisposable implements OnInit {
+export class DraftGenerationStepsComponent implements OnInit {
   @Output() readonly done = new EventEmitter<DraftGenerationStepsResult>();
   @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
@@ -115,135 +115,133 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService
-  ) {
-    super();
-  }
+  ) {}
 
   ngOnInit(): void {
-    this.subscribe(
-      this.draftSourcesService.getDraftProjectSources().pipe(
-        filter(({ trainingTargets, draftingSources }) => {
+    combineLatest([this.draftSourcesService.getDraftProjectSources(), this.activatedProject.projectId$])
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter(([{ trainingTargets, draftingSources }], projectId) => {
           this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
-          return trainingTargets[0] != null && draftingSources[0] != null;
-        })
-      ),
-      // Build book lists
-      async ({ trainingTargets, trainingSources, draftingSources }) => {
-        // The null values will have been filtered above
-        const target = trainingTargets[0]!;
-        const draftingSource = draftingSources[0]!;
-        // If both source and target project languages are in the NLLB,
-        // training book selection is optional (and discouraged).
-        this.isTrainingOptional =
-          (await this.nllbLanguageService.isNllbLanguageAsync(target.writingSystem.tag)) &&
-          (await this.nllbLanguageService.isNllbLanguageAsync(draftingSource.writingSystem.tag));
-
-        this.trainingSources = trainingSources.filter(s => s !== undefined) ?? [];
-        this.trainingTargets = trainingTargets.filter(t => t !== undefined) ?? [];
-
-        const draftingSourceBooks = new Set<number>();
-        for (const text of draftingSource.texts) {
-          draftingSourceBooks.add(text.bookNum);
-        }
-
-        let trainingSourceBooks: Set<number> = new Set<number>(trainingSources[0]?.texts.map(t => t.bookNum));
-        let additionalTrainingSourceBooks: Set<number> = new Set<number>(trainingSources[1]?.texts.map(t => t.bookNum));
-
-        this.availableTranslateBooks = [];
-        this.availableTrainingBooks[this.activatedProject.projectId] = [];
-        for (const source of this.trainingSources) {
-          this.availableTrainingBooks[source?.projectRef] = [];
-        }
-
-        // If book exists in both target and source, add to available books.
-        // Otherwise, add to unusable books.
-        // Ensure books are displayed in ascending canonical order.
-        const targetBooks = new Set<number>();
-        for (const text of target.texts.slice().sort((a, b) => a.bookNum - b.bookNum)) {
-          const bookNum = text.bookNum;
-          targetBooks.add(bookNum);
-
-          // Exclude non-canonical books
-          if (Canon.isExtraMaterial(bookNum)) {
-            continue;
-          }
-
-          // Translate books
-          if (draftingSourceBooks.has(bookNum)) {
-            this.availableTranslateBooks.push({ number: bookNum, selected: false });
-          } else {
-            this.unusableTranslateSourceBooks.push(bookNum);
-          }
-
-          // Training books
-          let isPresentInASource = false;
-          if (trainingSourceBooks.has(bookNum)) {
-            this.availableTrainingBooks[trainingSources[0].projectRef].push({ number: bookNum, selected: false });
-            isPresentInASource = true;
-          } else {
-            this.unusableTrainingSourceBooks.push(bookNum);
-          }
-          if (additionalTrainingSourceBooks != null && additionalTrainingSourceBooks.has(bookNum)) {
-            this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: false });
-            isPresentInASource = true;
-          }
-          if (isPresentInASource) {
-            this.availableTrainingBooks[this.activatedProject.projectId].push({ number: bookNum, selected: false });
-          }
-        }
-
-        this.setInitialTrainingBooks();
-        this.setInitialTranslateBooks();
-
-        // Store the books that are not in the target
-        this.unusableTrainingTargetBooks = [...trainingSourceBooks].filter(
-          bookNum => !targetBooks.has(bookNum) && Canon.isCanonical(bookNum)
-        );
-        this.unusableTranslateTargetBooks = [...draftingSourceBooks].filter(
-          bookNum => !targetBooks.has(bookNum) && Canon.isCanonical(bookNum)
-        );
-
-        this.hasLoaded = true;
-      }
-    );
-
-    // Get the training data files for the project
-    this.subscribe(
-      this.activatedProject.projectDoc$.pipe(
-        filterNullish(),
-        tap(async projectDoc => {
-          // Query for all training data files in the project
-          this.trainingDataQuery?.dispose();
-          this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(
-            projectDoc.id,
-            this.destroyRef
-          );
-          let projectChanged: boolean = true;
-
-          // Subscribe to this query, and show these
-          this.trainingDataSub?.unsubscribe();
-          this.trainingDataSub = this.subscribe(
-            merge(
-              this.trainingDataQuery.localChanges$,
-              this.trainingDataQuery.ready$,
-              this.trainingDataQuery.remoteChanges$,
-              this.trainingDataQuery.remoteDocChanges$
-            ),
-            () => {
-              this.availableTrainingFiles = [];
-              if (projectDoc.data?.translateConfig.draftConfig.additionalTrainingData) {
-                this.availableTrainingFiles =
-                  this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
-              }
-              if (projectChanged) {
-                // Set the selection based on previous builds
-                projectChanged = false;
-                this.setInitialTrainingDataFiles(this.availableTrainingFiles.map(d => d.dataId));
-              }
-            }
-          );
+          return trainingTargets[0] != null && draftingSources[0] != null && projectId != null;
         })
       )
+      .subscribe(
+        // Build book lists
+        async ([{ trainingTargets, trainingSources, draftingSources }, projectId]) => {
+          // The null values will have been filtered above
+          const target = trainingTargets[0]!;
+          const draftingSource = draftingSources[0]!;
+          // If both source and target project languages are in the NLLB,
+          // training book selection is optional (and discouraged).
+          this.isTrainingOptional =
+            (await this.nllbLanguageService.isNllbLanguageAsync(target.writingSystem.tag)) &&
+            (await this.nllbLanguageService.isNllbLanguageAsync(draftingSource.writingSystem.tag));
+
+          this.trainingSources = trainingSources.filter(s => s !== undefined) ?? [];
+          this.trainingTargets = trainingTargets.filter(t => t !== undefined) ?? [];
+
+          const draftingSourceBooks = new Set<number>();
+          for (const text of draftingSource.texts) {
+            draftingSourceBooks.add(text.bookNum);
+          }
+
+          let trainingSourceBooks: Set<number> = new Set<number>(trainingSources[0]?.texts.map(t => t.bookNum));
+          let additionalTrainingSourceBooks: Set<number> = new Set<number>(
+            trainingSources[1]?.texts.map(t => t.bookNum)
+          );
+
+          this.availableTranslateBooks = [];
+          this.availableTrainingBooks[projectId!] = [];
+          for (const source of this.trainingSources) {
+            this.availableTrainingBooks[source?.projectRef] = [];
+          }
+
+          // If book exists in both target and source, add to available books.
+          // Otherwise, add to unusable books.
+          // Ensure books are displayed in ascending canonical order.
+          const targetBooks = new Set<number>();
+          for (const text of target.texts.slice().sort((a, b) => a.bookNum - b.bookNum)) {
+            const bookNum = text.bookNum;
+            targetBooks.add(bookNum);
+
+            // Exclude non-canonical books
+            if (Canon.isExtraMaterial(bookNum)) {
+              continue;
+            }
+
+            // Translate books
+            if (draftingSourceBooks.has(bookNum)) {
+              this.availableTranslateBooks.push({ number: bookNum, selected: false });
+            } else {
+              this.unusableTranslateSourceBooks.push(bookNum);
+            }
+
+            // Training books
+            let isPresentInASource = false;
+            if (trainingSourceBooks.has(bookNum)) {
+              this.availableTrainingBooks[trainingSources[0]!.projectRef].push({ number: bookNum, selected: false });
+              isPresentInASource = true;
+            } else {
+              this.unusableTrainingSourceBooks.push(bookNum);
+            }
+            if (trainingSources[1] != null && additionalTrainingSourceBooks.has(bookNum)) {
+              this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: false });
+              isPresentInASource = true;
+            }
+            if (isPresentInASource) {
+              this.availableTrainingBooks[projectId!].push({ number: bookNum, selected: false });
+            }
+          }
+
+          this.setInitialTrainingBooks(projectId!);
+          this.setInitialTranslateBooks();
+
+          // Store the books that are not in the target
+          this.unusableTrainingTargetBooks = [...trainingSourceBooks].filter(
+            bookNum => !targetBooks.has(bookNum) && Canon.isCanonical(bookNum)
+          );
+          this.unusableTranslateTargetBooks = [...draftingSourceBooks].filter(
+            bookNum => !targetBooks.has(bookNum) && Canon.isCanonical(bookNum)
+          );
+
+          this.hasLoaded = true;
+        }
+      );
+
+    // Get the training data files for the project
+
+    this.activatedProject.projectDoc$.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      filterNullish(),
+      tap(async projectDoc => {
+        // Query for all training data files in the project
+        this.trainingDataQuery?.dispose();
+        this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id, this.destroyRef);
+        let projectChanged: boolean = true;
+
+        // Subscribe to this query, and show these
+        this.trainingDataSub?.unsubscribe();
+        this.trainingDataSub = merge(
+          this.trainingDataQuery.localChanges$,
+          this.trainingDataQuery.ready$,
+          this.trainingDataQuery.remoteChanges$,
+          this.trainingDataQuery.remoteDocChanges$
+        )
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            this.availableTrainingFiles = [];
+            if (projectDoc.data?.translateConfig.draftConfig.additionalTrainingData) {
+              this.availableTrainingFiles =
+                this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
+            }
+            if (projectChanged) {
+              // Set the selection based on previous builds
+              projectChanged = false;
+              this.setInitialTrainingDataFiles(this.availableTrainingFiles.map(d => d.dataId));
+            }
+          });
+      })
     );
   }
 
@@ -260,7 +258,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     return this.trainingSources[0]?.shortName ?? '';
   }
 
-  private _booksToTranslate: Book[];
+  private _booksToTranslate?: Book[];
   booksToTranslate(): Book[] {
     const value = this.availableTranslateBooks?.filter(b => b.selected) ?? [];
     if (this._booksToTranslate?.toString() !== value?.toString()) {
@@ -277,7 +275,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     const contiguousGroups: TrainingGroup[] = [];
     for (const projectRef in this.availableTrainingBooks) {
       if (projectRef === this.activatedProject.projectId) continue; //target would be a duplicate here
-      const sourceShortName = this.trainingSources.find(s => s.projectRef === projectRef).shortName;
+      const sourceShortName = this.trainingSources.find(s => s.projectRef === projectRef)!.shortName;
 
       let currentGroup: Book[] = [];
       for (const book of this.availableTrainingBooks[projectRef].filter(b => b.selected)) {
@@ -326,7 +324,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   private _selectableTrainingBooks: { [projectRef: string]: Book[] } = {};
-  selectableTrainingBooksByProj(projectRef: string): Book[] {
+  selectableTrainingBooksByProj(projectRef?: string): Book[] {
+    if (this.activatedProject.projectId == null || projectRef == null) return [];
     //start with the books in source and target
     const booksInTargetAndSource = this.availableTrainingBooks[projectRef] ?? [];
     //filter out selected books to draft
@@ -343,7 +342,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       value = booksNotBeingTranslated.filter(b => translatedBooks.find(x => x.number === b.number));
     }
 
-    if (this._selectableTrainingBooks[projectRef]?.toString() !== value?.toString()) {
+    if (this._selectableTrainingBooks[projectRef]?.toString() !== value.toString()) {
       this._selectableTrainingBooks[projectRef] = value;
     }
 
@@ -351,7 +350,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   private _selectedTrainingBooks: { [projectRef: string]: Book[] } = {};
-  selectedTrainingBooksByProj(projectRef: string): Book[] {
+  selectedTrainingBooksByProj(projectRef?: string): Book[] {
+    if (projectRef == null) return [];
     const value = this.availableTrainingBooks[projectRef]?.filter(b => b.selected) ?? [];
     if (this._selectedTrainingBooks[projectRef]?.toString() !== value?.toString()) {
       this._selectedTrainingBooks[projectRef] = value;
@@ -361,6 +361,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   onTranslatedBookSelect(selectedBooks: number[]): void {
+    if (this.activatedProject.projectId == null) return;
     //update selections in translated books
     for (const book of this.availableTrainingBooks[this.activatedProject.projectId]) {
       book.selected = selectedBooks.includes(book.number);
@@ -472,7 +473,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     }
   }
 
-  private setInitialTrainingBooks(): void {
+  private setInitialTrainingBooks(targetProjectId: string): void {
     // Get the previously selected training books from the target project
     const previousTraining =
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingScriptureRanges ?? [];
@@ -494,9 +495,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
             sourceBook.selected = true;
           }
           //select in the target
-          const targetBook = this.availableTrainingBooks[this.activatedProject.projectId].find(
-            b => b.number === bookNum
-          );
+          const targetBook = this.availableTrainingBooks[targetProjectId].find(b => b.number === bookNum);
           if (targetBook !== undefined) {
             targetBook.selected = true;
           }

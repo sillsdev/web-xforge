@@ -44,8 +44,8 @@ export class ConfirmSourcesComponent implements OnInit {
     this.languageCodesVerified.emit(change.checked);
   }
 
-  displayNameForProjectsLanguages(projects: (TranslateSource | SFProjectProfile)[]): string {
-    const uniqueTags = Array.from(new Set(projects.map(p => p.writingSystem.tag)));
+  displayNameForProjectsLanguages(projects: (TranslateSource | SFProjectProfile | undefined)[]): string {
+    const uniqueTags = Array.from(new Set(projects.filter(p => p != null).map(p => p.writingSystem.tag)));
     const displayNames = uniqueTags.map(tag => this.i18nService.getLanguageDisplayName(tag) ?? tag);
     return this.i18nService.enumerateList(displayNames);
   }
@@ -63,6 +63,6 @@ export class ConfirmSourcesComponent implements OnInit {
   }
 
   get draftingSourceShortNames(): string {
-    return this.i18nService.enumerateList(this.draftingSources.map(p => p.shortName));
+    return this.i18nService.enumerateList(this.draftingSources.filter(p => p != null).map(p => p.shortName));
   }
 }

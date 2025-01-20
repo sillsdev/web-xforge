@@ -2,7 +2,7 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { cloneDeep } from 'lodash-es';
 import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserService } from 'xforge-common/user.service';
@@ -50,7 +50,7 @@ describe('EditorTabPersistenceService', () => {
   it('should not return invalid persisted tabs', fakeAsync(() => {
     const tabs = [{ tabType: 'invalid' }, { tabType: 'biblical-terms' }] as unknown as EditorTabPersistData[];
     const env = new TestEnvironment(tabs);
-    let persistedTabs = [];
+    let persistedTabs: EditorTabPersistData[] = [];
     env.service.persistedTabs$.subscribe(tabs => {
       persistedTabs = tabs;
     });

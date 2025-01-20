@@ -2,7 +2,7 @@ import { NgZone } from '@angular/core';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -126,7 +126,7 @@ class TestEnvironment {
   createTexts(): TextInfo[] {
     const texts: TextInfo[] = [];
     for (let book = 0; book < 200; book++) {
-      const chapters = [];
+      const chapters: Chapter[] = [];
       for (let chapter = 0; chapter < 100; chapter++) {
         chapters.push({ isValid: true, lastVerse: 1, number: chapter, permissions: {}, hasAudio: false });
       }

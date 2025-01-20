@@ -1008,12 +1008,15 @@ describe('SettingsComponent', () => {
 
       it('should show Translation Suggestions when Based On is set', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            translationSuggestionsEnabled: false,
-            source: null
-          }
-        });
+        env.setupProject(
+          {
+            translateConfig: {
+              translationSuggestionsEnabled: false,
+              source: undefined
+            }
+          },
+          true
+        );
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
         expect(env.basedOnSelectValue).toEqual('');
@@ -1102,12 +1105,14 @@ describe('SettingsComponent', () => {
 
       it('Translation Suggestions should remain unchanged when Based On is changed', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            translationSuggestionsEnabled: false,
-            source: null
-          }
-        });
+        env.setupProject(
+          {
+            translateConfig: {
+              translationSuggestionsEnabled: false
+            }
+          },
+          true
+        );
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
         expect(env.basedOnSelectValue).toEqual('');
@@ -1949,10 +1954,13 @@ class TestEnvironment {
     }
   });
 
-  setupProject(data: RecursivePartial<SFProject> = {}): void {
+  setupProject(data: RecursivePartial<SFProject> = {}, noSource = false): void {
     const projectData = cloneDeep(this.testProject);
     if (data.translateConfig != null) {
       projectData.translateConfig = merge(projectData.translateConfig, data.translateConfig);
+      if (noSource) {
+        projectData.translateConfig.source = undefined;
+      }
     }
     if (data.checkingConfig != null) {
       projectData.checkingConfig = merge(projectData.checkingConfig, data.checkingConfig);
@@ -1964,7 +1972,11 @@ class TestEnvironment {
       projectData.sync = merge(projectData.sync, data.sync);
     }
     if (data.rolePermissions != null) {
-      projectData.rolePermissions = data.rolePermissions;
+      const rolePermissions: { [key: string]: string[] } = {};
+      for (const [role, permissions] of Object.entries(data.rolePermissions)) {
+        rolePermissions[role] = permissions?.filter(p => p != null) ?? [];
+      }
+      projectData.rolePermissions = rolePermissions;
     }
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',

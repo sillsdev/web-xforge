@@ -372,7 +372,7 @@ describe('ServalProjectComponent', () => {
     }
 
     getTrainingSourceBookNames(node: HTMLElement): string {
-      return node.querySelector('.training-source-range').textContent;
+      return node.querySelector('.training-source-range')?.textContent ?? '';
     }
   }
 });

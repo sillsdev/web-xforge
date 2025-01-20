@@ -19,7 +19,7 @@ import { compareProjectsForSorting, projectLabel } from '../shared/utils';
 interface ConnectProjectFormValues {
   settings: {
     checking: boolean;
-    sourceParatextId: string;
+    sourceParatextId: string | null;
   };
 }
 
@@ -133,7 +133,12 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     if (!this.connectProjectForm.valid || this.projectsFromParatext == null) {
       return;
     }
-    const values = this.connectProjectForm.value as ConnectProjectFormValues;
+    const values: ConnectProjectFormValues = {
+      settings: {
+        checking: !!this.connectProjectForm.value.settings?.checking,
+        sourceParatextId: this.connectProjectForm.value.settings?.sourceParatextId ?? null
+      }
+    };
     this.state = 'connecting';
     const settings: SFProjectCreateSettings = {
       paratextId: this.ptProjectId,

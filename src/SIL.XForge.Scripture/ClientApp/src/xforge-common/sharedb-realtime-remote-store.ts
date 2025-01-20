@@ -291,7 +291,7 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
    * pending ops to IndexedDB so they can be sent to the server when the connection is restored.
    */
   get pendingOps(): any[] {
-    let pendingOps = [];
+    let pendingOps: any[] = [];
     if (this.doc.hasWritePending()) {
       pendingOps = this.doc.pendingOps.slice();
 

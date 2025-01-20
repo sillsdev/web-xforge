@@ -59,6 +59,7 @@ describe('DraftSourcesService', () => {
         translateConfig: {
           source: {
             projectRef: 'source_project',
+            paratextId: 'PT_SP',
             name: 'Source Project',
             shortName: 'SP',
             writingSystem: {
@@ -68,6 +69,7 @@ describe('DraftSourcesService', () => {
           draftConfig: {
             alternateSource: {
               projectRef: 'alternate_source_project',
+              paratextId: 'PT_ASP',
               name: 'Alternate Source Project',
               shortName: 'ASP',
               writingSystem: {
@@ -76,6 +78,7 @@ describe('DraftSourcesService', () => {
             },
             alternateTrainingSource: {
               projectRef: 'alternate_training_source_project',
+              paratextId: 'PT_ATSP',
               name: 'Alternate Training Source Project',
               shortName: 'ATSP',
               writingSystem: {
@@ -86,6 +89,7 @@ describe('DraftSourcesService', () => {
             alternateTrainingSourceEnabled: true,
             additionalTrainingSource: {
               projectRef: 'additional_training_source_project',
+              paratextId: 'PT_ADSP',
               name: 'Additional Training Source Project',
               shortName: 'ADSP',
               writingSystem: {
@@ -98,6 +102,7 @@ describe('DraftSourcesService', () => {
       });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
+          id: 'project01',
           data: targetProject
         } as SFProjectProfileDoc)
       );
@@ -110,7 +115,7 @@ describe('DraftSourcesService', () => {
               name: 'Alternate Source Project',
               projectRef: 'alternate_source_project',
               shortName: 'ASP',
-              paratextId: undefined,
+              paratextId: 'PT_ASP',
               texts: [],
               writingSystem: {
                 tag: 'en_NZ'
@@ -123,7 +128,7 @@ describe('DraftSourcesService', () => {
               name: 'Alternate Training Source Project',
               projectRef: 'alternate_training_source_project',
               shortName: 'ATSP',
-              paratextId: undefined,
+              paratextId: 'PT_ATSP',
               texts: [],
               writingSystem: {
                 tag: 'en_AU'
@@ -134,7 +139,7 @@ describe('DraftSourcesService', () => {
               name: 'Additional Training Source Project',
               projectRef: 'additional_training_source_project',
               shortName: 'ADSP',
-              paratextId: undefined,
+              paratextId: 'PT_ADSP',
               texts: [],
               writingSystem: {
                 tag: 'en_UK'
@@ -203,6 +208,7 @@ describe('DraftSourcesService', () => {
       });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
+          id: 'project01',
           data: targetProject
         } as SFProjectProfileDoc)
       );
@@ -267,6 +273,7 @@ describe('DraftSourcesService', () => {
       });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
+          id: 'project01',
           data: targetProject
         } as SFProjectProfileDoc)
       );
@@ -287,6 +294,7 @@ describe('DraftSourcesService', () => {
       });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
+          id: 'project01',
           data: targetProject
         } as SFProjectProfileDoc)
       );
@@ -315,6 +323,7 @@ describe('DraftSourcesService', () => {
       });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
+          id: 'project01',
           data: targetProject
         } as SFProjectProfileDoc)
       );
@@ -335,6 +344,7 @@ describe('DraftSourcesService', () => {
       });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
+          id: 'project01',
           data: targetProject
         } as SFProjectProfileDoc)
       );
@@ -363,6 +373,7 @@ describe('DraftSourcesService', () => {
       });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
+          id: 'project01',
           data: targetProject
         } as SFProjectProfileDoc)
       );
@@ -383,6 +394,7 @@ describe('DraftSourcesService', () => {
       });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
+          id: 'project01',
           data: targetProject
         } as SFProjectProfileDoc)
       );

@@ -97,12 +97,14 @@ export class ShareControlComponent extends ShareBaseComponent {
     }
 
     return (
+      this.projectDoc?.data != null &&
       SF_PROJECT_RIGHTS.hasRight(
         this.projectDoc.data,
         this.userService.currentUserId,
         SFProjectDomain.UserInvites,
         Operation.Create
-      ) && this.userShareableRoles.includes(this.shareRole)
+      ) &&
+      this.userShareableRoles.includes(this.shareRole)
     );
   }
 

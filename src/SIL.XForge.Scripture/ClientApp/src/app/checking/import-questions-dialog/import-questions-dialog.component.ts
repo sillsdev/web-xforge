@@ -477,9 +477,10 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       ImportQuestionsConfirmationDialogComponent,
       data
     ) as MatDialogRef<ImportQuestionsConfirmationDialogComponent, ImportQuestionsConfirmationDialogResult>;
-    (await lastValueFrom(dialogRef.afterClosed())).forEach(
-      (checked, index) => (changesToConfirm[index].checked = checked)
-    );
+    const result: ImportQuestionsConfirmationDialogResult | undefined = await lastValueFrom(dialogRef.afterClosed());
+    if (result != null) {
+      result.forEach((checked, index) => (changesToConfirm[index].checked = checked));
+    }
     this.updateSelectAllCheckbox();
   }
 

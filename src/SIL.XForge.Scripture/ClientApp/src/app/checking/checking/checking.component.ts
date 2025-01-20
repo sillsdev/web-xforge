@@ -301,7 +301,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   get canShare(): boolean {
     return (
-      this.projectDoc != null &&
+      this.projectDoc?.data != null &&
       SF_PROJECT_RIGHTS.hasRight(
         this.projectDoc.data,
         this.userService.currentUserId,
@@ -600,7 +600,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             routeProjectId !== prevProjectId ||
             routeScope !== prevScope ||
             (routeScope !== 'all' && routeBookNum !== prevBookNum) ||
-            (routeScope === 'chapter' && parseInt(routeChapter) !== prevChapterNum)
+            (routeScope === 'chapter' && (routeChapter == null ? undefined : parseInt(routeChapter)) !== prevChapterNum)
           ) {
             this.cleanup();
 
