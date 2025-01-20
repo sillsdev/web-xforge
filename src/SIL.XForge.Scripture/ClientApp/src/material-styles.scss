@@ -1,161 +1,242 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
-@use 'sass:color';
-@use 'variables' as *;
-@use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
 
-@include mat.all-component-typographies();
-@include mat.core();
-
-$mat-sf-purple: (
-  200: $purpleLight,
-  500: $purpleMedium,
-  800: $purpleDark,
-  contrast: (
-    200: rgba(black, 0.87),
-    500: white,
-    800: white
-  )
-);
-
-$mat-sf-grey: (
-  100: color.scale($greyLight, $lightness: 10%),
-  200: $greyLight,
-  300: color.scale($greyLight, $lightness: -10%),
-  400: color.scale($greyDark, $lightness: 30%),
-  500: color.scale($greyDark, $lightness: 20%),
-  600: color.scale($greyDark, $lightness: 10%),
-  700: color.scale($greyDark, $lightness: 5%),
-  800: $greyDark,
-  900: color.scale($greyDark, $lightness: -5%),
-  contrast: (
-    200: rgba(black, 0.87),
-    800: white
-  )
-);
-
-$mat-sf-green: (
-  200: #dcedc8,
-  300: color.scale($greenLight, $lightness: 30%),
-  400: color.scale($greenLight, $lightness: 15%),
-  500: $greenLight,
-  600: color.scale($greenDark, $lightness: 20%),
-  700: color.scale($greenDark, $lightness: 10%),
-  800: $greenDark,
-  900: color.scale($greenDark, $lightness: -5%),
-  contrast: (
-    200: rgba(black, 0.87),
-    500: rgba(black, 0.87),
-    800: white
-  )
-);
-
-$mat-sf-blue: (
-  500: $blueMedium,
-  contrast: (
-    500: white
-  )
-);
-
-$mat-sf-orange: (
-  500: $orange,
-  contrast: (
-    500: white
-  )
-);
-
-$mat-sf-error: (
-  100: $errorColor,
-  500: $errorColor,
-  700: $errorColor,
-  contrast: (
-    100: white,
-    500: white,
-    700: white
-  )
-);
+@function get-palette-color($type, $shade: 50) {
+  $color-palette: map.get($_palettes, $type);
+  @if $color-palette {
+    $color-value: map.get($color-palette, $shade);
+    @if $color-value {
+      @return $color-value;
+    } @else {
+      @error "Shade `#{$shade}` not found in `#{$type}` palette.";
+    }
+  } @else {
+    @error "Color type `#{$type}` not found.";
+  }
+}
 
 // Styles for angular material components. Refer to https://material.angular.io/guide/theming
-$matGreyPalette: mat.m2-define-palette($mat-sf-grey, 800);
-$matGreenLightPalette: mat.m2-define-palette($mat-sf-green, 500, 200);
-$matErrorPalette: mat.m2-define-palette($mat-sf-error, 500);
-
-$app-typography: mat.m2-define-typography-config(
-  $body-1: mat.m2-define-typography-level(16px, 1.2em)
-);
-
-$dialog-typography: mat.m2-define-typography-config(
-  $body-1: mat.m2-define-typography-level(14px, 1.5em)
-);
-
-$material-app-theme: mat.m2-define-light-theme(
-  (
-    color: (
-      primary: $matGreyPalette,
-      accent: $matGreenLightPalette,
-      warn: $matErrorPalette
-    ),
-    typography: $app-typography
+// Note: Color palettes are generated from primary: #343A31, secondary: #B8D432, tertiary: #A065E3, neutral: #ffffff
+$_palettes: (
+  primary: (
+    0: #000000,
+    10: #171d15,
+    20: #2c3229,
+    25: #373d34,
+    30: #42493f,
+    35: #4e544a,
+    40: #5a6056,
+    50: #73796e,
+    60: #8c9387,
+    70: #a7ada1,
+    80: #c2c8bc,
+    90: #dfe4d7,
+    95: #edf3e5,
+    98: #f6fbee,
+    99: #f8fef1,
+    100: #ffffff
+  ),
+  secondary: (
+    0: #000000,
+    10: #181e00,
+    20: #2b3400,
+    25: #354000,
+    30: #404c00,
+    35: #4a5800,
+    40: #556500,
+    50: #6c7f00,
+    60: #839a00,
+    70: #9cb709,
+    80: #b7d331,
+    90: #d2f04d,
+    95: #e0fe5a,
+    98: #f5ffc3,
+    99: #fcffde,
+    100: #ffffff
+  ),
+  tertiary: (
+    0: #000000,
+    10: #2b0053,
+    20: #470083,
+    25: #550d96,
+    30: #6121a2,
+    35: #6d30ae,
+    40: #7a3fbc,
+    50: #9459d7,
+    60: #af74f3,
+    70: #c795ff,
+    80: #dbb8ff,
+    90: #efdbff,
+    95: #f9edff,
+    98: #fff7ff,
+    99: #fffbff,
+    100: #ffffff
+  ),
+  neutral: (
+    0: #000000,
+    4: #0a0b0b,
+    6: #101111,
+    10: #1a1c1c,
+    12: #1e2020,
+    17: #292b2b,
+    20: #2f3131,
+    22: #333535,
+    24: #383a3a,
+    25: #3a3c3c,
+    30: #454747,
+    35: #515353,
+    40: #5d5f5f,
+    50: #767777,
+    60: #909191,
+    70: #aaabab,
+    80: #c6c6c7,
+    87: #dadada,
+    90: #e2e2e2,
+    92: #e8e8e8,
+    94: #edeeee,
+    95: #f0f1f1,
+    96: #f3f4f4,
+    98: #f9f9f9,
+    99: #fcfcfc,
+    100: #ffffff
+  ),
+  neutral-variant: (
+    0: #000000,
+    10: #191c18,
+    20: #2e312c,
+    25: #393c37,
+    30: #454842,
+    35: #50534d,
+    40: #5c5f59,
+    50: #757871,
+    60: #8f928b,
+    70: #aaaca5,
+    80: #c5c7c0,
+    90: #e1e3db,
+    95: #f0f2e9,
+    98: #f8faf2,
+    99: #fbfdf5,
+    100: #ffffff
+  ),
+  error: (
+    0: #000000,
+    10: #410002,
+    20: #690005,
+    25: #7e0007,
+    30: #93000a,
+    35: #a80710,
+    40: #ba1a1a,
+    50: #de3730,
+    60: #ff5449,
+    70: #ff897d,
+    80: #ffb4ab,
+    90: #ffdad6,
+    95: #ffedea,
+    98: #fff8f7,
+    99: #fffbff,
+    100: #ffffff
   )
 );
 
-// A Material input uses the accent color for the asterisk, but light green is an odd color to use there.
-// This theme uses the error color for accent and can be applied only where needed.
-$material-theme-accent-error: mat.m2-define-light-theme(
+$_rest: (
+  secondary: map.get($_palettes, secondary),
+  neutral: map.get($_palettes, neutral),
+  neutral-variant: map.get($_palettes, neutral-variant),
+  error: map.get($_palettes, error)
+);
+$_primary: map.merge(map.get($_palettes, primary), $_rest);
+$_tertiary: map.merge(map.get($_palettes, tertiary), $_rest);
+
+$light-theme: mat.define-theme(
   (
     color: (
-      primary: $matGreyPalette,
-      accent: $matErrorPalette,
-      warn: $matErrorPalette
+      theme-type: light,
+      primary: $_primary,
+      tertiary: $_tertiary
+    )
+  )
+);
+$dark-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: $_primary,
+      tertiary: $_tertiary
     )
   )
 );
 
-@include mat.core-theme($material-app-theme);
-@include mat.autocomplete-theme($material-app-theme);
-@include mat.badge-theme($material-app-theme);
-@include mat.bottom-sheet-theme($material-app-theme);
-@include mat.icon-button-theme($material-app-theme);
-@include mat.button-theme($material-app-theme);
-@include mat.button-toggle-theme($material-app-theme);
-@include mat.icon-button-density(-2);
-@include mat.card-theme($material-app-theme);
-@include mat.checkbox-theme($material-app-theme);
-@include mat.chips-theme($material-app-theme);
-@include mat.dialog-theme($material-app-theme);
-@include mat.dialog-typography($dialog-typography);
-@include mat.divider-theme($material-app-theme);
-@include mat.expansion-theme($material-app-theme);
-@include mat.fab-theme($material-app-theme);
-@include mat.form-field-theme($material-theme-accent-error);
-@include mat.icon-theme($material-app-theme);
-@include mat.input-theme($material-app-theme);
-@include mat.list-theme($material-app-theme);
-@include mat.menu-theme($material-app-theme);
-@include mat.paginator-theme($material-app-theme);
-@include mat.progress-bar-theme($material-app-theme);
-@include mat.progress-spinner-theme($material-app-theme);
-@include mat.radio-theme($material-app-theme);
-@include mat.select-theme($material-app-theme);
-@include mat.sidenav-theme($material-app-theme);
-@include mat.slide-toggle-theme($material-app-theme);
-@include mat.slider-theme($material-app-theme);
-@include mat.snack-bar-theme($material-app-theme);
-@include mat.stepper-theme($material-app-theme);
-@include mat.table-theme($material-app-theme);
-@include mat.tabs-theme($material-app-theme);
-@include mat.toolbar-theme($material-app-theme);
-@include mat.tooltip-theme($material-app-theme);
-@include mat.option-theme($material-app-theme);
+html {
+  @include mat.core();
+  @include mat.all-component-themes($light-theme);
+  @include mat.system-level-colors($light-theme);
+  @include mat.all-component-typographies($light-theme);
+  @include mat.typography-hierarchy($light-theme);
 
-// Other components that appear to not be used at this time
+  /* Overwrites */
+  --mat-sidenav-container-width: auto !important;
+  .cdk-overlay-pane {
+    --mat-dialog-container-max-width: initial;
+  }
 
-// @include mat.grid-list-theme($material-app-theme);
-// @include mat.sort-theme($material-app-theme);
-// @include mat.tree-theme($material-app-theme);
+  /* Light theme overwrites */
+  &:has(body.theme-light) {
+    color-scheme: light;
+    --sf-list-item-active-background-color: rgba(0, 0, 0, 0.12);
+    --mdc-dialog-container-color: #fff;
+    .mat-toolbar {
+      --mat-toolbar-container-text-color: #fff;
+      --mdc-icon-button-icon-color: #fff;
+    }
+  }
 
-// Use theme with custom components
-@include sf-tab-group.theme($material-app-theme);
+  /* Dark theme overwrites */
+  &:has(body.theme-dark) {
+    color-scheme: dark;
+    @include mat.all-component-colors($dark-theme);
+    @include mat.system-level-colors($dark-theme);
+    --sf-list-item-active-background-color: rgba(225, 225, 225, 0.32);
+    --mat-sidenav-container-background-color: #{get-palette-color(primary, 10)};
+  }
+}
 
+$languageFonts: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
+//
+//$app-typography: mat.m2-define-typography-config(
+//  $body-1: mat.m2-define-typography-level(16px, 1.2em)
+//);
+//
+//$dialog-typography: mat.m2-define-typography-config(
+//  $body-1: mat.m2-define-typography-level(14px, 1.5em)
+//);
+//
+//$material-app-theme: mat.m2-define-light-theme(
+//  (
+//    color: (
+//      primary: $matGreyPalette,
+//      accent: $matGreenLightPalette,
+//      warn: $matErrorPalette
+//    ),
+//    typography: $app-typography
+//  )
+//);
+//
+//// A Material input uses the accent color for the asterisk, but light green is an odd color to use there.
+//// This theme uses the error color for accent and can be applied only where needed.
+//$material-theme-accent-error: mat.m2-define-light-theme(
+//  (
+//    color: (
+//      primary: $matGreyPalette,
+//      accent: $matErrorPalette,
+//      warn: $matErrorPalette
+//    )
+//  )
+//);
+//
+
+//// Use theme with custom components
+//@include sf-tab-group.theme($material-app-theme);
+//
 // Remove letter spacing (added by Material v15+) that may not work with some language scripts (e.g. Arabic).
 // TODO: Add to this list as needed as we migrate to Material v15+
 html,
@@ -172,16 +253,11 @@ mat-list-item {
   --mdc-list-list-item-label-text-tracking: initial;
 }
 
-.card-outline {
-  @include mat.elevation(0);
-  border: 1px solid #e0e0e0;
-}
-
 // Workaround for compatibility between mat-card and mat-elevation class
 // https://github.com/angular/components/issues/26094#issuecomment-1490245622
 @for $i from 0 through 24 {
   .mat-mdc-card.mat-elevation-z#{$i} {
-    @include mat.elevation($i);
+    //@include mat.elevation($i);
   }
 }
 
@@ -194,26 +270,17 @@ mat-card-title {
   --mat-card-title-text-size: 24px;
 }
 
-.mat-mdc-dialog-actions {
-  padding: 16px 24px !important;
-}
+/** Helper class names to help consistently match Material typography */
+$headings: (
+  'h1': '.mat-display-small',
+  'h2': '.mat-title-large',
+  'h3': '.mat-title-medium',
+  'h4': '.mat-title-small'
+);
 
-.mat-mdc-dialog-container {
-  --mdc-dialog-supporting-text-color: rgba(0, 0, 0, 0.9);
-}
-
-@mixin dense_mat_select() {
-  ::ng-deep {
-    height: 36px;
-    .mat-mdc-form-field-infix {
-      min-height: initial;
-      padding-top: 7px;
-      padding-bottom: 5px;
-      width: initial;
-      min-width: 25px; // prevent weird transparent gap between content and scrollbar in Chromium
-    }
-    .mat-mdc-select-arrow-wrapper {
-      margin-inline-start: 5px;
-    }
+@each $class, $extend in $headings {
+  #{$class},
+  .#{$class} {
+    @extend #{$extend};
   }
 }

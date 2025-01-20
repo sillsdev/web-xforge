@@ -122,6 +122,22 @@ body[dir='rtl'] .mirror-rtl {
   }
 }
 
+@mixin dense_mat_select() {
+  ::ng-deep {
+    height: 36px;
+    .mat-mdc-form-field-infix {
+      min-height: initial;
+      padding-top: 7px;
+      padding-bottom: 5px;
+      width: initial;
+      min-width: 25px; // prevent weird transparent gap between content and scrollbar in Chromium
+    }
+    .mat-mdc-select-arrow-wrapper {
+      margin-inline-start: 5px;
+    }
+  }
+}
+
 // These breakpoints can be somewhat confusing, because a breakpoint can be thought of as a range, or as a specific
 // width. If they're fixed numbers, hide-lt-md and hide-gt-md would be mutually exclusive, but if you think of them as
 // ranges, you would need to use hide-lt-md and hide-gt-sm to make two elements mutually exclusive. For the purposes of

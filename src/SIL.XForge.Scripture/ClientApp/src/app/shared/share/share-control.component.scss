@@ -44,6 +44,10 @@ form {
   app-share-button {
     align-self: flex-end;
   }
+
+  p {
+    margin-top: 0;
+  }
 }
 
 ::ng-deep .invitation-role-panel .mat-mdc-option {
