@@ -34,7 +34,7 @@ import {
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
-
+import { ThemeService } from 'xforge-common/theme.service';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -88,6 +88,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
+    private readonly themeService: ThemeService,
     onlineStatusService: OnlineStatusService,
     private destroyRef: DestroyRef
   ) {
@@ -235,6 +236,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   async ngOnInit(): Promise<void> {
     await this.authService.loggedIn;
+    this.subscribe(this.featureFlags.darkMode.enabled$, enabled => {
+      this.themeService.setDarkMode(enabled);
+    });
     this.loadingStarted();
     this.currentUserDoc = await this.userService.getCurrentUser();
     const userData: User | undefined = cloneDeep(this.currentUserDoc.data);

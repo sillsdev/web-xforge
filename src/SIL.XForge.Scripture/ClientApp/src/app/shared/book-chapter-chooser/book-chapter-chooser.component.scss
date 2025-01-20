@@ -1,4 +1,4 @@
-@use 'src/material-styles';
+@use 'src/styles';
 
 :host {
   display: flex;
@@ -9,7 +9,7 @@
 // These styles were written by inspecting the elements using developer and then adding rules until it looked right
 #chapter-select,
 #book-select {
-  @include material-styles.dense_mat_select();
+  @include styles.dense_mat_select();
 
   ::ng-deep .mat-mdc-text-field-wrapper {
     padding-left: 12px;

@@ -21,7 +21,7 @@
         @case ("initial") {
           <div class="initial-import-screen">
             <div class="card-wrapper">
-              <mat-card>
+              <mat-card class="card">
                 <mat-card-title>{{ t("import_from_transcelerator") }}</mat-card-title>
                 <mat-card-content>
                   @for (i of transceleratorInfo | async; track i) {
