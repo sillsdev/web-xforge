@@ -185,11 +185,7 @@ export class DraftGenerationStepsComponent implements OnInit {
             } else {
               this.unusableTrainingSourceBooks.push(bookNum);
             }
-            if (
-              trainingSources[1] != null &&
-              additionalTrainingSourceBooks != null &&
-              additionalTrainingSourceBooks.has(bookNum)
-            ) {
+            if (trainingSources[1] != null && additionalTrainingSourceBooks.has(bookNum)) {
               this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: false });
               isPresentInASource = true;
             }
