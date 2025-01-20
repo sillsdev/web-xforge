@@ -16,6 +16,7 @@ import { I18nService } from '../../../../xforge-common/i18n.service';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { XForgeCommonModule } from '../../../../xforge-common/xforge-common.module';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 
@@ -37,6 +38,8 @@ import { DraftSource, DraftSourcesService } from '../draft-sources.service';
   styleUrl: './draft-sources.component.scss'
 })
 export class DraftSourcesComponent extends DataLoadingComponent {
+  private static readonly projectSettingValueUnset = 'unset';
+
   step = 1;
 
   trainingSources: [SelectableProject?, SelectableProject?];
@@ -100,6 +103,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     private readonly i18n: I18nService,
     private readonly draftSourcesService: DraftSourcesService,
     private readonly dialogService: DialogService,
+    private readonly projectService: SFProjectService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -173,7 +177,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     }
   }
 
-  save(): void {
+  async save(): Promise<void> {
     if (!this.languageCodesConfirmed) {
       this.dialogService.message(of('Please confirm that the language codes are correct before saving.'));
       return;
@@ -189,6 +193,19 @@ export class DraftSourcesComponent extends DataLoadingComponent {
       this.draftingSources[0] != null ? selectableProjectToTranslateSource(this.draftingSources[0]) : undefined
     ];
     const trainingTargets: [TranslateSource] = [this.trainingTargets[0]];
+
+    // Update project settings first
+    const projectId = this.activatedProjectService.projectId;
+    if (projectId != null) {
+      await this.projectService.onlineUpdateSettings(projectId, {
+        alternateSourceParatextId: draftingSources[0]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset,
+        alternateTrainingSourceParatextId:
+          trainingSources[0]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset,
+        additionalTrainingSourceParatextId:
+          trainingSources[1]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset
+      });
+    }
+
     saveSources(trainingSources, draftingSources, trainingTargets, this.activatedProjectService);
   }
 }
