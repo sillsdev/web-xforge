@@ -16,6 +16,7 @@ import { I18nService } from '../../../../xforge-common/i18n.service';
 import { ElementState } from '../../../../xforge-common/models/element-state';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { XForgeCommonModule } from '../../../../xforge-common/xforge-common.module';
+import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
@@ -39,7 +40,7 @@ import { DraftSource, DraftSourcesService } from '../draft-sources.service';
   styleUrl: './draft-sources.component.scss'
 })
 export class DraftSourcesComponent extends DataLoadingComponent {
-  private static readonly projectSettingValueUnset = 'unset';
+  static readonly projectSettingValueUnset = 'unset';
 
   step = 1;
 
@@ -192,27 +193,27 @@ export class DraftSourcesComponent extends DataLoadingComponent {
       this.trainingSources[0] != null ? selectableProjectToTranslateSource(this.trainingSources[0]) : undefined,
       this.trainingSources[1] != null ? selectableProjectToTranslateSource(this.trainingSources[1]) : undefined
     ];
+    /** It may not make sense for drafting to have no drafting source. But for specifying project settings, allow an
+     * empty setting for drafting source. */
     const draftingSources: [TranslateSource?] = [
       this.draftingSources[0] != null ? selectableProjectToTranslateSource(this.draftingSources[0]) : undefined
     ];
     const trainingTargets: [TranslateSource] = [this.trainingTargets[0]];
 
-    // Update project settings first
+    const currentProjectParatextId: string = this.activatedProjectService.projectDoc?.data.paratextId;
+    const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
+      trainingSources,
+      draftingSources,
+      trainingTargets,
+      currentProjectParatextId
+    );
+    const projectSettingsChange: SFProjectSettings = sourcesSettingsChange;
     const projectId = this.activatedProjectService.projectId;
-    if (projectId != null) {
-      await this.checkUpdateStatus(
-        'projectSettings',
-        this.projectService.onlineUpdateSettings(projectId, {
-          alternateSourceParatextId: draftingSources[0]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset,
-          alternateTrainingSourceParatextId:
-            trainingSources[0]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset,
-          additionalTrainingSourceParatextId:
-            trainingSources[1]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset
-        })
-      );
-    }
-
-    saveSources(trainingSources, draftingSources, trainingTargets, this.activatedProjectService);
+    if (projectId == null) throw new Error('Project ID is null');
+    await this.checkUpdateStatus(
+      'projectSettings',
+      this.projectService.onlineUpdateSettings(projectId, projectSettingsChange)
+    );
   }
 
   private async checkUpdateStatus(setting: string, updatePromise: Promise<void>): Promise<void> {
@@ -231,7 +232,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 }
 
-export interface DraftSourcesConfig {
+export interface DraftSourcesSettingsChange {
   additionalTrainingSourceEnabled: boolean;
   additionalTrainingSourceParatextId?: string;
   alternateSourceEnabled: boolean;
@@ -251,30 +252,14 @@ export interface DraftSourcesConfig {
  *
  * This method is kind of doing the opposite of projectToDraftSources, as it maps the data model back the other way
  */
-function saveSources(
-  trainingSources: [TranslateSource?, TranslateSource?],
-  /** It may not make sense for drafting to have no drafting source. But for specifying project settings, allow an empty
-   * setting for drafting source. */
-  draftingSources: [TranslateSource?],
-  trainingTargets: [TranslateSource],
-  activatedProjectService: ActivatedProjectService
-): void {
-  const currentProjectParatextId: string = activatedProjectService.projectDoc?.data.paratextId;
-  const _draftSourcesConfig: DraftSourcesConfig = draftSourceArraysToDraftSourcesConfig(
-    trainingSources,
-    draftingSources,
-    trainingTargets,
-    currentProjectParatextId
-  );
-  // TODO Save draft sources config to project
-}
+function saveSources(): void {}
 
-export function draftSourceArraysToDraftSourcesConfig(
+export function sourceArraysToSettingsChange(
   trainingSources: [TranslateSource?, TranslateSource?],
   draftingSources: [TranslateSource?],
   trainingTargets: [TranslateSource],
   currentProjectParatextId: string
-): DraftSourcesConfig {
+): DraftSourcesSettingsChange {
   // Extra precaution on array lengths for now in case the type system is being bypassed.
   if (draftingSources.length > 1) {
     throw new Error('Drafting sources array must contain 0 or 1 source');
@@ -295,13 +280,23 @@ export function draftSourceArraysToDraftSourcesConfig(
   const additionalTrainingSource: TranslateSource | undefined = trainingSources[1];
   const alternateSource: TranslateSource | undefined = draftingSources[0];
 
-  const config: DraftSourcesConfig = {
-    additionalTrainingSourceEnabled: additionalTrainingSource != null,
-    additionalTrainingSourceParatextId: additionalTrainingSource?.paratextId,
-    alternateSourceEnabled: alternateSource != null,
-    alternateSourceParatextId: alternateSource?.paratextId,
-    alternateTrainingSourceEnabled: alternateTrainingSource != null,
-    alternateTrainingSourceParatextId: alternateTrainingSource?.paratextId
+  const alternateTrainingEnabled = alternateTrainingSource != null;
+  const additionalTrainingEnabled = additionalTrainingSource != null;
+  const alternateSourceEnabled = alternateSource != null;
+
+  const config: DraftSourcesSettingsChange = {
+    additionalTrainingSourceEnabled: additionalTrainingEnabled,
+    additionalTrainingSourceParatextId: additionalTrainingEnabled
+      ? additionalTrainingSource?.paratextId
+      : DraftSourcesComponent.projectSettingValueUnset,
+    alternateSourceEnabled: alternateSourceEnabled,
+    alternateSourceParatextId: alternateSourceEnabled
+      ? alternateSource?.paratextId
+      : DraftSourcesComponent.projectSettingValueUnset,
+    alternateTrainingSourceEnabled: alternateTrainingEnabled,
+    alternateTrainingSourceParatextId: alternateTrainingEnabled
+      ? alternateTrainingSource?.paratextId
+      : DraftSourcesComponent.projectSettingValueUnset
   };
   return config;
 }
