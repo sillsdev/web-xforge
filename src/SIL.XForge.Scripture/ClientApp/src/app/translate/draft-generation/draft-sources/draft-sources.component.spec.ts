@@ -12,7 +12,7 @@ import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
-import { draftSourceArraysToDraftSourcesConfig, DraftSourcesComponent } from './draft-sources.component';
+import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';
 
 const mockedParatextService = mock(ParatextService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -85,7 +85,7 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(
+      const result = sourceArraysToSettingsChange(
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
@@ -94,11 +94,11 @@ describe('DraftSourcesComponent', () => {
 
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: undefined,
+        additionalTrainingSourceParatextId: 'unset',
         alternateSourceEnabled: false,
-        alternateSourceParatextId: undefined,
+        alternateSourceParatextId: 'unset',
         alternateTrainingSourceEnabled: false,
-        alternateTrainingSourceParatextId: undefined
+        alternateTrainingSourceParatextId: 'unset'
       });
     });
 
@@ -109,7 +109,7 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(
+      const result = sourceArraysToSettingsChange(
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
@@ -117,9 +117,9 @@ describe('DraftSourcesComponent', () => {
       );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: undefined,
+        additionalTrainingSourceParatextId: 'unset',
         alternateSourceEnabled: false,
-        alternateSourceParatextId: undefined,
+        alternateSourceParatextId: 'unset',
         alternateTrainingSourceEnabled: true,
         alternateTrainingSourceParatextId: mockProject1.paratextId
       });
@@ -132,7 +132,7 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(
+      const result = sourceArraysToSettingsChange(
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
@@ -142,7 +142,7 @@ describe('DraftSourcesComponent', () => {
         additionalTrainingSourceEnabled: true,
         additionalTrainingSourceParatextId: mockProject2.paratextId,
         alternateSourceEnabled: false,
-        alternateSourceParatextId: undefined,
+        alternateSourceParatextId: 'unset',
         alternateTrainingSourceEnabled: true,
         alternateTrainingSourceParatextId: mockProject1.paratextId
       });
@@ -155,7 +155,7 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(
+      const result = sourceArraysToSettingsChange(
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
@@ -163,11 +163,11 @@ describe('DraftSourcesComponent', () => {
       );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: undefined,
+        additionalTrainingSourceParatextId: 'unset',
         alternateSourceEnabled: true,
         alternateSourceParatextId: mockProject1.paratextId,
         alternateTrainingSourceEnabled: false,
-        alternateTrainingSourceParatextId: undefined
+        alternateTrainingSourceParatextId: 'unset'
       });
     });
 
@@ -178,7 +178,7 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(
+      const result = sourceArraysToSettingsChange(
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
@@ -202,7 +202,7 @@ describe('DraftSourcesComponent', () => {
       };
 
       expect(() =>
-        draftSourceArraysToDraftSourcesConfig(
+        sourceArraysToSettingsChange(
           sources.trainingSources,
           sources.draftingSources,
           sources.trainingTargets,
@@ -218,7 +218,7 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(
+      const result = sourceArraysToSettingsChange(
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
@@ -226,11 +226,11 @@ describe('DraftSourcesComponent', () => {
       );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: undefined,
+        additionalTrainingSourceParatextId: 'unset',
         alternateSourceEnabled: false,
-        alternateSourceParatextId: undefined,
+        alternateSourceParatextId: 'unset',
         alternateTrainingSourceEnabled: false,
-        alternateTrainingSourceParatextId: undefined
+        alternateTrainingSourceParatextId: 'unset'
       });
     });
   });
