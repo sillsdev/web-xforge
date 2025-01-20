@@ -1,9 +1,9 @@
 <ng-container *transloco="let t; read: 'draft_generation'">
   @if (currentPage === "initial") {
     @if (isBackTranslationMode) {
-      <h1 class="mat-headline-4">{{ t("generate_back_translation_drafts_header") }}</h1>
+      <h1>{{ t("generate_back_translation_drafts_header") }}</h1>
     } @else {
-      <h1 class="mat-headline-4">
+      <h1>
         {{ t("generate_forward_translation_drafts_header") }}
       </h1>
     }
@@ -357,7 +357,7 @@
     @if (isServalAdmin()) {
       <section>
         <mat-expansion-panel class="serval-administration">
-          <mat-expansion-panel-header><h3>Serval Administration</h3></mat-expansion-panel-header>
+          <mat-expansion-panel-header>Serval Administration</mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <app-serval-project [showProjectTitle]="false"></app-serval-project>
           </ng-template>
