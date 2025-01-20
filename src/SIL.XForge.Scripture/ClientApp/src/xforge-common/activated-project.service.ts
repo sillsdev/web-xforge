@@ -11,6 +11,7 @@ import { CacheService } from '../app/shared/cache-service/cache.service';
 import { SubscriptionDisposable } from './subscription-disposable';
 
 interface IActiveProjectIdService {
+  /** SF project id */
   projectId$: Observable<string | undefined>;
 }
 
@@ -62,6 +63,7 @@ export class ActivatedProjectService extends SubscriptionDisposable {
     this.subscribe(activeProjectIdService.projectId$, projectId => this.selectProject(projectId));
   }
 
+  /** SF project id */
   get projectId(): string | undefined {
     return this._projectId$.getValue();
   }
