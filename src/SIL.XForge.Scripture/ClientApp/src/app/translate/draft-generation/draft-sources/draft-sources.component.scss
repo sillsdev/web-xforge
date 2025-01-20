@@ -152,4 +152,11 @@ strong {
   display: flex;
   gap: 1em;
   justify-content: flex-end;
+
+  // Not being honoured to move the "Save & sync" text up. :(
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
 }
