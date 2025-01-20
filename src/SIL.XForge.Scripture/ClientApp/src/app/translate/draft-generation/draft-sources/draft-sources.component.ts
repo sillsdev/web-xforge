@@ -188,8 +188,6 @@ export class DraftSourcesComponent extends DataLoadingComponent {
       return;
     }
 
-    this.dialogService.message(of('Saving is not yet implemented.'));
-
     const currentProjectParatextId: string = this.activatedProjectService.projectDoc?.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
       this.trainingSources,
@@ -204,6 +202,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
       'projectSettings',
       this.projectService.onlineUpdateSettings(currentSFProjectId, projectSettingsChange)
     );
+    // TODO Reveal when syncing is complete.
   }
 
   private async checkUpdateStatus(setting: string, updatePromise: Promise<void>): Promise<void> {
