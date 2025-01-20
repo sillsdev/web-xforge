@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { I18nService } from '../../../../xforge-common/i18n.service';
 import { NoticeService } from '../../../../xforge-common/notice.service';
@@ -21,7 +21,7 @@ const mockedDraftSourcesService = mock(DraftSourcesService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestTranslocoModule],
     declarations: [],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
