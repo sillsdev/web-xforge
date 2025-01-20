@@ -13,6 +13,7 @@ import { ActivatedProjectService } from '../../../../xforge-common/activated-pro
 import { DataLoadingComponent } from '../../../../xforge-common/data-loading-component';
 import { DialogService } from '../../../../xforge-common/dialog.service';
 import { I18nService } from '../../../../xforge-common/i18n.service';
+import { ElementState } from '../../../../xforge-common/models/element-state';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { XForgeCommonModule } from '../../../../xforge-common/xforge-common.module';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
@@ -52,6 +53,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   languageCodesConfirmed = false;
   changesMade = false;
+
+  private controlStates = new Map<string, ElementState>();
 
   get loading(): boolean {
     return !this.isLoaded;
@@ -197,16 +200,34 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     // Update project settings first
     const projectId = this.activatedProjectService.projectId;
     if (projectId != null) {
-      await this.projectService.onlineUpdateSettings(projectId, {
-        alternateSourceParatextId: draftingSources[0]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset,
-        alternateTrainingSourceParatextId:
-          trainingSources[0]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset,
-        additionalTrainingSourceParatextId:
-          trainingSources[1]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset
-      });
+      await this.checkUpdateStatus(
+        'projectSettings',
+        this.projectService.onlineUpdateSettings(projectId, {
+          alternateSourceParatextId: draftingSources[0]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset,
+          alternateTrainingSourceParatextId:
+            trainingSources[0]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset,
+          additionalTrainingSourceParatextId:
+            trainingSources[1]?.paratextId ?? DraftSourcesComponent.projectSettingValueUnset
+        })
+      );
     }
 
     saveSources(trainingSources, draftingSources, trainingTargets, this.activatedProjectService);
+  }
+
+  private async checkUpdateStatus(setting: string, updatePromise: Promise<void>): Promise<void> {
+    this.controlStates.set(setting, ElementState.Submitting);
+    try {
+      await updatePromise;
+      this.controlStates.set(setting, ElementState.Submitted);
+    } catch (err) {
+      this.controlStates.set(setting, ElementState.Error);
+      throw err; //?
+    }
+  }
+
+  getControlState(setting: string): ElementState | undefined {
+    return this.controlStates.get(setting);
   }
 }
 

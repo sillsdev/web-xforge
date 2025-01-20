@@ -153,7 +153,15 @@
   <div class="page-actions">
     <button mat-button (click)="cancel()"><mat-icon>cancel</mat-icon> Cancel</button>
 
-    <button mat-flat-button color="primary" (click)="save()"><mat-icon>checkmark</mat-icon> Save & sync</button>
+    <button id="saveButton" mat-flat-button color="primary" (click)="save()">
+      <ng-container [ngSwitch]="getControlState('projectSettings')">
+        <mat-icon *ngSwitchCase="'Submitting'">hourglass_empty</mat-icon>
+        <mat-icon *ngSwitchCase="'Submitted'">check</mat-icon>
+        <mat-icon *ngSwitchCase="'Error'">error</mat-icon>
+        <mat-icon *ngSwitchDefault>save</mat-icon>
+      </ng-container>
+      {{ getControlState("projectSettings") === "Submitting" ? "Saving..." : "Save & sync" }}
+    </button>
   </div>
 
   <ng-template #blankProject>
