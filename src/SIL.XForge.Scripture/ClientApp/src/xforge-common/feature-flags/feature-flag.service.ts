@@ -312,6 +312,13 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  readonly darkMode: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'DarkMode',
+    'Dark Mode',
+    15,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

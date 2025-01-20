@@ -1,7 +1,6 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
   <div [ngClass]="{ 'reviewer-panels': !canCreateQuestion }" class="header">
-    <mat-icon class="mirror-rtl">list</mat-icon>
-    <h2>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h2>
+    <h1>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h1>
     @if (canCreateQuestion) {
       <ng-container class="primary-actions">
         @if (showImportButton) {
@@ -237,10 +236,7 @@
     <p id="loading-questions-message">{{ t("loading_questions") }}</p>
   }
 
-  <div class="header">
-    <mat-icon class="mirror-rtl">bar_chart</mat-icon>
-    <h2>{{ t(canCreateQuestion ? "project_stats" : "my_contributions") }}</h2>
-  </div>
+  <h2>{{ t(canCreateQuestion ? "project_stats" : "my_contributions") }}</h2>
 
   <div class="reviewer-panels stat-panels">
     @if (canCreateQuestion) {
@@ -286,10 +282,7 @@
   </div>
 
   @if (canEditQuestion) {
-    <div class="header">
-      <mat-icon>archive</mat-icon>
-      <h2>{{ t("archived_questions") }}</h2>
-    </div>
+    <h2>{{ t("archived_questions") }}</h2>
   }
 
   @if (canEditQuestion) {
