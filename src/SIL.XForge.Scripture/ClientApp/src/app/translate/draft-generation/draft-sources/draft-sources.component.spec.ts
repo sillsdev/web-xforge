@@ -82,7 +82,12 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
+      const result = draftSourceArraysToDraftSourcesConfig(
+        sources.trainingSources,
+        sources.draftingSources,
+        sources.trainingTargets,
+        currentProjectParatextId
+      );
 
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
@@ -101,8 +106,12 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
-
+      const result = draftSourceArraysToDraftSourcesConfig(
+        sources.trainingSources,
+        sources.draftingSources,
+        sources.trainingTargets,
+        currentProjectParatextId
+      );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
         additionalTrainingSource: undefined,
@@ -120,8 +129,12 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
-
+      const result = draftSourceArraysToDraftSourcesConfig(
+        sources.trainingSources,
+        sources.draftingSources,
+        sources.trainingTargets,
+        currentProjectParatextId
+      );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: true,
         additionalTrainingSource: mockProject2,
@@ -139,8 +152,12 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
-
+      const result = draftSourceArraysToDraftSourcesConfig(
+        sources.trainingSources,
+        sources.draftingSources,
+        sources.trainingTargets,
+        currentProjectParatextId
+      );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
         additionalTrainingSource: undefined,
@@ -158,8 +175,12 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
-
+      const result = draftSourceArraysToDraftSourcesConfig(
+        sources.trainingSources,
+        sources.draftingSources,
+        sources.trainingTargets,
+        currentProjectParatextId
+      );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: true,
         additionalTrainingSource: mockProject2,
@@ -177,7 +198,14 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [someOtherTarget]
       };
 
-      expect(() => draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId)).toThrow();
+      expect(() =>
+        draftSourceArraysToDraftSourcesConfig(
+          sources.trainingSources,
+          sources.draftingSources,
+          sources.trainingTargets,
+          currentProjectParatextId
+        )
+      ).toThrow();
     });
 
     it('should handle undefined sources in arrays', () => {
@@ -187,8 +215,12 @@ describe('DraftSourcesComponent', () => {
         trainingTargets: [mockTarget]
       };
 
-      const result = draftSourceArraysToDraftSourcesConfig(sources, currentProjectParatextId);
-
+      const result = draftSourceArraysToDraftSourcesConfig(
+        sources.trainingSources,
+        sources.draftingSources,
+        sources.trainingTargets,
+        currentProjectParatextId
+      );
       expect(result).toEqual({
         additionalTrainingSourceEnabled: false,
         additionalTrainingSource: undefined,
