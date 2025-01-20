@@ -10,6 +10,7 @@ import { NoticeService } from '../../../../xforge-common/notice.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 import { draftSourceArraysToDraftSourcesConfig, DraftSourcesComponent } from './draft-sources.component';
 
@@ -18,6 +19,7 @@ const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
+const mockedSFProjectService = mock(SFProjectService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
@@ -28,6 +30,7 @@ describe('DraftSourcesComponent', () => {
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
+      { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: DraftSourcesService, useMock: mockedDraftSourcesService }
     ]
   }));
