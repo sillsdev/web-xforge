@@ -22,6 +22,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 
+/** Enables user to configure settings for drafting. */
 @Component({
   selector: 'app-draft-sources',
   standalone: true,
@@ -44,10 +45,10 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   step = 1;
 
-  trainingSources: [SelectableProject?, SelectableProject?];
-  // TODO Consider what importance of trainingTargets being type SFProjectProfile.
+  trainingSources: [SelectableProject?, SelectableProject?] = [];
+  // TODO Consider whether trainingTargets needs to be type SFProjectProfile.
   trainingTargets: [DraftSource];
-  draftingSources: [SelectableProject?];
+  draftingSources: [SelectableProject?] = [];
 
   projects?: SelectableProject[];
   resources?: SelectableProject[];
@@ -189,30 +190,19 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
     this.dialogService.message(of('Saving is not yet implemented.'));
 
-    const trainingSources: [TranslateSource?, TranslateSource?] = [
-      this.trainingSources[0] != null ? selectableProjectToTranslateSource(this.trainingSources[0]) : undefined,
-      this.trainingSources[1] != null ? selectableProjectToTranslateSource(this.trainingSources[1]) : undefined
-    ];
-    /** It may not make sense for drafting to have no drafting source. But for specifying project settings, allow an
-     * empty setting for drafting source. */
-    const draftingSources: [TranslateSource?] = [
-      this.draftingSources[0] != null ? selectableProjectToTranslateSource(this.draftingSources[0]) : undefined
-    ];
-    const trainingTargets: [TranslateSource] = [this.trainingTargets[0]];
-
     const currentProjectParatextId: string = this.activatedProjectService.projectDoc?.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
-      trainingSources,
-      draftingSources,
-      trainingTargets,
+      this.trainingSources,
+      this.draftingSources,
+      this.trainingTargets,
       currentProjectParatextId
     );
     const projectSettingsChange: SFProjectSettings = sourcesSettingsChange;
-    const projectId = this.activatedProjectService.projectId;
-    if (projectId == null) throw new Error('Project ID is null');
+    const currentSFProjectId = this.activatedProjectService.projectId;
+    if (currentSFProjectId == null) throw new Error('Project ID is null');
     await this.checkUpdateStatus(
       'projectSettings',
-      this.projectService.onlineUpdateSettings(projectId, projectSettingsChange)
+      this.projectService.onlineUpdateSettings(currentSFProjectId, projectSettingsChange)
     );
   }
 
@@ -221,9 +211,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     try {
       await updatePromise;
       this.controlStates.set(setting, ElementState.Submitted);
-    } catch (err) {
+    } catch (_error) {
       this.controlStates.set(setting, ElementState.Error);
-      throw err; //?
     }
   }
 
@@ -255,9 +244,11 @@ export interface DraftSourcesSettingsChange {
 function saveSources(): void {}
 
 export function sourceArraysToSettingsChange(
-  trainingSources: [TranslateSource?, TranslateSource?],
-  draftingSources: [TranslateSource?],
-  trainingTargets: [TranslateSource],
+  trainingSources: [SelectableProject?, SelectableProject?],
+  /** It may not make sense for drafting to have no drafting source. But for specifying project settings, allow an
+   * empty setting for drafting source. */
+  draftingSources: [SelectableProject?],
+  trainingTargets: [SelectableProject],
   currentProjectParatextId: string
 ): DraftSourcesSettingsChange {
   // Extra precaution on array lengths for now in case the type system is being bypassed.
@@ -276,9 +267,9 @@ export function sourceArraysToSettingsChange(
     throw new Error('Training target must be the current project');
   }
 
-  const alternateTrainingSource: TranslateSource | undefined = trainingSources[0];
-  const additionalTrainingSource: TranslateSource | undefined = trainingSources[1];
-  const alternateSource: TranslateSource | undefined = draftingSources[0];
+  const alternateTrainingSource: SelectableProject | undefined = trainingSources[0];
+  const additionalTrainingSource: SelectableProject | undefined = trainingSources[1];
+  const alternateSource: SelectableProject | undefined = draftingSources[0];
 
   const alternateTrainingEnabled = alternateTrainingSource != null;
   const additionalTrainingEnabled = additionalTrainingSource != null;

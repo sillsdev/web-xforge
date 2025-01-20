@@ -1,4 +1,6 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -8,6 +10,7 @@ import { ActivatedProjectService } from '../../../../xforge-common/activated-pro
 import { I18nService } from '../../../../xforge-common/i18n.service';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -23,7 +26,7 @@ const mockedSFProjectService = mock(SFProjectService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestTranslocoModule],
+    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule, TestTranslocoModule],
     declarations: [],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
@@ -35,6 +38,15 @@ describe('DraftSourcesComponent', () => {
     ]
   }));
 
+  let overlayContainer: OverlayContainer;
+  beforeEach(() => {
+    overlayContainer = TestBed.inject(OverlayContainer);
+  });
+  afterEach(() => {
+    // Prevents 'Error: Test did not clean up its overlay container content.'
+    overlayContainer.ngOnDestroy();
+  });
+
   it('loads projects and resources on init', fakeAsync(() => {
     const env = new TestEnvironment();
     verify(mockedParatextService.getProjects()).once();
@@ -43,7 +55,49 @@ describe('DraftSourcesComponent', () => {
     expect(env.component.resources).toBeDefined();
   }));
 
-  describe('draftSourceArraysToDraftSourcesConfig', () => {
+  it('updates control state during save', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).thenResolve();
+    env.component.languageCodesConfirmed = true;
+
+    env.component.save();
+    tick();
+
+    expect(env.component.getControlState('projectSettings')).toBe('Submitted');
+    verify(mockedSFProjectService.onlineUpdateSettings('project01', anything())).once();
+  }));
+
+  it('shows error state when save fails', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).thenReject(new Error('error saving'));
+    env.component.languageCodesConfirmed = true;
+
+    env.component.save();
+    tick();
+
+    expect(env.component.getControlState('projectSettings')).toBe('Error');
+    verify(mockedSFProjectService.onlineUpdateSettings('project01', anything())).once();
+  }));
+
+  it('shows submitting state while saving', fakeAsync(() => {
+    const env = new TestEnvironment();
+    let resolvePromise: () => void;
+    const savePromise = new Promise<void>(resolve => {
+      resolvePromise = resolve;
+    });
+    when(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).thenReturn(savePromise);
+    env.component.languageCodesConfirmed = true;
+
+    env.component.save();
+    tick();
+
+    expect(env.component.getControlState('projectSettings')).toBe('Submitting');
+    resolvePromise!();
+    tick();
+    expect(env.component.getControlState('projectSettings')).toBe('Submitted');
+  }));
+
+  describe('sourceArraysToSettingsChange', () => {
     const currentProjectParatextId = 'project01';
     const mockProject1: DraftSource = {
       paratextId: 'pt01',
@@ -258,7 +312,28 @@ class TestEnvironment {
     when(mockedParatextService.getResources()).thenResolve(this.mockResources);
     when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
     when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
-    when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(instance(mock<DraftSourcesAsArrays>())));
+    const draftProjectSources: DraftSourcesAsArrays = {
+      trainingSources: [instance(mock<DraftSource>()), instance(mock<DraftSource>())],
+      trainingTargets: [
+        {
+          paratextId: 'project01',
+          shortName: 'PRJ1',
+          writingSystem: { tag: 'en' }
+        } as DraftSource
+      ],
+      draftingSources: [instance(mock<DraftSource>())]
+    };
+    when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(draftProjectSources));
+
+    when(mockedActivatedProjectService.projectId).thenReturn('project01');
+    when(mockedActivatedProjectService.projectDoc).thenReturn({
+      id: 'project01',
+      data: {
+        paratextId: 'project01',
+        shortName: 'PRJ1',
+        writingSystem: { tag: 'en' }
+      }
+    } as SFProjectProfileDoc);
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;
