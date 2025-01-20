@@ -21,6 +21,13 @@ public class SFScrTextCollection : ScrTextCollection
     /// </summary>
     public static string ResourcesByIdDirectory => Path.Combine(SettingsDirectory, "_resourcesById");
 
+    /// <summary>
+    /// Adds a ScrText to the internal index. This should only be used for testing purposes!
+    /// </summary>
+    /// <param name="scrText">The scripture text to add to the index.</param>
+    public void AddToInternalIndex(ScrText scrText) =>
+        AddInternal(scrText, skipChangeNotify: false, checkAlreadyExists: false);
+
     protected override string DictionariesDirectoryInternal => null;
 
     protected override void InitializeInternal(string settingsDir, bool allowMigration)
