@@ -127,7 +127,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
         this.scriptureEnd.setValue(endVerseRef.toString());
       }
       this.updateSelection();
-    } else if (this.data.defaultVerse != null) {
+    } else if (this.data.defaultVerse != null && this.data.defaultVerse.bookNum > 0) {
       const { startVerseRef, endVerseRef } = toStartAndEndVerseRefs(this.data.defaultVerse);
       this.scriptureStart.setValue(startVerseRef.toString());
       if (endVerseRef != null) {
