@@ -17,7 +17,7 @@ import { NoticeService } from '../../../../xforge-common/notice.service';
 import { XForgeCommonModule } from '../../../../xforge-common/xforge-common.module';
 import { ParatextService, SelectableProject } from '../../../core/paratext.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
+import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 
 @Component({
   selector: 'app-draft-sources',
@@ -39,10 +39,10 @@ import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft
 export class DraftSourcesComponent extends DataLoadingComponent {
   step = 1;
 
-  // TODO Rather than use these three arrays, consider just using a single DraftSourcesAsArrays object.
-  trainingSources: [DraftSource?, DraftSource?];
+  trainingSources: [SelectableProject?, SelectableProject?];
+  // TODO Consider what importance of trainingTargets being type SFProjectProfile.
   trainingTargets: [DraftSource];
-  draftingSources: [DraftSource?];
+  draftingSources: [SelectableProject?];
 
   projects?: SelectableProject[];
   resources?: SelectableProject[];
@@ -181,12 +181,15 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
     this.dialogService.message(of('Saving is not yet implemented.'));
 
-    const sources: DraftSourcesAsArrays = {
-      trainingSources: this.trainingSources,
-      trainingTargets: this.trainingTargets,
-      draftingSources: this.draftingSources
-    };
-    saveSources(sources, this.activatedProjectService);
+    const trainingSources: [TranslateSource?, TranslateSource?] = [
+      this.trainingSources[0] != null ? selectableProjectToTranslateSource(this.trainingSources[0]) : undefined,
+      this.trainingSources[1] != null ? selectableProjectToTranslateSource(this.trainingSources[1]) : undefined
+    ];
+    const draftingSources: [TranslateSource?] = [
+      this.draftingSources[0] != null ? selectableProjectToTranslateSource(this.draftingSources[0]) : undefined
+    ];
+    const trainingTargets: [TranslateSource] = [this.trainingTargets[0]];
+    saveSources(trainingSources, draftingSources, trainingTargets, this.activatedProjectService);
   }
 }
 
@@ -210,38 +213,47 @@ export interface DraftSourcesConfig {
  *
  * This method is kind of doing the opposite of projectToDraftSources, as it maps the data model back the other way
  */
-function saveSources(sources: DraftSourcesAsArrays, activatedProjectService: ActivatedProjectService): void {
+function saveSources(
+  trainingSources: [TranslateSource?, TranslateSource?],
+  draftingSources: [TranslateSource?],
+  trainingTargets: [TranslateSource],
+  activatedProjectService: ActivatedProjectService
+): void {
   const currentProjectParatextId: string = activatedProjectService.projectDoc?.data.paratextId;
-  const draftSourcesConfig: DraftSourcesConfig = draftSourceArraysToDraftSourcesConfig(
-    sources,
+  const _draftSourcesConfig: DraftSourcesConfig = draftSourceArraysToDraftSourcesConfig(
+    trainingSources,
+    draftingSources,
+    trainingTargets,
     currentProjectParatextId
   );
   // TODO Save draft sources config to project
 }
 
 export function draftSourceArraysToDraftSourcesConfig(
-  sources: DraftSourcesAsArrays,
+  trainingSources: [TranslateSource?, TranslateSource?],
+  draftingSources: [TranslateSource?],
+  trainingTargets: [TranslateSource],
   currentProjectParatextId: string
 ): DraftSourcesConfig {
   // Extra precaution on array lengths for now in case the type system is being bypassed.
-  if (sources.draftingSources.length > 1) {
+  if (draftingSources.length > 1) {
     throw new Error('Drafting sources array must contain 0 or 1 source');
   }
-  if (sources.trainingSources.length > 2) {
+  if (trainingSources.length > 2) {
     throw new Error('Training sources array must contain 0, 1, or 2 sources');
   }
-  if (sources.trainingTargets.length !== 1) {
+  if (trainingTargets.length !== 1) {
     throw new Error('Training targets array must contain exactly 1 project');
   }
 
-  const trainingTargetParatextId = sources.trainingTargets[0].paratextId;
+  const trainingTargetParatextId = trainingTargets[0].paratextId;
   if (currentProjectParatextId !== trainingTargetParatextId) {
     throw new Error('Training target must be the current project');
   }
 
-  const alternateTrainingSource: TranslateSource = sources.trainingSources[0];
-  const additionalTrainingSource: TranslateSource = sources.trainingSources[1];
-  const alternateSource: TranslateSource = sources.draftingSources[0];
+  const alternateTrainingSource: TranslateSource = trainingSources[0];
+  const additionalTrainingSource: TranslateSource = trainingSources[1];
+  const alternateSource: TranslateSource = draftingSources[0];
 
   const config: DraftSourcesConfig = {
     additionalTrainingSourceEnabled: additionalTrainingSource != null,
@@ -252,4 +264,14 @@ export function draftSourceArraysToDraftSourcesConfig(
     alternateTrainingSource: alternateTrainingSource
   };
   return config;
+}
+
+function selectableProjectToTranslateSource(project: SelectableProject): TranslateSource {
+  return {
+    paratextId: project.paratextId,
+    projectRef: 'unknown',
+    name: 'unknown',
+    shortName: project.shortName,
+    writingSystem: { tag: 'unknown' }
+  };
 }
