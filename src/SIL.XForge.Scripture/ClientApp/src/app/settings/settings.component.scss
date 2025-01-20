@@ -122,10 +122,10 @@ mat-icon {
 }
 
 #delete-project {
-  border: 2px solid red;
+  border: 2px solid var(--sys-error);
   .source-project-msg,
   .project-syncing-msg {
-    color: red;
+    color: var(--sys-error);
   }
 }
 
@@ -134,8 +134,9 @@ mat-icon {
   background-color: rgba(0, 0, 0, 0.12);
   color: rgba(0, 0, 0, 0.38);
 }
-#delete-btn:not(:disabled):hover {
-  background-color: red;
+#delete-btn:not(:disabled) {
+  background-color: var(--sys-error);
+  color: var(--sys-on-error);
 }
 
 mat-radio-group.tool-setting {

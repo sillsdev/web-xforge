@@ -47,7 +47,11 @@ export const decorators = [
       { provide: APP_ROOT_ELEMENT_SELECTOR, useValue: 'storybook-root' },
       { provide: OverlayContainer, useClass: InAppRootOverlayContainer }
     ]
-  })
+  }),
+  storyFn => {
+    document.body.classList.add('theme-light');
+    return storyFn();
+  }
 ];
 
 getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());

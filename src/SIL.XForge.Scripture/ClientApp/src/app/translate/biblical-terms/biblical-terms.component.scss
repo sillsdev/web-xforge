@@ -1,4 +1,4 @@
-@use 'src/material-styles';
+//@use 'src/material-styles';
 @import 'src/styles';
 
 /* We have two mat-icon actions buttons */
@@ -83,6 +83,6 @@
 }
 
 .biblical-terms-select {
-  @include material-styles.dense_mat_select();
+  //@include material-styles.dense_mat_select();
   width: 200px;
 }
