@@ -7,7 +7,6 @@ import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
-import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { DataLoadingComponent } from '../../../../xforge-common/data-loading-component';
@@ -242,6 +241,7 @@ export interface DraftSourcesSettingsChange {
  */
 function saveSources(): void {}
 
+/** Convert some arrays of drafting sources to a settings object that can be applied to a SF project. */
 export function sourceArraysToSettingsChange(
   trainingSources: [SelectableProject?, SelectableProject?],
   /** It may not make sense for drafting to have no drafting source. But for specifying project settings, allow an
@@ -289,14 +289,4 @@ export function sourceArraysToSettingsChange(
       : DraftSourcesComponent.projectSettingValueUnset
   };
   return config;
-}
-
-function selectableProjectToTranslateSource(project: SelectableProject): TranslateSource {
-  return {
-    paratextId: project.paratextId,
-    projectRef: 'unknown',
-    name: 'unknown',
-    shortName: project.shortName,
-    writingSystem: { tag: 'unknown' }
-  };
 }
