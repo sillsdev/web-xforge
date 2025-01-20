@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'settings'">
   <div class="container">
-    <div class="mat-headline-4">{{ t("settings") }}</div>
+    <h1>{{ t("settings") }}</h1>
     @if (!isAppOnline) {
       <span class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
     }
@@ -323,7 +323,7 @@
     </div>
 
     <div id="danger-zone">
-      <div class="mat-headline-6">{{ t("danger_zone") }}</div>
+      <h2>{{ t("danger_zone") }}</h2>
       <mat-card class="card-content" id="delete-project">
         <h4>{{ t("delete_this_project") }}</h4>
         @if (isActiveSourceProject) {
@@ -346,7 +346,6 @@
           id="delete-btn"
           mat-flat-button
           type="button"
-          color="warn"
           (click)="openDeleteProjectDialog()"
           [class.enabled]="!deleteButtonDisabled"
           [disabled]="deleteButtonDisabled"

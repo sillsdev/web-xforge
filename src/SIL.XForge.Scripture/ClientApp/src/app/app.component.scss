@@ -1,5 +1,6 @@
-@use 'src/variables';
 @use 'src/breakpoints';
+@use '@angular/material' as mat;
+@use 'src/material-styles' as theme;
 
 $toolbar-height: 56px;
 
@@ -117,7 +118,7 @@ header {
       flex-direction: row;
       column-gap: 5px;
       align-items: center;
-      color: variables.$purpleLight;
+      color: theme.get-palette-color(tertiary, 70);
     }
     #user-menu-name {
       line-height: 1.5rem;
@@ -147,13 +148,14 @@ header {
     }
 
     .mat-mdc-menu-item .mat-mdc-menu-item-text {
-      font-family: variables.$languageFonts;
+      font-family: theme.$languageFonts;
     }
   }
 }
 
 .mat-toolbar {
   min-height: initial;
+  --mat-toolbar-container-background-color: #{theme.get-palette-color(primary, 20)};
 }
 
 .mat-toolbar-row {
@@ -186,7 +188,7 @@ header {
       }
 
       &.install-badge {
-        color: variables.$purpleLight;
+        color: theme.get-palette-color(tertiary, 70);
         background: #fff;
         border-radius: 50%;
         inset-inline-start: 3px;
@@ -210,6 +212,7 @@ header {
 .mat-drawer-container {
   width: 100%;
   background: initial;
+  --mat-sidenav-container-shape: 0;
 }
 
 .app-content {
