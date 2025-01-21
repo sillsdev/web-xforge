@@ -1659,6 +1659,30 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetQueuedStateAsync_WebhookRunning()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.QueueBuildAsync(
+            preTranslate: true,
+            dateTime: null,
+            errorMessage: null,
+            preTranslationsRetrieved: false
+        );
+
+        // SUT
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
+            User01,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+        Assert.AreEqual(MachineApiService.BuildStateFinishing, actual?.State);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(actual?.Message));
+    }
+
+    [Test]
     public async Task RetrievePreTranslationStatusAsync_DoesNotRecordTaskCancellation()
     {
         // Set up test environment
@@ -2662,7 +2686,12 @@ public class MachineApiServiceTests
         public ITranslationEngineTypesClient TranslationEngineTypesClient { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
 
-        public async Task QueueBuildAsync(bool preTranslate, DateTime? dateTime = null, string? errorMessage = null) =>
+        public async Task QueueBuildAsync(
+            bool preTranslate,
+            DateTime? dateTime = null,
+            string? errorMessage = null,
+            bool? preTranslationsRetrieved = null
+        ) =>
             await ProjectSecrets.UpdateAsync(
                 Project01,
                 u =>
@@ -2671,6 +2700,7 @@ public class MachineApiServiceTests
                     {
                         u.Set(p => p.ServalData.PreTranslationJobId, JobId);
                         u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime ?? DateTime.UtcNow);
+                        u.Set(p => p.ServalData.PreTranslationsRetrieved, preTranslationsRetrieved);
                         if (string.IsNullOrWhiteSpace(errorMessage))
                         {
                             u.Unset(p => p.ServalData.PreTranslationErrorMessage);
