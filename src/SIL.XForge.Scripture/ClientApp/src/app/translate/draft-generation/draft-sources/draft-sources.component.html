@@ -151,7 +151,7 @@
   </ng-container>
 
   <div class="page-actions">
-    <button mat-button (click)="cancel()"><mat-icon>cancel</mat-icon> Cancel</button>
+    <button mat-button (click)="cancel()"><mat-icon>close</mat-icon> Cancel</button>
 
     <button id="saveButton" mat-flat-button color="primary" (click)="save()">
       <ng-container [ngSwitch]="getControlState('projectSettings')">
@@ -176,6 +176,7 @@
       @if (step !== 1) {
         <button mat-button (click)="step = step - 1"><mat-icon>navigate_before</mat-icon> Back</button>
       }
+      <span class="spacer"></span>
       @if (step !== 3) {
         <button mat-flat-button color="primary" (click)="step = step + 1">
           Next <mat-icon iconPositionEnd>navigate_next</mat-icon>
