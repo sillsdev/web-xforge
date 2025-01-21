@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using Ionic.Zip;
+using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
@@ -400,9 +400,32 @@ public class SFInstallableDblResource : InstallableResource
         );
         if (RobustFile.Exists(resourceFile))
         {
-            using var zipFile = ZipFile.Read(resourceFile);
+            using var stream = new FileStream(resourceFile, FileMode.Open);
+            using var zipFile = new ZipFile(stream);
             zipFile.Password = this._passwordProvider?.GetPassword();
-            zipFile.ExtractAll(path, ExtractExistingFileAction.DoNotOverwrite);
+            ExtractAll(zipFile, path);
+        }
+    }
+
+    private static void ExtractAll(ZipFile zip, string path)
+    {
+        foreach (ZipEntry entry in zip)
+        {
+            if (!entry.IsFile)
+                continue; // Skip directories
+
+            string entryPath = Path.Combine(path, entry.Name);
+
+            if (File.Exists(entryPath))
+                continue; // Don't overwrite
+
+            // Ensure directories in the ZIP entry are created
+            Directory.CreateDirectory(Path.GetDirectoryName(entryPath));
+
+            // Extract the file
+            using Stream zipStream = zip.GetInputStream(entry);
+            using FileStream output = File.Create(entryPath);
+            zipStream.CopyTo(output);
         }
     }
 
@@ -510,9 +533,8 @@ public class SFInstallableDblResource : InstallableResource
                 // See if this a zip file, and if it contains the correct ID
                 try
                 {
-                    // This only uses DotNetZip because ParatextData uses DotNetZip
-                    // You could use System.IO.Compression if you wanted to
-                    using var zipFile = ZipFile.Read(resourceFile);
+                    using var stream = new FileStream(resourceFile, FileMode.Open);
+                    using var zipFile = new ZipFile(stream);
                     // Zip files use forward slashes, even on Windows
                     const string idSearchPath = DblFolderName + "/id/";
                     const string revisionSearchPath = DblFolderName + "/revision/";
@@ -524,19 +546,19 @@ public class SFInstallableDblResource : InstallableResource
                         if (
                             string.IsNullOrWhiteSpace(fileId)
                             && !entry.IsDirectory
-                            && entry.FileName.StartsWith(idSearchPath, StringComparison.OrdinalIgnoreCase)
+                            && entry.Name.StartsWith(idSearchPath, StringComparison.OrdinalIgnoreCase)
                         )
                         {
-                            fileId = entry.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
+                            fileId = entry.Name.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
                         }
                         else if (
                             revision == 0
                             && !entry.IsDirectory
-                            && entry.FileName.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase)
+                            && entry.Name.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase)
                         )
                         {
                             string revisionFilename = entry
-                                .FileName.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                                .Name.Split('/', StringSplitOptions.RemoveEmptyEntries)
                                 .Last();
                             if (!int.TryParse(revisionFilename, out revision))
                             {
