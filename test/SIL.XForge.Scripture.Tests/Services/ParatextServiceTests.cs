@@ -5303,6 +5303,55 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetRevisionHistoryAsync_DoesNotCrashWhenASyncUpdatesTheParatextRevisions()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+        env.ProjectHgRunner.SetStandardOutput(env.RuthBookUsfm, true);
+
+        // SUT
+        bool historyExists = false;
+        int count = 0;
+        await foreach (
+            DocumentRevision revision in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "RUT", 1)
+        )
+        {
+            // This will loop through the 4 valid ops in MemoryConnection.GetOpsAsync() then the 1 revision in MockHg._log
+            historyExists = true;
+            count++;
+
+            // Check the op sources
+            if (count == 4)
+            {
+                // The last revision should be the one from MockHg._log
+                Assert.AreEqual(revision.Source, OpSource.Paratext);
+            }
+            else if (count == 1)
+            {
+                // The first revision has a valid source
+                Assert.AreEqual(revision.Source, OpSource.Draft);
+            }
+            else
+            {
+                // The others do not
+                Assert.IsNull(revision.Source);
+            }
+
+            // Simulate a sync updating the revisions on disk
+            WriteLock writeLock = WriteLockManager.Default.ObtainLock(WriteScope.ProjectRepository(env.ProjectScrText));
+            writeLock.ReleaseAndNotify();
+        }
+
+        Assert.AreEqual(4, count);
+        Assert.IsTrue(historyExists);
+    }
+
+    [Test]
     public void GetRevisionHistoryAsync_InsufficientPermissions()
     {
         var env = new TestEnvironment();
@@ -5370,6 +5419,88 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetRevisionHistoryAsync_NoBookChangesInMercurial()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+        env.ProjectHgRunner.SetStandardOutput(string.Empty, false);
+
+        // SUT
+        bool historyExists = false;
+        int count = 0;
+        await foreach (
+            DocumentRevision revision in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)
+        )
+        {
+            // This will loop through the 4 valid ops (combined to 3) in MemoryConnection.GetOpsAsync()
+            // and skip the 1 revision in MockHg._log
+            historyExists = true;
+            count++;
+
+            // Check the op sources
+            if (count == 1)
+            {
+                // The first revision has a valid source
+                Assert.AreEqual(revision.Source, OpSource.Draft);
+            }
+            else
+            {
+                // The others do not
+                Assert.IsNull(revision.Source);
+            }
+        }
+
+        Assert.AreEqual(3, count);
+        Assert.IsTrue(historyExists);
+    }
+
+    [Test]
+    public async Task GetRevisionHistoryAsync_NoChapterChangesInMercurial()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+        env.ProjectHgRunner.SetStandardOutput(env.RuthBookUsfm, false);
+
+        // SUT
+        bool historyExists = false;
+        int count = 0;
+        await foreach (
+            DocumentRevision revision in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "RUT", 1)
+        )
+        {
+            // This will loop through the 4 valid ops (combined to 3) in MemoryConnection.GetOpsAsync()
+            // and skip the 1 revision in MockHg._log
+            historyExists = true;
+            count++;
+
+            // Check the op sources
+            if (count == 1)
+            {
+                // The first revision has a valid source
+                Assert.AreEqual(revision.Source, OpSource.Draft);
+            }
+            else
+            {
+                // The others do not
+                Assert.IsNull(revision.Source);
+            }
+        }
+
+        Assert.AreEqual(3, count);
+        Assert.IsTrue(historyExists);
+    }
+
+    [Test]
     public async Task GetRevisionHistoryAsync_Success()
     {
         var env = new TestEnvironment();
@@ -5398,7 +5529,67 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task GetSnapshotAsync_FetchesSnapshot()
+    public async Task GetSnapshotAsync_FetchesEarliestSnapshotFromParatext()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+        const string book = "RUT";
+        const int chapter = 1;
+        env.RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
+        env.ProjectHgRunner.SetStandardOutput(env.RuthBookUsfm, true);
+        TextData textData = env.GetTextDoc(Canon.BookIdToNumber(book), chapter);
+
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).Returns(_ => scrText);
+        env.MockDeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>())
+            .Returns([new ChapterDelta(chapter, 1, false, textData)]);
+
+        // SUT
+        var actual = await env.Service.GetSnapshotAsync(userSecret, project.Id, book, chapter, DateTime.MinValue);
+        Assert.AreEqual(textData.Ops.First(), actual.Data.Ops.First());
+        Assert.AreEqual(textData.Id, actual.Id);
+        Assert.AreEqual(0, actual.Version);
+        Assert.AreEqual(false, actual.IsValid);
+    }
+
+    [Test]
+    public async Task GetSnapshotAsync_FetchesSpecifiedSnapshotFromParatext()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+        const string book = "RUT";
+        const int chapter = 1;
+        env.RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
+        env.ProjectHgRunner.SetStandardOutput(env.RuthBookUsfm, true);
+        TextData textData = env.GetTextDoc(Canon.BookIdToNumber(book), chapter);
+
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).Returns(_ => scrText);
+        env.MockDeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>())
+            .Returns([new ChapterDelta(chapter, 1, false, textData)]);
+
+        // SUT
+        var actual = await env.Service.GetSnapshotAsync(userSecret, project.Id, book, chapter, DateTime.UtcNow);
+        Assert.AreEqual(textData.Ops.First(), actual.Data.Ops.First());
+        Assert.AreEqual(textData.Id, actual.Id);
+        Assert.AreEqual(0, actual.Version);
+        Assert.AreEqual(false, actual.IsValid);
+    }
+
+    [Test]
+    public async Task GetSnapshotAsync_FetchesSnapshotFromRealtimeServer()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -5464,6 +5655,29 @@ public class ParatextServiceTests
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
+        );
+    }
+
+    [Test]
+    public void GetSnapshotAsync_NoParatextRevisions()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+        env.RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
+        env.ProjectHg.Log.Clear();
+
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).Returns(_ => scrText);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetSnapshotAsync(userSecret, project.Id, "RUT", 1, DateTime.MinValue)
         );
     }
 
@@ -6080,15 +6294,22 @@ public class ParatextServiceTests
                 .SearchForBestProjectUsersData(Arg.Any<SharedRepositorySource>(), Arg.Any<SharedProject>())
                 .Returns(args => args.ArgAt<SharedProject>(1).Permissions);
             RegistryU.Implementation = new DotNetCoreRegistry();
-            ScrTextCollection.Implementation = new SFScrTextCollection();
+            ScrTextCollection.Implementation = ProjectScrTextCollection;
             AddProjectRepository();
             AddUserRepository();
 
             // Ensure that the SLDR is initialized for LanguageID.Code to be retrieved correctly
             if (!Sldr.IsInitialized)
                 Sldr.Initialize(true);
+
+            // Setup Mercurial for tests
+            Hg.DefaultRunnerCreationFunc = (_, _, _) => ProjectHgRunner;
+            Hg.Default = ProjectHg;
         }
 
+        public MockHgRunner ProjectHgRunner { get; } = new MockHgRunner();
+        public MockHg ProjectHg { get; } = new MockHg();
+        public SFScrTextCollection ProjectScrTextCollection { get; } = new SFScrTextCollection();
         public MockScrText ProjectScrText { get; set; }
         public CommentManager ProjectCommentManager { get; set; }
         public ProjectFileManager ProjectFileManager { get; set; }
@@ -6443,15 +6664,16 @@ public class ParatextServiceTests
 
         public TextData AddTextDoc(int bookNum, int chapterNum)
         {
-            Delta chapterDelta = Delta.New().Insert("In the beginning");
-            var textDoc = new TextData(chapterDelta)
+            TextData textDoc = GetTextDoc(bookNum, chapterNum);
+            RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>([textDoc]));
+            return textDoc;
+        }
+
+        public TextData GetTextDoc(int bookNum, int chapterNum) =>
+            new TextData(Delta.New().Insert("In the beginning"))
             {
                 Id = TextData.GetTextDocId("sf_id_" + Project01, bookNum, chapterNum),
             };
-            var texts = new TextData[] { textDoc };
-            RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
-            return textDoc;
-        }
 
         public void AddNoteThreadData(ThreadComponents[] threadComponents)
         {
@@ -6648,6 +6870,7 @@ public class ParatextServiceTests
         {
             string ptProjectId = PTProjectIds[baseId].Id;
             ProjectScrText = GetScrText(associatedPtUser, ptProjectId, hasEditPermission);
+            ProjectScrTextCollection.AddToInternalIndex(ProjectScrText);
 
             // We set the file manager here so we can track file manager operations after
             // the ScrText object has been disposed in ParatextService.
@@ -6801,6 +7024,7 @@ public class ParatextServiceTests
             scrText.Data.Add("RUT", RuthBookUsfm);
             scrText.Settings.BooksPresentSet = new BookSet("RUT");
             scrText.Settings.LanguageID = LanguageId.English;
+            scrText.Settings.FileNamePostPart = ".SFM";
             if (!hasEditPermission)
                 scrText.Permissions.SetPermission(null, 8, PermissionSet.Manual, false);
             return scrText;
