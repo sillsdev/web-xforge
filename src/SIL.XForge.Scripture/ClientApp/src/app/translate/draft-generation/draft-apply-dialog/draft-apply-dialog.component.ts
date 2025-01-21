@@ -188,6 +188,7 @@ export class DraftApplyDialogComponent implements OnInit {
   }
 
   private validateProject(): void {
+    // setTimeout prevents a "changed after checked" exception
     setTimeout(() => this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState())));
   }
 

@@ -143,11 +143,8 @@
     "project_name": "Project Name"
   },
   "draft_add_dialog": {
-    "add_book_to_project": "Add {{ bookName }} to project",
     "add_to_project": "Add to project",
-    "book_contents_will_be_overwritten": "Warning, this will overwrite any data in your project for the book of {{ bookName }}.",
     "cancel": "Cancel",
-    "readd_book_to_project": "Re-add {{ bookName }} to project",
     "readd_to_project": "Re-add to project"
   },
   "draft_apply_dialog": {
