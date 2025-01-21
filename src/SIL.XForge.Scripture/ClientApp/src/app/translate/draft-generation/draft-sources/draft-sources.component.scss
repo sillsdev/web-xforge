@@ -70,9 +70,9 @@ strong {
 
 .step-button-wrapper {
   display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
-  justify-content: flex-end;
+  .spacer {
+    flex-grow: 1;
+  }
 }
 
 .overview {
@@ -138,13 +138,19 @@ strong {
   margin: 0;
 }
 
-.blank-project > * {
-  background: #d9d9d9;
+.blank-project {
+  .project-name,
+  .language-code {
+    background: #d9d9d9;
+  }
+
   .project-name {
-    width: 70%;
+    width: 100%;
+    max-width: 15em;
   }
   .language-code {
-    width: 40%;
+    width: 70%;
+    max-width: 10em;
   }
 }
 
