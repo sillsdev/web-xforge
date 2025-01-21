@@ -11,6 +11,9 @@ public class TextData : Delta, IIdentifiable
     public static string GetTextDocId(string projectId, int book, int chapter) =>
         $"{projectId}:{Canon.BookNumberToId(book)}:{chapter}:target";
 
+    public static string GetTextDocId(string projectId, string book, int chapter) =>
+        $"{projectId}:{book}:{chapter}:target";
+
     public TextData() { }
 
     public TextData(Delta delta)

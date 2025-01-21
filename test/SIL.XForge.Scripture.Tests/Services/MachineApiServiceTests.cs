@@ -1204,7 +1204,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
         Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
-        Assert.AreEqual($"{Project01}:MAT:1:target", actual.Id);
+        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual.Id);
     }
 
     [Test]

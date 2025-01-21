@@ -30,14 +30,8 @@ public class MemoryRealtimeService : IRealtimeService
         return sp.GetRequiredService<INodeJSService>();
     }
 
-    private readonly Dictionary<Type, object> _repos;
-    private readonly Dictionary<Type, DocConfig> _docConfigs;
-
-    public MemoryRealtimeService()
-    {
-        _repos = [];
-        _docConfigs = [];
-    }
+    private readonly Dictionary<Type, object> _repos = [];
+    private readonly Dictionary<Type, DocConfig> _docConfigs = [];
 
     /// <summary>
     /// Gets or sets the last modified user identifier.

@@ -5312,6 +5312,7 @@ public class ParatextServiceTests
         SFProject project = env.NewSFProject();
         project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
         env.AddProjectRepository(project);
+        env.AddTextDataOps(project.Id, "RUT", 1);
         env.ProjectHgRunner.SetStandardOutput(env.RuthBookUsfm, true);
 
         // SUT
@@ -5406,6 +5407,7 @@ public class ParatextServiceTests
         SFProject project = env.NewSFProject();
         project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
         env.AddProjectRepository(project);
+        env.AddTextDataOps(project.Id, "MAT", 1);
         env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).ReturnsNull();
 
         // SUT
@@ -5428,6 +5430,7 @@ public class ParatextServiceTests
         SFProject project = env.NewSFProject();
         project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
         env.AddProjectRepository(project);
+        env.AddTextDataOps(project.Id, "MAT", 1);
         env.ProjectHgRunner.SetStandardOutput(string.Empty, false);
 
         // SUT
@@ -5469,6 +5472,7 @@ public class ParatextServiceTests
         SFProject project = env.NewSFProject();
         project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
         env.AddProjectRepository(project);
+        env.AddTextDataOps(project.Id, "RUT", 1);
         env.ProjectHgRunner.SetStandardOutput(env.RuthBookUsfm, false);
 
         // SUT
@@ -5510,6 +5514,7 @@ public class ParatextServiceTests
         SFProject project = env.NewSFProject();
         project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
         env.AddProjectRepository(project);
+        env.AddTextDataOps(project.Id, "MAT", 1);
 
         // SUT
         bool historyExists = false;
@@ -6609,6 +6614,53 @@ public class ParatextServiceTests
                     },
                 },
             };
+
+        public void AddTextDataOps(string projectId, string book, int chapter)
+        {
+            // Using the last hour will ensure that that ops are combined
+            // consistently in ParatextService.GetRevisionHistoryAsync()
+            DateTime thePreviousHour = new DateTime(
+                DateTime.UtcNow.Year,
+                DateTime.UtcNow.Month,
+                DateTime.UtcNow.Day,
+                DateTime.UtcNow.Hour,
+                0,
+                0,
+                DateTimeKind.Utc
+            );
+            Op[] ops =
+            [
+                new Op
+                {
+                    Metadata = new OpMetadata { Timestamp = thePreviousHour.AddMinutes(-30) },
+                    Version = 1,
+                },
+                new Op
+                {
+                    Metadata = new OpMetadata { Timestamp = thePreviousHour.AddMinutes(-10) },
+                    Version = 2,
+                },
+                new Op
+                {
+                    // This op should be combined with the next
+                    Metadata = new OpMetadata { Timestamp = thePreviousHour.AddMinutes(-1) },
+                    Version = 3,
+                },
+                new Op
+                {
+                    Metadata = new OpMetadata
+                    {
+                        Timestamp = thePreviousHour,
+                        UserId = "user01",
+                        Source = OpSource.Draft,
+                    },
+                    Version = 4,
+                },
+            ];
+            string id = TextData.GetTextDocId(projectId, book, chapter);
+            RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
+            RealtimeService.GetRepository<TextData>().SetOps(id, ops);
+        }
 
         public void AddProjectRepository(SFProject proj = null)
         {

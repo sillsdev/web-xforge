@@ -1911,7 +1911,7 @@ public class ParatextService : DisposableBase, IParatextService
         VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
 
         TextSnapshot ret;
-        string id = $"{sfProjectId}:{book}:{chapter}:target";
+        string id = TextData.GetTextDocId(sfProjectId, book, chapter);
         Snapshot<TextData> snapshot = await connection.FetchSnapshotAsync<TextData>(id, timestamp);
 
         if (snapshot.Data is null)
@@ -1988,7 +1988,7 @@ public class ParatextService : DisposableBase, IParatextService
             throw new ForbiddenException();
         }
 
-        string id = $"{sfProjectId}:{book}:{chapter}:target";
+        string id = TextData.GetTextDocId(sfProjectId, book, chapter);
         Op[] ops = await connection.GetOpsAsync<TextData>(id);
 
         // Iterate over the ops in reverse order, returning a milestone at least every 15 minutes
