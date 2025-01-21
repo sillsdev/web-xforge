@@ -231,6 +231,21 @@ describe('DraftGenerationStepsComponent', () => {
 
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([]);
     });
+
+    it('clears selected reference books when translated book is unselected', () => {
+      component.onTranslatedBookSelect([2, 3]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 2, selected: true },
+        { number: 3, selected: true }
+      ]);
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 2, selected: true },
+        { number: 3, selected: true }
+      ]);
+      component.onTranslatedBookSelect([2]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 2, selected: true }]);
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 2, selected: true }]);
+    });
   });
 
   describe('additional training source', () => {
