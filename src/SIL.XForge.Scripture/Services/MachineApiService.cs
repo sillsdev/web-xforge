@@ -59,6 +59,15 @@ public class MachineApiService(
     /// SF returns this state while the files are being uploaded to Serval.
     /// </remarks>
     internal const string BuildStateQueued = "QUEUED";
+
+    /// <summary>
+    /// The Finishing build state.
+    /// </summary>
+    /// <remarks>
+    /// SF returns this state while the webhook is running and the drafts are being downloaded to SF.
+    /// </remarks>
+    internal const string BuildStateFinishing = "FINISHING";
+
     private static readonly IEqualityComparer<IList<int>> _listIntComparer = SequenceEqualityComparer.Create(
         EqualityComparer<int>.Default
     );
@@ -484,15 +493,27 @@ public class MachineApiService(
             }
             else
             {
-                // If we do not have build queued, do not return a build dto
-                if (queuedAt is null)
+                // If the webhook is running, display that as a build state to the user
+                if (preTranslate && projectSecret.ServalData.PreTranslationsRetrieved == false)
                 {
+                    buildDto = new ServalBuildDto
+                    {
+                        State = BuildStateFinishing,
+                        Message = "The draft books are being retrieved.",
+                        AdditionalInfo = new ServalBuildAdditionalInfo
+                        {
+                            TranslationEngineId = engineId ?? string.Empty,
+                        },
+                    };
+                }
+                else if (queuedAt is null)
+                {
+                    // If we do not have build queued, do not return a build dto
                     return null;
                 }
-
-                // If the build was queued 6 hours or more ago, it will have failed to upload
-                if (queuedAt <= DateTime.UtcNow.AddHours(-6))
+                else if (queuedAt <= DateTime.UtcNow.AddHours(-6))
                 {
+                    // If the build was queued 6 hours or more ago, it will have failed to upload
                     buildDto = new ServalBuildDto
                     {
                         State = BuildStateFaulted,
