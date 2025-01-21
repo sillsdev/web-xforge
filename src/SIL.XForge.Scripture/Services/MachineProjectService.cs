@@ -446,30 +446,30 @@ public class MachineProjectService(
         // If there is an alternate training source, ensure that name, writing system and RTL is correct
         if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource is not null)
         {
-            ParatextSettings? alternateSourceSettings = paratextService.GetParatextSettings(
+            ParatextSettings? alternateTrainingSourceSettings = paratextService.GetParatextSettings(
                 userSecret,
                 projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId
             );
-            if (alternateSourceSettings is not null)
+            if (alternateTrainingSourceSettings is not null)
             {
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
                     op.Set(
                         pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.IsRightToLeft,
-                        alternateSourceSettings.IsRightToLeft
+                        alternateTrainingSourceSettings.IsRightToLeft
                     );
-                    if (alternateSourceSettings.LanguageTag is not null)
+                    if (alternateTrainingSourceSettings.LanguageTag is not null)
                     {
                         op.Set(
                             pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.WritingSystem.Tag,
-                            alternateSourceSettings.LanguageTag
+                            alternateTrainingSourceSettings.LanguageTag
                         );
                     }
-                    if (alternateSourceSettings.FullName is not null)
+                    if (alternateTrainingSourceSettings.FullName is not null)
                     {
                         op.Set(
                             pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.Name,
-                            alternateSourceSettings.FullName
+                            alternateTrainingSourceSettings.FullName
                         );
                     }
                 });

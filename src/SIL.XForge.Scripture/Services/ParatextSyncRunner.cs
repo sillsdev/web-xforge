@@ -1831,6 +1831,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 if (sourceSettings != null)
                 {
                     op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
+                    if (sourceSettings.LanguageRegion != null)
+                        op.Set(pd => pd.WritingSystem.Region, sourceSettings.LanguageRegion);
+                    if (sourceSettings.LanguageScript != null)
+                        op.Set(pd => pd.WritingSystem.Script, sourceSettings.LanguageScript);
                     if (sourceSettings.LanguageTag != null)
                         op.Set(pd => pd.TranslateConfig.Source.WritingSystem.Tag, sourceSettings.LanguageTag);
                 }
