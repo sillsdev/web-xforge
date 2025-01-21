@@ -238,12 +238,14 @@ describe('DraftGenerationStepsComponent', () => {
       trainingSources: [
         {
           projectRef: 'source1',
+          paratextId: 'PT_SP1',
           shortName: 'sP1',
           writingSystem: { tag: 'eng' },
           texts: availableBooks.concat({ bookNum: 1 })
         },
         {
           projectRef: 'source2',
+          paratextId: 'PT_SP2',
           shortName: 'sP2',
           writingSystem: { tag: 'eng' },
           texts: availableBooks.concat({ bookNum: 6 })
