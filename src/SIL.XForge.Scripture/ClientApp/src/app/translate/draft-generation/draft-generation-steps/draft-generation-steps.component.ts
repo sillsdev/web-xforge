@@ -18,6 +18,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
+import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
@@ -101,6 +102,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   protected trainingSources: DraftSource[] = [];
   protected trainingTargets: DraftSource[] = [];
+  protected translatedBooksWithNoSource: number[] = [];
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataSub?: Subscription;
@@ -114,7 +116,8 @@ export class DraftGenerationStepsComponent implements OnInit {
     private readonly trainingDataService: TrainingDataService,
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly progressService: ProgressService
   ) {}
 
   ngOnInit(): void {
@@ -184,6 +187,13 @@ export class DraftGenerationStepsComponent implements OnInit {
               isPresentInASource = true;
             } else {
               this.unusableTrainingSourceBooks.push(bookNum);
+              const textProgress: TextProgress | undefined = this.progressService.texts.find(
+                t => t.text.bookNum === bookNum
+              );
+              if (textProgress != null && textProgress.translated > 10) {
+                // we consider books with more than 10 translated segments as translated
+                this.translatedBooksWithNoSource.push(bookNum);
+              }
             }
             if (trainingSources[1] != null && additionalTrainingSourceBooks.has(bookNum)) {
               this.availableTrainingBooks[trainingSources[1].projectRef].push({ number: bookNum, selected: false });
@@ -252,6 +262,18 @@ export class DraftGenerationStepsComponent implements OnInit {
       }
     }
     return false;
+  }
+
+  get translatedBooksSelectedInTrainingSources(): boolean {
+    const translatedBooksSelected: Book[] = this.selectedTrainingBooksByProj(this.activatedProject.projectId);
+    const selectedInSource1: Book[] =
+      this.trainingSources[0] != null ? this.selectedTrainingBooksByProj(this.trainingSources[0].projectRef) : [];
+    const selectedInSource2: Book[] =
+      this.trainingSources[1] != null ? this.selectedTrainingBooksByProj(this.trainingSources[1].projectRef) : [];
+    const selectedInSources: number[] = Array.from(
+      new Set<number>([...selectedInSource1, ...selectedInSource2].map(b => b.number))
+    );
+    return translatedBooksSelected.every(b => selectedInSources.includes(b.number));
   }
 
   get firstTrainingSource(): string {

@@ -32,6 +32,7 @@ import { TrainingDataDoc } from '../../core/models/training-data-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
+import { ProgressService } from '../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../nllb-language.service';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
@@ -53,6 +54,7 @@ describe('DraftGenerationComponent', () => {
   let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
+  let mockProgressService: jasmine.SpyObj<ProgressService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -115,7 +117,8 @@ describe('DraftGenerationComponent', () => {
           { provide: PreTranslationSignupUrlService, useValue: mockPreTranslationSignupUrlService },
           { provide: NllbLanguageService, useValue: mockNllbLanguageService },
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-          { provide: TrainingDataService, useValue: mockTrainingDataService }
+          { provide: TrainingDataService, useValue: mockTrainingDataService },
+          { provide: ProgressService, useValue: mockProgressService }
         ]
       });
 

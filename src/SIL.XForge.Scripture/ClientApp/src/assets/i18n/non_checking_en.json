@@ -262,10 +262,12 @@
     "no_available_books": "You have no books available for drafting.",
     "overview": "Overview",
     "reference_books": "Reference books",
+    "source_books_missing": "The source for this project does not contain all the translated books. Are you sure you are using the correct source?",
     "these_source_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ firstTrainingSource }}).",
     "these_source_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
     "training_books_will_appear": "Training books will appear as you select books under translated books",
     "translated_books": "Translated books",
+    "translated_book_selected_no_training_pair": "You selected translated books but did not select matching reference books for training. Please choose matching reference books",
     "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
   },
   "draft_preview_books": {
