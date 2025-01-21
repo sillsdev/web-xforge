@@ -18,6 +18,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -26,7 +27,6 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { RealtimeQuery } from '../../../xforge-common/models/realtime-query';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../core/models/training-data-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -2115,6 +2115,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftInProgress({ state: BuildStates.Active } as BuildDto)).toBe(true);
       expect(env.component.isDraftInProgress({ state: BuildStates.Pending } as BuildDto)).toBe(true);
       expect(env.component.isDraftInProgress({ state: BuildStates.Queued } as BuildDto)).toBe(true);
+      expect(env.component.isDraftInProgress({ state: BuildStates.Finishing } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build is not in progress', () => {
@@ -2138,6 +2139,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftQueued({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftQueued({ state: BuildStates.Completed } as BuildDto)).toBe(false);
       expect(env.component.isDraftQueued({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+      expect(env.component.isDraftQueued({ state: BuildStates.Finishing } as BuildDto)).toBe(false);
     });
   });
 
@@ -2154,6 +2156,24 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftActive({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
       expect(env.component.isDraftActive({ state: BuildStates.Pending } as BuildDto)).toBe(false);
       expect(env.component.isDraftActive({ state: BuildStates.Queued } as BuildDto)).toBe(false);
+      expect(env.component.isDraftActive({ state: BuildStates.Finishing } as BuildDto)).toBe(false);
+    });
+  });
+
+  describe('isDraftFinishing', () => {
+    it('should return true if the draft build is finishing', () => {
+      let env = new TestEnvironment();
+      expect(env.component.isDraftFinishing({ state: BuildStates.Finishing } as BuildDto)).toBe(true);
+    });
+
+    it('should return false if the draft build is not active', () => {
+      let env = new TestEnvironment();
+      expect(env.component.isDraftFinishing({ state: BuildStates.Active } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFinishing({ state: BuildStates.Completed } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFinishing({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFinishing({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFinishing({ state: BuildStates.Pending } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFinishing({ state: BuildStates.Queued } as BuildDto)).toBe(false);
     });
   });
 
@@ -2170,6 +2190,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftComplete({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
       expect(env.component.isDraftComplete({ state: BuildStates.Pending } as BuildDto)).toBe(false);
       expect(env.component.isDraftComplete({ state: BuildStates.Queued } as BuildDto)).toBe(false);
+      expect(env.component.isDraftComplete({ state: BuildStates.Finishing } as BuildDto)).toBe(false);
     });
   });
 
@@ -2190,6 +2211,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftFaulted({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftFaulted({ state: BuildStates.Pending } as BuildDto)).toBe(false);
       expect(env.component.isDraftFaulted({ state: BuildStates.Queued } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFaulted({ state: BuildStates.Finishing } as BuildDto)).toBe(false);
       expect(env.getElementByTestId('warning-generation-failed')).toBeNull();
       expect(env.getElementByTestId('technical-details')).toBeNull();
     });
@@ -2256,7 +2278,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.downloadButton).not.toBeNull();
     });
 
-    it('button should not display if there is no completed build while a build is faulter', () => {
+    it('button should not display if there is no completed build while a build is faulted', () => {
       const env = new TestEnvironment();
       env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
       env.component.lastCompletedBuild = undefined;
