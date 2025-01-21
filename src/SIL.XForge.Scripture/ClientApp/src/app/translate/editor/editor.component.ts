@@ -1366,6 +1366,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const tagId: number | undefined =
       params.threadDataId == null ? this.projectDoc?.data?.translateConfig.defaultNoteTagId : undefined;
     const noteContent: string | undefined = params.content == null ? undefined : XmlUtils.encodeForXml(params.content);
+    const noteStatus: NoteStatus = params.status ?? NoteStatus.Todo;
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
@@ -1377,7 +1378,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       content: noteContent,
       conflictType: NoteConflictType.DefaultValue,
       type: NoteType.Normal,
-      status: params.status ?? NoteStatus.Todo,
+      status: noteStatus,
       deleted: false,
       editable: true,
       versionNumber: 1
@@ -1411,9 +1412,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           await threadDoc!.submitJson0Op(op => {
             op.set(t => t.notes[noteIndex].content, noteContent);
             op.set(t => t.notes[noteIndex].dateModified, currentDate);
+            op.set(t => t.notes[noteIndex].status, noteStatus);
+            // also set the status of the thread to be the status of the note
+            op.set(t => t.status, noteStatus);
           });
         } else {
-          this.dialogService.message(this.i18n.translate('editor.cannot_edit_note_paratext'));
+          this.dialogService.message('editor.cannot_edit_note_paratext');
         }
       } else {
         note.threadId = threadDoc.data!.threadId;

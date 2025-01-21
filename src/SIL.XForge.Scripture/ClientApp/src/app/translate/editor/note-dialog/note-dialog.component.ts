@@ -359,6 +359,7 @@ export class NoteDialogComponent implements OnInit {
     const content: NoteDialogResult = { status: NoteStatus.Resolved };
     if (this.currentNoteContent.trim().length > 0) {
       content.noteContent = this.currentNoteContent;
+      content.noteDataId = this.noteIdBeingEdited;
     }
     this.dialogRef.close(content);
   }
