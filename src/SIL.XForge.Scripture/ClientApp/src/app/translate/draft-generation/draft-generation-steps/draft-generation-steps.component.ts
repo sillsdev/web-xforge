@@ -375,6 +375,10 @@ export class DraftGenerationStepsComponent implements OnInit {
         if (sourceBook !== undefined) {
           sourceBook.selected = true;
         }
+        // ensure any books source training books not selected in translated books is unselected
+        trainingBooks.forEach(b => {
+          b.selected = selectedBooks.includes(b.number) ? b.selected : false;
+        });
       }
     }
 
