@@ -1910,8 +1910,8 @@ public class ParatextService : DisposableBase, IParatextService
         using ScrText scrText = GetScrText(userSecret, ptProjectId);
         VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
 
-        TextSnapshot ret = null;
-        string id = $"{sfProjectId}:{book}:{chapter}:target";
+        TextSnapshot ret;
+        string id = TextData.GetTextDocId(sfProjectId, book, chapter);
         Snapshot<TextData> snapshot = await connection.FetchSnapshotAsync<TextData>(id, timestamp);
 
         if (snapshot.Data is null)
@@ -1924,10 +1924,10 @@ public class ParatextService : DisposableBase, IParatextService
             HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
             DateTimeOffset timeStampOffset = new DateTimeOffset(timestamp, TimeSpan.Zero);
             HgRevision? revision = revisionCollection
-                .MutableCollection.Where(r => r.CommitTimeStamp <= timeStampOffset)
+                .FilterRevisions(r => r.CommitTimeStamp <= timeStampOffset)
                 .MaxBy(r => r.CommitTimeStamp);
 
-            // No revision was before than the timestamp, so get the first revision
+            // No revision was before the timestamp, so get the first revision
             revision ??= revisionCollection.MinBy(r => r.LocalRevisionNumber);
             if (revision is null)
             {
@@ -1988,7 +1988,7 @@ public class ParatextService : DisposableBase, IParatextService
             throw new ForbiddenException();
         }
 
-        string id = $"{sfProjectId}:{book}:{chapter}:target";
+        string id = TextData.GetTextDocId(sfProjectId, book, chapter);
         Op[] ops = await connection.GetOpsAsync<TextData>(id);
 
         // Iterate over the ops in reverse order, returning a milestone at least every 15 minutes
@@ -2062,11 +2062,11 @@ public class ParatextService : DisposableBase, IParatextService
         // Note: The following code is not testable due to ParatextData limitations
         // Iterate over the Paratext commits earlier than the earliest MongoOp
         DateTimeOffset timeStampOffset = new DateTimeOffset(milestonePeriod, TimeSpan.Zero);
-        HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
+        HgRevisionCollection revisionCollection = HgRevisionCollection
+            .Get(scrText)
+            .FilterRevisions(r => r.CommitTimeStamp <= timeStampOffset);
         int bookNum = Canon.BookIdToNumber(book);
-        foreach (
-            HgRevision revision in revisionCollection.MutableCollection.Where(r => r.CommitTimeStamp <= timeStampOffset)
-        )
+        foreach (HgRevision revision in revisionCollection)
         {
             // Get the revision summary to see if the book and chapter has changed
             RevisionChangeInfo revisionSummary = revisionCollection.GetSummaryFor(revision);

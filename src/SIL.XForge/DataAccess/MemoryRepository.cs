@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
 using SIL.XForge.Utils;
 
 namespace SIL.XForge.DataAccess;
@@ -23,7 +24,8 @@ public class MemoryRepository<T> : IRepository<T>
         Converters = [new BsonValueConverter()],
     };
 
-    private readonly ConcurrentDictionary<string, string> _entities;
+    private readonly ConcurrentDictionary<string, string> _entities = [];
+    private readonly ConcurrentDictionary<string, Op[]> _entityOps = [];
     private readonly Func<T, object>[] _uniqueKeySelectors;
     private readonly HashSet<object>[] _uniqueKeys;
 
@@ -37,7 +39,6 @@ public class MemoryRepository<T> : IRepository<T>
         for (int i = 0; i < _uniqueKeys.Length; i++)
             _uniqueKeys[i] = [];
 
-        _entities = new ConcurrentDictionary<string, string>();
         if (entities != null)
             Add(entities);
     }
@@ -85,6 +86,10 @@ public class MemoryRepository<T> : IRepository<T>
     public bool Contains(string id) => _entities.ContainsKey(id);
 
     public T Get(string id) => DeserializeEntity(id, _entities[id]);
+
+    public Op[] GetOps(string id) => _entityOps.TryGetValue(id, out Op[] ops) ? ops : [];
+
+    public void SetOps(string id, Op[] ops) => _entityOps[id] = ops;
 
     public IQueryable<T> Query() => _entities.Select(kvp => DeserializeEntity(kvp.Key, kvp.Value)).AsQueryable();
 
