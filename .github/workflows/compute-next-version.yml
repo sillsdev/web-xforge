@@ -28,7 +28,7 @@ on:
 jobs:
   deploy:
     name: "Compute next version"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       next_version: ${{ steps.compute_next_version.outputs.next_version }}
     steps:
