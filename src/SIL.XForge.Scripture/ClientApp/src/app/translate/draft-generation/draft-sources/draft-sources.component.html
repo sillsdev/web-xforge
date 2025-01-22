@@ -46,7 +46,7 @@
         }
 
         @if (allowAddingATrainingSource) {
-          <a href="#" (click)="trainingSources.push(undefined); $event.preventDefault()">
+          <a href="#" (click)="trainingSources.push(undefined); $event.preventDefault()" class="add-another-project">
             + Add another reference project
           </a>
         }
@@ -89,7 +89,7 @@
       </mat-card-header>
       <mat-card-content class="training-data">
         <div class="sources" (click)="step = 2" [class.active]="step === 2" matRipple>
-          <h3>Reference</h3>
+          <h3>Reference {{ parentheses(referenceLanguageDisplayName) }}</h3>
           @for (project of trainingSources; track $index) {
             @if (project == null) {
               <ng-container *ngTemplateOutlet="blankProject"></ng-container>
@@ -97,7 +97,7 @@
               <div class="project">
                 <span class="project-name">{{ project.name }}</span>
                 <span class="language-code">
-                  {{ t("language_code") }} <strong>{{ project.writingSystem?.tag }}</strong>
+                  {{ t("language_code") }} <strong>{{ project.languageTag }}</strong>
                 </span>
               </div>
             }
@@ -105,7 +105,7 @@
         </div>
         <span class="arrow mirror-rtl"><mat-icon>arrow_right_alt</mat-icon></span>
         <div class="targets" (click)="step = 3" [class.active]="step === 3" matRipple>
-          <h3>Translated project</h3>
+          <h3>Translated project {{ parentheses(targetLanguageDisplayName) }}</h3>
           @for (project of trainingTargets; track $index) {
             <div class="project">
               <span class="project-name">{{ project.name }}</span>
@@ -124,7 +124,7 @@
       </mat-card-header>
       <mat-card-content>
         <div class="translation-data" (click)="step = 1" [class.active]="step === 1" matRipple>
-          <h3>Source</h3>
+          <h3>Source {{ parentheses(sourceLanguageDisplayName) }}</h3>
           @for (project of draftingSources; track $index) {
             @if (project == null) {
               <ng-container *ngTemplateOutlet="blankProject"></ng-container>
@@ -132,7 +132,7 @@
               <div class="project">
                 <span class="project-name">{{ project.name }}</span>
                 <span class="language-code">
-                  {{ t("language_code") }} <strong>{{ project.writingSystem?.tag }}</strong>
+                  {{ t("language_code") }} <strong>{{ project.languageTag }}</strong>
                 </span>
               </div>
             }
@@ -141,13 +141,45 @@
       </mat-card-content>
     </mat-card>
 
-    <app-notice mode="outline">
-      <strong>{{ t("incorrect_language_codes_reduce_quality") }}</strong>
-      <p>{{ t("how_to_change_language_codes") }}</p>
-      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">{{
-        t("confirm_lang_codes_correct")
-      }}</mat-checkbox>
-    </app-notice>
+    @if (sourceSideLanguageCodes.length > 1) {
+      <app-notice mode="outline" type="warning">
+        <h3>All source and reference projects should be in the same language</h3>
+        <p>
+          Source and reference projects currently have the following language codes:
+          {{ i18n.enumerateList(sourceSideLanguageCodes) }}
+        </p>
+        <p>{{ t("how_to_change_language_codes") }}</p>
+        <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
+          I understand the problem and want to save these settings anyway
+        </mat-checkbox>
+      </app-notice>
+    }
+
+    @if (showSourceAndTargetLanguagesIdenticalWarning) {
+      <app-notice mode="outline" type="warning">
+        <h3>Source and target languages should not be the same</h3>
+        <p>
+          The source and target projects all have the
+          <strong>{{ trainingTargets[0].writingSystem.tag }}</strong> language code. This may reduce the quality of the
+          generated draft.
+        </p>
+        <p>{{ t("how_to_change_language_codes") }}</p>
+        <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
+          I understand the problem and want to save these settings anyway
+        </mat-checkbox>
+      </app-notice>
+    }
+
+    @if (sourceSideLanguageCodes.length === 1 && !showSourceAndTargetLanguagesIdenticalWarning) {
+      <app-notice mode="outline">
+        <h3>{{ t("incorrect_language_codes_reduce_quality") }}</h3>
+        <p>Please make sure all the language codes are correct before saving.</p>
+        <p>{{ t("how_to_change_language_codes") }}</p>
+        <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">{{
+          t("confirm_lang_codes_correct")
+        }}</mat-checkbox>
+      </app-notice>
+    }
   </ng-container>
 
   <div class="page-actions">
@@ -172,12 +204,14 @@
   <ng-template #navigationButtons>
     <div class="step-button-wrapper">
       @if (step !== 1) {
-        <button mat-button (click)="step = step - 1"><mat-icon>navigate_before</mat-icon> Back</button>
+        <button mat-button (click)="step = step - 1">
+          <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
+        </button>
       }
       <span class="spacer"></span>
       @if (step !== 3) {
         <button mat-flat-button color="primary" (click)="step = step + 1">
-          Next <mat-icon iconPositionEnd>navigate_next</mat-icon>
+          Next <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
         </button>
       }
     </div>
