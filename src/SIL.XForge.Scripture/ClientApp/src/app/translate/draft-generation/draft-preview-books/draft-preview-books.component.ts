@@ -64,7 +64,7 @@ export class DraftPreviewBooksComponent {
     DraftApplyProgress | undefined
   >(undefined);
 
-  protected projectParatextId: string;
+  protected projectParatextId?: string;
 
   private applyChapters: number[] = [];
   private draftApplyBookNum: number = 0;
@@ -83,7 +83,7 @@ export class DraftPreviewBooksComponent {
   get isProjectAdmin$(): Observable<boolean> {
     return this.activatedProjectService.changes$.pipe(
       filterNullish(),
-      tap(p => (this.projectParatextId = p.data.paratextId)),
+      tap(p => (this.projectParatextId = p.data?.paratextId)),
       map(p => p.data?.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator)
     );
   }

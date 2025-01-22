@@ -29,7 +29,7 @@ export interface DraftApplyDialogResult {
 }
 
 export interface DraftApplyDialogConfig {
-  initialParatextId: string;
+  initialParatextId?: string;
   bookNum: number;
   chapters: number[];
 }
