@@ -111,6 +111,16 @@ describe('CheckingOverviewComponent', () => {
       expect(env.noQuestionsLabel).not.toBeNull();
     }));
 
+    it('should not display loading if user is offline', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.testOnlineStatusService.setIsOnline(false);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.loadingQuestionsLabel).toBeNull();
+      expect(env.noQuestionsLabel).not.toBeNull();
+      env.waitForQuestions();
+    }));
+
     it('should not display "Add question" button for community checker', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.checkerUser);
@@ -418,6 +428,25 @@ describe('CheckingOverviewComponent', () => {
       expect(env.noArchivedQuestionsLabel).not.toBeNull();
 
       discardPeriodicTasks();
+    }));
+
+    it('should not display loading if user is offline', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      const questionDoc: QuestionDoc = env.realtimeService.get(
+        QuestionDoc.COLLECTION,
+        getQuestionDocId('project01', 'q7Id')
+      );
+      await questionDoc.submitJson0Op(op => {
+        op.set(d => d.isArchived, false);
+      });
+      env.testOnlineStatusService.setIsOnline(false);
+      env.fixture.detectChanges();
+      tick();
+      env.fixture.detectChanges();
+      expect(env.loadingArchivedQuestionsLabel).toBeNull();
+      expect(env.noArchivedQuestionsLabel).not.toBeNull();
+
+      env.waitForQuestions();
     }));
 
     it('archives and republishes a question', fakeAsync(() => {
@@ -1067,6 +1096,7 @@ class TestEnvironment {
       }
     );
     this.setCurrentUser(this.adminUser);
+    this.testOnlineStatusService.setIsOnline(true);
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
     this.component = this.fixture.componentInstance;
