@@ -220,7 +220,9 @@ public class ParatextController : ControllerBase
         try
         {
             var resources = await _paratextService.GetResourcesAsync(_userAccessor.UserId);
-            return Ok(resources.ToDictionary(r => r.ParatextId, r => new string[] { r.ShortName, r.Name }));
+            return Ok(
+                resources.ToDictionary(r => r.ParatextId, r => new string[] { r.ShortName, r.Name, r.LanguageTag })
+            );
         }
         catch (DataNotFoundException)
         {
