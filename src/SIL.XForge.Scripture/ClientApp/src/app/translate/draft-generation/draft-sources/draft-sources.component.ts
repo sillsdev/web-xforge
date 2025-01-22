@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -134,12 +135,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     const definedSources = this.draftingSources.filter(s => s != null);
 
     if (definedSources.length > 1) throw new Error('Multiple drafting sources not supported');
-
-    if (definedSources.length === 0) return null;
-
-    const singleSource = definedSources[0];
-
-    return this.i18n.getLanguageDisplayName(singleSource.languageTag);
+    else if (definedSources.length < 1) return null;
+    else return this.i18n.getLanguageDisplayName(definedSources[0].languageTag);
   }
 
   get targetLanguageDisplayName(): string {
@@ -187,6 +184,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     private readonly paratextService: ParatextService,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
+    private readonly router: Router,
     readonly i18n: I18nService,
     noticeService: NoticeService
   ) {
@@ -195,7 +193,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     this.activatedProjectService.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc != null) {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
-        if (trainingSources.length > 2) throw new Error('blah');
+        if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
 
         this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag) as [
           SelectableProjectWithLanguageCode?,
@@ -227,7 +225,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     return project == null ? '' : `${project.shortName} - ${project.name}`;
   }
 
-  sourceSelected(array: any, index: any, paratextId: string | undefined): void {
+  sourceSelected(array: (SelectableProject | SFProjectProfile)[], index: number, paratextId: string | undefined): void {
     const selectedProject: SelectableProject | undefined =
       this.projects?.find(p => p.paratextId === paratextId) ??
       this.resources?.find(r => r.paratextId === paratextId) ??
@@ -244,6 +242,11 @@ export class DraftSourcesComponent extends DataLoadingComponent {
       this.languageCodesConfirmed = false;
     } else {
       array[index] = undefined;
+      // When the user clears a project select, if there are now multiple blank project selects, remove the first one
+      if (array.filter(s => s == null).length > 1) {
+        const index = array.findIndex(s => s == null);
+        array.splice(index, 1);
+      }
     }
   }
 
@@ -264,7 +267,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
         of('Stay on page')
       ));
     if (leavePage) {
-      this.dialogService.message(of('Not implemented.'));
+      this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
     }
   }
 

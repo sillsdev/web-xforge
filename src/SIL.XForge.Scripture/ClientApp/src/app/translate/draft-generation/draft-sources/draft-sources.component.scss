@@ -4,7 +4,7 @@ $active-hover-color: lighten($active-color, 4%);
 :host {
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-column-gap: 3em;
+  grid-column-gap: 2em;
   align-items: start;
 }
 
@@ -139,12 +139,6 @@ strong {
 }
 
 .blank-project {
-  .project-name,
-  .language-code {
-    height: 1em;
-    background: #d9d9d9;
-  }
-
   .project-name {
     width: 100%;
     max-width: 15em;
@@ -153,6 +147,14 @@ strong {
     width: 70%;
     max-width: 10em;
   }
+}
+
+.blank-project > * {
+  height: 1em;
+  background: #eee;
+}
+.active .blank-project > * {
+  background: #b6d7a8;
 }
 
 .page-actions {
