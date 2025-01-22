@@ -30,8 +30,13 @@
       </div>
       <div class="step-body">
         <p>
-          Select projects that should be used as the reference when training the language model. All of these projects
-          should be in <strong>{{ sourceLanguageDisplayName }}</strong> just like the draft source.
+          Select projects that should be used as the reference when training the language model.
+          @if (sourceLanguageDisplayName) {
+            All of these projects should be in <strong>{{ sourceLanguageDisplayName }}</strong> just like the draft
+            source.
+          } @else {
+            All of these projects should be in same language as the draft source.
+          }
         </p>
 
         @for (source of trainingSources; track $index) {
@@ -46,7 +51,11 @@
         }
 
         @if (allowAddingATrainingSource) {
-          <a href="#" (click)="trainingSources.push(undefined); $event.preventDefault()" class="add-another-project">
+          <a
+            href="#add-project"
+            (click)="trainingSources.push(undefined); $event.preventDefault()"
+            class="add-another-project"
+          >
             + Add another reference project
           </a>
         }
@@ -146,7 +155,8 @@
         <h3>All source and reference projects should be in the same language</h3>
         <p>
           Source and reference projects currently have the following language codes:
-          {{ i18n.enumerateList(sourceSideLanguageCodes) }}
+          {{ i18n.enumerateList(sourceSideLanguageCodes) }}. Using incorrect language codes, or using source or
+          reference projects that are not all in the same language, may significantly reduce the draft quality.
         </p>
         <p>{{ t("how_to_change_language_codes") }}</p>
         <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
@@ -157,11 +167,15 @@
 
     @if (showSourceAndTargetLanguagesIdenticalWarning) {
       <app-notice mode="outline" type="warning">
-        <h3>Source and target languages should not be the same</h3>
+        <h3>
+          Source and target languages are both {{ i18n.getLanguageDisplayName(trainingTargets[0].writingSystem.tag) }}
+        </h3>
         <p>
           The source and target projects all have the
-          <strong>{{ trainingTargets[0].writingSystem.tag }}</strong> language code. This may reduce the quality of the
-          generated draft.
+          <strong>{{ trainingTargets[0].writingSystem.tag }}</strong> language code. If you are translating into a
+          dialect or related language that does not have a separate ISO code, these settings may be correct. For all
+          other projects, having the source and target projects set to the same language may significantly reduce the
+          draft quality.
         </p>
         <p>{{ t("how_to_change_language_codes") }}</p>
         <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
