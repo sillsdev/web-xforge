@@ -16,7 +16,7 @@ scriptDir="$(dirname "$0")"
 
 cd "${scriptDir}/.."
 
-cat <<EOF > "$BUILD_OUTPUT/app/secrets.json"
+cat <<EOF >"$BUILD_OUTPUT/app/secrets.json"
 {
   "Paratext": {
     "ClientId": "${PARATEXT_CLIENT_ID}",
@@ -40,12 +40,13 @@ cat <<EOF > "$BUILD_OUTPUT/app/secrets.json"
 }
 EOF
 
-sudo chown -R :www-data "${BUILD_OUTPUT}/app"
+sudo chown --recursive :www-data "${BUILD_OUTPUT}/app"
 
-rsync -progzlt --chmod=Dug=rwx,Fug=rwx,o-rwx --delete-during --stats --rsync-path="sudo rsync" \
+rsync --perms --recursive --owner --group --compress --links --times \
+  --chmod=Dug=rwx,Fug=rwx,o-rwx --delete-during --stats --rsync-path="sudo rsync" \
   --rsh="ssh -v -i ${DEPLOY_CREDENTIALS}" artifacts/app/ root@"${DEPLOY_DESTINATION}:${DEPLOY_PATH}/app"
 
-rsync -vaz --rsync-path="sudo rsync" --rsh="ssh -v -i ${DEPLOY_CREDENTIALS}" \
+rsync --verbose --archive --compress --rsync-path="sudo rsync" --rsh="ssh -v -i ${DEPLOY_CREDENTIALS}" \
   "${ERROR_PAGES_PATH}/" root@"${DEPLOY_DESTINATION}:${DEPLOY_PATH}/htdocs"
 
 ssh -v -i "${DEPLOY_CREDENTIALS}" root@"${DEPLOY_DESTINATION}" "systemctl restart ${APP_NAME}-web-app${SERVICE_UNIT_SUFFIX}"
