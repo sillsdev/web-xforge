@@ -1,7 +1,10 @@
 <h1>Configure draft sources</h1>
 
-@if (!loading) {
-  <mat-card class="draft-sources-stepper">
+<mat-card class="draft-sources-stepper">
+  <!-- This if statement exists because the app-project-select cannot handle having the value set *before* projects
+   and resources are loaded. Once that component has that limitation addressed, it can be removed, and the page will be
+   closer to being fully loaded before projects and resources have been fully loaded -->
+  @if (!loading) {
     <div class="step" [class.active]="step === 1">
       <div class="step-header" matRipple (click)="step = 1">
         <span class="step-title">Draft source</span>
@@ -88,8 +91,9 @@
         <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
       </div>
     </div>
-  </mat-card>
-}
+  }
+</mat-card>
+
 <div class="overview">
   <ng-container *transloco="let t; read: 'confirm_draft_sources'">
     <mat-card>
@@ -151,7 +155,7 @@
     </mat-card>
 
     @if (sourceSideLanguageCodes.length > 1) {
-      <app-notice mode="outline" type="warning">
+      <app-notice mode="fill-dark" type="warning">
         <h3>All source and reference projects should be in the same language</h3>
         <p>
           Source and reference projects currently have the following language codes:
@@ -166,7 +170,7 @@
     }
 
     @if (showSourceAndTargetLanguagesIdenticalWarning) {
-      <app-notice mode="outline" type="warning">
+      <app-notice mode="fill-dark" type="warning">
         <h3>
           Source and target languages are both {{ i18n.getLanguageDisplayName(trainingTargets[0].writingSystem.tag) }}
         </h3>
@@ -185,7 +189,7 @@
     }
 
     @if (sourceSideLanguageCodes.length === 1 && !showSourceAndTargetLanguagesIdenticalWarning) {
-      <app-notice mode="outline">
+      <app-notice mode="fill-dark">
         <h3>{{ t("incorrect_language_codes_reduce_quality") }}</h3>
         <p>Please make sure all the language codes are correct before saving.</p>
         <p>{{ t("how_to_change_language_codes") }}</p>
