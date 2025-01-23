@@ -212,7 +212,7 @@
         <h2>{{ t("summary_training_title") }}</h2>
         <mat-card class="confirm-section mat-elevation-z2">
           @if (selectedTrainingBooksCollapsed().length === 0) {
-            <span>No training books selected</span>
+            <span>{{ t("no_training_books") }}</span>
           } @else {
             <span class="explanation">{{ t("summary_training") }}</span>
             <table mat-table class="confirm-training" [dataSource]="selectedTrainingBooksCollapsed()">
