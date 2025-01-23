@@ -7,9 +7,9 @@ import {
   Question,
   QUESTIONS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { of } from 'rxjs';
@@ -24,7 +24,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -167,7 +167,7 @@ class TestEnvironment {
   readonly service: QuestionDialogService;
   readonly mockedDialogRef = mock<MatDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>>(MatDialogRef);
   textsByBookId: TextsByBookId;
-  projectDoc: SFProjectDoc;
+  projectProfileDoc: SFProjectProfileDoc;
   matthewText: TextInfo = {
     bookNum: 40,
     hasSource: false,
@@ -180,14 +180,11 @@ class TestEnvironment {
   readonly PROJECT01: string = 'project01';
   adminUser: UserInfo = { id: 'user01', role: SFProjectRole.ParatextAdministrator };
 
-  private testProject: SFProject = createTestProject({
+  private testProjectProfile: SFProjectProfile = createTestProjectProfile({
     texts: [this.matthewText],
     userRoles: {
       [this.adminUser.id]: this.adminUser.role
-    },
-    paratextUsers: [
-      { sfUserId: this.adminUser.id, username: `pt${this.adminUser.id}`, opaqueUserId: `opaque${this.adminUser.id}` }
-    ]
+    }
   });
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -195,16 +192,19 @@ class TestEnvironment {
     this.service = TestBed.inject(QuestionDialogService);
     this.textsByBookId = { ['MAT']: this.matthewText };
 
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: this.PROJECT01,
-      data: this.testProject
+      data: this.testProjectProfile
     });
-    this.projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, this.PROJECT01);
+    this.projectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      this.PROJECT01
+    );
 
     when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedDialogRef));
     when(mockedUserService.currentUserId).thenReturn(this.adminUser.id);
-    when(mockedProjectService.get(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
+    when(mockedProjectService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
   }
 
@@ -233,14 +233,22 @@ class TestEnvironment {
   }
 
   getQuestionDialogData(questionDoc?: QuestionDoc): QuestionDialogData {
-    return { questionDoc, projectDoc: this.projectDoc, textsByBookId: this.textsByBookId, projectId: this.PROJECT01 };
+    return {
+      questionDoc,
+      projectDoc: this.projectProfileDoc,
+      textsByBookId: this.textsByBookId,
+      projectId: this.PROJECT01
+    };
   }
 
   updateUserRole(role: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, this.PROJECT01);
-    const userRole = projectDoc.data!.userRoles;
+    const projectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      this.PROJECT01
+    );
+    const userRole = projectProfileDoc.data!.userRoles;
     userRole[this.adminUser.id] = role;
-    projectDoc.submitJson0Op(op => {
+    projectProfileDoc.submitJson0Op(op => {
       op.set(p => p.userRoles, userRole);
     }, false);
   }

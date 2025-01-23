@@ -550,6 +550,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     const currentDate: string = new Date().toJSON();
     const threadId = `BT_${biblicalTermDoc.data.termId}`;
     const noteContent: string | undefined = params.content == null ? undefined : XmlUtils.encodeForXml(params.content);
+    const noteStatus: NoteStatus = params.status ?? NoteStatus.Todo;
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
@@ -561,7 +562,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       content: noteContent,
       conflictType: NoteConflictType.DefaultValue,
       type: NoteType.Normal,
-      status: params.status ?? NoteStatus.Todo,
+      status: noteStatus,
       deleted: false,
       editable: true,
       versionNumber: 1
@@ -597,10 +598,18 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       );
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {
-        await threadDoc!.submitJson0Op(op => {
-          op.set(t => t.notes[noteIndex].content, noteContent);
-          op.set(t => t.notes[noteIndex].dateModified, currentDate);
-        });
+        // updated the existing note
+        if (threadDoc.data?.notes[noteIndex].editable === true) {
+          await threadDoc!.submitJson0Op(op => {
+            op.set(t => t.notes[noteIndex].content, noteContent);
+            op.set(t => t.notes[noteIndex].dateModified, currentDate);
+            op.set(t => t.notes[noteIndex].status, noteStatus);
+            // also set the status of the thread to be the status of the note
+            op.set(t => t.status, noteStatus);
+          });
+        } else {
+          this.dialogService.message('biblical_terms.cannot_edit_note_paratext');
+        }
       } else {
         note.threadId = threadDoc.data!.threadId;
         await threadDoc.submitJson0Op(op => {

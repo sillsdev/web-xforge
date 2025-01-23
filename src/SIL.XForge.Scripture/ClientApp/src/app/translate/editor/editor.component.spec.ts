@@ -3025,6 +3025,54 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('allows editing and resolving a note', fakeAsync(async () => {
+      const projectId: string = 'project01';
+      const threadDataId: string = 'dataid01';
+      const content: string = 'This thread is resolved.';
+      const env = new TestEnvironment();
+      let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
+      expect(noteThread.data!.notes.length).toEqual(3);
+      // Mark the note as editable
+      await noteThread.submitJson0Op(op => op.set(nt => nt.notes[0].editable, true));
+      env.setProjectUserConfig();
+      env.wait();
+      let noteThreadIconElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_1', threadDataId);
+      noteThreadIconElem!.click();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      env.mockNoteDialogRef.close({ noteContent: content, status: NoteStatus.Resolved, noteDataId: 'thread01_note0' });
+      env.wait();
+      noteThread = env.getNoteThreadDoc(projectId, threadDataId);
+      expect(noteThread.data!.notes.length).toEqual(3);
+      expect(noteThread.data!.notes[0].content).toEqual(content);
+      expect(noteThread.data!.notes[0].status).toEqual(NoteStatus.Resolved);
+
+      // the icon should be hidden from the editor
+      noteThreadIconElem = env.getNoteThreadIconElement('verse_1_1', threadDataId);
+      expect(noteThreadIconElem).toBeNull();
+      env.dispose();
+    }));
+
+    it('does not allow editing and resolving a non-editable note', fakeAsync(() => {
+      const projectId: string = 'project01';
+      const threadDataId: string = 'dataid01';
+      const content: string = 'This thread is resolved.';
+      const env = new TestEnvironment();
+      const dialogMessage = spyOn((env.component as any).dialogService, 'message').and.stub();
+      let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
+      expect(noteThread.data!.notes.length).toEqual(3);
+      env.setProjectUserConfig();
+      env.wait();
+      let noteThreadIconElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_1', threadDataId);
+      noteThreadIconElem!.click();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      env.mockNoteDialogRef.close({ noteContent: content, status: NoteStatus.Resolved, noteDataId: 'thread01_note0' });
+      env.wait();
+      noteThread = env.getNoteThreadDoc(projectId, threadDataId);
+      expect(noteThread.data!.notes.length).toEqual(3);
+      expect(dialogMessage).toHaveBeenCalledTimes(1);
+      env.dispose();
+    }));
+
     it('can open dialog of the second note on the verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
