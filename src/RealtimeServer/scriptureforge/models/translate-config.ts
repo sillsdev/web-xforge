@@ -49,6 +49,7 @@ export interface DraftConfig {
   lastSelectedTrainingScriptureRanges?: ProjectScriptureRange[];
   lastSelectedTranslationBooks: number[];
   lastSelectedTranslationScriptureRange?: string;
+  lastSelectedTranslationScriptureRanges?: ProjectScriptureRange[];
   servalConfig?: string;
 }
 

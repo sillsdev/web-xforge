@@ -290,6 +290,21 @@ export class SFProjectService extends ProjectService<SFProject> {
               lastSelectedTranslationScriptureRange: {
                 bsonType: 'string'
               },
+              lastSelectedTranslationScriptureRanges: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'object',
+                  properties: {
+                    projectId: {
+                      bsonType: 'string'
+                    },
+                    scriptureRange: {
+                      bsonType: 'string'
+                    }
+                  },
+                  additionalProperties: false
+                }
+              },
               servalConfig: {
                 bsonType: 'string'
               }
