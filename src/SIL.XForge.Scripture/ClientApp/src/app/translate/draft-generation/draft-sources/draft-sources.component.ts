@@ -272,8 +272,20 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   async save(): Promise<void> {
-    if (!this.languageCodesConfirmed) {
-      this.dialogService.message(of('Please confirm that the language codes are correct before saving.'));
+    // TODO verify at least one source and one reference is selected
+    const definedSources = this.draftingSources.filter(s => s != null);
+    const definedReferences = this.trainingSources.filter(s => s != null);
+
+    let message: string | undefined;
+    if (definedSources.length === 0 && definedReferences.length === 0)
+      message = 'Please select at least one source and one reference project before saving.';
+    else if (definedSources.length === 0) message = 'Please select at least one source project before saving.';
+    else if (definedReferences.length === 0) message = 'Please select at least one reference project before saving.';
+    else if (!this.languageCodesConfirmed)
+      message = 'Please confirm that the language codes are correct before saving.';
+
+    if (message) {
+      this.dialogService.message(of(message));
       return;
     }
 
