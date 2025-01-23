@@ -37,6 +37,14 @@ function translateSourceToSelectableProjectWithLanguageTag(
   };
 }
 
+/** Status for a project, which may or may not be at SF. */
+export interface ProjectStatus {
+  shortName: string;
+  knownToBeOnSF: boolean;
+  isSyncing?: boolean;
+  lastSyncSuccessful?: boolean;
+}
+
 export interface DraftSourcesAsArrays {
   trainingSources: [TranslateSource?, TranslateSource?];
   trainingTargets: [SFProjectProfile];
@@ -128,7 +136,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   changesMade = false;
 
   /** Whether some projects are syncing currently. */
-  syncStatus: Map<string, string> = new Map<string, string>();
+  syncStatus: Map<string, ProjectStatus> = new Map<string, ProjectStatus>();
 
   /** SF projects and resources that the current user is on at SF. */
   userConnectedProjectsAndResources: SFProjectProfileDoc[] = [];
@@ -364,26 +372,31 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
         p => p.data?.paratextId === givenProject.paratextId
       );
       if (projectDoc == null) {
-        // If the user isn't on the project yet, it may still be being created.
-        // TODO Is this still needed?
-        this.syncStatus.set(givenProject.paratextId, 'Fetching');
+        // If the user isn't on the project yet, it may still be being created. Tho when we don't show the sync status
+        // until the project setting is saved, this might not ever be used.
+
+        const status: ProjectStatus = { shortName: givenProject.shortName, knownToBeOnSF: false };
+        this.syncStatus.set(givenProject.paratextId, status);
       } else {
         if (
           !this.syncStatus.has(projectDoc.data.paratextId) ||
-          this.syncStatus.get(givenProject.paratextId) === 'Fetching'
+          this.syncStatus.get(givenProject.paratextId).knownToBeOnSF === false
         ) {
-          const lastWasSuccessful: boolean = projectDoc.data.sync.lastSyncSuccessful === true;
-          this.syncStatus.set(
-            projectDoc.data.paratextId,
-            (isSFProjectSyncing(projectDoc.data) ? 'Syncing' : 'Not syncing') + (lastWasSuccessful ? '' : ' - Problem')
-          );
+          const status: ProjectStatus = {
+            shortName: projectDoc.data.shortName,
+            knownToBeOnSF: true,
+            isSyncing: isSFProjectSyncing(projectDoc.data),
+            lastSyncSuccessful: projectDoc.data.sync.lastSyncSuccessful === true
+          };
+          this.syncStatus.set(projectDoc.data.paratextId, status);
           projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            const lastWasSuccessful: boolean = projectDoc.data.sync.lastSyncSuccessful === true;
-            this.syncStatus.set(
-              projectDoc.data.paratextId,
-              (isSFProjectSyncing(projectDoc.data) ? 'Syncing' : 'Not syncing') +
-                (lastWasSuccessful ? '' : ' - Problem')
-            );
+            const status: ProjectStatus = {
+              shortName: projectDoc.data.shortName,
+              knownToBeOnSF: true,
+              isSyncing: isSFProjectSyncing(projectDoc.data),
+              lastSyncSuccessful: projectDoc.data.sync.lastSyncSuccessful === true
+            };
+            this.syncStatus.set(projectDoc.data.paratextId, status);
           });
         }
       }
