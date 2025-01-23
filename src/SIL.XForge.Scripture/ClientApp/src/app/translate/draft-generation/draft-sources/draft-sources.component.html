@@ -6,7 +6,7 @@
    closer to being fully loaded before projects and resources have been fully loaded -->
   @if (!loading) {
     <div class="step" [class.active]="step === 1">
-      <div class="step-header" matRipple (click)="step = 1">
+      <div class="step-header" matRipple (click)="goToStep(1)">
         <span class="step-title">Draft source</span>
         <span class="step-subtitle">{{ sourceSubtitle }}</span>
       </div>
@@ -27,7 +27,7 @@
     </div>
 
     <div class="step" [class.active]="step === 2">
-      <div class="step-header" matRipple (click)="step = 2">
+      <div class="step-header" matRipple (click)="goToStep(2)">
         <span class="step-title">Reference projects</span>
         <span class="step-subtitle">{{ referencesSubtitle }}</span>
       </div>
@@ -54,9 +54,13 @@
         }
 
         @if (allowAddingATrainingSource) {
-          <a mat-button (click)="trainingSources.push(undefined); $event.preventDefault()" class="add-another-project">
+          <button
+            mat-button
+            (click)="trainingSources.push(undefined); $event.preventDefault()"
+            class="add-another-project"
+          >
             <mat-icon>add</mat-icon> Add another reference project
-          </a>
+          </button>
         }
 
         <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
@@ -64,7 +68,7 @@
     </div>
 
     <div class="step" [class.active]="step === 3">
-      <div class="step-header" matRipple (click)="step = 3">
+      <div class="step-header" matRipple (click)="goToStep(3)">
         <span class="step-title">Target language data</span>
         <span class="step-subtitle">{{ targetSubtitle }}</span>
       </div>
@@ -97,7 +101,7 @@
         <mat-card-title>{{ t("training_language_model") }}</mat-card-title>
       </mat-card-header>
       <mat-card-content class="training-data">
-        <div class="sources" (click)="step = 2" [class.active]="step === 2" matRipple>
+        <div class="sources" (click)="goToStep(2)" [class.active]="step === 2" matRipple>
           <h3>Reference {{ parentheses(referenceLanguageDisplayName) }}</h3>
           @for (project of trainingSources; track $index) {
             @if (project == null) {
@@ -113,7 +117,7 @@
           }
         </div>
         <span class="arrow mirror-rtl"><mat-icon>arrow_right_alt</mat-icon></span>
-        <div class="targets" (click)="step = 3" [class.active]="step === 3" matRipple>
+        <div class="targets" (click)="goToStep(3)" [class.active]="step === 3" matRipple>
           <h3>Translated project {{ parentheses(targetLanguageDisplayName) }}</h3>
           @for (project of trainingTargets; track $index) {
             <div class="project">
@@ -132,7 +136,7 @@
         <mat-card-title> Generate draft from language model </mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div class="translation-data" (click)="step = 1" [class.active]="step === 1" matRipple>
+        <div class="translation-data" (click)="goToStep(1)" [class.active]="step === 1" matRipple>
           <h3>Source {{ parentheses(sourceLanguageDisplayName) }}</h3>
           @for (project of draftingSources; track $index) {
             @if (project == null) {
@@ -218,13 +222,13 @@
   <ng-template #navigationButtons>
     <div class="step-button-wrapper">
       @if (step !== 1) {
-        <button mat-button (click)="step = step - 1">
+        <button mat-stroked-button (click)="goToStep(step - 1)">
           <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
         </button>
       }
       <span class="spacer"></span>
       @if (step !== 3) {
-        <button mat-flat-button color="primary" (click)="step = step + 1">
+        <button mat-flat-button color="primary" (click)="goToStep(step + 1)">
           Next <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
         </button>
       }
