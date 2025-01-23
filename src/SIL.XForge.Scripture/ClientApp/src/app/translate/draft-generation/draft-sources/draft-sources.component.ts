@@ -250,6 +250,18 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     }
   }
 
+  goToStep(step: number): void {
+    this.step = step;
+    // Remove any undefined values from the arrays, while keeping the length at least 1
+    const arrays = [this.trainingSources, this.trainingTargets, this.draftingSources];
+    for (const array of arrays) {
+      while (array.length > 1 && array.some(s => s == null)) {
+        const index = array.findIndex(s => s == null);
+        array.splice(index, 1);
+      }
+    }
+  }
+
   confirmationChanged(event: MatCheckboxChange): void {
     this.languageCodesConfirmed = event.checked;
   }
