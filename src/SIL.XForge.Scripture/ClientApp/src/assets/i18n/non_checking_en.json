@@ -260,6 +260,7 @@
     "loading": "Loading...",
     "next": "Next",
     "no_available_books": "You have no books available for drafting.",
+    "no_training_books": "No training books selected",
     "overview": "Overview",
     "reference_books": "Reference books",
     "these_source_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ firstTrainingSource }}).",
