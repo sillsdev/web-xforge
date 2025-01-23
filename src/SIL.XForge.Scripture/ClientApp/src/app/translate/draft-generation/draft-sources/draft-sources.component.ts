@@ -382,14 +382,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
           !this.syncStatus.has(projectDoc.data.paratextId) ||
           this.syncStatus.get(givenProject.paratextId).knownToBeOnSF === false
         ) {
-          const status: ProjectStatus = {
-            shortName: projectDoc.data.shortName,
-            knownToBeOnSF: true,
-            isSyncing: isSFProjectSyncing(projectDoc.data),
-            lastSyncSuccessful: projectDoc.data.sync.lastSyncSuccessful === true
-          };
-          this.syncStatus.set(projectDoc.data.paratextId, status);
-          projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+          const updateSyncStatusForProject = (projectDoc: SFProjectProfileDoc): void => {
             const status: ProjectStatus = {
               shortName: projectDoc.data.shortName,
               knownToBeOnSF: true,
@@ -397,6 +390,11 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
               lastSyncSuccessful: projectDoc.data.sync.lastSyncSuccessful === true
             };
             this.syncStatus.set(projectDoc.data.paratextId, status);
+          };
+
+          updateSyncStatusForProject(projectDoc);
+          projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            updateSyncStatusForProject(projectDoc);
           });
         }
       }
