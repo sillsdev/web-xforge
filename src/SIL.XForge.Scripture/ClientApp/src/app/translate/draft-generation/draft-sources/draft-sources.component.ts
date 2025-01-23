@@ -195,14 +195,15 @@ export class DraftSourcesComponent extends DataLoadingComponent {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
         if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
 
-        this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag) as [
-          SelectableProjectWithLanguageCode?,
-          SelectableProjectWithLanguageCode?
-        ];
+        const mappedTrainingSources: SelectableProjectWithLanguageCode[] = trainingSources.map(
+          translateSourceToSelectableProjectWithLanguageTag
+        );
+        this.trainingSources = [mappedTrainingSources[0], mappedTrainingSources[1]];
         this.trainingTargets = trainingTargets;
-        this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag) as [
-          SelectableProjectWithLanguageCode?
-        ];
+        const mappedDraftingSources: SelectableProjectWithLanguageCode[] = draftingSources.map(
+          translateSourceToSelectableProjectWithLanguageTag
+        );
+        this.draftingSources = [mappedDraftingSources[0]];
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
         if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
