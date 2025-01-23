@@ -9,6 +9,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { I18nService } from '../../../../xforge-common/i18n.service';
 import { NoticeService } from '../../../../xforge-common/notice.service';
+import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
@@ -23,6 +24,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
 const mockedSFProjectService = mock(SFProjectService);
+const mockedSFUserProjectsService = mock(SFUserProjectsService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
@@ -34,7 +36,8 @@ describe('DraftSourcesComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: DraftSourcesService, useMock: mockedDraftSourcesService }
+      { provide: DraftSourcesService, useMock: mockedDraftSourcesService },
+      { provide: SFUserProjectsService, useMock: mockedSFUserProjectsService }
     ]
   }));
 

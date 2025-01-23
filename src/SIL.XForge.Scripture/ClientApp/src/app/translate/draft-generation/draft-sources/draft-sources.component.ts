@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef } from '@angular/core';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -17,11 +17,14 @@ import { DialogService } from '../../../../xforge-common/dialog.service';
 import { I18nService } from '../../../../xforge-common/i18n.service';
 import { ElementState } from '../../../../xforge-common/models/element-state';
 import { NoticeService } from '../../../../xforge-common/notice.service';
+import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
 import { XForgeCommonModule } from '../../../../xforge-common/xforge-common.module';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
+import { isSFProjectSyncing } from '../../../sync/sync.component';
 
 function translateSourceToSelectableProjectWithLanguageTag(
   project: TranslateSource
@@ -104,8 +107,13 @@ export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAs
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
 })
-export class DraftSourcesComponent extends DataLoadingComponent {
+export class DraftSourcesComponent extends DataLoadingComponent implements OnInit {
+  /** Indicator that a project setting change is for clearing a value. */
   static readonly projectSettingValueUnset = 'unset';
+
+  // Expose ElementState enum to template.
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  ElementState = ElementState;
 
   step = 1;
 
@@ -118,6 +126,12 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   languageCodesConfirmed = false;
   changesMade = false;
+
+  /** Whether some projects are syncing currently. */
+  syncStatus: Map<string, string> = new Map<string, string>();
+
+  /** SF projects and resources that the current user is on at SF. */
+  userConnectedProjectsAndResources: SFProjectProfileDoc[] = [];
 
   private controlStates = new Map<string, ElementState>();
 
@@ -184,6 +198,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     private readonly paratextService: ParatextService,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
+    private readonly userProjectsService: SFUserProjectsService,
     private readonly router: Router,
     readonly i18n: I18nService,
     noticeService: NoticeService
@@ -211,6 +226,13 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     });
 
     this.loadProjects();
+  }
+
+  async ngOnInit(): Promise<void> {
+    this.subscribe(this.userProjectsService.projectDocs$, (projects?: SFProjectProfileDoc[]) => {
+      if (projects == null) return;
+      this.userConnectedProjectsAndResources = projects.filter(project => project.data != null);
+    });
   }
 
   async loadProjects(): Promise<void> {
@@ -316,7 +338,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
       'projectSettings',
       this.projectService.onlineUpdateSettings(currentSFProjectId, projectSettingsChange)
     );
-    // TODO Reveal when syncing is complete.
+    this.monitorSyncStatus();
   }
 
   private async checkUpdateStatus(setting: string, updatePromise: Promise<void>): Promise<void> {
@@ -326,6 +348,45 @@ export class DraftSourcesComponent extends DataLoadingComponent {
       this.controlStates.set(setting, ElementState.Submitted);
     } catch (_error) {
       this.controlStates.set(setting, ElementState.Error);
+    }
+  }
+
+  private monitorSyncStatus(): void {
+    this.syncStatus.clear();
+    const chosenProjects: SelectableProject[] = [
+      ...this.trainingSources.filter(source => source != null),
+      ...this.trainingTargets.filter(target => target != null),
+      ...this.draftingSources.filter(source => source != null)
+    ];
+
+    for (const givenProject of chosenProjects) {
+      const projectDoc: SFProjectProfileDoc = this.userConnectedProjectsAndResources.find(
+        p => p.data?.paratextId === givenProject.paratextId
+      );
+      if (projectDoc == null) {
+        // If the user isn't on the project yet, it may still be being created.
+        // TODO Is this still needed?
+        this.syncStatus.set(givenProject.paratextId, 'Fetching');
+      } else {
+        if (
+          !this.syncStatus.has(projectDoc.data.paratextId) ||
+          this.syncStatus.get(givenProject.paratextId) === 'Fetching'
+        ) {
+          const lastWasSuccessful: boolean = projectDoc.data.sync.lastSyncSuccessful === true;
+          this.syncStatus.set(
+            projectDoc.data.paratextId,
+            (isSFProjectSyncing(projectDoc.data) ? 'Syncing' : 'Not syncing') + (lastWasSuccessful ? '' : ' - Problem')
+          );
+          projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            const lastWasSuccessful: boolean = projectDoc.data.sync.lastSyncSuccessful === true;
+            this.syncStatus.set(
+              projectDoc.data.paratextId,
+              (isSFProjectSyncing(projectDoc.data) ? 'Syncing' : 'Not syncing') +
+                (lastWasSuccessful ? '' : ' - Problem')
+            );
+          });
+        }
+      }
     }
   }
 
