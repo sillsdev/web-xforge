@@ -54,12 +54,8 @@
         }
 
         @if (allowAddingATrainingSource) {
-          <a
-            href="#add-project"
-            (click)="trainingSources.push(undefined); $event.preventDefault()"
-            class="add-another-project"
-          >
-            + Add another reference project
+          <a mat-button (click)="trainingSources.push(undefined); $event.preventDefault()" class="add-another-project">
+            <mat-icon>add</mat-icon> Add another reference project
           </a>
         }
 
