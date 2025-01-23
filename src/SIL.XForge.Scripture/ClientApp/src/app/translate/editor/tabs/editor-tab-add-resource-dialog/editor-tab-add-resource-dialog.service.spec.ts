@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { ParatextProject } from '../../../../core/models/paratext-project';
-import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
+import { ParatextService, SelectableProjectWithLanguageCode } from '../../../../core/paratext.service';
 import { EditorTabAddResourceDialogService } from './editor-tab-add-resource-dialog.service';
 
 describe('EditorTabAddResourceDialogService', () => {
@@ -12,9 +12,9 @@ describe('EditorTabAddResourceDialogService', () => {
     { id: '1', name: 'Project 1' },
     { id: '2', name: 'Project 2' }
   ] as any;
-  const mockResources: SelectableProject[] = [
-    { id: '1', name: 'Resource 1' },
-    { id: '2', name: 'Resource 2' }
+  const mockResources: SelectableProjectWithLanguageCode[] = [
+    { id: '1', name: 'Resource 1', languageTag: 'en' },
+    { id: '2', name: 'Resource 2', languageTag: 'en' }
   ] as any;
 
   configureTestingModule(() => ({

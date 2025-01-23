@@ -12,7 +12,7 @@ import { NoticeService } from '../../../../xforge-common/notice.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
-import { ParatextService, SelectableProject } from '../../../core/paratext.service';
+import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';
@@ -300,9 +300,9 @@ class TestEnvironment {
     { paratextId: 'project02', name: 'Project 2', shortName: 'PRJ2' }
   ];
 
-  private readonly mockResources: SelectableProject[] = [
-    { paratextId: 'resource01', name: 'Resource 1', shortName: 'RSC1' },
-    { paratextId: 'resource02', name: 'Resource 2', shortName: 'RSC2' }
+  private readonly mockResources: SelectableProjectWithLanguageCode[] = [
+    { paratextId: 'resource01', name: 'Resource 1', shortName: 'RSC1', languageTag: 'en' },
+    { paratextId: 'resource02', name: 'Resource 2', shortName: 'RSC2', languageTag: 'en' }
   ];
 
   constructor() {
