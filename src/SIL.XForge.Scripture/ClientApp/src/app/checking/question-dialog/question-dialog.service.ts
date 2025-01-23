@@ -105,7 +105,7 @@ export class QuestionDialogService {
 
   private async canCreateAndEditQuestions(projectId: string): Promise<boolean> {
     const userId = this.userService.currentUserId;
-    const project = (await this.projectService.get(projectId)).data;
+    const project = (await this.projectService.getProfile(projectId)).data;
     return (
       project != null &&
       SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create) &&
