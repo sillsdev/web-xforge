@@ -2,6 +2,7 @@ import { WritingSystem } from '../../common/models/writing-system';
 
 export enum ProjectType {
   Standard = 'Standard',
+  Resource = 'Resource',
   BackTranslation = 'BackTranslation',
   Daughter = 'Daughter',
   Transliteration = 'Transliteration',
@@ -9,9 +10,15 @@ export enum ProjectType {
   TransliterationWithEncoder = 'TransliterationWithEncoder',
   StudyBible = 'StudyBible',
   ConsultantNotes = 'ConsultantNotes',
+  GlobalConsultantNotes = 'GlobalConsultantNotes',
+  GlobalAnthropologyNotes = 'GlobalAnthropologyNotes',
   StudyBibleAdditions = 'StudyBibleAdditions',
   Auxiliary = 'Auxiliary',
+  AuxiliaryResource = 'AuxiliaryResource',
+  MarbleResource = 'MarbleResource',
   Xml = 'Xml',
+  XmlResource = 'XmlResource',
+  XmlDictionary = 'XmlDictionary',
   SourceLanguage = 'SourceLanguage',
   Dictionary = 'Dictionary',
   EnhancedResource = 'EnhancedResource'
