@@ -216,8 +216,21 @@
   @if (getControlState("projectSettings") === ElementState.Submitted) {
     <div style="white-space: pre-line; border: 2px dashed grey; padding: 1em">
       Project sync status:<br />
-      @for (entry of syncStatus; track entry[0]) {
-        {{ entry[0] }}: {{ entry[1] }}<br />
+      @for (entry of syncStatus | keyvalue; track entry.key) {
+        {{ entry.value.shortName }}:
+        @if (entry.value.knownToBeOnSF) {
+          @if (entry.value.isSyncing) {
+            Syncing
+          } @else {
+            Not syncing
+            @if (!entry.value.lastSyncSuccessful) {
+              There was a problem.
+            }
+          }
+        } @else {
+          Connecting
+        }
+        <br />
       }
     </div>
   }
