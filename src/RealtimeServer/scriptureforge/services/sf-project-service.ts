@@ -290,6 +290,21 @@ export class SFProjectService extends ProjectService<SFProject> {
               lastSelectedTranslationScriptureRange: {
                 bsonType: 'string'
               },
+              lastSelectedTranslationScriptureRanges: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'object',
+                  properties: {
+                    projectId: {
+                      bsonType: 'string'
+                    },
+                    scriptureRange: {
+                      bsonType: 'string'
+                    }
+                  },
+                  additionalProperties: false
+                }
+              },
               servalConfig: {
                 bsonType: 'string'
               }
@@ -299,6 +314,7 @@ export class SFProjectService extends ProjectService<SFProject> {
           projectType: {
             enum: [
               'Standard',
+              'Resource',
               'BackTranslation',
               'Daughter',
               'Transliteration',
@@ -306,9 +322,15 @@ export class SFProjectService extends ProjectService<SFProject> {
               'TransliterationWithEncoder',
               'StudyBible',
               'ConsultantNotes',
+              'GlobalConsultantNotes',
+              'GlobalAnthropologyNotes',
               'StudyBibleAdditions',
               'Auxiliary',
+              'AuxiliaryResource',
+              'MarbleResource',
               'Xml',
+              'XmlResource',
+              'XmlDictionary',
               'SourceLanguage',
               'Dictionary',
               'EnhancedResource'
