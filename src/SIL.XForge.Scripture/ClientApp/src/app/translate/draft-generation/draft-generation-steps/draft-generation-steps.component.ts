@@ -404,6 +404,13 @@ export class DraftGenerationStepsComponent implements OnInit {
       }
     }
 
+    // if no books are selected, deselect all books in reference projects
+    if (selectedBooks.length < 1) {
+      for (const [_, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
+        trainingBooks.forEach(b => (b.selected = false));
+      }
+    }
+
     this.clearErrorMessage();
   }
 
