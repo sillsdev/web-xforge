@@ -316,7 +316,7 @@ export class LynxInsightsPanelComponent implements OnInit {
       return '...'; // TODO: better default text
     }
 
-    const linkItems = [];
+    const linkItems: string[] = [];
     const segmentRefs: string[] = this.editorSegmentService.getSegmentRefs(insight.range, editorSegments);
     let combinedVerseRef: VerseRef | undefined;
 

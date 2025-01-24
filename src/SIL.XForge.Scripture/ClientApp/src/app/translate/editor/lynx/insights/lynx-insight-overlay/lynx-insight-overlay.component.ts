@@ -37,7 +37,7 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
     }
   }
 
-  @Input() editor: LynxEditor;
+  @Input() editor?: LynxEditor;
 
   /** Emits when insight is dismissed by user. */
   @Output() insightDismiss = new EventEmitter<LynxInsight>();
@@ -102,6 +102,10 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
   }
 
   selectAction(action: LynxInsightAction): void {
+    if (this.editor == null) {
+      return;
+    }
+
     this.actionService.performAction(action, this.editor);
 
     if (this.focusedInsight == null) {

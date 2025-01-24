@@ -8,7 +8,7 @@ import {
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { Injectable, NgZone } from '@angular/core';
-import { Subject, asyncScheduler, observeOn, take, takeUntil } from 'rxjs';
+import { asyncScheduler, observeOn, Subject, take, takeUntil } from 'rxjs';
 import { LynxEditor } from './lynx-editor';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
@@ -81,7 +81,7 @@ export class LynxInsightOverlayService {
     return {
       ref: this.overlay.create(this.getConfig(origin)),
       closed$: new Subject<void>(),
-      hoverMultiInsight$: new Subject<LynxInsight>()
+      hoverMultiInsight$: new Subject<LynxInsight | null>()
     };
   }
 

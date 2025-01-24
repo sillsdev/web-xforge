@@ -43,7 +43,9 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
           merge(
             // Render blots when insights change
             this.insightState.filteredChapterInsights$.pipe(
-              tap(insights => this.insightRenderService.render(insights, this.editor))
+              tap(insights => {
+                this.insightRenderService.render(insights, this.editor!);
+              })
             ),
             // Check display state to render action overlay or cursor active state
             this.insightState.displayState$.pipe(
@@ -57,12 +59,18 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
                 );
 
                 if (activeInsightsChanged || actionOverlayActiveChanged) {
-                  const activeInsights = curr.activeInsightIds.map(id => this.insightState.getInsight(id));
-                  this.insightRenderService.renderActionOverlay(activeInsights, this.editor, curr.actionOverlayActive);
+                  const activeInsights = curr.activeInsightIds
+                    .map(id => this.insightState.getInsight(id))
+                    .filter(i => i != null);
+                  this.insightRenderService.renderActionOverlay(
+                    activeInsights,
+                    this.editor!,
+                    !!curr.actionOverlayActive
+                  );
                 }
 
                 if (cursorActiveInsightIdsChanged) {
-                  this.insightRenderService.renderCursorActiveState(curr.cursorActiveInsightIds, this.editor);
+                  this.insightRenderService.renderCursorActiveState(curr.cursorActiveInsightIds, this.editor!);
                 }
               })
             )
@@ -74,6 +82,8 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.insightRenderService.removeAllInsightFormatting(this.editor);
+    if (this.editor != null) {
+      this.insightRenderService.removeAllInsightFormatting(this.editor);
+    }
   }
 }
