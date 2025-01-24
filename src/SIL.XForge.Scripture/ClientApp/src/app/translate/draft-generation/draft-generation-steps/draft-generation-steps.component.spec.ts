@@ -225,6 +225,10 @@ describe('DraftGenerationStepsComponent', () => {
       ]);
     });
 
+    it('does not select deselected reference book when selecting translated book', () => {
+      // TODO
+    });
+
     it('does not allow selecting not selectable source training books', () => {
       component.onSourceTrainingBookSelect([6, 7], config.trainingSources[0]);
       fixture.detectChanges();
