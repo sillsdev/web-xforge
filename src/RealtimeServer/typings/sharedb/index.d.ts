@@ -46,7 +46,7 @@ declare class ShareDB {
    * @param fields field whitelist for the projection
    */
   addProjection(name: string, collection: string, fields: ShareDB.ProjectionFields): void;
-  listen(stream: any, req?: any): void;
+  listen(stream: any, req?: any): ShareDB.Agent;
   close(callback?: (err?: Error) => any): void;
   /**
    * Registers a server middleware function.
@@ -126,6 +126,11 @@ declare namespace ShareDB {
     constructor(backend: ShareDB, stream: any);
 
     protected clientId: string;
+
+    readonly connectTime: number;
+    readonly closed: boolean;
+    readonly subscribedDocs: { [collection: string]: { [id: string]: any } };
+    readonly subscribedQueries: { [index: string]: any };
 
     close(err: any): void;
     _open(): void;

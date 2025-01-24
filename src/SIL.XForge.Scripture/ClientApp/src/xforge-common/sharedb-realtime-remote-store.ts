@@ -24,6 +24,45 @@ function isMessageSendingOp(data: unknown): boolean {
   return hasPropWithValue(data, 'a', 'op');
 }
 
+// Taken from lib/message-actions.js in newer versions of ShareDB
+// Presumably the protocol has not changed the meaning of any of these
+const actionMeaningMap = {
+  initLegacy: 'init',
+  handshake: 'hs',
+  queryFetch: 'qf',
+  querySubscribe: 'qs',
+  queryUnsubscribe: 'qu',
+  queryUpdate: 'q',
+  bulkFetch: 'bf',
+  bulkSubscribe: 'bs',
+  bulkUnsubscribe: 'bu',
+  fetch: 'f',
+  fixup: 'fixup',
+  subscribe: 's',
+  unsubscribe: 'u',
+  op: 'op',
+  snapshotFetch: 'nf',
+  snapshotFetchByTimestamp: 'nt',
+  pingPong: 'pp',
+  presence: 'p',
+  presenceSubscribe: 'ps',
+  presenceUnsubscribe: 'pu',
+  presenceRequest: 'pr'
+};
+
+const commonlySeenActions = Object.keys({
+  handshake: 2,
+  subscribe: 1777,
+  queryFetch: 1777,
+  presenceSubscribe: 10,
+  presence: 29,
+  op: 5,
+  querySubscribe: 13,
+  queryUnsubscribe: 10,
+  presenceUnsubscribe: 8
+}).map(key => actionMeaningMap[key]);
+console.log(commonlySeenActions);
+
 /**
  * This class was created to work around a problem with ShareDB and offline support. ShareDB is designed to work with a
  * network that drops and then reconnects, but is not designed to persist data anywhere other than in memory.
@@ -64,7 +103,16 @@ class ShareDBWebsocketAdapter {
     readonly socket: ReconnectingWebSocket,
     readonly remoteStore: SharedbRealtimeRemoteStore,
     readonly featureFlags: FeatureFlagService
-  ) {}
+  ) {
+    // setInterval(() => {
+    //   const output = {};
+    //   for (const [action, count] of Object.entries(this.actionCounts)) {
+    //     const meaning = Object.entries(actionMeaningMap).find(([_, value]) => value === action)![0];
+    //     output[meaning] = count;
+    //   }
+    //   console.log(output);
+    // }, 1_000);
+  }
 
   close(): void {
     this.socket.close();
@@ -117,6 +165,8 @@ class ShareDBWebsocketAdapter {
     this.socket.onclose = handler;
   }
 
+  actionCounts: { [action: string]: number } = {};
+
   /**
    * Sends messages on through from the ShareDB client to the websocket, but ignores them if the message is an op and
    * the feature flag to disable sending ops is turned on.
@@ -134,6 +184,22 @@ class ShareDBWebsocketAdapter {
     if (sendingOp && hasStringProp(message, 'c') && hasStringProp(message, 'd')) {
       await this.remoteStore.beforeSendOp(message['c'], message['d']);
     }
+    // Log unsubscribe messages
+    if (hasPropWithValue(data, 'a', 'u')) {
+      console.log(message);
+    }
+    if (hasStringProp(message, 'a')) {
+      const action = message['a'];
+      if (this.actionCounts[action] == null) {
+        this.actionCounts[action] = 0;
+      }
+      this.actionCounts[action]++;
+
+      if (!commonlySeenActions.includes(action)) {
+        console.log(message);
+      }
+    }
+
     this.socket.send(data);
   }
 }
