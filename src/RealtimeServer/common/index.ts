@@ -90,7 +90,8 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
       undefined,
       undefined,
       options.origin.split(';').filter(s => s !== ''),
-      exceptionReporter
+      exceptionReporter,
+      options.connectionString
     );
     streamListener.listen(server);
     await streamListener.start();
@@ -111,7 +112,8 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
         options.certificatePath,
         options.privateKeyPath,
         options.origin.split(';').filter(s => s !== ''),
-        exceptionReporter
+        exceptionReporter,
+        options.connectionString
       );
       secureStreamListener.listen(server);
       await secureStreamListener.start();

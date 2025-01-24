@@ -1,0 +1,46 @@
+use("resource_consumption");
+
+const cursor = db.resource_consumption.aggregate([
+  {
+    $addFields: {
+      date: {
+        $dateToString: {
+          date: {
+            $toDate: '$_id'
+          }
+        }
+      }
+    }
+  }
+]);
+
+const first = cursor.next();
+
+const indexes = Object.entries(first)
+  .filter(([key, value]) => key !== "_id")
+  .map(([key, value]) => (typeof value === "object" ? Object.keys(value).map(k => [key, k]) : key)).flat();
+
+function printDoc(doc) {
+  const values = indexes.map(index => {
+    if (typeof index === "string") {
+      return doc[index];
+    } else {
+      const [key, subkey] = index;
+      return doc[key][subkey];
+    }
+  });
+  print(values.join("\t"));
+}
+
+function printHeader() {
+  const headers = indexes.map(e => typeof e === "string" ? e : e.join("_"));
+  print(headers.join("\t"));
+}
+
+printHeader();
+
+printDoc(first);
+
+while (cursor.hasNext()) {
+  printDoc(cursor.next());
+}

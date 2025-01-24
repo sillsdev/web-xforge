@@ -8,6 +8,7 @@ import ShareDB from 'sharedb';
 import WebSocketJSONStream from 'websocket-json-stream';
 import ws from 'ws';
 import { ExceptionReporter } from './exception-reporter';
+import { GlobalResourceConsumptionMonitor } from './resource-consumption';
 
 function isLocalRequest(request: http.IncomingMessage): boolean {
   const addr = request.socket.remoteAddress;
@@ -26,7 +27,8 @@ export class WebSocketStreamListener {
     certificatePath: string | undefined,
     privateKeyPath: string | undefined,
     private readonly origin: string[],
-    private exceptionReporter: ExceptionReporter
+    private exceptionReporter: ExceptionReporter,
+    dbConnectionString: string
   ) {
     // Create web servers to serve files and listen to WebSocket connections
     const app = express();
@@ -51,6 +53,8 @@ export class WebSocketStreamListener {
       cache: true,
       jwksUri: `${authority}.well-known/jwks.json`
     });
+
+    GlobalResourceConsumptionMonitor.setDbConnectionString(dbConnectionString);
   }
 
   listen(backend: ShareDB): void {
@@ -62,7 +66,8 @@ export class WebSocketStreamListener {
 
     wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
       const stream = new WebSocketJSONStream(webSocket);
-      backend.listen(stream, req);
+      const agent = backend.listen(stream, req);
+      GlobalResourceConsumptionMonitor.registerAgent(agent);
     });
   }
 
