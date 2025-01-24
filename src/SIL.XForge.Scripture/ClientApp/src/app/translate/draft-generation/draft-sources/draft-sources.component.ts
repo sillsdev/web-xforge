@@ -126,7 +126,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   step = 1;
 
   trainingSources: [SelectableProjectWithLanguageCode?, SelectableProjectWithLanguageCode?] = [];
-  trainingTargets: [SFProjectProfile];
+  trainingTargets: [SFProjectProfile?] = [];
   draftingSources: [SelectableProjectWithLanguageCode?] = [];
 
   projects?: SelectableProject[];
@@ -147,28 +147,28 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     return !this.isLoaded;
   }
 
-  get referenceLanguageDisplayName(): string | null {
+  get referenceLanguageDisplayName(): string {
     const uniqueTags = Array.from(new Set(this.trainingSources.filter(s => s != null).map(p => p.languageTag)));
     const displayNames = uniqueTags.map(tag => this.i18n.getLanguageDisplayName(tag) ?? tag);
     return this.i18n.enumerateList(displayNames);
   }
 
-  get sourceLanguageDisplayName(): string | null {
+  get sourceLanguageDisplayName(): string | undefined {
     const definedSources = this.draftingSources.filter(s => s != null);
 
     if (definedSources.length > 1) throw new Error('Multiple drafting sources not supported');
-    else if (definedSources.length < 1) return null;
+    else if (definedSources.length < 1) return undefined;
     else return this.i18n.getLanguageDisplayName(definedSources[0].languageTag);
   }
 
-  get targetLanguageDisplayName(): string {
+  get targetLanguageDisplayName(): string | undefined {
     if (this.trainingTargets.length !== 1) throw new Error('Multiple training targets not supported');
 
-    return this.i18n.getLanguageDisplayName(this.trainingTargets[0].writingSystem.tag);
+    return this.i18n.getLanguageDisplayName(this.trainingTargets[0]!.writingSystem.tag);
   }
 
   get currentProjectShortName(): string {
-    return this.activatedProjectService.projectDoc?.data.shortName ?? '';
+    return this.activatedProjectService.projectDoc?.data?.shortName ?? '';
   }
 
   get sourceSubtitle(): string {
@@ -197,7 +197,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   get showSourceAndTargetLanguagesIdenticalWarning(): boolean {
     const sourceCodes = this.sourceSideLanguageCodes;
     // FIXME Handle language codes that may be equivalent by not identical strings
-    return sourceCodes.length === 1 && sourceCodes[0] === this.trainingTargets[0].writingSystem.tag;
+    return sourceCodes.length === 1 && sourceCodes[0] === this.trainingTargets[0]!.writingSystem.tag;
   }
 
   constructor(
@@ -214,18 +214,20 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     super(noticeService);
 
     this.activatedProjectService.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
-      if (projectDoc != null) {
+      if (projectDoc?.data != null) {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
         if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
 
-        const mappedTrainingSources: SelectableProjectWithLanguageCode[] = trainingSources.map(
-          translateSourceToSelectableProjectWithLanguageTag
-        );
+        const mappedTrainingSources: SelectableProjectWithLanguageCode[] = trainingSources
+          // FIXME No actual nullish elements, but TS doesn't know because of how we set the array length
+          .filter(s => s != null)
+          .map(translateSourceToSelectableProjectWithLanguageTag);
         this.trainingSources = [mappedTrainingSources[0], mappedTrainingSources[1]];
         this.trainingTargets = trainingTargets;
-        const mappedDraftingSources: SelectableProjectWithLanguageCode[] = draftingSources.map(
-          translateSourceToSelectableProjectWithLanguageTag
-        );
+        const mappedDraftingSources: SelectableProjectWithLanguageCode[] = draftingSources
+          // FIXME No actual nullish elements, but TS doesn't know because of how we set the array length
+          .filter(s => s != null)
+          .map(translateSourceToSelectableProjectWithLanguageTag);
         this.draftingSources = [mappedDraftingSources[0]];
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
@@ -256,8 +258,12 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     return project == null ? '' : `${project.shortName} - ${project.name}`;
   }
 
-  sourceSelected(array: (SelectableProject | SFProjectProfile)[], index: number, paratextId: string | undefined): void {
-    const selectedProject: SelectableProject | undefined =
+  sourceSelected(
+    array: (SelectableProject | SFProjectProfile | undefined)[],
+    index: number,
+    paratextId: string | undefined
+  ): void {
+    const selectedProject: SelectableProject | null =
       this.projects?.find(p => p.paratextId === paratextId) ??
       this.resources?.find(r => r.paratextId === paratextId) ??
       null;
@@ -434,7 +440,7 @@ export function sourceArraysToSettingsChange(
   /** It may not make sense for drafting to have no drafting source. But for specifying project settings, allow an
    * empty setting for drafting source. */
   draftingSources: [SelectableProject?],
-  trainingTargets: [SelectableProject],
+  trainingTargets: [SelectableProject?],
   currentProjectParatextId: string
 ): DraftSourcesSettingsChange {
   // Extra precaution on array lengths for now in case the type system is being bypassed.
