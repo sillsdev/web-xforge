@@ -338,7 +338,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
       return;
     }
 
-    const currentProjectParatextId: string = this.activatedProjectService.projectDoc?.data.paratextId;
+    if (this.activatedProjectService.projectDoc == null) throw new Error('Project doc is null');
+    if (this.activatedProjectService.projectDoc.data == null) throw new Error('Project doc data is null');
+    const currentProjectParatextId: string = this.activatedProjectService.projectDoc.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
       this.trainingSources,
       this.draftingSources,
@@ -374,21 +376,20 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     ];
 
     for (const givenProject of chosenProjects) {
-      const projectDoc: SFProjectProfileDoc = this.userConnectedProjectsAndResources.find(
+      const projectDoc: SFProjectProfileDoc | undefined = this.userConnectedProjectsAndResources.find(
         p => p.data?.paratextId === givenProject.paratextId
       );
-      if (projectDoc == null) {
+      if (projectDoc == null || projectDoc.data == null) {
         // If the user isn't on the project yet, it may still be being created. Tho when we don't show the sync status
         // until the project setting is saved, this might not ever be used.
 
         const status: ProjectStatus = { shortName: givenProject.shortName, knownToBeOnSF: false };
         this.syncStatus.set(givenProject.paratextId, status);
       } else {
-        if (
-          !this.syncStatus.has(projectDoc.data.paratextId) ||
-          this.syncStatus.get(givenProject.paratextId).knownToBeOnSF === false
-        ) {
+        const projectStatus: ProjectStatus | undefined = this.syncStatus.get(projectDoc.data.paratextId);
+        if (projectStatus == null || projectStatus.knownToBeOnSF === false) {
           const updateSyncStatusForProject = (projectDoc: SFProjectProfileDoc): void => {
+            if (projectDoc.data == null) throw new Error('Project doc data is null');
             const status: ProjectStatus = {
               shortName: projectDoc.data.shortName,
               knownToBeOnSF: true,
@@ -450,7 +451,7 @@ export function sourceArraysToSettingsChange(
   if (trainingSources.length > 2) {
     throw new Error('Training sources array must contain 0, 1, or 2 sources');
   }
-  if (trainingTargets.length !== 1) {
+  if (trainingTargets.length !== 1 || trainingTargets[0] == null) {
     throw new Error('Training targets array must contain exactly 1 project');
   }
 
