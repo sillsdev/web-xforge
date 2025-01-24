@@ -138,6 +138,16 @@
             {{ t("choose_books_for_training_error") }}
           </app-notice>
         }
+        @if (!translatedBooksSelectedInTrainingSources) {
+          <app-notice class="warn-translated-books-unselected" type="warning" icon="warning">
+            {{ t("translated_book_selected_no_training_pair") }}
+          </app-notice>
+        }
+        @if (translatedBooksWithNoSource.length > 0) {
+          <app-notice class="warn-source-books-missing" type="warning" icon="warning">
+            {{ t("source_books_missing") }}
+          </app-notice>
+        }
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
           <button
