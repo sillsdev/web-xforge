@@ -16,15 +16,14 @@ import { SF_QUILL_FORMAT_NAMES } from '../../../../shared/text/quill-formats.ser
 import { EditorReadyService } from './base-services/editor-ready.service';
 import { EditorSegmentService } from './base-services/editor-segment.service';
 import { InsightRenderService } from './base-services/insight-render.service';
-import { InsightCodePipe } from './insight-code.pipe';
 import { LynxInsightActionPromptComponent } from './lynx-insight-action-prompt/lynx-insight-action-prompt.component';
 import { LynxInsightEditorObjectsComponent } from './lynx-insight-editor-objects/lynx-insight-editor-objects.component';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
 import { LynxInsightScrollPositionIndicatorComponent } from './lynx-insight-scroll-position-indicator/lynx-insight-scroll-position-indicator.component';
 import { LynxInsightStatusIndicatorComponent } from './lynx-insight-status-indicator/lynx-insight-status-indicator.component';
-import { LynxInsightUserEventService } from './lynx-insight-user-event.service';
 import { LynxInsightsPanelHeaderComponent } from './lynx-insights-panel/lynx-insights-panel-header/lynx-insights-panel-header.component';
 import { LynxInsightsPanelComponent } from './lynx-insights-panel/lynx-insights-panel.component';
+import { LynxService } from './lynx-workspace.service';
 import { lynxInsightBlots } from './quill-services/blots/lynx-insight-blot';
 import { LynxInsightBlotService } from './quill-services/lynx-insight-blot.service';
 import { QuillEditorReadyService } from './quill-services/quill-editor-ready.service';
@@ -39,8 +38,7 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
     LynxInsightsPanelHeaderComponent,
     LynxInsightOverlayComponent,
     LynxInsightScrollPositionIndicatorComponent,
-    LynxInsightStatusIndicatorComponent,
-    InsightCodePipe
+    LynxInsightStatusIndicatorComponent
   ],
   imports: [
     CommonModule,
@@ -57,7 +55,7 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
     OverlayModule,
     IncludesPipe
   ],
-  exports: [LynxInsightEditorObjectsComponent, LynxInsightsPanelComponent, InsightCodePipe]
+  exports: [LynxInsightEditorObjectsComponent, LynxInsightsPanelComponent]
 })
 export class LynxInsightsModule {
   static forRoot(): ModuleWithProviders<LynxInsightsModule> {
@@ -66,8 +64,8 @@ export class LynxInsightsModule {
       providers: [
         {
           provide: APP_INITIALIZER,
-          useFactory: () => () => {},
-          deps: [LynxInsightUserEventService],
+          useFactory: moduleInit,
+          deps: [LynxService],
           multi: true
         },
         {
@@ -82,4 +80,10 @@ export class LynxInsightsModule {
       ]
     };
   }
+}
+
+function moduleInit(lynxService: LynxService): () => Promise<void> {
+  return () => {
+    return lynxService.init();
+  };
 }
