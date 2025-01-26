@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
@@ -47,8 +46,7 @@ public class HealthController(
         // Restrict this endpoint to requests with the correct API key
         if (authOptions.Value.HealthCheckApiKey != apiKey)
         {
-            // Returning Forbid() results in a 400 error when executed in a POST action
-            return new StatusCodeResult(StatusCodes.Status403Forbidden);
+            return Forbid();
         }
 
         // Create the object to return for the health check
