@@ -1,16 +1,31 @@
+@use 'src/breakpoints';
+
 $active-color: #edf5e9;
 $active-hover-color: lighten($active-color, 4%);
 
 :host {
   display: grid;
-  grid-template-columns: auto 1fr;
   grid-column-gap: 2em;
+  grid-row-gap: 1em;
   align-items: start;
+  grid-template-columns: 1fr 2fr;
+  grid-template-areas: 'title title' 'accordion overview' 'codes codes' 'footer footer';
+}
+
+@include breakpoints.media-breakpoint-down(lg) {
+  :host {
+    grid-template-columns: auto;
+    grid-template-areas: 'title' 'accordion' 'codes' 'footer';
+  }
+}
+
+app-notice h3 {
+  margin: 0;
 }
 
 h1 {
-  grid-column-start: 1;
-  grid-column-end: 3;
+  grid-area: title;
+  margin: 0;
 }
 
 h1,
@@ -24,7 +39,7 @@ strong {
 }
 
 .draft-sources-stepper {
-  width: 30em;
+  grid-area: accordion;
 }
 
 .step-header {
@@ -79,6 +94,7 @@ strong {
   display: flex;
   flex-direction: column;
   gap: 1em;
+  grid-area: overview;
 }
 
 .overview mat-card-content {
@@ -89,11 +105,6 @@ strong {
 
 .arrow mat-icon {
   scale: 2;
-}
-
-.gap,
-.arrow {
-  padding-inline: 2em;
 }
 
 .arrow {
@@ -165,4 +176,40 @@ strong {
 
 .add-another-project {
   margin-bottom: 1em;
+}
+
+// small devices only
+@include breakpoints.media-breakpoint-down(lg) {
+  :host {
+    grid-template-columns: auto;
+  }
+
+  .overview {
+    display: none;
+  }
+  .draft-sources-stepper {
+    width: unset;
+    // grid-column-start: 1;
+    // grid-column-end: 3;
+  }
+}
+
+// @include breakpoints.media-breakpoint-down(sm) {
+//   .draft-sources-stepper {
+//     width: unset;
+//     grid-column-start: 1;
+//     grid-column-end: 3;
+//   }
+// }
+
+.component-footer {
+  grid-area: footer;
+}
+
+.confirm-language-codes {
+  grid-area: codes;
+}
+
+:host:has(.saving) > :not(.saving):not(h1) {
+  display: none;
 }
