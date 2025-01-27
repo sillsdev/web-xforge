@@ -19,7 +19,7 @@
       @if (!isAppOnline) {
         <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
       }
-      @if (projectSelectValid && canEditProject) {
+      @if (isValid) {
         <div class="target-project-content">
           @if (targetChapters$ | async; as chapters) {
             <app-notice icon="warning" type="warning"

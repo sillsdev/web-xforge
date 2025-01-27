@@ -70,6 +70,7 @@ export class DraftApplyDialogComponent implements OnInit {
   // the project id to add the draft to
   private targetProjectId?: string;
   private paratextIdToProjectId: Map<string, string> = new Map<string, string>();
+  isValid: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) private data: DraftApplyDialogConfig,
@@ -188,8 +189,11 @@ export class DraftApplyDialogComponent implements OnInit {
   }
 
   private validateProject(): void {
-    // setTimeout prevents a "changed after checked" exception
-    setTimeout(() => this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState())));
+    // setTimeout prevents a "changed after checked" exception (may be removable after SF-3014)
+    setTimeout(() => {
+      this.isValid = this.getCustomErrorState() === CustomErrorState.None;
+      this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
+    });
   }
 
   private async chaptersWithTextAsync(project: SFProjectProfile): Promise<number> {
