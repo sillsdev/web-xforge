@@ -960,7 +960,7 @@ public class ParatextService : DisposableBase, IParatextService
         }
 
         // Get the writing system details
-        WritingSystem writingSystem = GetWritingSystem(scrText.Language.Id);
+        WritingSystem writingSystem = GetWritingSystem(scrText.Settings.LanguageID.Id);
         return new ParatextSettings
         {
             FullName = scrText.FullName,
@@ -1848,7 +1848,7 @@ public class ParatextService : DisposableBase, IParatextService
     public WritingSystem GetWritingSystem(UserSecret userSecret, string ptProjectId)
     {
         using ScrText scrText = GetScrText(userSecret, ptProjectId);
-        return GetWritingSystem(scrText.Language.Id);
+        return GetWritingSystem(scrText.Settings.LanguageID.Id);
     }
 
     public void ClearParatextDataCaches(UserSecret userSecret, string paratextId)
