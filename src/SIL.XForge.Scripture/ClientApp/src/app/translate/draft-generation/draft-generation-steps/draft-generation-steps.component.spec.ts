@@ -226,7 +226,23 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('does not select deselected reference book when selecting translated book', () => {
-      // TODO
+      component.onTranslatedBookSelect([1, 2]);
+      fixture.detectChanges();
+      component.onSourceTrainingBookSelect([1], config.trainingSources[0]);
+      fixture.detectChanges();
+
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: true },
+        { number: 2, selected: true }
+      ]);
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
+
+      // deselect translated book 1
+      component.onTranslatedBookSelect([2]);
+      fixture.detectChanges();
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 2, selected: true }]);
+      // ensure that book 2 in the reference text is not re-selected
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([]);
     });
 
     it('does not allow selecting not selectable source training books', () => {
