@@ -1,97 +1,94 @@
 <h1>Configure draft sources</h1>
 
 <mat-card class="draft-sources-stepper">
-  <!-- This if statement exists because the app-project-select cannot handle having the value set *before* projects
-   and resources are loaded. Once that component has that limitation addressed, it can be removed, and the page will be
-   closer to being fully loaded before projects and resources have been fully loaded -->
-  @if (!loading) {
-    <div class="step" [class.active]="step === 1">
-      <div class="step-header" matRipple (click)="goToStep(1)">
-        <span class="step-title">Draft source</span>
-        <span class="step-subtitle">{{ sourceSubtitle }}</span>
-      </div>
-      <div class="step-body">
-        <p>Select the project you want the draft to be translated from.</p>
-        @for (source of draftingSources; track $index) {
-          <app-project-select
-            [isDisabled]="loading"
-            [projects]="projects"
-            [resources]="resources"
-            [value]="loading ? null : source?.paratextId"
-            (valueChange)="sourceSelected(draftingSources, $index, $event)"
-            [placeholder]="projectPlaceholder(source)"
-          ></app-project-select>
-        }
-        <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
-      </div>
+  <!-- The value on app-project-select is intentionally set to null until sources load, otherwise it won't correctly load -->
+
+  <div class="step" [class.active]="step === 1">
+    <div class="step-header" matRipple (click)="goToStep(1)">
+      <span class="step-title">Draft source</span>
+      <span class="step-subtitle">{{ sourceSubtitle }}</span>
     </div>
-
-    <div class="step" [class.active]="step === 2">
-      <div class="step-header" matRipple (click)="goToStep(2)">
-        <span class="step-title">Reference projects</span>
-        <span class="step-subtitle">{{ referencesSubtitle }}</span>
-      </div>
-      <div class="step-body">
-        <p>
-          Select projects that should be used as the reference when training the language model.
-          @if (sourceLanguageDisplayName) {
-            All of these projects should be in <strong>{{ sourceLanguageDisplayName }}</strong> just like the draft
-            source.
-          } @else {
-            All of these projects should be in same language as the draft source.
-          }
-        </p>
-
-        @for (source of trainingSources; track $index) {
-          <app-project-select
-            [isDisabled]="loading"
-            [projects]="projects"
-            [resources]="resources"
-            [value]="loading ? null : source?.paratextId"
-            (valueChange)="sourceSelected(trainingSources, $index, $event)"
-            [placeholder]="projectPlaceholder(source)"
-          ></app-project-select>
-        }
-
-        @if (allowAddingATrainingSource) {
-          <button
-            mat-button
-            (click)="trainingSources.push(undefined); $event.preventDefault()"
-            class="add-another-project"
-          >
-            <mat-icon>add</mat-icon> Add another reference project
-          </button>
-        }
-
-        <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
-      </div>
+    <div class="step-body">
+      <p>Select the project you want the draft to be translated from.</p>
+      @for (source of draftingSources; track $index) {
+        <app-project-select
+          [isDisabled]="loading"
+          [projects]="projects"
+          [resources]="resources"
+          [value]="loading ? null : source?.paratextId"
+          (valueChange)="sourceSelected(draftingSources, $index, $event)"
+          [placeholder]="projectPlaceholder(source)"
+        ></app-project-select>
+      }
+      <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
     </div>
+  </div>
 
-    <div class="step" [class.active]="step === 3">
-      <div class="step-header" matRipple (click)="goToStep(3)">
-        <span class="step-title">Target language data</span>
-        <span class="step-subtitle">{{ targetSubtitle }}</span>
-      </div>
-      <div class="step-body">
-        <p>
-          The <strong>{{ currentProjectShortName }}</strong> project will always be used to train the language model.
-          Select any additional projects that should be used as the target when training the language model. All of
-          these projects should be in the target language (<strong>{{ targetLanguageDisplayName }}</strong
-          >).
-        </p>
-        @for (source of trainingTargets; track $index) {
-          <app-project-select
-            [isDisabled]="true"
-            [projects]="projects"
-            [resources]="resources"
-            [value]="loading ? null : source.paratextId"
-            [placeholder]="projectPlaceholder(source)"
-          ></app-project-select>
-        }
-        <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
-      </div>
+  <div class="step" [class.active]="step === 2">
+    <div class="step-header" matRipple (click)="goToStep(2)">
+      <span class="step-title">Reference projects</span>
+      <span class="step-subtitle">{{ referencesSubtitle }}</span>
     </div>
-  }
+    <div class="step-body">
+      <p>
+        Select projects that should be used as the reference when training the language model.
+        @if (sourceLanguageDisplayName) {
+          All of these projects should be in <strong>{{ sourceLanguageDisplayName }}</strong> just like the draft
+          source.
+        } @else {
+          All of these projects should be in same language as the draft source.
+        }
+      </p>
+
+      @for (source of trainingSources; track $index) {
+        <app-project-select
+          [isDisabled]="loading"
+          [projects]="projects"
+          [resources]="resources"
+          [value]="loading ? null : source?.paratextId"
+          (valueChange)="sourceSelected(trainingSources, $index, $event)"
+          [placeholder]="projectPlaceholder(source)"
+        ></app-project-select>
+      }
+
+      @if (allowAddingATrainingSource) {
+        <button
+          mat-button
+          (click)="trainingSources.push(undefined); $event.preventDefault()"
+          class="add-another-project"
+        >
+          <mat-icon>add</mat-icon> Add another reference project
+        </button>
+      }
+
+      <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
+    </div>
+  </div>
+
+  <div class="step" [class.active]="step === 3">
+    <div class="step-header" matRipple (click)="goToStep(3)">
+      <span class="step-title">Target language data</span>
+      <span class="step-subtitle">{{ targetSubtitle }}</span>
+    </div>
+    <div class="step-body">
+      <p>
+        The <strong>{{ currentProjectShortName }}</strong> project will always be used to train the language model.
+        Select any additional projects that should be used as the target when training the language model. All of these
+        projects should be in the target language (<strong>{{ targetLanguageDisplayName }}</strong
+        >).
+      </p>
+      @for (source of trainingTargets; track $index) {
+        <app-project-select
+          [isDisabled]="true"
+          [projects]="projects"
+          [resources]="resources"
+          [value]="loading ? null : source.paratextId"
+          [placeholder]="projectPlaceholder(source)"
+        ></app-project-select>
+      }
+      <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
+    </div>
+  </div>
 </mat-card>
 
 <div class="overview">
@@ -153,7 +150,11 @@
         </div>
       </mat-card-content>
     </mat-card>
+  </ng-container>
+</div>
 
+<div class="confirm-language-codes">
+  <ng-container *transloco="let t; read: 'confirm_draft_sources'">
     @if (sourceSideLanguageCodes.length > 1) {
       <app-notice mode="fill-dark" type="warning">
         <h3>All source and reference projects should be in the same language</h3>
@@ -199,62 +200,71 @@
       </app-notice>
     }
   </ng-container>
+</div>
 
+<div class="component-footer">
   <div class="page-actions">
     <button mat-button (click)="cancel()"><mat-icon>close</mat-icon> Cancel</button>
     <button mat-flat-button color="primary" (click)="save()"><mat-icon>check</mat-icon> Save & sync</button>
   </div>
-
-  <!-- Temporary save indicator -->
-  @if (getControlState("projectSettings") != null) {
-    <div style="border: 2px dashed grey; padding: 1em">
-      Save state: <code>{{ getControlState("projectSettings") }}</code>
-    </div>
-  }
-
-  <!-- Temporary rough display of sync statuses -->
-  @if (getControlState("projectSettings") === ElementState.Submitted) {
-    <div style="white-space: pre-line; border: 2px dashed grey; padding: 1em">
-      Project sync status:<br />
-      @for (entry of syncStatus | keyvalue; track entry.key) {
-        {{ entry.value.shortName }}:
-        @if (entry.value.knownToBeOnSF) {
-          @if (entry.value.isSyncing) {
-            Syncing
-          } @else {
-            Not syncing
-            @if (!entry.value.lastSyncSuccessful) {
-              There was a problem.
-            }
-          }
-        } @else {
-          Connecting
-        }
-        <br />
-      }
-    </div>
-  }
-
-  <ng-template #blankProject>
-    <div class="project blank-project">
-      <span class="project-name"></span>
-      <span class="language-code"></span>
-    </div>
-  </ng-template>
-
-  <ng-template #navigationButtons>
-    <div class="step-button-wrapper">
-      @if (step !== 1) {
-        <button mat-stroked-button (click)="goToStep(step - 1)">
-          <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
-        </button>
-      }
-      <span class="spacer"></span>
-      @if (step !== 3) {
-        <button mat-flat-button color="primary" (click)="goToStep(step + 1)">
-          Next <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
-        </button>
-      }
-    </div>
-  </ng-template>
 </div>
+
+@if (getControlState("projectSettings") != null) {
+  <div class="saving">
+    <div class="saving-indeterminate"><mat-spinner [diameter]="32"></mat-spinner> Saving</div>
+    <div class="saving-complete"><mat-icon>checkmark</mat-icon> All changes saved</div>
+
+    <!-- Temporary save indicator -->
+    @if (getControlState("projectSettings") != null) {
+      <div style="border: 2px dashed grey; padding: 1em">
+        Save state: <code>{{ getControlState("projectSettings") }}</code>
+      </div>
+    }
+
+    <!-- Temporary rough display of sync statuses -->
+    @if (getControlState("projectSettings") === ElementState.Submitted) {
+      <div style="white-space: pre-line; border: 2px dashed grey; padding: 1em">
+        Project sync status:<br />
+        @for (entry of syncStatus | keyvalue; track entry.key) {
+          {{ entry.value.shortName }}:
+          @if (entry.value.knownToBeOnSF) {
+            @if (entry.value.isSyncing) {
+              Syncing
+            } @else {
+              Not syncing
+              @if (!entry.value.lastSyncSuccessful) {
+                There was a problem.
+              }
+            }
+          } @else {
+            Connecting
+          }
+          <br />
+        }
+      </div>
+    }
+  </div>
+}
+
+<ng-template #blankProject>
+  <div class="project blank-project">
+    <span class="project-name"></span>
+    <span class="language-code"></span>
+  </div>
+</ng-template>
+
+<ng-template #navigationButtons>
+  <div class="step-button-wrapper">
+    @if (step !== 1) {
+      <button mat-stroked-button (click)="goToStep(step - 1)">
+        <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
+      </button>
+    }
+    <span class="spacer"></span>
+    @if (step !== 3) {
+      <button mat-flat-button color="primary" (click)="goToStep(step + 1)">
+        Next <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+      </button>
+    }
+  </div>
+</ng-template>
