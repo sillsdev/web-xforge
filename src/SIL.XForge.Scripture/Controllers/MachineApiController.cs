@@ -80,8 +80,7 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            // Returning Forbid() results in a 400 error when executed in a POST action
-            return new StatusCodeResult(StatusCodes.Status403Forbidden);
+            return Forbid();
         }
     }
 
@@ -522,8 +521,7 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            // Returning Forbid() results in a 400 error when executed in a POST action
-            return new StatusCodeResult(StatusCodes.Status403Forbidden);
+            return Forbid();
         }
         catch (InvalidOperationException)
         {
@@ -592,8 +590,7 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            // Returning Forbid() results in a 400 error when executed in a POST action
-            return new StatusCodeResult(StatusCodes.Status403Forbidden);
+            return Forbid();
         }
         catch (UnauthorizedAccessException)
         {
@@ -641,8 +638,7 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            // Returning Forbid() results in a 400 error when executed in a POST action
-            return new StatusCodeResult(StatusCodes.Status403Forbidden);
+            return Forbid();
         }
         catch (UnauthorizedAccessException)
         {
@@ -688,8 +684,7 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            // Returning Forbid() results in a 400 error when executed in a POST action
-            return new StatusCodeResult(StatusCodes.Status403Forbidden);
+            return Forbid();
         }
     }
 
@@ -776,8 +771,7 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            // Returning Forbid() results in a 400 error when executed in a POST action
-            return new StatusCodeResult(StatusCodes.Status403Forbidden);
+            return Forbid();
         }
     }
 }

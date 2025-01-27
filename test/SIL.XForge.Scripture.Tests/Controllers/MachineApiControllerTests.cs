@@ -52,8 +52,7 @@ public class MachineApiControllerTests
         // SUT
         ActionResult actual = await env.Controller.CancelPreTranslationBuildAsync(Project01, CancellationToken.None);
 
-        Assert.IsInstanceOf<StatusCodeResult>(actual);
-        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual as StatusCodeResult)?.StatusCode);
+        Assert.IsInstanceOf<ForbidResult>(actual);
     }
 
     [Test]
@@ -1198,8 +1197,7 @@ public class MachineApiControllerTests
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
-        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual.Result as StatusCodeResult)?.StatusCode);
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
 
     [Test]
@@ -1302,11 +1300,11 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
-        Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        Assert.IsInstanceOf<ObjectResult>(actual);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -1318,10 +1316,9 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
-        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
-        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual.Result as StatusCodeResult)?.StatusCode);
+        Assert.IsInstanceOf<ForbidResult>(actual);
     }
 
     [Test]
@@ -1333,9 +1330,9 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
-        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+        Assert.IsInstanceOf<NotFoundResult>(actual);
     }
 
     [Test]
@@ -1347,9 +1344,9 @@ public class MachineApiControllerTests
             .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
-        ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
-        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        Assert.IsInstanceOf<OkObjectResult>(actual);
         await env.MachineApiService.Received(1).StartBuildAsync(User01, Project01, CancellationToken.None);
     }
 
@@ -1362,9 +1359,9 @@ public class MachineApiControllerTests
             .Throws(new UnauthorizedAccessException());
 
         // SUT
-        ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
-        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+        Assert.IsInstanceOf<UnauthorizedResult>(actual);
     }
 
     [Test]
@@ -1380,14 +1377,14 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<ServalBuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
+        ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(
             new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
-        Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        Assert.IsInstanceOf<ObjectResult>(actual);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -1403,13 +1400,12 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<ServalBuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
+        ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(
             new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
-        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual.Result as StatusCodeResult)?.StatusCode);
+        Assert.IsInstanceOf<ForbidResult>(actual);
     }
 
     [Test]
@@ -1425,12 +1421,12 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<ServalBuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
+        ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(
             new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+        Assert.IsInstanceOf<NotFoundResult>(actual);
     }
 
     [Test]
@@ -1467,12 +1463,12 @@ public class MachineApiControllerTests
             .Throws(new UnauthorizedAccessException());
 
         // SUT
-        ActionResult<ServalBuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
+        ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(
             new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+        Assert.IsInstanceOf<UnauthorizedResult>(actual);
     }
 
     [Test]
@@ -1504,8 +1500,7 @@ public class MachineApiControllerTests
         // SUT
         ActionResult actual = await env.Controller.TrainSegmentAsync(Project01, segmentPair, CancellationToken.None);
 
-        Assert.IsInstanceOf<StatusCodeResult>(actual);
-        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual as StatusCodeResult)?.StatusCode);
+        Assert.IsInstanceOf<ForbidResult>(actual);
     }
 
     [Test]
@@ -1652,8 +1647,7 @@ public class MachineApiControllerTests
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
-        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual.Result as StatusCodeResult)?.StatusCode);
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
 
     [Test]

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -63,8 +62,7 @@ public class HealthCheckControllerTests
         // SUT
         var actual = await env.Controller.HealthCheckAsync("invalid_key");
 
-        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
-        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual.Result as StatusCodeResult)?.StatusCode);
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
 
     [Test]
