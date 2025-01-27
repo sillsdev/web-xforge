@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -110,7 +111,8 @@ export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAs
     CommonModule,
     TranslocoModule,
     NoticeComponent,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatProgressSpinner
   ],
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
@@ -263,6 +265,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     index: number,
     paratextId: string | undefined
   ): void {
+    // When still loading projects, the project selectors will temporarily set the value to null
+    if (!this.isLoaded) return;
+
     const selectedProject: SelectableProject | null =
       this.projects?.find(p => p.paratextId === paratextId) ??
       this.resources?.find(r => r.paratextId === paratextId) ??
