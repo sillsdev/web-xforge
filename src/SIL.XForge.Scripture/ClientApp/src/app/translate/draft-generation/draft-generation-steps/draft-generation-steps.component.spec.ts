@@ -484,10 +484,12 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.stepper.selectedIndex).toBe(2);
       component.onSourceTrainingBookSelect([2], config.trainingSources[0]);
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.warn-translated-books-unselected')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.error-translated-books-unselected')).not.toBeNull();
       component.tryAdvanceStep();
       fixture.detectChanges();
-      expect(component.stepper.selectedIndex).toBe(3);
+      // The user cannot advance if reference books are not provided for training
+      expect(component.stepper.selectedIndex).toBe(2);
+      expect(fixture.nativeElement.querySelector('.error-choose-training-books')).toBeNull();
     });
 
     it('clears selected reference books when translated book is unselected', () => {

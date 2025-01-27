@@ -75,7 +75,9 @@
           </button>
         </div>
       </mat-step>
-      <mat-step [completed]="isTrainingOptional || trainingSourceBooksSelected">
+      <mat-step
+        [completed]="(isTrainingOptional || trainingSourceBooksSelected) && translatedBooksSelectedInTrainingSources"
+      >
         <ng-template matStepLabel>
           {{ t("choose_books_for_training_header") }}
         </ng-template>
@@ -133,14 +135,13 @@
             ></app-book-multi-select>
           }
         }
-        @if (showBookSelectionError) {
-          <app-notice type="error">
-            {{ t("choose_books_for_training_error") }}
-          </app-notice>
-        }
         @if (!translatedBooksSelectedInTrainingSources) {
-          <app-notice class="warn-translated-books-unselected" type="warning" icon="warning">
+          <app-notice class="error-translated-books-unselected" type="error">
             {{ t("translated_book_selected_no_training_pair") }}
+          </app-notice>
+        } @else if (showBookSelectionError) {
+          <app-notice class="error-choose-training-books" type="error">
+            {{ t("choose_books_for_training_error") }}
           </app-notice>
         }
         @if (translatedBooksWithNoSource.length > 0) {
