@@ -9,11 +9,11 @@
       </mat-button-toggle>
     </mat-button-toggle-group>
     <mat-menu #menu="matMenu">
-      <button mat-menu-item (click)="confirmAndAddToProjectAsync(book)">
+      <button mat-menu-item (click)="chooseProjectToAddDraft(book, projectParatextId)">
         <mat-icon>input</mat-icon>{{ book.draftApplied ? t("readd_to_project") : t("add_to_project") }}
       </button>
       @if ((isProjectAdmin$ | async) === true) {
-        <button mat-menu-item (click)="chooseAlternateProjectToAddDraft(book)">
+        <button mat-menu-item (click)="chooseProjectToAddDraft(book)">
           <mat-icon>output</mat-icon>{{ t("add_to_different_project") }}
         </button>
       }

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { TranslocoModule, translate } from '@ngneat/transloco';
+import { translate, TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -29,6 +29,7 @@ export interface DraftApplyDialogResult {
 }
 
 export interface DraftApplyDialogConfig {
+  initialParatextId?: string;
   bookNum: number;
   chapters: number[];
 }
@@ -41,12 +42,12 @@ export interface DraftApplyDialogConfig {
   styleUrl: './draft-apply-dialog.component.scss'
 })
 export class DraftApplyDialogComponent implements OnInit {
-  @ViewChild(ProjectSelectComponent) projectSelect!: ProjectSelectComponent;
+  @ViewChild(ProjectSelectComponent) projectSelect?: ProjectSelectComponent;
 
   _projects?: SFProjectProfile[];
-  isLoading: boolean = false;
+  protected isLoading: boolean = true;
   addToProjectForm = new FormGroup({
-    targetParatextId: new FormControl<string | undefined>('', Validators.required),
+    targetParatextId: new FormControl<string | undefined>(this.data.initialParatextId, Validators.required),
     overwrite: new FormControl(false, Validators.requiredTrue)
   });
   /** An observable that emits the number of chapters in the target project that have some text. */
@@ -69,6 +70,7 @@ export class DraftApplyDialogComponent implements OnInit {
   // the project id to add the draft to
   private targetProjectId?: string;
   private paratextIdToProjectId: Map<string, string> = new Map<string, string>();
+  isValid: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) private data: DraftApplyDialogConfig,
@@ -106,6 +108,10 @@ export class DraftApplyDialogComponent implements OnInit {
     return this.addToProjectForm.controls.targetParatextId.valid;
   }
 
+  get projectName(): string {
+    return this.targetProject$.value?.name ?? '';
+  }
+
   get isAppOnline(): boolean {
     return this.onlineStatusService.isOnline;
   }
@@ -128,12 +134,15 @@ export class DraftApplyDialogComponent implements OnInit {
           return projects.sort(compareProjectsForSorting);
         })
       )
-      .subscribe(projects => (this._projects = projects));
+      .subscribe(projects => {
+        this._projects = projects;
+        this.isLoading = false;
+      });
   }
 
   addToProject(): void {
     this.addToProjectClicked = true;
-    this.projectSelect.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
+    this.validateProject();
     if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
       return;
     }
@@ -150,7 +159,7 @@ export class DraftApplyDialogComponent implements OnInit {
       this.canEditProject = false;
       this.targetBookExists = false;
       this.targetProject$.next(undefined);
-      this.projectSelect.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
+      this.validateProject();
       return;
     }
 
@@ -172,11 +181,19 @@ export class DraftApplyDialogComponent implements OnInit {
     } else {
       this.targetProject$.next(undefined);
     }
-    this.projectSelect.customValidate(SFValidators.customValidator(this.getCustomErrorState(paratextId)));
+    this.validateProject();
   }
 
   close(): void {
     this.dialogRef.close();
+  }
+
+  private validateProject(): void {
+    // setTimeout prevents a "changed after checked" exception (may be removable after SF-3014)
+    setTimeout(() => {
+      this.isValid = this.getCustomErrorState() === CustomErrorState.None;
+      this.projectSelect?.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
+    });
   }
 
   private async chaptersWithTextAsync(project: SFProjectProfile): Promise<number> {
@@ -196,8 +213,8 @@ export class DraftApplyDialogComponent implements OnInit {
     return textDoc.getNonEmptyVerses().length > 0;
   }
 
-  private getCustomErrorState(paratextId?: string): CustomErrorState {
-    if (!this.projectSelectValid && paratextId == null) {
+  private getCustomErrorState(): CustomErrorState {
+    if (!this.projectSelectValid) {
       return CustomErrorState.InvalidProject;
     }
     if (!this.targetBookExists) {
