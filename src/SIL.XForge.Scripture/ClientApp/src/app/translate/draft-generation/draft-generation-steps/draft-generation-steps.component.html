@@ -4,11 +4,11 @@
       <!-- Icon overrides -->
       <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
 
-      <mat-step [completed]="languagesVerified">
+      <mat-step [completed]="languagesVerified && languagesAreCompatible">
         <ng-template matStepLabel>{{ t("overview") }}</ng-template>
         <app-confirm-sources (languageCodesVerified)="languagesVerified = $event"></app-confirm-sources>
         @if (nextClickedOnLanguageVerification && !languagesVerified) {
-          <app-notice type="error" mode="fill-dark">{{ t("confirm_codes_correct_to_continue") }}</app-notice>
+          <app-notice type="error">{{ t("confirm_codes_correct_to_continue") }}</app-notice>
         }
         <div class="button-strip">
           <button mat-stroked-button class="backout-button" (click)="cancel.emit()">
