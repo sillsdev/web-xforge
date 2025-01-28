@@ -27,6 +27,8 @@ public static class MachineApi
         "translation/engines/project:{sfProjectId}/actions/preTranslate/{bookNum}_{chapterNum}/delta";
     public const string GetPreTranslationUsfm =
         "translation/engines/project:{sfProjectId}/actions/preTranslate/{bookNum}_{chapterNum}/usfm";
+    public const string GetPreTranslationUsj =
+        "translation/engines/project:{sfProjectId}/actions/preTranslate/{bookNum}_{chapterNum}/usj";
     public const string GetPreTranslationUsx =
         "translation/engines/project:{sfProjectId}/actions/preTranslate/{bookNum}_{chapterNum}/usx";
     public const string GetLastCompletedPreTranslationBuild =
