@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
@@ -9,8 +10,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
-import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
-import { ConfirmSourcesComponent } from './confirm-sources.component';
+import { LanguageCodesConfirmationComponent } from './language-codes-confirmation.component';
 
 const mockDraftService = mock(DraftSourcesService);
 const mockActivatedProject = mock(ActivatedProjectService);
@@ -63,11 +63,11 @@ when(mockActivatedProject.projectDoc).thenReturn({
 when(mockAuthService.currentUserId).thenReturn('user1');
 
 const meta: Meta = {
-  title: 'Translate/ConfirmSources',
-  component: ConfirmSourcesComponent,
+  title: 'Translate/LanguageCodesConfirmation',
+  component: LanguageCodesConfirmationComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, TranslocoModule, LanguageCodesConfirmationComponent],
+      imports: [CommonModule, TranslocoModule, TranslocoMarkupComponent, LanguageCodesConfirmationComponent],
       providers: [
         { provide: DraftSourcesService, useValue: instance(mockDraftService) },
         { provide: ActivatedProjectService, useValue: instance(mockActivatedProject) },
@@ -84,9 +84,25 @@ interface StoryState {}
 type Story = StoryObj<StoryState>;
 
 export const Default: Story = {
+  args: {}
+};
+
+export const SameSourceAndTargetCodes: Story = {
   args: {
-    book: 1,
-    progress: 0.37,
-    hues: [0]
+    targetLanguageTag: 'es'
+  }
+};
+
+export const DifferentSourceCodes: Story = {
+  args: {
+    draftingSources: [
+      {
+        projectRef: 'alternate-drafting-source',
+        shortName: 'ADS',
+        name: 'Alternate Drafting Source',
+        paratextId: 'alternate-drafting-source',
+        writingSystem: { tag: 'cat' }
+      } as DraftSource
+    ]
   }
 };
