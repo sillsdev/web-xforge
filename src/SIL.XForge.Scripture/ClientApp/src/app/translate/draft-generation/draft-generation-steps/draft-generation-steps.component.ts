@@ -384,20 +384,27 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   onTranslatedBookSelect(selectedBooks: number[]): void {
     if (this.activatedProject.projectId == null) return;
+    const newlySelectedBooks: number[] = this.availableTrainingBooks[this.activatedProject.projectId]
+      .filter(b => !b.selected && selectedBooks.includes(b.number))
+      .map(b => b.number);
     //update selections in translated books
     for (const book of this.availableTrainingBooks[this.activatedProject.projectId]) {
       book.selected = selectedBooks.includes(book.number);
     }
 
     //for each selected book, select the matching book in the sources
-    for (const selectedBook of selectedBooks) {
-      for (const [projectRef, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
-        if (projectRef === this.activatedProject.projectId) continue;
-        const sourceBook = trainingBooks.find(b => b.number === selectedBook);
-        if (sourceBook !== undefined) {
-          sourceBook.selected = true;
+    for (const [projectRef, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
+      if (projectRef === this.activatedProject.projectId) continue;
+
+      trainingBooks.forEach(b => {
+        if (newlySelectedBooks.includes(b.number)) {
+          b.selected = true;
         }
-      }
+        // ensure any books source training books not selected in translated books is unselected
+        if (!selectedBooks.includes(b.number)) {
+          b.selected = false;
+        }
+      });
     }
 
     this.clearErrorMessage();

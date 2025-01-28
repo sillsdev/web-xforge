@@ -225,10 +225,47 @@ describe('DraftGenerationStepsComponent', () => {
       ]);
     });
 
+    it('does not select deselected reference book when selecting translated book', () => {
+      component.onTranslatedBookSelect([1, 2]);
+      fixture.detectChanges();
+      component.onSourceTrainingBookSelect([1], config.trainingSources[0]);
+      fixture.detectChanges();
+
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: true },
+        { number: 2, selected: true }
+      ]);
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
+
+      // deselect translated book 1
+      component.onTranslatedBookSelect([2]);
+      fixture.detectChanges();
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 2, selected: true }]);
+      // ensure that book 2 in the reference text is not re-selected
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([]);
+    });
+
     it('does not allow selecting not selectable source training books', () => {
       component.onSourceTrainingBookSelect([6, 7], config.trainingSources[0]);
       fixture.detectChanges();
 
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([]);
+    });
+
+    it('clears selected reference books when translated book is unselected', () => {
+      component.onTranslatedBookSelect([2, 3]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 2, selected: true },
+        { number: 3, selected: true }
+      ]);
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 2, selected: true },
+        { number: 3, selected: true }
+      ]);
+      component.onTranslatedBookSelect([2]);
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 2, selected: true }]);
+
+      component.onTranslatedBookSelect([]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([]);
     });
   });
@@ -451,6 +488,30 @@ describe('DraftGenerationStepsComponent', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
       expect(component.stepper.selectedIndex).toBe(3);
+    });
+
+    it('clears selected reference books when translated book is unselected', () => {
+      component.onTranslatedBookSelect([2, 3]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 2, selected: true },
+        { number: 3, selected: true }
+      ]);
+      expect(component.selectedTrainingBooksByProj('source1')).toEqual([
+        { number: 2, selected: true },
+        { number: 3, selected: true }
+      ]);
+      expect(component.selectedTrainingBooksByProj('source2')).toEqual([
+        { number: 2, selected: true },
+        { number: 3, selected: true }
+      ]);
+
+      component.onTranslatedBookSelect([2]);
+      expect(component.selectedTrainingBooksByProj('source1')).toEqual([{ number: 2, selected: true }]);
+      expect(component.selectedTrainingBooksByProj('source2')).toEqual([{ number: 2, selected: true }]);
+
+      component.onTranslatedBookSelect([]);
+      expect(component.selectedTrainingBooksByProj('source1')).toEqual([]);
+      expect(component.selectedTrainingBooksByProj('source2')).toEqual([]);
     });
   });
 
