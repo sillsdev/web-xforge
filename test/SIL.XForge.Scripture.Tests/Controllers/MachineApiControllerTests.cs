@@ -9,6 +9,7 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
+using SIL.Converters.Usj;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -1043,6 +1044,123 @@ public class MachineApiControllerTests
         await env
             .MachineApiService.Received(1)
             .GetPreTranslationUsfmAsync(User01, Project01, 40, 1, false, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<Usj> actual = await env.Controller.GetPreTranslationUsjAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<Usj> actual = await env.Controller.GetPreTranslationUsjAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new DataNotFoundException(string.Empty));
+
+        // SUT
+        ActionResult<Usj> actual = await env.Controller.GetPreTranslationUsjAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_NotBuilt()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new InvalidOperationException());
+
+        // SUT
+        ActionResult<Usj> actual = await env.Controller.GetPreTranslationUsjAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ConflictResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_NotSupported()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new NotSupportedException());
+
+        // SUT
+        ActionResult<Usj> actual = await env.Controller.GetPreTranslationUsjAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<IStatusCodeActionResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status405MethodNotAllowed, (actual.Result as IStatusCodeActionResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(new Usj()));
+
+        // SUT
+        ActionResult<Usj> actual = await env.Controller.GetPreTranslationUsjAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
 
     [Test]
