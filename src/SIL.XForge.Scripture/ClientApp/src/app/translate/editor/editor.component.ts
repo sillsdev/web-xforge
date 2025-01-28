@@ -85,6 +85,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { stripHtml } from 'xforge-common/util/string-util';
 import { browserLinks, getLinkHTML, isBlink, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
@@ -1208,7 +1209,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     // Show the copyright notice
     this.dialogService.openGenericDialog({
-      message: of(this.stripXml(copyrightNotice)),
+      message: of(stripHtml(copyrightNotice)),
       options: [{ value: undefined, label: this.i18n.translate('dialog.close'), highlight: true }]
     });
   }
@@ -2034,7 +2035,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   /** Gets the information needed to format a particular featured verse. */
   private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo | undefined {
     const notes: Note[] = threadDoc.notesInOrderClone(threadDoc.data!.notes);
-    let preview: string = notes[0].content != null ? this.stripXml(notes[0].content.trim()) : '';
+    let preview: string = notes[0].content != null ? stripHtml(notes[0].content.trim()) : '';
     if (notes.length > 1) {
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
@@ -2059,10 +2060,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       textAnchor: threadDoc.data.position,
       highlight: hasNewContent
     };
-  }
-
-  private stripXml(xmlContent: string): string {
-    return xmlContent.replace(/<[^>]+>/g, '');
   }
 
   /** Update the text anchors for the note threads in the current segment. */
