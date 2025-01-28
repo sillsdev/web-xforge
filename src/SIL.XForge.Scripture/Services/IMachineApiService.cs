@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Autofac.Extras.DynamicProxy;
 using Serval.Client;
+using SIL.Converters.Usj;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -65,6 +66,13 @@ public interface IMachineApiService
         int bookNum,
         int chapterNum,
         bool isServalAdmin,
+        CancellationToken cancellationToken
+    );
+    Task<Usj> GetPreTranslationUsjAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
         CancellationToken cancellationToken
     );
     Task<string> GetPreTranslationUsxAsync(
