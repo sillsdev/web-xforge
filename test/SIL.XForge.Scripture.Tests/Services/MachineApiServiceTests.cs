@@ -14,6 +14,7 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
+using SIL.Converters.Usj;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -1261,6 +1262,78 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
         Assert.AreEqual(expected, usfm);
+    }
+
+    [Test]
+    public void GetPreTranslationUsjAsync_CorpusDoesNotSupportUsfm()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Throws(ServalApiExceptions.InvalidCorpus);
+
+        // SUT
+        Assert.ThrowsAsync<NotSupportedException>(
+            () => env.Service.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_MissingUserSecret()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.UserSecrets.DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string usfm = "\\c 1 \\v1 Verse 1";
+        const string usx =
+            "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
+            + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
+        Usj expected = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content =
+            [
+                new UsjMarker
+                {
+                    Type = "book",
+                    Marker = "id",
+                    Code = "MAT",
+                },
+                new UsjMarker
+                {
+                    Type = "chapter",
+                    Marker = "c",
+                    Number = "1",
+                },
+                new UsjMarker
+                {
+                    Type = "verse",
+                    Marker = "v",
+                    Number = "1",
+                },
+                "Verse 1",
+            ],
+        };
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(usfm));
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
+
+        // SUT
+        Usj actual = await env.Service.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None);
+        Assert.That(actual, Is.EqualTo(expected).UsingPropertiesComparer());
     }
 
     [Test]
