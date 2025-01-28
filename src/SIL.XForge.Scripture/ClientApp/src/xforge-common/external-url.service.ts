@@ -31,19 +31,19 @@ export class ExternalUrlService {
   }
 
   get transceleratorImportHelpPage(): string {
-    return this.helps + '/community-checking#1ed2e353d94847a3861ad3a69d531aac';
+    return this.helps + '/adding-questions#1850d745ac9e8003815fc894b8baaeb7';
   }
 
   get csvImportHelpPage(): string {
-    return this.helps + '/community-checking#42107c9def434bf396442d0004577710';
+    return this.helps + '/adding-questions#1850d745ac9e8085960dd88b648f0c7a';
   }
 
   get chapterAudioHelpPage(): string {
-    return this.helps + '/community-checking#fd31ef9b6d74417099996e7dadb5068e';
+    return this.helps + '/adding-questions#1850d745ac9e80e795f3d611356e74d5';
   }
 
   get sharingSettingsHelpPage(): string {
-    return this.helps + '/community-checking#5aa7e3d8451f40cfa6b33c5dd39a3c6f';
+    return this.helps + '/managing-checkers#1850d745ac9e8097ad4efcb063fc2603';
   }
 
   get graphite(): string {
