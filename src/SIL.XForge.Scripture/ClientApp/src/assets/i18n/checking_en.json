@@ -40,7 +40,8 @@
   },
   "attach_audio": {
     "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording"
+    "tooltip_stop": "Stop recording",
+    "tooltip_upload": "Upload audio"
   },
   "canon": {
     "book_names": {
