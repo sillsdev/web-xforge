@@ -43,11 +43,15 @@ export async function submitJson0Op<T>(
   conn: Connection,
   collection: string,
   id: string,
-  build: (op: Json0OpBuilder<T>) => void
+  build: (op: Json0OpBuilder<T>) => void,
+  source: boolean | any | undefined = undefined
 ): Promise<boolean> {
   const doc = conn.get(collection, id);
   await docFetch(doc);
-  return await docSubmitJson0Op(doc, build);
+  if (source != null) {
+    doc.submitSource = true;
+  }
+  return await docSubmitJson0Op(doc, build, source);
 }
 
 export async function deleteDoc(conn: Connection, collection: string, id: string): Promise<void> {
