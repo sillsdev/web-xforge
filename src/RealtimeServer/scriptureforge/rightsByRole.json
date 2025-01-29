@@ -4,7 +4,8 @@
     "texts": ["view"],
     "sf_note_threads": ["view"],
     "notes": ["view"],
-    "text_audio": ["view"]
+    "text_audio": ["view"],
+    "text_documents": ["view"]
   },
   "pt_observer": {
     "project_user_configs": ["view_own", "edit_own"],
@@ -19,14 +20,16 @@
     "pt_note_threads": ["view"],
     "sf_note_threads": ["view"],
     "notes": ["view"],
-    "text_audio": ["view"]
+    "text_audio": ["view"],
+    "text_documents": ["view"]
   },
   "sf_commenter": {
     "project_user_configs": ["view_own", "edit_own"],
     "texts": ["view"],
     "sf_note_threads": ["view", "create", "delete_own"],
     "notes": ["view", "create", "edit_own", "delete_own"],
-    "text_audio": ["view"]
+    "text_audio": ["view"],
+    "text_documents": ["view"]
   },
   "sf_community_checker": {
     "project_user_configs": ["view_own", "edit_own"],
@@ -36,7 +39,8 @@
     "answer_status": ["view"],
     "answer_comments": ["view", "create", "edit_own", "delete_own"],
     "likes": ["view", "create", "delete_own"],
-    "text_audio": ["view"]
+    "text_audio": ["view"],
+    "text_documents": ["view"]
   },
   "pt_consultant": {
     "project_user_configs": ["view_own", "edit_own"],
@@ -51,7 +55,8 @@
     "pt_note_threads": ["view", "create", "edit", "delete_own"],
     "sf_note_threads": ["view", "create", "edit", "delete_own"],
     "notes": ["view", "create", "edit_own", "delete_own"],
-    "text_audio": ["view"]
+    "text_audio": ["view"],
+    "text_documents": ["view"]
   },
   "pt_translator": {
     "project_user_configs": ["view_own", "edit_own"],
@@ -67,6 +72,7 @@
     "sf_note_threads": ["view", "create", "edit", "delete_own"],
     "notes": ["view", "create", "edit_own", "delete_own"],
     "text_audio": ["view"],
+    "text_documents": ["view", "edit"],
     "training_data": ["view", "create", "edit_own", "delete_own"],
     "drafts": ["view"]
   },
@@ -84,6 +90,7 @@
     "sf_note_threads": ["view", "create", "edit", "delete"],
     "notes": ["view", "create", "edit_own", "delete"],
     "text_audio": ["view", "edit", "create", "delete"],
+    "text_documents": ["view", "edit"],
     "training_data": ["view", "create", "edit", "delete"],
     "drafts": ["view"],
     "user_invites": ["create"]

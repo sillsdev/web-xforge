@@ -15,6 +15,7 @@ import { SFProjectService } from './services/sf-project-service';
 import { SF_PROJECT_USER_CONFIG_MIGRATIONS } from './services/sf-project-user-config-migrations';
 import { SFProjectUserConfigService } from './services/sf-project-user-config-service';
 import { TextAudioService } from './services/text-audio-service';
+import { TextDocumentService } from './services/text-document-service';
 import { TextService } from './services/text-service';
 import { TrainingDataService } from './services/training-data-service';
 
@@ -27,6 +28,7 @@ const SF_DOC_SERVICES: DocService[] = [
   new BiblicalTermService(),
   new NoteThreadService(),
   new TextAudioService(),
+  new TextDocumentService(),
   new TrainingDataService()
 ];
 
