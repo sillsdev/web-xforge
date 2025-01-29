@@ -50,7 +50,11 @@ export class TextAndAudioComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   updateFormValidity(): void {
-    if (this.hasTextOrAudio() || this._audioAttachment?.status === 'processed') {
+    if (
+      this.hasTextOrAudio() ||
+      this._audioAttachment?.status === 'processed' ||
+      this._audioAttachment?.status === 'uploaded'
+    ) {
       this.text.setErrors(null);
       this.input!.audioUrl = this._audioAttachment?.url;
     } else if (this._audioAttachment?.status === 'reset') {
