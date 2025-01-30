@@ -3,13 +3,14 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
+import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
 import { SharedModule } from '../../shared/shared.module';
@@ -38,8 +39,8 @@ describe('AttachAudioComponent', () => {
     when(env.mockTextAndAudio.input).thenReturn({});
     when(env.mockTextAndAudio.audioAttachment).thenReturn({ status: 'reset' });
     env.fixture.detectChanges();
-    expect(env.iconButton.nativeElement.textContent).toBe('mic');
-    env.iconButton.nativeElement.click();
+    expect(env.firstIcon.nativeElement.textContent).toBe('mic');
+    env.firstIcon.nativeElement.click();
     tick();
     env.fixture.detectChanges();
     verify(mockDialogService.openMatDialog(AudioRecorderDialogComponent, anything())).once();
@@ -50,12 +51,12 @@ describe('AttachAudioComponent', () => {
     when(env.mockTextAndAudio.input).thenReturn({});
     when(env.mockRecorderDialogRef.afterClosed()).thenReturn(of(undefined));
     env.fixture.detectChanges();
-    env.iconButton.nativeElement.click();
+    env.firstIcon.nativeElement.click();
     tick();
     env.fixture.detectChanges();
     verify(mockDialogService.openMatDialog(AudioRecorderDialogComponent, anything())).once();
     verify(env.mockTextAndAudio.setAudioAttachment(anything())).never();
-    expect(env.iconButton.nativeElement.textContent).toBe('mic');
+    expect(env.firstIcon.nativeElement.textContent).toBe('mic');
   }));
 
   it('should show clear when audio is attached', () => {
@@ -63,10 +64,37 @@ describe('AttachAudioComponent', () => {
     when(env.mockTextAndAudio.input).thenReturn({ audioUrl: 'blob://audio' });
     env.fixture.detectChanges();
     expect(env.component.audioPlayer).not.toBeNull();
-    expect(env.iconButton.nativeElement.textContent).toBe('clear');
-    env.iconButton.nativeElement.click();
+    expect(env.firstIcon.nativeElement.textContent).toBe('clear');
+    env.firstIcon.nativeElement.click();
     env.fixture.detectChanges();
     verify(env.mockTextAndAudio.resetAudio()).once();
+  });
+
+  it('should only show upload button when enabled', () => {
+    expect(env.uploadAudioButton).toBeNull();
+
+    env.component.isUploadEnabled = true;
+    env.fixture.detectChanges();
+
+    expect(env.uploadAudioButton).not.toBeNull();
+  });
+
+  it('should allow uploading audio files', () => {
+    env.fixture.detectChanges();
+
+    env.component['uploadAudioFile'] = new File([env.audioBlob], 'test.wav');
+    env.component['processAudioFileUpload']();
+
+    verify(env.mockTextAndAudio.setAudioAttachment(anything())).once();
+  });
+
+  it('forces uploading if lastInvalids sees an ogg file', () => {
+    env.fixture.detectChanges();
+
+    const file = new File([env.audioBlob], 'test.wav', { type: 'video/ogg' });
+    env.component['lastInvalids'] = [{ file } as InvalidFileItem];
+
+    verify(env.mockTextAndAudio.setAudioAttachment(anything())).once();
   });
 });
 
@@ -89,7 +117,15 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  get iconButton(): DebugElement {
+  get firstIcon(): DebugElement {
     return this.fixture.debugElement.query(By.css('button .mat-icon'));
+  }
+
+  get uploadAudioButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('button.upload-audio-file'));
+  }
+
+  get audioBlob(): Blob {
+    return getAudioBlob();
   }
 }
