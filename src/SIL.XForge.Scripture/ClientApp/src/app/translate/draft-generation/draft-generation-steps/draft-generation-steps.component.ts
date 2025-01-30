@@ -426,6 +426,7 @@ export class DraftGenerationStepsComponent implements OnInit {
     for (const book of this.availableTranslateBooks) {
       book.selected = selectedBooks.includes(book.number);
     }
+    this.updateSelectedTrainingBooks();
     this.clearErrorMessage();
   }
 
@@ -450,7 +451,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
       const trainingData: ProjectScriptureRange[] = [];
       for (const source of this.trainingSources) {
-        const booksForThisSource = this.availableTrainingBooks[source.projectRef].filter(b => b.selected);
+        const booksForThisSource: Book[] = this.selectedTrainingBooksByProj(source.projectRef);
         if (booksForThisSource.length > 0) {
           trainingData.push({
             projectId: source.projectRef,
@@ -476,6 +477,14 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   protected projectLabel(source: TranslateSource): string {
     return projectLabel(source);
+  }
+
+  private updateSelectedTrainingBooks(): void {
+    const booksForTranslation: number[] = this.availableTranslateBooks.filter(b => b.selected).map(b => b.number);
+    for (const [, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
+      // set the selected state of any training book to false if it is selected for translation
+      trainingBooks.forEach(b => (b.selected = booksForTranslation.includes(b.number) ? false : b.selected));
+    }
   }
 
   private validateCurrentStep(): boolean {
