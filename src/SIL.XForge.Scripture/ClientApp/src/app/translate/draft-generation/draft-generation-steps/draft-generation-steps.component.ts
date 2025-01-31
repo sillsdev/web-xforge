@@ -426,7 +426,6 @@ export class DraftGenerationStepsComponent implements OnInit {
     for (const book of this.availableTranslateBooks) {
       book.selected = selectedBooks.includes(book.number);
     }
-    this.updateSelectedTrainingBooks();
     this.clearErrorMessage();
   }
 
@@ -440,6 +439,8 @@ export class DraftGenerationStepsComponent implements OnInit {
     }
 
     if (this.stepper.selected !== this.stepper.steps.last) {
+      // update training books when the stepper is advanced
+      this.updateSelectedTrainingBooks();
       this.stepper.next();
     } else {
       if (!this.onlineStatusService.isOnline) {
