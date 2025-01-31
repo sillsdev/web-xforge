@@ -426,11 +426,11 @@ export class DraftGenerationStepsComponent implements OnInit {
     for (const book of this.availableTranslateBooks) {
       book.selected = selectedBooks.includes(book.number);
     }
-    this.updateSelectedTrainingBooks();
     this.clearErrorMessage();
   }
 
   onStepChange(): void {
+    this.updateSelectedTrainingBooks();
     this.clearErrorMessage();
   }
 
