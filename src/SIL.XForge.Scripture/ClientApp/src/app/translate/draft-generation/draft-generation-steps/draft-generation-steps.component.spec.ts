@@ -268,6 +268,58 @@ describe('DraftGenerationStepsComponent', () => {
       component.onTranslatedBookSelect([]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([]);
     });
+
+    it('clears selected translated and reference books in training when translate book selected', () => {
+      clickConfirmLanguages(fixture);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.onTranslateBookSelect([3]);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.onTranslatedBookSelect([1, 2]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: true },
+        { number: 2, selected: true }
+      ]);
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([
+        { number: 1, selected: true },
+        { number: 2, selected: true }
+      ]);
+      component.stepper.selectedIndex = 1;
+      fixture.detectChanges();
+      component.onTranslateBookSelect([2, 3]);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
+    });
+
+    it('shows unselected translate book on training page', () => {
+      clickConfirmLanguages(fixture);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      // select Exodus and Leviticus
+      component.onTranslateBookSelect([2, 3]);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.onTranslatedBookSelect([1]);
+      expect(component.selectableTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
+      component.stepper.selectedIndex = 1;
+      fixture.detectChanges();
+      // deselect Exodus and keep Leviticus
+      component.onTranslateBookSelect([3]);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      // Exodus becomes a selectable training book
+      expect(component.selectableTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: true },
+        { number: 2, selected: false }
+      ]);
+      expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
+      expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
+    });
   });
 
   describe('additional training source', () => {
