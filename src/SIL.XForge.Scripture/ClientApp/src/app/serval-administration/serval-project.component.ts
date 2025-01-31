@@ -270,7 +270,9 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   arrayToString(value: any): string {
-    return '[' + value.join(', ') + ']';
+    const isObject = typeof value[0] === 'object';
+    const contents = isObject ? value.map(x => this.stringify(x)).join(', ') : value.join(', ');
+    return '[' + contents + ']';
   }
 
   private getDraftJob(projectId: string): Observable<BuildDto | undefined> {
