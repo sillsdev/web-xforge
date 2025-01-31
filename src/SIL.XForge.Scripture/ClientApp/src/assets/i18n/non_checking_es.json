@@ -143,14 +143,6 @@
     "please_type_project_name": "Por favor, escriba el nombre del proyecto para confirmar.",
     "project_name": "Nombre del proyecto"
   },
-  "draft_add_dialog": {
-    "add_book_to_project": "Añadir {{ bookName }} al proyecto",
-    "add_to_project": "Añadir al proyecto",
-    "book_contents_will_be_overwritten": "Atención, esto sobrescribirá cualquier dato en su proyecto para el libro de {{ bookName }}.",
-    "cancel": "Cancelar",
-    "readd_book_to_project": "Vuelva a añadir {{ bookName }} al proyecto",
-    "readd_to_project": "Volver a añadir al proyecto"
-  },
   "draft_apply_dialog": {
     "add_to_project": "Añadir al proyecto",
     "book_does_not_exist": "{{ bookName }} en el proyecto seleccionado no existe",

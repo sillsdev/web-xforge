@@ -143,14 +143,6 @@
     "please_type_project_name": "Silakan ketik nama proyek untuk mengonfirmasi.",
     "project_name": "Nama Proyek"
   },
-  "draft_add_dialog": {
-    "add_book_to_project": "Tambahkan {{ bookName }} ke proyek",
-    "add_to_project": "Tambahkan ke proyek",
-    "book_contents_will_be_overwritten": "Peringatan, ini akan menimpa data apa pun dalam proyek Anda untuk kitab {{ bookName }}.",
-    "cancel": "Batal",
-    "readd_book_to_project": "Tambahkan kembali {{ bookName }} ke proyek",
-    "readd_to_project": "Tambahkan kembali ke proyek"
-  },
   "draft_apply_dialog": {
     "add_to_project": "Tambahkan ke proyek",
     "book_does_not_exist": "{{ bookName }} on the selected project does not exist",

@@ -143,14 +143,6 @@
     "please_type_project_name": "يُردى طباعة اسم المشروع من أجل التأكيد.",
     "project_name": "اسم المشروع"
   },
-  "draft_add_dialog": {
-    "add_book_to_project": "Add {{ bookName }} to project",
-    "add_to_project": "Add to project",
-    "book_contents_will_be_overwritten": "Warning, this will overwrite any data in your project for the book of {{ bookName }}.",
-    "cancel": "إلغاء",
-    "readd_book_to_project": "Re-add {{ bookName }} to project",
-    "readd_to_project": "Re-add to project"
-  },
   "draft_apply_dialog": {
     "add_to_project": "Add to project",
     "book_does_not_exist": "{{ bookName }} on the selected project does not exist",
