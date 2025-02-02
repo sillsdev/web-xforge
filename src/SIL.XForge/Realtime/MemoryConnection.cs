@@ -158,4 +158,18 @@ public class MemoryConnection : IConnection
         int currentVersion,
         OpSource? source
     ) => throw new NotImplementedException();
+
+    /// <summary>
+    /// Replaces a document asynchronously.
+    /// </summary>
+    /// <exception cref="NotImplementedException">
+    /// This is not supported by a <see cref="MemoryConnection" />.
+    /// </exception>
+    public Task<Snapshot<T>> ReplaceDocAsync<T>(
+        string collection,
+        string id,
+        T data,
+        int currentVersion,
+        OpSource? source
+    ) => throw new NotImplementedException();
 }
