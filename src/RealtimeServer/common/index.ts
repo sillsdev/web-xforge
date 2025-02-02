@@ -1,3 +1,4 @@
+import json0OtDiff from 'json0-ot-diff';
 import { MongoClient } from 'mongodb';
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
@@ -313,5 +314,47 @@ export = {
     }
     data = type.apply(data, ops);
     callback(undefined, data);
+  },
+
+  replaceDoc: (
+    callback: InteropCallback,
+    handle: number,
+    collection: string,
+    id: string,
+    data: any,
+    source: string | undefined
+  ): void => {
+    // Ensure we can get the existing document
+    if (server == null) {
+      callback(new Error('Server not started.'));
+      return;
+    }
+    const doc = getDoc(handle, collection, id);
+    if (doc == null) {
+      callback(new Error('Connection not found.'));
+      return;
+    }
+
+    // Build the ops from a diff
+    // NOTE: We do not use diff-patch-match, as that may result in
+    // op conflicts when ops are submitted from multiple sources.
+    const ops = json0OtDiff(doc.data, data);
+
+    // Submit the ops
+    if (ops.length > 0) {
+      const options: any = {};
+      doc.submitSource = source != null;
+      if (source != null) {
+        options.source = source;
+      }
+      doc.submitOp(ops, options, err => {
+        if (source != null) {
+          doc.submitSource = false;
+        }
+        callback(err, createSnapshot(doc));
+      });
+    } else {
+      callback(null, createSnapshot(doc));
+    }
   }
 };
