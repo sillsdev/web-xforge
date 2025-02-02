@@ -99,6 +99,9 @@ public class RealtimeServer : IRealtimeServer
     public Task<T> ApplyOpAsync<T>(string otTypeName, T data, object op) =>
         InvokeExportAsync<T>("applyOp", otTypeName, data, op);
 
+    public Task<Snapshot<T>> ReplaceDocAsync<T>(int handle, string collection, string id, T data, OpSource? source) =>
+        InvokeExportAsync<Snapshot<T>>("replaceDoc", handle, collection, id, data, source);
+
     private Task<T> InvokeExportAsync<T>(string exportedFunctionName, params object?[] args) =>
         _nodeJSService.InvokeFromFileAsync<T>(_modulePath, exportedFunctionName, args);
 

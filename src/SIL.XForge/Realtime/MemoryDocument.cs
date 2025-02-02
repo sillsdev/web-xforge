@@ -74,9 +74,18 @@ public class MemoryDocument<T> : IDocument<T>
 
     public async Task SubmitOpAsync(object op, OpSource? source)
     {
-        Data = await MemoryRealtimeService.Server.ApplyOpAsync(OTTypeName, Data, op);
-        Data.Id = Id;
+        T data = await MemoryRealtimeService.Server.ApplyOpAsync(OTTypeName, Data, op);
+        data.Id = Id;
+        await _repo.ReplaceAsync(data);
+        Data = data;
         Version++;
-        await _repo.ReplaceAsync(Data);
+    }
+
+    public async Task ReplaceAsync(T data, OpSource? source)
+    {
+        data.Id = Id;
+        await _repo.ReplaceAsync(data);
+        Data = data;
+        Version++;
     }
 }
