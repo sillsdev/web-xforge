@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.ObjectModel;
+using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -717,6 +718,16 @@ public class MachineApiService(
                 // Get the pre-translations
                 await preTranslationService.UpdatePreTranslationStatusAsync(sfProjectId, cancellationToken);
 
+                // Update the pre-translation text documents if we have an id for the user who ran the build
+                if (projectSecret.ServalData?.PreTranslationLastUserId != null)
+                {
+                    await UpdatePreTranslationTextDocuments(
+                        projectSecret.ServalData.PreTranslationLastUserId,
+                        sfProjectId,
+                        cancellationToken
+                    );
+                }
+
                 // Set the retrieved flag as complete
                 await projectSecrets.UpdateAsync(
                     sfProjectId,
@@ -735,9 +746,9 @@ public class MachineApiService(
         catch (Exception e)
         {
             // Log the error and report to bugsnag
-            string message =
-                $"Retrieve pre-translation status exception occurred for project {sfProjectId} running in background job.";
-            logger.LogError(e, message);
+            const string message =
+                "Retrieve pre-translation status exception occurred for project {sfProjectId} running in background job.";
+            logger.LogError(e, message, sfProjectId.Sanitize());
             exceptionHandler.ReportException(e);
 
             // Ensure that the retrieved flag is cleared
@@ -1064,6 +1075,102 @@ public class MachineApiService(
         }
 
         return [.. translationResults];
+    }
+
+    /// <summary>
+    /// Updates the text documents locally with the latest pre-translation drafts.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>An asynchronous task.</returns>
+    /// <exception cref="DataNotFoundException">Required data could not be found.</exception>
+    /// <remarks>This can be mocked in unit tests.</remarks>
+    protected internal virtual async Task UpdatePreTranslationTextDocuments(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        // Load the project from the realtime service
+        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // Retrieve the user secret
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user does not exist.");
+        }
+
+        // Load the project secrets, so we can get the translation engine ID and corpus ID
+        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        {
+            throw new DataNotFoundException("The project secret cannot be found.");
+        }
+
+        // Get the translation engine id
+        string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            throw new DataNotFoundException("The translation engine ID cannot be found.");
+        }
+
+        // Get the parallel corpus id
+        string parallelCorpusId = projectSecret.ServalData?.ParallelCorpusIdForPreTranslate;
+        if (string.IsNullOrWhiteSpace(parallelCorpusId))
+        {
+            throw new DataNotFoundException("The parallel corpus ID cannot be found.");
+        }
+
+        // Ensure that the user has permission on the project
+        MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data); // For every text we have a draft applied to, get the pre-translation
+        foreach (TextInfo textInfo in projectDoc.Data.Texts.Where(t => t.Chapters.Any(c => c.HasDraft == true)))
+        {
+            // Get the USFM
+            string usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
+                translationEngineId,
+                parallelCorpusId,
+                Canon.BookNumberToId(textInfo.BookNum),
+                PretranslationUsfmTextOrigin.OnlyPretranslated,
+                PretranslationUsfmTemplate.Source,
+                cancellationToken
+            );
+            var usj = paratextService.GetChaptersAsUsj(userSecret, projectDoc.Data.ParatextId, textInfo.BookNum, usfm);
+            foreach (
+                Chapter chapter in textInfo.Chapters.Where(c =>
+                    c.HasDraft == true && c.Number <= usj.Count && c.Number >= 1
+                )
+            )
+            {
+                // Save the USJ to the realtime service
+                string id = TextDocument.GetDocId(sfProjectId, textInfo.BookNum, chapter.Number, TextDocument.Draft);
+                IDocument<TextDocument> textDocument = await conn.FetchAsync<TextDocument>(id);
+
+                // Get the USJ for the chapter
+                Usj chapterUsj = usj[chapter.Number - 1];
+                TextDocument chapterTextDocument = new TextDocument
+                {
+                    Content = chapterUsj.Content,
+                    Type = chapterUsj.Type,
+                    Version = chapterUsj.Version,
+                };
+
+                // Create or update the text document
+                if (!textDocument.IsLoaded)
+                {
+                    await textDocument.CreateAsync(chapterTextDocument);
+                }
+                else
+                {
+                    await textDocument.ReplaceAsync(chapterTextDocument, OpSource.Draft);
+                }
+            }
+        }
     }
 
     /// <summary>
