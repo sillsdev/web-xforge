@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using NSubstitute.Extensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
@@ -1713,6 +1714,23 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task RetrievePreTranslationStatusAsync_DoesNotTextDocumentsIfNotLastUserId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Unset(p => p.ServalData.PreTranslationLastUserId));
+        env.Service.Configure()
+            .UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None)
+            .Returns(Task.CompletedTask);
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+        await env.Service.DidNotReceive().UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
+    }
+
+    [Test]
     public async Task RetrievePreTranslationStatusAsync_ReportsErrors()
     {
         // Set up test environment
@@ -1742,15 +1760,19 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatus()
+    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatusAndTextDocuments()
     {
         // Set up test environment
         var env = new TestEnvironment();
+        env.Service.Configure()
+            .UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None)
+            .Returns(Task.CompletedTask);
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
         await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+        await env.Service.Received().UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
     }
 
     [Test]
@@ -2587,6 +2609,7 @@ public class MachineApiServiceTests
                         {
                             TranslationEngineId = TranslationEngine01,
                             PreTranslationEngineId = TranslationEngine01,
+                            PreTranslationLastUserId = User01,
                         },
                     },
                     new SFProjectSecret
@@ -2654,7 +2677,7 @@ public class MachineApiServiceTests
                 ]
             );
 
-            Service = new MachineApiService(
+            Service = Substitute.ForPartsOf<MachineApiService>(
                 BackgroundJobClient,
                 ExceptionHandler,
                 MockLogger,

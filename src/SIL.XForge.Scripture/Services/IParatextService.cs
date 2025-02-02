@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using SIL.Converters.Usj;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
@@ -98,6 +99,7 @@ public interface IParatextService
     );
 
     Task<Delta> GetDeltaFromUsfmAsync(string curUserId, string sfProjectId, string usfm, int bookNum);
+    IReadOnlyList<Usj> GetChaptersAsUsj(UserSecret userSecret, string paratextId, int bookNum, string usfm);
 
     Task<ParatextProject> SendReceiveAsync(
         UserSecret userSecret,
