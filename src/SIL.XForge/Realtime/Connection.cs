@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SIL.ObjectModel;
@@ -145,6 +144,15 @@ public class Connection : DisposableBase, IConnection
                             queuedOperation.Collection,
                             queuedOperation.Id,
                             queuedOperation.Op,
+                            queuedOperation.Source
+                        );
+                        break;
+                    case QueuedAction.Replace:
+                        await _realtimeServer.ReplaceDocAsync(
+                            queuedOperation.Handle,
+                            queuedOperation.Collection,
+                            queuedOperation.Id,
+                            queuedOperation.Data,
                             queuedOperation.Source
                         );
                         break;
@@ -321,7 +329,7 @@ public class Connection : DisposableBase, IConnection
     public async Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)
         where T : IIdentifiable
     {
-        if (!ids.Any())
+        if (ids.Count == 0)
         {
             return new List<IDocument<T>>();
         }
@@ -396,7 +404,7 @@ public class Connection : DisposableBase, IConnection
         {
             // If we have a collection of JSON0 operations, see if any are to be committed immediately
             bool queueOperation = true;
-            if (_excludedProperties.Any() && op is IEnumerable<Json0Op> jsonOps)
+            if (_excludedProperties.Count > 0 && op is IEnumerable<Json0Op> jsonOps)
             {
                 foreach (Json0Op jsonOp in jsonOps)
                 {
@@ -440,6 +448,56 @@ public class Connection : DisposableBase, IConnection
         return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op, source);
     }
 
+    /// <summary>
+    /// Replaces a document asynchronously.
+    /// </summary>
+    /// <typeparam name="T">The document type.</typeparam>
+    /// <param name="collection">The collection.</param>
+    /// <param name="id">The identifier.</param>
+    /// <param name="data">The replacement data.</param>
+    /// <param name="currentVersion">The current version (only used when in a transaction).</param>
+    /// <param name="source">The source of the op. This is currently only used by text_document documents.</param>
+    /// <returns>
+    /// A snapshot of the updated document.
+    /// </returns>
+    /// <remarks>Only for use with JSON0 documents. This will generate the ops in the realtime server.</remarks>
+    public async Task<Snapshot<T>> ReplaceDocAsync<T>(
+        string collection,
+        string id,
+        T data,
+        int currentVersion,
+        OpSource? source
+    )
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        if (_isTransaction)
+        {
+            // Queue this operation
+            _queuedOperations.Enqueue(
+                new QueuedOperation
+                {
+                    Action = QueuedAction.Replace,
+                    Collection = collection,
+                    Data = data,
+                    Handle = _handle,
+                    Id = id,
+                    Source = source,
+                }
+            );
+
+            // Return a snapshot
+            return new Snapshot<T>
+            {
+                Data = data,
+                Id = id,
+                Version = ++currentVersion,
+            };
+        }
+
+        // Outside a transaction
+        return await _realtimeServer.ReplaceDocAsync(_handle, collection, id, data, source);
+    }
+
     public async ValueTask DisposeAsync()
     {
         await _realtimeService.Server.DisconnectAsync(_handle);
@@ -458,7 +516,7 @@ public class Connection : DisposableBase, IConnection
     /// </summary>
     protected override void DisposeManagedResources() => _realtimeService.Server.Disconnect(_handle);
 
-    private IDocument<T> GetDocument<T>(string id, DocConfig docConfig, Snapshot<T>? snapshot = null)
+    private Document<T> GetDocument<T>(string id, DocConfig docConfig, Snapshot<T>? snapshot = null)
         where T : IIdentifiable
     {
         string otTypeName = docConfig.OTTypeName;
