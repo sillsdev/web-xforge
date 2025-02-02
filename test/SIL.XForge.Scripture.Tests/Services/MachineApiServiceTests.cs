@@ -11,10 +11,12 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using NSubstitute.Extensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Converters.Usj;
+using SIL.Scripture;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -33,10 +35,12 @@ public class MachineApiServiceTests
     private const string Project02 = "project02";
     private const string Project03 = "project03";
     private const string Build01 = "build01";
+    private const string ParallelCorpusId01 = "parallelCorpusId01";
     private const string TranslationEngine01 = "translationEngine01";
     private const string User01 = "user01";
     private const string User02 = "user02";
-    private const string ParatextUserId01 = "paratext01";
+    private const string Paratext01 = "paratext01";
+    private const string ParatextUserId01 = "paratextUser01";
     private const string Segment = "segment";
     private const string TargetSegment = "targetSegment";
     private const string JobId = "jobId";
@@ -44,6 +48,38 @@ public class MachineApiServiceTests
 
     private const string JsonPayload =
         """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/translationEngine01/builds/65f0c455682bb17bc4066917"},"engine":{"id":"translationEngine01","url":"/api/v1/translation/engines/translationEngine01"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
+
+    private const string TestUsfm = "\\c 1 \\v1 Verse 1";
+    private const string TestUsx =
+        "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
+        + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
+    private static Usj TestUsj = new Usj
+    {
+        Type = Usj.UsjType,
+        Version = Usj.UsjVersion,
+        Content =
+        [
+            new UsjMarker
+            {
+                Type = "book",
+                Marker = "id",
+                Code = "MAT",
+            },
+            new UsjMarker
+            {
+                Type = "chapter",
+                Marker = "c",
+                Number = "1",
+            },
+            new UsjMarker
+            {
+                Type = "verse",
+                Marker = "v",
+                Number = "1",
+            },
+            "Verse 1",
+        ],
+    };
 
     [Test]
     public void CancelPreTranslationBuildAsync_NoPermission()
@@ -1296,44 +1332,13 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string usfm = "\\c 1 \\v1 Verse 1";
-        const string usx =
-            "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
-            + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
-        Usj expected = new Usj
-        {
-            Type = Usj.UsjType,
-            Version = Usj.UsjVersion,
-            Content =
-            [
-                new UsjMarker
-                {
-                    Type = "book",
-                    Marker = "id",
-                    Code = "MAT",
-                },
-                new UsjMarker
-                {
-                    Type = "chapter",
-                    Marker = "c",
-                    Number = "1",
-                },
-                new UsjMarker
-                {
-                    Type = "verse",
-                    Marker = "v",
-                    Number = "1",
-                },
-                "Verse 1",
-            ],
-        };
         env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
-            .Returns(Task.FromResult(usfm));
-        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
+            .Returns(Task.FromResult(TestUsfm));
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
 
         // SUT
         Usj actual = await env.Service.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None);
-        Assert.That(actual, Is.EqualTo(expected).UsingPropertiesComparer());
+        Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
     }
 
     [Test]
@@ -1713,6 +1718,23 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task RetrievePreTranslationStatusAsync_DoesNotTextDocumentsIfNotLastUserId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Unset(p => p.ServalData.PreTranslationLastUserId));
+        env.Service.Configure()
+            .UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None)
+            .Returns(Task.CompletedTask);
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+        await env.Service.DidNotReceive().UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
+    }
+
+    [Test]
     public async Task RetrievePreTranslationStatusAsync_ReportsErrors()
     {
         // Set up test environment
@@ -1742,15 +1764,19 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatus()
+    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatusAndTextDocuments()
     {
         // Set up test environment
         var env = new TestEnvironment();
+        env.Service.Configure()
+            .UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None)
+            .Returns(Task.CompletedTask);
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
         await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+        await env.Service.Received().UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
     }
 
     [Test]
@@ -2563,6 +2589,121 @@ public class MachineApiServiceTests
         Assert.AreEqual(TargetSegment, actual.First().Translation);
     }
 
+    [Test]
+    public async Task UpdatePreTranslationTextDocuments_CreatesNewDocument()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        string textDocumentId = TextDocument.GetDocId(Project01, 1, 1, TextDocument.Draft);
+        const int bookNum = 1;
+        env.SetupTextDocument(textDocumentId, bookNum, alreadyExists: false);
+
+        // SUT
+        await env.Service.UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
+
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                TranslationEngine01,
+                ParallelCorpusId01,
+                Canon.BookNumberToId(bookNum),
+                PretranslationUsfmTextOrigin.OnlyPretranslated,
+                PretranslationUsfmTemplate.Source,
+                CancellationToken.None
+            );
+        env.ParatextService.Received(1).GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, TestUsfm);
+        Assert.AreEqual(1, await env.TextDocuments.CountDocumentsAsync(_ => true));
+        Assert.IsNotEmpty(env.TextDocuments.Get(textDocumentId).Content!);
+    }
+
+    [Test]
+    public async Task UpdatePreTranslationTextDocuments_NoProjectSecret()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void UpdatePreTranslationTextDocuments_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.UpdatePreTranslationTextDocuments(User01, "invalid_project_id", CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void UpdatePreTranslationTextDocuments_NoParallelCorpusId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.UpdatePreTranslationTextDocuments(User01, Project02, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void UpdatePreTranslationTextDocuments_NoTranslationEngine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.UpdatePreTranslationTextDocuments(User01, Project03, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void UpdatePreTranslationTextDocuments_NoUser()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.UpdatePreTranslationTextDocuments("invalid_user_id", Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task UpdatePreTranslationTextDocuments_UpdatesExistingDocument()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        string textDocumentId = TextDocument.GetDocId(Project01, 1, 1, TextDocument.Draft);
+        const int bookNum = 1;
+        env.SetupTextDocument(textDocumentId, bookNum, alreadyExists: true);
+
+        // SUT
+        await env.Service.UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
+
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                TranslationEngine01,
+                ParallelCorpusId01,
+                Canon.BookNumberToId(bookNum),
+                PretranslationUsfmTextOrigin.OnlyPretranslated,
+                PretranslationUsfmTemplate.Source,
+                CancellationToken.None
+            );
+        env.ParatextService.Received(1).GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, Arg.Any<string>());
+        Assert.AreEqual(1, await env.TextDocuments.CountDocumentsAsync(_ => true));
+        Assert.IsNotEmpty(env.TextDocuments.Get(textDocumentId).Content!);
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
@@ -2585,8 +2726,10 @@ public class MachineApiServiceTests
                         Id = Project01,
                         ServalData = new ServalData
                         {
-                            TranslationEngineId = TranslationEngine01,
+                            ParallelCorpusIdForPreTranslate = ParallelCorpusId01,
                             PreTranslationEngineId = TranslationEngine01,
+                            PreTranslationLastUserId = User01,
+                            TranslationEngineId = TranslationEngine01,
                         },
                     },
                     new SFProjectSecret
@@ -2594,6 +2737,7 @@ public class MachineApiServiceTests
                         Id = Project02,
                         ServalData = new ServalData { PreTranslationEngineId = TranslationEngine01 },
                     },
+                    new SFProjectSecret { Id = Project03, ServalData = new ServalData() },
                 ]
             );
             Projects = new MemoryRepository<SFProject>(
@@ -2601,6 +2745,19 @@ public class MachineApiServiceTests
                     new SFProject
                     {
                         Id = Project01,
+                        ParatextId = Paratext01,
+                        Texts =
+                        [
+                            new TextInfo
+                            {
+                                BookNum = 1,
+                                Chapters =
+                                [
+                                    new Chapter { Number = 1, HasDraft = true },
+                                    new Chapter { Number = 2, HasDraft = false },
+                                ],
+                            },
+                        ],
                         UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
                     },
                     new SFProject
@@ -2623,10 +2780,12 @@ public class MachineApiServiceTests
                     },
                 ]
             );
+            TextDocuments = new MemoryRepository<TextDocument>();
             ProjectService = Substitute.For<ISFProjectService>();
             ProjectService.SyncAsync(User01, Arg.Any<string>()).Returns(Task.FromResult(JobId));
             var realtimeService = new SFMemoryRealtimeService();
             realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
+            realtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
 
             var servalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             SyncService = Substitute.For<ISyncService>();
@@ -2654,7 +2813,7 @@ public class MachineApiServiceTests
                 ]
             );
 
-            Service = new MachineApiService(
+            Service = Substitute.ForPartsOf<MachineApiService>(
                 BackgroundJobClient,
                 ExceptionHandler,
                 MockLogger,
@@ -2679,6 +2838,7 @@ public class MachineApiServiceTests
         public IPreTranslationService PreTranslationService { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
+        public MemoryRepository<TextDocument> TextDocuments { get; }
         public ISFProjectService ProjectService { get; }
         public MachineApiService Service { get; }
         public ISyncService SyncService { get; }
@@ -2725,5 +2885,41 @@ public class MachineApiServiceTests
                     }
                 }
             );
+
+        /// <summary>
+        /// Sets up a text document and the API calls used to create and update it.
+        /// </summary>
+        /// <param name="textDocumentId">The id of the document.</param>
+        /// <param name="bookNum">The book number.</param>
+        /// <param name="alreadyExists">
+        /// If <c>true</c>, ensure the document is already in <see cref="TextDocuments"/>, but with empty content.
+        /// </param>
+        public void SetupTextDocument(string textDocumentId, int bookNum, bool alreadyExists)
+        {
+            TranslationEnginesClient
+                .GetPretranslatedUsfmAsync(
+                    TranslationEngine01,
+                    ParallelCorpusId01,
+                    Canon.BookNumberToId(bookNum),
+                    PretranslationUsfmTextOrigin.OnlyPretranslated,
+                    PretranslationUsfmTemplate.Source,
+                    CancellationToken.None
+                )
+                .Returns(Task.FromResult(TestUsfm));
+            ParatextService.GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, TestUsfm).Returns([TestUsj]);
+
+            if (alreadyExists)
+            {
+                TextDocuments.Add(
+                    new TextDocument
+                    {
+                        Content = [],
+                        Id = textDocumentId,
+                        Type = TestUsj.Type,
+                        Version = TestUsj.Version,
+                    }
+                );
+            }
+        }
     }
 }
