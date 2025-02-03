@@ -1,7 +1,8 @@
-import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
-import { LocalSettingsService } from 'xforge-common/local-settings.service';
+import { Inject, Injectable, Renderer2, RendererFactory2 } from '@angular/core';
+import { DOCUMENT } from 'xforge-common/browser-globals';
+import { LocalSettingsService } from './local-settings.service';
 
-enum Theme {
+export enum Theme {
   Light = 'theme-light',
   Dark = 'theme-dark',
   NotSet = ''
@@ -16,7 +17,8 @@ export class ThemeService {
 
   constructor(
     readonly rendererFactory: RendererFactory2,
-    private readonly localSettings: LocalSettingsService
+    private readonly localSettings: LocalSettingsService,
+    @Inject(DOCUMENT) private readonly document: Document
   ) {
     this.renderer = rendererFactory.createRenderer(null, null);
     this.theme = this.localSettings.get<Theme>('theme') ?? Theme.Light;
@@ -32,9 +34,9 @@ export class ThemeService {
     }
 
     if (this._theme !== Theme.NotSet) {
-      this.renderer.removeClass(document.body, this._theme);
+      this.renderer.removeClass(this.document.body, this._theme);
     }
-    this.renderer.addClass(document.body, theme);
+    this.renderer.addClass(this.document.body, theme);
     this._theme = theme;
     this.localSettings.set('theme', theme);
   }
