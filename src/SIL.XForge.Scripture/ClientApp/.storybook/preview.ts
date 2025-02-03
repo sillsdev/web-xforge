@@ -6,10 +6,10 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { setCompodocJson } from '@storybook/addon-docs/angular';
 import { applicationConfig } from '@storybook/angular';
 import docJson from '../documentation.json';
-import { I18nStoryDecorator, I18nStoryModule } from '../src/xforge-common/i18n-story.module';
-import { I18nService } from '../src/xforge-common/i18n.service';
-import { APP_ROOT_ELEMENT_SELECTOR, InAppRootOverlayContainer } from '../src/xforge-common/overlay-container';
-import { getI18nLocales } from '../src/xforge-common/utils';
+import { I18nStoryDecorator, I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { I18nService } from 'xforge-common/i18n.service';
+import { APP_ROOT_ELEMENT_SELECTOR, InAppRootOverlayContainer } from 'xforge-common/overlay-container';
+import { getI18nLocales } from 'xforge-common/utils';
 
 setCompodocJson(docJson);
 
