@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -6,26 +7,17 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Realtime;
 
-public class MemoryDocument<T> : IDocument<T>
+[ExcludeFromCodeCoverage(Justification = "This code is only used in unit tests")]
+public class MemoryDocument<T>(MemoryRepository<T> repo, string otTypeName, string collection, string id) : IDocument<T>
     where T : IIdentifiable
 {
-    private readonly MemoryRepository<T> _repo;
+    public string Collection { get; } = collection;
 
-    internal MemoryDocument(MemoryRepository<T> repo, string otTypeName, string collection, string id)
-    {
-        _repo = repo;
-        OTTypeName = otTypeName;
-        Collection = collection;
-        Id = id;
-    }
-
-    public string Collection { get; }
-
-    public string Id { get; }
+    public string Id { get; } = id;
 
     public int Version { get; private set; }
 
-    public string OTTypeName { get; }
+    public string OTTypeName { get; } = otTypeName;
 
     public T Data { get; private set; }
 
@@ -36,28 +28,28 @@ public class MemoryDocument<T> : IDocument<T>
         if (IsLoaded)
             throw new InvalidOperationException("The doc already exists.");
         data.Id = Id;
-        await _repo.InsertAsync(data);
+        await repo.InsertAsync(data);
         Data = data;
         Version = 0;
     }
 
     public async Task DeleteAsync()
     {
-        if (!_repo.Contains(Id))
+        if (!repo.Contains(Id))
         {
             throw new Jering.Javascript.NodeJS.InvocationException(
                 "Document does not exist",
                 "Would be received in production."
             );
         }
-        await _repo.DeleteAsync(Id);
+        await repo.DeleteAsync(Id);
         Data = default;
         Version = -1;
     }
 
     public async Task FetchAsync()
     {
-        Attempt<T> attempt = await _repo.TryGetAsync(Id);
+        Attempt<T> attempt = await repo.TryGetAsync(Id);
         if (attempt.TryResult(out T data))
         {
             Data = data;
@@ -76,7 +68,7 @@ public class MemoryDocument<T> : IDocument<T>
     {
         T data = await MemoryRealtimeService.Server.ApplyOpAsync(OTTypeName, Data, op);
         data.Id = Id;
-        await _repo.ReplaceAsync(data);
+        await repo.ReplaceAsync(data);
         Data = data;
         Version++;
     }
@@ -84,7 +76,7 @@ public class MemoryDocument<T> : IDocument<T>
     public async Task ReplaceAsync(T data, OpSource? source)
     {
         data.Id = Id;
-        await _repo.ReplaceAsync(data);
+        await repo.ReplaceAsync(data);
         Data = data;
         Version++;
     }
