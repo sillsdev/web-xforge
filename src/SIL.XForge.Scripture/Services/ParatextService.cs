@@ -2536,6 +2536,9 @@ public class ParatextService : DisposableBase, IParatextService
         if (overrideLanguage is not null)
         {
             scrText.Settings.LanguageID = overrideLanguage;
+
+            // This will create Settings.xml with the correct LanguageIsoCode value
+            scrText.Settings.Save();
         }
 
         // Perform a simple migration of the Paratext 7 LDML file to the new Paratext 8+ location.
