@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -9,16 +10,13 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Realtime;
 
-public class MemoryConnection : IConnection
+[ExcludeFromCodeCoverage(Justification = "This code is only used in unit tests")]
+public class MemoryConnection(MemoryRealtimeService realtimeService) : IConnection
 {
-    private readonly MemoryRealtimeService _realtimeService;
-    private readonly Dictionary<(string, string), object> _documents;
-
-    internal MemoryConnection(MemoryRealtimeService realtimeService)
-    {
-        _realtimeService = realtimeService;
-        _documents = [];
-    }
+    /// <summary>
+    /// A cache of the documents.
+    /// </summary>
+    private readonly Dictionary<(string, string), object> _documents = [];
 
     /// <summary>
     /// Begins the transaction.
@@ -105,16 +103,16 @@ public class MemoryConnection : IConnection
     /// </summary>
     /// <returns>An Op array.</returns>
     public Task<Op[]> GetOpsAsync<T>(string id)
-        where T : IIdentifiable => Task.FromResult(_realtimeService.GetRepository<T>().GetOps(id));
+        where T : IIdentifiable => Task.FromResult(realtimeService.GetRepository<T>().GetOps(id));
 
     public IDocument<T> Get<T>(string id)
         where T : IIdentifiable
     {
-        DocConfig docConfig = _realtimeService.GetDocConfig<T>();
+        DocConfig docConfig = realtimeService.GetDocConfig<T>();
         if (_documents.TryGetValue((docConfig.CollectionName, id), out object docObj))
             return (IDocument<T>)docObj;
 
-        MemoryRepository<T> repo = _realtimeService.GetRepository<T>();
+        MemoryRepository<T> repo = realtimeService.GetRepository<T>();
         IDocument<T> doc = new MemoryDocument<T>(repo, docConfig.OTTypeName, docConfig.CollectionName, id);
         _documents[(docConfig.CollectionName, id)] = doc;
         return doc;
