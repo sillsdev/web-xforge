@@ -39,8 +39,8 @@ describe('AttachAudioComponent', () => {
     when(env.mockTextAndAudio.input).thenReturn({});
     when(env.mockTextAndAudio.audioAttachment).thenReturn({ status: 'reset' });
     env.fixture.detectChanges();
-    expect(env.firstIcon.nativeElement.textContent).toBe('mic');
-    env.firstIcon.nativeElement.click();
+    expect(env.recordIcon.nativeElement.textContent).toBe('mic');
+    env.recordIcon.nativeElement.click();
     tick();
     env.fixture.detectChanges();
     verify(mockDialogService.openMatDialog(AudioRecorderDialogComponent, anything())).once();
@@ -51,12 +51,12 @@ describe('AttachAudioComponent', () => {
     when(env.mockTextAndAudio.input).thenReturn({});
     when(env.mockRecorderDialogRef.afterClosed()).thenReturn(of(undefined));
     env.fixture.detectChanges();
-    env.firstIcon.nativeElement.click();
+    env.recordIcon.nativeElement.click();
     tick();
     env.fixture.detectChanges();
     verify(mockDialogService.openMatDialog(AudioRecorderDialogComponent, anything())).once();
     verify(env.mockTextAndAudio.setAudioAttachment(anything())).never();
-    expect(env.firstIcon.nativeElement.textContent).toBe('mic');
+    expect(env.recordIcon.nativeElement.textContent).toBe('mic');
   }));
 
   it('should show clear when audio is attached', () => {
@@ -64,8 +64,8 @@ describe('AttachAudioComponent', () => {
     when(env.mockTextAndAudio.input).thenReturn({ audioUrl: 'blob://audio' });
     env.fixture.detectChanges();
     expect(env.component.audioPlayer).not.toBeNull();
-    expect(env.firstIcon.nativeElement.textContent).toBe('clear');
-    env.firstIcon.nativeElement.click();
+    expect(env.clearIcon.nativeElement.textContent).toBe('clear');
+    env.clearIcon.nativeElement.click();
     env.fixture.detectChanges();
     verify(env.mockTextAndAudio.resetAudio()).once();
   });
@@ -117,8 +117,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  get firstIcon(): DebugElement {
-    return this.fixture.debugElement.query(By.css('button .mat-icon'));
+  get recordIcon(): DebugElement {
+    return this.fixture.debugElement.query(By.css('button.record-audio .mat-icon'));
+  }
+
+  get clearIcon(): DebugElement {
+    return this.fixture.debugElement.query(By.css('button.clear .mat-icon'));
   }
 
   get uploadAudioButton(): DebugElement {

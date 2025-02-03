@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'attach_audio'">
   <div [ngClass]="{ 'add-audio': isUploadEnabled }">
     @if (audioUrl == null && textAndAudio?.audioAttachment?.status !== "recording") {
-      <button mat-icon-button (click)="startRecording()" [matTooltip]="t('tooltip_record')">
+      <button mat-icon-button class="record-audio" (click)="startRecording()" [matTooltip]="t('tooltip_record')">
         <mat-icon>mic</mat-icon>
       </button>
       @if (isUploadEnabled) {
