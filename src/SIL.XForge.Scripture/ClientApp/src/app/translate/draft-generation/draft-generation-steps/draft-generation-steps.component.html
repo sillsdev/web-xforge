@@ -11,9 +11,13 @@
           <app-notice type="error" mode="fill-dark">{{ t("confirm_codes_correct_to_continue") }}</app-notice>
         }
         <div class="button-strip">
-          <button mat-stroked-button class="backout-button" (click)="cancel.emit()">{{ t("back") }}</button>
+          <button mat-stroked-button class="backout-button" (click)="cancel.emit()">
+            <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+            {{ t("back") }}
+          </button>
           <button mat-flat-button (click)="tryAdvanceStep(); nextClickedOnLanguageVerification = true" color="primary">
             {{ t("next") }}
+            <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
           </button>
         </div>
       </mat-step>
@@ -69,9 +73,13 @@
           </app-notice>
         }
         <div class="button-strip">
-          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-stroked-button matStepperPrevious>
+            <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+            {{ t("back") }}
+          </button>
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
             {{ t("next") }}
+            <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
           </button>
         </div>
       </mat-step>
@@ -150,7 +158,10 @@
           </app-notice>
         }
         <div class="button-strip">
-          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-stroked-button matStepperPrevious>
+            <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+            {{ t("back") }}
+          </button>
           <button
             mat-flat-button
             (click)="tryAdvanceStep()"
@@ -159,6 +170,7 @@
             [disabled]="isStepsCompleted"
           >
             {{ t("next") }}
+            <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
           </button>
         </div>
       </mat-step>
@@ -175,7 +187,10 @@
             data-test-id="draft-stepper-training-data-files"
           ></app-training-data-multi-select>
           <div class="button-strip">
-            <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+            <button mat-stroked-button matStepperPrevious>
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+              {{ t("back") }}
+            </button>
             <button
               mat-flat-button
               (click)="tryAdvanceStep()"
@@ -184,6 +199,7 @@
               [disabled]="isStepsCompleted"
             >
               {{ t("next") }}
+              <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
             </button>
           </div>
         </mat-step>
@@ -201,7 +217,10 @@
             <app-notice icon="warning" type="warning" class="warning">{{ t("fast_training_warning") }}</app-notice>
           }
           <div class="button-strip">
-            <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+            <button mat-stroked-button matStepperPrevious>
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+              {{ t("back") }}
+            </button>
             <button
               mat-flat-button
               (click)="tryAdvanceStep()"
@@ -210,6 +229,7 @@
               [disabled]="isStepsCompleted"
             >
               {{ t("next") }}
+              <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
             </button>
           </div>
         </mat-step>
@@ -267,8 +287,12 @@
         </mat-card>
 
         <div class="button-strip">
-          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-stroked-button matStepperPrevious>
+            <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
+            {{ t("back") }}
+          </button>
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+            <mat-icon class="mirror-rtl">auto_awesome</mat-icon>
             {{ t("generate_draft") }}
           </button>
           @if (isStepsCompleted) {
