@@ -27,6 +27,7 @@
     "ajv": "^8.12.0",
     "ajv-bsontype": "^1.0.7",
     "express": "^4.18.1",
+    "json0-ot-diff": "^1.1.2",
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^2.1.2",
     "lodash-es": "^4.17.21",
