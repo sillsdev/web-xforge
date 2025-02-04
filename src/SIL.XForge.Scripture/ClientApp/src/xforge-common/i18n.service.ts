@@ -36,6 +36,7 @@ export type I18nKeyForComponent<T extends keyof typeof en> = ObjectPaths<(typeof
 // this mismatch is left to be solved at another time.
 
 export const IGNORE_COOKIE_LOCALE = new InjectionToken<boolean>('IGNORE_COOKIE_LOCALE');
+const LANGUAGE_CODE_REGEX = /(^[a-zA-Z]{2,3})-*/;
 
 @Injectable()
 export class TranslationLoader implements TranslocoLoader {
@@ -410,6 +411,18 @@ export class I18nService {
       // Some language codes are unsupported in some browsers. For example, Firefox 122 errors on nsk-Cans-CA-x-nasksyl
       return languageCode;
     }
+  }
+
+  languageCodesEquivalent(languageCode: string, otherLanguageCode: string): boolean {
+    const languageCodeMatch = LANGUAGE_CODE_REGEX.exec(languageCode);
+    const otherLanguageCodeMatch = LANGUAGE_CODE_REGEX.exec(otherLanguageCode);
+    if (languageCodeMatch == null || otherLanguageCodeMatch == null) return false;
+    if (languageCodeMatch[1] === otherLanguageCodeMatch[1]) return true;
+
+    return (
+      new Intl.DisplayNames(['en'], { type: 'language' }).of(languageCodeMatch[1]) ===
+      new Intl.DisplayNames(['en'], { type: 'language' }).of(otherLanguageCodeMatch[1])
+    );
   }
 
   static getHumanReadableTimeZoneOffset(localeCode: string, date: Date): string {

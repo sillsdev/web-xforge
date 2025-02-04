@@ -75,6 +75,79 @@ describe('DraftGenerationStepsComponent', () => {
     when(mockOnlineStatusService.isOnline).thenReturn(true);
   }));
 
+  describe('training and drafting sources different', async () => {
+    const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
+    const config = {
+      trainingSources: [
+        {
+          projectRef: 'source1',
+          paratextId: 'PT_SP',
+          name: 'Source Project',
+          shortName: 'sP1',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks
+        },
+        undefined
+      ] as [DraftSource, DraftSource?],
+      trainingTargets: [
+        {
+          projectRef: mockActivatedProjectService.projectId,
+          shortName: 'tT',
+          writingSystem: { tag: 'xyz' },
+          texts: availableBooks
+        }
+      ] as [DraftSource],
+      draftingSources: [
+        {
+          projectRef: 'source2',
+          paratextId: 'PT_SP2',
+          shortName: 'sP2',
+          writingSystem: { tag: 'es' },
+          texts: availableBooks
+        }
+      ] as [DraftSource]
+    };
+
+    beforeEach(fakeAsync(() => {
+      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
+      const mockTargetProjectDoc = {
+        id: 'project01',
+        data: createTestProjectProfile({
+          texts: availableBooks,
+          translateConfig: {
+            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'xyz' } }
+          },
+          writingSystem: { tag: 'eng' }
+        })
+      } as SFProjectProfileDoc;
+      const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
+
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
+      when(mockTrainingDataQuery.docs).thenReturn([]);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+    }));
+
+    it('should not advance steps if drafting and training sources are different', fakeAsync(() => {
+      expect(component.stepper.selectedIndex).toBe(0);
+      clickConfirmLanguages(fixture);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      tick();
+      fixture.detectChanges();
+      expect(component.stepper.selectedIndex).toBe(0);
+    }));
+  });
+
   describe('one training source', async () => {
     const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
     const allBooks = [...availableBooks, { bookNum: 6 }, { bookNum: 7 }];

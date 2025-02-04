@@ -115,6 +115,7 @@
     "language_code": "Language code: ",
     "references_heading": "References ({{ referenceLanguage }})",
     "review_draft_setup": "Review draft setup",
+    "sources_must_be_same_language": "The training source must be the same language as the drafting source.",
     "targets_heading": "Translation project ({{ targetLanguage }})",
     "training_language_model": "Training the language model"
   },

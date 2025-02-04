@@ -49,4 +49,10 @@
     <p>{{ t("how_to_change_language_codes") }}</p>
     <mat-checkbox (change)="confirmationChanged($event)">{{ t("confirm_lang_codes_correct") }}</mat-checkbox>
   </app-notice>
+
+  @if (showSourceLanguagesNotCompatibleError) {
+    <app-notice type="error">
+      <span>{{ t("sources_must_be_same_language") }}</span>
+    </app-notice>
+  }
 </ng-container>
