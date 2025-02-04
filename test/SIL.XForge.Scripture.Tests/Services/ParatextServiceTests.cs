@@ -4285,6 +4285,15 @@ public class ParatextServiceTests
         env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
 
+        // The FileManager will be disposed via the using statement in ParatextService.MigrateResourceIfRequired(),
+        // so capture the saving of the settings here
+        bool settingsSaved = false;
+        scrText
+            .FileManager.When(fm =>
+                fm.WriteFileCreatingBackup("Settings.xml", Arg.Any<Action<string>>(), Arg.Any<Action<string>>())
+            )
+            .Do(_ => settingsSaved = true);
+
         // Set up the mock file system calls used by the migration
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(false);
@@ -4305,6 +4314,7 @@ public class ParatextServiceTests
         env.MockFileSystemService.Received(1)
             .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
         Assert.AreEqual(scrText.Settings.LanguageID.Code, zipLanguageCode);
+        Assert.IsTrue(settingsSaved);
     }
 
     [Test]
@@ -4338,6 +4348,15 @@ public class ParatextServiceTests
         env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
 
+        // The FileManager will be disposed via the using statement in ParatextService.MigrateResourceIfRequired(),
+        // so capture the saving of the settings here
+        bool settingsSaved = false;
+        scrText
+            .FileManager.When(fm =>
+                fm.WriteFileCreatingBackup("Settings.xml", Arg.Any<Action<string>>(), Arg.Any<Action<string>>())
+            )
+            .Do(_ => settingsSaved = true);
+
         // Set up the mock file system calls used by the migration
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(false);
@@ -4355,6 +4374,7 @@ public class ParatextServiceTests
         env.MockFileSystemService.Received(1)
             .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
         Assert.AreEqual(resourceScrText.Settings.LanguageID?.Code, "en");
+        Assert.IsTrue(settingsSaved);
     }
 
     [Test]
