@@ -12,13 +12,14 @@ namespace SIL.Converters.Usj
         public string Marker { get; set; }
 
         /// <summary>
-        /// Indicates the Book-chapter-verse value in the paragraph based structure.
+        /// The milestone start ID, which indicates the Book-chapter-verse value in the paragraph based structure.
         /// </summary>
         /// <remarks>Nullable.</remarks>
         public string Sid { get; set; }
 
         /// <summary>
-        /// Milestone end ID, matches start ID (not currently included in USJ spec).
+        /// Milestone end ID, which matches the milestone start ID <see cref="Sid"/>.
+        /// <see cref="Eid"/> is not specified in the USJ spec, but is kept for USX compatibility.
         /// </summary>
         /// <remarks>Nullable.</remarks>
         public string Eid { get; set; }
@@ -42,8 +43,12 @@ namespace SIL.Converters.Usj
         public string AltNumber { get; set; }
 
         /// <summary>
-        /// Published character of chapter or verse.
+        /// Published character of a chapter or verse.
         /// </summary>
+        /// <value>
+        /// This can be a letter (I, II, etc.), a number (1, 2, ...), or both.
+        /// It is only displayed in the published version of the scripture text.
+        /// </value>
         /// <remarks>Nullable.</remarks>
         public string PubNumber { get; set; }
 

@@ -32,7 +32,7 @@ public static partial class TestData
     /// <summary>
     /// Genesis 1:1 in USJ as a JSON string.
     /// </summary>
-    public const string JsonGen1V1 = $$"""
+    public static readonly string JsonGen1V1 = $$"""
         {
           type: "{{Usj.UsjType}}",
           version: "{{Usj.UsjVersion}}",
@@ -50,6 +50,8 @@ public static partial class TestData
                 { type: "verse", marker: "v", number: "15", altnumber: "3", sid: "GEN 1:15" },
                 "Tell the Israelites that I, the ",
                 { type: "char", marker: "nd", content: ["Lord"] },
+                " ",
+                { type: "char", marker: "nd", content: ["God"] },
                 ", the God of their ancestors, the God of Abraham, Isaac, and Jacob,",
                 { type: "char", marker: "va", content: ["4"] },
               ],
@@ -88,7 +90,7 @@ public static partial class TestData
     /// <summary>
     /// An empty USX document.
     /// </summary>
-    public const string UsxEmpty = $"""<usx version="{Usx.UsxVersion}" />""";
+    public static readonly string UsxEmpty = $"""<usx version="{Usx.UsxVersion}" />""";
 
     /// <summary>
     /// An empty USJ object.
@@ -107,17 +109,17 @@ public static partial class TestData
     ///  - Whitespace for all self-closing element endings.
     ///  - Reorder attributes to match UsxUsfmParserSink output.
     /// </remarks>
-    public const string UsxGen1V1 = $"""
+    public static readonly string UsxGen1V1 = $"""
         <usx version="{Usx.UsxVersion}">
           <book code="GEN" style="id">Some Scripture Version</book>
           <chapter number="1" style="c" pubnumber="I" sid="GEN 1" />
-            <para style="p">
-              <verse number="1" style="v" sid="GEN 1:1" />the first verse <verse eid="GEN 1:1" />
-              <verse number="2" style="v" sid="GEN 1:2" />the second verse <verse eid="GEN 1:2" />
-              <verse number="15" style="v" altnumber="3" sid="GEN 1:15" />Tell the Israelites that I, the <char style="nd">Lord</char>, the God of their ancestors, the God of Abraham, Isaac, and Jacob,<char style="va">4</char><verse eid="GEN 1:15" />
-            </para>
-            <para style="b" />
-            <para style="q2"><verse number="16" style="v" sid="GEN 1:16" />“There is no help for him in God.”<note caller="+" style="f" category="TN"><char style="fr">3:2 </char><char style="ft">The Hebrew word rendered “God” is “אֱלֹהִ֑ים” (Elohim).</char></note> <unmatched marker="f*" /> <char style="qs">Selah.</char><verse eid="GEN 1:16" /></para>
+          <para style="p">
+            <verse number="1" style="v" sid="GEN 1:1" />the first verse <verse eid="GEN 1:1" />
+            <verse number="2" style="v" sid="GEN 1:2" />the second verse <verse eid="GEN 1:2" />
+            <verse number="15" style="v" altnumber="3" sid="GEN 1:15" />Tell the Israelites that I, the <char style="nd">Lord</char> <char style="nd">God</char>, the God of their ancestors, the God of Abraham, Isaac, and Jacob,<char style="va">4</char><verse eid="GEN 1:15" />
+          </para>
+          <para style="b" />
+          <para style="q2"><verse number="16" style="v" sid="GEN 1:16" />“There is no help for him in God.”<note caller="+" style="f" category="TN"><char style="fr">3:2 </char><char style="ft">The Hebrew word rendered “God” is “אֱלֹהִ֑ים” (Elohim).</char></note> <unmatched marker="f*" /> <char style="qs">Selah.</char><verse eid="GEN 1:16" /></para>
           <chapter eid="GEN 1" />
         </usx>
         """;
@@ -139,13 +141,13 @@ public static partial class TestData
     /// Tests a chapter with an implied paragraph.
     /// </summary>
     /// <remarks>Attributes are reordered to match UsxUsfmParserSink output.</remarks>
-    public const string UsxGen1V1ImpliedPara = $"""
+    public static readonly string UsxGen1V1ImpliedPara = $"""
         <usx version="{Usx.UsxVersion}">
           <book code="GEN" style="id" />
           <chapter number="1" style="c" sid="GEN 1" />
-            <verse number="1" style="v" sid="GEN 1:1" />the first verse <verse eid="GEN 1:1" />
-            <verse number="2" style="v" sid="GEN 1:2" />the second verse <verse eid="GEN 1:2" />
-            <verse number="15" style="v" sid="GEN 1:15" />Tell the Israelites that I, the <char style="nd">Lord</char>, the God of their ancestors, the God of Abraham, Isaac, and Jacob,<verse eid="GEN 1:15" />
+          <verse number="1" style="v" sid="GEN 1:1" />the first verse <verse eid="GEN 1:1" />
+          <verse number="2" style="v" sid="GEN 1:2" />the second verse <verse eid="GEN 1:2" />
+          <verse number="15" style="v" sid="GEN 1:15" />Tell the Israelites that I, the <char style="nd">Lord</char>, the God of their ancestors, the God of Abraham, Isaac, and Jacob,<verse eid="GEN 1:15" />
           <chapter eid="GEN 1" />
         </usx>
         """;
@@ -178,18 +180,18 @@ public static partial class TestData
     /// Additional test features:
     ///  - Preserve contents of `ca` even though it seems possible `ca` should not occur as its own marker
     ///  - Preserve non-standard contents of `b` marker that should not have contents
-    ///  - Preserve closed attribute on character marker
+    ///  - Preserve closed attribute on character marker. This is non-standard use of a non-standard marker.
     ///  - Reorder attributes to match UsxUsfmParserSink output.
     /// </summary>
-    public const string UsxGen1V1Nonstandard = $"""
+    public static readonly string UsxGen1V1Nonstandard = $"""
         <usx version="{Usx.UsxVersion}">
           <book code="GEN" style="id">Some Scripture Version</book>
           <chapter number="1" style="c" sid="GEN 1" />
-            <para style="p">
-              <verse number="1" style="v" sid="GEN 1:1" />the <char style="nd" closed="false">first verse <verse eid="GEN 1:1" />
-              <verse number="2" style="v" sid="GEN 1:2" />the second verse <char style="ca">4</char></char><verse eid="GEN 1:2" />
-            </para>
-            <para style="b">This should not be here</para>
+          <para style="p">
+            <verse number="1" style="v" sid="GEN 1:1" />the <char style="nd" closed="false">first verse <verse eid="GEN 1:1" />
+            <verse number="2" style="v" sid="GEN 1:2" />the second verse <char style="ca">4</char></char><verse eid="GEN 1:2" />
+          </para>
+          <para style="b">This should not be here</para>
           <chapter eid="GEN 1" />
         </usx>
         """;
@@ -241,11 +243,11 @@ public static partial class TestData
     /// TODO: Especially concerning is that the editor inserts a bunch of ZWSP in many places in the editable state.
     /// </summary>
     /// <remarks>Attributes are reordered to match UsxUsfmParserSink output.</remarks>
-    public const string UsxGen1V1Whitespace = $"""
+    public static readonly string UsxGen1V1Whitespace = $"""
         <usx version="{Usx.UsxVersion}">
           <book code="GEN" style="id" />
           <chapter number="1" style="c" sid="GEN 1" />
-            <verse number="1" style="v" sid="GEN 1:1" /><char style="nd">space</char> <char style="wj">between</char> <char style="nd">each</char>{IDEOGRAPHIC_SPACE}<char style="wj">word</char> <char style="nd">should</char>{THIN_SPACE}{IDEOGRAPHIC_SPACE} <char style="wj">stay</char><verse eid="GEN 1:1" />
+          <verse number="1" style="v" sid="GEN 1:1" /><char style="nd">space</char> <char style="wj">between</char> <char style="nd">each</char>{IDEOGRAPHIC_SPACE}<char style="wj">word</char> <char style="nd">should</char>{THIN_SPACE}{IDEOGRAPHIC_SPACE} <char style="wj">stay</char><verse eid="GEN 1:1" />
           <chapter eid="GEN 1" />
         </usx>
         """;
@@ -282,17 +284,17 @@ public static partial class TestData
     /// This is a version of <see cref="UsxGen1V1"/> with attributes that will be removed.
     /// If round-tripping, compare the final USX to <see cref="UsxGen1V1"/>.
     /// </remarks>
-    public const string UsxGen1V1WithAttributesToRemove = $"""
+    public static readonly string UsxGen1V1WithAttributesToRemove = $"""
         <usx version="{Usx.UsxVersion}">
           <book code="GEN" style="id">Some Scripture Version</book>
           <chapter number="1" style="c" pubnumber="I" sid="GEN 1" />
-            <para style="p" vid="GEN 1:1-3" status="not standard">
-              <verse number="1" style="v" sid="GEN 1:1" />the first verse <verse eid="GEN 1:1" />
-              <verse number="2" style="v" sid="GEN 1:2" />the second verse <verse eid="GEN 1:2" />
-              <verse number="15" style="v" altnumber="3" sid="GEN 1:15" />Tell the Israelites that I, the <char style="nd">Lord</char>, the God of their ancestors, the God of Abraham, Isaac, and Jacob,<char style="va">4</char><verse eid="GEN 1:15" />
-            </para>
-            <para style="b" />
-            <para style="q2"><verse number="16" style="v" sid="GEN 1:16" />“There is no help for him in God.”<note caller="+" style="f" category="TN"><char style="fr">3:2 </char><char style="ft">The Hebrew word rendered “God” is “אֱלֹהִ֑ים” (Elohim).</char></note> <unmatched marker="f*" /> <char style="qs">Selah.</char><verse eid="GEN 1:16" /></para>
+          <para style="p" vid="GEN 1:1-3" status="not standard">
+            <verse number="1" style="v" sid="GEN 1:1" />the first verse <verse eid="GEN 1:1" />
+            <verse number="2" style="v" sid="GEN 1:2" />the second verse <verse eid="GEN 1:2" />
+            <verse number="15" style="v" altnumber="3" sid="GEN 1:15" />Tell the Israelites that I, the <char style="nd">Lord</char> <char style="nd">God</char>, the God of their ancestors, the God of Abraham, Isaac, and Jacob,<char style="va">4</char><verse eid="GEN 1:15" />
+          </para>
+          <para style="b" />
+          <para style="q2"><verse number="16" style="v" sid="GEN 1:16" />“There is no help for him in God.”<note caller="+" style="f" category="TN"><char style="fr">3:2 </char><char style="ft">The Hebrew word rendered “God” is “אֱלֹהִ֑ים” (Elohim).</char></note> <unmatched marker="f*" /> <char style="qs">Selah.</char><verse eid="GEN 1:16" /></para>
           <chapter eid="GEN 1" />
         </usx>
         """;
@@ -300,20 +302,20 @@ public static partial class TestData
     /// <summary>
     /// Genesis 1:1 in USX (with a table).
     /// </summary>
-    public const string UsxGen1V1WithTable = $"""
+    public static readonly string UsxGen1V1WithTable = $"""
         <usx version="{Usx.UsxVersion}">
           <book code="GEN" style="id">Some Scripture Version</book>
           <chapter number="1" style="c" sid="GEN 1" />
-            <table>
-              <row style="tr">
-                <cell style="th1" align="start">Tribe </cell>
-                <cell style="th2" align="start">Leader </cell>
-                <cell style="th3" align="start">Number </cell>
-              </row>
-            </table>
-            <para style="p">
-              <verse number="1" style="v" sid="GEN 1:1" />the first verse <verse eid="GEN 1:1" />
-            </para>
+          <table>
+            <row style="tr">
+              <cell style="th1" align="start">Tribe </cell>
+              <cell style="th2" align="start">Leader </cell>
+              <cell style="th3" align="start">Number </cell>
+            </row>
+          </table>
+          <para style="p">
+            <verse number="1" style="v" sid="GEN 1:1" />the first verse <verse eid="GEN 1:1" />
+          </para>
           <chapter eid="GEN 1" />
         </usx>
         """;
@@ -355,4 +357,111 @@ public static partial class TestData
         }
         """
     )!;
+
+    /// <summary>
+    /// Genesis 1:1 in USJ (with additional blank chapters).
+    /// </summary>
+    public static readonly Usj UsjGen1V1WithBlankChapters = JsonConvert.DeserializeObject<Usj>(
+        $$"""
+        {
+          type: "{{Usj.UsjType}}",
+          version: "{{Usj.UsjVersion}}",
+          content: [
+            { type: "book", marker: "id", code: "GEN" },
+            { type: "chapter", marker: "c", number: "1", sid: "GEN 1" },
+            { type: "verse", marker: "v", number: "1", sid: "GEN 1:1" },
+            "In the beginning ",
+            { type: "verse", marker: "v", number: "2", sid: "GEN 1:2" },
+            { type: "chapter", marker: "c", number: "2", sid: "GEN 2" },
+            { type: "chapter", marker: "c", number: "3", sid: "GEN 3" },
+          ],
+        }
+        """
+    )!;
+
+    /// <summary>
+    /// Genesis 1:1 in USX (with additional blank chapters).
+    /// </summary>
+    public static readonly string UsxGen1V1WithBlankChapters = $"""
+        <usx version="{Usx.UsxVersion}">
+          <book code="GEN" style="id" />
+          <chapter number="1" style="c" sid="GEN 1" />
+          <verse number="1" style="v" sid="GEN 1:1" />In the beginning <verse eid="GEN 1:1" />
+          <verse number="2" style="v" sid="GEN 1:2" /><chapter eid="GEN 1" />
+          <chapter number="2" style="c" sid="GEN 2" /><chapter eid="GEN 2" />
+          <chapter number="3" style="c" sid="GEN 3" /><chapter eid="GEN 3" />
+        </usx>
+        """;
+
+    /// <summary>
+    /// Genesis 1:1 in USJ (with blank verses).
+    /// </summary>
+    public static readonly Usj UsjGen1V1WithBlankVerses = JsonConvert.DeserializeObject<Usj>(
+        $$"""
+        {
+          type: "{{Usj.UsjType}}",
+          version: "{{Usj.UsjVersion}}",
+          content: [
+            { type: "book", marker: "id", code: "GEN" },
+            { type: "chapter", marker: "c", number: "1", sid: "GEN 1" },
+            { type: "verse", marker: "v", number: "1", sid: "GEN 1:1" },
+            "In the beginning ",
+            { type: "verse", marker: "v", number: "2", sid: "GEN 1:2" },
+            { type: "verse", marker: "v", number: "3", sid: "GEN 1:3" },
+            { type: "verse", marker: "v", number: "4", sid: "GEN 1:4" },
+          ],
+        }
+        """
+    )!;
+
+    /// <summary>
+    /// Genesis 1:1 in USX (with blank verses).
+    /// </summary>
+
+
+    public static readonly string UsxGen1V1WithBlankVerses = $"""
+        <usx version="{Usx.UsxVersion}">
+          <book code="GEN" style="id" />
+          <chapter number="1" style="c" sid="GEN 1" />
+          <verse number="1" style="v" sid="GEN 1:1" />In the beginning <verse eid="GEN 1:1" />
+          <verse number="2" style="v" sid="GEN 1:2" /><verse eid="GEN 1:2" />
+          <verse number="3" style="v" sid="GEN 1:3" /><verse eid="GEN 1:3" />
+          <verse number="4" style="v" sid="GEN 1:4" />
+          <chapter eid="GEN 1" />
+        </usx>
+        """;
+
+    /// <summary>
+    /// Genesis 1:1 in USJ (with no sids).
+    /// </summary>
+    public static readonly Usj UsjGen1V1WithNoSids = JsonConvert.DeserializeObject<Usj>(
+        $$"""
+        {
+          type: "{{Usj.UsjType}}",
+          version: "{{Usj.UsjVersion}}",
+          content: [
+            { type: "book", marker: "id", code: "GEN" },
+            { type: "chapter", marker: "c", number: "1"},
+            { type: "verse", marker: "v", number: "1" },
+            "In the beginning ",
+            { type: "verse", marker: "v", number: "2" },
+            { type: "verse", marker: "v", number: "3" },
+            { type: "verse", marker: "v", number: "4" },
+          ],
+        }
+        """
+    )!;
+
+    /// <summary>
+    /// Genesis 1:1 in USJ (with no sids).
+    /// </summary>
+    public static readonly string UsxGen1V1WithNoSids = $"""
+        <usx version="{Usx.UsxVersion}">
+          <book code="GEN" style="id" />
+          <chapter number="1" style="c" />
+          <verse number="1" style="v" />In the beginning <verse number="2" style="v" />
+          <verse number="3" style="v" />
+          <verse number="4" style="v" />
+        </usx>
+        """;
 }

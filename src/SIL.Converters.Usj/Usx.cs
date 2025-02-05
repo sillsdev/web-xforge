@@ -9,11 +9,11 @@ namespace SIL.Converters.Usj
         /// <summary>
         /// The USX spec type.
         /// </summary>
-        public const string UsxType = "usx";
+        public static readonly string UsxType = "usx";
 
         /// <summary>
         /// The USX spec version.
         /// </summary>
-        public const string UsxVersion = "3.0";
+        public static readonly string UsxVersion = "3.0";
     }
 }

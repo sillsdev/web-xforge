@@ -61,6 +61,13 @@ namespace SIL.Converters.Usj
             foreach (KeyValuePair<string, object> nonStandardAttribute in markerContent.AdditionalData)
             {
                 string key = nonStandardAttribute.Key;
+
+                // Include any non-standard attributes that are strings for compatibility with USX.
+                //
+                // Notes:
+                //  - If the non-standard attribute is not a string, discard it as it is invalid.
+                //  - Type and marker are handled above, so do not repeat them.
+                //  - Content is a collection handled in ConvertUsjRecurse.
                 if (nonStandardAttribute.Value is string value && key != "type" && key != "marker" && key != "content")
                 {
                     element.SetAttribute(key, value);
@@ -103,10 +110,14 @@ namespace SIL.Converters.Usj
                 throw new ArgumentOutOfRangeException(nameof(markerContent));
             }
 
+            // Store the previous verse eid so we can close them in the correct place
+            string lastVerseEid = null;
+
             // Create chapter and verse end elements from SID attributes.
             if (_verseEid != null && (type == "verse" || (parentElement.Name == "para" && isLastItem)))
             {
                 eidElement = CreateVerseEndElement(usxDoc);
+                lastVerseEid = _verseEid;
                 _verseEid = null;
             }
 
@@ -126,15 +137,28 @@ namespace SIL.Converters.Usj
                 _chapterEid = usjMarker.Sid;
             }
 
-            // Append to parent.
+            // See if we are at a new verse
+            if (eidElement != null && isLastItem && _verseEid != null && _verseEid != lastVerseEid)
+            {
+                // Write the eid element for the previous verse
+                parentElement.AppendChild(eidElement);
+
+                // Ensure that eid element for the current verse is not written
+                eidElement = null;
+                _verseEid = null;
+            }
+
+            // Append to parent to close the verse or chapter before this new node
             if (eidElement != null && !isLastItem)
             {
                 parentElement.AppendChild(eidElement);
+                eidElement = null;
             }
 
             parentElement.AppendChild(node);
 
-            if (eidElement != null && isLastItem)
+            // Append the eid element as this is the last element
+            if (eidElement != null)
             {
                 parentElement.AppendChild(eidElement);
             }
@@ -167,18 +191,35 @@ namespace SIL.Converters.Usj
         }
 
         /// <summary>
+        /// Converts a USJ object to a USX <see cref="XmlDocument"/>.
+        /// </summary>
+        /// <param name="usj">The USJ object.</param>
+        /// <returns>The XML Document.</returns>
+        public XmlDocument UsjToUsxXmlDocument(IUsj usj)
+        {
+            // Reset any instance variables
+            _chapterEid = null;
+            _verseEid = null;
+
+            // Create the USX document
+            XmlDocument usxDoc = new XmlDocument { PreserveWhitespace = true };
+            XmlElement documentElement = usxDoc.CreateElement(Usx.UsxType);
+            documentElement.SetAttribute("version", Usx.UsxVersion);
+            usxDoc.AppendChild(documentElement);
+            UsjToUsxDom(usj, usxDoc);
+            return usxDoc;
+        }
+
+        /// <summary>
         /// Converts a USJ object to a USX string.
         /// </summary>
         /// <param name="usj">The USJ object.</param>
         /// <returns>The USX as a string.</returns>
         public string UsjToUsxString(IUsj usj)
         {
-            XmlDocument usxDoc = new XmlDocument { PreserveWhitespace = true };
-            XmlElement documentElement = usxDoc.CreateElement(Usx.UsxType);
-            documentElement.SetAttribute("version", Usx.UsxVersion);
-            usxDoc.AppendChild(documentElement);
-            UsjToUsxDom(usj, usxDoc);
+            XmlDocument usxDoc = UsjToUsxXmlDocument(usj);
 
+            // Output as a string
             using (StringWriter stringWriter = new StringWriter())
             {
                 // These settings conform to ParatextData.UsfmToUsx
