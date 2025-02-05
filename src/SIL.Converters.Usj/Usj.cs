@@ -9,12 +9,12 @@ namespace SIL.Converters.Usj
         /// <summary>
         /// The supported USJ spec type.
         /// </summary>
-        public const string UsjType = "USJ";
+        public static readonly string UsjType = "USJ";
 
         /// <summary>
         /// The supported USJ spec version.
         /// </summary>
-        public const string UsjVersion = "3.1";
+        public static readonly string UsjVersion = "3.1";
 
         /// <summary>
         /// The USJ spec version.

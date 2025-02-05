@@ -1,3 +1,4 @@
+using System;
 using System.Xml;
 using NUnit.Framework;
 
@@ -14,16 +15,19 @@ public class UsxToUsjTests
     }
 
     [Test]
-    public void ShouldConvertFromNullToUsj()
+    public void ShouldConvertFromEmptyUsxToUsj_Roundtrip()
     {
-        Usj usj = UsxToUsj.UsxStringToUsj(null);
-        Assert.That(usj, Is.EqualTo(TestData.UsjEmpty).UsingPropertiesComparer());
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxEmpty);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxEmpty)));
     }
 
     [Test]
-    public void ShouldConvertFromNullXmlDocumentToUsj()
+    public void ShouldConvertFromNullToUsj()
     {
-        Usj usj = UsxToUsj.UsxXmlDocumentToUsj(null);
+        Usj usj = UsxToUsj.UsxStringToUsj(null);
         Assert.That(usj, Is.EqualTo(TestData.UsjEmpty).UsingPropertiesComparer());
     }
 
@@ -35,10 +39,65 @@ public class UsxToUsjTests
     }
 
     [Test]
+    public void ShouldConvertFromUsxToUsj_Roundtrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1)));
+    }
+
+    [Test]
     public void ShouldConvertFromUsxToUsjAndRemoveSpecificAttributes()
     {
         Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithAttributesToRemove);
         Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjAndRemoveSpecificAttributes_Roundtrip()
+    {
+        // NOTE: We do not compare with the original, as invalid attributes are removed
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithAttributesToRemove);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1)));
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjWithBlankChapters()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithBlankChapters);
+        Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1WithBlankChapters).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjWithBlankChapters_Roundtrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithBlankChapters);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1WithBlankChapters)));
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjWithBlankVerses()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithBlankVerses);
+        Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1WithBlankVerses).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjWithBlankVerses_Roundtrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithBlankVerses);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1WithBlankVerses)));
     }
 
     [Test]
@@ -49,10 +108,30 @@ public class UsxToUsjTests
     }
 
     [Test]
+    public void ShouldConvertFromUsxToUsjWithImpliedParagraphs_Roundtrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1ImpliedPara);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1ImpliedPara)));
+    }
+
+    [Test]
     public void ShouldConvertFromUsxToUsjWithSpecialWhiteSpace()
     {
         Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1Whitespace);
         Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1Whitespace).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjWithSpecialWhiteSpace_Roundtrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1Whitespace);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1Whitespace)));
     }
 
     [Test]
@@ -63,10 +142,47 @@ public class UsxToUsjTests
     }
 
     [Test]
+    public void ShouldConvertFromUsxToUsjWithNonStandardFeatures_RoundTrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1Nonstandard);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1Nonstandard)));
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjWithNoSids()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithNoSids);
+        Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1WithNoSids).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjWithNoSids_Roundtrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithNoSids);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1WithNoSids)));
+    }
+
+    [Test]
     public void ShouldConvertFromUsxToUsjWithTable()
     {
         Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithTable);
         Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1WithTable).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjWithTable_Roundtrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithTable);
+        var usjToUsx = new UsjToUsx();
+        string usx = usjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+        Assert.That(usx, Is.EqualTo(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1WithTable)));
     }
 
     [Test]
@@ -77,4 +193,23 @@ public class UsxToUsjTests
         Usj usj = UsxToUsj.UsxXmlDocumentToUsj(document);
         Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1).UsingPropertiesComparer());
     }
+
+    [Test]
+    public void ShouldConvertFromXmlDocumentToUsj_Roundtrip()
+    {
+        XmlDocument document = new XmlDocument { PreserveWhitespace = true };
+        document.LoadXml(TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1));
+        Usj usj = UsxToUsj.UsxXmlDocumentToUsj(document);
+        var usjToUsx = new UsjToUsx();
+        XmlDocument usx = usjToUsx.UsjToUsxXmlDocument(usj);
+        Assert.That(usx, Is.EqualTo(document).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldNotConvertFromNullXmlDocumentToUsj() =>
+        Assert.Throws<ArgumentException>(() => UsxToUsj.UsxXmlDocumentToUsj(null));
+
+    [Test]
+    public void ShouldNotConvertFromNonPreserveWhitespaceXmlDocumentToUsj() =>
+        Assert.Throws<ArgumentException>(() => UsxToUsj.UsxXmlDocumentToUsj(new XmlDocument()));
 }
