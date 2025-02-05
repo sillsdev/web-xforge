@@ -64,35 +64,33 @@
       <div id="scripture-panel">
         <header>
           <div class="panel-nav">
-            <app-book-chapter-chooser
-              [books]="books"
-              [book]="book"
-              [chapters]="chapters"
-              [chapter]="chapter"
-              [bookSelectDisabled]="activeQuestionScope === 'all'"
-              [chapterSelectDisabled]="activeQuestionScope !== 'chapter'"
-              [prevNextHidden]="activeQuestionScope !== 'chapter' || isScreenSmall"
-              (bookChange)="onBookSelect($event)"
-              (chapterChange)="onChapterSelect($event)"
-            >
-            </app-book-chapter-chooser>
-
-            <div class="action-icons">
-              @if (canCreateQuestions) {
+            <div class="book-chapter">
+              <app-book-chapter-chooser
+                [books]="books"
+                [book]="book"
+                [chapters]="chapters"
+                [chapter]="chapter"
+                [bookSelectDisabled]="activeQuestionScope === 'all'"
+                [chapterSelectDisabled]="activeQuestionScope !== 'chapter'"
+                [prevNextHidden]="activeQuestionScope !== 'chapter' || isScreenSmall"
+                (bookChange)="onBookSelect($event)"
+                (chapterChange)="onChapterSelect($event)"
+              >
+              </app-book-chapter-chooser>
+              @if (chapterHasAudio) {
                 <button
-                  mat-icon-button
                   type="button"
-                  [matTooltip]="t('add_question')"
-                  (click)="questionDialog()"
-                  class="add-question-button hide-gt-xl"
+                  mat-icon-button
+                  [matTooltip]="t('play_chapter')"
+                  [matTooltipDisabled]="isAudioPlaying()"
+                  (click)="toggleAudio()"
                 >
-                  <mat-icon class="mirror-rtl">post_add</mat-icon>
-                </button>
-                <button mat-button type="button" (click)="questionDialog()" class="add-question-button hide-lt-xl">
-                  <mat-icon class="mirror-rtl">post_add</mat-icon>
-                  <span>{{ t("add_question") }}</span>
+                  <mat-icon>{{ isAudioPlaying() ? "stop" : "play_arrow" }}</mat-icon>
                 </button>
               }
+            </div>
+
+            <div class="action-icons">
               @if (canCreateScriptureAudio) {
                 <button
                   type="button"
@@ -102,17 +100,6 @@
                   class="add-audio-button"
                 >
                   <mat-icon class="material-icons-outlined">audio_file</mat-icon>
-                </button>
-              }
-              @if (chapterHasAudio) {
-                <button
-                  type="button"
-                  mat-icon-button
-                  [matTooltip]="t('play_chapter')"
-                  [matTooltipDisabled]="isAudioPlaying()"
-                  (click)="toggleAudio()"
-                >
-                  <mat-icon>{{ isAudioPlaying() ? "stop" : "play_circle_outline" }}</mat-icon>
                 </button>
               }
               <app-font-size [class.hidden]="hideChapterText" (apply)="applyFontChange($event)"></app-font-size>
@@ -200,11 +187,28 @@
       </div>
       @if (projectDoc && totalVisibleQuestions() > 0) {
         <div id="question-nav" [ngClass]="{ hide: textboxIsShownMobile || userOpenedChapterAudio }">
-          @if (!isQuestionListPermanent) {
-            <button mat-button type="button" (click)="setQuestionsOverlayVisibility(true)">
-              {{ t("view_questions") }}
-            </button>
-          }
+          <div class="question-nav-left">
+            @if (canCreateQuestions) {
+              <button
+                mat-icon-button
+                type="button"
+                [matTooltip]="t('add_question')"
+                (click)="questionDialog()"
+                class="add-question-button"
+              >
+                <mat-icon class="mirror-rtl">post_add</mat-icon>
+              </button>
+              <button mat-button type="button" (click)="questionDialog()" class="add-question-button">
+                <mat-icon class="mirror-rtl">post_add</mat-icon>
+                <span>{{ t("add_question") }}</span>
+              </button>
+            }
+            @if (!isQuestionListPermanent) {
+              <button mat-button type="button" (click)="setQuestionsOverlayVisibility(true)">
+                {{ t("view_questions") }}
+              </button>
+            }
+          </div>
           <div class="question-nav-wrapper">
             <button
               mat-button

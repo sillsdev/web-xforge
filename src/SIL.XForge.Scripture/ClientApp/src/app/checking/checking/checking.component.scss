@@ -217,8 +217,28 @@ header {
     background-color: lighten(vars.$sf_grey, 70%);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 9px;
+
+    .question-nav-left {
+      display: flex;
+      align-items: center;
+      column-gap: 4px;
+    }
+
+    .add-question-button.mat-mdc-icon-button {
+      display: none;
+    }
+
+    @include media-breakpoint('<=', sm) {
+      .add-question-button.mat-mdc-button {
+        display: none;
+      }
+
+      .add-question-button.mat-mdc-icon-button {
+        display: block;
+      }
+    }
 
     .question-nav-wrapper {
       display: flex;
@@ -247,7 +267,6 @@ header {
     @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
       // Widen once the questions panel is hidden
       margin-inline-start: -20px;
-      justify-content: space-between;
     }
 
     .next-question {
