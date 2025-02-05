@@ -6,8 +6,8 @@ import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, merge, Subscription } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { combineLatest, merge } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -105,7 +105,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   protected translatedBooksWithNoSource: number[] = [];
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
-  private trainingDataSub?: Subscription;
+  private projectChanged: boolean = true;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -221,38 +221,39 @@ export class DraftGenerationStepsComponent implements OnInit {
 
     // Get the training data files for the project
 
-    this.activatedProject.projectDoc$.pipe(
-      takeUntilDestroyed(this.destroyRef),
-      filterNullish(),
-      tap(async projectDoc => {
-        // Query for all training data files in the project
-        this.trainingDataQuery?.dispose();
-        this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id, this.destroyRef);
-        let projectChanged: boolean = true;
+    this.activatedProject.projectDoc$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filterNullish(),
+        map(async projectDoc => {
+          this.projectChanged = true;
+          // Query for all training data files in the project
+          this.trainingDataQuery?.dispose();
+          this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(
+            projectDoc.id,
+            this.destroyRef
+          );
 
-        // Subscribe to this query, and show these
-        this.trainingDataSub?.unsubscribe();
-        this.trainingDataSub = merge(
-          this.trainingDataQuery.localChanges$,
-          this.trainingDataQuery.ready$,
-          this.trainingDataQuery.remoteChanges$,
-          this.trainingDataQuery.remoteDocChanges$
-        )
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe(() => {
-            this.availableTrainingFiles = [];
-            if (projectDoc.data?.translateConfig.draftConfig.additionalTrainingData) {
-              this.availableTrainingFiles =
-                this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
-            }
-            if (projectChanged) {
-              // Set the selection based on previous builds
-              projectChanged = false;
-              this.setInitialTrainingDataFiles(this.availableTrainingFiles.map(d => d.dataId));
-            }
-          });
-      })
-    );
+          return merge(
+            this.trainingDataQuery.localChanges$,
+            this.trainingDataQuery.ready$,
+            this.trainingDataQuery.remoteChanges$,
+            this.trainingDataQuery.remoteDocChanges$
+          );
+        })
+      )
+      .subscribe(() => {
+        this.availableTrainingFiles = [];
+        if (this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.additionalTrainingData) {
+          this.availableTrainingFiles =
+            this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
+        }
+        if (this.projectChanged) {
+          // Set the selection based on previous builds
+          this.projectChanged = false;
+          this.setInitialTrainingDataFiles(this.availableTrainingFiles.map(d => d.dataId));
+        }
+      });
   }
 
   get trainingSourceBooksSelected(): boolean {
