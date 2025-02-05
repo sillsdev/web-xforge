@@ -47,9 +47,9 @@ export interface ProjectStatus {
 }
 
 export interface DraftSourcesAsArrays {
-  trainingSources: [TranslateSource?, TranslateSource?];
+  trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 });
   trainingTargets: [SFProjectProfile];
-  draftingSources: [TranslateSource?];
+  draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 });
 }
 /**
  * Takes a SFProjectProfile and returns the training and drafting sources for the project as three arrays.
@@ -70,8 +70,8 @@ export interface DraftSourcesAsArrays {
  * @returns An object with three arrays: trainingSources, trainingTargets, and draftingSources
  */
 export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAsArrays {
-  const trainingSources: [TranslateSource?, TranslateSource?] = [];
-  const draftingSources: [TranslateSource?] = [];
+  const trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 }) = [];
+  const draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 }) = [];
   const trainingTargets: [SFProjectProfile] = [project];
   const draftConfig = project.translateConfig.draftConfig;
   let trainingSource: TranslateSource | undefined;
@@ -220,11 +220,13 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
         if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
 
-        const mappedTrainingSources: SelectableProjectWithLanguageCode[] = trainingSources
+        const mappedTrainingSources = trainingSources
           // FIXME No actual nullish elements, but TS doesn't know because of how we set the array length
           .filter(s => s != null)
-          .map(translateSourceToSelectableProjectWithLanguageTag);
-        this.trainingSources = [mappedTrainingSources[0], mappedTrainingSources[1]];
+          .map(translateSourceToSelectableProjectWithLanguageTag) as SelectableProjectWithLanguageCode[] &
+          ({ length: 0 } | { length: 1 } | { length: 2 });
+
+        this.trainingSources = mappedTrainingSources;
         this.trainingTargets = trainingTargets;
         const mappedDraftingSources: SelectableProjectWithLanguageCode[] = draftingSources
           // FIXME No actual nullish elements, but TS doesn't know because of how we set the array length
