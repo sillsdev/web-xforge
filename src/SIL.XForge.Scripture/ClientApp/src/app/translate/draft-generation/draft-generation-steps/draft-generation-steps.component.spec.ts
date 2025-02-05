@@ -363,6 +363,7 @@ describe('DraftGenerationStepsComponent', () => {
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
+      when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
       when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
@@ -605,6 +606,7 @@ describe('DraftGenerationStepsComponent', () => {
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
+      when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
         instance(mockTrainingDataQuery)
@@ -736,6 +738,72 @@ describe('DraftGenerationStepsComponent', () => {
         { number: 9, selected: true },
         { number: 10, selected: true }
       ]);
+    });
+  });
+
+  describe('can add additional training data', () => {
+    const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }];
+    const config = {
+      trainingSources: [
+        {
+          projectRef: 'source1',
+          paratextId: 'PT_SP1',
+          name: 'Source Project 1',
+          shortName: 'sP1',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks
+        },
+        undefined
+      ] as [DraftSource, DraftSource?],
+      trainingTargets: [
+        {
+          projectRef: mockActivatedProjectService.projectId,
+          shortName: 'tT',
+          writingSystem: { tag: 'nllb' },
+          texts: availableBooks
+        }
+      ] as [DraftSource],
+      draftingSources: [
+        {
+          projectRef: 'draftingSource',
+          shortName: 'dS',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks
+        }
+      ] as [DraftSource]
+    };
+
+    const mockTargetProjectDoc: SFProjectProfileDoc = {
+      id: mockActivatedProjectService.projectId,
+      data: createTestProjectProfile({
+        texts: availableBooks,
+        translateConfig: {
+          source: { projectRef: 'sourceProject', shortName: 'sP1', writingSystem: { tag: 'eng' } },
+          draftConfig: { additionalTrainingData: true }
+        },
+        writingSystem: { tag: 'nllb' }
+      })
+    } as SFProjectProfileDoc;
+    const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
+
+    beforeEach(fakeAsync(() => {
+      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
+      when(mockTrainingDataQuery.docs).thenReturn([]);
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
+
+    it('should allow additional training data', () => {
+      expect(component.trainingDataFilesAvailable).toBe(true);
     });
   });
 
