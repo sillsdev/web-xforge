@@ -22,7 +22,11 @@ namespace SIL.Converters.Usj
         /// The JSON representation of scripture contents from USFM/USX.
         /// </summary>
         /// <value>This will either be a <see cref="UsjMarker"/> or <see cref="string"/>.</value>
-        /// <remarks>Nullable. The contents will be laid out in order.</remarks>
+        /// <remarks>
+        /// Nullable.
+        /// If there are no contents, this will be null for <see cref="UsjMarker"/>, or empty for <see cref="Usj"/>.
+        /// The contents will be laid out in order.
+        /// </remarks>
         [JsonConverter(typeof(UsjContentConverter))]
         public ArrayList Content { get; set; }
 

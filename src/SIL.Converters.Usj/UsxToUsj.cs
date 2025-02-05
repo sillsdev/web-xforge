@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace SIL.Converters.Usj
                 .Attributes.Cast<XmlAttribute>()
                 .ToDictionary(attrib => attrib.Name, attrib => attrib.Value);
 
-            // If style is present, make that the market
+            // If style is present, make that the marker
             if (attributes.TryGetValue("style", out string marker))
             {
                 attributes.Remove("style");
@@ -105,6 +106,9 @@ namespace SIL.Converters.Usj
                     outObj.Content.Add(childDict);
                 }
 
+                // If the next sibling is text or a user inputted space (a single space), add it to the content.
+                // We skip whitespace nodes with more than one space because they are padding, not formatting spaces.
+                // Note: Any Paratext 9.5 special whitespace characters will have a node type of XmlNodeType.Text.
                 if (
                     child.NextSibling?.NodeType == XmlNodeType.Text
                     || (child.NextSibling?.NodeType == XmlNodeType.Whitespace && child.NextSibling.Value == " ")
@@ -121,7 +125,7 @@ namespace SIL.Converters.Usj
 
             if (outObj is UsjMarker usjMarker2 && usjMarker2.Eid != null && (type == "verse" || type == "chapter"))
             {
-                // Ignore
+                // Omit any verse or chapter eid elements
                 append = false;
             }
 
@@ -173,6 +177,17 @@ namespace SIL.Converters.Usj
         /// <remarks>
         /// The <see cref="XmlDocument"/> should have <see cref="XmlDocument.PreserveWhitespace"/> set to <c>true</c>.
         /// </remarks>
-        public static Usj UsxXmlDocumentToUsj(XmlDocument xmlDocument) => UsxDomToUsj(xmlDocument?.DocumentElement);
+        public static Usj UsxXmlDocumentToUsj(XmlDocument xmlDocument)
+        {
+            if (xmlDocument?.PreserveWhitespace != true)
+            {
+                throw new ArgumentException(
+                    "The XmlDocument should have PreserveWhitespace set to true.",
+                    nameof(xmlDocument)
+                );
+            }
+
+            return UsxDomToUsj(xmlDocument.DocumentElement);
+        }
     }
 }
