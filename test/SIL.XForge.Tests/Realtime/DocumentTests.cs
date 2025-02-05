@@ -77,7 +77,6 @@ public class DocumentTests
     public async Task FetchAsyncOrCreate_Fetches()
     {
         var env = new TestEnvironment();
-        env.Connection.CreateDocAsync(Collection, Id, _data, OtTypeName).Returns(Task.FromResult(_snapshot));
         env.Connection.FetchDocAsync<Json0Snapshot>(Collection, Id).Returns(Task.FromResult(_snapshot));
 
         // SUT

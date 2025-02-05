@@ -168,7 +168,7 @@ public class ConnectionTests
         // Verify queue is empty
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
-        // Verify that the call was not passed to the underlying realtime server
+        // Verify that the call was passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(1)
             .CreateDocAsync(
@@ -219,7 +219,7 @@ public class ConnectionTests
         // Verify queue is empty
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
-        // Verify that the call was not passed to the underlying realtime server
+        // Verify that the call was passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(1)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
@@ -468,7 +468,7 @@ public class ConnectionTests
         // Verify queue is empty
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
-        // Verify that the call was not passed to the underlying realtime server
+        // Verify that the call was passed to the underlying realtime server
         await env.RealtimeService.Server.Received(1).ReplaceDocAsync(Arg.Any<int>(), collection, id, data, source);
     }
 
@@ -634,7 +634,7 @@ public class ConnectionTests
         // Verify queue
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
-        // Verify that the call was not passed to the underlying realtime server
+        // Verify that the call was passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(1)
             .SubmitOpAsync<TestProject>(

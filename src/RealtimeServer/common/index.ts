@@ -338,6 +338,7 @@ export = {
     // Build the ops from a diff
     // NOTE: We do not use diff-patch-match, as that may result in
     // op conflicts when ops are submitted from multiple sources.
+    // diff-patch-match mutates the string, but we want to replace it.
     const ops = json0OtDiff(doc.data, data);
 
     // Submit the ops
