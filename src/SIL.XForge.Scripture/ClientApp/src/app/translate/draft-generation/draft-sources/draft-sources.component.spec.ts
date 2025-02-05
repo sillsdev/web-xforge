@@ -107,7 +107,7 @@ describe('DraftSourcesComponent', () => {
       name: 'Project 1',
       shortName: 'PRJ1',
       projectRef: '',
-      writingSystem: undefined,
+      writingSystem: { tag: 'en' },
       texts: []
     };
     const mockProject2: DraftSource = {
@@ -115,7 +115,7 @@ describe('DraftSourcesComponent', () => {
       name: 'Project 2',
       shortName: 'PRJ2',
       projectRef: '',
-      writingSystem: undefined,
+      writingSystem: { tag: 'en' },
       texts: []
     };
     const mockTarget: DraftSource = {
@@ -124,7 +124,7 @@ describe('DraftSourcesComponent', () => {
       projectRef: '',
       name: '',
       shortName: '',
-      writingSystem: undefined
+      writingSystem: { tag: 'en' }
     };
     const someOtherTarget: DraftSource = {
       paratextId: 'some-other-id',
@@ -132,7 +132,7 @@ describe('DraftSourcesComponent', () => {
       projectRef: '',
       name: '',
       shortName: '',
-      writingSystem: undefined
+      writingSystem: { tag: 'en' }
     };
 
     it('should handle empty sources', () => {
