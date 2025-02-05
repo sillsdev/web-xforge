@@ -62,6 +62,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SIL.Converters.Usj\SIL.Converters.Usj.csproj" />
     <ProjectReference Include="..\SIL.XForge\SIL.XForge.csproj" />
   </ItemGroup>
   <ItemGroup>
