@@ -70,7 +70,6 @@ export class DraftGenerationStepsComponent implements OnInit {
   @Output() readonly done = new EventEmitter<DraftGenerationStepsResult>();
   @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
-  @ViewChild(ConfirmSourcesComponent) confirmSourcesComponent?: ConfirmSourcesComponent;
 
   availableTranslateBooks: Book[] = [];
   availableTrainingBooks: { [projectRef: string]: Book[] } = {}; //books in both source and target
@@ -255,10 +254,6 @@ export class DraftGenerationStepsComponent implements OnInit {
           this.setInitialTrainingDataFiles(this.availableTrainingFiles.map(d => d.dataId));
         }
       });
-  }
-
-  get languagesAreCompatible(): boolean {
-    return !!this.confirmSourcesComponent?.languageCodesCompatible;
   }
 
   get trainingSourceBooksSelected(): boolean {
