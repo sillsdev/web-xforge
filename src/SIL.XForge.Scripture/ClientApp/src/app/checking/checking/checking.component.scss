@@ -86,17 +86,18 @@ header {
   // Override 'sm' breakpoint for this element (also adjusts BreakPointObserver 'SM' for this element)
   @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
     position: absolute;
-    top: 0;
-    left: -100%;
+    bottom: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
+    height: 0;
     margin: 0;
     z-index: 7;
+    overflow: hidden;
     background: #fff;
-    transition: transform 0.4s cubic-bezier(0.68, -0.6, 0.265, 1.6); // Snap back effect
+    transition: height 0.4s cubic-bezier(0.68, -0.6, 0.265, 1.6); // Snap back effect
 
     &.overlay-visible {
-      transform: translateX(100%);
+      height: 100%;
 
       .questions-overlay-close {
         display: block;
@@ -220,7 +221,17 @@ header {
     justify-content: space-between;
     padding: 9px;
 
-    .question-nav-left {
+    .mat-icon {
+      font-size: 24px;
+      height: 24px;
+      width: 24px;
+    }
+
+    .view-questions .mat-icon {
+      margin-inline-end: 4px;
+    }
+
+    .question-nav-start {
       display: flex;
       align-items: center;
       column-gap: 4px;
