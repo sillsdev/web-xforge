@@ -450,19 +450,6 @@ export interface DraftSourcesSettingsChange {
   alternateTrainingSourceParatextId?: string;
 }
 
-/**
- * This is deliberately a function outside of the class to make it easier to make changes without merge conflicts
- *
- * Requirements:
- * - Do not touch the project source (only the "alternate" sources)
- * - Save the draft config to the project
- * - Sync the projects/resources (I think this is implicitly when setting sources)
- * - Inform the user which projects are syncing, and when they are done (this can be a very rough UI)
- *
- * This method is kind of doing the opposite of projectToDraftSources, as it maps the data model back the other way
- */
-function saveSources(): void {}
-
 /** Convert some arrays of drafting sources to a settings object that can be applied to a SF project. */
 export function sourceArraysToSettingsChange(
   trainingSources: [SelectableProject?, SelectableProject?],
