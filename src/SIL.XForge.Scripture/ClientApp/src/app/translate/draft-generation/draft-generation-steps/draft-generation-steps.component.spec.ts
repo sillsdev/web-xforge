@@ -87,8 +87,15 @@ describe('DraftGenerationStepsComponent', () => {
           writingSystem: { tag: 'eng' },
           texts: availableBooks
         },
-        undefined
-      ] as [DraftSource, DraftSource?],
+        {
+          projectRef: 'source2',
+          paratextId: 'PT_SP2',
+          name: 'Source Project 2',
+          shortName: 'sP2',
+          writingSystem: { tag: 'grc' },
+          texts: availableBooks
+        }
+      ] as [DraftSource, DraftSource],
       trainingTargets: [
         {
           projectRef: mockActivatedProjectService.projectId,
@@ -137,14 +144,15 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
     }));
 
-    it('should not advance steps if drafting and training sources are different', fakeAsync(() => {
+    it('should advance steps if drafting and training sources are different', fakeAsync(() => {
       expect(component.stepper.selectedIndex).toBe(0);
+      expect(fixture.nativeElement.querySelector('.warning-source-languages-different')).not.toBeNull();
       clickConfirmLanguages(fixture);
       fixture.detectChanges();
       component.tryAdvanceStep();
       tick();
       fixture.detectChanges();
-      expect(component.stepper.selectedIndex).toBe(0);
+      expect(component.stepper.selectedIndex).toBe(1);
     }));
   });
 
