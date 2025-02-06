@@ -83,19 +83,33 @@ namespace SIL.Converters.Usj
         )
         {
             XmlNode node;
-            string type = null;
-            XmlElement eidElement = null;
-            UsjMarker usjMarker = markerContent as UsjMarker;
             if (markerContent is string markerText)
             {
                 node = usxDoc.CreateTextNode(markerText);
             }
-            else if (usjMarker != null)
+            else if (markerContent is UsjMarker usjMarker)
             {
-                type = usjMarker.Type.Replace("table:", string.Empty);
+                string type = usjMarker.Type.Replace("table:", string.Empty);
                 XmlElement element = usxDoc.CreateElement(type);
                 node = element;
                 SetAttributes(element, usjMarker);
+
+                if (type == "verse")
+                {
+                    // If we encounter a new verse, write out a verse EID for the previous verse, and record the new
+                    // verse ID.
+                    WritePendingVerseEid(usxDoc, parentElement);
+                    _verseEid = usjMarker.Sid;
+                }
+
+                if (type == "chapter")
+                {
+                    // If we encounter a new chapter, write out a verse EID for the previous verse (unless already done), write out a chapter EID for the previous chapter, and record the new chapter ID.
+                    WritePendingVerseEid(usxDoc, parentElement);
+                    WritePendingChapterEid(usxDoc, parentElement);
+                    _chapterEid = usjMarker.Sid;
+                }
+
                 if (usjMarker.Content != null)
                 {
                     for (int i = 0; i < usjMarker.Content.Count; i++)
@@ -110,74 +124,41 @@ namespace SIL.Converters.Usj
                 throw new ArgumentOutOfRangeException(nameof(markerContent));
             }
 
-            // Store the previous verse eid so we can close them in the correct place
-            string lastVerseEid = null;
-
-            // Create chapter and verse end elements from SID attributes.
-            if (_verseEid != null && (type == "verse" || (parentElement.Name == "para" && isLastItem)))
-            {
-                eidElement = CreateVerseEndElement(usxDoc);
-                lastVerseEid = _verseEid;
-                _verseEid = null;
-            }
-
-            if (type == "verse" && usjMarker?.Sid != null)
-            {
-                _verseEid = usjMarker.Sid;
-            }
-
-            if (_chapterEid != null && (type == "chapter" || (type == "para" && isLastItem)))
-            {
-                eidElement = CreateChapterEndElement(usxDoc);
-                _chapterEid = null;
-            }
-
-            if (type == "chapter" && usjMarker?.Sid != null)
-            {
-                _chapterEid = usjMarker.Sid;
-            }
-
-            // See if we are at a new verse
-            if (eidElement != null && isLastItem && _verseEid != null && _verseEid != lastVerseEid)
-            {
-                // Write the eid element for the previous verse
-                parentElement.AppendChild(eidElement);
-
-                // Ensure that eid element for the current verse is not written
-                eidElement = null;
-                _verseEid = null;
-            }
-
-            // Append to parent to close the verse or chapter before this new node
-            if (eidElement != null && !isLastItem)
-            {
-                parentElement.AppendChild(eidElement);
-                eidElement = null;
-            }
-
             parentElement.AppendChild(node);
 
-            // Append the eid element as this is the last element
-            if (eidElement != null)
+            if (isLastItem)
             {
-                parentElement.AppendChild(eidElement);
+                if (parentElement.Name == "para")
+                {
+                    // Write out the verse EID for the current verse at the end of a paragraph.
+                    WritePendingVerseEid(usxDoc, parentElement);
+                }
+
+                if (_chapterEid != null && parentElement.Name == Usx.UsxType)
+                {
+                    // If the USX is using an implied paragraph, and we reach the end, write out any verse EID or
+                    // chapter EID that hasn't been written already.
+                    WritePendingVerseEid(usxDoc, parentElement);
+                    WritePendingChapterEid(usxDoc, parentElement);
+                }
             }
+        }
 
-            // Allow for final chapter and verse end elements at the end of an implied para.
-            if (isLastItem && parentElement.Name == Usx.UsxType)
+        private void WritePendingChapterEid(XmlDocument usxDoc, XmlElement parentElement)
+        {
+            if (_chapterEid != null)
             {
-                if (_verseEid != null)
-                {
-                    parentElement.AppendChild(CreateVerseEndElement(usxDoc));
-                }
-
-                if (_chapterEid != null)
-                {
-                    parentElement.AppendChild(CreateChapterEndElement(usxDoc));
-                }
-
-                _verseEid = null;
+                parentElement.AppendChild(CreateChapterEndElement(usxDoc));
                 _chapterEid = null;
+            }
+        }
+
+        private void WritePendingVerseEid(XmlDocument usxDoc, XmlElement parentElement)
+        {
+            if (_verseEid != null)
+            {
+                parentElement.AppendChild(CreateVerseEndElement(usxDoc));
+                _verseEid = null;
             }
         }
 

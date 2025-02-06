@@ -387,7 +387,7 @@ public static partial class TestData
           <book code="GEN" style="id" />
           <chapter number="1" style="c" sid="GEN 1" />
           <verse number="1" style="v" sid="GEN 1:1" />In the beginning <verse eid="GEN 1:1" />
-          <verse number="2" style="v" sid="GEN 1:2" /><chapter eid="GEN 1" />
+          <verse number="2" style="v" sid="GEN 1:2" /><verse eid="GEN 1:2" /><chapter eid="GEN 1" />
           <chapter number="2" style="c" sid="GEN 2" /><chapter eid="GEN 2" />
           <chapter number="3" style="c" sid="GEN 3" /><chapter eid="GEN 3" />
         </usx>
@@ -426,7 +426,7 @@ public static partial class TestData
           <verse number="1" style="v" sid="GEN 1:1" />In the beginning <verse eid="GEN 1:1" />
           <verse number="2" style="v" sid="GEN 1:2" /><verse eid="GEN 1:2" />
           <verse number="3" style="v" sid="GEN 1:3" /><verse eid="GEN 1:3" />
-          <verse number="4" style="v" sid="GEN 1:4" />
+          <verse number="4" style="v" sid="GEN 1:4" /><verse eid="GEN 1:4" />
           <chapter eid="GEN 1" />
         </usx>
         """;
