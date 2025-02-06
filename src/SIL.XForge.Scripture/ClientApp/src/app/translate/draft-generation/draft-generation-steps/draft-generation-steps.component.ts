@@ -7,7 +7,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, merge } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { filter, switchMap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -105,7 +105,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   protected translatedBooksWithNoSource: number[] = [];
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
-  private projectChanged: boolean = true;
+  private isTrainingDataInitialized: boolean = false;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -220,13 +220,12 @@ export class DraftGenerationStepsComponent implements OnInit {
       );
 
     // Get the training data files for the project
-
     this.activatedProject.projectDoc$
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         filterNullish(),
-        map(async projectDoc => {
-          this.projectChanged = true;
+        switchMap(async projectDoc => {
+          this.isTrainingDataInitialized = false;
           // Query for all training data files in the project
           this.trainingDataQuery?.dispose();
           this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(
@@ -234,6 +233,7 @@ export class DraftGenerationStepsComponent implements OnInit {
             this.destroyRef
           );
 
+          // switch to the observable from trainingDataQuery
           return merge(
             this.trainingDataQuery.localChanges$,
             this.trainingDataQuery.ready$,
@@ -248,9 +248,9 @@ export class DraftGenerationStepsComponent implements OnInit {
           this.availableTrainingFiles =
             this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
         }
-        if (this.projectChanged) {
+        if (!this.isTrainingDataInitialized) {
           // Set the selection based on previous builds
-          this.projectChanged = false;
+          this.isTrainingDataInitialized = true;
           this.setInitialTrainingDataFiles(this.availableTrainingFiles.map(d => d.dataId));
         }
       });
