@@ -111,6 +111,20 @@ public class Document<T> : IDocument<T>
         }
     }
 
+    public async Task ReplaceAsync(T data, OpSource? source)
+    {
+        await _lock.WaitAsync();
+        try
+        {
+            Snapshot<T> snapshot = await _connection.ReplaceDocAsync(Collection, Id, data, Version, source);
+            UpdateFromSnapshot(snapshot);
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
     private void UpdateFromSnapshot(Snapshot<T> snapshot)
     {
         Version = snapshot.Version;

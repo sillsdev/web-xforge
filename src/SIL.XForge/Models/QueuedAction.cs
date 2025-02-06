@@ -16,4 +16,9 @@ internal enum QueuedAction
     /// The <c>submitOp</c> action.
     /// </summary>
     Submit = 2,
+
+    /// <summary>
+    /// The <c>replaceDoc</c> action.
+    /// </summary>
+    Replace = 3,
 }

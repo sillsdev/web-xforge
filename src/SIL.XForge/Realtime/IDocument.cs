@@ -23,4 +23,6 @@ public interface IDocument<T>
     Task SubmitOpAsync(object op, OpSource? source);
 
     Task DeleteAsync();
+
+    Task ReplaceAsync(T data, OpSource? source);
 }

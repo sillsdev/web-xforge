@@ -62,18 +62,15 @@ public class ConnectionTests
     {
         // Setup
         var env = new TestEnvironment();
-        string collection = "test_project";
-        string id = "id1";
-        string otTypeName = OTType.Json0;
-        var snapshot = new Snapshot<TestProject>
-        {
-            Data = new TestProject() { Id = id, SyncDisabled = false },
-            Version = 1,
-        };
+        const string collection = "test_project";
+        const string id = "id1";
+        const string otTypeName = OTType.Json0;
+        var data = new TestProject { Id = id, SyncDisabled = false };
+        var snapshot = new Snapshot<TestProject> { Data = data, Version = 1 };
         var builder = new Json0OpBuilder<TestProject>(snapshot.Data);
         builder.Set(p => p.SyncDisabled, true);
         List<Json0Op> op = builder.Op;
-        var updatedData = new TestProject() { Id = id, SyncDisabled = true };
+        var updatedData = new TestProject { Id = id, SyncDisabled = true };
 
         env.RealtimeService.Server.FetchDocAsync<TestProject>(Arg.Any<int>(), collection, id)
             .Returns(Task.FromResult(snapshot));
@@ -82,13 +79,15 @@ public class ConnectionTests
         // Setup Queue
         env.Service.BeginTransaction();
         await env.Service.CreateDocAsync(collection, id, snapshot.Data, otTypeName);
-        await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version, null);
+        await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version, source: null);
+        await env.Service.ReplaceDocAsync(collection, id, data, snapshot.Version, source: null);
         await env.Service.DeleteDocAsync(collection, id);
 
         // Verify Queue
-        Assert.AreEqual(env.Service.QueuedOperations.First().Action, QueuedAction.Create);
-        Assert.AreEqual(env.Service.QueuedOperations.Skip(1).First().Action, QueuedAction.Submit);
-        Assert.AreEqual(env.Service.QueuedOperations.Last().Action, QueuedAction.Delete);
+        Assert.AreEqual(QueuedAction.Create, env.Service.QueuedOperations.First().Action);
+        Assert.AreEqual(QueuedAction.Submit, env.Service.QueuedOperations.Skip(1).First().Action);
+        Assert.AreEqual(QueuedAction.Replace, env.Service.QueuedOperations.Skip(2).First().Action);
+        Assert.AreEqual(QueuedAction.Delete, env.Service.QueuedOperations.Last().Action);
 
         // SUT
         await env.Service.CommitTransactionAsync();
@@ -103,6 +102,15 @@ public class ConnectionTests
         await env
             .RealtimeService.Server.Received(1)
             .SubmitOpAsync<object>(
+                Arg.Any<int>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<object>(),
+                Arg.Any<OpSource?>()
+            );
+        await env
+            .RealtimeService.Server.Received(1)
+            .ReplaceDocAsync(
                 Arg.Any<int>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),
@@ -160,7 +168,7 @@ public class ConnectionTests
         // Verify queue is empty
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
-        // Verify that the call was not passed to the underlying realtime server
+        // Verify that the call was passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(1)
             .CreateDocAsync(
@@ -211,7 +219,7 @@ public class ConnectionTests
         // Verify queue is empty
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
-        // Verify that the call was not passed to the underlying realtime server
+        // Verify that the call was passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(1)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
@@ -326,6 +334,20 @@ public class ConnectionTests
     }
 
     [Test]
+    public async Task GetAndFetchDocsAsync_NoIds()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        string[] ids = [];
+
+        // SUT
+        IReadOnlyCollection<IDocument<Project>> actual = await env.Service.GetAndFetchDocsAsync<Project>(ids);
+
+        // Verify
+        Assert.IsEmpty(actual);
+    }
+
+    [Test]
     public async Task GetAndFetchDocsAsync_RetrievesDocsWithData()
     {
         // Setup
@@ -387,6 +409,67 @@ public class ConnectionTests
         Assert.AreEqual("id1", result.First().Id);
         Assert.AreEqual(1, result.First().Version);
         Assert.IsNotNull(result.First().Data);
+    }
+
+    [Test]
+    public async Task ReplaceDocAsync_QueuesAction()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        const string collection = "test_project";
+        const string id = "id1";
+        var data = new TestProject { Id = id, Name = "Test Project 1" };
+        const int currentVersion = 1;
+        OpSource? source = OpSource.Draft;
+
+        // SUT
+        env.Service.BeginTransaction();
+        Snapshot<TestProject> actual = await env.Service.ReplaceDocAsync(collection, id, data, currentVersion, source);
+
+        // Verify result
+        Assert.AreEqual(currentVersion + 1, actual.Version);
+        Assert.AreEqual(data, actual.Data);
+
+        // Verify queue
+        Assert.AreEqual(1, env.Service.QueuedOperations.Count);
+        QueuedOperation queuedOperation = env.Service.QueuedOperations.First();
+        Assert.AreEqual(QueuedAction.Replace, queuedOperation.Action);
+        Assert.AreEqual(collection, queuedOperation.Collection);
+        Assert.AreEqual(data, queuedOperation.Data);
+        Assert.AreEqual(id, queuedOperation.Id);
+        Assert.AreEqual(source, queuedOperation.Source);
+
+        // Verify that the call was not passed to the underlying realtime server
+        await env
+            .RealtimeService.Server.Received(0)
+            .ReplaceDocAsync(
+                Arg.Any<int>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<object>(),
+                Arg.Any<OpSource?>()
+            );
+    }
+
+    [Test]
+    public async Task ReplaceDocAsync_UsesUnderlyingRealtimeServerOutsideOfATransaction()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        const string collection = "test_project";
+        const string id = "id1";
+        var data = new TestProject { Id = id, Name = "Test Project 1" };
+        const int currentVersion = 1;
+        OpSource? source = OpSource.Draft;
+
+        // SUT
+        await env.Service.ReplaceDocAsync(collection, id, data, currentVersion, source);
+
+        // Verify queue is empty
+        Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
+
+        // Verify that the call was passed to the underlying realtime server
+        await env.RealtimeService.Server.Received(1).ReplaceDocAsync(Arg.Any<int>(), collection, id, data, source);
     }
 
     [Test]
@@ -551,7 +634,7 @@ public class ConnectionTests
         // Verify queue
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
-        // Verify that the call was not passed to the underlying realtime server
+        // Verify that the call was passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(1)
             .SubmitOpAsync<TestProject>(
