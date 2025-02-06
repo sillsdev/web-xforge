@@ -50,9 +50,37 @@
     <mat-checkbox (change)="confirmationChanged($event)">{{ t("confirm_lang_codes_correct") }}</mat-checkbox>
   </app-notice>
 
-  @if (showSourceLanguagesNotCompatibleError) {
-    <app-notice type="error">
-      <span>{{ t("sources_must_be_same_language") }}</span>
-    </app-notice>
+  @if (warnTrainingAndDraftingSourceLanguagesNotCompatible) {
+    @if (isProjectAdmin) {
+      <app-notice class="warning-source-languages-different" type="warning" icon="warning">
+        <transloco
+          key="confirm_draft_sources.info_alert_different_training_and_source_language"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
+    } @else {
+      <app-notice class="warning-source-languages-different" type="warning" icon="warning">
+        <transloco
+          key="confirm_draft_sources.non_pa_info_alert_different_training_and_source_language"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
+    }
+  } @else if (warnTrainingSourceLanguagesNotCompatible) {
+    @if (isProjectAdmin) {
+      <app-notice class="warning-training-languages-different" type="warning" icon="warning">
+        <transloco
+          key="confirm_draft_sources.info_alert_different_additional_training_and_source_language"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
+    } @else {
+      <app-notice class="warning-traing-languages-different" type="warning" icon="warning">
+        <transloco
+          key="confirm_draft_sources.non_pa_info_alert_different_additional_training_and_source_language"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
+    }
   }
 </ng-container>
