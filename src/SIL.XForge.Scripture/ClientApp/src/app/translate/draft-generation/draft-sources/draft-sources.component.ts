@@ -15,6 +15,7 @@ import { of } from 'rxjs';
 import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { DataLoadingComponent } from '../../../../xforge-common/data-loading-component';
 import { DialogService } from '../../../../xforge-common/dialog.service';
+import { FeatureFlagService } from '../../../../xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from '../../../../xforge-common/i18n.service';
 import { ElementState } from '../../../../xforge-common/models/element-state';
 import { NoticeService } from '../../../../xforge-common/notice.service';
@@ -128,7 +129,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   step = 1;
 
   trainingSources: [SelectableProjectWithLanguageCode?, SelectableProjectWithLanguageCode?] = [];
-  trainingTargets: [SFProjectProfile?] = [];
+  trainingTargets: [SFProjectProfile] | [] = [];
   draftingSources: [SelectableProjectWithLanguageCode?] = [];
 
   projects?: SelectableProject[];
@@ -185,7 +186,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     return this.i18n.enumerateList(this.trainingTargets.filter(s => s != null).map(t => t.shortName) ?? []);
   }
 
-  parentheses(value: string | null): string {
+  parentheses(value?: string): string {
     return value ? `(${value})` : '';
   }
 
@@ -202,6 +203,10 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     return sourceCodes.length === 1 && sourceCodes[0] === this.trainingTargets[0]!.writingSystem.tag;
   }
 
+  get targetLanguageTag(): string {
+    return this.trainingTargets[0]!.writingSystem.tag;
+  }
+
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly destroyRef: DestroyRef,
@@ -210,6 +215,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     private readonly projectService: SFProjectService,
     private readonly userProjectsService: SFUserProjectsService,
     private readonly router: Router,
+    private readonly featureFlags: FeatureFlagService,
     readonly i18n: I18nService,
     noticeService: NoticeService
   ) {
@@ -311,7 +317,11 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   }
 
   get allowAddingATrainingSource(): boolean {
-    return this.trainingSources.length < 2 && this.trainingSources.every(s => s != null);
+    return (
+      this.featureFlags.allowAdditionalTrainingSource.enabled &&
+      this.trainingSources.length < 2 &&
+      this.trainingSources.every(s => s != null)
+    );
   }
 
   async cancel(): Promise<void> {
@@ -323,8 +333,19 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
         of('Stay on page')
       ));
     if (leavePage) {
-      this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
+      this.navigateToDrafting();
     }
+  }
+
+  navigateToDrafting(): void {
+    this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
+  }
+
+  get allProjectsSavedAndSynced(): boolean {
+    return (
+      this.getControlState('projectSettings') === ElementState.Submitted &&
+      Array.from(this.syncStatus.values()).every(entry => entry.isSyncing === false)
+    );
   }
 
   async save(): Promise<void> {

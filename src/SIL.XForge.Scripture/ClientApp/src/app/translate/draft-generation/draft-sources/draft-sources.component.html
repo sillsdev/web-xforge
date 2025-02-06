@@ -15,7 +15,7 @@
           [isDisabled]="loading"
           [projects]="projects"
           [resources]="resources"
-          [value]="loading ? null : source?.paratextId"
+          [value]="loading ? undefined : source?.paratextId"
           (valueChange)="sourceSelected(draftingSources, $index, $event)"
           [placeholder]="projectPlaceholder(source)"
         ></app-project-select>
@@ -45,7 +45,7 @@
           [isDisabled]="loading"
           [projects]="projects"
           [resources]="resources"
-          [value]="loading ? null : source?.paratextId"
+          [value]="loading ? undefined : source?.paratextId"
           (valueChange)="sourceSelected(trainingSources, $index, $event)"
           [placeholder]="projectPlaceholder(source)"
         ></app-project-select>
@@ -82,7 +82,7 @@
           [isDisabled]="true"
           [projects]="projects"
           [resources]="resources"
-          [value]="loading ? null : source.paratextId"
+          [value]="loading ? undefined : source?.paratextId"
           [placeholder]="projectPlaceholder(source)"
         ></app-project-select>
       }
@@ -172,15 +172,12 @@
 
     @if (showSourceAndTargetLanguagesIdenticalWarning) {
       <app-notice mode="fill-dark" type="warning">
-        <h3>
-          Source and target languages are both {{ i18n.getLanguageDisplayName(trainingTargets[0].writingSystem.tag) }}
-        </h3>
+        <h3>Source and target languages are both {{ i18n.getLanguageDisplayName(targetLanguageTag) }}</h3>
         <p>
           The source and target projects all have the
-          <strong>{{ trainingTargets[0].writingSystem.tag }}</strong> language code. If you are translating into a
-          dialect or related language that does not have a separate ISO code, these settings may be correct. For all
-          other projects, having the source and target projects set to the same language may significantly reduce the
-          draft quality.
+          <strong>{{ targetLanguageTag }}</strong> language code. If you are translating into a dialect or related
+          language that does not have a separate ISO code, these settings may be correct. For all other projects, having
+          the source and target projects set to the same language may significantly reduce the draft quality.
         </p>
         <p>{{ t("how_to_change_language_codes") }}</p>
         <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
@@ -210,40 +207,40 @@
 </div>
 
 @if (getControlState("projectSettings") != null) {
-  <div class="saving">
-    <div class="saving-indeterminate"><mat-spinner [diameter]="32"></mat-spinner> Saving</div>
-    <div class="saving-complete"><mat-icon>checkmark</mat-icon> All changes saved</div>
-
-    <!-- Temporary save indicator -->
-    @if (getControlState("projectSettings") != null) {
-      <div style="border: 2px dashed grey; padding: 1em">
-        Save state: <code>{{ getControlState("projectSettings") }}</code>
-      </div>
-    }
-
-    <!-- Temporary rough display of sync statuses -->
-    @if (getControlState("projectSettings") === ElementState.Submitted) {
-      <div style="white-space: pre-line; border: 2px dashed grey; padding: 1em">
-        Project sync status:<br />
-        @for (entry of syncStatus | keyvalue; track entry.key) {
-          {{ entry.value.shortName }}:
+  <mat-card class="saving">
+    <mat-card-header>
+      <mat-card-title>Saving draft sources</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (getControlState("projectSettings") === ElementState.Submitting) {
+        <div class="saving-indicator"><mat-spinner [diameter]="24" [color]="'primary'"></mat-spinner> Saving</div>
+      } @else {
+        <div class="saving-indicator"><mat-icon class="success">checkmark</mat-icon> All changes saved</div>
+      }
+      @for (entry of syncStatus | keyvalue; track entry.key) {
+        <div>
           @if (entry.value.knownToBeOnSF) {
             @if (entry.value.isSyncing) {
-              Syncing
+              <mat-spinner [diameter]="24"></mat-spinner> {{ entry.value.shortName }} - syncing
             } @else {
-              Not syncing
-              @if (!entry.value.lastSyncSuccessful) {
-                There was a problem.
+              @if (entry.value.lastSyncSuccessful) {
+                <mat-icon class="success">check</mat-icon> {{ entry.value.shortName }} - sync successful
+              } @else {
+                <mat-icon class="failure">error</mat-icon> {{ entry.value.shortName }} - There was an error syncing
               }
             }
           } @else {
-            Connecting
+            <mat-spinner></mat-spinner> {{ entry.value.shortName }} - Connecting
           }
-          <br />
-        }
-      </div>
+        </div>
+      }
+    </mat-card-content>
+    @if (allProjectsSavedAndSynced) {
+      <mat-card-actions align="end">
+        <button mat-button (click)="navigateToDrafting()"><mat-icon>close</mat-icon> Close</button>
+      </mat-card-actions>
     }
-  </div>
+  </mat-card>
 }
 
 <ng-template #blankProject>
