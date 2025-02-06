@@ -3,8 +3,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DraftSourcesService } from '../draft-sources.service';
@@ -12,7 +16,7 @@ import { DraftSourcesService } from '../draft-sources.service';
 @Component({
   selector: 'app-confirm-sources',
   standalone: true,
-  imports: [TranslocoModule, NoticeComponent, MatCheckboxModule, MatIconModule],
+  imports: [TranslocoModule, NoticeComponent, MatCheckboxModule, MatIconModule, TranslocoMarkupModule],
   templateUrl: './confirm-sources.component.html',
   styleUrl: './confirm-sources.component.scss'
 })
@@ -22,14 +26,17 @@ export class ConfirmSourcesComponent implements OnInit {
   trainingSources: TranslateSource[] = [];
   trainingTargets: TranslateSource[] = [];
   draftingSources: TranslateSource[] = [];
-  languageCodesCompatible: boolean = true;
 
-  protected showSourceLanguagesNotCompatibleError = false;
+  protected warnTrainingAndDraftingSourceLanguagesNotCompatible = false;
+  protected warnTrainingSourceLanguagesNotCompatible = false;
+  protected projectSettingsUrl?: string;
 
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly i18nService: I18nService,
-    private readonly draftSourcesService: DraftSourcesService
+    private readonly draftSourcesService: DraftSourcesService,
+    private readonly activatedProject: ActivatedProjectService,
+    private readonly authService: AuthService
   ) {}
 
   get referenceLanguage(): string {
@@ -48,6 +55,14 @@ export class ConfirmSourcesComponent implements OnInit {
     return this.i18nService.enumerateList(this.draftingSources.filter(p => p != null).map(p => p.shortName));
   }
 
+  get isProjectAdmin(): boolean {
+    const userId = this.authService.currentUserId;
+    if (userId != null) {
+      return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
+    }
+    return false;
+  }
+
   ngOnInit(): void {
     this.draftSourcesService
       .getDraftProjectSources()
@@ -58,16 +73,18 @@ export class ConfirmSourcesComponent implements OnInit {
         this.draftingSources = draftingSources.filter(s => s !== undefined);
 
         // compare language codes
-        const trainingSourcesMatch =
-          this.trainingSources.length <= 1 ||
+        this.warnTrainingSourceLanguagesNotCompatible =
+          this.trainingSources.length >= 1 &&
           this.sourceLanguagesAreCompatible(this.trainingSources[0], this.trainingSources[1]);
-        const trainingDraftingSourcesMatch = this.sourceLanguagesAreCompatible(
+        this.warnTrainingAndDraftingSourceLanguagesNotCompatible = this.sourceLanguagesAreCompatible(
           this.trainingSources[0],
           this.draftingSources[0]
         );
-        this.languageCodesCompatible = trainingSourcesMatch && trainingDraftingSourcesMatch;
-        this.showSourceLanguagesNotCompatibleError = !this.languageCodesCompatible;
       });
+
+    this.activatedProject.projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectId => {
+      this.projectSettingsUrl = `/projects/${projectId}/settings`;
+    });
   }
 
   confirmationChanged(change: MatCheckboxChange): void {
