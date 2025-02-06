@@ -79,7 +79,6 @@
               </app-book-chapter-chooser>
               @if (chapterHasAudio) {
                 <button
-                  type="button"
                   mat-icon-button
                   [matTooltip]="t('play_chapter')"
                   [matTooltipDisabled]="isAudioPlaying()"
@@ -93,7 +92,6 @@
             <div class="action-icons">
               @if (canCreateScriptureAudio) {
                 <button
-                  type="button"
                   mat-icon-button
                   [matTooltip]="t('manage_audio')"
                   (click)="addAudioTimingData()"
@@ -187,24 +185,24 @@
       </div>
       @if (projectDoc && totalVisibleQuestions() > 0) {
         <div id="question-nav" [ngClass]="{ hide: textboxIsShownMobile || userOpenedChapterAudio }">
-          <div class="question-nav-left">
+          <div class="question-nav-start">
             @if (canCreateQuestions) {
               <button
                 mat-icon-button
-                type="button"
                 [matTooltip]="t('add_question')"
                 (click)="questionDialog()"
                 class="add-question-button"
               >
                 <mat-icon class="mirror-rtl">post_add</mat-icon>
               </button>
-              <button mat-button type="button" (click)="questionDialog()" class="add-question-button">
+              <button mat-button (click)="questionDialog()" class="add-question-button">
                 <mat-icon class="mirror-rtl">post_add</mat-icon>
                 <span>{{ t("add_question") }}</span>
               </button>
             }
             @if (!isQuestionListPermanent) {
-              <button mat-button type="button" (click)="setQuestionsOverlayVisibility(true)">
+              <button mat-button class="view-questions" (click)="setQuestionsOverlayVisibility(true)">
+                <mat-icon>keyboard_arrow_up</mat-icon>
                 {{ t("view_questions") }}
               </button>
             }
@@ -212,7 +210,6 @@
           <div class="question-nav-wrapper">
             <button
               mat-button
-              type="button"
               (click)="activateQuestion(prevQuestion!)"
               [disabled]="prevQuestion == null"
               class="prev-question"
@@ -222,7 +219,6 @@
             </button>
             <button
               mat-button
-              type="button"
               (click)="activateQuestion(nextQuestion!)"
               [disabled]="nextQuestion == null"
               class="next-question"
@@ -231,7 +227,6 @@
             </button>
             <button
               mat-icon-button
-              type="button"
               (click)="activateQuestion(prevQuestion!)"
               [disabled]="prevQuestion == null"
               class="prev-question"
@@ -240,7 +235,6 @@
             </button>
             <button
               mat-icon-button
-              type="button"
               (click)="activateQuestion(nextQuestion!)"
               [disabled]="nextQuestion == null"
               class="next-question"
