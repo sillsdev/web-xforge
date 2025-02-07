@@ -85,20 +85,6 @@
               <transloco key="draft_generation.non_pa_info_alert_source_text_not_selected"></transloco>
             }
           </app-notice>
-        } @else if (!isSourceAndTargetDifferent) {
-          <app-notice type="warning" icon="warning" data-test-id="warning-source-target-same">
-            @if (isProjectAdmin) {
-              <transloco
-                key="draft_generation.info_alert_same_source_and_target_language"
-                [params]="{ targetLanguageDisplayName, projectSettingsUrl: { route: projectSettingsUrl } }"
-              ></transloco>
-            } @else {
-              <transloco
-                key="draft_generation.non_pa_info_alert_same_source_and_target_language"
-                [params]="{ targetLanguageDisplayName }"
-              ></transloco>
-            }
-          </app-notice>
         } @else if (!canAccessDraftSourceIfAvailable(source)) {
           <app-notice type="warning" icon="warning" data-test-id="warning-source-no-access">
             <transloco
