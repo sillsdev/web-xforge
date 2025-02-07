@@ -20,7 +20,6 @@
     "language": "语言",
     "log_out": "登出",
     "logged_in_as": "登录为",
-    "manual": "Manual",
     "my_progress": "My progress",
     "offline": "Offline",
     "online": "Online",
@@ -40,7 +39,8 @@
   },
   "attach_audio": {
     "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording"
+    "tooltip_stop": "Stop recording",
+    "tooltip_upload": "Upload audio"
   },
   "canon": {
     "book_names": {

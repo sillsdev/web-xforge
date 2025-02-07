@@ -20,7 +20,6 @@
     "language": "Bahasa",
     "log_out": "Keluar",
     "logged_in_as": "Masuk sebagai",
-    "manual": "Petunjuk",
     "my_progress": "Kemajuan saya",
     "offline": "Luring",
     "online": "Daring",
@@ -40,7 +39,8 @@
   },
   "attach_audio": {
     "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording"
+    "tooltip_stop": "Stop recording",
+    "tooltip_upload": "Upload audio"
   },
   "canon": {
     "book_names": {

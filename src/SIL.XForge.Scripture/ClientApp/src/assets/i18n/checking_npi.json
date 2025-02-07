@@ -20,7 +20,6 @@
     "language": "भाषा",
     "log_out": "लग आउट",
     "logged_in_as": "लग इन भएको परिचय",
-    "manual": "निर्देशिका",
     "my_progress": "मेरो प्रगति",
     "offline": "अफलाइन",
     "online": "अनलाइन",
@@ -40,7 +39,8 @@
   },
   "attach_audio": {
     "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording"
+    "tooltip_stop": "Stop recording",
+    "tooltip_upload": "Upload audio"
   },
   "canon": {
     "book_names": {
