@@ -44,43 +44,9 @@
     }
   </div>
 
-  <app-notice mode="outline">
-    <strong>{{ t("incorrect_language_codes_reduce_quality") }}</strong>
-    <p>{{ t("how_to_change_language_codes") }}</p>
-    <mat-checkbox (change)="confirmationChanged($event)">{{ t("confirm_lang_codes_correct") }}</mat-checkbox>
-  </app-notice>
-
-  @if (warnTrainingAndDraftingSourceLanguagesNotCompatible) {
-    @if (isProjectAdmin) {
-      <app-notice class="warning-source-languages-different" type="warning" icon="warning">
-        <transloco
-          key="confirm_draft_sources.info_alert_different_training_and_source_language"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-        ></transloco>
-      </app-notice>
-    } @else {
-      <app-notice class="warning-source-languages-different" type="warning" icon="warning">
-        <transloco
-          key="confirm_draft_sources.non_pa_info_alert_different_training_and_source_language"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-        ></transloco>
-      </app-notice>
-    }
-  } @else if (warnTrainingSourceLanguagesNotCompatible) {
-    @if (isProjectAdmin) {
-      <app-notice class="warning-training-languages-different" type="warning" icon="warning">
-        <transloco
-          key="confirm_draft_sources.info_alert_different_additional_training_and_source_language"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-        ></transloco>
-      </app-notice>
-    } @else {
-      <app-notice class="warning-traing-languages-different" type="warning" icon="warning">
-        <transloco
-          key="confirm_draft_sources.non_pa_info_alert_different_additional_training_and_source_language"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-        ></transloco>
-      </app-notice>
-    }
-  }
+  <app-language-codes-confirmation
+    class="confirm-codes"
+    [draftSources]="draftSources"
+    (languageCodesVerified)="confirmationChanged($event)"
+  ></app-language-codes-confirmation>
 </ng-container>
