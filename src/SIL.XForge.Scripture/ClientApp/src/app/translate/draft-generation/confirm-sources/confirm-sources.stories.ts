@@ -4,6 +4,7 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
+import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
 import { ConfirmSourcesComponent } from './confirm-sources.component';
 
 const mockDraftService = mock(DraftSourcesService);
@@ -52,7 +53,7 @@ const meta: Meta = {
   component: ConfirmSourcesComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, TranslocoModule],
+      imports: [CommonModule, TranslocoModule, LanguageCodesConfirmationComponent],
       providers: [{ provide: DraftSourcesService, useValue: instance(mockDraftService) }]
     })
   ]
