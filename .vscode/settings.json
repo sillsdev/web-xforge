@@ -104,12 +104,12 @@
   "liveSassCompile.settings.generateMap": false,
   "omnisharp.enableEditorConfigSupport": true,
   "omnisharp.enableRoslynAnalyzers": true,
-  "omnisharp.organizeImportsOnFormat": true,
   "python.formatting.provider": "black",
   "typescript.tsdk": "./src/SIL.XForge.Scripture/ClientApp/node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.preferences.organizeImports": {
     "caseSensitivity": "caseInsensitive"
-  }
+  },
+  "dotnet.formatting.organizeImportsOnFormat": true
 }
