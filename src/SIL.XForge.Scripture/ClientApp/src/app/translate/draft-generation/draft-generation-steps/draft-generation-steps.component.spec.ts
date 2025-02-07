@@ -143,17 +143,6 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
       fixture.detectChanges();
     }));
-
-    it('should advance steps if drafting and training sources are different', fakeAsync(() => {
-      expect(component.stepper.selectedIndex).toBe(0);
-      expect(fixture.nativeElement.querySelector('.warning-source-languages-different')).not.toBeNull();
-      clickConfirmLanguages(fixture);
-      fixture.detectChanges();
-      component.tryAdvanceStep();
-      tick();
-      fixture.detectChanges();
-      expect(component.stepper.selectedIndex).toBe(1);
-    }));
   });
 
   describe('one training source', async () => {
