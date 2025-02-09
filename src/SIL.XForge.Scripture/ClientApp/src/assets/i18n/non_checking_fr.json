@@ -256,12 +256,12 @@
     "no_training_books": "Aucun livre de formation sélectionnée",
     "overview": "Aperçu",
     "reference_books": "Livres de référence",
-    "source_books_missing": "The reference text is missing one or more of the translated books in your project. Consider choosing a reference text that contains a match for all the translated books",
+    "source_books_missing": "Il manque au texte de référence un ou plusieurs livres traduits dans votre projet. Pensez à choisir un texte de référence qui contient une correspondance pour tous les livres traduits.",
     "these_source_books_cannot_be_used_for_training": "Les livres suivants ne peuvent pas être utilisés pour la formation car ils ne sont pas dans le texte source de la formation ({{ firstTrainingSource }}).",
     "these_source_books_cannot_be_used_for_translating": "Les livres suivants ne peuvent pas être traduits car ils ne figurent pas dans le texte source de la rédaction ({{ draftingSourceProjectName }}).",
     "training_books_will_appear": "Les livres de formation apparaîtront lorsque vous sélectionnerez des livres dans la rubrique \"livres traduits\".",
     "translated_books": "Livres traduits",
-    "translated_book_selected_no_training_pair": "Some of the training books you selected have no matching reference books selected. Please select matching reference books.",
+    "translated_book_selected_no_training_pair": "Certains des livres de formation que vous avez sélectionnés n'ont aucun livre de référence correspondant. Veuillez sélectionner les livres de référence correspondants.",
     "unusable_target_books": "Vous ne trouvez pas le livre que vous cherchez ? Assurez-vous que le livre est créé dans Paratext, puis synchronisez votre projet."
   },
   "draft_preview_books": {

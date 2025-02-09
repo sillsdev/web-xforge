@@ -253,15 +253,15 @@
     "loading": "Wird geladen...",
     "next": "Weiter",
     "no_available_books": "Du hast keine Bücher für die Erstellung von Entwürfen verfügbar.",
-    "no_training_books": "No training books selected",
+    "no_training_books": "Keine Bücher für die Schulung ausgewählt",
     "overview": "Übersicht",
     "reference_books": "Referenzbücher",
-    "source_books_missing": "The reference text is missing one or more of the translated books in your project. Consider choosing a reference text that contains a match for all the translated books",
+    "source_books_missing": "Im Referenztext fehlen ein oder mehrere der übersetzten Bücher Deines Projekts. Wähle einen Referenztext, der eine Übereinstimmung für alle übersetzten Bücher enthält",
     "these_source_books_cannot_be_used_for_training": "Die folgenden Bücher können nicht für die Schulungen verwendet werden, da sie nicht im Ausgangstext für die Schulung ({{ firstTrainingSource }}) enthalten sind.",
     "these_source_books_cannot_be_used_for_translating": "Die folgenden Bücher können nicht übersetzt werden, da sie nicht im Ausgangstext für Entwürfe ({{ draftingSourceProjectName }}) enthalten sind.",
     "training_books_will_appear": "Bücher für die Schulung werden angezeigt, wenn Du Bücher unter übersetzten Büchern auswählst",
     "translated_books": "Übersetzte Bücher",
-    "translated_book_selected_no_training_pair": "Some of the training books you selected have no matching reference books selected. Please select matching reference books.",
+    "translated_book_selected_no_training_pair": "Für einige der von Dir ausgewählten Bücher für die Schulung sind keine passenden Referenzbücher ausgewählt. Bitte wähle passende Referenzbücher aus.",
     "unusable_target_books": "Du kannst das Buch nicht finden? Stelle sicher, dass das Buch in Paratext erstellt wurde und synchronisiere Dein Projekt."
   },
   "draft_preview_books": {

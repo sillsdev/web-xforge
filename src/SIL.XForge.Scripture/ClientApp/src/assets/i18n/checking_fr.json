@@ -20,7 +20,6 @@
     "language": "Langue",
     "log_out": "Déconnexion",
     "logged_in_as": "Connecté en tant que",
-    "manual": "Manuel",
     "my_progress": "Ma progression",
     "offline": "Hors connexion",
     "online": "Connecté",
@@ -40,7 +39,8 @@
   },
   "attach_audio": {
     "tooltip_record": "Enregistrer l'audio",
-    "tooltip_stop": "Arrêter l'enregistrement"
+    "tooltip_stop": "Arrêter l'enregistrement",
+    "tooltip_upload": "Téléverser Fichier audio"
   },
   "canon": {
     "book_names": {
