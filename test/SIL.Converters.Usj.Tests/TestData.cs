@@ -453,7 +453,7 @@ public static partial class TestData
     )!;
 
     /// <summary>
-    /// Genesis 1:1 in USJ (with no sids).
+    /// Genesis 1:1 in USX (with no sids).
     /// </summary>
     public static readonly string UsxGen1V1WithNoSids = $"""
         <usx version="{Usx.UsxVersion}">

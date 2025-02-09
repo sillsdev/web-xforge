@@ -16,20 +16,27 @@ namespace SIL.Converters.Usj
     /// </remarks>
     public class UsjToUsx
     {
-        private string _chapterEid;
-        private string _verseEid;
+        /// <summary>
+        /// The eid which will be written for the current chapter.
+        /// </summary>
+        private string _currentChapterEid;
+
+        /// <summary>
+        /// The eid which will be written for the current verse.
+        /// </summary>
+        private string _currentVerseEid;
 
         private XmlElement CreateVerseEndElement(XmlDocument usxDoc)
         {
             XmlElement eidElement = usxDoc.CreateElement("verse");
-            eidElement.SetAttribute("eid", _verseEid);
+            eidElement.SetAttribute("eid", _currentVerseEid);
             return eidElement;
         }
 
         private XmlElement CreateChapterEndElement(XmlDocument usxDoc)
         {
             XmlElement eidElement = usxDoc.CreateElement("chapter");
-            eidElement.SetAttribute("eid", _chapterEid);
+            eidElement.SetAttribute("eid", _currentChapterEid);
             return eidElement;
         }
 
@@ -110,42 +117,42 @@ namespace SIL.Converters.Usj
                 throw new ArgumentOutOfRangeException(nameof(markerContent));
             }
 
-            // Store the previous verse eid so we can close them in the correct place
+            // Store the previous verse eid so we can close that verse in the correct place
             string lastVerseEid = null;
 
             // Create chapter and verse end elements from SID attributes.
-            if (_verseEid != null && (type == "verse" || (parentElement.Name == "para" && isLastItem)))
+            if (_currentVerseEid != null && (type == "verse" || (parentElement.Name == "para" && isLastItem)))
             {
                 eidElement = CreateVerseEndElement(usxDoc);
-                lastVerseEid = _verseEid;
-                _verseEid = null;
+                lastVerseEid = _currentVerseEid;
+                _currentVerseEid = null;
             }
 
             if (type == "verse" && usjMarker?.Sid != null)
             {
-                _verseEid = usjMarker.Sid;
+                _currentVerseEid = usjMarker.Sid;
             }
 
-            if (_chapterEid != null && (type == "chapter" || (type == "para" && isLastItem)))
+            if (_currentChapterEid != null && (type == "chapter" || (type == "para" && isLastItem)))
             {
                 eidElement = CreateChapterEndElement(usxDoc);
-                _chapterEid = null;
+                _currentChapterEid = null;
             }
 
             if (type == "chapter" && usjMarker?.Sid != null)
             {
-                _chapterEid = usjMarker.Sid;
+                _currentChapterEid = usjMarker.Sid;
             }
 
             // See if we are at a new verse
-            if (eidElement != null && isLastItem && _verseEid != null && _verseEid != lastVerseEid)
+            if (eidElement != null && isLastItem && _currentVerseEid != null && _currentVerseEid != lastVerseEid)
             {
                 // Write the eid element for the previous verse
                 parentElement.AppendChild(eidElement);
 
                 // Ensure that eid element for the current verse is not written
                 eidElement = null;
-                _verseEid = null;
+                _currentVerseEid = null;
             }
 
             // Append to parent to close the verse or chapter before this new node
@@ -166,18 +173,18 @@ namespace SIL.Converters.Usj
             // Allow for final chapter and verse end elements at the end of an implied para.
             if (isLastItem && parentElement.Name == Usx.UsxType)
             {
-                if (_verseEid != null)
+                if (_currentVerseEid != null)
                 {
                     parentElement.AppendChild(CreateVerseEndElement(usxDoc));
                 }
 
-                if (_chapterEid != null)
+                if (_currentChapterEid != null)
                 {
                     parentElement.AppendChild(CreateChapterEndElement(usxDoc));
                 }
 
-                _verseEid = null;
-                _chapterEid = null;
+                _currentVerseEid = null;
+                _currentChapterEid = null;
             }
         }
 
@@ -198,8 +205,8 @@ namespace SIL.Converters.Usj
         public XmlDocument UsjToUsxXmlDocument(IUsj usj)
         {
             // Reset any instance variables
-            _chapterEid = null;
-            _verseEid = null;
+            _currentChapterEid = null;
+            _currentVerseEid = null;
 
             // Create the USX document
             XmlDocument usxDoc = new XmlDocument { PreserveWhitespace = true };
