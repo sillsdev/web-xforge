@@ -60,20 +60,20 @@ namespace SIL.Converters.Usj
 
             // Set the attributes, placing unknown attributes in the Json Extension Data
             // This code implements the Typescript code: outObj = { ...outObj, ...attributes };
-            foreach (KeyValuePair<string, string> attrib in attributes)
+            foreach (KeyValuePair<string, string> attribute in attributes)
             {
                 PropertyInfo property = outObj
                     .GetType()
-                    .GetProperty(attrib.Key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                    .GetProperty(attribute.Key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
                 if (property != null && property.CanWrite)
                 {
                     // Set the property if it exists
-                    property.SetValue(outObj, attrib.Value);
+                    property.SetValue(outObj, attribute.Value);
                 }
                 else
                 {
                     // Add to the Json Extension Data if the property does not exist
-                    outObj.AdditionalData[attrib.Key] = attrib.Value;
+                    outObj.AdditionalData[attribute.Key] = attribute.Value;
                 }
             }
 
