@@ -222,9 +222,7 @@ header {
     padding: 9px;
 
     .mat-icon {
-      font-size: 24px;
-      height: 24px;
-      width: 24px;
+      @include checkingVars.md-icon-size(24px);
     }
 
     .view-questions .mat-icon {
