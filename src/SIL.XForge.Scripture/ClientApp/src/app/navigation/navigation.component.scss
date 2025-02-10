@@ -1,4 +1,5 @@
 @use 'src/variables';
+@use 'src/material-styles';
 
 mat-nav-list .mdc-list-item {
   font-weight: 500;
@@ -54,6 +55,10 @@ mat-nav-list .mdc-list-item {
 #tools-menu-list,
 #admin-pages-menu-list {
   padding-block: 0;
+}
+
+#admin-pages-menu-list {
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 #tools-menu-list {
