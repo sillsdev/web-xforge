@@ -9,7 +9,7 @@
       <span class="step-subtitle">{{ sourceSubtitle }}</span>
     </div>
     <div class="step-body">
-      <p>Select the project you want the draft to be translated from.</p>
+      <p>Select the project to translate.</p>
       @for (source of draftingSources; track $index) {
         <app-project-select
           [isDisabled]="loading"
@@ -31,12 +31,14 @@
     </div>
     <div class="step-body">
       <p>
-        Select projects that should be used as the reference when training the language model.
+        Select projects that should be used on the source side when training the language model. Choosing a back
+        translation often improves the model.
+
         @if (sourceLanguageDisplayName) {
-          All of these projects should be in <strong>{{ sourceLanguageDisplayName }}</strong> just like the draft
-          source.
+          All these should be in the same language as the draft source (<strong>{{ sourceLanguageDisplayName }}</strong
+          >).
         } @else {
-          All of these projects should be in same language as the draft source.
+          All these should be in the same language as the draft source.
         }
       </p>
 
@@ -72,10 +74,9 @@
     </div>
     <div class="step-body">
       <p>
-        The <strong>{{ currentProjectShortName }}</strong> project will always be used to train the language model.
-        Select any additional projects that should be used as the target when training the language model. All of these
-        projects should be in the target language (<strong>{{ targetLanguageDisplayName }}</strong
-        >).
+        Your project (<strong>{{ currentProjectShortName }}</strong
+        >) will always be used to train the language model.
+        <!-- Select here any other projects to be used on the target side. All of these should be in the language of the target (<strong>{{ targetLanguageDisplayName }}</strong>). -->
       </p>
       @for (source of trainingTargets; track $index) {
         <app-project-select
