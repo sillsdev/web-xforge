@@ -4,13 +4,16 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { BehaviorSubject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { SFUserProjectsService } from '../../../../../xforge-common/user-projects.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -20,6 +23,7 @@ const mockSFProjectService = mock(SFProjectService);
 const mockParatextService = mock(ParatextService);
 const mockMatDialogRef = mock(MatDialogRef);
 const mockPermissionsService = mock(PermissionsService);
+const mockProjectsService = mock(SFUserProjectsService);
 
 describe('EditorTabAddResourceDialogComponent', () => {
   configureTestingModule(() => ({
@@ -30,10 +34,15 @@ describe('EditorTabAddResourceDialogComponent', () => {
       { provide: ParatextService, useMock: mockParatextService },
       { provide: PermissionsService, useMock: mockPermissionsService },
       { provide: MatDialogRef, useMock: mockMatDialogRef },
+      { provide: SFUserProjectsService, useMock: mockProjectsService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MAT_DIALOG_DATA, useValue: {} }
     ]
   }));
+
+  beforeEach(() => {
+    when(mockProjectsService.projectDocs$).thenReturn(new BehaviorSubject<SFProjectProfileDoc[]>([]));
+  });
 
   afterEach(() => {
     expect(true).toBe(true); // Suppress 'no expectations' warning
@@ -50,9 +59,12 @@ describe('EditorTabAddResourceDialogComponent', () => {
   describe('getProjectsAndResources', () => {
     it('should set projects and resources and clear error flags', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.component['getProjectsAndResources']();
+      tick();
       env.component.projectLoadingFailed = true;
+      tick();
       env.component.resourceLoadingFailed = true;
+      tick();
+      env.component['getProjectsAndResources']();
       tick();
       verify(mockParatextService.getProjects()).once();
       verify(mockParatextService.getResources()).once();

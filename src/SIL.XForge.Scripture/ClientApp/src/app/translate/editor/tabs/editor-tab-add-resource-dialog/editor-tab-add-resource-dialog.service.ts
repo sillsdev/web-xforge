@@ -1,4 +1,6 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { SFUserProjectsService } from '../../../../../xforge-common/user-projects.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
 
@@ -7,20 +9,29 @@ import { ParatextService, SelectableProject } from '../../../../core/paratext.se
 })
 export class EditorTabAddResourceDialogService {
   // Cache values until page refresh
-  projects?: ParatextProject[];
-  resources?: SelectableProject[];
+  private projects?: ParatextProject[];
+  private resources?: SelectableProject[];
 
-  constructor(private readonly paratextService: ParatextService) {}
-
-  getProjects(): Promise<ParatextProject[] | undefined> {
-    return this.projects != null
-      ? Promise.resolve(this.projects)
-      : this.paratextService.getProjects().then(projects => (this.projects = projects));
+  constructor(
+    private readonly paratextService: ParatextService,
+    private readonly userProjectsService: SFUserProjectsService,
+    private readonly destroyRef: DestroyRef
+  ) {
+    this.userProjectsService.projectDocs$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projects => {
+      if (projects == null) return;
+      this.projects = await this.paratextService.getProjects();
+    });
   }
 
-  getResources(): Promise<SelectableProject[] | undefined> {
+  async getProjects(): Promise<ParatextProject[] | undefined> {
+    return this.projects != null
+      ? await Promise.resolve(this.projects)
+      : await this.paratextService.getProjects().then(projects => (this.projects = projects));
+  }
+
+  async getResources(): Promise<SelectableProject[] | undefined> {
     return this.resources != null
-      ? Promise.resolve(this.resources)
-      : this.paratextService.getResources().then(resources => (this.resources = resources));
+      ? await Promise.resolve(this.resources)
+      : await this.paratextService.getResources().then(resources => (this.resources = resources));
   }
 }
