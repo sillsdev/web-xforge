@@ -65,24 +65,10 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   transition:
     color 0.15s,
     background-color 0.15s;
-
-  &:not(:disabled):hover {
-    background-color: variables.$greenLight;
-    color: variables.$sf_grey;
-  }
 }
 
 .mat-mdc-icon-button.mat-mdc-button-base.mdc-icon-button {
   transition: color 0.15s;
-
-  &:not([disabled]):hover {
-    color: variables.$greenLight;
-  }
-}
-
-.mat-step-icon.mat-step-icon-selected {
-  --mat-stepper-header-selected-state-icon-background-color: #{variables.$greenLight};
-  --mat-stepper-header-selected-state-icon-foreground-color: #{variables.$sf_grey};
 }
 
 .offline-text {
