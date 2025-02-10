@@ -254,10 +254,6 @@ describe('DraftGenerationComponent', () => {
       return (this.fixture.nativeElement as HTMLElement).querySelector('app-draft-generation-steps');
     }
 
-    get warningSourceTargetSame(): HTMLElement | null {
-      return this.getElementByTestId('warning-source-target-same');
-    }
-
     getElementByTestId(testId: string): HTMLElement | null {
       return this.fixture.nativeElement.querySelector(`[data-test-id="${testId}"]`);
     }
@@ -277,7 +273,6 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(true);
       expect(env.component.isSourceProjectSet).toBe(true);
-      expect(env.component.isSourceAndTargetDifferent).toBe(true);
       expect(env.component.targetLanguage).toBe('en');
     });
 
@@ -361,9 +356,7 @@ describe('DraftGenerationComponent', () => {
 
       // source and target text are the same
       env.component.isSourceProjectSet = true;
-      env.component.isSourceAndTargetDifferent = false;
       env.fixture.detectChanges();
-      expect(env.warningSourceTargetSame).toBeNull();
     });
     describe('source text missing', () => {
       it('should show warning with settings link when source text is missing AND target language is supported, user is Paratext Admin', () => {
@@ -430,7 +423,6 @@ describe('DraftGenerationComponent', () => {
         });
         env.component.isPreTranslationApproved = true;
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         expect(env.getElementByTestId('warning-source-no-access')).not.toBeNull();
       });
@@ -467,7 +459,6 @@ describe('DraftGenerationComponent', () => {
         env.component.isBackTranslation = false;
         env.component.isPreTranslationApproved = false;
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
@@ -488,7 +479,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = false;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
@@ -509,7 +499,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = false;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
@@ -530,7 +519,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
@@ -555,7 +543,6 @@ describe('DraftGenerationComponent', () => {
         });
         env.component.isPreTranslationApproved = true;
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-training-source-no-access')).not.toBeNull();
@@ -586,7 +573,6 @@ describe('DraftGenerationComponent', () => {
         env.component.isBackTranslation = false;
         env.component.isPreTranslationApproved = false;
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
@@ -608,7 +594,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = false;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
@@ -630,29 +615,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = false;
-        env.component.isSourceAndTargetDifferent = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              draftingSources: [undefined],
-              trainingSources: [
-                {
-                  noAccess: true
-                } as DraftSource,
-                undefined
-              ],
-              trainingTargets: [undefined]
-            } as DraftSourcesAsArrays)
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
@@ -678,7 +640,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
@@ -704,7 +665,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
@@ -726,7 +686,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
@@ -750,7 +709,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).not.toBeNull();
@@ -781,7 +739,6 @@ describe('DraftGenerationComponent', () => {
         env.component.isBackTranslation = false;
         env.component.isPreTranslationApproved = false;
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
@@ -803,7 +760,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = false;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
@@ -825,7 +781,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = false;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
@@ -851,7 +806,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
@@ -875,7 +829,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
@@ -897,7 +850,6 @@ describe('DraftGenerationComponent', () => {
           );
         });
         env.component.isSourceProjectSet = true;
-        env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
@@ -969,7 +921,6 @@ describe('DraftGenerationComponent', () => {
       env.component.isBackTranslation = false;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = false;
-      env.component.isSourceAndTargetDifferent = false;
       env.component.isPreTranslationApproved = false;
       env.fixture.detectChanges();
       expect(env.component.isBackTranslationMode).toBe(false);
@@ -989,7 +940,6 @@ describe('DraftGenerationComponent', () => {
       env.component.isBackTranslation = false;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = false;
-      env.component.isSourceAndTargetDifferent = false;
       env.component.isPreTranslationApproved = true;
       env.fixture.detectChanges();
       expect(env.component.isBackTranslationMode).toBe(false);
@@ -1009,7 +959,6 @@ describe('DraftGenerationComponent', () => {
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = false;
-      env.component.isSourceAndTargetDifferent = false;
       env.component.isPreTranslationApproved = true;
       env.fixture.detectChanges();
       expect(env.component.isBackTranslationMode).toBe(true);

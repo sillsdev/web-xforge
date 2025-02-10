@@ -207,40 +207,6 @@ describe('I18nService', () => {
     });
   });
 
-  describe('areLanguagesCompatible', () => {
-    it('should return true for identical codes', () => {
-      const service = getI18nService();
-      service.setLocale('en');
-      expect(service.languageCodesEquivalent('fr', 'fr')).toBe(true);
-    });
-
-    it('should return true when codes have different regions', () => {
-      const service = getI18nService();
-      service.setLocale('en');
-      expect(service.languageCodesEquivalent('es', 'es-SP-latn')).toBe(true);
-      expect(service.languageCodesEquivalent('zh-CN', 'zh-Hant')).toBe(true);
-    });
-
-    it('should return true if codes have the same name', () => {
-      const service = getI18nService();
-      service.setLocale('en');
-      expect(service.languageCodesEquivalent('npi', 'nep')).toBe(true);
-      expect(service.languageCodesEquivalent('zho', 'chi')).toBe(true);
-    });
-
-    it('should return false for different codes', () => {
-      const service = getI18nService();
-      service.setLocale('en');
-      expect(service.languageCodesEquivalent('ar', 'az')).toBe(false);
-    });
-
-    it('should return false if codes are not formatted correctly', () => {
-      const service = getI18nService();
-      service.setLocale('en');
-      expect(service.languageCodesEquivalent('a-r', 'a-r')).toBe(false);
-    });
-  });
-
   describe('getPluralRule', () => {
     it('should return rule for zero, one and other', () => {
       const service = getI18nService();

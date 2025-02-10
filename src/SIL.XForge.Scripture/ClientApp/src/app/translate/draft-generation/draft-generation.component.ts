@@ -88,7 +88,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   isTargetLanguageSupported = true;
   isBackTranslation = true;
   isSourceProjectSet = true;
-  isSourceAndTargetDifferent = true;
 
   source?: DraftSource;
   trainingSource?: DraftSource;
@@ -177,7 +176,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       (!this.isBackTranslationMode || this.isBackTranslation) &&
       this.isTargetLanguageSupported &&
       this.isSourceProjectSet &&
-      this.isSourceAndTargetDifferent &&
       this.canAccessDraftSourceIfAvailable(this.source) &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
@@ -255,7 +253,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
               translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
             this.additionalTrainingSourceLanguage =
               translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag;
-            this.isSourceAndTargetDifferent = this.sourceLanguage !== this.targetLanguage;
 
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
