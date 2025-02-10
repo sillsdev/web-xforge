@@ -21,6 +21,16 @@ public static partial class TestData
     [GeneratedRegex(@"(?!>)[ \r\n\t]+(?=<\/usx>)", RegexOptions.Compiled)]
     private static partial Regex LastElementWhiteSpace();
 
+    [GeneratedRegex(@" vid=""[A-Za-z0-9: ]+""", RegexOptions.Compiled)]
+    private static partial Regex VidAttributes();
+
+    [GeneratedRegex(@"<(verse|chapter) eid=""[A-Za-z0-9: ]+"" />", RegexOptions.Compiled)]
+    private static partial Regex EidElements();
+
+    public static string RemoveEidElements(string xml) => EidElements().Replace(xml, string.Empty);
+
+    public static string RemoveVidAttributes(string xml) => VidAttributes().Replace(xml, string.Empty);
+
     public static string RemoveXmlWhiteSpace(string xml)
     {
         // C# adds whitespace to self-closing elements, so we do not remove it
@@ -387,7 +397,7 @@ public static partial class TestData
           <book code="GEN" style="id" />
           <chapter number="1" style="c" sid="GEN 1" />
           <verse number="1" style="v" sid="GEN 1:1" />In the beginning <verse eid="GEN 1:1" />
-          <verse number="2" style="v" sid="GEN 1:2" /><chapter eid="GEN 1" />
+          <verse number="2" style="v" sid="GEN 1:2" /><verse eid="GEN 1:2" /><chapter eid="GEN 1" />
           <chapter number="2" style="c" sid="GEN 2" /><chapter eid="GEN 2" />
           <chapter number="3" style="c" sid="GEN 3" /><chapter eid="GEN 3" />
         </usx>
@@ -426,7 +436,7 @@ public static partial class TestData
           <verse number="1" style="v" sid="GEN 1:1" />In the beginning <verse eid="GEN 1:1" />
           <verse number="2" style="v" sid="GEN 1:2" /><verse eid="GEN 1:2" />
           <verse number="3" style="v" sid="GEN 1:3" /><verse eid="GEN 1:3" />
-          <verse number="4" style="v" sid="GEN 1:4" />
+          <verse number="4" style="v" sid="GEN 1:4" /><verse eid="GEN 1:4" />
           <chapter eid="GEN 1" />
         </usx>
         """;
@@ -463,5 +473,31 @@ public static partial class TestData
           <verse number="3" style="v" />
           <verse number="4" style="v" />
         </usx>
+        """;
+
+    /// <summary>
+    /// Mark 1:1 in USX (with poetic formatting).
+    /// </summary>
+    public static readonly string UsxMrk1V1WithPoeticFormatting = $"""
+        <usx version="{Usx.UsxVersion}">
+          <book code="MRK" style="id" />
+          <para style="toc1">Mark</para>
+          <para style="toc2">Mark</para>
+          <para style="mt1">The Gospel according to St. Mark</para>
+          <chapter number="1" style="c" sid="MRK 1" />
+          <para style="s1">The office of John the Baptist</para>
+          <para style="m">
+            <verse number="1" style="v" sid="MRK 1:1" />The beginning of the gospel of Jesus Christ, the Son of God; <verse eid="MRK 1:1" />
+            <verse number="2" style="v" sid="MRK 1:2" />As it is written in the prophets,</para>
+          <para style="b" vid="MRK 1:2" />
+          <para style="q1" vid="MRK 1:2">“Behold, I send my messenger before thy face,</para>
+          <para style="q2" vid="MRK 1:2">which shall prepare thy way before thee. <verse eid="MRK 1:2" /></para>
+          <para style="q1">
+            <verse number="3" style="v" sid="MRK 1:3" />The voice of one crying in the wilderness,</para>
+          <para style="q1" vid="MRK 1:3">‘Prepare ye the way of the <char style="nd">Lord</char>,</para>
+          <para style="q2" vid="MRK 1:3">make his paths straight.’”<verse eid="MRK 1:3" /></para>
+          <para style="b" />
+          <chapter eid="MRK 1" />
+        </usx>  
         """;
 }
