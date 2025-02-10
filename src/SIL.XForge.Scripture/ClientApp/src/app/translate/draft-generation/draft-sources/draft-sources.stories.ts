@@ -5,20 +5,22 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
-import { DialogService } from '../../../xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from '../../../xforge-common/feature-flags/feature-flag.service';
-import { SFUserProjectsService } from '../../../xforge-common/user-projects.service';
-import { ParatextProject } from '../../core/models/paratext-project';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { ParatextService, SelectableProjectWithLanguageCode } from '../../core/paratext.service';
-import { SFProjectService } from '../../core/sf-project.service';
-import { DraftSourcesComponent } from '../../translate/draft-generation/draft-sources/draft-sources.component';
+import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
+import { DialogService } from '../../../../xforge-common/dialog.service';
+import {
+  createTestFeatureFlag,
+  FeatureFlagService
+} from '../../../../xforge-common/feature-flags/feature-flag.service';
+import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
+import { ParatextProject } from '../../../core/models/paratext-project';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { ParatextService, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
+import { DraftSourcesComponent } from '../../../translate/draft-generation/draft-sources/draft-sources.component';
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDestroyRef = mock(DestroyRef);
 const mockParatextService = mock(ParatextService);
-const mockDialogService = mock(DialogService);
 const mockProjectService = mock(SFProjectService);
 const mockUserProjectsService = mock(SFUserProjectsService);
 const mockRouter = mock(Router);
@@ -34,7 +36,9 @@ const defaultArgs: DraftSourcesComponentStoryState = {
   mixedSource: true
 };
 
-when(mockActivatedProjectService.changes$).thenReturn(of({ data: createTestProjectProfile() } as SFProjectProfileDoc));
+const testProjectDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
+when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+when(mockActivatedProjectService.projectDoc).thenReturn(testProjectDoc);
 when(mockFeatureFlags.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
 
 const languageCodes = ['en', 'fr', 'es', 'pt', 'de', 'ru', 'zh', 'ar', 'hi', 'bn'];
