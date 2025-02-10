@@ -36,7 +36,6 @@ export type I18nKeyForComponent<T extends keyof typeof en> = ObjectPaths<(typeof
 // this mismatch is left to be solved at another time.
 
 export const IGNORE_COOKIE_LOCALE = new InjectionToken<boolean>('IGNORE_COOKIE_LOCALE');
-const LANGUAGE_CODE_REGEX = /(^[a-zA-Z]{2,3})-*/;
 
 @Injectable()
 export class TranslationLoader implements TranslocoLoader {
