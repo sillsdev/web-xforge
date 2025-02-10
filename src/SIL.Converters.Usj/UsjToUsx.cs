@@ -14,32 +14,8 @@ namespace SIL.Converters.Usj
     /// Ported to C# from this file:
     /// <c>https://github.com/BiblioNexus-Foundation/scripture-editors/blob/main/packages/utilities/src/converters/usj/usj-to-usx.ts</c>
     /// </remarks>
-    public class UsjToUsx
+    public static class UsjToUsx
     {
-        /// <summary>
-        /// The eid which will be written for the current chapter.
-        /// </summary>
-        private string _currentChapterEid;
-
-        /// <summary>
-        /// The eid which will be written for the current verse.
-        /// </summary>
-        private string _currentVerseEid;
-
-        private XmlElement CreateVerseEndElement(XmlDocument usxDoc)
-        {
-            XmlElement eidElement = usxDoc.CreateElement("verse");
-            eidElement.SetAttribute("eid", _currentVerseEid);
-            return eidElement;
-        }
-
-        private XmlElement CreateChapterEndElement(XmlDocument usxDoc)
-        {
-            XmlElement eidElement = usxDoc.CreateElement("chapter");
-            eidElement.SetAttribute("eid", _currentChapterEid);
-            return eidElement;
-        }
-
         private static void SetAttributes(XmlElement element, UsjMarker markerContent)
         {
             // Get the standard attributes
@@ -82,118 +58,43 @@ namespace SIL.Converters.Usj
             }
         }
 
-        private void ConvertUsjRecurse(
-            object markerContent,
-            XmlElement parentElement,
-            XmlDocument usxDoc,
-            bool isLastItem
-        )
+        private static void ConvertUsjRecurse(object markerContent, XmlElement parentElement, XmlDocument usxDoc)
         {
             XmlNode node;
-            string type = null;
-            XmlElement eidElement = null;
-            UsjMarker usjMarker = markerContent as UsjMarker;
-            if (markerContent is string markerText)
+            switch (markerContent)
             {
-                node = usxDoc.CreateTextNode(markerText);
-            }
-            else if (usjMarker != null)
-            {
-                type = usjMarker.Type.Replace("table:", string.Empty);
-                XmlElement element = usxDoc.CreateElement(type);
-                node = element;
-                SetAttributes(element, usjMarker);
-                if (usjMarker.Content != null)
+                case string markerText:
+                    node = usxDoc.CreateTextNode(markerText);
+                    break;
+                case UsjMarker usjMarker:
                 {
-                    for (int i = 0; i < usjMarker.Content.Count; i++)
+                    string type = usjMarker.Type.Replace("table:", string.Empty);
+                    XmlElement element = usxDoc.CreateElement(type);
+                    node = element;
+                    SetAttributes(element, usjMarker);
+
+                    if (usjMarker.Content != null)
                     {
-                        bool elementIsLastItem = i == usjMarker.Content.Count - 1;
-                        ConvertUsjRecurse(usjMarker.Content[i], element, usxDoc, elementIsLastItem);
+                        foreach (object content in usjMarker.Content)
+                        {
+                            ConvertUsjRecurse(content, element, usxDoc);
+                        }
                     }
+
+                    break;
                 }
-            }
-            else
-            {
-                throw new ArgumentOutOfRangeException(nameof(markerContent));
-            }
-
-            // Store the previous verse eid so we can close that verse in the correct place
-            string lastVerseEid = null;
-
-            // Create chapter and verse end elements from SID attributes.
-            if (_currentVerseEid != null && (type == "verse" || (parentElement.Name == "para" && isLastItem)))
-            {
-                eidElement = CreateVerseEndElement(usxDoc);
-                lastVerseEid = _currentVerseEid;
-                _currentVerseEid = null;
-            }
-
-            if (type == "verse" && usjMarker?.Sid != null)
-            {
-                _currentVerseEid = usjMarker.Sid;
-            }
-
-            if (_currentChapterEid != null && (type == "chapter" || (type == "para" && isLastItem)))
-            {
-                eidElement = CreateChapterEndElement(usxDoc);
-                _currentChapterEid = null;
-            }
-
-            if (type == "chapter" && usjMarker?.Sid != null)
-            {
-                _currentChapterEid = usjMarker.Sid;
-            }
-
-            // See if we are at a new verse
-            if (eidElement != null && isLastItem && _currentVerseEid != null && _currentVerseEid != lastVerseEid)
-            {
-                // Write the eid element for the previous verse
-                parentElement.AppendChild(eidElement);
-
-                // Ensure that eid element for the current verse is not written
-                eidElement = null;
-                _currentVerseEid = null;
-            }
-
-            // Append to parent to close the verse or chapter before this new node
-            if (eidElement != null && !isLastItem)
-            {
-                parentElement.AppendChild(eidElement);
-                eidElement = null;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(markerContent));
             }
 
             parentElement.AppendChild(node);
-
-            // Append the eid element as this is the last element
-            if (eidElement != null)
-            {
-                parentElement.AppendChild(eidElement);
-            }
-
-            // Allow for final chapter and verse end elements at the end of an implied para.
-            if (isLastItem && parentElement.Name == Usx.UsxType)
-            {
-                if (_currentVerseEid != null)
-                {
-                    parentElement.AppendChild(CreateVerseEndElement(usxDoc));
-                }
-
-                if (_currentChapterEid != null)
-                {
-                    parentElement.AppendChild(CreateChapterEndElement(usxDoc));
-                }
-
-                _currentVerseEid = null;
-                _currentChapterEid = null;
-            }
         }
 
-        private void UsjToUsxDom(IUsj usj, XmlDocument usxDoc)
+        private static void UsjToUsxDom(IUsj usj, XmlDocument usxDoc)
         {
-            for (int i = 0; i < usj.Content.Count; i++)
+            foreach (object content in usj.Content)
             {
-                bool isLastItem = i == usj.Content.Count - 1;
-                ConvertUsjRecurse(usj.Content[i], usxDoc.DocumentElement, usxDoc, isLastItem);
+                ConvertUsjRecurse(content, usxDoc.DocumentElement, usxDoc);
             }
         }
 
@@ -202,12 +103,9 @@ namespace SIL.Converters.Usj
         /// </summary>
         /// <param name="usj">The USJ object.</param>
         /// <returns>The XML Document.</returns>
-        public XmlDocument UsjToUsxXmlDocument(IUsj usj)
+        /// <remarks>Refer to remarks for <seealso cref="UsjToUsxString"/>.</remarks>
+        public static XmlDocument UsjToUsxXmlDocument(IUsj usj)
         {
-            // Reset any instance variables
-            _currentChapterEid = null;
-            _currentVerseEid = null;
-
             // Create the USX document
             XmlDocument usxDoc = new XmlDocument { PreserveWhitespace = true };
             XmlElement documentElement = usxDoc.CreateElement(Usx.UsxType);
@@ -222,7 +120,12 @@ namespace SIL.Converters.Usj
         /// </summary>
         /// <param name="usj">The USJ object.</param>
         /// <returns>The USX as a string.</returns>
-        public string UsjToUsxString(IUsj usj)
+        /// <remarks>
+        /// The USX is not fully USX compliant as it does not contain <c>vid</c> attributes or <c>eid</c>
+        /// attributes for <c>verse</c> or <c>chapter</c> elements. If you wish to have these,
+        /// please insert via post-processing, or round-tripping via USFM in ParatextData.
+        /// </remarks>
+        public static string UsjToUsxString(IUsj usj)
         {
             XmlDocument usxDoc = UsjToUsxXmlDocument(usj);
 
