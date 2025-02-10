@@ -14,17 +14,17 @@
     "helps": ""
   },
   {
+    "localName": "Bahasa Indonesia",
+    "englishName": "Indonesian",
+    "tags": ["id", "id-ID"],
+    "production": true
+  },
+  {
     "localName": "français",
     "englishName": "French",
     "tags": ["fr", "fr-FR"],
     "production": true,
     "helps": "fr"
-  },
-  {
-    "localName": "Bahasa Indonesia",
-    "englishName": "Indonesian",
-    "tags": ["id", "id-ID"],
-    "production": true
   },
   {
     "localName": "Español",
@@ -60,10 +60,23 @@
     "production": true
   },
   {
+    "localName": "ខ្មែរ",
+    "englishName": "Khmer",
+    "tags": ["km", "km-KH"],
+    "production": true
+  },
+  {
     "localName": "Azərbaycanca",
     "englishName": "Azerbaijani",
     "tags": ["az", "az-AZ"],
     "production": true
+  },
+  {
+    "localName": "Deutsch",
+    "englishName": "German",
+    "tags": ["de", "de-DE"],
+    "production": true,
+    "helps": "de"
   },
   {
     "localName": "ꤊꤢ꤬ꤛꤢ꤭ꤜꤟꤤ꤬",
@@ -78,13 +91,6 @@
     "production": true
   },
   {
-    "localName": "Deutsch",
-    "englishName": "German",
-    "tags": ["de", "de-DE"],
-    "production": true,
-    "helps": "de"
-  },
-  {
     "localName": "नेपाली",
     "englishName": "Nepali",
     "tags": ["npi", "npi-NP"],
@@ -94,12 +100,6 @@
     "localName": "ພາສາລາວ",
     "englishName": "Lao",
     "tags": ["lo", "lo-LA"],
-    "production": true
-  },
-  {
-    "localName": "ខ្មែរ",
-    "englishName": "Khmer",
-    "tags": ["km", "km-KH"],
     "production": true
   }
 ]
