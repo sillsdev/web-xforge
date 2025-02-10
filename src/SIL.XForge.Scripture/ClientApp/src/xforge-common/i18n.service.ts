@@ -413,18 +413,6 @@ export class I18nService {
     }
   }
 
-  languageCodesEquivalent(languageCode: string, otherLanguageCode: string): boolean {
-    const languageCodeMatch = LANGUAGE_CODE_REGEX.exec(languageCode);
-    const otherLanguageCodeMatch = LANGUAGE_CODE_REGEX.exec(otherLanguageCode);
-    if (languageCodeMatch == null || otherLanguageCodeMatch == null) return false;
-    if (languageCodeMatch[1] === otherLanguageCodeMatch[1]) return true;
-
-    return (
-      new Intl.DisplayNames(['en'], { type: 'language' }).of(languageCodeMatch[1]) ===
-      new Intl.DisplayNames(['en'], { type: 'language' }).of(otherLanguageCodeMatch[1])
-    );
-  }
-
   static getHumanReadableTimeZoneOffset(localeCode: string, date: Date): string {
     return new Intl.DateTimeFormat(localeCode, { timeZoneName: 'short' })
       .formatToParts(date)

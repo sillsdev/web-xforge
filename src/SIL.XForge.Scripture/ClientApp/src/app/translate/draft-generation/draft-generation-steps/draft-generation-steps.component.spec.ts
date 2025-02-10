@@ -7,6 +7,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -36,6 +37,7 @@ describe('DraftGenerationStepsComponent', () => {
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
   const mockDraftSourceService = mock(DraftSourcesService);
+  const mockAuthService = mock(AuthService);
 
   const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
   when(mockTrainingDataQuery.localChanges$).thenReturn(of());
@@ -56,7 +58,8 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: ProgressService, useMock: mockProgressService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
-      { provide: NoticeService, useMock: mockNoticeService }
+      { provide: NoticeService, useMock: mockNoticeService },
+      { provide: AuthService, useMock: mockAuthService }
     ]
   }));
 
