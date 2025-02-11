@@ -8,7 +8,6 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Observable, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -229,14 +228,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.currentUserDoc == null
       ? undefined
       : (this._selectedProjectDoc?.data?.userRoles[this.currentUserDoc.id] as SFProjectRole);
-  }
-
-  get texts(): TextInfo[] {
-    return this._selectedProjectDoc?.data?.texts.slice().sort((a, b) => a.bookNum - b.bookNum) || [];
-  }
-
-  get appName(): string {
-    return environment.siteName;
   }
 
   async ngOnInit(): Promise<void> {
