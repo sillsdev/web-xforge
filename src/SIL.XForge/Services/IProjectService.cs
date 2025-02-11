@@ -5,7 +5,7 @@ namespace SIL.XForge.Services;
 
 public interface IProjectService
 {
-    Task AddUserAsync(string curUserId, string projectId, string projectRole = null);
+    Task AddUserAsync(string curUserId, string projectId, string? projectRole = null);
     Task RemoveUserAsync(string curUserId, string projectId, string projectUserId);
     Task RemoveUserWithoutPermissionsCheckAsync(string curUserId, string projectId, string projectUserId);
     Task<string> GetProjectRoleAsync(string curUserId, string projectId);

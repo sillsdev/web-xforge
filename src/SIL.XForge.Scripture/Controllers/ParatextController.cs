@@ -31,6 +31,7 @@ public class ParatextController : ControllerBase
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IMachineProjectService _machineProjectService;
     private readonly IParatextService _paratextService;
+    private readonly ISFProjectService _projectService;
     private readonly IUserAccessor _userAccessor;
     private readonly IRepository<UserSecret> _userSecrets;
 
@@ -38,6 +39,7 @@ public class ParatextController : ControllerBase
         IExceptionHandler exceptionHandler,
         IMachineProjectService machineProjectService,
         IParatextService paratextService,
+        ISFProjectService projectService,
         IUserAccessor userAccessor,
         IRepository<UserSecret> userSecrets
     )
@@ -45,6 +47,7 @@ public class ParatextController : ControllerBase
         _userSecrets = userSecrets;
         _machineProjectService = machineProjectService;
         _paratextService = paratextService;
+        _projectService = projectService;
         _userAccessor = userAccessor;
         _exceptionHandler = exceptionHandler;
         _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
@@ -90,6 +93,32 @@ public class ParatextController : ControllerBase
 
         // Return the zip file stream
         return File(outputStream, "application/zip", fileName);
+    }
+
+    /// <summary>
+    /// Joins a user to an existing project already configured in Scripture Forge.
+    /// </summary>
+    /// <param name="projectId">The Scripture Forge project identifier.</param>
+    /// <returns>An HTTP Response code corresponding to the action's success.</returns>
+    /// <response code="200">The user has joined to the project successfully.</response>
+    /// <response code="403">The user does not have permission to join this project.</response>
+    /// <response code="404">The project has not been connected to on Scripture Forge before.</response>
+    [HttpPost("projects/{projectId}/join")]
+    public async Task<ActionResult> JoinProjectAsync(string projectId)
+    {
+        try
+        {
+            await _projectService.AddUserAsync(_userAccessor.UserId, projectId, projectRole: null);
+            return Ok();
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
     }
 
     /// <summary>
