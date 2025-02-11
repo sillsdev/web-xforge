@@ -264,6 +264,40 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetProjectsAsync_IsDraftingEnabled()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
+
+        // 1: A back translation with pre-translation disabled
+        SFProject project1 = env.NewSFProject(env.Project01);
+        project1.TranslateConfig.ProjectType = ProjectType.BackTranslation.ToString();
+
+        // 2: Not a back translation and pre-translation enabled
+        SFProject project2 = env.NewSFProject(env.Project02);
+        project2.TranslateConfig.PreTranslate = true;
+
+        // 3: Not a back translation and pre-translation disabled
+        SFProject project3 = env.NewSFProject(env.Project03);
+        env.AddProjectRepository([project1, project2, project3]);
+
+        // SUT
+        IReadOnlyList<ParatextProject> projects = await env.Service.GetProjectsAsync(userSecret);
+        Assert.AreEqual(3, projects.Count);
+
+        // 1: A back translation with pre-translation disabled
+        Assert.IsTrue(projects[0].IsDraftingEnabled);
+
+        // 2: Not a back translation and pre-translation enabled
+        Assert.IsTrue(projects[1].IsDraftingEnabled);
+
+        // 3: Not a back translation and pre-translation disabled
+        Assert.IsFalse(projects[2].IsDraftingEnabled);
+    }
+
+    [Test]
     public async Task GetResourcesAsync_ReturnResources()
     {
         var env = new TestEnvironment();
@@ -6569,11 +6603,13 @@ public class ParatextServiceTests
             return mockSource;
         }
 
-        public SFProject NewSFProject() =>
-            new SFProject
+        public SFProject NewSFProject(string? projectId = null)
+        {
+            projectId ??= Project01;
+            return new SFProject
             {
-                Id = "sf_id_" + Project01,
-                ParatextId = PTProjectIds[Project01].Id,
+                Id = "sf_id_" + projectId,
+                ParatextId = PTProjectIds[projectId].Id,
                 Name = "Full Name " + Project01,
                 ShortName = "P01",
                 WritingSystem = new WritingSystem { Tag = "en" },
@@ -6634,6 +6670,7 @@ public class ParatextServiceTests
                     },
                 },
             };
+        }
 
         public void AddTextDataOps(string projectId, string book, int chapter)
         {
@@ -6685,7 +6722,12 @@ public class ParatextServiceTests
         public void AddProjectRepository(SFProject proj = null)
         {
             proj ??= NewSFProject();
-            RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>([proj]));
+            AddProjectRepository([proj]);
+        }
+
+        public void AddProjectRepository(SFProject[] projects)
+        {
+            RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(projects));
             MockFileSystemService
                 .DirectoryExists(
                     Arg.Is<string>((string path) => path.EndsWith(Path.Combine(PTProjectIds[Project01].Id, "target")))
