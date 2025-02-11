@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { SFUserProjectsService } from '../../../../../xforge-common/user-projects.service';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
 
