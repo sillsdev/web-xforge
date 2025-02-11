@@ -10,6 +10,7 @@ import QuillTextBlot from 'quill/blots/text';
 import QuillClipboard from 'quill/modules/clipboard';
 import QuillHistory, { StackItem } from 'quill/modules/history';
 import { DeltaOperation, StringMap } from 'rich-text';
+import { isString } from '../../../type-utils';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 
@@ -224,6 +225,28 @@ export function registerScripture(): string[] {
     contentNode!: HTMLElement;
   }
   formats.push(EmptyEmbed);
+
+  class JumpLinkEmbed extends QuillEmbedBlot {
+    static blotName = 'link';
+    static tagName = 'span'; // TODO: Support jump links in the future
+
+    static create(value: any): Node {
+      const node = super.create(value) as HTMLElement;
+
+      // If link is a jump link to a project/book/chapter/verse, extract the link contents and display as non-link text
+      if (value['link-href'] != null && isString(value.contents?.ops?.[0]?.insert)) {
+        node.innerText = value.contents.ops[0].insert;
+      }
+
+      setUsxValue(node, value);
+      return node;
+    }
+
+    static value(node: HTMLElement): any {
+      return getUsxValue(node);
+    }
+  }
+  formats.push(JumpLinkEmbed);
 
   /** Span of characters or elements, that can have formatting. */
   class CharInline extends QuillInlineBlot {
