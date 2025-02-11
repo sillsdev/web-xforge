@@ -1736,6 +1736,26 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task AddUserAsync_AlreadyExists()
+    {
+        var env = new TestEnvironment();
+        env.ParatextService.TryGetProjectRoleAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
+        SFProject existingSfProject = env.GetProject(Project01);
+        Assert.IsTrue(existingSfProject.UserRoles.ContainsKey(User01));
+
+        // SUT
+        await env.Service.AddUserAsync(User01, Project01, projectRole: null);
+
+        existingSfProject = env.GetProject(Project01);
+        Assert.IsTrue(existingSfProject.UserRoles.ContainsKey(User01));
+    }
+
+    [Test]
     public async Task AddUserAsync_PTUserHasPTPermissions()
     {
         // If a user connects to an existing project from the Connect Project page, project text permissions should
@@ -3103,15 +3123,15 @@ public class SFProjectServiceTests
     public async Task AddUserToResourceProjectAsync_UserResourcePermission()
     {
         var env = new TestEnvironment();
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User02, Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(TextInfoPermission.Read));
 
-        User user = env.GetUser(User01);
+        User user = env.GetUser(User02);
         Assert.That(user.Sites[SiteId].Projects.Contains(Resource01), Is.False, "setup");
 
-        await env.Service.AddUserAsync(User01, Resource01, null);
+        await env.Service.AddUserAsync(User02, Resource01, null);
 
-        user = env.GetUser(User01);
+        user = env.GetUser(User02);
         Assert.That(user.Sites[SiteId].Projects.Contains(Resource01), Is.True, "User can access resource");
     }
 
@@ -3152,33 +3172,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CancelSyncAsync_AdministratorsCanCancelSyncResource()
-    {
-        // Setup
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Resource01));
-    }
-
-    [Test]
-    public void CancelSyncAsync_TranslatorsCancelCanSyncResource()
-    {
-        // Setup
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User05, Resource01));
-    }
-
-    [Test]
     public void CancelSyncAsync_ObserversCanCancelSyncResource()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User02, Resource01));
+        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Resource01));
     }
 
     [Test]
@@ -3224,35 +3224,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task SyncAsync_AdministratorsCanSyncResource()
-    {
-        // Setup
-        var env = new TestEnvironment();
-
-        // SUT
-        string actual = await env.Service.SyncAsync(User01, Resource01);
-        Assert.AreEqual("jobId", actual);
-    }
-
-    [Test]
-    public async Task SyncAsync_TranslatorsCanSyncResource()
-    {
-        // Setup
-        var env = new TestEnvironment();
-
-        // SUT
-        string actual = await env.Service.SyncAsync(User05, Resource01);
-        Assert.AreEqual("jobId", actual);
-    }
-
-    [Test]
     public async Task SyncAsync_ObserversCanSyncResource()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        string actual = await env.Service.SyncAsync(User02, Resource01);
+        string actual = await env.Service.SyncAsync(User01, Resource01);
         Assert.AreEqual("jobId", actual);
     }
 
@@ -4601,12 +4579,7 @@ public class SFProjectServiceTests
                                     },
                                 },
                             },
-                            UserRoles =
-                            {
-                                { User01, SFProjectRole.Administrator },
-                                { User05, SFProjectRole.Translator },
-                                { User02, SFProjectRole.PTObserver },
-                            },
+                            UserRoles = { { User01, SFProjectRole.PTObserver } },
                         },
                         new SFProject
                         {
