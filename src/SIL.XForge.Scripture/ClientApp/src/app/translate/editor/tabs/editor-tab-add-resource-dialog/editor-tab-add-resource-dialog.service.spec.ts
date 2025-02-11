@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { mock, resetCalls, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { SFUserProjectsService } from '../../../../../xforge-common/user-projects.service';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
