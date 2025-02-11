@@ -390,7 +390,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     try {
       await updatePromise;
       this.controlStates.set(setting, ElementState.Submitted);
-    } catch (_error) {
+    } catch (error) {
+      console.error('Error updating project settings', error);
       this.controlStates.set(setting, ElementState.Error);
     }
   }
