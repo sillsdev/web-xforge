@@ -312,6 +312,46 @@ public class ParatextControllerTests
     }
 
     [Test]
+    public async Task JoinProjectAsync_NotFound()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.AddUserAsync(User01, Project01, projectRole: null)
+            .ThrowsAsync(new DataNotFoundException("Not Found"));
+
+        // SUT
+        ActionResult actual = await env.Controller.JoinProjectAsync(Project01);
+
+        Assert.IsInstanceOf<NotFoundResult>(actual);
+    }
+
+    [Test]
+    public async Task JoinProjectAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        ActionResult actual = await env.Controller.JoinProjectAsync(Project01);
+
+        Assert.IsInstanceOf<OkResult>(actual);
+    }
+
+    [Test]
+    public async Task JoinProjectAsync_Unauthorized()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.AddUserAsync(User01, Project01, projectRole: null)
+            .ThrowsAsync(new ForbiddenException("Forbidden"));
+
+        // SUT
+        ActionResult actual = await env.Controller.JoinProjectAsync(Project01);
+
+        Assert.IsInstanceOf<ForbidResult>(actual);
+    }
+
+    [Test]
     public async Task ResourcesAsync_SecurityException()
     {
         // Set up test environment
@@ -428,10 +468,13 @@ public class ParatextControllerTests
                 .GetSnapshotAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter, Timestamp)
                 .Returns(Task.FromResult(TestSnapshot));
 
+            ProjectService = Substitute.For<ISFProjectService>();
+
             Controller = new ParatextController(
                 exceptionHandler,
                 MachineProjectService,
                 ParatextService,
+                ProjectService,
                 UserAccessor,
                 userSecrets
             );
@@ -440,6 +483,7 @@ public class ParatextControllerTests
         public ParatextController Controller { get; }
         public IMachineProjectService MachineProjectService { get; }
         public IParatextService ParatextService { get; }
+        public ISFProjectService ProjectService { get; }
         public IUserAccessor UserAccessor { get; }
 
         private async IAsyncEnumerable<DocumentRevision> RevisionHistory()

@@ -57,7 +57,11 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
                 throw new ForbiddenException();
         }
 
-        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole!);
+        // Add the user, if they are not already on the project
+        if (!projectDoc.Data.UserRoles.ContainsKey(curUserId))
+        {
+            await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole!);
+        }
     }
 
     /// <summary>
