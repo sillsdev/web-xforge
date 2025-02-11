@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Serval.Client;
+using SIL.Converters.Usj;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -550,6 +551,42 @@ public class MachineApiService(
                 chapterNum,
                 cancellationToken
             );
+        }
+        catch (ServalApiException e)
+        {
+            ProcessServalApiException(e);
+            throw;
+        }
+    }
+
+    public async Task<Usj> GetPreTranslationUsjAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+
+        // Retrieve the user secret
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user does not exist.");
+        }
+
+        try
+        {
+            string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                cancellationToken
+            );
+            string usx = paratextService.GetBookText(userSecret, project.ParatextId, bookNum, usfm);
+            return UsxToUsj.UsxStringToUsj(usx);
         }
         catch (ServalApiException e)
         {
