@@ -77,6 +77,9 @@
                 (chapterChange)="onChapterSelect($event)"
               >
               </app-book-chapter-chooser>
+            </div>
+
+            <div class="action-icons">
               @if (chapterHasAudio) {
                 <button
                   mat-icon-button
@@ -84,12 +87,9 @@
                   [matTooltipDisabled]="isAudioPlaying()"
                   (click)="toggleAudio()"
                 >
-                  <mat-icon>{{ isAudioPlaying() ? "stop" : "play_arrow" }}</mat-icon>
+                  <mat-icon>{{ isAudioPlaying() ? "stop" : "play_circle_outline" }}</mat-icon>
                 </button>
               }
-            </div>
-
-            <div class="action-icons">
               @if (canCreateScriptureAudio) {
                 <button
                   mat-icon-button
@@ -183,7 +183,7 @@
           </as-split>
         </div>
       </div>
-      @if (projectDoc && totalVisibleQuestions() > 0) {
+      @if (projectDoc && (totalVisibleQuestions() > 0 || canCreateQuestions)) {
         <div id="question-nav" [ngClass]="{ hide: textboxIsShownMobile || userOpenedChapterAudio }">
           <div class="question-nav-start">
             @if (canCreateQuestions) {
