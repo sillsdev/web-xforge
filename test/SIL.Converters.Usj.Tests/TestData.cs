@@ -498,6 +498,6 @@ public static partial class TestData
           <para style="q2" vid="MRK 1:3">make his paths straight.’”<verse eid="MRK 1:3" /></para>
           <para style="b" />
           <chapter eid="MRK 1" />
-        </usx>  
+        </usx>
         """;
 }
