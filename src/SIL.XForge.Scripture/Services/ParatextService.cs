@@ -2252,8 +2252,7 @@ public class ParatextService : DisposableBase, IParatextService
         IEnumerable<ProjectMetadata> projectsMetadata
     )
     {
-        if (userSecret == null)
-            throw new ArgumentNullException();
+        ArgumentNullException.ThrowIfNull(userSecret, nameof(userSecret));
 
         List<ParatextProject> paratextProjects = [];
         IQueryable<SFProject> existingSfProjects = _realtimeService.QuerySnapshots<SFProject>();
@@ -2281,6 +2280,11 @@ public class ParatextService : DisposableBase, IParatextService
                 correspondingSfProject?.WritingSystem.Tag ?? projectMD?.LanguageId.Code
             );
 
+            // Determine if drafting is enabled
+            bool isBackTranslation =
+                correspondingSfProject?.TranslateConfig.ProjectType == ProjectType.BackTranslation.ToString();
+            bool preTranslationEnabled = correspondingSfProject?.TranslateConfig.PreTranslate == true;
+
             paratextProjects.Add(
                 new ParatextProject
                 {
@@ -2293,6 +2297,7 @@ public class ParatextService : DisposableBase, IParatextService
                     ProjectId = correspondingSfProject?.Id,
                     IsConnectable = ptProjectIsConnectable,
                     IsConnected = sfProjectExists && sfUserIsOnSfProject,
+                    IsDraftingEnabled = isBackTranslation || preTranslationEnabled,
                 }
             );
         }
@@ -2817,6 +2822,7 @@ public class ParatextService : DisposableBase, IParatextService
                         : 0,
                     IsConnectable = false,
                     IsConnected = false,
+                    IsDraftingEnabled = false,
                     IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid.Id),
                     LanguageRegion = writingSystem.Region,
                     LanguageScript = writingSystem.Script,
