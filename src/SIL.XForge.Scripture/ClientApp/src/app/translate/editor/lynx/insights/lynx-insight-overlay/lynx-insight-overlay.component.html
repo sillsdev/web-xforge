@@ -42,7 +42,7 @@
 } @else if (insights.length > 1) {
   <div class="main-section list">
     <h1>Select for details</h1>
-    @for (insight of insights; track insight) {
+    @for (insight of insights; track insight.id) {
       <div
         class="insight-item"
         [class]="insight.type"
