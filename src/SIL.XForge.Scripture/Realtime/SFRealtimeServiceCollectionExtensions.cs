@@ -37,6 +37,7 @@ public static class SFRealtimeServiceCollectionExtensions
                         new DocConfig("text_audio", typeof(TextAudio)),
                         new DocConfig("biblical_terms", typeof(BiblicalTerm)),
                         new DocConfig("training_data", typeof(TrainingData)),
+                        new DocConfig("text_documents", typeof(TextDocument)),
                     ]
                 );
                 o.UserDataDocs.AddRange([new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig))]);
