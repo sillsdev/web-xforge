@@ -63,9 +63,9 @@ public class TransceleratorService : ITransceleratorService
             "Transcelerator",
             "Transcelerator"
         );
-        string fileRegex = "Translated Checking Questions for \\w+\\.xml$";
+        string fileRegex = "^Translated Checking Questions for \\w+\\.xml$";
         return _fileService.DirectoryExists(pathToFiles)
-            ? _fileService.EnumerateFiles(pathToFiles).Where(file => Regex.IsMatch(file, fileRegex))
+            ? _fileService.EnumerateFiles(pathToFiles).Where(file => Regex.IsMatch(Path.GetFileName(file), fileRegex))
             : System.Array.Empty<string>();
     }
 
