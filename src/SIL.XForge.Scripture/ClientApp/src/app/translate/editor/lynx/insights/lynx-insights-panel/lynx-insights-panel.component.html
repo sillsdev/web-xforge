@@ -33,7 +33,7 @@
           @case (0) {
             <div class="level-code">
               <mat-icon [svgIcon]="'lynx_' + node.type" [class.dismissed]="node.isDismissed" [class]="node.type" />
-              <span class="text">{{ node.name | insightCode: i18n.localeCode }}</span>
+              <span class="text">{{ node.description }}</span>
               <span class="code">({{ node.name }})</span>
               <span class="count">{{ node.count }}</span>
             </div>
