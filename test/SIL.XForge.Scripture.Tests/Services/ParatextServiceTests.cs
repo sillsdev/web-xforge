@@ -28,6 +28,7 @@ using Paratext.Data.Repository;
 using Paratext.Data.Terms;
 using Paratext.Data.Users;
 using PtxUtils;
+using SIL.Converters.Usj;
 using SIL.Scripture;
 using SIL.WritingSystems;
 using SIL.XForge.Configuration;
@@ -100,7 +101,7 @@ public class ParatextServiceTests
         );
 
         // Repos are returned in alphabetical order by paratext project name.
-        List<string> repoList = repos.Select(repo => repo.Name).ToList();
+        List<string> repoList = [.. repos.Select(repo => repo.Name)];
         Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[0], repoList[1]), Is.LessThan(0));
         Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[1], repoList[2]), Is.LessThan(0));
     }
@@ -1698,9 +1699,17 @@ public class ParatextServiceTests
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
-        List<NoteThreadChange> changes = env
-            .Service.GetNoteThreadChanges(userSecret, projectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers)
-            .ToList();
+        List<NoteThreadChange> changes =
+        [
+            .. env.Service.GetNoteThreadChanges(
+                userSecret,
+                projectId,
+                40,
+                noteThreadDocs,
+                chapterDeltas,
+                ptProjectUsers
+            ),
+        ];
 
         Assert.That(changes.Count, Is.EqualTo(1));
         Assert.That(changes[0].NotesAdded.Count, Is.EqualTo(1));
@@ -2657,9 +2666,17 @@ public class ParatextServiceTests
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
         // SUT
-        IList<NoteThreadChange> changes = env
-            .Service.GetNoteThreadChanges(userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers)
-            .ToList();
+        IList<NoteThreadChange> changes =
+        [
+            .. env.Service.GetNoteThreadChanges(
+                userSecret,
+                ptProjectId,
+                40,
+                noteThreadDocs,
+                chapterDeltas,
+                ptProjectUsers
+            ),
+        ];
         // We fetched a single change, of one new note to create.
 
         Assert.That(changes.Count, Is.EqualTo(1));
@@ -2755,9 +2772,10 @@ public class ParatextServiceTests
         CommentThread thread = env.ProjectCommentManager.FindThread(thread1);
         Assert.That(thread, Is.Null);
         string[] noteThreadDataIds = [dataId1, dataId2, dataId3];
-        List<IDocument<NoteThread>> noteThreadDocs = (
-            await TestEnvironment.GetNoteThreadDocsAsync(conn, noteThreadDataIds)
-        ).ToList();
+        List<IDocument<NoteThread>> noteThreadDocs =
+        [
+            .. (await TestEnvironment.GetNoteThreadDocsAsync(conn, noteThreadDataIds)),
+        ];
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
         {
             {
@@ -5323,6 +5341,97 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void GetChaptersAsUsj_InvalidUserSecret()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = new UserSecret();
+        env.MockJwtTokenHelper.GetParatextUsername(userSecret).Returns(_ => null);
+        string paratextId = env.PTProjectIds[env.Project01].ToString();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+        {
+            foreach (var _ in env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, env.RuthBookUsfm)) { }
+            return null;
+        });
+    }
+
+    [Test]
+    public void GetChaptersAsUsj_MissingProject()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        const string paratextId = "invalid_paratext_id";
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        {
+            foreach (var _ in env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, env.RuthBookUsfm)) { }
+            return null;
+        });
+    }
+
+    [Test]
+    public void GetChaptersAsUsj_MissingChapter()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+        string paratextId = env.PTProjectIds[env.Project01].ToString();
+        string usfm = $"{env.RuthBookUsfm}\n\\c 3\n\\v 1 Chapter 3 Verse 1 here.";
+        List<Usj> expected =
+        [
+            env.RuthBookUsj,
+            new Usj
+            {
+                Type = Usj.UsjType,
+                Version = Usj.UsjVersion,
+                Content = [],
+            },
+            new Usj
+            {
+                Type = Usj.UsjType,
+                Version = Usj.UsjVersion,
+                Content =
+                [
+                    new UsjMarker
+                    {
+                        Marker = "c",
+                        Number = "3",
+                        Type = "chapter",
+                    },
+                    new UsjMarker
+                    {
+                        Marker = "v",
+                        Number = "1",
+                        Type = "verse",
+                    },
+                    "Chapter 3 Verse 1 here.",
+                ],
+            },
+        ];
+
+        // SUT
+        List<Usj> actual = [.. env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, usfm)];
+        Assert.That(actual, Is.EqualTo(expected).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void GetChaptersAsUsj_Success()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+        string paratextId = env.PTProjectIds[env.Project01].ToString();
+
+        // SUT
+        var actual = env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, env.RuthBookUsfm);
+        Assert.That(actual.Single(), Is.EqualTo(env.RuthBookUsj).UsingPropertiesComparer());
+    }
+
+    [Test]
     public async Task GetRevisionHistoryAsync_DoesNotCrashWhenASyncUpdatesTheParatextRevisions()
     {
         var env = new TestEnvironment();
@@ -6151,6 +6260,42 @@ public class ParatextServiceTests
 
         public readonly string RuthBookUsfm =
             "\\id RUT - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
+
+        public readonly Usj RuthBookUsj = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content =
+            [
+                new UsjMarker
+                {
+                    Marker = "id",
+                    Code = "RUT",
+                    Type = "book",
+                    Content = ["- ProjectNameHere"],
+                },
+                new UsjMarker
+                {
+                    Marker = "c",
+                    Number = "1",
+                    Type = "chapter",
+                },
+                new UsjMarker
+                {
+                    Marker = "v",
+                    Number = "1",
+                    Type = "verse",
+                },
+                "Verse 1 here. ",
+                new UsjMarker
+                {
+                    Marker = "v",
+                    Number = "2",
+                    Type = "verse",
+                },
+                "Verse 2 here.",
+            ],
+        };
 
         public readonly HttpResponseMessage UnauthorizedHttpResponseMessage = new HttpResponseMessage(
             HttpStatusCode.Unauthorized
@@ -7319,7 +7464,7 @@ public class ParatextServiceTests
         {
             if (notes == null)
                 return CommentThread.unassignedUser;
-            List<ThreadNoteComponents> notesList = new List<ThreadNoteComponents>(notes);
+            List<ThreadNoteComponents> notesList = [.. notes];
             return notesList.LastOrDefault(n => n.assignedPTUser != null).assignedPTUser
                 ?? CommentThread.unassignedUser;
         }

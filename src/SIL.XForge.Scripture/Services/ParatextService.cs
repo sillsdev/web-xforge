@@ -33,6 +33,7 @@ using Paratext.Data.Repository;
 using Paratext.Data.Terms;
 using Paratext.Data.Users;
 using PtxUtils;
+using SIL.Converters.Usj;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.WritingSystems;
@@ -675,23 +676,25 @@ public class ParatextService : DisposableBase, IParatextService
                 token
             );
 
-            users = JArray
-                .Parse(response)
-                .Where(m =>
-                    !string.IsNullOrEmpty((string?)m["userId"])
-                    && !string.IsNullOrEmpty((string)m["username"])
-                    && !string.IsNullOrEmpty((string?)m["role"])
-                )
-                .Select(m => new ParatextProjectUser
-                {
-                    ParatextId = (string)m["userId"] ?? string.Empty,
-                    Role = (string)m["role"] ?? string.Empty,
-                    Username = (string)m["username"] ?? string.Empty,
-                })
-                .ToList();
+            users =
+            [
+                .. JArray
+                    .Parse(response)
+                    .Where(m =>
+                        !string.IsNullOrEmpty((string?)m["userId"])
+                        && !string.IsNullOrEmpty((string)m["username"])
+                        && !string.IsNullOrEmpty((string?)m["role"])
+                    )
+                    .Select(m => new ParatextProjectUser
+                    {
+                        ParatextId = (string)m["userId"] ?? string.Empty,
+                        Role = (string)m["role"] ?? string.Empty,
+                        Username = (string)m["username"] ?? string.Empty,
+                    }),
+            ];
 
             // Get the mapping of Scripture Forge user IDs to Paratext usernames
-            string[] paratextIds = users.Select(p => p.ParatextId).ToArray();
+            string[] paratextIds = [.. users.Select(p => p.ParatextId)];
             Dictionary<string, string> userMapping = _realtimeService
                 .QuerySnapshots<User>()
                 .Where(u => paratextIds.Contains(u.ParatextId))
@@ -1008,6 +1011,21 @@ public class ParatextService : DisposableBase, IParatextService
         return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
     }
 
+    public IEnumerable<Usj> GetChaptersAsUsj(UserSecret userSecret, string paratextId, int bookNum, string usfm)
+    {
+        string username = GetParatextUsername(userSecret) ?? throw new ForbiddenException();
+        using ScrText scrText =
+            ScrTextCollection.FindById(username, paratextId)
+            ?? throw new DataNotFoundException("Can't get access to cloned project.");
+
+        foreach (string chapterUsfm in ScrText.SplitIntoChapters(scrText.Name, bookNum, usfm))
+        {
+            yield return UsxToUsj.UsxXmlDocumentToUsj(
+                UsfmToUsx.ConvertToXmlDocument(scrText, scrText.ScrStylesheet(bookNum), chapterUsfm, forExport: false)
+            );
+        }
+    }
+
     /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
     /// <remarks> It is up to the caller to determine whether the project text is editable. </remarks>
     public async Task<int> PutBookText(
@@ -1253,10 +1271,7 @@ public class ParatextService : DisposableBase, IParatextService
             if (existingThread is null)
             {
                 // The thread has been removed
-                threadChange.NoteIdsRemoved = threadDoc
-                    .Data.Notes.Where(n => !n.Deleted)
-                    .Select(n => n.DataId)
-                    .ToList();
+                threadChange.NoteIdsRemoved = [.. threadDoc.Data.Notes.Where(n => !n.Deleted).Select(n => n.DataId)];
                 if (threadChange.NoteIdsRemoved.Count > 0)
                     changes.Add(threadChange);
                 continue;
@@ -1534,8 +1549,8 @@ public class ParatextService : DisposableBase, IParatextService
                     TermLocalization termLocalization = termLocalizations.GetTermLocalization(term.Id);
                     BiblicalTermDefinition biblicalTermDefinition = new BiblicalTermDefinition
                     {
-                        Categories = term.CategoryIds.Select(termLocalizations.GetCategoryLocalization).ToList(),
-                        Domains = term.SemanticDomains.Select(termLocalizations.GetDomainLocalization).ToList(),
+                        Categories = [.. term.CategoryIds.Select(termLocalizations.GetCategoryLocalization)],
+                        Domains = [.. term.SemanticDomains.Select(termLocalizations.GetDomainLocalization)],
                         Gloss = !string.IsNullOrEmpty(termLocalization.Gloss) ? termLocalization.Gloss : term.Gloss,
                         Notes = termLocalization.Notes,
                     };
@@ -1546,11 +1561,11 @@ public class ParatextService : DisposableBase, IParatextService
                 {
                     TermId = term.Id,
                     Transliteration = term.Transliteration,
-                    Renderings = termRendering.RenderingsEntries.ToList(),
+                    Renderings = [.. termRendering.RenderingsEntries],
                     Description = termRendering.Notes,
                     Language = term.Language,
-                    Links = term.Links.ToList(),
-                    References = term.VerseRefs().Select(v => v.BBBCCCVVV).ToList(),
+                    Links = [.. term.Links],
+                    References = [.. term.VerseRefs().Select(v => v.BBBCCCVVV)],
                     Definitions = definitions,
                 };
                 biblicalTermsChanges.BiblicalTerms.Add(biblicalTerm);
@@ -2712,9 +2727,7 @@ public class ParatextService : DisposableBase, IParatextService
 
     private void WriteCommentXml(CommentManager commentManager, string username)
     {
-        CommentList userComments = new CommentList(
-            commentManager.AllComments.Where(comment => comment.User == username)
-        );
+        CommentList userComments = [.. commentManager.AllComments.Where(comment => comment.User == username)];
         string fileName = commentManager.GetUserFileName(username);
         string path = Path.Combine(commentManager.ScrText.Directory, fileName);
         using Stream stream = _fileSystemService.CreateFile(path);
@@ -3108,7 +3121,7 @@ public class ParatextService : DisposableBase, IParatextService
             return content;
         XDocument doc = XDocument.Parse(content);
         XElement contentNode = (XElement)doc.FirstNode;
-        XNode[] nodes = contentNode.Nodes().ToArray();
+        XNode[] nodes = [.. contentNode.Nodes()];
         if (!nodes.Any())
             return string.Empty;
 
