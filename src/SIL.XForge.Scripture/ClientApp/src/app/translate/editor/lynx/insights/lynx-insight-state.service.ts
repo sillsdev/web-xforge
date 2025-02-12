@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
+import { DiagnosticSeverity } from '@sillsdev/lynx';
+import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
 import {
   LynxInsightFilter,
@@ -9,21 +11,25 @@ import {
 import { LynxInsightUserData } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight-user-data';
 import {
   BehaviorSubject,
-  Observable,
   combineLatest,
   distinctUntilChanged,
   filter,
   map,
+  Observable,
   shareReplay,
+  switchMap,
   take,
   tap,
   withLatestFrom
 } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { TextDocId } from '../../../../core/models/text-doc';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightDisplayState } from './lynx-insight';
 import { LynxInsightFilterService } from './lynx-insight-filter.service';
+import { LynxWorkspaceService } from './lynx-workspace.service';
 
 type BooleanProp<T> = { [K in keyof T]: T[K] extends boolean | undefined ? K : never }[keyof T];
 
@@ -31,298 +37,54 @@ type BooleanProp<T> = { [K in keyof T]: T[K] extends boolean | undefined ? K : n
   providedIn: 'root'
 })
 export class LynxInsightStateService {
-  private rawInsightSource$ = new BehaviorSubject<LynxInsight[]>([
-    // Mark 1
-    {
-      id: '0a',
-      type: 'info',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 300,
-        length: 5
-      },
-      code: '1011'
-    },
-    {
-      id: '0b',
-      type: 'info',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 314,
-        length: 3
-      },
-      code: '1011'
-    },
-    {
-      id: '0c',
-      type: 'info',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 318,
-        length: 10
-      },
-      code: '1011'
-    },
-    {
-      id: '1',
-      type: 'info',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 0,
-        length: 5
-      },
-      code: '1001'
-    },
-    // {
-    //   id: '1b',
-    //   type: 'info',
-    //   chapter: 1,
-    //   book: 41,
-    //   range: {
-    //     index: 1,
-    //     length: 6
-    //   },
-    //   code: '1001'
-    // },
-    {
-      id: '2',
-      type: 'warning',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 16,
-        length: 1
-      },
-      code: '2001'
-    },
-    {
-      id: '2a',
-      type: 'warning',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 22,
-        length: 1
-      },
-      code: '2001'
-    },
-    {
-      id: '2b',
-      type: 'error',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 40,
-        length: 10
-      },
-      code: '3002'
-    },
-    {
-      id: '3',
-      type: 'error',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 86,
-        length: 10
-      },
-      code: '3001'
-    },
-    {
-      id: '3a',
-      type: 'warning',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 76,
-        length: 30
-      },
-      code: '2011'
-    },
-    {
-      id: '3b',
-      type: 'info',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 88,
-        length: 13
-      },
-      code: '1012'
-    },
-    {
-      id: '4',
-      type: 'warning',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 34,
-        length: 11
-      },
-      code: '1000'
-      // code: '2002'
-    },
-    {
-      id: '5',
-      type: 'warning',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 110,
-        length: 11
-      },
-      code: '2005'
-    },
-    {
-      id: '5a',
-      type: 'info',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 112,
-        length: 5
-      },
-      code: '1005'
-    },
-    {
-      id: '6',
-      type: 'info',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 125,
-        length: 10
-      },
-      code: '1006'
-    },
-    {
-      id: '6a',
-      type: 'error',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 127,
-        length: 5
-      },
-      code: '3006'
-    },
-    // Mark 2
-    {
-      id: '11',
-      type: 'info',
-      chapter: 2,
-      book: 41,
-      range: {
-        index: 2,
-        length: 5
-      },
-      code: '1001'
-    },
-    {
-      id: '22',
-      type: 'warning',
-      chapter: 2,
-      book: 41,
-      range: {
-        index: 16,
-        length: 1
-      },
-      code: '2001'
-    },
-    {
-      id: '33',
-      type: 'warning',
-      chapter: 2,
-      book: 41,
-      range: {
-        index: 22,
-        length: 1
-      },
-      code: '2001'
-    },
-    {
-      id: '44',
-      type: 'error',
-      chapter: 2,
-      book: 41,
-      range: {
-        index: 86,
-        length: 10
-      },
-      code: '3001'
-    },
-    {
-      id: '55',
-      type: 'warning',
-      chapter: 2,
-      book: 41,
-      range: {
-        index: 34,
-        length: 11
-      },
-      code: '2002'
-    },
-    // Luke 2
-    {
-      id: '111',
-      type: 'info',
-      chapter: 2,
-      book: 42,
-      range: {
-        index: 0,
-        length: 5
-      },
-      code: '1001'
-    },
-    {
-      id: '222',
-      type: 'warning',
-      chapter: 2,
-      book: 42,
-      range: {
-        index: 16,
-        length: 1
-      },
-      code: '2001'
-    },
-    {
-      id: '333',
-      type: 'warning',
-      chapter: 2,
-      book: 42,
-      range: {
-        index: 22,
-        length: 1
-      },
-      code: '2001'
-    },
-    {
-      id: '444',
-      type: 'error',
-      chapter: 2,
-      book: 42,
-      range: {
-        index: 86,
-        length: 10
-      },
-      code: '3001'
-    },
-    {
-      id: '555',
-      type: 'warning',
-      chapter: 2,
-      book: 42,
-      range: {
-        index: 34,
-        length: 11
-      },
-      code: '2002'
-    }
-  ]);
+  private readonly curInsights = new Map<string, LynxInsight[]>();
+  private rawInsightSource$: Observable<LynxInsight[]> = this.lynxWorkspaceService.workspace.diagnosticsChanged$.pipe(
+    switchMap(async e => {
+      if (e.diagnostics.length === 0) {
+        this.curInsights.delete(e.uri);
+      } else {
+        const doc = await this.lynxWorkspaceService.documentManager.get(e.uri);
+        const insights: LynxInsight[] = [];
+        if (doc != null) {
+          const textDocIdParts = e.uri.split(':', 3);
+          const textDocId = new TextDocId(
+            textDocIdParts[0],
+            Canon.bookIdToNumber(textDocIdParts[1]),
+            parseInt(textDocIdParts[2])
+          );
+          for (const diagnostic of e.diagnostics) {
+            let type: LynxInsightType = 'info';
+            switch (diagnostic.severity) {
+              case DiagnosticSeverity.Information:
+              case DiagnosticSeverity.Hint:
+                type = 'info';
+                break;
+              case DiagnosticSeverity.Warning:
+                type = 'warning';
+                break;
+              case DiagnosticSeverity.Error:
+                type = 'error';
+                break;
+            }
+            const start = doc.offsetAt(diagnostic.range.start);
+            const end = doc.offsetAt(diagnostic.range.end);
+            insights.push({
+              id: uuidv4(),
+              type,
+              textDocId,
+              range: { index: start, length: end - start },
+              code: diagnostic.code.toString(),
+              source: diagnostic.source,
+              description: diagnostic.message,
+              data: diagnostic.data
+            });
+          }
+        }
+        this.curInsights.set(e.uri, insights);
+      }
+      return Array.from(this.curInsights.values()).flat();
+    })
+  );
 
   private rawInsights$: Observable<LynxInsight[]> = this.rawInsightSource$.pipe(
     distinctUntilChanged(isEqual),
@@ -454,23 +216,20 @@ export class LynxInsightStateService {
     @Inject(EDITOR_INSIGHT_DEFAULTS) private defaults: LynxInsightConfig,
     private readonly insightFilterService: LynxInsightFilterService,
     private readonly activatedBookChapter: ActivatedBookChapterService,
-    private readonly activatedProjectUserConfig: ActivatedProjectUserConfigService
+    private readonly activatedProjectUserConfig: ActivatedProjectUserConfigService,
+    private readonly lynxWorkspaceService: LynxWorkspaceService
   ) {
     this.init();
   }
 
   getInsight(id: string): LynxInsight | undefined {
-    return this.rawInsightSource$.value.find(i => i.id === id);
-  }
-
-  addInsight(insight: LynxInsight): void {
-    this.rawInsightSource$.next([...this.rawInsightSource$.value, insight]);
-  }
-
-  updateInsight(newValue: LynxInsight): void {
-    this.rawInsightSource$.next(
-      this.rawInsightSource$.value.map(i => (i.id === newValue.id ? { ...i, ...newValue } : i))
-    );
+    for (const insights of this.curInsights.values()) {
+      const insight = insights.find(i => i.id === id);
+      if (insight != null) {
+        return insight;
+      }
+    }
+    return undefined;
   }
 
   setActiveInsights(ids: string[]): void {

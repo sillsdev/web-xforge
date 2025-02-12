@@ -2,18 +2,11 @@ import { DOCUMENT } from '@angular/common';
 import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { take } from 'rxjs';
-import { I18nService } from 'xforge-common/i18n.service';
 import { LynxEditor } from '../lynx-editor';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightAction, LynxInsightActionService } from '../lynx-insight-action.service';
-import { LynxInsightCodeService } from '../lynx-insight-code.service';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
-
-interface LynxInsightFlattened extends LynxInsight {
-  description: string;
-  moreInfo?: string;
-}
 
 @Component({
   selector: 'app-lynx-insight-overlay',
@@ -24,16 +17,20 @@ interface LynxInsightFlattened extends LynxInsight {
 export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
   showMoreInfo = false;
 
-  insightsFlattened: LynxInsightFlattened[] = [];
+  private _insights: LynxInsight[] = [];
+
+  get insights(): LynxInsight[] {
+    return this._insights;
+  }
 
   @Input()
   set insights(value: LynxInsight[]) {
     console.log(`set insights(${value.map(i => i.id).join(', ')})`);
-    this.insightsFlattened = value.map(insight => this.flattenInsight(insight));
+    this._insights = value;
 
     // Focus if single insight
-    if (value.length === 1) {
-      this.focusInsight(this.insightsFlattened[0]);
+    if (this._insights.length === 1) {
+      this.focusInsight(this._insights[0]);
     }
   }
 
@@ -48,7 +45,7 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
   /** Emits hovered insight when overlay displays multi-insight selection list. Emits `null` when hover ceases. */
   @Output() insightHover = new EventEmitter<LynxInsight | null>();
 
-  focusedInsight?: LynxInsightFlattened;
+  focusedInsight?: LynxInsight;
   menuActions: LynxInsightAction[] = [];
   primaryAction?: LynxInsightAction;
 
@@ -57,10 +54,8 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly insightState: LynxInsightStateService,
-    private readonly codeService: LynxInsightCodeService,
     private readonly actionService: LynxInsightActionService,
     private readonly overlayService: LynxInsightOverlayService,
-    private readonly i18n: I18nService,
     @Inject(DOCUMENT) private readonly document: Document,
     @Inject(EDITOR_INSIGHT_DEFAULTS) private readonly config: LynxInsightConfig
   ) {}
@@ -88,7 +83,7 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
     this.showMoreInfo = !this.showMoreInfo;
   }
 
-  focusInsight(insight: LynxInsightFlattened): void {
+  focusInsight(insight: LynxInsight): void {
     this.focusedInsight = insight;
     this.fetchInsightActions(insight);
     this.insightFocus.emit(insight);
@@ -121,22 +116,13 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
     this.insightState.dismissInsights([insight.id]);
   }
 
-  private flattenInsight(insight: LynxInsight): LynxInsightFlattened {
-    const insightCode = this.codeService.lookupCode(insight.code, this.i18n.localeCode);
-    return {
-      ...insight,
-      description: insightCode?.description ?? '',
-      moreInfo: insightCode?.moreInfo
-    };
-  }
-
   private fetchInsightActions(insight: LynxInsight | undefined): void {
     if (insight == null) {
       return;
     }
 
     this.actionService
-      .getActions(insight, this.i18n.localeCode)
+      .getActions(insight)
       .pipe(take(1))
       .subscribe(actions => {
         const menuActions: LynxInsightAction[] = [];
