@@ -28,6 +28,7 @@ using Paratext.Data.Repository;
 using Paratext.Data.Terms;
 using Paratext.Data.Users;
 using PtxUtils;
+using SIL.Converters.Usj;
 using SIL.Scripture;
 using SIL.WritingSystems;
 using SIL.XForge.Configuration;
@@ -5409,6 +5410,97 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void GetChaptersAsUsj_InvalidUserSecret()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = new UserSecret();
+        env.MockJwtTokenHelper.GetParatextUsername(userSecret).Returns(_ => null);
+        string paratextId = env.PTProjectIds[env.Project01].ToString();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+        {
+            foreach (var _ in env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, env.RuthBookUsfm)) { }
+            return null;
+        });
+    }
+
+    [Test]
+    public void GetChaptersAsUsj_MissingProject()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        const string paratextId = "invalid_paratext_id";
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        {
+            foreach (var _ in env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, env.RuthBookUsfm)) { }
+            return null;
+        });
+    }
+
+    [Test]
+    public void GetChaptersAsUsj_MissingChapter()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+        string paratextId = env.PTProjectIds[env.Project01].ToString();
+        string usfm = $"{env.RuthBookUsfm}\n\\c 3\n\\v 1 Chapter 3 Verse 1 here.";
+        List<Usj> expected =
+        [
+            env.RuthBookUsj,
+            new Usj
+            {
+                Type = Usj.UsjType,
+                Version = Usj.UsjVersion,
+                Content = [],
+            },
+            new Usj
+            {
+                Type = Usj.UsjType,
+                Version = Usj.UsjVersion,
+                Content =
+                [
+                    new UsjMarker
+                    {
+                        Marker = "c",
+                        Number = "3",
+                        Type = "chapter",
+                    },
+                    new UsjMarker
+                    {
+                        Marker = "v",
+                        Number = "1",
+                        Type = "verse",
+                    },
+                    "Chapter 3 Verse 1 here.",
+                ],
+            },
+        ];
+
+        // SUT
+        List<Usj> actual = [.. env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, usfm)];
+        Assert.That(actual, Is.EqualTo(expected).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void GetChaptersAsUsj_Success()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+        string paratextId = env.PTProjectIds[env.Project01].ToString();
+
+        // SUT
+        var actual = env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, env.RuthBookUsfm);
+        Assert.That(actual.Single(), Is.EqualTo(env.RuthBookUsj).UsingPropertiesComparer());
+    }
+
+    [Test]
     public async Task GetRevisionHistoryAsync_DoesNotCrashWhenASyncUpdatesTheParatextRevisions()
     {
         var env = new TestEnvironment();
@@ -6237,6 +6329,42 @@ public class ParatextServiceTests
 
         public readonly string RuthBookUsfm =
             "\\id RUT - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
+
+        public readonly Usj RuthBookUsj = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content =
+            [
+                new UsjMarker
+                {
+                    Marker = "id",
+                    Code = "RUT",
+                    Type = "book",
+                    Content = ["- ProjectNameHere"],
+                },
+                new UsjMarker
+                {
+                    Marker = "c",
+                    Number = "1",
+                    Type = "chapter",
+                },
+                new UsjMarker
+                {
+                    Marker = "v",
+                    Number = "1",
+                    Type = "verse",
+                },
+                "Verse 1 here. ",
+                new UsjMarker
+                {
+                    Marker = "v",
+                    Number = "2",
+                    Type = "verse",
+                },
+                "Verse 2 here.",
+            ],
+        };
 
         public readonly HttpResponseMessage UnauthorizedHttpResponseMessage = new HttpResponseMessage(
             HttpStatusCode.Unauthorized
