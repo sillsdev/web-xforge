@@ -15,7 +15,7 @@ import { combineLatest, map, switchMap, tap } from 'rxjs';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { TextDoc, TextDocId } from '../../../../../core/models/text-doc';
+import { TextDoc } from '../../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../../core/sf-project.service';
 import { getText, rangeComparer } from '../../../../../shared/text/quill-util';
 import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../shared/utils';
@@ -25,6 +25,7 @@ import { LynxInsightStateService } from '../lynx-insight-state.service';
 
 interface InsightPanelNode {
   name: string;
+  description: string;
   type: LynxInsightType;
   children?: InsightPanelNode[];
   insight?: LynxInsight;
@@ -36,6 +37,7 @@ interface InsightPanelNode {
 interface InsightPanelFlatNode {
   expandable: boolean;
   name: string;
+  description: string;
   type: string;
   level: number;
   insight?: LynxInsight;
@@ -150,6 +152,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     return {
       expandable: !!node.children && node.children.length > 0,
       name: node.name,
+      description: node.description,
       type: node.type,
       level: level,
       insight: node.insight,
@@ -181,6 +184,7 @@ export class LynxInsightsPanelComponent implements OnInit {
 
         return {
           name: this.getLinkText(insight),
+          description: insight.description,
           type: insight.type,
           insight,
           range: insight.range,
@@ -190,6 +194,7 @@ export class LynxInsightsPanelComponent implements OnInit {
 
       const codeNode: InsightPanelNode = {
         name: code,
+        description: byCode[0].description,
         type: byCode[0].type,
         children,
         count: byCode.length,
@@ -238,12 +243,15 @@ export class LynxInsightsPanelComponent implements OnInit {
 
     const activeBookNum: number = Canon.bookIdToNumber(this.activeBookChapter.bookId);
 
-    if (insight.book !== activeBookNum || insight.chapter !== this.activeBookChapter.chapter) {
-      const insightBookId: string = Canon.bookNumberToId(insight.book);
+    if (
+      insight.textDocId.bookNum !== activeBookNum ||
+      insight.textDocId.chapterNum !== this.activeBookChapter.chapter
+    ) {
+      const insightBookId: string = Canon.bookNumberToId(insight.textDocId.bookNum);
 
       // Navigate to book/chapter with insight id as query params
       await this.router.navigate(
-        ['/projects', this.activatedProject.projectId, 'translate', insightBookId, insight.chapter],
+        ['/projects', this.activatedProject.projectId, 'translate', insightBookId, insight.textDocId.chapterNum],
         {
           queryParams: { [this.lynxInsightConfig.queryParamName]: insight.id }
         }
@@ -264,13 +272,12 @@ export class LynxInsightsPanelComponent implements OnInit {
 
     if (this.activatedProject.projectId != null) {
       for (const insight of insights) {
-        const textDocId = new TextDocId(this.activatedProject.projectId!, insight.book, insight.chapter);
-        const textDocIdStr: string = textDocId.toString();
+        const textDocIdStr: string = insight.textDocId.toString();
 
         if (!textDocMap.has(textDocIdStr)) {
           textDocMap.set(
             textDocIdStr,
-            this.projectService.getText(textDocId).then(textDoc => {
+            this.projectService.getText(insight.textDocId).then(textDoc => {
               // Update segment map for text doc
               this.textDocSegments.set(
                 textDocIdStr,
@@ -306,8 +313,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     let textDocIdStr: string = '';
 
     if (this.activatedProject.projectId != null) {
-      const textDocId = new TextDocId(this.activatedProject.projectId, insight.book, insight.chapter);
-      textDocIdStr = textDocId.toString();
+      textDocIdStr = insight.textDocId.toString();
     }
 
     const editorSegments = this.textDocSegments.get(textDocIdStr);
@@ -321,7 +327,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     let combinedVerseRef: VerseRef | undefined;
 
     for (const segmentRef of segmentRefs) {
-      const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(insight.book, segmentRef);
+      const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(insight.textDocId.bookNum, segmentRef);
 
       if (verseRef != null) {
         if (combinedVerseRef != null) {
@@ -337,7 +343,10 @@ export class LynxInsightsPanelComponent implements OnInit {
           combinedVerseRef = undefined;
         }
 
-        const bookChapter: string = this.i18n.localizeBookChapter(insight.book, insight.chapter);
+        const bookChapter: string = this.i18n.localizeBookChapter(
+          insight.textDocId.bookNum,
+          insight.textDocId.chapterNum
+        );
 
         linkItems.push(`${bookChapter}:${this.getTextSample(insight, segmentRef, true)}`);
       }
