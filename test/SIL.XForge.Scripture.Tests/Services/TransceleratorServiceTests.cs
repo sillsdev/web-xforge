@@ -45,6 +45,28 @@ public class TransceleratorServiceTests
         Assert.DoesNotThrow(() => env.Service.Questions(Project01));
     }
 
+    [Test]
+    public void TransceleratorService_QuestionFiles_FiltersFiles()
+    {
+        var env = new TestEnvironment();
+        env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
+        env.FileSystemService.EnumerateFiles(Arg.Any<string>())
+            .Returns(
+                new string[]
+                {
+                    "._Translated Checking Questions for 1SA.xml",
+                    "Phrase substitutions.xml",
+                    "Question Customizations.xml",
+                    "Translated Checking Questions for 1SA.xml",
+                    "Translations of Checking Questions.xml",
+                }
+            );
+        Assert.AreEqual(
+            env.Service.QuestionFiles("project_id"),
+            new string[] { "Translated Checking Questions for 1SA.xml" }
+        );
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
