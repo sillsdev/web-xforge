@@ -111,7 +111,11 @@ namespace SIL.Converters.Usj
             XmlElement documentElement = usxDoc.CreateElement(Usx.UsxType);
             documentElement.SetAttribute("version", Usx.UsxVersion);
             usxDoc.AppendChild(documentElement);
-            UsjToUsxDom(usj, usxDoc);
+            if (usj.Content != null)
+            {
+                UsjToUsxDom(usj, usxDoc);
+            }
+
             return usxDoc;
         }
 
