@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, take } from 'rxjs';
+import { Diagnostic, DiagnosticSeverity } from '@sillsdev/lynx';
+import { Op } from 'quill';
+import { from, Observable } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 import { LynxEditor } from './lynx-editor';
-import { LynxInsight, LynxInsightRange } from './lynx-insight';
+import { LynxInsight } from './lynx-insight';
+import { LynxWorkspaceService } from './lynx-workspace.service';
 
 export interface LynxInsightAction {
   id: string;
@@ -9,68 +13,59 @@ export interface LynxInsightAction {
   label: string;
   description?: string;
   isPrimary?: boolean;
-}
-
-// TODO: this type will be in Lynx lib
-export interface TextEdit {
-  range: LynxInsightRange;
-  newText: string;
+  ops: Op[];
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class LynxInsightActionService {
-  constructor() {}
+  constructor(private readonly lynxService: LynxWorkspaceService) {}
 
-  // TODO: send locale to server along with insightId
-  getActions(insight: LynxInsight, localeCode: string): Observable<LynxInsightAction[]> {
-    return of([
-      // TODO: confirm that primary action should be an additional action (to have more flexible text)
-      {
-        id: '0',
-        insight,
-        label: 'Update quotation mark',
-        isPrimary: true
-      },
-      {
-        id: '1',
-        insight,
-        label: 'Update',
-        description: 'Quotation mark to " style'
-      },
-      {
-        id: '2',
-        insight,
-        label: 'Update all 48',
-        description: 'Quotation mark inconsistencies to " style'
-      },
-      {
-        id: '3',
-        insight,
-        label: 'Reject',
-        description: 'Suggestion not relevant'
-      }
-    ]);
+  getActions(insight: LynxInsight): Observable<LynxInsightAction[]> {
+    return from(this.getActionsFromWorkspace(insight));
   }
 
   performAction(action: LynxInsightAction, editor: LynxEditor): void {
     console.log('Performing action', action);
-
-    this.getFix(action.insight)
-      .pipe(take(1))
-      .subscribe(fix => {
-        console.log('Fix', fix);
-
-        editor.deleteText(fix.range.index, fix.range.length);
-        editor.insertText(fix.range.index, fix.newText);
-      });
+    editor.updateContents(action.ops);
   }
 
-  getFix(insight: LynxInsight): Observable<TextEdit> {
-    return of({
-      range: insight.range,
-      newText: 'New text' + insight.id
-    });
+  private async getActionsFromWorkspace(insight: LynxInsight): Promise<LynxInsightAction[]> {
+    const doc = await this.lynxService.documentManager.get(insight.textDocId.toString());
+    if (doc == null) {
+      return [];
+    }
+    let severity = DiagnosticSeverity.Information;
+    switch (insight.type) {
+      case 'info':
+        severity = DiagnosticSeverity.Information;
+        break;
+      case 'warning':
+        severity = DiagnosticSeverity.Warning;
+        break;
+      case 'error':
+        severity = DiagnosticSeverity.Error;
+        break;
+    }
+    const diagnostic: Diagnostic = {
+      code: insight.code,
+      source: insight.source,
+      range: {
+        start: doc.positionAt(insight.range.index),
+        end: doc.positionAt(insight.range.index + insight.range.length)
+      },
+      message: insight.description,
+      severity,
+      data: insight.data
+    };
+    const fixes = await this.lynxService.workspace.getDiagnosticFixes(insight.textDocId.toString(), diagnostic);
+    return fixes.map(fix => ({
+      id: uuidv4(),
+      insight,
+      label: fix.title,
+      isPrimary: fix.isPreferred,
+      ops: fix.edits
+    }));
   }
 }
