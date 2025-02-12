@@ -56,6 +56,26 @@ public class UsjToUsxTests
     }
 
     [Test]
+    public void ShouldConvertFromUsjToUsxXmlDocumentWithNullContent()
+    {
+        // Setup
+        var expectedUsx = new XmlDocument { PreserveWhitespace = true };
+        string expected = TestData.RemoveXmlWhiteSpace(TestData.UsxEmpty);
+        expected = TestData.RemoveEidElements(expected);
+        expectedUsx.LoadXml(expected);
+        Usj usj = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content = null,
+        };
+
+        // SUT
+        XmlDocument actualUsx = UsjToUsx.UsjToUsxXmlDocument(usj);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx));
+    }
+
+    [Test]
     public void ShouldConvertFromUsjToUsxXmlDocument_Roundtrip()
     {
         XmlDocument usx = UsjToUsx.UsjToUsxXmlDocument(TestData.UsjGen1V1);
