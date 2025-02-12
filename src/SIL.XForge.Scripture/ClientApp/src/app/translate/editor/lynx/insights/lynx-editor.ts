@@ -1,4 +1,4 @@
-import Quill, { EmitterSource } from 'quill';
+import Quill, { Delta, EmitterSource, Op } from 'quill';
 
 export type LynxableEditor = Quill; // Add future editor as union type
 
@@ -81,6 +81,16 @@ export class LynxEditor {
     switch (true) {
       case this.isQuill(this.editor):
         return this.editor.getBounds(index, length);
+      default:
+        throw new Error('Unsupported editor type');
+    }
+  }
+
+  updateContents(delta: Delta | Op[]): void {
+    switch (true) {
+      case this.isQuill(this.editor):
+        this.editor.updateContents(delta, 'user');
+        break;
       default:
         throw new Error('Unsupported editor type');
     }

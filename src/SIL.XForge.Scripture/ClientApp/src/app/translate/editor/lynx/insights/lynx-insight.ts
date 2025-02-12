@@ -4,6 +4,7 @@ import {
   LynxInsightSortOrder,
   LynxInsightType
 } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
+import { TextDocId } from '../../../../core/models/text-doc';
 
 export interface LynxInsightRange {
   index: number;
@@ -20,14 +21,16 @@ export interface LynxInsightDisplayState {
   cursorActiveInsightIds: string[];
 }
 
-// TODO: include something like TextDocId?
 export interface LynxInsight {
   id: string;
   type: LynxInsightType;
-  chapter: number;
-  book: number;
+  textDocId: TextDocId;
   range: LynxInsightRange;
   code: string;
+  source: string;
+  data?: unknown;
+  description: string;
+  moreInfo?: string; // Verbose information about the insight (markdown?)
 }
 
 export interface LynxInsightNode {
