@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -175,19 +174,10 @@ namespace SIL.Converters.Usj
         /// <param name="xmlDocument">The XML document.</param>
         /// <returns>The USJ.</returns>
         /// <remarks>
-        /// The <see cref="XmlDocument"/> should have <see cref="XmlDocument.PreserveWhitespace"/> set to <c>true</c>.
+        /// The <see cref="XmlDocument"/> should have <see cref="XmlDocument.PreserveWhitespace"/> set to <c>true</c>,
+        /// if you have loaded it directly from a text file. <see cref="XmlDocument"/> objects created by ParatextData
+        /// will not have this set as they are created using an <see cref="XmlWriter"/>.
         /// </remarks>
-        public static Usj UsxXmlDocumentToUsj(XmlDocument xmlDocument)
-        {
-            if (xmlDocument?.PreserveWhitespace != true)
-            {
-                throw new ArgumentException(
-                    "The XmlDocument should have PreserveWhitespace set to true.",
-                    nameof(xmlDocument)
-                );
-            }
-
-            return UsxDomToUsj(xmlDocument.DocumentElement);
-        }
+        public static Usj UsxXmlDocumentToUsj(XmlDocument xmlDocument) => UsxDomToUsj(xmlDocument?.DocumentElement);
     }
 }
