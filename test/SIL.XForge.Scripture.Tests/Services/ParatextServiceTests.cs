@@ -100,7 +100,7 @@ public class ParatextServiceTests
         );
 
         // Repos are returned in alphabetical order by paratext project name.
-        List<string> repoList = repos.Select(repo => repo.Name).ToList();
+        List<string> repoList = [.. repos.Select(repo => repo.Name)];
         Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[0], repoList[1]), Is.LessThan(0));
         Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[1], repoList[2]), Is.LessThan(0));
     }
@@ -295,6 +295,41 @@ public class ParatextServiceTests
 
         // 3: Not a back translation and pre-translation disabled
         Assert.IsFalse(projects[2].IsDraftingEnabled);
+    }
+
+    [Test]
+    public async Task GetProjectsAsync_HasDraft()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
+
+        // 1: Pre-translation enabled and a draft is present
+        SFProject project1 = env.NewSFProject(env.Project01);
+        project1.TranslateConfig.PreTranslate = true;
+        project1.Texts[0].Chapters[0].HasDraft = true;
+
+        // 2: Pre-translation enabled and no draft is present
+        SFProject project2 = env.NewSFProject(env.Project02);
+        project2.TranslateConfig.PreTranslate = true;
+
+        // 3: Pre-translation disabled
+        SFProject project3 = env.NewSFProject(env.Project03);
+        env.AddProjectRepository([project1, project2, project3]);
+
+        // SUT
+        IReadOnlyList<ParatextProject> projects = await env.Service.GetProjectsAsync(userSecret);
+        Assert.AreEqual(3, projects.Count);
+
+        // 1: Pre-translation enabled and a draft is present
+        Assert.IsTrue(projects[0].HasDraft);
+
+        // 2: Pre-translation enabled and no draft is present
+        Assert.IsFalse(projects[1].HasDraft);
+
+        // 3: Pre-translation disabled
+        Assert.IsFalse(projects[2].HasDraft);
     }
 
     [Test]
@@ -1732,9 +1767,17 @@ public class ParatextServiceTests
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
         }.ToDictionary(u => u.Username);
-        List<NoteThreadChange> changes = env
-            .Service.GetNoteThreadChanges(userSecret, projectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers)
-            .ToList();
+        List<NoteThreadChange> changes =
+        [
+            .. env.Service.GetNoteThreadChanges(
+                userSecret,
+                projectId,
+                40,
+                noteThreadDocs,
+                chapterDeltas,
+                ptProjectUsers
+            ),
+        ];
 
         Assert.That(changes.Count, Is.EqualTo(1));
         Assert.That(changes[0].NotesAdded.Count, Is.EqualTo(1));
@@ -2691,9 +2734,17 @@ public class ParatextServiceTests
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
         // SUT
-        IList<NoteThreadChange> changes = env
-            .Service.GetNoteThreadChanges(userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers)
-            .ToList();
+        IList<NoteThreadChange> changes =
+        [
+            .. env.Service.GetNoteThreadChanges(
+                userSecret,
+                ptProjectId,
+                40,
+                noteThreadDocs,
+                chapterDeltas,
+                ptProjectUsers
+            ),
+        ];
         // We fetched a single change, of one new note to create.
 
         Assert.That(changes.Count, Is.EqualTo(1));
@@ -2789,9 +2840,10 @@ public class ParatextServiceTests
         CommentThread thread = env.ProjectCommentManager.FindThread(thread1);
         Assert.That(thread, Is.Null);
         string[] noteThreadDataIds = [dataId1, dataId2, dataId3];
-        List<IDocument<NoteThread>> noteThreadDocs = (
-            await TestEnvironment.GetNoteThreadDocsAsync(conn, noteThreadDataIds)
-        ).ToList();
+        List<IDocument<NoteThread>> noteThreadDocs =
+        [
+            .. (await TestEnvironment.GetNoteThreadDocsAsync(conn, noteThreadDataIds)),
+        ];
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
         {
             {
@@ -7361,7 +7413,7 @@ public class ParatextServiceTests
         {
             if (notes == null)
                 return CommentThread.unassignedUser;
-            List<ThreadNoteComponents> notesList = new List<ThreadNoteComponents>(notes);
+            List<ThreadNoteComponents> notesList = [.. notes];
             return notesList.LastOrDefault(n => n.assignedPTUser != null).assignedPTUser
                 ?? CommentThread.unassignedUser;
         }

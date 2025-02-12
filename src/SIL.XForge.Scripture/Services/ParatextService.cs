@@ -675,23 +675,25 @@ public class ParatextService : DisposableBase, IParatextService
                 token
             );
 
-            users = JArray
-                .Parse(response)
-                .Where(m =>
-                    !string.IsNullOrEmpty((string?)m["userId"])
-                    && !string.IsNullOrEmpty((string)m["username"])
-                    && !string.IsNullOrEmpty((string?)m["role"])
-                )
-                .Select(m => new ParatextProjectUser
-                {
-                    ParatextId = (string)m["userId"] ?? string.Empty,
-                    Role = (string)m["role"] ?? string.Empty,
-                    Username = (string)m["username"] ?? string.Empty,
-                })
-                .ToList();
+            users =
+            [
+                .. JArray
+                    .Parse(response)
+                    .Where(m =>
+                        !string.IsNullOrEmpty((string?)m["userId"])
+                        && !string.IsNullOrEmpty((string)m["username"])
+                        && !string.IsNullOrEmpty((string?)m["role"])
+                    )
+                    .Select(m => new ParatextProjectUser
+                    {
+                        ParatextId = (string)m["userId"] ?? string.Empty,
+                        Role = (string)m["role"] ?? string.Empty,
+                        Username = (string)m["username"] ?? string.Empty,
+                    }),
+            ];
 
             // Get the mapping of Scripture Forge user IDs to Paratext usernames
-            string[] paratextIds = users.Select(p => p.ParatextId).ToArray();
+            string[] paratextIds = [.. users.Select(p => p.ParatextId)];
             Dictionary<string, string> userMapping = _realtimeService
                 .QuerySnapshots<User>()
                 .Where(u => paratextIds.Contains(u.ParatextId))
@@ -1253,10 +1255,7 @@ public class ParatextService : DisposableBase, IParatextService
             if (existingThread is null)
             {
                 // The thread has been removed
-                threadChange.NoteIdsRemoved = threadDoc
-                    .Data.Notes.Where(n => !n.Deleted)
-                    .Select(n => n.DataId)
-                    .ToList();
+                threadChange.NoteIdsRemoved = [.. threadDoc.Data.Notes.Where(n => !n.Deleted).Select(n => n.DataId)];
                 if (threadChange.NoteIdsRemoved.Count > 0)
                     changes.Add(threadChange);
                 continue;
@@ -1534,8 +1533,8 @@ public class ParatextService : DisposableBase, IParatextService
                     TermLocalization termLocalization = termLocalizations.GetTermLocalization(term.Id);
                     BiblicalTermDefinition biblicalTermDefinition = new BiblicalTermDefinition
                     {
-                        Categories = term.CategoryIds.Select(termLocalizations.GetCategoryLocalization).ToList(),
-                        Domains = term.SemanticDomains.Select(termLocalizations.GetDomainLocalization).ToList(),
+                        Categories = [.. term.CategoryIds.Select(termLocalizations.GetCategoryLocalization)],
+                        Domains = [.. term.SemanticDomains.Select(termLocalizations.GetDomainLocalization)],
                         Gloss = !string.IsNullOrEmpty(termLocalization.Gloss) ? termLocalization.Gloss : term.Gloss,
                         Notes = termLocalization.Notes,
                     };
@@ -1546,11 +1545,11 @@ public class ParatextService : DisposableBase, IParatextService
                 {
                     TermId = term.Id,
                     Transliteration = term.Transliteration,
-                    Renderings = termRendering.RenderingsEntries.ToList(),
+                    Renderings = [.. termRendering.RenderingsEntries],
                     Description = termRendering.Notes,
                     Language = term.Language,
-                    Links = term.Links.ToList(),
-                    References = term.VerseRefs().Select(v => v.BBBCCCVVV).ToList(),
+                    Links = [.. term.Links],
+                    References = [.. term.VerseRefs().Select(v => v.BBBCCCVVV)],
                     Definitions = definitions,
                 };
                 biblicalTermsChanges.BiblicalTerms.Add(biblicalTerm);
@@ -2284,6 +2283,12 @@ public class ParatextService : DisposableBase, IParatextService
             bool isBackTranslation =
                 correspondingSfProject?.TranslateConfig.ProjectType == ProjectType.BackTranslation.ToString();
             bool preTranslationEnabled = correspondingSfProject?.TranslateConfig.PreTranslate == true;
+            bool isDraftingEnabled = isBackTranslation || preTranslationEnabled;
+
+            // Determine if there is a draft
+            bool hasDraft =
+                isDraftingEnabled
+                && correspondingSfProject?.Texts.Any(t => t.Chapters.Any(c => c.HasDraft == true)) == true;
 
             paratextProjects.Add(
                 new ParatextProject
@@ -2297,7 +2302,8 @@ public class ParatextService : DisposableBase, IParatextService
                     ProjectId = correspondingSfProject?.Id,
                     IsConnectable = ptProjectIsConnectable,
                     IsConnected = sfProjectExists && sfUserIsOnSfProject,
-                    IsDraftingEnabled = isBackTranslation || preTranslationEnabled,
+                    IsDraftingEnabled = isDraftingEnabled,
+                    HasDraft = hasDraft,
                 }
             );
         }
@@ -2717,9 +2723,7 @@ public class ParatextService : DisposableBase, IParatextService
 
     private void WriteCommentXml(CommentManager commentManager, string username)
     {
-        CommentList userComments = new CommentList(
-            commentManager.AllComments.Where(comment => comment.User == username)
-        );
+        CommentList userComments = [.. commentManager.AllComments.Where(comment => comment.User == username)];
         string fileName = commentManager.GetUserFileName(username);
         string path = Path.Combine(commentManager.ScrText.Directory, fileName);
         using Stream stream = _fileSystemService.CreateFile(path);
@@ -3114,7 +3118,7 @@ public class ParatextService : DisposableBase, IParatextService
             return content;
         XDocument doc = XDocument.Parse(content);
         XElement contentNode = (XElement)doc.FirstNode;
-        XNode[] nodes = contentNode.Nodes().ToArray();
+        XNode[] nodes = [.. contentNode.Nodes()];
         if (!nodes.Any())
             return string.Empty;
 
