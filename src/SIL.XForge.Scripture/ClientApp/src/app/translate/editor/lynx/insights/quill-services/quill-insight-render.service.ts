@@ -55,7 +55,6 @@ export class QuillInsightRenderService extends InsightRenderService {
    * This avoids multiple calls to quill `formatText`, which will re-render the DOM after each call.
    */
   private refreshInsightFormatting(insights: LynxInsight[], editor: Quill): void {
-    let delta: Delta = editor.getContents();
     const formatsToRemove: StringMap = {};
 
     // Prepare formats to remove
@@ -64,7 +63,7 @@ export class QuillInsightRenderService extends InsightRenderService {
     }
 
     // Apply removal of formats
-    delta = delta.compose(new Delta().retain(delta.length(), formatsToRemove));
+    let delta = new Delta().retain(editor.getLength(), formatsToRemove);
 
     // Apply formats, merging each format op with the result of the prev (let quill handle overlapping formats)
     for (const insight of insights) {
@@ -75,8 +74,8 @@ export class QuillInsightRenderService extends InsightRenderService {
       delta = delta.compose(deltaToApply);
     }
 
-    // Set contents with the combined delta
-    editor.setContents(delta, 'api');
+    // Update contents with the combined delta
+    editor.updateContents(delta, 'api');
   }
 
   renderActionOverlay(insights: LynxInsight[], editor: Quill, actionOverlayActive: boolean): void {
