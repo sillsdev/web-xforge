@@ -21,7 +21,6 @@ import { LynxInsightEditorObjectsComponent } from './lynx-insight-editor-objects
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
 import { LynxInsightScrollPositionIndicatorComponent } from './lynx-insight-scroll-position-indicator/lynx-insight-scroll-position-indicator.component';
 import { LynxInsightStatusIndicatorComponent } from './lynx-insight-status-indicator/lynx-insight-status-indicator.component';
-import { LynxInsightUserEventService } from './lynx-insight-user-event.service';
 import { LynxInsightsPanelHeaderComponent } from './lynx-insights-panel/lynx-insights-panel-header/lynx-insights-panel-header.component';
 import { LynxInsightsPanelComponent } from './lynx-insights-panel/lynx-insights-panel.component';
 import { LynxWorkspaceService } from './lynx-workspace.service';
@@ -65,7 +64,7 @@ export class LynxInsightsModule {
         {
           provide: APP_INITIALIZER,
           useFactory: moduleInit,
-          deps: [LynxWorkspaceService, LynxInsightUserEventService],
+          deps: [LynxWorkspaceService],
           multi: true
         },
         {
