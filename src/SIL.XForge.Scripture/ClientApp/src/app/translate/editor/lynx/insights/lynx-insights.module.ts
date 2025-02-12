@@ -16,7 +16,6 @@ import { QuillFormatRegistryService } from '../../../../shared/text/quill-editor
 import { EditorReadyService } from './base-services/editor-ready.service';
 import { EditorSegmentService } from './base-services/editor-segment.service';
 import { InsightRenderService } from './base-services/insight-render.service';
-import { InsightCodePipe } from './insight-code.pipe';
 import { LynxInsightActionPromptComponent } from './lynx-insight-action-prompt/lynx-insight-action-prompt.component';
 import { LynxInsightEditorObjectsComponent } from './lynx-insight-editor-objects/lynx-insight-editor-objects.component';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
@@ -25,6 +24,7 @@ import { LynxInsightStatusIndicatorComponent } from './lynx-insight-status-indic
 import { LynxInsightUserEventService } from './lynx-insight-user-event.service';
 import { LynxInsightsPanelHeaderComponent } from './lynx-insights-panel/lynx-insights-panel-header/lynx-insights-panel-header.component';
 import { LynxInsightsPanelComponent } from './lynx-insights-panel/lynx-insights-panel.component';
+import { LynxWorkspaceService } from './lynx-workspace.service';
 import { lynxInsightBlots } from './quill-services/blots/lynx-insight-blot';
 import { QuillEditorReadyService } from './quill-services/quill-editor-ready.service';
 import { QuillEditorSegmentService } from './quill-services/quill-editor-segment.service';
@@ -38,8 +38,7 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
     LynxInsightsPanelHeaderComponent,
     LynxInsightOverlayComponent,
     LynxInsightScrollPositionIndicatorComponent,
-    LynxInsightStatusIndicatorComponent,
-    InsightCodePipe
+    LynxInsightStatusIndicatorComponent
   ],
   imports: [
     CommonModule,
@@ -56,7 +55,7 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
     OverlayModule,
     IncludesPipe
   ],
-  exports: [LynxInsightEditorObjectsComponent, LynxInsightsPanelComponent, InsightCodePipe]
+  exports: [LynxInsightEditorObjectsComponent, LynxInsightsPanelComponent]
 })
 export class LynxInsightsModule {
   static forRoot(): ModuleWithProviders<LynxInsightsModule> {
@@ -65,8 +64,8 @@ export class LynxInsightsModule {
       providers: [
         {
           provide: APP_INITIALIZER,
-          useFactory: () => () => {},
-          deps: [LynxInsightUserEventService],
+          useFactory: moduleInit,
+          deps: [LynxWorkspaceService, LynxInsightUserEventService],
           multi: true
         },
         {
@@ -83,4 +82,10 @@ export class LynxInsightsModule {
       ]
     };
   }
+}
+
+function moduleInit(lynxService: LynxWorkspaceService): () => Promise<void> {
+  return () => {
+    return lynxService.init();
+  };
 }
