@@ -1,4 +1,3 @@
-using System;
 using System.Xml;
 using NUnit.Framework;
 
@@ -27,6 +26,13 @@ public class UsxToUsjTests
     public void ShouldConvertFromNullToUsj()
     {
         Usj usj = UsxToUsj.UsxStringToUsj(null);
+        Assert.That(usj, Is.EqualTo(TestData.UsjEmpty).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromNullXmlDocumentToUsj()
+    {
+        Usj usj = UsxToUsj.UsxXmlDocumentToUsj(null);
         Assert.That(usj, Is.EqualTo(TestData.UsjEmpty).UsingPropertiesComparer());
     }
 
@@ -233,12 +239,4 @@ public class UsxToUsjTests
         XmlDocument actualUsx = UsjToUsx.UsjToUsxXmlDocument(usj);
         Assert.That(actualUsx, Is.EqualTo(document).UsingPropertiesComparer());
     }
-
-    [Test]
-    public void ShouldNotConvertFromNullXmlDocumentToUsj() =>
-        Assert.Throws<ArgumentException>(() => UsxToUsj.UsxXmlDocumentToUsj(null));
-
-    [Test]
-    public void ShouldNotConvertFromNonPreserveWhitespaceXmlDocumentToUsj() =>
-        Assert.Throws<ArgumentException>(() => UsxToUsj.UsxXmlDocumentToUsj(new XmlDocument()));
 }
