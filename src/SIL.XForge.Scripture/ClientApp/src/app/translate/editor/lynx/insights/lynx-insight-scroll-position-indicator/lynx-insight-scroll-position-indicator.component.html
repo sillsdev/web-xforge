@@ -1,3 +1,3 @@
-@for (pos of scrollPositions; track pos) {
+@for (pos of scrollPositions; track pos.id) {
   <div class="indicator" [class]="pos.type" [attr.style]="'--scroll-position-percent: ' + pos.percent + '%'"></div>
 }
