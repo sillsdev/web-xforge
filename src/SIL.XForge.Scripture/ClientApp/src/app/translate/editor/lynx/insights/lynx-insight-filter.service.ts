@@ -32,11 +32,14 @@ export class LynxInsightFilterService {
       return true;
     }
 
-    if (filter.scope === 'book' && routeBookNum !== insight.book) {
+    if (filter.scope === 'book' && routeBookNum !== insight.textDocId.bookNum) {
       return false;
     }
 
-    if (filter.scope === 'chapter' && (routeBookNum !== insight.book || routeChapter !== insight.chapter)) {
+    if (
+      filter.scope === 'chapter' &&
+      (routeBookNum !== insight.textDocId.bookNum || routeChapter !== insight.textDocId.chapterNum)
+    ) {
       return false;
     }
 
@@ -47,9 +50,9 @@ export class LynxInsightFilterService {
     const routeBookNum: number | undefined = bookChapter.bookId ? Canon.bookIdToNumber(bookChapter.bookId) : undefined;
     const routeChapter = bookChapter.chapter;
 
-    if (insight.book === routeBookNum && insight.chapter === routeChapter) {
+    if (insight.textDocId.bookNum === routeBookNum && insight.textDocId.chapterNum === routeChapter) {
       return 'chapter';
-    } else if (insight.book === routeBookNum) {
+    } else if (insight.textDocId.bookNum === routeBookNum) {
       return 'book';
     } else {
       return 'project';
