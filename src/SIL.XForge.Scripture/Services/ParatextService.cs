@@ -33,6 +33,7 @@ using Paratext.Data.Repository;
 using Paratext.Data.Terms;
 using Paratext.Data.Users;
 using PtxUtils;
+using SIL.Converters.Usj;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.WritingSystems;
@@ -1008,6 +1009,21 @@ public class ParatextService : DisposableBase, IParatextService
             ?? throw new DataNotFoundException("Can't get access to cloned project.");
         usfm ??= scrText.GetText(bookNum);
         return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
+    }
+
+    public IEnumerable<Usj> GetChaptersAsUsj(UserSecret userSecret, string paratextId, int bookNum, string usfm)
+    {
+        string username = GetParatextUsername(userSecret) ?? throw new ForbiddenException();
+        using ScrText scrText =
+            ScrTextCollection.FindById(username, paratextId)
+            ?? throw new DataNotFoundException("Can't get access to cloned project.");
+
+        foreach (string chapterUsfm in ScrText.SplitIntoChapters(scrText.Name, bookNum, usfm))
+        {
+            yield return UsxToUsj.UsxXmlDocumentToUsj(
+                UsfmToUsx.ConvertToXmlDocument(scrText, scrText.ScrStylesheet(bookNum), chapterUsfm, forExport: false)
+            );
+        }
     }
 
     /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
