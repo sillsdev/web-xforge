@@ -444,6 +444,63 @@ describe('MyProjectsComponent', () => {
     // We won't expect getProjects() to have been called.
     verify(mockedParatextService.getProjects()).never();
   }));
+
+  it('shows project in updates section when user role has changed and is removed when role is updated successfully', fakeAsync(() => {
+    // Suppose a users role on Paratext has been changed, but the role on SF has not been updated.
+    // We should display the project in the updates section, and show a button to update the role.
+    const env = new TestEnvironment({ isKnownPTUser: true });
+    when(mockedParatextService.getProjects()).thenResolve([
+      {
+        paratextId: 'pt-project-id-update-role',
+        name: 'PT Project Update Role',
+        projectId: 'testProject1',
+        shortName: 'PTUR',
+        isConnectable: true,
+        isConnected: true,
+        hasUserRoleChanged: true
+      }
+    ] as ParatextProject[]);
+    env.waitUntilLoaded();
+    expect(env.component.userUpdateParatextProjects.length).toEqual(1);
+    expect(
+      env.component.userUpdateParatextProjects.find(proj => proj.projectId === 'testProject1')?.hasUserRoleChanged
+    ).toBeTrue();
+    expect(env.userUpdateParatextProjects).not.toBeNull();
+
+    env.click(env.buttonForUpdateUserRole('testProject1'));
+    verify(mockedNoticeService.loadingStarted(anything())).once();
+    verify(mockedSFProjectService.onlineSyncUserRole('testProject1')).once();
+    expect(env.component.userUpdateParatextProjects.length).toEqual(0);
+  }));
+
+  it('shows project in updates section when user role has changed in paratext and remains when role is not updated', fakeAsync(() => {
+    const env = new TestEnvironment({ isKnownPTUser: true });
+    when(mockedParatextService.getProjects()).thenResolve([
+      {
+        paratextId: 'pt-project-id-update-role',
+        name: 'PT Project Update Role',
+        projectId: 'testProject1',
+        shortName: 'PTUR',
+        isConnectable: true,
+        isConnected: true,
+        hasUserRoleChanged: true
+      }
+    ] as ParatextProject[]);
+    env.waitUntilLoaded();
+    expect(env.component.userUpdateParatextProjects.length).toEqual(1);
+    expect(
+      env.component.userUpdateParatextProjects.find(proj => proj.projectId === 'testProject1')?.hasUserRoleChanged
+    ).toBeTrue();
+    expect(env.userUpdateParatextProjects).not.toBeNull();
+
+    when(mockedSFProjectService.onlineSyncUserRole('testProject1')).thenThrow(new Error('test error'));
+    env.click(env.buttonForUpdateUserRole('testProject1'));
+
+    expect(env.component.userUpdateParatextProjects.length).toEqual(1);
+    expect(
+      env.component.userUpdateParatextProjects.find(proj => proj.projectId === 'testProject1')?.hasUserRoleChanged
+    ).toBeTrue();
+  }));
 });
 
 class TestEnvironment {
@@ -624,11 +681,19 @@ class TestEnvironment {
     return this.getElement(`div[data-pt-project-id=${ptProjectId}].user-unconnected-project`);
   }
 
+  userUpdateParatextProjects(ptProjectId: string): DebugElement {
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}].user-update-project`);
+  }
+
   buttonForUnconnectedProject(ptProjectId: string): DebugElement {
     return (
       this.getElement(`div[data-pt-project-id=${ptProjectId}] > button`) ??
       this.getElement(`div[data-pt-project-id=${ptProjectId}] > a`)
     );
+  }
+
+  buttonForUpdateUserRole(ptProjectId: string): DebugElement {
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}].user-update-project > button`);
   }
 
   waitUntilLoaded(): void {
