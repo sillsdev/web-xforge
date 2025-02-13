@@ -183,7 +183,7 @@
           </as-split>
         </div>
       </div>
-      @if (projectDoc && (totalVisibleQuestions() > 0 || canCreateQuestions)) {
+      @if (projectDoc) {
         <div id="question-nav" [ngClass]="{ hide: textboxIsShownMobile || userOpenedChapterAudio }">
           <div class="question-nav-start">
             @if (canCreateQuestions) {
