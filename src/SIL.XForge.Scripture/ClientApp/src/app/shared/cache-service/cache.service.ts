@@ -1,18 +1,37 @@
-import { EventEmitter, Injectable } from '@angular/core';
+import { DestroyRef, EventEmitter, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { TextDocId } from '../../core/models/text-doc';
+import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 
 @Injectable({ providedIn: 'root' })
 export class CacheService {
-  private abortCurrent: EventEmitter<void> = new EventEmitter();
+  private readonly abortCurrent: EventEmitter<void> = new EventEmitter();
+  private readonly subscribedTexts: TextDoc[] = [];
+
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly permissionsService: PermissionsService
-  ) {}
+    private readonly permissionsService: PermissionsService,
+    currentProject: ActivatedProjectService,
+    destroyRef: DestroyRef
+  ) {
+    currentProject.projectId$.pipe(takeUntilDestroyed(destroyRef)).subscribe(async projectId => {
+      if (projectId == null) return;
 
-  async cache(project: SFProjectProfileDoc): Promise<void> {
+      this.uncache();
+      const project = await this.projectService.getProfile(projectId);
+      await this.cache(project);
+    });
+  }
+
+  private uncache(): void {
+    this.subscribedTexts.forEach(t => t.adapter.destroy());
+    this.subscribedTexts.length = 0;
+  }
+
+  private async cache(project: SFProjectProfileDoc): Promise<void> {
     this.abortCurrent.emit();
     await this.loadAllChapters(project);
   }
@@ -33,13 +52,13 @@ export class CacheService {
 
           const textDocId = new TextDocId(project.id, text.bookNum, chapter.number, 'target');
           if (await this.permissionsService.canAccessText(textDocId)) {
-            await this.projectService.getText(textDocId);
+            this.subscribedTexts.push(await this.projectService.getText(textDocId));
           }
 
           if (text.hasSource && sourceId != null) {
             const sourceTextDocId = new TextDocId(sourceId, text.bookNum, chapter.number, 'target');
             if (await this.permissionsService.canAccessText(sourceTextDocId)) {
-              await this.projectService.getText(sourceTextDocId);
+              this.subscribedTexts.push(await this.projectService.getText(sourceTextDocId));
             }
           }
         }
