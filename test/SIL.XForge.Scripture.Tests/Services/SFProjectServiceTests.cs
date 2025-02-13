@@ -2564,6 +2564,79 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task UpdateSettingsAsync_SelectSourceProject_CanAddUserWhenProjectConfigExists()
+    {
+        var env = new TestEnvironment();
+        env.RealtimeService.GetRepository<SFProjectUserConfig>()
+            .Add(
+                new SFProjectUserConfig
+                {
+                    Id = SFProjectUserConfig.GetDocId(Project02, User01),
+                    ProjectRef = Project02,
+                    OwnerRef = User01,
+                }
+            );
+        env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(new Attempt<string>(SFProjectRole.Translator)));
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { SourceParatextId = "paratext_" + Project02 }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.Source.ProjectRef, Is.EqualTo(Project02));
+        SFProject source = env.GetProject(Project02);
+        Assert.That(source.UserRoles.ContainsKey(User01), Is.True);
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_SelectSourceProject_PermissionsUpdated()
+    {
+        var env = new TestEnvironment();
+        env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(new Attempt<string>(SFProjectRole.Translator)));
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(TextInfoPermission.Read));
+        env.ParatextService.GetPermissionsAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<SFProject>(),
+                Arg.Any<IReadOnlyDictionary<string, string>>(),
+                0,
+                0,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(new Dictionary<string, string> { { User01, TextInfoPermission.Read } }));
+
+        SFProject resource = env.GetProject(Resource01);
+        Assert.That(resource.UserRoles.ContainsKey(User01), Is.True);
+        Assert.That(resource.Texts.All(t => t.Permissions.ContainsKey(User01)), Is.False);
+
+        env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Resource01PTId)
+            .Returns(resource.Texts.Select(t => t.BookNum).ToList());
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project03,
+            new SFProjectSettings { SourceParatextId = Resource01PTId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.Source.ProjectRef, Is.EqualTo(Resource01));
+        await env
+            .ParatextService.Received(2)
+            .GetPermissionsAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>(p => p.ParatextId == Resource01PTId),
+                Arg.Any<IReadOnlyDictionary<string, string>>(),
+                Arg.Any<int>(),
+                Arg.Any<int>()
+            );
+        resource = env.GetProject(Resource01);
+        Assert.That(resource.UserRoles.ContainsKey(User01), Is.True);
+        Assert.That(resource.Texts.All(t => t.Permissions.ContainsKey(User01)), Is.True);
+    }
+
+    [Test]
     public async Task UpdateSettingsAsync_ChangeSourceProject_RecreateMachineProjectAndSync()
     {
         var env = new TestEnvironment();
@@ -4896,6 +4969,7 @@ public class SFProjectServiceTests
                     LanguageTag = "qaa",
                 },
                 new ParatextProject { ParatextId = GetProject(Project01).ParatextId },
+                new ParatextProject { ParatextId = GetProject(Project02).ParatextId },
                 new ParatextProject { ParatextId = PTProjectIdNotYetInSF },
                 new ParatextProject { ParatextId = "ptProject123" },
             ];

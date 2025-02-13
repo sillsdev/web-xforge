@@ -1191,10 +1191,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string? shareKey = null
     )
     {
-        await conn.CreateAsync<SFProjectUserConfig>(
-            SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
-            new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id }
+        // Check if a project user config already exists
+        var projectUserConfig = await conn.FetchAsync<SFProjectUserConfig>(
+            SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id)
         );
+        if (!projectUserConfig.IsLoaded)
+        {
+            await conn.CreateAsync(
+                SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
+                new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id }
+            );
+        }
         // Listeners can now assume the ProjectUserConfig is ready when the user is added.
         await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, shareKey);
 
@@ -1222,7 +1229,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 if (attempt.TryResult(out string sourceProjectRole))
                 {
                     // If they are in Paratext, add the user to the source project
-                    await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole, shareKey);
+                    await AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole, shareKey);
                 }
             }
         }
@@ -1759,7 +1766,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (sourcePTProject == null)
         {
             // If it is not a project, see if there is a matching resource
-            IReadOnlyList<ParatextResource> resources = await this._paratextService.GetResourcesAsync(curUserId);
+            IReadOnlyList<ParatextResource> resources = await _paratextService.GetResourcesAsync(curUserId);
             sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
             if (sourcePTProject == null)
             {
@@ -1786,6 +1793,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             projectCreated = true;
         }
 
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = projectCreated ? null : await GetProjectDocAsync(sourceProjectRef, conn);
         // Add each user in the target project to the source project so they can access it
         foreach (string userId in userIds)
         {
@@ -1795,6 +1804,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 if (sourceProject == null || !sourceProject.UserRoles.ContainsKey(userId))
                 {
                     await AddUserAsync(userId, sourceProjectRef, null);
+                }
+                else if (projectDoc != null)
+                {
+                    Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, userId);
+                    if (attempt.Success)
+                    {
+                        await UpdatePermissionsAsync(userId, projectDoc);
+                    }
                 }
             }
             catch (ForbiddenException)
