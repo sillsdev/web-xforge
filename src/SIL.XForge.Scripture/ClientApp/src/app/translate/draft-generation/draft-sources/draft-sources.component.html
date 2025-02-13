@@ -121,7 +121,7 @@
             <div class="project">
               <span class="project-name">{{ project.name }}</span>
               <span class="language-code">
-                {{ t("language_code") }} <strong>{{ project.writingSystem?.tag }}</strong>
+                {{ t("language_code") }} <strong>{{ project.writingSystem.tag }}</strong>
               </span>
             </div>
           }
@@ -156,7 +156,7 @@
 
 <div class="confirm-language-codes">
   <ng-container *transloco="let t; read: 'confirm_draft_sources'">
-    @if (sourceSideLanguageCodes.length > 1) {
+    @if (multipleSourceSideLanguages) {
       <app-notice mode="fill-dark" type="warning">
         <h3>All source and reference projects should be in the same language</h3>
         <p>
@@ -187,7 +187,7 @@
       </app-notice>
     }
 
-    @if (sourceSideLanguageCodes.length === 1 && !showSourceAndTargetLanguagesIdenticalWarning) {
+    @if (!multipleSourceSideLanguages && !showSourceAndTargetLanguagesIdenticalWarning) {
       <app-notice mode="fill-dark">
         <h3>{{ t("incorrect_language_codes_reduce_quality") }}</h3>
         <p>Please make sure all the language codes are correct before saving.</p>
@@ -214,7 +214,7 @@
     </mat-card-header>
     <mat-card-content>
       @if (getControlState("projectSettings") === ElementState.Submitting) {
-        <div class="saving-indicator"><mat-spinner [diameter]="24" [color]="'primary'"></mat-spinner> Saving</div>
+        <div class="saving-indicator"><mat-spinner [diameter]="24" color="primary"></mat-spinner> Saving</div>
       } @else {
         <div class="saving-indicator"><mat-icon class="success">checkmark</mat-icon> All changes saved</div>
       }
