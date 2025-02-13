@@ -84,8 +84,14 @@ jobs:
             -p:CollectCoverage=true \
             -e:CoverletOutputFormat=opencover \
             -e:Exclude=\"[NUnit3.TestAdapter]*,[SIL.XForge.*.Views]*,[SIL.XForge.Tests]*\"
+
+      # Run the tests while making sure none of the common/known warnings are printed
       - name: "Test: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:gha
+        run: |
+          set -e
+          cd src/SIL.XForge.Scripture/ClientApp
+          npm run test:gha | tee output.log
+          ! grep NG0303 output.log # Can't bind to 'some_property since it isn't a known property of 'some_element'
 
       - name: "Coverage: Backend"
         run: |
