@@ -1,0 +1,48 @@
+use('xforge');
+
+// Add the short names of the projects you want to check for the latest sync status
+const shortNames = ''.split(' ');
+
+const latestSyncMetricByProject = db.sf_projects.aggregate([
+  {
+    $match: {
+      shortName: { $in: shortNames }
+    }
+  },
+  {
+    $project: {
+      _id: 1,
+      shortName: 1
+    }
+  },
+  {
+    $lookup: {
+      from: 'sync_metrics',
+      let: { projectId: '$_id' },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: ['$projectRef', '$$projectId']
+            }
+          }
+        },
+        {
+          $sort: { dateStarted: -1 },
+        },
+        { $limit: 1 }
+      ],
+      as: 'latestSync'
+    }
+  }, { $unwind: "$latestSync" }
+])
+
+while (latestSyncMetricByProject.hasNext()) {
+  const project = latestSyncMetricByProject.next();
+  const shortName = project.shortName;
+  const metric = project.latestSync;
+  console.log(`Project short name: ${shortName}`);
+  console.log(`Status: ${metric.status}`);
+  if (metric.errorDetails != null) console.log(metric.errorDetails);
+  console.log('\n');
+}
