@@ -9,6 +9,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -28,6 +29,7 @@ const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDraftHandlingService = mock(DraftHandlingService);
 const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
+const mockNoticeService = mock(NoticeService);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -50,7 +52,8 @@ describe('EditorDraftComponent', () => {
       { provide: DraftHandlingService, useMock: mockDraftHandlingService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: DialogService, useMock: mockDialogService }
+      { provide: DialogService, useMock: mockDialogService },
+      { provide: NoticeService, useMock: mockNoticeService }
     ]
   }));
 
@@ -201,6 +204,27 @@ describe('EditorDraftComponent', () => {
       expect(draftDelta.ops).toEqual(component['draftDelta']!.ops);
       verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, component['draftDelta']!)).once();
       expect(component.isDraftApplied).toBe(true);
+    }));
+
+    it('should show snackbar if applying a draft fails', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile()
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+      when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
+      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
+      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      when(mockDraftHandlingService.applyChapterDraftAsync(anything(), anything())).thenReject(new Error('Offline'));
+      component.applyDraft();
+      tick();
+      verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, anything())).once();
+      verify(mockNoticeService.showError(anything())).once();
+      expect(component.isDraftApplied).toBe(false);
     }));
   });
 
