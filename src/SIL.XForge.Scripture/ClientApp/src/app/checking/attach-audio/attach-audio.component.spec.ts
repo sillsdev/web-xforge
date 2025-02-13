@@ -3,6 +3,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
+import { ngfModule } from 'angular-file';
 import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -23,7 +24,14 @@ describe('AttachAudioComponent', () => {
   let env: TestEnvironment;
 
   configureTestingModule(() => ({
-    imports: [CommonModule, UICommonModule, SharedModule, TestTranslocoModule, TestOnlineStatusModule.forRoot()],
+    imports: [
+      CommonModule,
+      UICommonModule,
+      ngfModule,
+      SharedModule,
+      TestTranslocoModule,
+      TestOnlineStatusModule.forRoot()
+    ],
     declarations: [AttachAudioComponent],
     providers: [
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
