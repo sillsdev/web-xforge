@@ -4255,6 +4255,34 @@ public class SFProjectServiceTests
         );
     }
 
+    [Test]
+    public async Task SyncUserRoleAsync_Success()
+    {
+        var env = new TestEnvironment();
+        var user = env.GetProject(Project01).UserRoles[User01];
+        Assert.AreEqual(SFProjectRole.Administrator, user);
+
+        // SUT
+        env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
+        await env.Service.SyncUserRoleAsync(User01, Project01);
+        user = env.GetProject(Project01).UserRoles[User01];
+        Assert.AreEqual(SFProjectRole.Translator, user);
+    }
+
+    [Test]
+    public void SyncUserRoleAsync_ForbiddenError()
+    {
+        var env = new TestEnvironment();
+        var user = env.GetProject(Project01).UserRoles[User01];
+        Assert.AreEqual(SFProjectRole.Administrator, user);
+
+        // SUT
+        env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(Attempt.Failure(SFProjectRole.Translator)));
+        Assert.ThrowsAsync<ForbiddenException>(async () => await env.Service.SyncUserRoleAsync(User01, Project01));
+    }
+
     private class TestEnvironment
     {
         public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);
