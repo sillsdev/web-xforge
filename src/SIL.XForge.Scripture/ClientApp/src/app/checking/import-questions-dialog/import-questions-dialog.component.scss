@@ -107,10 +107,11 @@
 
 // Section: Question list screen
 
-::ng-deep .filter-text {
+.filter-text {
   padding: 0;
 
-  div {
+  // below is to make denser
+  ::ng-deep div {
     display: flex;
     align-items: center;
     mat-form-field:not(.mdc-text-field--textarea) {
