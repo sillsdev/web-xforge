@@ -155,7 +155,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     )
     {
         TModel project = await GetProjectAsync(projectId);
-        if (!systemRoles.Contains(SystemRole.SystemAdmin) && !IsProjectAdmin(project, curUserId))
+        if (!systemRoles.Contains(SystemRole.SystemAdmin) && !IsProjectAdmin(project, curUserId, projectRole))
             throw new ForbiddenException();
 
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
@@ -321,8 +321,9 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
 
     protected bool IsOnProject(TModel project, string userId) => project.UserRoles.ContainsKey(userId);
 
-    protected bool IsProjectAdmin(TModel project, string userId) =>
-        project.UserRoles.TryGetValue(userId, out string role) && role == ProjectAdminRole;
+    protected bool IsProjectAdmin(TModel project, string userId, string projectRole = null) =>
+        project.UserRoles.TryGetValue(userId, out string role) && role == ProjectAdminRole
+        || projectRole == ProjectAdminRole;
 
     protected string GetAudioDir(string projectId) => Path.Combine(SiteOptions.Value.SiteDir, "audio", projectId);
 

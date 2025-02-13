@@ -34,7 +34,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   userConnectedResources: SFProjectProfileDoc[] = [];
   sfProjects: SFProjectDoc[] = [];
   /** PT projects that the user can access that they are not connected to on SF. */
-  userUnconnectedParatextProjects: ParatextProject[] = [];
+  userParatextProjects: ParatextProject[] | undefined = [];
 
   user?: UserDoc;
   problemGettingPTProjects: boolean = false;
@@ -62,8 +62,12 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     return (
       this.userConnectedProjects.length > 0 ||
       this.userConnectedResources.length > 0 ||
-      this.userUnconnectedParatextProjects.length > 0
+      (this.userUnconnectedParatextProjects?.length ?? 0) > 0
     );
+  }
+
+  get userUnconnectedParatextProjects(): ParatextProject[] | undefined {
+    return this.userParatextProjects?.filter(project => !project.isConnected);
   }
 
   get isOnline(): Observable<boolean> {
@@ -83,6 +87,10 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
 
     await this.onlineStatusService.online;
     if (this.userIsPTUser) await this.loadParatextProjects();
+  }
+
+  currentUserRole(projectId: string): string | undefined {
+    return this.userConnectedProjects.find(project => project.id === projectId)?.data?.userRoles[this.user!.id];
   }
 
   isLastSelectedProject(project: SFProjectProfileDoc): boolean {
@@ -105,6 +113,13 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     return `${drafting}${checking}`;
   }
 
+  userRoleNeedsUpdated(projectId: string): boolean | undefined {
+    return (
+      this.userIsPTUser &&
+      this.userParatextProjects?.find(project => project.projectId === projectId)?.userRoleNeedsUpdated
+    );
+  }
+
   async joinProject(projectId: string): Promise<void> {
     try {
       this.noticeService.loadingStarted(this.constructor.name);
@@ -119,6 +134,13 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     }
   }
 
+  async updateUserRole(projectId: string): Promise<void> {
+    const userRole = this.userParatextProjects!.find(project => project.projectId === projectId)!.projectUserRole;
+    if (userRole === 'pt_administrator')
+      await this.projectService.onlineUpdateUserRole(projectId, this.user!.id, userRole);
+    await this.projectService.onlineSync(projectId).then(() => this.router.navigate(['projects', projectId]));
+  }
+
   private async loadUser(): Promise<void> {
     this.user = await this.userService.getCurrentUser();
     this.userIsPTUser = this.user.data != null ? isPTUser(this.user.data) : false;
@@ -128,12 +150,11 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     this.loadingPTProjects = true;
     this.problemGettingPTProjects = false;
     try {
-      const userPTProjects = await this.paratextService.getProjects();
-      if (userPTProjects == null) {
+      this.userParatextProjects = await this.paratextService.getProjects();
+      if (this.userParatextProjects == null) {
         this.problemGettingPTProjects = true;
         return;
       }
-      this.userUnconnectedParatextProjects = userPTProjects.filter(project => !project.isConnected);
     } catch (err) {
       if (err instanceof HttpErrorResponse && err.status === HttpStatusCode.ServiceUnavailable) {
         this.errorMessage = 'failed_to_connect_to_pt_server';
