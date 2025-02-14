@@ -326,7 +326,7 @@
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
     "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
-    "go_to_retrain": "Go to Overview",
+    "go_to_retrain": "Ümumi Baxışa keçin",
     "try_again": "Yenidən çalışın"
   },
   "exception_handling_service": {
@@ -341,7 +341,7 @@
     "storage_space_is_limited": "Bu cihazdakı saxlama sahəsi məhduddur. Bütün xüsusiyyətlərin mövcudluğunu təmin etmək üçün ən azı 500 MB boş yerə malik olmağa təklif olunur. Zəhmət olmasa saxlama yerini boşaltın."
   },
   "font_size": {
-    "text_size": "Text size"
+    "text_size": "Mətn ölçüsü"
   },
   "global_notices": {
     "close": "Bağla",

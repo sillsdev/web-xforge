@@ -40,7 +40,7 @@
   "attach_audio": {
     "tooltip_record": "Audio aufnehmen",
     "tooltip_stop": "Aufnahme beenden",
-    "tooltip_upload": "Upload audio"
+    "tooltip_upload": "Audio hochladen"
   },
   "canon": {
     "book_names": {
