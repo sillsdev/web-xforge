@@ -10,8 +10,7 @@
   width: 36px;
 }
 
-.app-avatar-container > button,
-::ng-deep div.avatar-content {
+.app-avatar-container > button {
   height: 32px;
   width: 32px;
 }
@@ -24,10 +23,8 @@ app-avatar {
   cursor: pointer;
 }
 
-.other-viewer ::ng-deep {
-  > span {
-    display: flex;
-    align-items: center;
-    column-gap: 4px;
-  }
+.other-viewer ::ng-deep span {
+  display: flex;
+  align-items: center;
+  column-gap: 4px;
 }
