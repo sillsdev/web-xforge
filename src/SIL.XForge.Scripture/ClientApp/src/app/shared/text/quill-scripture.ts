@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash-es';
-import { Attributor, Formattable, Scope } from 'parchment';
+import { Attributor, Blot, Formattable, Scope } from 'parchment';
 import Quill, { Delta, Parchment, Range } from 'quill';
 import QuillCursors from 'quill-cursors';
 import QuillBlockBlot, { BlockEmbed as QuillBlockEmbedBlot } from 'quill/blots/block';
@@ -131,6 +131,64 @@ export function registerScripture(): string[] {
   const ZWSP = '\u200b';
   // non-breaking space
   const NBSP = '\u00A0';
+
+  /**
+   * This class overrides the Quill `ScrollBlot` 'create' method so that it can handle unknown blot types.
+   * If an unregistered blot type is encountered, it will be rendered as the 'unknown' blot type.
+   */
+  class ScrollBlot extends QuillScrollBlot {
+    static unknownBlots: Set<string> = new Set<string>();
+
+    create(input: Node | string | Scope, value?: any): Blot {
+      // Try to create the blot.  If blot type not registered, fallback to the custom 'unknown' blot
+      try {
+        return super.create(input, value);
+      } catch {
+        ScrollBlot.unknownBlots.add(input as string);
+
+        // Throw error after render with message including list of unknown blot types
+        setTimeout(() => {
+          if (ScrollBlot.unknownBlots.size === 0) {
+            return;
+          }
+
+          try {
+            const unknownBlotList = Array.from(ScrollBlot.unknownBlots)
+              .map(name => `'${name}'`)
+              .join(', ');
+            throw new Error(`Unable to create blot${ScrollBlot.unknownBlots.size > 1 ? 's' : ''}: ${unknownBlotList}.`);
+          } finally {
+            // Clear unrendered blot list after reporting error
+            ScrollBlot.unknownBlots.clear();
+          }
+        });
+
+        value.origBlotName = input as string;
+        return super.create('unknown', value);
+      }
+    }
+  }
+
+  /**
+   * Fallback blot for when Quill encounters a blot type that is not registered.
+   */
+  class UnknownBlot extends QuillEmbedBlot {
+    static blotName = 'unknown';
+    static tagName = 'span';
+
+    static create(value: any): Node {
+      const node = super.create(value) as HTMLElement;
+      // Store the original blot name and value
+      node.innerText = `[Unknown format: '${value.origBlotName || 'unknown'}']`;
+      setUsxValue(node, value);
+      return node;
+    }
+
+    static value(node: HTMLElement): any {
+      return getUsxValue(node);
+    }
+  }
+  formats.push(UnknownBlot);
 
   /**
    * This class overrides the "value" method so that it does not normalize text to NFC. This avoids a bug where Quill
@@ -873,7 +931,7 @@ export function registerScripture(): string[] {
     }
   }
 
-  Quill.register('blots/scroll', QuillScrollBlot, true);
+  Quill.register('blots/scroll', ScrollBlot, true);
   Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
   Quill.register('modules/cursors', QuillCursors);
