@@ -93,7 +93,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     );
   }
 
-  @Input() set value(id: string) {
+  @Input() set value(id: string | undefined) {
     if (this.paratextIdControl?.value.paratextId === id) return;
     const project =
       this.projects?.find(p => p.paratextId === id) ||

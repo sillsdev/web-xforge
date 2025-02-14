@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, defer, from, Observable } from 'rxjs';
@@ -24,6 +25,11 @@ export interface DraftSourcesAsArrays {
   trainingSources: [DraftSource?, DraftSource?];
   trainingTargets: [DraftSource?];
   draftingSources: [DraftSource?];
+}
+
+/** This type can be downcast as a DraftSource. */
+export interface SFProjectProfileWithProjectRef extends SFProjectProfile {
+  projectRef: string;
 }
 
 @Injectable({
@@ -139,12 +145,12 @@ export class DraftSourcesService {
                 : undefined;
             let target: DraftSource | undefined =
               targetDoc?.data != null ? { ...targetDoc.data, projectRef: targetDoc.id } : undefined;
-
-            return {
-              trainingSources: [trainingSource, additionalTrainingSource] as [DraftSource, DraftSource],
-              trainingTargets: [target] as [DraftSource],
-              draftingSources: [draftingSource] as [DraftSource]
+            const result: DraftSourcesAsArrays = {
+              trainingSources: [trainingSource, additionalTrainingSource],
+              trainingTargets: [target],
+              draftingSources: [draftingSource]
             };
+            return result;
           })
         );
       })
