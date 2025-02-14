@@ -1,9 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -25,7 +23,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../core/models/training-data-doc';
@@ -95,14 +92,7 @@ describe('DraftGenerationComponent', () => {
       }
 
       TestBed.configureTestingModule({
-        imports: [
-          TestOnlineStatusModule.forRoot(),
-          RouterModule.forRoot([]),
-          TranslocoMarkupModule,
-          TestTranslocoModule,
-          NoopAnimationsModule,
-          UICommonModule.forRoot()
-        ],
+        imports: [TestOnlineStatusModule.forRoot(), RouterModule.forRoot([]), TestTranslocoModule],
         providers: [
           { provide: AuthService, useValue: mockAuthService },
           { provide: FeatureFlagService, useValue: mockFeatureFlagService },
@@ -112,9 +102,7 @@ describe('DraftGenerationComponent', () => {
           { provide: SFProjectService, useValue: mockProjectService },
           { provide: UserService, useValue: mockUserService },
           { provide: DialogService, useValue: mockDialogService },
-          { provide: I18nService, useValue: mockI18nService },
           { provide: NoticeService, useValue: mockNoticeService },
-          { provide: PreTranslationSignupUrlService, useValue: mockPreTranslationSignupUrlService },
           { provide: NllbLanguageService, useValue: mockNllbLanguageService },
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },

@@ -1,26 +1,19 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { anything, mock, when } from 'ts-mockito';
-import { FeatureFlagService } from '../feature-flags/feature-flag.service';
 import { I18nService } from '../i18n.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { ErrorAlertData, ErrorDialogComponent } from './error-dialog.component';
 
-const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedI18nService = mock(I18nService);
 
 describe('ErrorDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule],
-    providers: [
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
-      { provide: I18nService, useMock: mockedI18nService }
-    ]
+    providers: [{ provide: I18nService, useMock: mockedI18nService }]
   }));
 
   let overlayContainer: OverlayContainer;
@@ -77,9 +70,8 @@ describe('ErrorDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoopAnimationsModule],
-  declarations: [ErrorDialogComponent],
-  exports: [ErrorDialogComponent]
+  imports: [UICommonModule, TestTranslocoModule],
+  declarations: [ErrorDialogComponent]
 })
 class DialogTestModule {}
 

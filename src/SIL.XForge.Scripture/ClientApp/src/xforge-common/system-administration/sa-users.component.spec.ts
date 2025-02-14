@@ -22,7 +22,6 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { environment } from '../../environments/environment';
 import { ProjectDoc } from '../models/project-doc';
 import { UserDoc } from '../models/user-doc';
-import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
@@ -34,14 +33,12 @@ import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 import { SaUsersComponent } from './sa-users.component';
 
 const mockedMatDialog = mock(MatDialog);
-const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
 const mockedProjectService: ProjectService = mock(ProjectService);
 
 describe('SaUsersComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      NoopAnimationsModule,
       RouterModule.forRoot([]),
       UICommonModule,
       DialogTestModule,
@@ -52,7 +49,6 @@ describe('SaUsersComponent', () => {
     declarations: [SaUsersComponent],
     providers: [
       { provide: MatDialog, useMock: mockedMatDialog },
-      { provide: NoticeService, useMock: mockedNoticeService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ProjectService, useMock: mockedProjectService },
       emptyHammerLoader,
@@ -162,9 +158,7 @@ class TestProjectDoc extends ProjectDoc {
 }
 
 @NgModule({
-  imports: [NoopAnimationsModule, UICommonModule],
-  exports: [SaDeleteDialogComponent],
-  declarations: [SaDeleteDialogComponent]
+  imports: [NoopAnimationsModule]
 })
 class DialogTestModule {}
 

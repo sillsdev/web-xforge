@@ -4,7 +4,7 @@ import { MatSliderDragEvent } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
 import { lastValueFrom } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
-import { instance, mock } from 'ts-mockito';
+import { mock } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -195,10 +195,7 @@ class TestEnvironment {
   constructor(template: string, isOnline = true) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
-      providers: [
-        { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-        { provide: I18nService, useFactory: () => instance(this.mockedI18nService) }
-      ],
+      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }],
       imports: [UICommonModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule]
     });
 

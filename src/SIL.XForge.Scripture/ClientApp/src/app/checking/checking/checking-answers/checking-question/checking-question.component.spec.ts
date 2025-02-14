@@ -1,7 +1,6 @@
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
@@ -10,9 +9,7 @@ import { BehaviorSubject, lastValueFrom, Subject } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../../../core/models/question-doc';
@@ -62,14 +59,9 @@ class MockComponent {
 
 describe('CheckingQuestionComponent', () => {
   configureTestingModule(() => ({
-    imports: [UICommonModule, TestTranslocoModule, TestOnlineStatusModule.forRoot(), NoopAnimationsModule],
+    imports: [UICommonModule, TestTranslocoModule, TestOnlineStatusModule.forRoot()],
     declarations: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, MockComponent],
-    providers: [
-      { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: QuestionDoc, useMock: mockedQuestionDoc },
-      { provide: SFProjectUserConfigDoc, useMock: mockedSFProjectUserConfigDoc }
-    ]
+    providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
   }));
 
   it('selects scripture text when scripture audio is present', async () => {

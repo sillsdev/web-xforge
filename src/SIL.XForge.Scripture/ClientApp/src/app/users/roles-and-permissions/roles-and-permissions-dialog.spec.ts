@@ -1,10 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHandler } from '@angular/common/http';
 import { Component, DebugElement, Input, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { BrowserModule, By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { By } from '@angular/platform-browser';
 import { forEach } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
@@ -47,7 +45,7 @@ const mockedProjectService = mock(SFProjectService);
 
 describe('RolesAndPermissionsComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: ExternalUrlService },
       { provide: HttpClient },
@@ -199,7 +197,7 @@ class FakeAvatarComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, BrowserModule, UICommonModule, TestTranslocoModule, NoticeComponent],
+  imports: [UICommonModule, TestTranslocoModule, NoticeComponent],
   declarations: [RolesAndPermissionsDialogComponent, FakeAvatarComponent]
 })
 class DialogTestModule {}

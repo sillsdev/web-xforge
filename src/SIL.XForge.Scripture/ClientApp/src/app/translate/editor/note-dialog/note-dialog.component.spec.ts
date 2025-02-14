@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -8,7 +7,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
-import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { BiblicalTerm, getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -39,18 +37,11 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import * as RichText from 'rich-text';
 import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import {
-  ChildViewContainerComponent,
-  configureTestingModule,
-  matDialogCloseDelay,
-  TestTranslocoModule
-} from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { ChildViewContainerComponent, configureTestingModule, matDialogCloseDelay } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
@@ -64,8 +55,6 @@ import { getCombinedVerseTextDoc, getTextDoc, paratextUsersFromRoles } from '../
 import { TranslateModule } from '../../translate.module';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
 
-const mockedAuthService = mock(AuthService);
-const mockedCookieService = mock(CookieService);
 const mockedHttpClient = mock(HttpClient);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -75,10 +64,7 @@ describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
-      { provide: AuthService, useMock: mockedAuthService },
-      { provide: CookieService, useMock: mockedCookieService },
       { provide: HttpClient, useMock: mockedHttpClient },
-      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DialogService, useMock: mockedDialogService }
     ]
@@ -706,7 +692,7 @@ describe('NoteDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TranslateModule, TestTranslocoModule]
+  imports: [TranslateModule]
 })
 class DialogTestModule {}
 

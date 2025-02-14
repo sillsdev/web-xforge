@@ -1,11 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { firstValueFrom } from 'rxjs';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -18,7 +15,7 @@ import {
 
 describe('ImportQuestionsConfirmationDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [ReactiveFormsModule, FormsModule, DialogTestModule, NoopAnimationsModule]
+    imports: [DialogTestModule]
   }));
 
   it('Allows selecting and unselecting all questions', fakeAsync(async () => {
@@ -74,8 +71,7 @@ describe('ImportQuestionsConfirmationDialogComponent', () => {
 
 @NgModule({
   declarations: [ImportQuestionsConfirmationDialogComponent],
-  exports: [ImportQuestionsConfirmationDialogComponent],
-  imports: [CommonModule, UICommonModule, TestTranslocoModule],
+  imports: [UICommonModule, TestTranslocoModule],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

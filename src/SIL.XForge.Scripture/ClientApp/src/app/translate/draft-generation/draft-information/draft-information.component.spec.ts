@@ -3,7 +3,6 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { DraftInformationComponent } from './draft-information.component';
 
@@ -11,7 +10,6 @@ const mockAuthService = mock(AuthService);
 
 describe('DraftInformationComponent', () => {
   configureTestingModule(() => ({
-    imports: [UICommonModule],
     providers: [{ provide: AuthService, useMock: mockAuthService }]
   }));
 

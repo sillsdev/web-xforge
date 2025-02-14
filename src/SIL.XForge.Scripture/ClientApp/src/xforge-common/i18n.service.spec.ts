@@ -6,31 +6,21 @@ import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { DOCUMENT } from './browser-globals';
-import { BugsnagService } from './bugsnag.service';
 import { I18nService } from './i18n.service';
-import { LocationService } from './location.service';
 import { isSafari } from './utils';
 
-const mockedLocationService = mock(LocationService);
-const mockedBugsnagService = mock(BugsnagService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedCookieService = mock(CookieService);
-const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDocument = mock(Document);
 const mockedDocumentBody = mock(HTMLBodyElement);
 
 describe('I18nService', () => {
   configureTestingModule(() => ({
-    declarations: [],
     providers: [
-      { provide: LocationService, useMock: mockedLocationService },
-      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: DOCUMENT, useMock: mockedDocument },
       { provide: HTMLBodyElement, useMock: mockedDocumentBody },
       provideHttpClient(withInterceptorsFromDi()),

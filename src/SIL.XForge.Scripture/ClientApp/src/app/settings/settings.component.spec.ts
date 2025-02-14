@@ -7,7 +7,6 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route, RouterModule } from '@angular/router';
 import { cloneDeep, merge } from 'lodash-es';
-import { CookieService } from 'ngx-cookie-service';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -23,7 +22,6 @@ import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/trans
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -53,8 +51,6 @@ const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
-const mockedBugsnagService = mock(BugsnagService);
-const mockedCookieService = mock(CookieService);
 const mockedDialog = mock(MatDialog);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 
@@ -76,7 +72,7 @@ describe('SettingsComponent', () => {
       TestOnlineStatusModule.forRoot(),
       NoopAnimationsModule
     ],
-    declarations: [SettingsComponent, WriteStatusComponent, MockComponent, ProjectSelectComponent, InfoComponent],
+    declarations: [SettingsComponent, WriteStatusComponent, ProjectSelectComponent, InfoComponent],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },
@@ -84,8 +80,6 @@ describe('SettingsComponent', () => {
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: CookieService, useMock: mockedCookieService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: FeatureFlagService, useValue: instance(mockedFeatureFlagService) },
       { provide: MatDialog, useMock: mockedDialog }

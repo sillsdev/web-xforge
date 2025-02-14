@@ -27,7 +27,6 @@ describe('UserService', () => {
   configureTestingModule(() => ({
     imports: [TestTranslocoModule, TestRealtimeModule.forRoot(new TypeRegistry([UserDoc], [], []))],
     providers: [
-      UserService,
       { provide: AuthService, useMock: mockedAuthService },
       { provide: LocalSettingsService, useMock: mockedLocalSettingsService },
       { provide: CommandService, useMock: mockedCommandService },

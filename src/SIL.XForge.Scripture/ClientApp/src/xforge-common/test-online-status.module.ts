@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { mock, when } from 'ts-mockito';
 
-@NgModule({ imports: [], providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()] })
+@NgModule({ providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()] })
 export class TestOnlineStatusModule {
   static forRoot(): ModuleWithProviders<TestOnlineStatusModule> {
     const mockedNavigator = mock(Navigator);

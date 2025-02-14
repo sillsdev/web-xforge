@@ -4,21 +4,18 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { anything, mock, verify } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
 import { ServalAdministrationService } from './serval-administration.service';
 
 const mockedCommandService = mock(CommandService);
 const mockedRealtimeService = mock(RealtimeService);
-const mockedRetryingRequestService = mock(RetryingRequestService);
 
 describe('ServalAdministrationService', () => {
   configureTestingModule(() => ({
     providers: [
       { provide: CommandService, useMock: mockedCommandService },
       { provide: RealtimeService, useMock: mockedRealtimeService },
-      { provide: RetryingRequestService, useMock: mockedRetryingRequestService },
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting()
     ]

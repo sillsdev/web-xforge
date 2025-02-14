@@ -6,7 +6,6 @@ import { MatMenuHarness } from '@angular/material/menu/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -15,9 +14,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
-import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -41,14 +38,11 @@ import { SharedModule } from '../../shared/shared.module';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { CollaboratorsComponent } from './collaborators.component';
 
-const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
-const mockedBugsnagService = mock(BugsnagService);
-const mockedCookieService = mock(CookieService);
 const mockedDialogService = mock(DialogService);
 
 describe('CollaboratorsComponent', () => {
@@ -64,14 +58,10 @@ describe('CollaboratorsComponent', () => {
       AvatarComponent
     ],
     providers: [
-      { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: CookieService, useMock: mockedCookieService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialogService },
       emptyHammerLoader

@@ -10,8 +10,7 @@ describe('TabScrollButtonComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [SFTabsModule],
-      declarations: [TabScrollButtonComponent]
+      imports: [SFTabsModule]
     });
     fixture = TestBed.createComponent(TabScrollButtonComponent);
     component = fixture.componentInstance;

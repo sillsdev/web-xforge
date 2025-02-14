@@ -1,16 +1,10 @@
 import { NgZone } from '@angular/core';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AppComponent } from '../../app.component';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -22,14 +16,6 @@ const mockedPermissionService = mock(PermissionsService);
 
 describe('cache service', () => {
   configureTestingModule(() => ({
-    declarations: [AppComponent],
-    imports: [
-      UICommonModule,
-      NoopAnimationsModule,
-      TestTranslocoModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: PermissionsService, useMock: mockedPermissionService }

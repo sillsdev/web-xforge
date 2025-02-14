@@ -9,12 +9,10 @@ import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../app/core/models/sf-type-registry';
 import { isSafari } from '../utils';
@@ -103,13 +101,9 @@ class TestEnvironment {
   constructor(template: string) {
     TestBed.configureTestingModule({
       declarations: [HostComponent],
-      imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), AvatarComponent, OwnerComponent],
+      imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), OwnerComponent],
       providers: [
-        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
-        { provide: BugsnagService, useFactory: () => instance(this.mockedBugsnagService) },
-        { provide: CookieService, useFactory: () => instance(this.mockedCookieService) },
         { provide: TranslocoService, useFactory: () => instance(this.mockedTranslocoService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
       ]
