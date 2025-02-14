@@ -41,7 +41,6 @@ describe('HistoryChooserComponent', () => {
     declarations: [HistoryChooserComponent, HistoryRevisionFormatPipe],
     providers: [
       { provide: DialogService, useMock: mockedDialogService },
-      { provide: I18nService, useMock: mockedI18nService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ParatextService, useMock: mockedParatextService },

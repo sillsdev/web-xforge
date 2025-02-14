@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import {
   getQuestionDocId,
@@ -21,7 +20,6 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -41,15 +39,13 @@ const mockedFileService = mock(FileService);
 
 describe('QuestionDialogService', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, NoopAnimationsModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
-      QuestionDialogService,
       { provide: DialogService, useMock: mockedDialogService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: FileService, useMock: mockedFileService }
+      { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
 

@@ -15,8 +15,7 @@ let env: TestEnvironment;
 
 describe('ActiveProjectIdService', () => {
   configureTestingModule(() => ({
-    imports: [RouterModule.forRoot(ROUTES)],
-    declarations: [MockComponent]
+    imports: [RouterModule.forRoot(ROUTES)]
   }));
 
   beforeEach(() => (env = new TestEnvironment()));

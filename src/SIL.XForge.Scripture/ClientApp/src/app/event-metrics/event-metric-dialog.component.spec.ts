@@ -3,14 +3,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EventMetricDialogComponent } from './event-metric-dialog.component';
 
 describe('EventMetricDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, NoopAnimationsModule, UICommonModule]
+    imports: [DialogTestModule]
   }));
 
   let dialog: MatDialog;
@@ -65,8 +63,7 @@ describe('EventMetricDialogComponent', () => {
 });
 
 @NgModule({
-  exports: [EventMetricDialogComponent],
-  imports: [EventMetricDialogComponent, TestTranslocoModule, UICommonModule],
+  imports: [TestTranslocoModule],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

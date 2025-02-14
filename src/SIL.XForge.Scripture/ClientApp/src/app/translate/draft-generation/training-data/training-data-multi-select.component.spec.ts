@@ -58,7 +58,6 @@ describe('TrainingDataMultiSelectComponent', () => {
       { provide: DialogService, useMock: mockDialogService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
-      { provide: TrainingDataUploadDialogComponent, useMock: mockTrainingDataUploadDialogComponent },
       { provide: UserService, useMock: mockUserService }
     ]
   }));

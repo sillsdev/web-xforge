@@ -3,7 +3,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ProjectData } from 'realtime-server/lib/esm/common/models/project-data';
 import { obj, PathItem } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getAudioBlob } from 'xforge-common/test-utils';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -26,7 +26,6 @@ const mockedDialogService = mock(DialogService);
 describe('FileService', () => {
   configureTestingModule(() => ({
     imports: [
-      TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(new TypeRegistry([TestDataDoc], [FileType.Audio], []))
     ],

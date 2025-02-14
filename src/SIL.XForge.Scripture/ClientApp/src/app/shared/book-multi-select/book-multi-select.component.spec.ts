@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatChipsModule } from '@angular/material/chips';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
@@ -21,7 +20,7 @@ describe('BookMultiSelectComponent', () => {
   let mockSelectedBooks: Book[];
 
   configureTestingModule(() => ({
-    imports: [MatChipsModule, TestTranslocoModule],
+    imports: [TestTranslocoModule],
     providers: [
       { provide: ProgressService, useMock: mockedProgressService },
       { provide: I18nService, useMock: mockedI18nService }

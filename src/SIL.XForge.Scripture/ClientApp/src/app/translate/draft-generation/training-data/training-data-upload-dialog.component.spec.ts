@@ -3,16 +3,13 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ngfModule } from 'angular-file';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { anything, mock, when } from 'ts-mockito';
-import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import {
@@ -22,7 +19,6 @@ import {
 } from './training-data-upload-dialog.component';
 import { TrainingDataService } from './training-data.service';
 
-const mockedDialogService = mock(DialogService);
 const mockedFileService = mock(FileService);
 const mockedTrainingDataService = mock(TrainingDataService);
 const mockedUserService = mock(UserService);
@@ -31,7 +27,6 @@ describe('TrainingDataUploadDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule],
     providers: [
-      { provide: DialogService, useMock: mockedDialogService },
       { provide: FileService, useMock: mockedFileService },
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
       { provide: UserService, useMock: mockedUserService }
@@ -108,7 +103,7 @@ describe('TrainingDataUploadDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [MatDialogModule, ngfModule, NoopAnimationsModule, TestTranslocoModule, UICommonModule],
+  imports: [ngfModule, TestTranslocoModule],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

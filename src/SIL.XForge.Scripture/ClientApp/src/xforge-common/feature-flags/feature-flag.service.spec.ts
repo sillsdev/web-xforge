@@ -1,9 +1,7 @@
 import { fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { mock, verify, when } from 'ts-mockito';
 import { AnonymousService } from 'xforge-common/anonymous.service';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { FeatureFlagService } from './feature-flag.service';
 
@@ -12,10 +10,7 @@ const mockedAnonymousService = mock(AnonymousService);
 describe('FeatureFlagService', () => {
   configureTestingModule(() => ({
     imports: [TestOnlineStatusModule.forRoot()],
-    providers: [
-      { provide: AnonymousService, useMock: mockedAnonymousService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
-    ]
+    providers: [{ provide: AnonymousService, useMock: mockedAnonymousService }]
   }));
 
   it('sets and gets the enabled property', fakeAsync(() => {

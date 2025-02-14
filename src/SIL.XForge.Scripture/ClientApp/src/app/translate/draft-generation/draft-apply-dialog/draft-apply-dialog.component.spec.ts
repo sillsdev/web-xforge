@@ -16,7 +16,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -47,20 +46,16 @@ let env: TestEnvironment;
 describe('DraftApplyDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      UICommonModule,
-      DraftApplyDialogComponent,
       TestTranslocoModule,
       RouterModule.forRoot(ROUTES),
       NoopAnimationsModule,
       TestOnlineStatusModule.forRoot()
     ],
     providers: [
-      { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: TextDocService, useMock: mockedTextDocService },
-      { provide: I18nService, useMock: mockedI18nService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MatDialogRef, useMock: mockedDialogRef },
       { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1, chapters: [1, 2] } }

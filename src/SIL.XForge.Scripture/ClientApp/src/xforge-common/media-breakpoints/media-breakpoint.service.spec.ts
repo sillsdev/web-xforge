@@ -5,9 +5,6 @@ describe('MediaBreakpointService', () => {
   let service: MediaBreakpointService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [MediaBreakpointService]
-    });
     service = TestBed.inject(MediaBreakpointService);
   });
 

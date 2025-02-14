@@ -13,40 +13,30 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, when } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { ProjectDoc } from 'xforge-common/models/project-doc';
-import { NoticeService } from 'xforge-common/notice.service';
 import { QueryFilter, QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectsComponent } from './serval-projects.component';
 
-const mockedNoticeService = mock(NoticeService);
 const mockedServalAdministrationService = mock(ServalAdministrationService);
 const mockedUserService = mock(UserService);
-const mockAuthService = mock(AuthService);
 
 describe('ServalProjectsComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      ServalProjectsComponent,
       NoopAnimationsModule,
       RouterModule.forRoot([]),
-      UICommonModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
     ],
     providers: [
-      { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
-      { provide: UserService, useMock: mockedUserService },
-      { provide: AuthService, useMock: mockAuthService },
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting()
     ]

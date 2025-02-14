@@ -1,16 +1,12 @@
 import { Component, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { instance, mock } from 'ts-mockito';
+import { mock } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayerStub } from '../../../checking/checking-test.utils';
-import { CheckingScriptureAudioPlayerComponent } from '../../../checking/checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayer, AudioStatus } from '../audio-player';
-import { AudioTimePipe } from '../audio-time-pipe';
 import { AudioPlayerBaseComponent } from './audio-player-base.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -108,12 +104,9 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioTimePipe, AudioTestComponent],
-      providers: [
-        { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
-      ],
-      imports: [UICommonModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule]
+      declarations: [HostComponent, AudioTestComponent],
+      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }],
+      imports: [TestOnlineStatusModule.forRoot()]
     });
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
