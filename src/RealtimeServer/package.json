@@ -21,6 +21,7 @@
   "types": "lib/cjs/common/index.d.ts",
   "private": true,
   "dependencies": {
+    "@biblionexus-foundation/scripture-utilities": "^0.0.7",
     "@bugsnag/js": "^7.21.0",
     "@sillsdev/scripture": "1.4.1",
     "@types/ajv-bsontype": "^1.0.1",
