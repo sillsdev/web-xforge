@@ -377,6 +377,7 @@
     "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
     "connect_a_project_to_get_started": "Connect a project to get started",
     "connected": "Connected",
+    "contact_admin_update_role": "Please contact your project administrator to sync this project.",
     "dbl_resource": "Digital Bible Library resource",
     "dbl_resources": "Digital Bible Library resources",
     "drafting": "Drafting",
@@ -392,7 +393,9 @@
     "offline": "You will need to connect to the internet to get started with a project.",
     "offline-accessible": "Offline Access",
     "open": "Open",
-    "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
+    "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help.",
+    "update": "Update",
+    "update_role": "Paratext role needs updated."
   },
   "roles": {
     "sf_community_checker": "Community Checker"
