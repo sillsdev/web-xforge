@@ -63,7 +63,6 @@ describe('ConnectProjectComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: I18nService, useMock: mockedI18nService },
       { provide: ErrorHandler, useMock: mockedErrorHandler },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]

@@ -15,7 +15,6 @@ import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import { cloneDeep } from 'lodash-es';
 import clone from 'lodash-es/clone';
-import { CookieService } from 'ngx-cookie-service';
 import { Delta } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -39,9 +38,6 @@ import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
-import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
-import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -96,19 +92,15 @@ import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { CheckingComponent } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
 
-const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedDialogService = mock(DialogService);
-const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 const mockedMediaBreakpointService = mock(MediaBreakpointService);
-const mockedBugsnagService = mock(BugsnagService);
-const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
 const mockedPermissions = mock(PermissionsService);
 
@@ -165,29 +157,22 @@ describe('CheckingComponent', () => {
       RouterModule.forRoot(ROUTES),
       SharedModule,
       UICommonModule,
-      AvatarComponent,
       OwnerComponent,
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
-      { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: DialogService, useMock: mockedDialogService },
-      { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
-      { provide: MediaBreakpointService, useMock: mockedMediaBreakpointService },
-      { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: PermissionsService, useMock: mockedPermissions }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 

@@ -7,13 +7,9 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -26,13 +22,11 @@ const mockProjectService = mock(ActivatedProjectService);
 
 describe('progress service', () => {
   configureTestingModule(() => ({
-    declarations: [],
-    imports: [TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [TestOnlineStatusModule.forRoot()],
     providers: [
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: PermissionsService, useMock: mockPermissionService },
       { provide: SFProjectService, useMock: mockSFProjectService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ActivatedProjectService, useMock: mockProjectService }
     ]
   }));

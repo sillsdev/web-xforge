@@ -20,7 +20,6 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -41,15 +40,12 @@ const mockedDialogService = mock(DialogService);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
-    declarations: [ProjectComponent],
-    imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: Router, useMock: mockedRouter },
-      { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
-      { provide: PermissionsService, useMock: mockedPermissions },
       { provide: ResumeCheckingService, useMock: mockResumeCheckingService },
       { provide: DialogService, useMock: mockedDialogService },
       provideHttpClient(withInterceptorsFromDi()),

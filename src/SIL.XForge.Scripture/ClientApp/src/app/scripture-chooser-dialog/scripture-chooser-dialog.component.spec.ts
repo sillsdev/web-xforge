@@ -1,32 +1,20 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement, NgModule } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
-import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { BrowserModule, By } from '@angular/platform-browser';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
-import { CookieService } from 'ngx-cookie-service';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { mock } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
-import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { ChildViewContainerComponent, TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
 
-const mockedBugsnagService = mock(BugsnagService);
-
 describe('ScriptureChooserDialog', () => {
   configureTestingModule(() => ({
-    imports: [TestModule],
-    providers: [
-      { provide: AuthService, useMock: mock(AuthService) },
-      { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: CookieService, useMock: mock(CookieService) }
-    ]
+    imports: [TestModule]
   }));
 
   let env: TestEnvironment;
@@ -411,15 +399,7 @@ describe('ScriptureChooserDialog', () => {
 
   @NgModule({
     declarations: [ScriptureChooserDialogComponent],
-    exports: [ScriptureChooserDialogComponent],
-    imports: [
-      BrowserModule,
-      RouterModule.forRoot([]),
-      UICommonModule,
-      MatDialogModule,
-      TestTranslocoModule,
-      NoopAnimationsModule
-    ],
+    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
     providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
   })
   class TestModule {}

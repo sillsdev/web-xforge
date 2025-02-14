@@ -1,16 +1,11 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { CommonModule } from '@angular/common';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { mock, when } from 'ts-mockito';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoticeComponent } from '../../app/shared/notice/notice.component';
 import { FeatureFlagService } from './feature-flag.service';
@@ -20,7 +15,8 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 
 describe('FeatureFlagsComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    declarations: [FeatureFlagsDialogComponent],
+    imports: [UICommonModule, NoticeComponent],
     providers: [{ provide: FeatureFlagService, useMock: mockedFeatureFlagService }]
   }));
 
@@ -59,22 +55,6 @@ describe('FeatureFlagsComponent', () => {
     expect(env.getMatCheckbox(3).checked).toBeFalsy();
   }));
 });
-
-@NgModule({
-  declarations: [FeatureFlagsDialogComponent],
-  exports: [FeatureFlagsDialogComponent],
-  imports: [
-    CommonModule,
-    UICommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    TestTranslocoModule,
-    NoopAnimationsModule,
-    NoticeComponent
-  ],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
-})
-class DialogTestModule {}
 
 class TestEnvironment {
   private readonly fixture: ComponentFixture<ChildViewContainerComponent>;

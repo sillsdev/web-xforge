@@ -4,24 +4,13 @@ import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { CookieService } from 'ngx-cookie-service';
-import { mock } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
-import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
 
-const mockedBugsnagService = mock(BugsnagService);
-
 describe('DeleteProjectDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, UICommonModule, NoopAnimationsModule],
-    providers: [
-      { provide: AuthService, useMock: mock(AuthService) },
-      { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: CookieService, useMock: mock(CookieService) }
-    ]
+    imports: [DialogTestModule, NoopAnimationsModule]
   }));
 
   let dialog: MatDialog;
@@ -115,7 +104,6 @@ describe('DeleteProjectDialogComponent', () => {
 
 @NgModule({
   declarations: [DeleteProjectDialogComponent],
-  exports: [DeleteProjectDialogComponent],
   imports: [UICommonModule, TestTranslocoModule],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })

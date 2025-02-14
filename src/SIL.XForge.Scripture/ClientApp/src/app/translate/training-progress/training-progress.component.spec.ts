@@ -31,7 +31,6 @@ describe('TrainingProgressComponent', () => {
     imports: [TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     declarations: [TrainingProgressComponent],
     providers: [
-      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: UserService, useMock: mockedUserService },
       provideHttpClient(withInterceptorsFromDi()),

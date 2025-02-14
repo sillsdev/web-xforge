@@ -3,24 +3,18 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { anything, mock, verify } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
-import { LocationService } from 'xforge-common/location.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectService } from './sf-project.service';
 
 const mockedCommandService = mock(CommandService);
-const mockedLocationService = mock(LocationService);
 const mockedRealtimeService = mock(RealtimeService);
-const mockedRetryingRequestService = mock(RetryingRequestService);
 
 describe('SFProjectService', () => {
   configureTestingModule(() => ({
     providers: [
       { provide: CommandService, useMock: mockedCommandService },
-      { provide: LocationService, useMock: mockedLocationService },
       { provide: RealtimeService, useMock: mockedRealtimeService },
-      { provide: RetryingRequestService, useMock: mockedRetryingRequestService },
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting()
     ]
