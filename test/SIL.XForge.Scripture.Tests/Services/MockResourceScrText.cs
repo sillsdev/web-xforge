@@ -1,5 +1,6 @@
-using System.Text;
-using Ionic.Zip;
+using System;
+using System.IO;
+using ICSharpCode.SharpZipLib.Zip;
 using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectFileAccess;
@@ -38,7 +39,7 @@ public class MockResourceScrText : ResourceScrText
         }
     }
 
-    public ZipFile ZipFile { get; } = new ZipFile(new UTF8Encoding());
+    public ZipFile ZipFile { get; } = new ZipFile(new MemoryStream());
 
     protected override ProjectFileManager CreateFileManager() =>
         new MockZippedProjectFileManager(ZipFile, loadDblSettings: true, Name);
@@ -48,7 +49,7 @@ public class MockResourceScrText : ResourceScrText
         base.Dispose(disposing);
         if (disposing)
         {
-            ZipFile.Dispose();
+            (ZipFile as IDisposable).Dispose();
         }
     }
 
