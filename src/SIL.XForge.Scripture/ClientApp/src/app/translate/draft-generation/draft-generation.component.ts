@@ -88,9 +88,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   isTargetLanguageSupported = true;
   isBackTranslation = true;
   isSourceProjectSet = true;
-  isSourceAndTargetDifferent = true;
-  isSourceAndTrainingSourceLanguageIdentical = true;
-  isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
 
   source?: DraftSource;
   trainingSource?: DraftSource;
@@ -179,9 +176,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       (!this.isBackTranslationMode || this.isBackTranslation) &&
       this.isTargetLanguageSupported &&
       this.isSourceProjectSet &&
-      this.isSourceAndTargetDifferent &&
-      this.isSourceAndTrainingSourceLanguageIdentical &&
-      this.isSourceAndAdditionalTrainingSourceLanguageIdentical &&
       this.canAccessDraftSourceIfAvailable(this.source) &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
@@ -259,43 +253,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
               translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
             this.additionalTrainingSourceLanguage =
               translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag;
-            this.isSourceAndTargetDifferent = this.sourceLanguage !== this.targetLanguage;
-
-            // The alternate training source and source languages must match
-            if (
-              (translateConfig?.draftConfig.alternateTrainingSourceEnabled ?? false) &&
-              translateConfig?.draftConfig.alternateTrainingSource != null
-            ) {
-              this.isSourceAndTrainingSourceLanguageIdentical =
-                translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag === this.sourceLanguage;
-            } else {
-              // There is no alternate training source specified
-              this.isSourceAndTrainingSourceLanguageIdentical = true;
-            }
-
-            // The additional training source and source languages must match
-            if (
-              (translateConfig?.draftConfig.additionalTrainingSourceEnabled ?? false) &&
-              translateConfig?.draftConfig.additionalTrainingSource != null
-            ) {
-              if (
-                (translateConfig?.draftConfig.alternateTrainingSourceEnabled ?? false) &&
-                translateConfig?.draftConfig.alternateTrainingSource != null
-              ) {
-                // Compare the additional training source with the alternate training source
-                this.isSourceAndAdditionalTrainingSourceLanguageIdentical =
-                  this.additionalTrainingSourceLanguage === this.alternateTrainingSourceLanguage;
-              } else {
-                // Compare the additional training source with the source (which will be used for training)
-                // We do not compare to this.sourceLanguage, as that may be the alternate source (used for drafting)
-                this.isSourceAndAdditionalTrainingSourceLanguageIdentical =
-                  this.additionalTrainingSourceLanguage === translateConfig?.source?.writingSystem.tag;
-                this.alternateTrainingSourceLanguage = translateConfig?.source?.writingSystem.tag;
-              }
-            } else {
-              // There is no additional training source specified
-              this.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
-            }
 
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 

@@ -7,6 +7,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -36,6 +37,7 @@ describe('DraftGenerationStepsComponent', () => {
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
   const mockDraftSourceService = mock(DraftSourcesService);
+  const mockAuthService = mock(AuthService);
 
   const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
   when(mockTrainingDataQuery.localChanges$).thenReturn(of());
@@ -56,7 +58,8 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: ProgressService, useMock: mockProgressService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
-      { provide: NoticeService, useMock: mockNoticeService }
+      { provide: NoticeService, useMock: mockNoticeService },
+      { provide: AuthService, useMock: mockAuthService }
     ]
   }));
 
@@ -74,6 +77,76 @@ describe('DraftGenerationStepsComponent', () => {
     ]);
     when(mockOnlineStatusService.isOnline).thenReturn(true);
   }));
+
+  describe('training and drafting sources different', async () => {
+    const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
+    const config = {
+      trainingSources: [
+        {
+          projectRef: 'source1',
+          paratextId: 'PT_SP',
+          name: 'Source Project',
+          shortName: 'sP1',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks
+        },
+        {
+          projectRef: 'source2',
+          paratextId: 'PT_SP2',
+          name: 'Source Project 2',
+          shortName: 'sP2',
+          writingSystem: { tag: 'grc' },
+          texts: availableBooks
+        }
+      ] as [DraftSource, DraftSource],
+      trainingTargets: [
+        {
+          projectRef: mockActivatedProjectService.projectId,
+          shortName: 'tT',
+          writingSystem: { tag: 'xyz' },
+          texts: availableBooks
+        }
+      ] as [DraftSource],
+      draftingSources: [
+        {
+          projectRef: 'source2',
+          paratextId: 'PT_SP2',
+          shortName: 'sP2',
+          writingSystem: { tag: 'es' },
+          texts: availableBooks
+        }
+      ] as [DraftSource]
+    };
+
+    beforeEach(fakeAsync(() => {
+      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
+      const mockTargetProjectDoc = {
+        id: 'project01',
+        data: createTestProjectProfile({
+          texts: availableBooks,
+          translateConfig: {
+            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'xyz' } }
+          },
+          writingSystem: { tag: 'eng' }
+        })
+      } as SFProjectProfileDoc;
+      const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
+
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
+      when(mockTrainingDataQuery.docs).thenReturn([]);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+    }));
+  });
 
   describe('one training source', async () => {
     const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
