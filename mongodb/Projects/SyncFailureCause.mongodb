@@ -1,6 +1,6 @@
 use("xforge");
 
-const shortName = "WOElai";
+const shortName = "";
 
 const project = db.sf_projects.findOne({
   shortName: shortName
