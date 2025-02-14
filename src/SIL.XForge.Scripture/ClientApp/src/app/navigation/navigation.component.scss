@@ -67,7 +67,7 @@ mat-nav-list .mdc-list-item {
   }
 }
 
-::ng-deep #sync-icon .mat-badge-content {
+#sync-icon ::ng-deep .mat-badge-content {
   font-family: 'Material Icons';
   background: transparent;
   color: variables.$errorColor;

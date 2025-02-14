@@ -6,6 +6,7 @@
           [value]="selectedRevision"
           (selectionChange)="onSelectionChanged($event)"
           panelWidth="''"
+          panelClass="history-select-panel"
           [disabled]="isSelectDisabled$ | async"
           hideSingleSelectionIndicator
         >

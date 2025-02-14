@@ -117,7 +117,7 @@ mat-icon {
   padding: 3px 0px;
 }
 
-::ng-deep .mat-mdc-checkbox .mdc-label {
+:host ::ng-deep .mat-mdc-checkbox .mdc-label {
   line-height: normal !important;
 }
 
