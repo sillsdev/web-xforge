@@ -6,17 +6,10 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ServalAdministrationComponent } from './serval-administration.component';
-import { ServalProjectsComponent } from './serval-projects.component';
 
 describe('ServalAdministrationComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      ServalAdministrationComponent,
-      ServalProjectsComponent,
-      NoopAnimationsModule,
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
+    imports: [NoopAnimationsModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
   }));
 

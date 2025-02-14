@@ -1,20 +1,16 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { mock } from 'ts-mockito';
-import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
@@ -23,19 +19,13 @@ import { BuildConfig } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
 describe('DraftGenerationService', () => {
-  const mockNoticeService = mock(NoticeService);
-
   let service: DraftGenerationService;
   let httpTestingController: HttpTestingController;
   let testOnlineStatusService: TestOnlineStatusService;
 
   configureTestingModule(() => ({
-    imports: [NoopAnimationsModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule, UICommonModule],
-    providers: [
-      DraftGenerationService,
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: NoticeService, useMock: mockNoticeService }
-    ]
+    imports: [TestOnlineStatusModule.forRoot(), TestTranslocoModule],
+    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
   }));
 
   const projectId = 'testProjectId';

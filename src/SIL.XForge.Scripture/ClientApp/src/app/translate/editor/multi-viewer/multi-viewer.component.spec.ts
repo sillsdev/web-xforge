@@ -9,7 +9,6 @@ describe('MultiViewerComponent', () => {
   let fixture: ComponentFixture<MultiViewerComponent>;
 
   configureTestingModule(() => ({
-    declarations: [MultiViewerComponent],
     providers: [{ provide: BreakpointObserver, useClass: TestBreakpointObserver }]
   }));
 

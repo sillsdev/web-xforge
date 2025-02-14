@@ -1,11 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { mock } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -14,16 +11,10 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
-const mockedI18nService = mock(I18nService);
-
 describe('EditNameDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [TestOnlineStatusModule.forRoot()],
-    providers: [
-      DialogService,
-      { provide: I18nService, useMock: mockedI18nService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
-    ]
+    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
   }));
 
   it('should display name and cancel button', fakeAsync(() => {
@@ -116,8 +107,7 @@ class TestEnvironment {
 
   constructor() {
     TestBed.configureTestingModule({
-      declarations: [DialogOpenerComponent],
-      imports: [DialogTestModule, UICommonModule]
+      imports: [DialogTestModule]
     });
     this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     this.fixture = TestBed.createComponent(DialogOpenerComponent);
@@ -187,9 +177,8 @@ class TestEnvironment {
 }
 
 @NgModule({
-  imports: [UICommonModule, CommonModule, TestTranslocoModule, NoopAnimationsModule],
-  declarations: [EditNameDialogComponent],
-  exports: [EditNameDialogComponent]
+  imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
+  declarations: [EditNameDialogComponent]
 })
 class DialogTestModule {}
 

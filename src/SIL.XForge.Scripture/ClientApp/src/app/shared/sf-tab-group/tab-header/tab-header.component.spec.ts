@@ -12,8 +12,7 @@ describe('TabHeaderComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [SFTabsModule],
-      declarations: [TabHeaderComponent]
+      imports: [SFTabsModule]
     });
     fixture = TestBed.createComponent(TabHeaderComponent);
     harnessLoader = TestbedHarnessEnvironment.loader(fixture);

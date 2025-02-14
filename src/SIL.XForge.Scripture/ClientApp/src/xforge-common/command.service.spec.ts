@@ -1,20 +1,12 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { mock } from 'ts-mockito';
-import { BugsnagService } from './bugsnag.service';
 import { CommandError, CommandErrorCode, CommandService, JsonRpcError, JsonRpcResponse } from './command.service';
 import { configureTestingModule } from './test-utils';
 
-const mockedBugsnagService = mock(BugsnagService);
-
 describe('CommandService', () => {
   configureTestingModule(() => ({
-    providers: [
-      { provide: BugsnagService, useMock: mockedBugsnagService },
-      provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting()
-    ]
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
   }));
 
   it('fetches', fakeAsync(() => {

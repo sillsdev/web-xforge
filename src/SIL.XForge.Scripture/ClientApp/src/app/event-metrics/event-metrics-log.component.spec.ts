@@ -1,27 +1,20 @@
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryResults } from 'xforge-common/query-parameters';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric, EventScope } from './event-metric';
 import { EventMetricDialogComponent } from './event-metric-dialog.component';
@@ -30,31 +23,19 @@ import { EventMetricsLogComponent } from './event-metrics-log.component';
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedAuthService = mock(AuthService);
 const mockDialogService = mock(DialogService);
-const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
 describe('EventMetricsLogComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      EventMetricsLogComponent,
-      NoopAnimationsModule,
-      RouterModule.forRoot([]),
-      TestOnlineStatusModule.forRoot(),
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      UICommonModule
-    ],
+    imports: [NoopAnimationsModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DialogService, useMock: mockDialogService },
-      { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService },
-      provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting()
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 

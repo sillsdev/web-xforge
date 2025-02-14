@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
@@ -120,9 +119,8 @@ describe('SuggestionsSettingsDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule],
-  declarations: [SuggestionsSettingsDialogComponent],
-  exports: [SuggestionsSettingsDialogComponent]
+  imports: [UICommonModule, TestTranslocoModule],
+  declarations: [SuggestionsSettingsDialogComponent]
 })
 class DialogTestModule {}
 

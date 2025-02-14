@@ -13,7 +13,6 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
 import { EditorHistoryComponent } from './editor-history.component';
 import { EditorHistoryService } from './editor-history.service';
@@ -31,15 +30,13 @@ describe('EditorHistoryComponent', () => {
   const showDiffChange$ = new Subject<boolean>();
 
   configureTestingModule(() => ({
-    imports: [NoticeComponent, TestOnlineStatusModule.forRoot()],
+    imports: [TestOnlineStatusModule.forRoot()],
     declarations: [EditorHistoryComponent],
     schemas: [NO_ERRORS_SCHEMA], // Ignore undeclared child components
     providers: [
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockSFProjectService },
-      { provide: I18nService, useMock: mockI18nService },
-      { provide: EditorHistoryService, useMock: mockEditorHistoryService },
-      { provide: HistoryChooserComponent, useMock: mockHistoryChooserComponent }
+      { provide: I18nService, useMock: mockI18nService }
     ]
   }));
 

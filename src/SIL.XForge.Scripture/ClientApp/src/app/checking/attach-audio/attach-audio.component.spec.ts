@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
@@ -8,9 +7,7 @@ import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
@@ -24,19 +21,9 @@ describe('AttachAudioComponent', () => {
   let env: TestEnvironment;
 
   configureTestingModule(() => ({
-    imports: [
-      CommonModule,
-      UICommonModule,
-      ngfModule,
-      SharedModule,
-      TestTranslocoModule,
-      TestOnlineStatusModule.forRoot()
-    ],
+    imports: [UICommonModule, ngfModule, SharedModule, TestTranslocoModule, TestOnlineStatusModule.forRoot()],
     declarations: [AttachAudioComponent],
-    providers: [
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: DialogService, useMock: mockDialogService }
-    ]
+    providers: [{ provide: DialogService, useMock: mockDialogService }]
   }));
 
   beforeEach(async () => {
@@ -94,6 +81,7 @@ describe('AttachAudioComponent', () => {
     env.component['processAudioFileUpload']();
 
     verify(env.mockTextAndAudio.setAudioAttachment(anything())).once();
+    expect().nothing();
   });
 
   it('forces uploading if lastInvalids sees an ogg file', () => {
@@ -103,6 +91,7 @@ describe('AttachAudioComponent', () => {
     env.component['lastInvalids'] = [{ file } as InvalidFileItem];
 
     verify(env.mockTextAndAudio.setAudioAttachment(anything())).once();
+    expect().nothing();
   });
 });
 

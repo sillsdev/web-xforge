@@ -5,7 +5,6 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { of, take } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -19,22 +18,18 @@ import { EditorTabMenuService } from './editor-tab-menu.service';
 import { EditorTabInfo } from './editor-tabs.types';
 
 let service: EditorTabMenuService;
-const userServiceMock = mock(UserService);
 const activatedProjectMock = mock(ActivatedProjectService);
 const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
-const mockAuthService = mock(AuthService);
 
 describe('EditorTabMenuService', () => {
   configureTestingModule(() => ({
     imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestOnlineStatusModule.forRoot(), TestTranslocoModule],
     providers: [
       EditorTabMenuService,
-      { provide: UserService, useMock: userServiceMock },
       { provide: ActivatedProjectService, useMock: activatedProjectMock },
       { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
-      { provide: AuthService, useMock: mockAuthService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));

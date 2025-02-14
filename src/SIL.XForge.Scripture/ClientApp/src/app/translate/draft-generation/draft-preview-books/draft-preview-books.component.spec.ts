@@ -14,9 +14,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { NoticeService } from 'xforge-common/notice.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftApplyDialogComponent } from '../draft-apply-dialog/draft-apply-dialog.component';
@@ -28,7 +26,6 @@ const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedI18nService = mock(I18nService);
 const mockedUserService = mock(UserService);
 const mockedDraftHandlingService = mock(DraftHandlingService);
-const mockedNoticeService = mock(NoticeService);
 const mockedDialogService = mock(DialogService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedRouter = mock(Router);
@@ -37,13 +34,12 @@ describe('DraftPreviewBooks', () => {
   let env: TestEnvironment;
 
   configureTestingModule(() => ({
-    imports: [UICommonModule, DraftPreviewBooksComponent, TestTranslocoModule, NoopAnimationsModule],
+    imports: [TestTranslocoModule, NoopAnimationsModule],
     providers: [
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
-      { provide: NoticeService, useMock: mockedNoticeService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: Router, useMock: mockedRouter }

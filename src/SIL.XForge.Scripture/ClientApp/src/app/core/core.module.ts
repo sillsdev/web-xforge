@@ -7,7 +7,6 @@ import { SFProjectService } from './sf-project.service';
 
 @NgModule({
   imports: [CommonModule],
-  declarations: [],
   providers: [
     { provide: ProjectService, useExisting: SFProjectService },
     { provide: TypeRegistry, useValue: SF_TYPE_REGISTRY }

@@ -34,7 +34,6 @@ export default {
       return story;
     },
     moduleMetadata({
-      imports: [],
       providers: [
         {
           provide: ActivatedProjectService,
