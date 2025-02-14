@@ -15,7 +15,6 @@ $table-border-color: #404040;
 }
 
 .wrapper:not(.collapsed) {
-  padding: 4px 12px;
   width: 25vw;
   min-width: 380px;
 }
@@ -66,11 +65,39 @@ h3 {
   align-items: center;
 
   h2 {
-    margin: 0;
+    margin: 0 0 0 2em;
     flex-grow: 1;
   }
 }
 
 .collapsed .header {
   flex-direction: column;
+}
+
+.nav-and-content-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-wrapper {
+  writing-mode: vertical-rl;
+  display: flex;
+
+  > * {
+    padding: 1em 0.6em;
+    cursor: pointer;
+    background-color: #3b3b3f;
+
+    &:hover {
+      background-color: #4f4f53;
+    }
+  }
+
+  .active {
+    border-block-start: 2px solid $foreground-color;
+  }
+}
+
+a {
+  color: $foreground-color;
 }

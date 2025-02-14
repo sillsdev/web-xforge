@@ -13,6 +13,7 @@ import { ServalAdminAuthGuard } from './serval-administration/serval-admin-auth.
 import { ServalAdministrationComponent } from './serval-administration/serval-administration.component';
 import { ServalProjectComponent } from './serval-administration/serval-project.component';
 import { SettingsComponent } from './settings/settings.component';
+import { BlankPageComponent } from './shared/blank-page/blank-page.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
 import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
 import { SyncComponent } from './sync/sync.component';
@@ -31,6 +32,7 @@ const routes: Routes = [
   { path: 'serval-administration/:projectId', component: ServalProjectComponent, canActivate: [ServalAdminAuthGuard] },
   { path: 'serval-administration', component: ServalAdministrationComponent, canActivate: [ServalAdminAuthGuard] },
   { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },
+  { path: 'blank-page', component: BlankPageComponent },
   { path: '**', component: PageNotFoundComponent }
 ];
 

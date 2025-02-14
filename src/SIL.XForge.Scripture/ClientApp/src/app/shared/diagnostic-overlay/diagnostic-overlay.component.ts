@@ -6,6 +6,7 @@ import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { L10nNumberPipe } from '../../../xforge-common/l10n-number.pipe';
 
 export interface DiagnosticOverlayData {
   bookNum: number;
@@ -27,12 +28,15 @@ const diagnosticOverlayCollapsedKey = 'DIAGNOSTIC_OVERLAY_COLLAPSED';
 export class DiagnosticOverlayComponent {
   isExpanded: boolean = true;
   isOpen: boolean = true;
+  tab = 0;
+  digestCycles = 0;
 
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly diagnosticOverlayService: DiagnosticOverlayService,
     readonly noticeService: NoticeService,
-    private readonly localSettings: LocalSettingsService
+    private readonly localSettings: LocalSettingsService,
+    private readonly l10nNumber: L10nNumberPipe
   ) {
     if (this.localSettings.get<boolean>(diagnosticOverlayCollapsedKey) === false) {
       this.isExpanded = false;
@@ -55,6 +59,13 @@ export class DiagnosticOverlayComponent {
 
   get totalDocsCount(): number {
     return this.realtimeService.totalDocCount;
+  }
+
+  get digestCycleCounter(): string {
+    this.digestCycles++;
+    const displayElement = document.getElementById('digest-cycles');
+    if (displayElement) displayElement.textContent = this.l10nNumber.transform(this.digestCycles);
+    return '';
   }
 
   toggle(): void {
