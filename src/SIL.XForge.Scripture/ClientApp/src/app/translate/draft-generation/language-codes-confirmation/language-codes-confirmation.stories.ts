@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
+import { defaultTranslocoMarkupTranspilers, TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
@@ -71,7 +71,8 @@ const meta: Meta = {
       providers: [
         { provide: DraftSourcesService, useValue: instance(mockDraftService) },
         { provide: ActivatedProjectService, useValue: instance(mockActivatedProject) },
-        { provide: AuthService, useValue: instance(mockAuthService) }
+        { provide: AuthService, useValue: instance(mockAuthService) },
+        defaultTranslocoMarkupTranspilers()
       ]
     })
   ]
