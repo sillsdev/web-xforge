@@ -370,7 +370,7 @@ describe('ImportQuestionsDialogComponent', () => {
 
   it('allows reference and questions columns to be anywhere and ignores irrelevant columns', fakeAsync(() => {
     // (also, it infers the book from the file name)
-    let env = new TestEnvironment({ includeAllBooks: true });
+    const env = new TestEnvironment({ includeAllBooks: true });
 
     const fileContents = [
       ['ID', 'Notes', 'Question', 'Answer', 'Reference'],
@@ -387,7 +387,7 @@ describe('ImportQuestionsDialogComponent', () => {
 
   it('allows ignores white space and capitalization in question and reference heading', fakeAsync(() => {
     // (also, make sure it doesn't care whether the words are plural)
-    let env = new TestEnvironment({ includeAllBooks: true });
+    const env = new TestEnvironment({ includeAllBooks: true });
 
     const fileContents = [
       ['ID', 'Notes', ' QUestions ', 'Answer', ' references '],

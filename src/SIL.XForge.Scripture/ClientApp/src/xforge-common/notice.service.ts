@@ -65,8 +65,11 @@ export class NoticeService {
     action: string | undefined = undefined,
     onAction: (() => void) | undefined = undefined
   ): Promise<void> {
-    let config: MatSnackBarConfig<any> | undefined;
-    config = { panelClass: classes.join(' '), direction: this.i18n.direction, duration: 5000 };
+    const config: MatSnackBarConfig<any> = {
+      panelClass: classes.join(' '),
+      direction: this.i18n.direction,
+      duration: 5000
+    };
     if (this.messageOnDisplay === message) {
       // Do nothing if the message is the same as one currently on display
       return;

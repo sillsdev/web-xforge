@@ -138,7 +138,7 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
     }
 
     // Create the training_data record
-    let trainingData: TrainingData = {
+    const trainingData: TrainingData = {
       ownerRef: this.userService.currentUserId,
       projectRef: this.data.projectId,
       dataId,

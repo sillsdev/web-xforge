@@ -149,8 +149,8 @@ export class DraftGenerationStepsComponent implements OnInit {
             draftingSourceBooks.add(text.bookNum);
           }
 
-          let trainingSourceBooks: Set<number> = new Set<number>(trainingSources[0]?.texts.map(t => t.bookNum));
-          let additionalTrainingSourceBooks: Set<number> = new Set<number>(
+          const trainingSourceBooks: Set<number> = new Set<number>(trainingSources[0]?.texts.map(t => t.bookNum));
+          const additionalTrainingSourceBooks: Set<number> = new Set<number>(
             trainingSources[1]?.texts.map(t => t.bookNum)
           );
 
@@ -300,7 +300,7 @@ export class DraftGenerationStepsComponent implements OnInit {
       if (projectRef === this.activatedProject.projectId) continue; //target would be a duplicate here
       const sourceShortName = this.trainingSources.find(s => s.projectRef === projectRef)!.shortName;
 
-      let currentGroup: Book[] = [];
+      const currentGroup: Book[] = [];
       for (const book of this.availableTrainingBooks[projectRef].filter(b => b.selected)) {
         const isBookConsecutive = book.number === currentGroup[currentGroup.length - 1]?.number + 1;
         if (currentGroup.length > 0 && !isBookConsecutive) {

@@ -2266,7 +2266,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const noteCount: number = this.getEmbedCountInAnchorRange(oldVerseEmbedPositions, noteIndex, oldTextAnchor.length);
     const noteAnchorEndIndex: number = noteIndex + oldTextAnchor.length + noteCount;
     const verseNotePositions = new Set(oldVerseEmbedPositions.values());
-    let [startChange, lengthChange] = this.getAnchorChanges(
+    const [startChange, lengthChange] = this.getAnchorChanges(
       noteIndex,
       noteAnchorEndIndex,
       verseRange,
@@ -2333,7 +2333,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       } else if (deleteOp != null) {
         if (editIsInVerseRange) {
-          let [deleteBefore, deleteWithin] = this.calculateDeletionUpdate(
+          const [deleteBefore, deleteWithin] = this.calculateDeletionUpdate(
             curIndex,
             embedPosition,
             noteAnchorEndIndex,

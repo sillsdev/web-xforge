@@ -85,7 +85,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(result.book).toEqual(env.component.book);
     expect(result.chapter).toEqual(env.component.chapter);
     expect(result.timingData.length).toEqual(2);
-    for (let row of result.timingData) {
+    for (const row of result.timingData) {
       expect(row.to).not.toEqual(0);
     }
     expect(env.component.timingErrorMessageKey).toEqual('');
@@ -175,7 +175,7 @@ describe('ChapterAudioDialogComponent', () => {
   it('populates books and chapters', fakeAsync(() => {
     expect(env.component.books.length).toEqual(2);
 
-    for (let i of Object.entries(TestEnvironment.textsByBookId)) {
+    for (const i of Object.entries(TestEnvironment.textsByBookId)) {
       const bookNum = i[1].bookNum;
       const numChapters = i[1].chapters.length;
       env.component.book = bookNum;

@@ -97,7 +97,7 @@ export class TextDocService {
     bookNum: number | undefined,
     chapterNum: number | undefined
   ): boolean {
-    let text: TextInfo | undefined = project?.texts.find(t => t.bookNum === bookNum);
+    const text: TextInfo | undefined = project?.texts.find(t => t.bookNum === bookNum);
     if (text == null) {
       return true;
     }

@@ -62,7 +62,7 @@ export class DraftSourcesService {
 
         // If the user cannot access the source project, populate using the target's source information
         const sourceProjectId: string | undefined = translateConfig?.source?.projectRef;
-        let sourceProject = this.getDraftSource(
+        const sourceProject = this.getDraftSource(
           sourceProjectId,
           currentUser,
           targetDoc?.data?.translateConfig?.source,
@@ -73,7 +73,7 @@ export class DraftSourcesService {
         const alternateSourceProjectId: string | undefined = translateConfig?.draftConfig.alternateSourceEnabled
           ? translateConfig.draftConfig.alternateSource?.projectRef
           : undefined;
-        let alternateSourceProject = this.getDraftSource(
+        const alternateSourceProject = this.getDraftSource(
           alternateSourceProjectId,
           currentUser,
           translateConfig?.draftConfig?.alternateSource
@@ -81,11 +81,11 @@ export class DraftSourcesService {
 
         // If the user cannot access the alternate training source project,
         // populate using the target's alternate training source information, if enabled
-        let alternateTrainingSourceProjectId: string | undefined = translateConfig?.draftConfig
+        const alternateTrainingSourceProjectId: string | undefined = translateConfig?.draftConfig
           .alternateTrainingSourceEnabled
           ? translateConfig?.draftConfig.alternateTrainingSource?.projectRef
           : undefined;
-        let alternateTrainingSourceProject = this.getDraftSource(
+        const alternateTrainingSourceProject = this.getDraftSource(
           alternateTrainingSourceProjectId,
           currentUser,
           translateConfig?.draftConfig?.alternateTrainingSource
@@ -93,11 +93,11 @@ export class DraftSourcesService {
 
         // If the user cannot access the additional training source project,
         // populate using the target's additional training source information, if enabled
-        let additionalTrainingSourceProjectId: string | undefined = translateConfig?.draftConfig
+        const additionalTrainingSourceProjectId: string | undefined = translateConfig?.draftConfig
           .additionalTrainingSourceEnabled
           ? translateConfig.draftConfig.additionalTrainingSource?.projectRef
           : undefined;
-        let additionalTrainingSourceProject = this.getDraftSource(
+        const additionalTrainingSourceProject = this.getDraftSource(
           additionalTrainingSourceProjectId,
           currentUser,
           translateConfig?.draftConfig?.additionalTrainingSource
@@ -121,23 +121,23 @@ export class DraftSourcesService {
           ])
         ).pipe(
           map(([sourceDoc, alternateSourceDoc, alternateTrainingSourceDoc, additionalTrainingSourceProjectDoc]) => {
-            let draftingSource: DraftSource | undefined =
+            const draftingSource: DraftSource | undefined =
               alternateSourceDoc?.data != null
                 ? { ...alternateSourceDoc.data, projectRef: alternateSourceProjectId! }
                 : sourceDoc?.data != null
                   ? { ...sourceDoc.data, projectRef: sourceProjectId! }
                   : undefined;
-            let trainingSource: DraftSource | undefined =
+            const trainingSource: DraftSource | undefined =
               alternateTrainingSourceDoc?.data != null
                 ? { ...alternateTrainingSourceDoc.data, projectRef: alternateTrainingSourceProjectId! }
                 : sourceDoc?.data != null
                   ? { ...sourceDoc.data, projectRef: sourceProjectId! }
                   : undefined;
-            let additionalTrainingSource: DraftSource | undefined =
+            const additionalTrainingSource: DraftSource | undefined =
               additionalTrainingSourceProjectDoc?.data != null
                 ? { ...additionalTrainingSourceProjectDoc.data, projectRef: additionalTrainingSourceProjectId! }
                 : undefined;
-            let target: DraftSource | undefined =
+            const target: DraftSource | undefined =
               targetDoc?.data != null ? { ...targetDoc.data, projectRef: targetDoc.id } : undefined;
 
             return {

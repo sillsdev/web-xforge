@@ -89,7 +89,9 @@
             "code": 120
           }
         ],
-        "no-underscore-dangle": "off"
+        "no-underscore-dangle": "off",
+        "prefer-const": ["warn", { "ignoreReadBeforeAssign": true }],
+        "no-var": "warn"
       }
     },
     {

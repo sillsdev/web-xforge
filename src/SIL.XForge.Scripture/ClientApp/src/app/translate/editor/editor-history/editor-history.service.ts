@@ -42,7 +42,7 @@ export class EditorHistoryService {
     deltaA.forEach(obj => this.removeCid(obj));
     deltaB.forEach(obj => this.removeCid(obj));
 
-    let diff: Delta = deltaA.diff(deltaB);
+    const diff: Delta = deltaA.diff(deltaB);
 
     // Process each op in the diff
     for (const op of diff.ops ?? []) {
@@ -66,7 +66,7 @@ export class EditorHistoryService {
 
   removeCid(obj: any): void {
     if (obj.cid != null) delete obj.cid;
-    for (let subObj in obj) {
+    for (const subObj in obj) {
       if (typeof obj[subObj] === 'object' && obj[subObj] != null) this.removeCid(obj[subObj]);
     }
   }

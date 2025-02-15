@@ -87,7 +87,7 @@ describe('TabGroupHeaderComponent', () => {
     });
 
     it('should initialize direction and dirMutObserver when closest dir element is not null', () => {
-      let mutationObserverSpy = spyOn(window, 'MutationObserver').and.callThrough();
+      const mutationObserverSpy = spyOn(window, 'MutationObserver').and.callThrough();
       component['dirMutObserver'] = undefined;
       component['initDirectionChangeDetection']();
       expect(component['direction']).toBe('ltr');
@@ -255,7 +255,7 @@ describe('TabGroupHeaderComponent', () => {
 
   describe('movablePredicate', () => {
     let tabToMove: any;
-    let cdkDraggingTab = {} as CdkDrag;
+    const cdkDraggingTab = {} as CdkDrag;
     let cdkDropList: CdkDropList;
 
     describe('move within same tab group', () => {

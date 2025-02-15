@@ -269,7 +269,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('ngOnInit', () => {
     it('should subscribe to build progress', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
 
       expect(env.component.draftJob).toEqual(buildDto);
       expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
@@ -299,7 +299,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -337,7 +337,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -391,7 +391,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -436,7 +436,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -475,7 +475,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -527,7 +527,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -573,7 +573,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -613,7 +613,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -635,7 +635,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('Online status', () => {
     it('should display offline message when offline', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       env.testOnlineStatusService.setIsOnline(false);
       env.fixture.detectChanges();
       expect(env.offlineTextElement).not.toBeNull();
@@ -646,7 +646,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should not display offline message when online', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       env.fixture.detectChanges();
       expect(env.offlineTextElement).toBeNull();
 
@@ -658,7 +658,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('warnings', () => {
     it('should not show any warnings if not a back translation nor pre-translate approved', () => {
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
@@ -717,7 +717,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = false;
         env.fixture.detectChanges();
@@ -725,7 +725,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source text is not missing', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
@@ -761,7 +761,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isTargetLanguageSupported = false;
@@ -770,7 +770,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = false;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isTargetLanguageSupported = true;
@@ -779,7 +779,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and target text are different', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isTargetLanguageSupported = true;
@@ -790,7 +790,7 @@ describe('DraftGenerationComponent', () => {
 
     describe('source and alternate training source language must be the same', () => {
       it('should show warning when source and alternate training source are different AND target language is supported', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = false;
@@ -800,7 +800,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = false;
@@ -810,7 +810,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = false;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = false;
@@ -820,7 +820,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isSourceAndTrainingSourceLanguageIdentical = false;
@@ -830,7 +830,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and alternate training source language are the same', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -878,7 +878,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = true;
@@ -889,7 +889,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = false;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = true;
@@ -900,7 +900,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = false;
@@ -911,7 +911,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and additional training source language are the same', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
         env.component.isSourceAndTargetDifferent = true;
@@ -922,7 +922,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and alternate training source are different', () => {
-        let env = new TestEnvironment();
+        const env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = true;
@@ -935,7 +935,7 @@ describe('DraftGenerationComponent', () => {
 
     describe('user must have access to source project', () => {
       it('should show warning when no access to source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -965,7 +965,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to source project if project is not back translation nor pre-translate approved', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1004,7 +1004,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1026,7 +1026,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1048,7 +1048,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1070,7 +1070,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and alternate training source language are different', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1092,7 +1092,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and additional training source language are different', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1115,7 +1115,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when access to source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1139,7 +1139,7 @@ describe('DraftGenerationComponent', () => {
 
     describe('user must have access to training source project', () => {
       it('should show warning when no access to training source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1163,7 +1163,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to alternate source project and not back translation nor pre-translate approved', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1195,7 +1195,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1218,7 +1218,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1241,7 +1241,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1264,7 +1264,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and alternate training source language are different', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1287,7 +1287,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and additional training source language are different', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1311,7 +1311,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1338,7 +1338,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to alternate source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1365,7 +1365,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when access to alternate training source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1390,7 +1390,7 @@ describe('DraftGenerationComponent', () => {
 
     describe('user must have access to additional training source project', () => {
       it('should show warning when no access to additional training source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1414,7 +1414,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to additional training source project and not back translation nor pre-translate approved', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1447,7 +1447,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1471,7 +1471,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1495,7 +1495,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1519,7 +1519,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and alternate training source language are different', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1543,7 +1543,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and additional training source language are different', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1567,7 +1567,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [
@@ -1595,7 +1595,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to training source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1621,7 +1621,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when access to additional training source project', () => {
-        let env = new TestEnvironment(() => {
+        const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
               draftingSources: [undefined],
@@ -1698,7 +1698,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('getInfoAlert', () => {
     it('should show "approval needed" info alert when isPreTranslationApproved is false and project is not in back translation mode', () => {
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
@@ -1718,7 +1718,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should not show "approval needed" info alert when isPreTranslationApproved is true', () => {
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
@@ -1738,7 +1738,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should not show "approval needed" info alert when project is in back translation mode', () => {
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
@@ -1776,7 +1776,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
@@ -1814,7 +1814,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
@@ -1841,7 +1841,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('currentPage', () => {
     it('should navigate to pre-generate steps', fakeAsync(() => {
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockUserService.getCurrentUser.and.returnValue(
           new Promise<UserDoc>(() => ({
             data: createTestUser()
@@ -1869,7 +1869,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('startBuild', () => {
     it('should start the draft build', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
 
       env.component.currentPage = 'steps';
       env.component.startBuild({
@@ -1894,7 +1894,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should not attempt "cancel dialog" close for queued build', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
 
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
@@ -1919,7 +1919,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should not attempt "cancel dialog" close for pending build', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
 
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
@@ -1944,7 +1944,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should not attempt "cancel dialog" close for active build', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
 
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
@@ -1969,7 +1969,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should attempt "cancel dialog" close for cancelled build', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
 
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       when(mockDialogRef.getState()).thenReturn(MatDialogState.OPEN);
@@ -1994,7 +1994,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should track whether the current project is not syncing', fakeAsync(() => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       env.fixture.detectChanges();
       tick();
 
@@ -2021,7 +2021,7 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -2037,7 +2037,7 @@ describe('DraftGenerationComponent', () => {
     }));
 
     it('should display the Paratext credentials update prompt when startBuild throws a forbidden error', fakeAsync(() => {
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
           throwError(() => new HttpErrorResponse({ status: 401 }))
         );
@@ -2065,7 +2065,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('cancel', () => {
     it('should cancel the draft build if user confirms "cancel" dialog', async () => {
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockDialogService.openGenericDialog.and.returnValue({
           dialogRef: {} as MatDialogRef<any>,
           result: Promise.resolve(true)
@@ -2083,7 +2083,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should not cancel the draft build if user exits "cancel" dialog', async () => {
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockDialogService.openGenericDialog.and.returnValue({
           dialogRef: {} as MatDialogRef<any>,
           result: Promise.resolve(false)
@@ -2098,7 +2098,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should cancel the draft build without dialog if the build state is not active', async () => {
-      let env = new TestEnvironment(() => {
+      const env = new TestEnvironment(() => {
         mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       });
 
@@ -2114,14 +2114,14 @@ describe('DraftGenerationComponent', () => {
 
   describe('isDraftInProgress', () => {
     it('should return true if the draft build is in progress', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftInProgress({ state: BuildStates.Active } as BuildDto)).toBe(true);
       expect(env.component.isDraftInProgress({ state: BuildStates.Pending } as BuildDto)).toBe(true);
       expect(env.component.isDraftInProgress({ state: BuildStates.Queued } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build is not in progress', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftInProgress({ state: BuildStates.Completed } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
@@ -2130,13 +2130,13 @@ describe('DraftGenerationComponent', () => {
 
   describe('isDraftQueued', () => {
     it('should return true if the draft build is queued', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftQueued({ state: BuildStates.Queued } as BuildDto)).toBe(true);
       expect(env.component.isDraftQueued({ state: BuildStates.Pending } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build is not queued', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftQueued({ state: BuildStates.Active } as BuildDto)).toBe(false);
       expect(env.component.isDraftQueued({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftQueued({ state: BuildStates.Completed } as BuildDto)).toBe(false);
@@ -2146,12 +2146,12 @@ describe('DraftGenerationComponent', () => {
 
   describe('isDraftActive', () => {
     it('should return true if the draft build is active', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftActive({ state: BuildStates.Active } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build is not active', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftActive({ state: BuildStates.Completed } as BuildDto)).toBe(false);
       expect(env.component.isDraftActive({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftActive({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
@@ -2162,12 +2162,12 @@ describe('DraftGenerationComponent', () => {
 
   describe('isDraftComplete', () => {
     it('should return true if the draft build is complete', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftComplete({ state: BuildStates.Completed } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build is not complete', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftComplete({ state: BuildStates.Active } as BuildDto)).toBe(false);
       expect(env.component.isDraftComplete({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftComplete({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
@@ -2178,7 +2178,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('isDraftFaulted', () => {
     it('should return true if the draft build is faulted', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
       env.fixture.detectChanges();
       expect(env.component.isDraftFaulted({ state: BuildStates.Faulted } as BuildDto)).toBe(true);
@@ -2187,7 +2187,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should return false if the draft build is not faulted', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftFaulted({ state: BuildStates.Active } as BuildDto)).toBe(false);
       expect(env.component.isDraftFaulted({ state: BuildStates.Completed } as BuildDto)).toBe(false);
       expect(env.component.isDraftFaulted({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
@@ -2200,14 +2200,14 @@ describe('DraftGenerationComponent', () => {
 
   describe('canCancel', () => {
     it('should return true if the draft build is in progress', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftInProgress({ state: BuildStates.Active } as BuildDto)).toBe(true);
       expect(env.component.isDraftInProgress({ state: BuildStates.Pending } as BuildDto)).toBe(true);
       expect(env.component.isDraftInProgress({ state: BuildStates.Queued } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build is not in progress', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftInProgress({ state: BuildStates.Completed } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);

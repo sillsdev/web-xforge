@@ -61,7 +61,7 @@ export class RouterLinkDirective {
   }
 
   private get routerOptions(): NavigationExtras {
-    let routerNavigationExtras: NavigationExtras = {};
+    const routerNavigationExtras: NavigationExtras = {};
     const isRelativeRoute = this.route[0][0] !== '/';
     routerNavigationExtras.relativeTo = isRelativeRoute ? this.currentRoute : null;
     routerNavigationExtras.state = this.state;

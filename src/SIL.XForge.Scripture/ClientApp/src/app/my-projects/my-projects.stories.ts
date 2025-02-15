@@ -213,9 +213,9 @@ const meta: Meta = {
     }),
     (story, context) => {
       // SF projects the user is connected to.
-      let projectProfileDocs: SFProjectProfileDoc[] = [];
+      const projectProfileDocs: SFProjectProfileDoc[] = [];
       // PT projects the user has access to.
-      let userParatextProjects: ParatextProject[] = [];
+      const userParatextProjects: ParatextProject[] = [];
       // Create the user who is viewing the page.
       const user: User = createTestUser({
         paratextId: context.args.isKnownPTUser ? 'pt-user-id' : undefined,

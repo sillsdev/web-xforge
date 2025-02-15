@@ -95,10 +95,10 @@ export class DraftHandlingService {
         } else if (segmentRef.startsWith('verse_') && segmentRef.indexOf('-') > -1) {
           // Otherwise, if the target verse is combined
           // Get the verse ref from the segment. We don't use the book number, so just specify Genesis
-          let segmentVerseRef: VerseRef | undefined = getVerseRefFromSegmentRef(1, segmentRef);
+          const segmentVerseRef: VerseRef | undefined = getVerseRefFromSegmentRef(1, segmentRef);
           if (segmentVerseRef != null) {
             // Add the drafts for all of the verses in the segment
-            for (var verseRef of segmentVerseRef?.allVerses()) {
+            for (const verseRef of segmentVerseRef?.allVerses()) {
               if (draftSegmentText == null) {
                 draftSegmentText = '';
               } else if (draftSegmentText[draftSegmentText.length - 1] !== ' ') {
