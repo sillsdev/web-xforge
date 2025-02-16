@@ -9,7 +9,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestTranslocoModule, getAudioBlob } from 'xforge-common/test-utils';
+import { getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
@@ -60,7 +60,7 @@ describe('CheckingAudioPlayerComponent', () => {
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
     env.clickButton(env.playButton(1));
-    await env.waitForPlayer(1100);
+    await env.waitForPlayer(1200);
     env.fixture.detectChanges();
     env.clickButton(env.pauseButton(1));
     await env.waitForPlayer(1100);
