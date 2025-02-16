@@ -7081,7 +7081,8 @@ public class ParatextServiceTests
                 CachedGuid = HexId.FromStr(projectId),
             };
             scrText.Settings.LanguageID = LanguageId.English;
-            scrText.ZipFile.AddFile(
+            scrText.ZipFile.BeginUpdate(); //todo check other places???
+            scrText.ZipFile.Add(
                 Path.Combine(ZippedProjectFileManagerBase.DBLFolderName, "language", "iso", zipLanguageCode)
             );
             return scrText;
