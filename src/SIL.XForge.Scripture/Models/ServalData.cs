@@ -75,6 +75,11 @@ public class ServalData
     public string? PreTranslationJobId { get; set; }
 
     /// <summary>
+    /// Gets or sets the user identifier for last user to start a Pre-Translation build.
+    /// </summary>
+    public string? PreTranslationLastUserId { get; set; }
+
+    /// <summary>
     /// Gets or sets the Identifier of the Parallel Corpus to be used in the PreTranslate section of the
     /// <see cref="Serval.Client.TranslationBuildConfig"/> for pre-translation (NMT) builds.
     /// </summary>

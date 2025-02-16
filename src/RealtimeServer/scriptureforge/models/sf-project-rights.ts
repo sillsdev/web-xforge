@@ -16,6 +16,7 @@ export enum SFProjectDomain {
   SFNoteThreads = 'sf_note_threads',
   Notes = 'notes',
   TextAudio = 'text_audio',
+  TextDocuments = 'text_documents',
   TrainingData = 'training_data',
   Drafts = 'drafts',
   UserInvites = 'user_invites'
