@@ -1,0 +1,63 @@
+<ng-container *transloco="let t; read: 'language_codes_confirmation'">
+  @if (sourceSideLanguageCodes.length > 1) {
+    <app-notice mode="fill-dark" type="warning">
+      <h3>{{ t("all_sources_should_be_same_language") }}</h3>
+      <p>
+        {{
+          t("source_and_reference_languages_different", { languageCodes: i18n.enumerateList(sourceSideLanguageCodes) })
+        }}
+      </p>
+      <p>
+        @if (isProjectAdmin) {
+          <transloco
+            key="language_codes_confirmation.change_source_projects_on_settings_page"
+            [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+          ></transloco>
+        } @else {
+          {{ t("contact_project_administrator_to_change_settings") }}
+        }
+      </p>
+      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
+        {{ t("i_understand_and_accept") }}
+      </mat-checkbox>
+    </app-notice>
+  }
+
+  @if (showSourceAndTargetLanguagesIdenticalWarning) {
+    <app-notice mode="fill-dark" type="warning">
+      <h3>
+        {{ t("source_and_target_languages_same", { displayLanguage: i18n.getLanguageDisplayName(targetLanguageTag) }) }}
+      </h3>
+      <p>
+        <transloco
+          key="language_codes_confirmation.source_and_target_projects_all_have_language_code"
+          [params]="{ languageCode: targetLanguageTag }"
+        ></transloco>
+      </p>
+      <p>
+        @if (isProjectAdmin) {
+          <transloco
+            key="language_codes_confirmation.change_source_projects_on_settings_page"
+            [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+          ></transloco>
+        } @else {
+          {{ t("contact_project_administrator_to_change_settings") }}
+        }
+      </p>
+      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
+        {{ t("i_understand_and_accept") }}
+      </mat-checkbox>
+    </app-notice>
+  }
+
+  @if (sourceSideLanguageCodes.length === 1 && !showSourceAndTargetLanguagesIdenticalWarning) {
+    <app-notice mode="fill-dark">
+      <h3>{{ t("incorrect_language_codes_reduce_quality") }}</h3>
+      <p>{{ t("please_make_sure_codes_correct") }}</p>
+      <p>{{ t("how_to_change_language_codes") }}</p>
+      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">{{
+        t("confirm_lang_codes_correct")
+      }}</mat-checkbox>
+    </app-notice>
+  }
+</ng-container>

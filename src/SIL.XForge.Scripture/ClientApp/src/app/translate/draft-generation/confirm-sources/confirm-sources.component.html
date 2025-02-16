@@ -44,9 +44,8 @@
     }
   </div>
 
-  <app-notice mode="outline">
-    <strong>{{ t("incorrect_language_codes_reduce_quality") }}</strong>
-    <p>{{ t("how_to_change_language_codes") }}</p>
-    <mat-checkbox (change)="confirmationChanged($event)">{{ t("confirm_lang_codes_correct") }}</mat-checkbox>
-  </app-notice>
+  <app-language-codes-confirmation
+    class="confirm-codes"
+    (languageCodesVerified)="confirmationChanged($event)"
+  ></app-language-codes-confirmation>
 </ng-container>
