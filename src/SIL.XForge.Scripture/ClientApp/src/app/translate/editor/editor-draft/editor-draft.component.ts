@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { translate } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -22,6 +23,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { isString } from '../../../../type-utils';
@@ -67,7 +69,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    readonly onlineStatusService: OnlineStatusService
+    readonly onlineStatusService: OnlineStatusService,
+    private readonly noticeService: NoticeService
   ) {}
 
   ngOnChanges(): void {
@@ -169,9 +172,13 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       }
     }
 
-    await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
-    this.isDraftApplied = true;
-    this.userAppliedDraft = true;
+    try {
+      await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
+      this.isDraftApplied = true;
+      this.userAppliedDraft = true;
+    } catch {
+      this.noticeService.showError(translate('editor_draft_tab.error_applying_draft'));
+    }
   }
 
   private setInitialState(): void {
