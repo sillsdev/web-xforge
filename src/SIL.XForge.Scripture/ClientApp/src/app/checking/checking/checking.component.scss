@@ -86,17 +86,18 @@ header {
   // Override 'sm' breakpoint for this element (also adjusts BreakPointObserver 'SM' for this element)
   @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
     position: absolute;
-    top: 0;
-    left: -100%;
+    bottom: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
+    height: 0;
     margin: 0;
     z-index: 7;
+    overflow: hidden;
     background: #fff;
-    transition: transform 0.4s cubic-bezier(0.68, -0.6, 0.265, 1.6); // Snap back effect
+    transition: height 0.4s cubic-bezier(0.68, -0.6, 0.265, 1.6); // Snap back effect
 
     &.overlay-visible {
-      transform: translateX(100%);
+      height: 100%;
 
       .questions-overlay-close {
         display: block;
@@ -217,8 +218,36 @@ header {
     background-color: lighten(vars.$sf_grey, 70%);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 9px;
+
+    .mat-icon {
+      @include checkingVars.md-icon-size(24px);
+    }
+
+    .view-questions .mat-icon {
+      margin-inline-end: 4px;
+    }
+
+    .question-nav-start {
+      display: flex;
+      align-items: center;
+      column-gap: 4px;
+    }
+
+    .add-question-button.mat-mdc-icon-button {
+      display: none;
+    }
+
+    @include media-breakpoint('<=', sm) {
+      .add-question-button.mat-mdc-button {
+        display: none;
+      }
+
+      .add-question-button.mat-mdc-icon-button {
+        display: block;
+      }
+    }
 
     .question-nav-wrapper {
       display: flex;
@@ -247,7 +276,6 @@ header {
     @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
       // Widen once the questions panel is hidden
       margin-inline-start: -20px;
-      justify-content: space-between;
     }
 
     .next-question {
