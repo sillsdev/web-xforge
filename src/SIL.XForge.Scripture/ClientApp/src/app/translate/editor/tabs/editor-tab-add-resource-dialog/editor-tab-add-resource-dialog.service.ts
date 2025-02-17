@@ -24,14 +24,16 @@ export class EditorTabAddResourceDialogService {
   }
 
   async getProjects(): Promise<ParatextProject[] | undefined> {
-    return this.projects != null
-      ? await Promise.resolve(this.projects)
-      : await this.paratextService.getProjects().then(projects => (this.projects = projects));
+    if (!this.projects) {
+      this.projects = await this.paratextService.getProjects();
+    }
+    return this.projects;
   }
 
   async getResources(): Promise<SelectableProject[] | undefined> {
-    return this.resources != null
-      ? await Promise.resolve(this.resources)
-      : await this.paratextService.getResources().then(resources => (this.resources = resources));
+    if (!this.resources) {
+      this.resources = await this.paratextService.getResources();
+    }
+    return this.resources;
   }
 }
