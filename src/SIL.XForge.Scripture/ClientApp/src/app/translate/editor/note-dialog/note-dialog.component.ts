@@ -279,15 +279,15 @@ export class NoteDialogComponent implements OnInit {
   getNoteContextText(plainText: boolean = false): string {
     if (this.isBiblicalTermNote) {
       if (this.threadDoc?.data?.extraHeadingInfo != null) {
-        let termLang = this.threadDoc.data.extraHeadingInfo.language === 'greek' ? 'grc' : 'hbo';
+        const termLang = this.threadDoc.data.extraHeadingInfo.language === 'greek' ? 'grc' : 'hbo';
         return (
           `<span lang="${termLang}">${this.threadDoc.data.extraHeadingInfo.lemma}</span> ` +
           `<span>(${this.threadDoc.data.extraHeadingInfo.transliteration})</span> ` +
           `<span>${this.threadDoc.data.extraHeadingInfo.gloss}</span>`
         );
       } else if (this.biblicalTermDoc?.data != null) {
-        let termLang = this.biblicalTermDoc.data.language === 'greek' ? 'grc' : 'hbo';
-        let biblicalTermGloss = this.biblicalTermDoc.getBiblicalTermGloss(
+        const termLang = this.biblicalTermDoc.data.language === 'greek' ? 'grc' : 'hbo';
+        const biblicalTermGloss = this.biblicalTermDoc.getBiblicalTermGloss(
           this.i18n.localeCode,
           I18nService.defaultLocale.canonicalTag
         );

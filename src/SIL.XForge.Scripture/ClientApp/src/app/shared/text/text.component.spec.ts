@@ -1070,8 +1070,8 @@ describe('TextComponent', () => {
 
   it('can backspace a word at a time', fakeAsync(() => {
     const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
-    let initialText = 'quick brown fox';
-    let resultTexts = ['quick brown ', 'quick ', '', ''];
+    const initialText = 'quick brown fox';
+    const resultTexts = ['quick brown ', 'quick ', '', ''];
     env.performDeleteWordTest('Backspace', segmentRange.index, initialText, resultTexts);
     TestEnvironment.waitForPresenceTimer();
   }));
@@ -1108,7 +1108,7 @@ describe('TextComponent', () => {
 
   it('can delete a word at a time', fakeAsync(() => {
     const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
-    let initialText = 'quick brown fox';
+    const initialText = 'quick brown fox';
     const resultTexts = [' brown fox', ' fox', '', ''];
     env.performDeleteWordTest('Delete', segmentRange.index, initialText, resultTexts);
     TestEnvironment.waitForPresenceTimer();

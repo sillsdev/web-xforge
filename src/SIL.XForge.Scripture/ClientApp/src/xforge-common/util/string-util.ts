@@ -32,7 +32,7 @@ export function stripHtml(content: string): string {
 
   // Use 'text/html' to avoid parsing errors with 'text/xml', as it is more lenient
   const doc: Document = new DOMParser().parseFromString(content, 'text/html');
-  let result: string = doc.documentElement.textContent || '';
+  const result: string = doc.documentElement.textContent || '';
 
   // Remove any remaining stray angle brackets
   return result.replace(/[<>]/g, '');

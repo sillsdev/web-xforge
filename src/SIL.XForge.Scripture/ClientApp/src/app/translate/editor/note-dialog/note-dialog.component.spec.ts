@@ -606,7 +606,7 @@ describe('NoteDialogComponent', () => {
 
   it('allows adding a note to an existing biblical term note thread', fakeAsync(() => {
     const biblicalTerm = TestEnvironment.defaultBiblicalTerm;
-    let noteThread = TestEnvironment.getNoteThread();
+    const noteThread = TestEnvironment.getNoteThread();
     noteThread.biblicalTermId = biblicalTerm.dataId;
     noteThread.extraHeadingInfo = {
       gloss: 'note_gloss',

@@ -79,7 +79,7 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
   }
 
   getNonEmptyVerses(): string[] {
-    let verses: string[] = [];
+    const verses: string[] = [];
     if (this.data != null && this.data.ops != null) {
       for (const op of this.data.ops) {
         if (op.attributes != null && op.attributes.segment != null && (op.insert as any).blank == null) {

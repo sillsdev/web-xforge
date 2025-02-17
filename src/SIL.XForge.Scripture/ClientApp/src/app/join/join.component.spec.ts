@@ -72,7 +72,7 @@ describe('JoinComponent', () => {
   }));
 
   it('check sharing link does not show offline error when online', fakeAsync(() => {
-    var env = new TestEnvironment({ isLoggedIn: true, isOnline: true });
+    const env = new TestEnvironment({ isLoggedIn: true, isOnline: true });
 
     // Set the online status again to trigger updateOfflineJoiningStatus a second time
     env.onlineStatus = true;

@@ -18,7 +18,7 @@ export class CacheService {
   }
 
   private async loadAllChapters(project: SFProjectProfileDoc): Promise<void> {
-    var abort = false;
+    let abort = false;
     const sub = this.abortCurrent.subscribe(() => (abort = true));
 
     if (project?.data != null) {

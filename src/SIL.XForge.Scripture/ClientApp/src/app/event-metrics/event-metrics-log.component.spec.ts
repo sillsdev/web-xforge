@@ -172,7 +172,7 @@ describe('EventMetricsLogComponent', () => {
   it('should show custom event type calculations', fakeAsync(() => {
     const env = new TestEnvironment();
     // This list is to ensure complete test coverage of the custom cases in EventMetricsLogComponent.getEventType()
-    let eventMetrics: Partial<EventMetric>[] = [
+    const eventMetrics: Partial<EventMetric>[] = [
       { eventType: 'SetIsValidAsync', payload: { isValid: true } },
       { eventType: 'SetIsValidAsync', payload: { isValid: false } },
       { eventType: 'SetDraftAppliedAsync', payload: { draftApplied: true } },

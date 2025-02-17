@@ -14,7 +14,7 @@ const mockMatDialogRef = mock(MatDialogRef);
 
 describe('DraftApplyProgressDialogComponent', () => {
   let env: TestEnvironment;
-  let progress$: BehaviorSubject<DraftApplyProgress> = new BehaviorSubject<DraftApplyProgress>({
+  const progress$: BehaviorSubject<DraftApplyProgress> = new BehaviorSubject<DraftApplyProgress>({
     bookNum: 1,
     completed: false,
     chapters: [1, 2, 3],

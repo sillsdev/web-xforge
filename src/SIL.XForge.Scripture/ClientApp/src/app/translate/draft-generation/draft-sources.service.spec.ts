@@ -14,9 +14,9 @@ import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-
 
 describe('DraftSourcesService', () => {
   let service: DraftSourcesService;
-  let mockActivatedProjectService: ActivatedProjectService = mock(ActivatedProjectService);
-  let mockProjectService: SFProjectService = mock(SFProjectService);
-  let mockUserService: UserService = mock(UserService);
+  const mockActivatedProjectService: ActivatedProjectService = mock(ActivatedProjectService);
+  const mockProjectService: SFProjectService = mock(SFProjectService);
+  const mockUserService: UserService = mock(UserService);
 
   configureTestingModule(() => ({
     providers: [

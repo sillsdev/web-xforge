@@ -180,7 +180,7 @@ export function checkAppAccess(
     op.unset(puc => puc.selectedQuestionRef!);
   });
   const projectRole = projectDoc.data.userRoles[userId] as SFProjectRole;
-  let route = '/projects/' + projectDoc.id;
+  const route = '/projects/' + projectDoc.id;
 
   if (pathname.includes('translate') && !roleCanAccessTranslate(projectRole)) {
     router.navigateByUrl(route, { replaceUrl: true });

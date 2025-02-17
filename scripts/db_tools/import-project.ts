@@ -162,11 +162,11 @@ class Program {
         { name: 'o_questions', docIdentifyingFieldName: 'd' }
       ];
 
-      for (let collectionInfo of collections) {
+      for (const collectionInfo of collections) {
         const collectionName = collectionInfo.name;
         const originCollection: Collection<any> = originDB.collection(collectionName);
         const destinationCollection: Collection<any> = destinationDB.collection(collectionName);
-        let originQuery: any = {};
+        const originQuery: any = {};
         originQuery[collectionInfo.docIdentifyingFieldName] = new RegExp(`^${originProjectSFId}`);
         const originRecords: any[] = await originCollection.find(originQuery).toArray();
         if (originRecords.length < 1) {

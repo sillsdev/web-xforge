@@ -136,7 +136,7 @@ class TestEnvironment {
     ).thenResolve('training data file url');
     when(mockedUserService.currentUserId).thenReturn('user01');
 
-    let blob = new Blob(['source_1,target_2\nsource_2,target_2'], { type: 'text/csv' });
+    const blob = new Blob(['source_1,target_2\nsource_2,target_2'], { type: 'text/csv' });
     this.trainingDataFile = {
       blob,
       fileName: 'test.csv',

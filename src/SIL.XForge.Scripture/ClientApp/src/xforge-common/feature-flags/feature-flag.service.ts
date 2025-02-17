@@ -319,7 +319,7 @@ export class FeatureFlagService {
 
   get versionSuffix(): string {
     // Get the feature flags, sorted alphabetically
-    let featureFlags: FeatureFlag[] = Object.values(this).filter(
+    const featureFlags: FeatureFlag[] = Object.values(this).filter(
       value => value instanceof FeatureFlagFromStorage || value instanceof ServerOnlyFeatureFlag
     );
     featureFlags.sort((a, b) => a.position - b.position);
@@ -335,7 +335,7 @@ export class FeatureFlagService {
     let versionNumber: number = 0;
 
     // Get the feature flags as a 32-bit number
-    for (let featureFlag of featureFlags) {
+    for (const featureFlag of featureFlags) {
       if (featureFlag.enabled) {
         versionNumber += Math.pow(2, featureFlag.position);
       }

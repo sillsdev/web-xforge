@@ -320,7 +320,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     // Remove the column headers
     data.shift();
 
-    let timing: AudioTiming[] = [];
+    const timing: AudioTiming[] = [];
 
     for (const row of data) {
       if (row.length !== 6) {
@@ -371,7 +371,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
    * https://manual.audacityteam.org/man/importing_and_exporting_labels.html
    */
   private parseAudacityStyleTimingFile(data: string[][]): AudioTiming[] {
-    let timing: AudioTiming[] = [];
+    const timing: AudioTiming[] = [];
 
     for (const row of data) {
       if (row.length !== 3) {
@@ -462,7 +462,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private parseTimeToSecondsWithCentiseconds(time: string): number {
     const a: string[] = time?.split(':');
 
-    let centiseconds = parseFloat(a.pop() as string) / 100;
+    const centiseconds = parseFloat(a.pop() as string) / 100;
 
     return this.parseTimeToSeconds(a.join(':')) + centiseconds;
   }

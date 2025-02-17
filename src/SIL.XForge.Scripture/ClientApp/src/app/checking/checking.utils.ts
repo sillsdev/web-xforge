@@ -63,7 +63,7 @@ export class CheckingUtils {
   }
 
   static parseAudioRef(ref: string): AudioTextRef | undefined {
-    let audioTimingMatch: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(ref);
+    const audioTimingMatch: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(ref);
 
     // return if the text ref is for a heading and not a verse
     if (audioTimingMatch == null) return undefined;
@@ -108,10 +108,10 @@ export class CheckingUtils {
     if (match == null) return undefined;
     const ref: string = match[0];
     const label: string = match[1];
-    let iterationStr: string = match[2];
+    const iterationStr: string = match[2];
     if (iterationStr !== '') return { label, iteration: +iterationStr };
 
-    let iteration: number = timingData.filter(t => t.to <= currentAudioTiming.to && t.textRef === ref).length;
+    const iteration: number = timingData.filter(t => t.to <= currentAudioTiming.to && t.textRef === ref).length;
     return { label: match[1], iteration };
   }
 

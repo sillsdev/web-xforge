@@ -102,7 +102,7 @@ class ValidateData {
           const validate = ajv.compile(collection.options.validator.$jsonSchema);
 
           // Show failed document
-          for (let document of documents) {
+          for (const document of documents) {
             console.log(`${colored(colors.red, `${collection.name} document failed validation:`)} ${document._id}`);
             if (this.showValidationErrors) {
               const isValid: boolean = validate(document);

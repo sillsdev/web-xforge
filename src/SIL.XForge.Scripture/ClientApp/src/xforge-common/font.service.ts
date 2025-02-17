@@ -113,7 +113,7 @@ export class FontService {
       return this.loadedFontFamilies.get(projectFont)!;
     }
 
-    let fontUrl = FONT_FACE_DEFINITIONS[projectFont];
+    const fontUrl = FONT_FACE_DEFINITIONS[projectFont];
     this.addFontFamilyToDocument(projectFont, fontUrl);
     this.loadedFontFamilies.set(projectFont, projectFont);
     return projectFont;

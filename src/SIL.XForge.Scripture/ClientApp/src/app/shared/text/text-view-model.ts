@@ -721,7 +721,7 @@ export class TextViewModel implements OnDestroy {
   }
 
   private embeddedElementPositions(embeds: EmbedPosition[]): number[] {
-    let result: number[] = [];
+    const result: number[] = [];
     for (const ep of embeds.values()) {
       result.push(ep.position);
       if (ep.duplicatePosition != null) {
@@ -805,7 +805,7 @@ export class TextViewModel implements OnDestroy {
     let previousOp: 'retain' | 'insert' | 'delete' | undefined;
     let editorStartPos: number = 0;
     for (const op of modelDelta.ops) {
-      let cloneOp: DeltaOperation = cloneDeep(op);
+      const cloneOp: DeltaOperation = cloneDeep(op);
       editorStartPos = curIndex + embedsUpToIndex;
       if (cloneOp.retain != null) {
         const retainCount: number = getRetainCount(cloneOp)!;
