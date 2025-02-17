@@ -78,7 +78,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly cacheService: CacheService,
     private readonly locationService: LocationService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly breakpointService: MediaBreakpointService,
@@ -88,6 +87,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
+    _cacheService: CacheService, //don't remove, as this needs to be used to be constructed
     onlineStatusService: OnlineStatusService
   ) {
     super(noticeService);

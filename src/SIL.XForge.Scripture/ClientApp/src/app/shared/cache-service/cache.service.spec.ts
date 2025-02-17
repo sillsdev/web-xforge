@@ -5,9 +5,9 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { RealtimeDocAdapter } from 'xforge-common/realtime-remote-store';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { MemoryRealtimeDocAdapter } from '../../../xforge-common/memory-realtime-remote-store';
-import { RealtimeDocAdapter } from '../../../xforge-common/realtime-remote-store';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
@@ -94,6 +94,8 @@ describe('cache service', () => {
       expect(true).toBeTruthy();
 
       async function cacheNewProject(): Promise<void> {
+        projectId$.next('new project');
+        when(mockedActivatedProject.projectId).thenReturn('new project');
         const mockProject = mock(SFProjectProfileDoc);
         when(mockProject.id).thenReturn('new project');
         const data = createTestProjectProfile({
