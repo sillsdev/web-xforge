@@ -8,6 +8,7 @@ const texts = db.texts.find({
   ops: {
     $elemMatch: {
       $or: [
+        { 'insert.link': true },
         { 'insert.verse': true },
         { 'attributes.segment': /(?:null|undefined)/ },
         // This will match delete and retain ops, which should not exist, but have been found in production
