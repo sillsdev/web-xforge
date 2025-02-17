@@ -6,12 +6,12 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { RealtimeDocAdapter } from 'xforge-common/realtime-remote-store';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { MemoryRealtimeDocAdapter } from '../../../xforge-common/memory-realtime-remote-store';
-import { RealtimeDocAdapter } from '../../../xforge-common/realtime-remote-store';
 import { AppComponent } from '../../app.component';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -108,6 +108,8 @@ describe('cache service', () => {
       expect(true).toBeTruthy();
 
       async function cacheNewProject(): Promise<void> {
+        projectId$.next('new project');
+        when(mockedActivatedProject.projectId).thenReturn('new project');
         const mockProject = mock(SFProjectProfileDoc);
         when(mockProject.id).thenReturn('new project');
         const data = createTestProjectProfile({
