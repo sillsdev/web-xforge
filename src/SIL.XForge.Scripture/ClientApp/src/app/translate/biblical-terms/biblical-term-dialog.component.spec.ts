@@ -125,7 +125,7 @@ describe('BiblicalTermDialogComponent', () => {
     env.setTextFieldValue(env.description, 'updatedDescription');
     env.click(env.submitButton);
     env.wait();
-    let biblicalTerm = env.getBiblicalTermDoc('id01');
+    const biblicalTerm = env.getBiblicalTermDoc('id01');
     expect(biblicalTerm.data?.renderings).toEqual(['updatedRendering', 'secondRendering', 'thirdRendering']);
     expect(biblicalTerm.data?.description).toBe('updatedDescription');
   }));
@@ -140,7 +140,7 @@ describe('BiblicalTermDialogComponent', () => {
     env.setTextFieldValue(env.description, '');
     env.click(env.submitButton);
     env.wait();
-    let biblicalTerm = env.getBiblicalTermDoc('id01');
+    const biblicalTerm = env.getBiblicalTermDoc('id01');
     expect(biblicalTerm.data?.renderings).toEqual([]);
     expect(biblicalTerm.data?.description).toBe('');
   }));

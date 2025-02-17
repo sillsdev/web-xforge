@@ -406,7 +406,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       return;
     }
 
-    let invalidRows: string[][] = [];
+    const invalidRows: string[][] = [];
     const questions: SourceQuestion[] = [];
 
     for (const [index, row] of result.entries()) {

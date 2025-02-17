@@ -9,8 +9,8 @@ import { PreTranslationSignupUrlService } from './pretranslation-signup-url.serv
 
 describe('PreTranslationSignupUrlService', () => {
   let service: PreTranslationSignupUrlService;
-  let mockActivatedProjectService: ActivatedProjectService = mock(ActivatedProjectService);
-  let mockUserService: UserService = mock(UserService);
+  const mockActivatedProjectService: ActivatedProjectService = mock(ActivatedProjectService);
+  const mockUserService: UserService = mock(UserService);
 
   configureTestingModule(() => ({
     providers: [

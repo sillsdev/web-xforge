@@ -328,7 +328,7 @@ export class DraftGenerationService {
   private toDraftSegmentMap(preTranslations: PreTranslation[]): DraftSegmentMap {
     const draftSegmentMap: DraftSegmentMap = {};
 
-    for (let preTranslation of preTranslations) {
+    for (const preTranslation of preTranslations) {
       // Ensure single space at end to not crowd a following verse number.
       // TODO: Make this more sophisticated to check next segment for `{ insert: { verse: {} } }` before adding space?
       // TODO: ... and investigate if there is a better way to display a space before the next verse marker

@@ -873,7 +873,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     this.editor.setSelection(range);
     this.editor.blur();
-    let presenceData: PresenceData = {
+    const presenceData: PresenceData = {
       viewer: { ...viewer, activeInEditor: true }
     };
     this.onPresenceChannelReceive(presenceId, presenceData);

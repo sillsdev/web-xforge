@@ -490,7 +490,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             routeBookId === 'all' ? 'all' : queryParams['scope']?.toLowerCase();
 
           // Handle 'ALL' scope being passed as book param
-          let routeBookNum: number | undefined =
+          const routeBookNum: number | undefined =
             routeBookId != null && routeBookId !== 'all' ? Canon.bookIdToNumber(routeBookId) : undefined;
 
           const prevProjectId: string = this.projectDoc == null ? '' : this.projectDoc.id;
@@ -1608,8 +1608,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     // or provided route book.
     if (suggestedBookChapter == null) {
       const texts: TextInfo[] = this.projectDoc!.data!.texts;
-      let navBookNum: number = routeBookNum ?? this.books[0];
-      let navChapterNum: number = texts.find(t => t.bookNum === navBookNum)!.chapters[0].number;
+      const navBookNum: number = routeBookNum ?? this.books[0];
+      const navChapterNum: number = texts.find(t => t.bookNum === navBookNum)!.chapters[0].number;
 
       suggestedBookChapter = {
         bookNum: navBookNum,

@@ -148,7 +148,7 @@ class UserCommentReport {
     const [dateToken, timeToken] = date.split('T');
     const [year, month, day] = dateToken.split('-').map(Number);
 
-    let normalizedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    const normalizedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     const timeSuffix = timeToken ? `T${timeToken}` : '';
 
     return normalizedDate + timeSuffix;

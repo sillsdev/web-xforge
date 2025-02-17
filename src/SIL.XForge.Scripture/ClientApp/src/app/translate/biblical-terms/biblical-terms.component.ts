@@ -160,7 +160,7 @@ class Row {
 
   private get hasNoteThreadResolved(): boolean {
     // Get the non-deleted notes in date order descending
-    let notes =
+    const notes =
       this.noteThreadDoc?.data?.notes
         .filter(n => !n.deleted)
         .sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated)) ?? [];
@@ -295,7 +295,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     } else if ((this._verse ?? '0') === '0') {
       return ` (${this.i18n.localizeBook(this._bookNum ?? 0)} ${this._chapter})`;
     } else {
-      let verseRef = new VerseRef(Canon.bookNumberToId(this._bookNum!), this._chapter!.toString(), this._verse!);
+      const verseRef = new VerseRef(Canon.bookNumberToId(this._bookNum!), this._chapter!.toString(), this._verse!);
       return ` (${this.i18n.localizeReference(verseRef)})`;
     }
   }
@@ -376,7 +376,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   }
 
   async editRendering(id: string): Promise<void> {
-    var biblicalTermDoc = await this.projectService.getBiblicalTerm(getBiblicalTermDocId(this._projectId!, id));
+    const biblicalTermDoc = await this.projectService.getBiblicalTerm(getBiblicalTermDocId(this._projectId!, id));
     this.dialogService.openMatDialog<BiblicalTermDialogComponent, BiblicalTermDialogData>(BiblicalTermDialogComponent, {
       data: { biblicalTermDoc, projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc },
       width: '560px'
@@ -401,12 +401,12 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     const categories = new Set<string>();
     const rangeRows: Row[] = [];
     const rangeAndCategoryRows: Row[] = [];
-    let verses: number[] = getVerseNumbers(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
+    const verses: number[] = getVerseNumbers(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
     for (const biblicalTermDoc of this.biblicalTermQuery?.docs || []) {
       let matchesRange = false;
       // Filter by verse, chapter, or book
       for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
-        var verseRef = new VerseRef(bbbcccvvv);
+        const verseRef = new VerseRef(bbbcccvvv);
         if (this.selectedRangeFilter === 'current_book' && verseRef.bookNum === bookNum) {
           matchesRange = true;
           break;
@@ -440,7 +440,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       if (category != null) {
         // Categories are localized in the biblical terms document, and comma separated
         termCategories = category.split(',');
-        for (let categoryName of termCategories) categories.add(categoryName.trim());
+        for (const categoryName of termCategories) categories.add(categoryName.trim());
       }
 
       // If we are filtering by category, exclude terms without the specified category

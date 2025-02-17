@@ -86,14 +86,14 @@ describe('TrainingDataMultiSelectComponent', () => {
 
   it('can delete training data', fakeAsync(() => {
     when(mockUserService.currentUserId).thenReturn('user01');
-    let canDelete = component.canDeleteTrainingData(mockTrainingData[0]);
+    const canDelete = component.canDeleteTrainingData(mockTrainingData[0]);
 
     expect(canDelete).toBeTruthy();
   }));
 
   it('can not delete training data', fakeAsync(() => {
     when(mockUserService.currentUserId).thenReturn('user02');
-    let canDelete = component.canDeleteTrainingData(mockTrainingData[0]);
+    const canDelete = component.canDeleteTrainingData(mockTrainingData[0]);
 
     expect(canDelete).toBeFalsy();
   }));

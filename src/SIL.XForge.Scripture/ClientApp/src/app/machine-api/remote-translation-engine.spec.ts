@@ -176,8 +176,8 @@ describe('RemoteTranslationEngine', () => {
 
   it('train segment executes successfully', async () => {
     const env = new TestEnvironment();
-    let sourceSegment = 'source';
-    let targetSegment = 'target';
+    const sourceSegment = 'source';
+    const targetSegment = 'target';
     let remoteMethodCalled = false;
     when(
       env.mockedHttpClient.post<SegmentPairDto>(

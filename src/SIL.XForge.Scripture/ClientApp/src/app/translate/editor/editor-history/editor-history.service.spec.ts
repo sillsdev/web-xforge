@@ -9,7 +9,7 @@ const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
 
 describe('EditorHistoryService', () => {
   let service: EditorHistoryService;
-  let i18nMock = mock(I18nService);
+  const i18nMock = mock(I18nService);
 
   configureTestingModule(() => ({
     providers: [EditorHistoryService, { provide: I18nService, useMock: i18nMock }]

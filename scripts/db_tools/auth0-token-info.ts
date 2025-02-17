@@ -18,7 +18,7 @@ const authDomain = '';
 // fetch.
 const userEmail = '';
 
-var options = {
+const options = {
   method: 'GET',
   url: `https://${authDomain}/api/v2/users`,
   params: { q: `email:"${userEmail}"`, search_engine: 'v3' },

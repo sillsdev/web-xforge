@@ -1523,7 +1523,7 @@ describe('EditorComponent', () => {
       expect(verse1Note).not.toBeNull();
       expect(verse1Note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       expect(verse1Note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
-      let contents = env.targetEditor.getContents();
+      const contents = env.targetEditor.getContents();
       expect(contents.ops![3].insert).toEqual('target: ');
       expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
 
@@ -1866,7 +1866,7 @@ describe('EditorComponent', () => {
 
       const insertedText = 'inserted text';
       const insertedTextLength = insertedText.length;
-      let priorThreadEditorPos = env.getNoteThreadEditorPosition(priorThreadId);
+      const priorThreadEditorPos = env.getNoteThreadEditorPosition(priorThreadId);
 
       // Edit between anchorings
       env.targetEditor.setSelection(priorThreadEditorPos, 0, 'user');
@@ -2198,8 +2198,8 @@ describe('EditorComponent', () => {
       env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       const textBeforeNote = 'Text in ';
-      let range: Range = env.component.target!.getSegmentRange('s_2')!;
-      let notePosition: number = env.getNoteThreadEditorPosition('dataid06');
+      const range: Range = env.component.target!.getSegmentRange('s_2')!;
+      const notePosition: number = env.getNoteThreadEditorPosition('dataid06');
       expect(range.index + textBeforeNote.length).toEqual(notePosition);
       const thread06Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid06');
       let textAnchor: TextAnchor = thread06Doc.data!.position;
@@ -2532,7 +2532,7 @@ describe('EditorComponent', () => {
 
       // undo deleting note and context
       let deleteLength: number = 5;
-      let beforeNoteLength: number = 2;
+      const beforeNoteLength: number = 2;
       // target|->: $ch<-|apter 1, $verse 1.
       env.targetEditor.setSelection(note1Position - beforeNoteLength, deleteLength, 'user');
       env.deleteCharacters();
@@ -3062,7 +3062,7 @@ describe('EditorComponent', () => {
       expect(noteThread.data!.notes.length).toEqual(3);
       env.setProjectUserConfig();
       env.wait();
-      let noteThreadIconElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_1', threadDataId);
+      const noteThreadIconElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_1', threadDataId);
       noteThreadIconElem!.click();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       env.mockNoteDialogRef.close({ noteContent: content, status: NoteStatus.Resolved, noteDataId: 'thread01_note0' });

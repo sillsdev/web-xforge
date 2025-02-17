@@ -665,7 +665,7 @@ describe('CheckingComponent', () => {
       env.waitForAudioPlayer();
       expect(env.component.questionsList!.activeQuestionDoc!.id).toBe(questionId);
       expect(env.questions.length).toEqual(15);
-      let question = env.selectQuestion(15);
+      const question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
     }));
 
@@ -2745,9 +2745,9 @@ class TestEnvironment {
   }
 
   static generateTestProject(): SFProject {
-    let audioPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)];
-    let questionPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create)];
-    let userPermissions = {
+    const audioPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)];
+    const questionPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create)];
+    const userPermissions = {
       [TRANSLATOR_USER.id]: audioPermissions,
       [CONSULTANT_USER.id]: questionPermissions
     };
