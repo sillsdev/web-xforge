@@ -2097,8 +2097,12 @@ describe('DraftGenerationComponent', () => {
       expect(mockDraftGenerationService.cancelBuild).not.toHaveBeenCalled();
     });
 
-    it('should cancel the draft build without dialog if the build state is not active', async () => {
+    it('should cancel the draft build with dialog if the build state is not active', async () => {
       const env = new TestEnvironment(() => {
+        mockDialogService.openGenericDialog.and.returnValue({
+          dialogRef: {} as MatDialogRef<any>,
+          result: Promise.resolve(true)
+        });
         mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       });
 
@@ -2106,7 +2110,7 @@ describe('DraftGenerationComponent', () => {
       await env.component.cancel();
       env.component.draftJob = { ...buildDto, state: BuildStates.Canceled };
       env.fixture.detectChanges();
-      expect(mockDialogService.openGenericDialog).not.toHaveBeenCalled();
+      expect(mockDialogService.openGenericDialog).toHaveBeenCalledTimes(1);
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
       expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
     });
