@@ -1206,7 +1206,16 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(
-            () => env.Service.GetPreTranslationDeltaAsync(User01, Project01, 40, 1, CancellationToken.None)
+            () =>
+                env.Service.GetPreTranslationDeltaAsync(
+                    User01,
+                    Project01,
+                    40,
+                    1,
+                    false,
+                    DateTime.UtcNow,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1218,8 +1227,41 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationDeltaAsync(User01, Project01, 40, 0, CancellationToken.None)
+            () =>
+                env.Service.GetPreTranslationDeltaAsync(
+                    User01,
+                    Project01,
+                    40,
+                    0,
+                    false,
+                    DateTime.UtcNow,
+                    CancellationToken.None
+                )
         );
+    }
+
+    [Test]
+    public async Task GetPreTranslationDeltaAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
+        Delta expected = new Delta([token]);
+        env.ParatextService.GetDeltaFromUsfmAsync(User01, Project01, Arg.Any<string>(), 40)
+            .Returns(Task.FromResult(expected));
+
+        // SUT
+        Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
+            User02,
+            Project01,
+            40,
+            1,
+            true,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
+        Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
+        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual.Id);
     }
 
     [Test]
@@ -1238,10 +1280,167 @@ public class MachineApiServiceTests
             Project01,
             40,
             1,
+            false,
+            DateTime.UtcNow,
             CancellationToken.None
         );
         Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
         Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual.Id);
+    }
+
+    [Test]
+    public async Task GetPreTranslationRevisionsAsync_CancelEnumeration()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        string textDocumentId = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
+        env.SetupTextDocument(textDocumentId, 40, alreadyExists: true);
+        var cancellationTokenSource = new CancellationTokenSource();
+        List<DocumentRevision> revisions = [];
+
+        // SUT
+        await foreach (
+            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                isServalAdmin: false,
+                cancellationTokenSource.Token
+            )
+        )
+        {
+            await cancellationTokenSource.CancelAsync();
+            revisions.Add(revision);
+        }
+
+        Assert.AreEqual(1, revisions.Count);
+    }
+
+    [Test]
+    public async Task GetPreTranslationRevisionsAsync_NoOps()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        DateTimeOffset dateFinished = DateTimeOffset.UtcNow;
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>(
+                    [
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Message = "completed",
+                            PercentCompleted = 0,
+                            Revision = 43,
+                            State = JobState.Completed,
+                            DateFinished = dateFinished,
+                        },
+                    ]
+                )
+            );
+        List<DocumentRevision> revisions = [];
+
+        // SUT
+        await foreach (
+            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        )
+        {
+            revisions.Add(revision);
+        }
+
+        Assert.AreEqual(1, revisions.Count);
+        Assert.AreEqual(revisions[0].Source, OpSource.Draft);
+        Assert.AreEqual(revisions[0].Timestamp, dateFinished.UtcDateTime);
+        Assert.IsNull(revisions[0].UserId);
+    }
+
+    [Test]
+    public async Task GetPreTranslationRevisionsAsync_NoOpsOrBuildOnServal()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        List<DocumentRevision> revisions = [];
+
+        // SUT
+        await foreach (
+            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        )
+        {
+            revisions.Add(revision);
+        }
+
+        Assert.IsEmpty(revisions);
+    }
+
+    [Test]
+    public async Task GetPreTranslationRevisionsAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        string textDocumentId = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
+        env.SetupTextDocument(textDocumentId, 40, alreadyExists: true);
+        List<DocumentRevision> revisions = [];
+
+        // SUT
+        await foreach (
+            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
+                User02,
+                Project01,
+                40,
+                1,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+        )
+        {
+            revisions.Add(revision);
+        }
+
+        Assert.AreEqual(2, revisions.Count);
+    }
+
+    [Test]
+    public async Task GetPreTranslationRevisionsAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        string textDocumentId = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
+        env.SetupTextDocument(textDocumentId, 40, alreadyExists: true);
+        List<DocumentRevision> revisions = [];
+
+        // SUT
+        await foreach (
+            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        )
+        {
+            revisions.Add(revision);
+        }
+
+        Assert.AreEqual(2, revisions.Count);
     }
 
     [Test]
@@ -1254,7 +1453,16 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(
-            () => env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, false, CancellationToken.None)
+            () =>
+                env.Service.GetPreTranslationUsfmAsync(
+                    User01,
+                    Project01,
+                    40,
+                    1,
+                    false,
+                    DateTime.UtcNow,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1274,6 +1482,7 @@ public class MachineApiServiceTests
             40,
             1,
             true,
+            DateTime.UtcNow,
             CancellationToken.None
         );
         Assert.AreEqual(expected, usfm);
@@ -1295,6 +1504,7 @@ public class MachineApiServiceTests
             40,
             1,
             false,
+            DateTime.UtcNow,
             CancellationToken.None
         );
         Assert.AreEqual(expected, usfm);
@@ -1310,7 +1520,16 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(
-            () => env.Service.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+            () =>
+                env.Service.GetPreTranslationUsjAsync(
+                    User01,
+                    Project01,
+                    40,
+                    1,
+                    false,
+                    DateTime.UtcNow,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1323,8 +1542,39 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None)
+            () =>
+                env.Service.GetPreTranslationUsjAsync(
+                    User01,
+                    Project01,
+                    40,
+                    1,
+                    false,
+                    DateTime.UtcNow,
+                    CancellationToken.None
+                )
         );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(TestUsfm));
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
+
+        // SUT
+        Usj actual = await env.Service.GetPreTranslationUsjAsync(
+            User02,
+            Project01,
+            40,
+            1,
+            true,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
+        Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
     }
 
     [Test]
@@ -1337,7 +1587,15 @@ public class MachineApiServiceTests
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
 
         // SUT
-        Usj actual = await env.Service.GetPreTranslationUsjAsync(User01, Project01, 40, 1, CancellationToken.None);
+        Usj actual = await env.Service.GetPreTranslationUsjAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            false,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
         Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
     }
 
@@ -1351,7 +1609,16 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(
-            () => env.Service.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+            () =>
+                env.Service.GetPreTranslationUsxAsync(
+                    User01,
+                    Project01,
+                    40,
+                    1,
+                    false,
+                    DateTime.UtcNow,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1364,8 +1631,43 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None)
+            () =>
+                env.Service.GetPreTranslationUsxAsync(
+                    User01,
+                    Project01,
+                    40,
+                    1,
+                    false,
+                    DateTime.UtcNow,
+                    CancellationToken.None
+                )
         );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsxAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string usfm = "\\c 1 \\v1 Verse 1";
+        const string expected =
+            "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
+            + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(usfm));
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(expected);
+
+        // SUT
+        string usx = await env.Service.GetPreTranslationUsxAsync(
+            User02,
+            Project01,
+            40,
+            1,
+            true,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
+        Assert.AreEqual(expected, usx);
     }
 
     [Test]
@@ -1382,7 +1684,15 @@ public class MachineApiServiceTests
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(expected);
 
         // SUT
-        string usx = await env.Service.GetPreTranslationUsxAsync(User01, Project01, 40, 1, CancellationToken.None);
+        string usx = await env.Service.GetPreTranslationUsxAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            false,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
         Assert.AreEqual(expected, usx);
     }
 
@@ -1718,23 +2028,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task RetrievePreTranslationStatusAsync_DoesNotTextDocumentsIfNotLastUserId()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Unset(p => p.ServalData.PreTranslationLastUserId));
-        env.Service.Configure()
-            .UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None)
-            .Returns(Task.CompletedTask);
-
-        // SUT
-        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
-
-        await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
-        await env.Service.DidNotReceive().UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
-    }
-
-    [Test]
     public async Task RetrievePreTranslationStatusAsync_ReportsErrors()
     {
         // Set up test environment
@@ -1769,14 +2062,14 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.Service.Configure()
-            .UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None)
+            .UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
             .Returns(Task.CompletedTask);
 
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
         await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
-        await env.Service.Received().UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
+        await env.Service.Received().UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
     }
 
     [Test]
@@ -2590,7 +2883,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task UpdatePreTranslationTextDocuments_CreatesNewDocument()
+    public async Task UpdatePreTranslationTextDocumentsAsync_CreatesNewDocument()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2599,7 +2892,7 @@ public class MachineApiServiceTests
         env.SetupTextDocument(textDocumentId, bookNum, alreadyExists: false);
 
         // SUT
-        await env.Service.UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
+        await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
 
         await env
             .TranslationEnginesClient.Received(1)
@@ -2617,7 +2910,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task UpdatePreTranslationTextDocuments_NoProjectSecret()
+    public async Task UpdatePreTranslationTextDocumentsAsync_NoProjectSecret()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2625,60 +2918,48 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None)
+            () => env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
         );
     }
 
     [Test]
-    public void UpdatePreTranslationTextDocuments_NoProject()
+    public void UpdatePreTranslationTextDocumentsAsync_NoProject()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocuments(User01, "invalid_project_id", CancellationToken.None)
+            () => env.Service.UpdatePreTranslationTextDocumentsAsync("invalid_project_id", CancellationToken.None)
         );
     }
 
     [Test]
-    public void UpdatePreTranslationTextDocuments_NoParallelCorpusId()
+    public void UpdatePreTranslationTextDocumentsAsync_NoParallelCorpusId()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocuments(User01, Project02, CancellationToken.None)
+            () => env.Service.UpdatePreTranslationTextDocumentsAsync(Project02, CancellationToken.None)
         );
     }
 
     [Test]
-    public void UpdatePreTranslationTextDocuments_NoTranslationEngine()
+    public void UpdatePreTranslationTextDocumentsAsync_NoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocuments(User01, Project03, CancellationToken.None)
+            () => env.Service.UpdatePreTranslationTextDocumentsAsync(Project03, CancellationToken.None)
         );
     }
 
     [Test]
-    public void UpdatePreTranslationTextDocuments_NoUser()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocuments("invalid_user_id", Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task UpdatePreTranslationTextDocuments_UpdatesExistingDocument()
+    public async Task UpdatePreTranslationTextDocumentsAsync_UpdatesExistingDocument()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2687,7 +2968,7 @@ public class MachineApiServiceTests
         env.SetupTextDocument(textDocumentId, bookNum, alreadyExists: true);
 
         // SUT
-        await env.Service.UpdatePreTranslationTextDocuments(User01, Project01, CancellationToken.None);
+        await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
 
         await env
             .TranslationEnginesClient.Received(1)
@@ -2728,7 +3009,6 @@ public class MachineApiServiceTests
                         {
                             ParallelCorpusIdForPreTranslate = ParallelCorpusId01,
                             PreTranslationEngineId = TranslationEngine01,
-                            PreTranslationLastUserId = User01,
                             TranslationEngineId = TranslationEngine01,
                         },
                     },
@@ -2783,9 +3063,9 @@ public class MachineApiServiceTests
             TextDocuments = new MemoryRepository<TextDocument>();
             ProjectService = Substitute.For<ISFProjectService>();
             ProjectService.SyncAsync(User01, Arg.Any<string>()).Returns(Task.FromResult(JobId));
-            var realtimeService = new SFMemoryRealtimeService();
-            realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
-            realtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
+            RealtimeService = new SFMemoryRealtimeService();
+            RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
+            RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
 
             var servalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             SyncService = Substitute.For<ISyncService>();
@@ -2822,7 +3102,7 @@ public class MachineApiServiceTests
                 PreTranslationService,
                 ProjectSecrets,
                 ProjectService,
-                realtimeService,
+                RealtimeService,
                 servalOptions,
                 SyncService,
                 TranslationEnginesClient,
@@ -2840,6 +3120,7 @@ public class MachineApiServiceTests
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MemoryRepository<TextDocument> TextDocuments { get; }
         public ISFProjectService ProjectService { get; }
+        public SFMemoryRealtimeService RealtimeService { get; }
         public MachineApiService Service { get; }
         public ISyncService SyncService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
@@ -2919,6 +3200,27 @@ public class MachineApiServiceTests
                         Version = TestUsj.Version,
                     }
                 );
+
+                // Add two ops for this text document
+                Op[] ops =
+                [
+                    new Op
+                    {
+                        Metadata = new OpMetadata { Timestamp = DateTime.UtcNow.AddMinutes(-30) },
+                        Version = 1,
+                    },
+                    new Op
+                    {
+                        Metadata = new OpMetadata
+                        {
+                            Timestamp = DateTime.UtcNow.AddMinutes(-10),
+                            UserId = "user01",
+                            Source = OpSource.Draft,
+                        },
+                        Version = 2,
+                    },
+                ];
+                RealtimeService.GetRepository<TextDocument>().SetOps(textDocumentId, ops);
             }
         }
     }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -209,11 +210,8 @@ public class MachineApiService(
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -251,11 +249,8 @@ public class MachineApiService(
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
         // Get the translation engine
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
@@ -298,11 +293,8 @@ public class MachineApiService(
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
         // Otherwise execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -404,11 +396,16 @@ public class MachineApiService(
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        bool isServalAdmin,
+        DateTime timestamp,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+
+        // If the user is a serval admin, get the highest ranked user on the project
+        string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
 
         // Do not allow retrieving the entire book as a delta
         if (chapterNum == 0)
@@ -428,7 +425,7 @@ public class MachineApiService(
             {
                 Id = TextData.GetTextDocId(sfProjectId, bookNum, chapterNum),
                 Version = 0,
-                Data = new TextData(await paratextService.GetDeltaFromUsfmAsync(curUserId, sfProjectId, usfm, bookNum)),
+                Data = new TextData(await paratextService.GetDeltaFromUsfmAsync(userId, sfProjectId, usfm, bookNum)),
             };
         }
         catch (ServalApiException e)
@@ -459,11 +456,8 @@ public class MachineApiService(
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
         // If there is a job queued, return a build dto with a status showing it is queued
         if (
@@ -550,20 +544,74 @@ public class MachineApiService(
         return buildDto;
     }
 
+    public async IAsyncEnumerable<DocumentRevision> GetPreTranslationRevisionsAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        bool isServalAdmin,
+        [EnumeratorCancellation] CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+
+        await using IConnection connection = await realtimeService.ConnectAsync(curUserId);
+        string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
+        Op[] ops = await connection.GetOpsAsync<TextDocument>(id);
+
+        // If there are no ops, just get the most recent revision from Serval
+        if (ops.Length == 0)
+        {
+            ServalBuildDto? build = await GetLastCompletedPreTranslationBuildAsync(
+                curUserId,
+                sfProjectId,
+                isServalAdmin,
+                cancellationToken
+            );
+            if (build is not null)
+            {
+                yield return new DocumentRevision
+                {
+                    Source = OpSource.Draft,
+                    Timestamp = build.AdditionalInfo?.DateFinished?.UtcDateTime ?? DateTime.UtcNow,
+                };
+            }
+        }
+        else
+        {
+            // Draft Ops are not user created, so we do not need to milestone them,
+            // like we do in ParatextService.GetRevisionHistoryAsync()
+            foreach (Op op in ops)
+            {
+                // Allow cancellation
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                yield return new DocumentRevision
+                {
+                    Source = op.Metadata.Source ?? OpSource.Draft,
+                    Timestamp = op.Metadata.Timestamp,
+                    UserId = op.Metadata.UserId,
+                };
+            }
+        }
+    }
+
     public async Task<string> GetPreTranslationUsfmAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,
         int chapterNum,
         bool isServalAdmin,
+        DateTime timestamp,
         CancellationToken cancellationToken
     )
     {
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
         try
         {
@@ -586,14 +634,19 @@ public class MachineApiService(
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        bool isServalAdmin,
+        DateTime timestamp,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+
+        // If the user is a serval admin, get the highest ranked user on the project
+        string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
 
         // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId);
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
         if (!attempt.TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("The user does not exist.");
@@ -622,14 +675,19 @@ public class MachineApiService(
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        bool isServalAdmin,
+        DateTime timestamp,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+
+        // If the user is a serval admin, get the highest ranked user on the project
+        string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
 
         // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId);
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
         if (!attempt.TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("The user does not exist.");
@@ -718,15 +776,8 @@ public class MachineApiService(
                 // Get the pre-translations
                 await preTranslationService.UpdatePreTranslationStatusAsync(sfProjectId, cancellationToken);
 
-                // Update the pre-translation text documents if we have an id for the user who ran the build
-                if (projectSecret.ServalData?.PreTranslationLastUserId != null)
-                {
-                    await UpdatePreTranslationTextDocuments(
-                        projectSecret.ServalData.PreTranslationLastUserId,
-                        sfProjectId,
-                        cancellationToken
-                    );
-                }
+                // Update the pre-translation text documents
+                await UpdatePreTranslationTextDocumentsAsync(sfProjectId, cancellationToken);
 
                 // Set the retrieved flag as complete
                 await projectSecrets.UpdateAsync(
@@ -1078,30 +1129,55 @@ public class MachineApiService(
     }
 
     /// <summary>
+    /// Gets the highest ranked user id on a project.
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <returns>The user id.</returns>
+    private static string GetHighestRankedUserId(SFProject project)
+    {
+        // Rank the Paratext roles
+        var rolePriority = new Dictionary<string, int>
+        {
+            { SFProjectRole.Administrator, 1 },
+            { SFProjectRole.Translator, 2 },
+            { SFProjectRole.Consultant, 3 },
+            { SFProjectRole.PTObserver, 4 },
+        };
+
+        // Get the highest ranking user id, if the current user id is not set
+        return project
+            .UserRoles.Where(ur => SFProjectRole.IsParatextRole(ur.Value))
+            .OrderBy(kvp => rolePriority[kvp.Value])
+            .First()
+            .Key;
+    }
+
+    /// <summary>
     /// Updates the text documents locally with the latest pre-translation drafts.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An asynchronous task.</returns>
     /// <exception cref="DataNotFoundException">Required data could not be found.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
-    protected internal virtual async Task UpdatePreTranslationTextDocuments(
-        string curUserId,
+    protected internal virtual async Task UpdatePreTranslationTextDocumentsAsync(
         string sfProjectId,
         CancellationToken cancellationToken
     )
     {
         // Load the project from the realtime service
-        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await realtimeService.ConnectAsync();
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
         if (!projectDoc.IsLoaded)
         {
             throw new DataNotFoundException("The project does not exist.");
         }
 
+        // Get the user to perform this action as
+        string userId = GetHighestRankedUserId(projectDoc.Data);
+
         // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId);
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
         if (!attempt.TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("The user does not exist.");
@@ -1128,7 +1204,7 @@ public class MachineApiService(
         }
 
         // Ensure that the user has permission on the project
-        MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
+        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
 
         // For every text we have a draft applied to, get the pre-translation
         foreach (TextInfo textInfo in projectDoc.Data.Texts.Where(t => t.Chapters.Any(c => c.HasDraft == true)))
@@ -1289,7 +1365,11 @@ public class MachineApiService(
         return engineDto;
     }
 
-    private async Task<SFProject> EnsureProjectPermissionAsync(string curUserId, string sfProjectId)
+    private async Task<SFProject> EnsureProjectPermissionAsync(
+        string curUserId,
+        string sfProjectId,
+        bool isServalAdmin = false
+    )
     {
         // Load the project from the realtime service
         Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
@@ -1299,7 +1379,10 @@ public class MachineApiService(
         }
 
         // Check for permission
-        MachineApi.EnsureProjectPermission(curUserId, project);
+        if (!isServalAdmin)
+        {
+            MachineApi.EnsureProjectPermission(curUserId, project);
+        }
 
         // Return the project, in case the caller needs it
         return project;

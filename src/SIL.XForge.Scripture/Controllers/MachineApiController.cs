@@ -321,6 +321,7 @@ public class MachineApiController : ControllerBase
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. This cannot be zero.</param>
+    /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
@@ -333,16 +334,20 @@ public class MachineApiController : ControllerBase
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        DateTime? timestamp,
         CancellationToken cancellationToken
     )
     {
         try
         {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             Snapshot<TextData> delta = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,
+                isServalAdmin,
+                timestamp ?? DateTime.UtcNow,
                 cancellationToken
             );
             return Ok(delta);
@@ -377,6 +382,7 @@ public class MachineApiController : ControllerBase
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. If zero, the entire book is returned.</param>
+    /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
@@ -389,6 +395,7 @@ public class MachineApiController : ControllerBase
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        DateTime? timestamp,
         CancellationToken cancellationToken
     )
     {
@@ -401,6 +408,7 @@ public class MachineApiController : ControllerBase
                 bookNum,
                 chapterNum,
                 isServalAdmin,
+                timestamp ?? DateTime.UtcNow,
                 cancellationToken
             );
             return Ok(usfm);
@@ -434,6 +442,7 @@ public class MachineApiController : ControllerBase
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. If zero, the entire book is returned.</param>
+    /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
@@ -446,16 +455,20 @@ public class MachineApiController : ControllerBase
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        DateTime? timestamp,
         CancellationToken cancellationToken
     )
     {
         try
         {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             Usj usj = await _machineApiService.GetPreTranslationUsjAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,
+                isServalAdmin,
+                timestamp ?? DateTime.UtcNow,
                 cancellationToken
             );
             return Ok(usj);
@@ -489,6 +502,7 @@ public class MachineApiController : ControllerBase
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. If zero, the entire book is returned.</param>
+    /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
@@ -501,16 +515,20 @@ public class MachineApiController : ControllerBase
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        DateTime? timestamp,
         CancellationToken cancellationToken
     )
     {
         try
         {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             string usx = await _machineApiService.GetPreTranslationUsxAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,
+                isServalAdmin,
+                timestamp ?? DateTime.UtcNow,
                 cancellationToken
             );
             return Ok(usx);
