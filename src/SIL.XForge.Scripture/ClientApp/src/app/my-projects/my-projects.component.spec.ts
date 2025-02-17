@@ -444,6 +444,31 @@ describe('MyProjectsComponent', () => {
     // We won't expect getProjects() to have been called.
     verify(mockedParatextService.getProjects()).never();
   }));
+
+  it('displays an app notice when users role on SF is not up to date with PT', fakeAsync(() => {
+    // Suppose a users role on Paratext has been changed, but the role on SF has not been updated.
+    // We should show a notice with a button to update the role.
+    const env = new TestEnvironment({ isKnownPTUser: true });
+    when(mockedParatextService.getProjects()).thenResolve([
+      {
+        paratextId: 'pt-project-id-update-role',
+        name: 'PT Project Update Role',
+        projectId: 'testProject1',
+        shortName: 'PTUR',
+        isConnectable: true,
+        isConnected: true,
+        projectUserRole: 'pt_administrator',
+        userRoleNeedsUpdated: true
+      }
+    ] as ParatextProject[]);
+    env.waitUntilLoaded();
+    expect(env.messageUserRoleNeedsUpdated).not.toBeNull();
+
+    env.click(env.buttonForUpdateUserRole('testProject1'));
+    verify(mockedNoticeService.loadingStarted(anything())).once();
+    verify(mockedSFProjectService.onlineRemoveUser(anything(), anything())).once();
+    verify(mockedSFProjectService.onlineAddCurrentUser(anything())).once();
+  }));
 });
 
 class TestEnvironment {
@@ -624,11 +649,19 @@ class TestEnvironment {
     return this.getElement(`div[data-pt-project-id=${ptProjectId}].user-unconnected-project`);
   }
 
+  messageUserRoleNeedsUpdated(projectId: string): DebugElement {
+    return this.getElement(`#message-user-role-needs-updated-${projectId}`);
+  }
+
   buttonForUnconnectedProject(ptProjectId: string): DebugElement {
     return (
       this.getElement(`div[data-pt-project-id=${ptProjectId}] > button`) ??
       this.getElement(`div[data-pt-project-id=${ptProjectId}] > a`)
     );
+  }
+
+  buttonForUpdateUserRole(ptProjectId: string): DebugElement {
+    return this.getElement(`#message-user-role-needs-updated-${ptProjectId} > span > button`);
   }
 
   waitUntilLoaded(): void {

@@ -46,6 +46,11 @@ public class ParatextProject
     public string? ProjectId { get; init; }
 
     /// <summary>
+    /// The role of the user in the project.
+    /// </summary>
+    public string? ProjectUserRole { get; init; }
+
+    /// <summary>
     /// If the requesting user has access to the PT project, but not yet to a corresponding SF project, and has
     /// permission to connect an SF project to the PT project. The SF project may or may not yet already exist.
     /// </summary>
@@ -55,6 +60,11 @@ public class ParatextProject
     /// If the requesting user has access to both the PT project and the corresponding SF project.
     /// </summary>
     public bool IsConnected { get; init; }
+
+    /// <summary>
+    /// If the user's role in the project needs to be updated.
+    /// </summary>
+    public bool UserRoleNeedsUpdated { get; init; }
 
     /// <summary>
     /// A descriptive string of object's properties, for debugging.

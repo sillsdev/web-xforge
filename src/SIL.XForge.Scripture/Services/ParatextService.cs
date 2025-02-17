@@ -2266,10 +2266,14 @@ public class ParatextService : DisposableBase, IParatextService
 
             bool sfProjectExists = correspondingSfProject != null;
             bool sfUserIsOnSfProject = correspondingSfProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
-            bool adminOnPtProject =
-                remotePtProject.SourceUsers.GetRole(GetParatextUsername(userSecret)) == UserRoles.Administrator;
+            UserRoles ptUserRole = remotePtProject.SourceUsers.GetRole(GetParatextUsername(userSecret));
+            bool adminOnPtProject = ptUserRole == UserRoles.Administrator;
             bool ptProjectIsConnectable =
                 (sfProjectExists && !sfUserIsOnSfProject) || (!sfProjectExists && adminOnPtProject);
+            bool updateUserRole =
+                sfProjectExists
+                && sfUserIsOnSfProject
+                && ConvertFromUserRole(ptUserRole) != correspondingSfProject.UserRoles[userSecret.Id];
 
             // On SF Live server, many users have projects without corresponding project metadata.
             // If this happens, default to using the project's short name
@@ -2293,6 +2297,8 @@ public class ParatextService : DisposableBase, IParatextService
                     ProjectId = correspondingSfProject?.Id,
                     IsConnectable = ptProjectIsConnectable,
                     IsConnected = sfProjectExists && sfUserIsOnSfProject,
+                    UserRoleNeedsUpdated = updateUserRole,
+                    ProjectUserRole = ConvertFromUserRole(ptUserRole),
                 }
             );
         }

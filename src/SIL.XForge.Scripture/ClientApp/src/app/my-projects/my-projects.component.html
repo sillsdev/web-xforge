@@ -12,21 +12,30 @@
       </h2>
     }
     @for (projectDoc of userConnectedProjects; track projectDoc) {
-      <mat-card
-        [class.active-project]="isLastSelectedProject(projectDoc)"
-        id="user-connected-project-card-{{ projectDoc.data?.paratextId }}"
-        [attr.data-pt-project-id]="projectDoc.data?.paratextId"
-        class="user-connected-project mat-elevation-z4"
-        appRouterLink="/projects/{{ projectDoc.id }}"
-        matRipple
-      >
-        <span class="project-name">
-          <b>{{ projectDoc.data?.shortName }}</b> - {{ projectDoc.data?.name }}
-        </span>
-        <span class="project-description">
-          {{ projectTypeDescription(projectDoc) }}
-        </span>
-      </mat-card>
+      @if (userRoleNeedsUpdated(projectDoc.id)) {
+        <app-notice id="message-user-role-needs-updated-{{ projectDoc.id }}" icon="info" type="info">
+          <b>{{ projectDoc.data?.shortName }}</b> - {{ projectDoc.data?.name }}: {{ t("update_role") }}
+          <button mat-flat-button (click)="updateUserRole(projectDoc.id)">
+            {{ t("update") }}
+          </button>
+        </app-notice>
+      } @else {
+        <mat-card
+          [class.active-project]="isLastSelectedProject(projectDoc)"
+          id="user-connected-project-card-{{ projectDoc.data?.paratextId }}"
+          [attr.data-pt-project-id]="projectDoc.data?.paratextId"
+          class="user-connected-project mat-elevation-z4"
+          appRouterLink="/projects/{{ projectDoc.id }}"
+          matRipple
+        >
+          <span class="project-name">
+            <b>{{ projectDoc.data?.shortName }}</b> - {{ projectDoc.data?.name }}
+          </span>
+          <span class="project-description">
+            {{ projectTypeDescription(projectDoc) }}
+          </span>
+        </mat-card>
+      }
     }
     @if (initialLoadingSFProjects) {
       <mat-card id="sf-loading-card" class="loading-card">
