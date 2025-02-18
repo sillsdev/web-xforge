@@ -83,6 +83,10 @@ describe('shared utils', () => {
       expect(isBadDelta([chapterInsert])).toBeFalse();
       expect(isBadDelta([chapterInsert, chapterInsert])).toBeTrue();
     });
+
+    it('does not allow op.insert.link to be true', () => {
+      expect(isBadDelta([{ insert: { link: true } }])).toBeTrue();
+    });
   });
 
   it('compares projects for sorting', () => {

@@ -2,9 +2,10 @@ import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { DeltaOperation } from 'rich-text';
+import { isObj } from '../../type-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
@@ -223,6 +224,8 @@ export function isBadDelta(ops: DeltaOperation[]): boolean {
       (typeof op.insert === 'object' &&
         'verse' in op.insert &&
         (op.insert.verse == null || typeof op.insert.verse !== 'object')) ||
+      // insert.link should not exist
+      (isObj(op.insert) && op.insert.link === true) ||
       // the segment identifier should not have null or undefined in it, like we've seen in the past
       (typeof op.attributes?.segment === 'string' && /(?:undefined|null)/.test(op.attributes.segment))
   );
