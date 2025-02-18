@@ -2,7 +2,6 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -25,7 +24,6 @@ describe('DraftGenerationStepsComponent', () => {
   let fixture: ComponentFixture<DraftGenerationStepsComponent>;
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
-  const mockActivatedRoute = mock(ActivatedRoute);
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockNllbLanguageService = mock(NllbLanguageService);
   const mockTrainingDataService = mock(TrainingDataService);
@@ -58,7 +56,6 @@ describe('DraftGenerationStepsComponent', () => {
   beforeEach(fakeAsync(() => {
     when(mockActivatedProjectService.projectId).thenReturn('project01');
     when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
-    when(mockActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockProgressService.isLoaded$).thenReturn(of(true));
     when(mockProgressService.texts).thenReturn([
       { text: { bookNum: 1 }, translated: 100 } as TextProgress,

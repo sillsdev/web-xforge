@@ -9,7 +9,6 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { firstValueFrom } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -30,7 +29,6 @@ const mockedProjectService = mock(SFProjectService);
 const mockedNavigator = mock(Navigator);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 
 enum TestUsers {
   CommunityChecker = 'user01',
@@ -423,7 +421,6 @@ class TestEnvironment {
         }`
     );
     when(mockedProjectService.isProjectAdmin(projectId, TestUsers.Admin)).thenResolve(true);
-    when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(true));
 
     const config: MatDialogConfig<ShareDialogData> = {
       data: {

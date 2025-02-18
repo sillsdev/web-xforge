@@ -5,7 +5,6 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -23,7 +22,6 @@ import { HistoryChooserComponent } from './history-chooser.component';
 import { HistoryRevisionFormatPipe } from './history-revision-format.pipe';
 
 const mockedDialogService = mock(DialogService);
-const mockedI18nService = mock(I18nService);
 const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
@@ -204,14 +202,6 @@ describe('HistoryChooserComponent', () => {
         type: '',
         v: 1,
         isValid: this.isSnapshotValid
-      });
-      when(mockedI18nService.locale).thenReturn({
-        localName: 'English',
-        englishName: 'English',
-        canonicalTag: 'en',
-        direction: 'ltr',
-        tags: ['en'],
-        production: false
       });
       when(mockedProjectService.getProfile('project01')).thenCall(() =>
         this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')

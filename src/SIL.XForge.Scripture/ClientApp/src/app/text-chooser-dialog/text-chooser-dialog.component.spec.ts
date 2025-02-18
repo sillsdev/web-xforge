@@ -20,17 +20,13 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule } from 'xforge-common/test-utils';
-import { UserService } from 'xforge-common/user.service';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { TextDoc } from '../core/models/text-doc';
-import { SFProjectService } from '../core/sf-project.service';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
 const mockedDocument = mock(Document);
-const mockedProjectService = mock(SFProjectService);
-const mockedUserService = mock(UserService);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
@@ -438,16 +434,6 @@ class TestEnvironment {
       data: TestEnvironment.testProject
     });
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, { id: 'user01', data: createTestUser() });
-
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
-    );
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
-    );
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
-    );
 
     const dialogRef = TestBed.inject(MatDialog).open(TextChooserDialogComponent, { data: config });
     this.component = dialogRef.componentInstance;

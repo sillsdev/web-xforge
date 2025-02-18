@@ -17,7 +17,6 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { LocationService } from 'xforge-common/location.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -39,7 +38,6 @@ import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { CollaboratorsComponent } from './collaborators.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
-const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -425,7 +423,6 @@ class TestEnvironment {
     when(mockedProjectService.onlineInvite(this.project01Id, anything(), anything(), anything())).thenResolve();
     when(mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(mockedNoticeService.show(anything())).thenResolve();
-    when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
     when(mockedUserService.getProfile(anything())).thenCall(userId =>
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, userId)
     );

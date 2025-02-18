@@ -11,7 +11,6 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -32,7 +31,6 @@ const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialogRef = mock(MatDialogRef);
 const mockedTextDocService = mock(TextDocService);
-const mockedI18nService = mock(I18nService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -219,7 +217,6 @@ class TestEnvironment {
 
   constructor(args: { projectDoc?: SFProjectProfileDoc } = {}) {
     when(mockedUserService.currentUserId).thenReturn('user01');
-    when(mockedI18nService.localizeBook(anything())).thenReturn('Genesis');
     this.setupProject(args.projectDoc);
     this.fixture = TestBed.createComponent(DraftApplyDialogComponent);
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);

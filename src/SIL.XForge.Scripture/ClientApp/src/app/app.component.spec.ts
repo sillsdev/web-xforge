@@ -22,7 +22,6 @@ import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -42,18 +41,16 @@ import { AppComponent } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
-import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
 import { NavigationComponent } from './navigation/navigation.component';
 import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
-import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
+import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
 
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedSettingsAuthGuard = mock(SettingsAuthGuard);
 const mockedSyncAuthGuard = mock(SyncAuthGuard);
-const mockedNmtDraftAuthGuard = mock(NmtDraftAuthGuard);
 const mockedUsersAuthGuard = mock(UsersAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedCookieService = mock(CookieService);
@@ -65,8 +62,6 @@ const mockedUrlService = mock(ExternalUrlService);
 const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
-const mockedPermissions = mock(PermissionsService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -129,8 +124,6 @@ describe('AppComponent', () => {
 
   it('navigate to last project', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
-    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.navigate(['/projects', 'project01']);
     env.init();
 
@@ -145,8 +138,6 @@ describe('AppComponent', () => {
 
   it('navigate to different project', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
-    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.navigate(['/projects', 'project02']);
     env.init();
 
@@ -170,8 +161,6 @@ describe('AppComponent', () => {
     // The user goes to a project. They are using an sm size viewport.
     const env = new TestEnvironment();
     env.breakpointObserver.emitObserveValue(false);
-    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
-    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.navigateFully(['/projects', 'project01']);
     // (And we are not here calling env.init(), which would open the drawer.)
 
@@ -692,7 +681,6 @@ class TestEnvironment {
     when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
     when(mockedSettingsAuthGuard.allowTransition(anything())).thenReturn(this.canSeeSettings$);
     when(mockedSyncAuthGuard.allowTransition(anything())).thenReturn(this.canSync$);
-    when(mockedNmtDraftAuthGuard.allowTransition(anything())).thenReturn(this.canSeeGenerateDraft$);
     when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
     when(mockedI18nService.localeCode).thenReturn('en');
     when(mockedUrlService.helps).thenReturn('helps');
@@ -706,11 +694,6 @@ class TestEnvironment {
       this.comesOnline$.next();
       this.goFullyOnline();
     }
-    when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
-    when(mockedFeatureFlagService.allowForwardTranslationNmtDrafting).thenReturn(createTestFeatureFlag(false));
-    when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
-    when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
-    when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(false));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
     when(mockedPwaService.canInstall$).thenReturn(this.canInstall$);
