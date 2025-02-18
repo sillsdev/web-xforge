@@ -3,7 +3,7 @@ import { MatDialogLaunchComponent, matDialogStory } from '../../../../../.storyb
 import {
   ImportQuestionsConfirmationDialogComponent,
   ImportQuestionsConfirmationDialogData
-} from './import-question-confirmation-dialog.component';
+} from './import-questions-confirmation-dialog.component';
 
 const meta: Meta = {
   title: 'Import/Import Questions',

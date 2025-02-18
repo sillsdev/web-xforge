@@ -11,7 +11,7 @@ import {
   ImportQuestionsConfirmationDialogComponent,
   ImportQuestionsConfirmationDialogData,
   ImportQuestionsConfirmationDialogResult
-} from './import-question-confirmation-dialog.component';
+} from './import-questions-confirmation-dialog.component';
 
 describe('ImportQuestionsConfirmationDialogComponent', () => {
   configureTestingModule(() => ({

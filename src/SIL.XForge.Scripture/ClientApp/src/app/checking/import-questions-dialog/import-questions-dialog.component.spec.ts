@@ -25,7 +25,7 @@ import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
-import { ImportQuestionsConfirmationDialogComponent } from './import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
+import { ImportQuestionsConfirmationDialogComponent } from './import-questions-confirmation-dialog/import-questions-confirmation-dialog.component';
 import {
   ImportQuestionsDialogComponent,
   ImportQuestionsDialogData,
