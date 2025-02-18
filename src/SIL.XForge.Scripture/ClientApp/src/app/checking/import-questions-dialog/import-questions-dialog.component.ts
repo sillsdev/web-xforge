@@ -30,7 +30,7 @@ import {
   ImportQuestionsConfirmationDialogComponent,
   ImportQuestionsConfirmationDialogData,
   ImportQuestionsConfirmationDialogResult
-} from './import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
+} from './import-questions-confirmation-dialog/import-questions-confirmation-dialog.component';
 
 export interface TransceleratorQuestion {
   book: string;

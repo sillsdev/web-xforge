@@ -23,7 +23,7 @@ import { CheckingScriptureAudioPlayerComponent } from './checking/checking-scrip
 import { CheckingTextComponent } from './checking/checking-text/checking-text.component';
 import { CheckingComponent } from './checking/checking.component';
 import { FontSizeComponent } from './checking/font-size/font-size.component';
-import { ImportQuestionsConfirmationDialogComponent } from './import-questions-dialog/import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
+import { ImportQuestionsConfirmationDialogComponent } from './import-questions-dialog/import-questions-confirmation-dialog/import-questions-confirmation-dialog.component';
 import { ImportQuestionsDialogComponent } from './import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogComponent } from './question-dialog/question-dialog.component';
 import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component';
