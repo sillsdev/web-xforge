@@ -40,7 +40,6 @@ import { first } from 'rxjs/operators';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
-import { MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
@@ -64,7 +63,6 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDoc } from '../../core/models/text-doc';
-import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
@@ -100,9 +98,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedDialogService = mock(DialogService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
-const mockedMediaBreakpointService = mock(MediaBreakpointService);
 const mockedFileService = mock(FileService);
-const mockedPermissions = mock(PermissionsService);
 
 function createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
@@ -2489,8 +2485,6 @@ class TestEnvironment {
     when(doc.data).thenReturn(instance(textAudio));
     when(query.docs).thenReturn([instance(doc)]);
     when(mockedProjectService.queryAudioText('project01', anything())).thenResolve(instance(query));
-    when(mockedMediaBreakpointService.width(anything(), anything())).thenReturn('(width < 576px)');
-    when(mockedMediaBreakpointService.width(anything(), anything(), anything())).thenReturn('(width > 576px)');
 
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
@@ -3025,7 +3019,6 @@ class TestEnvironment {
   }
 
   setCheckingEnabled(isEnabled: boolean = true): void {
-    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(isEnabled);
     this.ngZone.run(() => {
       this.component.projectDoc!.submitJson0Op(
         op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled),
@@ -3306,8 +3299,6 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
     );
 
-    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
-    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
       instance(this.mockedTextChooserDialogComponent)
     );

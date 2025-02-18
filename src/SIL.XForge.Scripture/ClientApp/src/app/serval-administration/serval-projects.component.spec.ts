@@ -20,12 +20,10 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
-import { UserService } from 'xforge-common/user.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectsComponent } from './serval-projects.component';
 
 const mockedServalAdministrationService = mock(ServalAdministrationService);
-const mockedUserService = mock(UserService);
 
 describe('ServalProjectsComponent', () => {
   configureTestingModule(() => ({
@@ -123,7 +121,6 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
-    when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedServalAdministrationService.onlineQuery(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>) =>
         combineLatest([term$, parameters$]).pipe(

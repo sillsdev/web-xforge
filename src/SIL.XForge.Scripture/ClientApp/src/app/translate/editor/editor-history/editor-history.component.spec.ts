@@ -1,6 +1,6 @@
 import { EventEmitter, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import Quill, { Delta } from 'quill';
+import Quill from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Subject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
@@ -15,7 +15,6 @@ import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { EditorHistoryComponent } from './editor-history.component';
-import { EditorHistoryService } from './editor-history.service';
 import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/history-chooser.component';
 
 describe('EditorHistoryComponent', () => {
@@ -23,7 +22,6 @@ describe('EditorHistoryComponent', () => {
   let fixture: ComponentFixture<EditorHistoryComponent>;
   const mockSFProjectService = mock(SFProjectService);
   const mockI18nService = mock(I18nService);
-  const mockEditorHistoryService = mock(EditorHistoryService);
   const mockHistoryChooserComponent = mock(HistoryChooserComponent);
 
   const revisionSelect$ = new Subject<RevisionSelectEvent>();
@@ -70,7 +68,6 @@ describe('EditorHistoryComponent', () => {
   });
 
   it('should load history after view init', fakeAsync(() => {
-    const diff = new Delta();
     const revision: Revision = { timestamp: 'date_here' };
     const textDoc: TextDoc = { data: { ops: [] } } as unknown as TextDoc;
     const snapshot: Snapshot<TextData> = {
@@ -86,7 +83,6 @@ describe('EditorHistoryComponent', () => {
     });
 
     when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
-    when(mockEditorHistoryService.processDiff(anything(), anything())).thenReturn(diff);
 
     component.historyChooser = mockHistoryChooserComponent;
     component.snapshotText = mockTextComponent;
@@ -103,7 +99,6 @@ describe('EditorHistoryComponent', () => {
 
   it('should not reload history if browser goes offline and comes back online', fakeAsync(() => {
     const onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
-    const diff = new Delta();
     const revision: Revision = { timestamp: 'date_here' };
     const textDoc: TextDoc = { data: { ops: [] } } as unknown as TextDoc;
     const snapshot: Snapshot<TextData> = {
@@ -119,7 +114,6 @@ describe('EditorHistoryComponent', () => {
     });
 
     when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
-    when(mockEditorHistoryService.processDiff(anything(), anything())).thenReturn(diff);
 
     component.historyChooser = mockHistoryChooserComponent;
     component.snapshotText = mockTextComponent;

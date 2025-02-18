@@ -4,8 +4,6 @@ import { MatSliderDragEvent } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
 import { lastValueFrom } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
-import { mock } from 'ts-mockito';
-import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -186,7 +184,6 @@ class HostComponent {
 
 class TestEnvironment {
   readonly testOnlineStatusService: TestOnlineStatusService;
-  readonly mockedI18nService = mock(I18nService);
   readonly ngZone: NgZone;
 
   fixture: ComponentFixture<HostComponent>;

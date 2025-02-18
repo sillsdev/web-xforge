@@ -41,7 +41,6 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
-import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { CheckingModule } from '../checking.module';
@@ -57,7 +56,6 @@ const mockedProjectService = mock(SFProjectService);
 const mockedQuestionsService = mock(CheckingQuestionsService);
 const mockedUserService = mock(UserService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
-const mockedPermissions = mock(PermissionsService);
 const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 
 describe('CheckingOverviewComponent', () => {
@@ -1246,7 +1244,6 @@ class TestEnvironment {
   }
 
   setCheckingEnabled(isEnabled: boolean): void {
-    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(isEnabled);
     this.ngZone.run(() => {
       const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
       projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
@@ -1289,17 +1286,6 @@ class TestEnvironment {
 
   setCurrentUser(currentUser: UserInfo): void {
     when(mockedUserService.currentUserId).thenReturn(currentUser.id);
-    const role = currentUser.id as SFProjectRole;
-    if (role === SFProjectRole.CommunityChecker) {
-      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
-      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
-    } else if (role === SFProjectRole.ParatextTranslator) {
-      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
-      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
-    } else {
-      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
-      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
-    }
   }
 
   addQuestion(question: Question): void {

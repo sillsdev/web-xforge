@@ -34,7 +34,6 @@ import { NllbLanguageService } from '../nllb-language.service';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
-import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
 describe('DraftGenerationComponent', () => {
@@ -48,7 +47,6 @@ describe('DraftGenerationComponent', () => {
   let mockUserService: jasmine.SpyObj<UserService>;
   let mockI18nService: jasmine.SpyObj<I18nService>;
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
-  let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockProgressService: jasmine.SpyObj<ProgressService>;
@@ -144,10 +142,8 @@ describe('DraftGenerationComponent', () => {
       ]);
       TestEnvironment.initProject('user01');
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
-      mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
 
       mockI18nService.getLanguageDisplayName.and.returnValue('English');
-      mockPreTranslationSignupUrlService.generateSignupUrl.and.returnValue(Promise.resolve(''));
       mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(this.startedOrActiveBuild$);
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));

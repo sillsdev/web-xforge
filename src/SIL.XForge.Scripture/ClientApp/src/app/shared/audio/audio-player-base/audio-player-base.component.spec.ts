@@ -1,11 +1,9 @@
 import { Component, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { mock } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { AudioPlayerStub } from '../../../checking/checking-test.utils';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayer, AudioStatus } from '../audio-player';
 import { AudioPlayerBaseComponent } from './audio-player-base.component';
 
@@ -97,7 +95,6 @@ describe('AudioPlayerBaseComponent', () => {
 
 class TestEnvironment {
   readonly testOnlineStatusService: TestOnlineStatusService;
-  readonly mockedProjectService = mock(SFProjectService);
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
   ngZone: NgZone;
