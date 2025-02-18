@@ -7,9 +7,6 @@ describe('TabBodyComponent', () => {
   let fixture: ComponentFixture<TabBodyComponent>;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [TabBodyComponent]
-    });
     fixture = TestBed.createComponent(TabBodyComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

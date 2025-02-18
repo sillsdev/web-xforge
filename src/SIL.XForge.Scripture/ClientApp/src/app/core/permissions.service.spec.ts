@@ -1,5 +1,4 @@
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { RouterModule } from '@angular/router';
 import { User } from '@bugsnag/js';
 import { cloneDeep } from 'lodash-es';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -12,8 +11,7 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './models/sf-type-registry';
@@ -27,12 +25,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
 describe('PermissionsService', () => {
   configureTestingModule(() => ({
-    imports: [
-      RouterModule.forRoot([]),
-      UICommonModule,
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
+    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: SFProjectService, useMock: mockedProjectService }

@@ -3,9 +3,8 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Params, RouterModule } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { ProgressStatus } from '@sillsdev/machine';
-import { CookieService } from 'ngx-cookie-service';
 import { Delta } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -19,7 +18,6 @@ import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -34,7 +32,6 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
-import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { Progress, ProgressService, TextProgress } from '../../shared/progress-service/progress.service';
@@ -44,10 +41,8 @@ import { TranslateOverviewComponent } from './translate-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedAuthService = mock(AuthService);
-const mockedSFProjectService = mock(SFProjectService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
-const mockedBugsnagService = mock(BugsnagService);
 const mockedUserService = mock(UserService);
 const mockedPermissionService = mock(PermissionsService);
 const mockedProgressService = mock(ProgressService);
@@ -56,7 +51,6 @@ describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
     declarations: [TranslateOverviewComponent, TrainingProgressComponent],
     imports: [
-      RouterModule.forRoot([]),
       UICommonModule,
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
@@ -66,12 +60,9 @@ describe('TranslateOverviewComponent', () => {
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: CookieService, useMock: mock(CookieService) },
       { provide: PermissionsService, useMock: mockedPermissionService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ProgressService, useMock: mockedProgressService }
@@ -276,12 +267,6 @@ class TestEnvironment {
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(this.mockedRemoteTranslationEngine.startTraining()).thenResolve();
-    when(mockedSFProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
-    );
-    when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
-    );
     when(mockedProgressService.isLoaded$).thenReturn(of(true));
     when(mockedProgressService.overallProgress).thenReturn(new Progress());
     when(mockedProgressService.texts).thenReturn([

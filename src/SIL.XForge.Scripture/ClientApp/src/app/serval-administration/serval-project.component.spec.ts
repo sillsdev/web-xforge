@@ -14,10 +14,8 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
@@ -41,12 +39,7 @@ const mockServalAdministrationService = mock(ServalAdministrationService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      NoopAnimationsModule,
-      TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      TestTranslocoModule
-    ],
+    imports: [NoopAnimationsModule, TestOnlineStatusModule.forRoot()],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },

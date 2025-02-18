@@ -1,5 +1,5 @@
-import { HttpErrorResponse, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse } from '@angular/common/http';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -22,7 +22,6 @@ describe('NllbLanguageService', () => {
     TestBed.configureTestingModule({
       imports: [TestOnlineStatusModule.forRoot()],
       providers: [
-        NllbLanguageService,
         {
           provide: NLLB_LANGUAGES,
           useValue: {
@@ -35,10 +34,7 @@ describe('NllbLanguageService', () => {
           }
         },
         { provide: ErrorReportingService, useValue: mockErrorReportingService },
-        { provide: HttpClient, useValue: { get: () => of({}) } },
-        { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-        provideHttpClient(withInterceptorsFromDi()),
-        provideHttpClientTesting()
+        { provide: OnlineStatusService, useClass: TestOnlineStatusService }
       ]
     });
     service = TestBed.inject(NllbLanguageService);

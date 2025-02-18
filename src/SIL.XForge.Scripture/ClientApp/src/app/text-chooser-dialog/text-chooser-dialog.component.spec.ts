@@ -1,6 +1,3 @@
-import { CommonModule } from '@angular/common';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -17,29 +14,19 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import * as RichText from 'rich-text';
 import { firstValueFrom, of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
 import { DOCUMENT } from 'xforge-common/browser-globals';
-import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
-import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
-import { UserService } from 'xforge-common/user.service';
+import { ChildViewContainerComponent, configureTestingModule } from 'xforge-common/test-utils';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { TextDoc } from '../core/models/text-doc';
-import { SFProjectService } from '../core/sf-project.service';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
 const mockedDocument = mock(Document);
-const mockedBugsnagService = mock(BugsnagService);
-const mockedProjectService = mock(SFProjectService);
-const mockedUserService = mock(UserService);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
@@ -50,13 +37,8 @@ describe('TextChooserDialogComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
-      { provide: AuthService, useMock: mock(AuthService) },
-      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: DOCUMENT, useMock: mockedDocument },
-      { provide: CookieService, useMock: mock(CookieService) },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: CookieService, useMock: mock(CookieService) }
     ]
   }));
 
@@ -350,8 +332,7 @@ describe('TextChooserDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+  imports: [CheckingModule]
 })
 class DialogTestModule {}
 
@@ -453,16 +434,6 @@ class TestEnvironment {
       data: TestEnvironment.testProject
     });
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, { id: 'user01', data: createTestUser() });
-
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
-    );
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
-    );
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
-    );
 
     const dialogRef = TestBed.inject(MatDialog).open(TextChooserDialogComponent, { data: config });
     this.component = dialogRef.componentInstance;

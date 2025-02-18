@@ -117,7 +117,6 @@ export class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [],
   declarations: [ChildViewContainerComponent, ViewContainerDirective],
   exports: [ViewContainerDirective]
 })

@@ -90,8 +90,8 @@ jobs:
         run: |
           set -e
           cd src/SIL.XForge.Scripture/ClientApp
-          npm run test:gha | tee output.log
-          ! grep NG0303 output.log # Can't bind to 'some_property since it isn't a known property of 'some_element'
+          npm run test:gha | tee test_output.log
+          ! grep -P 'NG\d+|ERROR:|WARN:|LOG:|INFO:' test_output.log
 
       - name: "Coverage: Backend"
         run: |

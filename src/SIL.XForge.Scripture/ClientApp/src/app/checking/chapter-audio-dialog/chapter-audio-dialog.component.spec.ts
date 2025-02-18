@@ -1,9 +1,7 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
@@ -13,11 +11,9 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { firstValueFrom } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { CsvService } from 'xforge-common/csv-service.service';
-import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -26,15 +22,12 @@ import {
   ChildViewContainerComponent,
   configureTestingModule,
   getAudioBlob,
-  getShortAudioBlob,
-  TestTranslocoModule
+  getShortAudioBlob
 } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
-import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import {
@@ -43,19 +36,15 @@ import {
   ChapterAudioDialogResult
 } from './chapter-audio-dialog.component';
 
-const mockedDialogService = mock(DialogService);
 const mockedCsvService = mock(CsvService);
 const mockedFileService = mock(FileService);
-const mockedSFProjectService = mock(SFProjectService);
 
 describe('ChapterAudioDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
-      { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
@@ -589,8 +578,7 @@ describe('ChapterAudioDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [MatDialogModule, NoopAnimationsModule, UICommonModule, ngfModule, CheckingModule, TestTranslocoModule],
-  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+  imports: [NoopAnimationsModule, ngfModule, CheckingModule]
 })
 class DialogTestModule {}
 
@@ -669,9 +657,6 @@ class TestEnvironment {
         true
       )
     ).thenResolve('audio url');
-    when(mockedSFProjectService.queryAudioText(anything(), anything())).thenReturn(
-      this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, {}, noopDestroyRef)
-    );
 
     this.audioFile = {
       status: 'uploaded',

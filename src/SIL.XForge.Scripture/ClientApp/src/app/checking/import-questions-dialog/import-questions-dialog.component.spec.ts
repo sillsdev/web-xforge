@@ -1,22 +1,19 @@
-import { CommonModule } from '@angular/common';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
-import { CookieService } from 'ngx-cookie-service';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -37,20 +34,16 @@ import {
 
 const mockedProjectService = mock(SFProjectService);
 const mockedQuestionsService = mock(CheckingQuestionsService);
-const mockedAuthService = mock(AuthService);
-const mockedCookieService = mock(CookieService);
 const mockedDialogService = mock(DialogService);
 const mockedCsvService = mock(CsvService);
 const mockedRealtimeQuery: RealtimeQuery<QuestionDoc> = mock(RealtimeQuery);
 
 describe('ImportQuestionsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
+    imports: [DialogTestModule],
     providers: [
-      { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
-      { provide: CookieService, useMock: mockedCookieService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService }
     ]
@@ -455,8 +448,8 @@ describe('ImportQuestionsDialogComponent', () => {
 
 @NgModule({
   declarations: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent],
-  exports: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent],
-  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoopAnimationsModule, ngfModule],
+
+  imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule, ngfModule],
   providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

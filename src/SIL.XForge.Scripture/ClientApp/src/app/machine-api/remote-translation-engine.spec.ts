@@ -1,6 +1,5 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgModule, NgZone } from '@angular/core';
+import { NgZone } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslationSources, WordGraph } from '@sillsdev/machine';
@@ -8,7 +7,6 @@ import { of, throwError } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { BuildDto } from './build-dto';
 import { BuildStates } from './build-states';
 import { EngineDto } from './engine-dto';
@@ -21,7 +19,7 @@ import { WordGraphDto } from './word-graph-dto';
 
 describe('RemoteTranslationEngine', () => {
   configureTestingModule(() => ({
-    imports: [TestModule, TestTranslocoModule]
+    imports: [TestTranslocoModule]
   }));
 
   it('get word graph', async () => {
@@ -400,11 +398,6 @@ describe('RemoteTranslationEngine', () => {
     expect(result.isEmpty).toBeTruthy();
   });
 });
-
-@NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule]
-})
-class TestModule {}
 
 class TestEnvironment {
   readonly mockedHttpClient: HttpClient;

@@ -2,7 +2,6 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -13,10 +12,8 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
@@ -28,9 +25,7 @@ describe('DraftGenerationStepsComponent', () => {
   let fixture: ComponentFixture<DraftGenerationStepsComponent>;
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
-  const mockActivatedRoute = mock(ActivatedRoute);
   const mockFeatureFlagService = mock(FeatureFlagService);
-  const mockProjectService = mock(SFProjectService);
   const mockNllbLanguageService = mock(NllbLanguageService);
   const mockTrainingDataService = mock(TrainingDataService);
   const mockProgressService = mock(ProgressService);
@@ -47,16 +42,14 @@ describe('DraftGenerationStepsComponent', () => {
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
   configureTestingModule(() => ({
-    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
+    imports: [TestTranslocoModule, NoopAnimationsModule],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftSourcesService, useMock: mockDraftSourceService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: NllbLanguageService, useMock: mockNllbLanguageService },
-      { provide: SFProjectService, useMock: mockProjectService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: ProgressService, useMock: mockProgressService },
-      { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: AuthService, useMock: mockAuthService }
@@ -66,7 +59,6 @@ describe('DraftGenerationStepsComponent', () => {
   beforeEach(fakeAsync(() => {
     when(mockActivatedProjectService.projectId).thenReturn('project01');
     when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
-    when(mockActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockProgressService.isLoaded$).thenReturn(of(true));
     when(mockProgressService.texts).thenReturn([
       { text: { bookNum: 1 }, translated: 100 } as TextProgress,

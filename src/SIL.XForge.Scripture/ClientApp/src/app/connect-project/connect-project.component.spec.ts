@@ -10,7 +10,6 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -19,7 +18,6 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -41,9 +39,7 @@ const mockedParatextService = mock(ParatextService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
-const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
-const mockedI18nService = mock(I18nService);
 const mockedErrorHandler = mock(ErrorHandler);
 
 describe('ConnectProjectComponent', () => {
@@ -63,7 +59,6 @@ describe('ConnectProjectComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: I18nService, useMock: mockedI18nService },
       { provide: ErrorHandler, useMock: mockedErrorHandler },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
@@ -386,8 +381,6 @@ class TestEnvironment {
       } as any);
     }
     when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
-    when(mockedUserService.currentUserId).thenReturn('user01');
-    when(mockedI18nService.translateAndInsertTags(anything())).thenReturn('A translated string.');
     this.testOnlineStatusService.setIsOnline(params.hasConnection ?? true);
     this.fixture = TestBed.createComponent(ConnectProjectComponent);
     this.component = this.fixture.componentInstance;

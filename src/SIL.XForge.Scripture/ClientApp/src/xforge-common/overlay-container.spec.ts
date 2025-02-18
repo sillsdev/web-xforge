@@ -4,7 +4,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { InAppRootOverlayContainer } from './overlay-container';
 
 describe('OverlayContainer', () => {
@@ -55,7 +54,7 @@ class TestEnvironment {
   constructor() {
     TestBed.configureTestingModule({
       declarations: [HostComponent, AppRootComponent],
-      imports: [UICommonModule, NoopAnimationsModule],
+      imports: [NoopAnimationsModule],
       providers: [{ provide: OverlayContainer, useClass: InAppRootOverlayContainer }]
     });
 

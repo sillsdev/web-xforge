@@ -1,8 +1,6 @@
-import { CommonModule } from '@angular/common';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -11,8 +9,6 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { firstValueFrom } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { LocationService } from 'xforge-common/location.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -22,7 +18,6 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -33,9 +28,7 @@ import { ShareDialogComponent, ShareDialogData, ShareLinkType } from './share-di
 const mockedProjectService = mock(SFProjectService);
 const mockedNavigator = mock(Navigator);
 const mockedNoticeService = mock(NoticeService);
-const mockedLocationService = mock(LocationService);
 const mockedUserService = mock(UserService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 
 enum TestUsers {
   CommunityChecker = 'user01',
@@ -51,9 +44,7 @@ describe('ShareDialogComponent', () => {
       { provide: NAVIGATOR, useMock: mockedNavigator },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: LocationService, useMock: mockedLocationService },
-      { provide: UserService, useMock: mockedUserService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
@@ -351,7 +342,7 @@ interface TestEnvironmentArgs {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoopAnimationsModule]
+  imports: [TestTranslocoModule]
 })
 class DialogTestModule {}
 
@@ -430,7 +421,6 @@ class TestEnvironment {
         }`
     );
     when(mockedProjectService.isProjectAdmin(projectId, TestUsers.Admin)).thenResolve(true);
-    when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(true));
 
     const config: MatDialogConfig<ShareDialogData> = {
       data: {

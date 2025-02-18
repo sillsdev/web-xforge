@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -8,7 +7,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
-import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { BiblicalTerm, getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -24,7 +22,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   createTestProject,
   createTestProjectProfile
@@ -39,18 +37,11 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import * as RichText from 'rich-text';
 import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import {
-  ChildViewContainerComponent,
-  configureTestingModule,
-  matDialogCloseDelay,
-  TestTranslocoModule
-} from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { ChildViewContainerComponent, configureTestingModule, matDialogCloseDelay } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
@@ -59,15 +50,11 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { getCombinedVerseTextDoc, getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { TranslateModule } from '../../translate.module';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
 
-const mockedAuthService = mock(AuthService);
-const mockedCookieService = mock(CookieService);
 const mockedHttpClient = mock(HttpClient);
-const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialogService = mock(DialogService);
 
@@ -75,10 +62,7 @@ describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
-      { provide: AuthService, useMock: mockedAuthService },
-      { provide: CookieService, useMock: mockedCookieService },
       { provide: HttpClient, useMock: mockedHttpClient },
-      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DialogService, useMock: mockedDialogService }
     ]
@@ -351,7 +335,6 @@ describe('NoteDialogComponent', () => {
     expect(env.noteInputElement).toBeTruthy();
     env.submit();
     expect(env.noteInputElement).toBeTruthy();
-    verify(mockedProjectService.createNoteThread(anything(), anything())).never();
   }));
 
   it('does not show text area for users without write permissions', fakeAsync(() => {
@@ -706,7 +689,7 @@ describe('NoteDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TranslateModule, TestTranslocoModule]
+  imports: [TranslateModule]
 })
 class DialogTestModule {}
 
@@ -1041,30 +1024,6 @@ class TestEnvironment {
         });
       }
     }
-
-    when(mockedProjectService.getBiblicalTerm(anything())).thenCall(id =>
-      this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id)
-    );
-
-    when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
-      this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)
-    );
-
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
-    );
-
-    when(mockedProjectService.getUserConfig(configData.projectId, currentUserId)).thenCall((projectId, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(projectId, userId))
-    );
-
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id)
-    );
-
-    when(mockedProjectService.tryGetForRole(anything(), anything())).thenCall((id, role) =>
-      isParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
-    );
 
     when(mockedUserService.currentUserId).thenReturn(currentUserId);
     firstValueFrom(this.dialogRef.afterClosed()).then(result => (this.dialogResult = result));

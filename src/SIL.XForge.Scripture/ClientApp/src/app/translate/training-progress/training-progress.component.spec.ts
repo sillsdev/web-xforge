@@ -17,12 +17,10 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
-import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TrainingProgressComponent } from './training-progress.component';
 
-const mockedProjectService = mock(SFProjectService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedUserService = mock(UserService);
 
@@ -31,7 +29,6 @@ describe('TrainingProgressComponent', () => {
     imports: [TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     declarations: [TrainingProgressComponent],
     providers: [
-      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: UserService, useMock: mockedUserService },
       provideHttpClient(withInterceptorsFromDi()),
@@ -123,9 +120,6 @@ class TestEnvironment {
   private trainingProgress$ = new Subject<ProgressStatus>();
 
   constructor() {
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
-    );
     when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );

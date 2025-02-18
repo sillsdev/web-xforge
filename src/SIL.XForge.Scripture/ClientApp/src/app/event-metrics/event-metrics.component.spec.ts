@@ -1,21 +1,10 @@
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { EventMetricsComponent } from './event-metrics.component';
 
 describe('EventMetricsComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      EventMetricsComponent,
-      NoopAnimationsModule,
-      TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
-    ],
-    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+    imports: [TestTranslocoModule]
   }));
 
   it('should be created', () => {

@@ -1,9 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -16,8 +14,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { I18nService } from 'xforge-common/i18n.service';
-import { Locale } from 'xforge-common/models/i18n-locale';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -25,7 +21,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../core/models/training-data-doc';
@@ -37,7 +32,6 @@ import { NllbLanguageService } from '../nllb-language.service';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
-import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
 describe('DraftGenerationComponent', () => {
@@ -49,9 +43,7 @@ describe('DraftGenerationComponent', () => {
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
   let mockProjectService: jasmine.SpyObj<SFProjectService>;
   let mockUserService: jasmine.SpyObj<UserService>;
-  let mockI18nService: jasmine.SpyObj<I18nService>;
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
-  let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockProgressService: jasmine.SpyObj<ProgressService>;
@@ -70,15 +62,6 @@ describe('DraftGenerationComponent', () => {
     queueDepth: 0
   };
 
-  const locale: Locale = {
-    localName: 'Test',
-    englishName: 'Test',
-    canonicalTag: 'en',
-    direction: 'ltr',
-    tags: ['test'],
-    production: false
-  };
-
   const projectId = 'testProjectId';
 
   class TestEnvironment {
@@ -95,14 +78,7 @@ describe('DraftGenerationComponent', () => {
       }
 
       TestBed.configureTestingModule({
-        imports: [
-          TestOnlineStatusModule.forRoot(),
-          RouterModule.forRoot([]),
-          TranslocoMarkupModule,
-          TestTranslocoModule,
-          NoopAnimationsModule,
-          UICommonModule.forRoot()
-        ],
+        imports: [TestOnlineStatusModule.forRoot(), RouterModule.forRoot([]), TestTranslocoModule],
         providers: [
           { provide: AuthService, useValue: mockAuthService },
           { provide: FeatureFlagService, useValue: mockFeatureFlagService },
@@ -112,9 +88,7 @@ describe('DraftGenerationComponent', () => {
           { provide: SFProjectService, useValue: mockProjectService },
           { provide: UserService, useValue: mockUserService },
           { provide: DialogService, useValue: mockDialogService },
-          { provide: I18nService, useValue: mockI18nService },
           { provide: NoticeService, useValue: mockNoticeService },
-          { provide: PreTranslationSignupUrlService, useValue: mockPreTranslationSignupUrlService },
           { provide: NllbLanguageService, useValue: mockNllbLanguageService },
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },
@@ -138,12 +112,6 @@ describe('DraftGenerationComponent', () => {
         }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
-      mockI18nService = jasmine.createSpyObj<I18nService>(
-        ['getLanguageDisplayName', 'translate', 'interpolate', 'localizeBook'],
-        {
-          locale$: of(locale)
-        }
-      );
       mockNoticeService = jasmine.createSpyObj<NoticeService>(['loadingStarted', 'loadingFinished', 'showError']);
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
@@ -156,10 +124,7 @@ describe('DraftGenerationComponent', () => {
       ]);
       TestEnvironment.initProject('user01');
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
-      mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
 
-      mockI18nService.getLanguageDisplayName.and.returnValue('English');
-      mockPreTranslationSignupUrlService.generateSignupUrl.and.returnValue(Promise.resolve(''));
       mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(this.startedOrActiveBuild$);
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));

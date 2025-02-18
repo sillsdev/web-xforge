@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
@@ -160,9 +159,8 @@ describe('BiblicalTermDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule],
-  declarations: [BiblicalTermDialogComponent],
-  exports: [BiblicalTermDialogComponent]
+  imports: [UICommonModule, TestTranslocoModule],
+  declarations: [BiblicalTermDialogComponent]
 })
 class DialogTestModule {}
 

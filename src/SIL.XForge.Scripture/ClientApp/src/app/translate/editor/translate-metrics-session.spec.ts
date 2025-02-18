@@ -8,7 +8,6 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import * as RichText from 'rich-text';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -34,7 +33,6 @@ import {
 
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
-const mockedDialogService = mock(DialogService);
 const mockedReportingService = mock(ErrorReportingService);
 
 describe('TranslateMetricsSession', () => {
@@ -49,9 +47,7 @@ describe('TranslateMetricsSession', () => {
     providers: [
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: UserService, useMock: mockedUserService },
-      { provide: DialogService, useMock: mockedDialogService },
-      { provide: ErrorReportingService, useMock: mockedReportingService }
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 

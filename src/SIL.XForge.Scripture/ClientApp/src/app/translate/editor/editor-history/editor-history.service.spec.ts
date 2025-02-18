@@ -12,7 +12,7 @@ describe('EditorHistoryService', () => {
   const i18nMock = mock(I18nService);
 
   configureTestingModule(() => ({
-    providers: [EditorHistoryService, { provide: I18nService, useMock: i18nMock }]
+    providers: [{ provide: I18nService, useMock: i18nMock }]
   }));
 
   beforeEach(() => {
