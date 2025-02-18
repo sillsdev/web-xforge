@@ -62,6 +62,16 @@ describe('DraftSourcesComponent', () => {
     expect(env.component.resources).toBeDefined();
   }));
 
+  it('should not save when language codes are not confirmed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.languageCodesConfirmed = false;
+
+    env.component.save();
+    tick();
+
+    verify(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).never();
+  }));
+
   it('updates control state during save', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).thenResolve();
