@@ -10,7 +10,7 @@
 import { Db, MongoClient } from 'mongodb';
 import * as RichText from 'rich-text';
 import ShareDB from 'sharedb';
-import { Connection } from 'sharedb/lib/client';
+import { Connection, Doc } from 'sharedb/lib/client';
 import WebSocket from 'ws';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -71,23 +71,74 @@ class Program {
     }
   }
 
+  // /** Example method that makes changes to a document by omitting ops and applying the diff. */
+  // private async makeAndApplyOpDiff(doc: Doc, docId: string) {
+  //   // Needs:
+  //   // import * as child_process from 'child_process';
+  //   // import * as fs from 'fs/promises';
+
+  //   function isGoodOp(op: any) {
+  //     if (op.insert != null && typeof op.insert === 'object' && op.insert.hasOwnProperty('link')) {
+  //       console.log('bad:', op);
+  //       return false;
+  //     }
+  //     return true;
+  //   }
+
+  //   const origOps: RichText.DeltaOperation[] = doc.data.ops.slice();
+  //   // utils.visualizeOps(origOps, false);
+  //   const changedOps = doc.data.ops.filter((op: any) => isGoodOp(op));
+  //   const origOpsFilepath = `/tmp/${docId}-origOps.txt`;
+  //   const changedOpsFilepath = `/tmp/${docId}-changedOps.txt`;
+  //   await fs.writeFile(origOpsFilepath, JSON.stringify(origOps, null, 2));
+  //   await fs.writeFile(changedOpsFilepath, JSON.stringify(changedOps, null, 2));
+  //   console.log(`Wrote original ops to ${origOpsFilepath} and changed ops to ${changedOpsFilepath} for inspection.`);
+
+  //   const diffProcess = child_process.spawnSync('diff', ['-U0', origOpsFilepath, changedOpsFilepath]);
+  //   const textDiff = diffProcess.stdout.toString();
+  //   console.log('Text diff between them:', textDiff);
+
+  //   const diff = doc.type.diff(origOps, changedOps);
+  //   console.log('Diff ops:', diff);
+  //   // await utils.submitDocOp(doc, diff);
+  // }
+
   async main() {
     ShareDB.types.register(RichText.type);
     await this.withDB(async (conn: Connection, db: Db) => {
       // Here, manipulate sharedb or mongodb.
-      // For example:
-      // const userDoc: Doc = conn.get('users', '1234');
-      // await utils.fetchDoc(userDoc);
-      // console.log(JSON.stringify(userDoc.data));
-      // await utils.submitDocOp(userDoc, {
-      //   p: ['paratextId'],
-      //   od: 'abc123'
-      // });
-      // Example by applying a diff:
-      // const origOps: RichText.DeltaOperation[] = textDoc.data.ops.slice();
-      // const updatedOps: RichText.DeltaOperation[] = textDoc.data.ops.splice(1, 7);
-      // const diff = textDoc.type.diff(origOps, updatedOps);
-      // await utils.submitDocOp(textDoc, diff);
+
+      const docCollectionName: string = 'texts';
+      const docIdsToProcess: string[] = [
+        // '123456789012345678901234:MAT:1:target',
+        // '213456789012345678902345:JHN:2:target',
+      ];
+
+      for (const docId of docIdsToProcess) {
+        console.log(`Processing doc id ${docId}`);
+        const doc: Doc = conn.get(docCollectionName, docId);
+        await utils.fetchDoc(doc);
+        console.log(`Original doc data:`, JSON.stringify(doc.data, null, 2));
+
+        // // Example changing a user doc field value:
+        // await utils.submitDocOp(doc, {
+        //   // Path to the field to update, expressed as an array of strings, such as "['resourceConfig', 'revision']".
+        //   p: ['paratextId'],
+        //   // Old value:
+        //   od: 'abc123',
+        //   // New value:
+        //   oi: 'def456'
+        // });
+
+        // // Example applying a diff to a text doc:
+        // const origOps: RichText.DeltaOperation[] = doc.data.ops.slice();
+        // const updatedOps: RichText.DeltaOperation[] = doc.data.ops.splice(1, 7);
+        // const diff = doc.type.diff(origOps, updatedOps);
+        // await utils.submitDocOp(doc, diff);
+
+        // // Example modifying ops and applying the resulting diff:
+        // await this.makeAndApplyOpDiff(doc, docId);
+      }
     });
   }
 }
