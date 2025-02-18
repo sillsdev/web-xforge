@@ -10,6 +10,11 @@
 #chapter-select,
 #book-select {
   @include material-styles.dense_mat_select();
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }
 
 ::ng-deep .mat-mdc-select-panel {
