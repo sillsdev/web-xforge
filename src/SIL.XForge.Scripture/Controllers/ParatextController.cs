@@ -238,7 +238,7 @@ public class ParatextController : ControllerBase
     /// </summary>
     /// <response code="200">
     /// The resources were successfully retrieved. A dictionary is returned where the Paratext Id is the key, and the
-    /// values are an array with the short name followed by the name.
+    /// values are an array containing: [shortName, name, languageTag].
     /// </response>
     /// <response code="204">The user does not have permission to access Paratext.</response>
     /// <response code="401">The user's Paratext tokens have expired, and the user must log in again.</response>

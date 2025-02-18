@@ -85,24 +85,6 @@ export default {
       ]
     })
   ],
-  // render: args => {
-  //   // setUpMocks(args as DraftSourcesComponentStoryState);
-  //   return {
-  //     // moduleMetadata: {
-  //     //   providers: [
-  //     //     { provide: ActivatedProjectService, useValue: instance(mockActivatedProjectService) },
-  //     //     { provide: DestroyRef, useValue: instance(mockDestroyRef) },
-  //     //     { provide: ParatextService, useValue: instance(mockParatextService) },
-  //     //     { provide: DialogService, useValue: instance(mockDialogService) },
-  //     //     { provide: SFProjectService, useValue: instance(mockProjectService) },
-  //     //     { provide: SFUserProjectsService, useValue: instance(mockUserProjectsService) },
-  //     //     { provide: Router, useValue: instance(mockRouter) },
-  //     //     { provide: FeatureFlagService, useValue: instance(mockFeatureFlags) }
-  //     //   ]
-  //     // },
-  //     template: `<app-draft-sources></app-draft-sources>`
-  //   };
-  // },
   args: defaultArgs,
   parameters: {
     controls: {
