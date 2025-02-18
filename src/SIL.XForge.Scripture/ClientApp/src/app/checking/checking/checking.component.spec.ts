@@ -1227,7 +1227,7 @@ describe('CheckingComponent', () => {
       const newAnswer = env.component.answersPanel!.answers[0];
       expect(newAnswer.audioUrl).toEqual('blob://audio');
       expect(env.component.answersPanel?.getFileSource(newAnswer.audioUrl)).toBeDefined();
-      verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio'));
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio')).once();
       flush();
       discardPeriodicTasks();
     }));
