@@ -41,11 +41,13 @@ describe('QuestionDialogService', () => {
   configureTestingModule(() => ({
     imports: [TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
+      { provide: FileService, useMock: mockedFileService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: FileService, useMock: mockedFileService }
     ]
   }));
 
@@ -150,7 +152,9 @@ describe('QuestionDialogService', () => {
     expect(questionDoc!.data!.audioUrl).toBe(audioUrl);
     await env.service.questionDialog(env.getQuestionDialogData(questionDoc));
     expect(questionDoc!.data!.audioUrl).toBeUndefined();
-    verify(mockedFileService.deleteFile(FileType.Audio, env.PROJECT01, QuestionDoc.COLLECTION, anything(), anything()));
+    verify(
+      mockedFileService.deleteFile(FileType.Audio, env.PROJECT01, QuestionDoc.COLLECTION, anything(), anything())
+    ).once();
   });
 });
 
