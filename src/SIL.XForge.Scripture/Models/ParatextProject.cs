@@ -57,6 +57,20 @@ public class ParatextProject
     public bool IsConnected { get; init; }
 
     /// <summary>
+    /// If the specified project has drafting enabled.
+    /// </summary>
+    /// <remarks>
+    /// A <c>true</c> value does not infer that the user has access to drafting,
+    /// but that drafting has been configured or can be configured for the project.
+    /// </remarks>
+    public bool IsDraftingEnabled { get; init; }
+
+    /// <summary>
+    /// If the specified project has a draft generated.
+    /// </summary>
+    public bool HasDraft { get; init; }
+
+    /// <summary>
     /// A descriptive string of object's properties, for debugging.
     /// </summary>
     /// <returns>
@@ -77,6 +91,8 @@ public class ParatextProject
                 ProjectId,
                 IsConnectable.ToString(),
                 IsConnected.ToString(),
+                IsDraftingEnabled.ToString(),
+                HasDraft.ToString(),
                 IsRightToLeft?.ToString(),
             }
         )
