@@ -6,7 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -27,6 +27,7 @@ import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode }
 import { SFProjectService } from '../../../core/sf-project.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
+import { countNonEquivalentLanguageCodes } from '../draft-utils';
 
 function translateSourceToSelectableProjectWithLanguageTag(
   project: TranslateSource
@@ -113,7 +114,7 @@ export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAs
     TranslocoModule,
     NoticeComponent,
     MatCheckboxModule,
-    MatProgressSpinner
+    MatProgressSpinnerModule
   ],
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
@@ -190,17 +191,25 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     return value ? `(${value})` : '';
   }
 
+  get multipleSourceSideLanguages(): boolean {
+    return countNonEquivalentLanguageCodes(this.sourceSideLanguageCodes) > 1;
+  }
+
   get sourceSideLanguageCodes(): string[] {
     return Array.from(
-      // FIXME Handle language codes that may be equivalent by not identical strings
       new Set([...this.draftingSources, ...this.trainingSources].filter(s => s != null).map(s => s.languageTag))
     );
   }
 
   get showSourceAndTargetLanguagesIdenticalWarning(): boolean {
+    // Show the warning when there's only one language on the source side, but that one language is equivalent to the
+    // target language.
     const sourceCodes = this.sourceSideLanguageCodes;
-    // FIXME Handle language codes that may be equivalent by not identical strings
-    return sourceCodes.length === 1 && sourceCodes[0] === this.trainingTargets[0]!.writingSystem.tag;
+    return (
+      sourceCodes.length > 0 &&
+      countNonEquivalentLanguageCodes(sourceCodes) === 1 &&
+      countNonEquivalentLanguageCodes([sourceCodes[0], this.targetLanguageTag]) < 2
+    );
   }
 
   get targetLanguageTag(): string {
@@ -226,18 +235,15 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
         if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
 
-        const mappedTrainingSources = trainingSources
-          // FIXME No actual nullish elements, but TS doesn't know because of how we set the array length
-          .filter(s => s != null)
-          .map(translateSourceToSelectableProjectWithLanguageTag) as SelectableProjectWithLanguageCode[] &
-          ({ length: 0 } | { length: 1 } | { length: 2 });
+        const mappedTrainingSources = trainingSources.map(
+          translateSourceToSelectableProjectWithLanguageTag
+        ) as SelectableProjectWithLanguageCode[] & ({ length: 0 } | { length: 1 } | { length: 2 });
 
         this.trainingSources = mappedTrainingSources;
         this.trainingTargets = trainingTargets;
-        const mappedDraftingSources: SelectableProjectWithLanguageCode[] = draftingSources
-          // FIXME No actual nullish elements, but TS doesn't know because of how we set the array length
-          .filter(s => s != null)
-          .map(translateSourceToSelectableProjectWithLanguageTag);
+        const mappedDraftingSources: SelectableProjectWithLanguageCode[] = draftingSources.map(
+          translateSourceToSelectableProjectWithLanguageTag
+        );
         this.draftingSources = [mappedDraftingSources[0]];
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
@@ -294,8 +300,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
       array[index] = undefined;
       // When the user clears a project select, if there are now multiple blank project selects, remove the first one
       if (array.filter(s => s == null).length > 1) {
-        const index = array.findIndex(s => s == null);
-        array.splice(index, 1);
+        const nullIndex = array.findIndex(s => s == null);
+        array.splice(nullIndex, 1);
       }
     }
   }
@@ -306,8 +312,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     const arrays = [this.trainingSources, this.trainingTargets, this.draftingSources];
     for (const array of arrays) {
       while (array.length > 1 && array.some(s => s == null)) {
-        const index = array.findIndex(s => s == null);
-        array.splice(index, 1);
+        const nullIndex = array.findIndex(s => s == null);
+        array.splice(nullIndex, 1);
       }
     }
   }
@@ -349,7 +355,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   }
 
   async save(): Promise<void> {
-    // TODO verify at least one source and one reference is selected
     const definedSources = this.draftingSources.filter(s => s != null);
     const definedReferences = this.trainingSources.filter(s => s != null);
 
