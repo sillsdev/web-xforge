@@ -25,16 +25,12 @@ import { ResumeCheckingService } from '../checking/checking/resume-checking.serv
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
-import { PermissionsService } from '../core/permissions.service';
-import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
 
 const mockedUserService = mock(UserService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
-const mockedSFProjectService = mock(SFProjectService);
 const mockedTranslocoService = mock(TranslocoService);
-const mockedPermissions = mock(PermissionsService);
 const mockResumeCheckingService = mock(ResumeCheckingService);
 const mockedDialogService = mock(DialogService);
 
@@ -87,7 +83,6 @@ describe('ProjectComponent', () => {
 
   it('navigate to checking tool if a checker and no last selected task', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.setProjectData({ role: SFProjectRole.CommunityChecker, memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
@@ -118,7 +113,6 @@ describe('ProjectComponent', () => {
 
   it('if checking is disabled, navigate to translate app, even if last location was in checking app', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(false);
     env.setProjectData({
       selectedTask: 'checking',
       selectedBooknum: 41,
@@ -135,7 +129,6 @@ describe('ProjectComponent', () => {
 
   it('doesnt allow commenters to navigate to community checking', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(false);
     env.setProjectData({
       selectedTask: 'checking',
       memberProjectIdSuffixes: [1],
@@ -151,7 +144,6 @@ describe('ProjectComponent', () => {
 
   it('do not navigate when project does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.subscribeRealtimeDocs('project1');
     env.fixture.detectChanges();
     tick();
 
@@ -194,8 +186,6 @@ class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(enableSharing = false) {
-    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
-    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project1' }));
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedUserService.currentProjectId(anything())).thenReturn('project1');
@@ -276,7 +266,6 @@ class TestEnvironment {
           projectIdSuffix
         )
       });
-      this.subscribeRealtimeDocs(projectId);
     }
 
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
@@ -290,17 +279,5 @@ class TestEnvironment {
     const userDoc: UserDoc = this.realtimeService.get(UserDoc.COLLECTION, 'user01');
     userDoc.submitJson0Op(op => op.set(u => u.sites, { sf: { projects: [`project${projectIdSuffix}`] } }), false);
     tick();
-  }
-
-  subscribeRealtimeDocs(projectId: string): void {
-    when(mockedSFProjectService.getUserConfig(projectId, 'user01')).thenCall(() =>
-      this.realtimeService.subscribe(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId(projectId, 'user01')
-      )
-    );
-    when(mockedSFProjectService.getProfile(projectId)).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
-    );
   }
 }

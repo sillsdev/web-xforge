@@ -14,8 +14,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { I18nService } from 'xforge-common/i18n.service';
-import { Locale } from 'xforge-common/models/i18n-locale';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -34,7 +32,6 @@ import { NllbLanguageService } from '../nllb-language.service';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
-import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
 describe('DraftGenerationComponent', () => {
@@ -46,9 +43,7 @@ describe('DraftGenerationComponent', () => {
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
   let mockProjectService: jasmine.SpyObj<SFProjectService>;
   let mockUserService: jasmine.SpyObj<UserService>;
-  let mockI18nService: jasmine.SpyObj<I18nService>;
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
-  let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockProgressService: jasmine.SpyObj<ProgressService>;
@@ -65,15 +60,6 @@ describe('DraftGenerationComponent', () => {
     message: '',
     state: BuildStates.Queued,
     queueDepth: 0
-  };
-
-  const locale: Locale = {
-    localName: 'Test',
-    englishName: 'Test',
-    canonicalTag: 'en',
-    direction: 'ltr',
-    tags: ['test'],
-    production: false
   };
 
   const projectId = 'testProjectId';
@@ -126,12 +112,6 @@ describe('DraftGenerationComponent', () => {
         }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
-      mockI18nService = jasmine.createSpyObj<I18nService>(
-        ['getLanguageDisplayName', 'translate', 'interpolate', 'localizeBook'],
-        {
-          locale$: of(locale)
-        }
-      );
       mockNoticeService = jasmine.createSpyObj<NoticeService>(['loadingStarted', 'loadingFinished', 'showError']);
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
@@ -144,10 +124,7 @@ describe('DraftGenerationComponent', () => {
       ]);
       TestEnvironment.initProject('user01');
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
-      mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
 
-      mockI18nService.getLanguageDisplayName.and.returnValue('English');
-      mockPreTranslationSignupUrlService.generateSignupUrl.and.returnValue(Promise.resolve(''));
       mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(this.startedOrActiveBuild$);
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));

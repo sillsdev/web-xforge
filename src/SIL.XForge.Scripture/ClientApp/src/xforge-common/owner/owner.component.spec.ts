@@ -4,16 +4,12 @@ import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslocoService } from '@ngneat/transloco';
-import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { anything, instance, mock, when } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
-import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../app/core/models/sf-type-registry';
 import { isSafari } from '../utils';
 import { OwnerComponent } from './owner.component';
@@ -90,11 +86,7 @@ class HostComponent {
 class TestEnvironment {
   readonly fixture: ComponentFixture<HostComponent>;
 
-  readonly mockedAuthService = mock(AuthService);
-  readonly mockedBugsnagService = mock(BugsnagService);
-  readonly mockedCookieService = mock(CookieService);
   readonly mockedTranslocoService = mock(TranslocoService);
-  readonly mockedUserService = mock(UserService);
 
   private readonly realtimeService: TestRealtimeService;
 
@@ -115,9 +107,6 @@ class TestEnvironment {
       id: 'user01',
       data: createTestUserProfile({ displayName: 'User 01' })
     });
-    when(this.mockedUserService.getProfile('user01')).thenCall(() =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, 'user01')
-    );
     when(this.mockedTranslocoService.translate<string>(anything())).thenCall(
       (translationStringKey: string) => translationStringKey
     );

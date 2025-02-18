@@ -22,7 +22,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   createTestProject,
   createTestProjectProfile
@@ -50,13 +50,11 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { getCombinedVerseTextDoc, getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { TranslateModule } from '../../translate.module';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
 
 const mockedHttpClient = mock(HttpClient);
-const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialogService = mock(DialogService);
 
@@ -337,7 +335,6 @@ describe('NoteDialogComponent', () => {
     expect(env.noteInputElement).toBeTruthy();
     env.submit();
     expect(env.noteInputElement).toBeTruthy();
-    verify(mockedProjectService.createNoteThread(anything(), anything())).never();
   }));
 
   it('does not show text area for users without write permissions', fakeAsync(() => {
@@ -1027,30 +1024,6 @@ class TestEnvironment {
         });
       }
     }
-
-    when(mockedProjectService.getBiblicalTerm(anything())).thenCall(id =>
-      this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id)
-    );
-
-    when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
-      this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)
-    );
-
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
-    );
-
-    when(mockedProjectService.getUserConfig(configData.projectId, currentUserId)).thenCall((projectId, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(projectId, userId))
-    );
-
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id)
-    );
-
-    when(mockedProjectService.tryGetForRole(anything(), anything())).thenCall((id, role) =>
-      isParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
-    );
 
     when(mockedUserService.currentUserId).thenReturn(currentUserId);
     firstValueFrom(this.dialogRef.afterClosed()).then(result => (this.dialogResult = result));

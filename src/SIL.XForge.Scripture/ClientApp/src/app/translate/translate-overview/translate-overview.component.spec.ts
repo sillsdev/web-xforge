@@ -32,7 +32,6 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
-import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { Progress, ProgressService, TextProgress } from '../../shared/progress-service/progress.service';
@@ -42,7 +41,6 @@ import { TranslateOverviewComponent } from './translate-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedAuthService = mock(AuthService);
-const mockedSFProjectService = mock(SFProjectService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
@@ -269,12 +267,6 @@ class TestEnvironment {
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(this.mockedRemoteTranslationEngine.startTraining()).thenResolve();
-    when(mockedSFProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
-    );
-    when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
-    );
     when(mockedProgressService.isLoaded$).thenReturn(of(true));
     when(mockedProgressService.overallProgress).thenReturn(new Progress());
     when(mockedProgressService.texts).thenReturn([

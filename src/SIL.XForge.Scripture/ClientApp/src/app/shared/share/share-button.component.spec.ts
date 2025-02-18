@@ -1,18 +1,15 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { mock, when } from 'ts-mockito';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { SFProjectService } from '../../core/sf-project.service';
 import { ShareButtonComponent } from './share-button.component';
 
-const mockedProjectService = mock(SFProjectService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 
 describe('ShareButtonComponent', () => {
@@ -33,7 +30,6 @@ describe('ShareButtonComponent', () => {
     env.clickElement(env.shareButton);
 
     env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite('project01', anything(), anything(), anything())).never();
     expect().nothing();
   }));
 });
@@ -45,9 +41,6 @@ class TestEnvironment {
 
   constructor() {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
-    );
 
     this.fixture = TestBed.createComponent(ShareButtonComponent);
     this.component = this.fixture.componentInstance;

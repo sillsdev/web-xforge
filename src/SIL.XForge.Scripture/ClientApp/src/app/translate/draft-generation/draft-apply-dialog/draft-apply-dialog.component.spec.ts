@@ -11,7 +11,6 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -23,16 +22,13 @@ import { TextDoc } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { CustomValidatorState } from '../../../shared/sfvalidators';
-import { DraftHandlingService } from '../draft-handling.service';
 import { DraftApplyDialogComponent } from './draft-apply-dialog.component';
 
-const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialogRef = mock(MatDialogRef);
 const mockedTextDocService = mock(TextDocService);
-const mockedI18nService = mock(I18nService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -69,7 +65,6 @@ describe('DraftApplyDialogComponent', () => {
   it('can get projects', fakeAsync(() => {
     expect(env.cancelButton).toBeTruthy();
     expect(env.component.projects.map(p => p.paratextId)).toEqual(['paratextId1', 'paratextId2']);
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
     env.cancelButton.click();
     tick();
     env.fixture.detectChanges();
@@ -219,7 +214,6 @@ class TestEnvironment {
 
   constructor(args: { projectDoc?: SFProjectProfileDoc } = {}) {
     when(mockedUserService.currentUserId).thenReturn('user01');
-    when(mockedI18nService.localizeBook(anything())).thenReturn('Genesis');
     this.setupProject(args.projectDoc);
     this.fixture = TestBed.createComponent(DraftApplyDialogComponent);
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -8,7 +7,6 @@ import { Book } from '../../translate/draft-generation/draft-generation-steps/dr
 import { ProgressService, TextProgress } from '../progress-service/progress.service';
 import { BookMultiSelectComponent } from './book-multi-select.component';
 
-const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedProgressService = mock(ProgressService);
 const mockedI18nService = mock(I18nService);
 
@@ -37,7 +35,6 @@ describe('BookMultiSelectComponent', () => {
       { number: 1, selected: true },
       { number: 3, selected: true }
     ];
-    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedProgressService.isLoaded$).thenReturn(of(true));
     when(mockedProgressService.texts).thenReturn([
       { text: { bookNum: 1 }, percentage: 0 } as TextProgress,

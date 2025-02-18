@@ -14,7 +14,6 @@ import { CsvService } from 'xforge-common/csv-service.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -29,7 +28,6 @@ import { QuestionDoc } from '../../core/models/question-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
-import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import {
@@ -40,7 +38,6 @@ import {
 
 const mockedCsvService = mock(CsvService);
 const mockedFileService = mock(FileService);
-const mockedSFProjectService = mock(SFProjectService);
 
 describe('ChapterAudioDialogComponent', () => {
   configureTestingModule(() => ({
@@ -660,9 +657,6 @@ class TestEnvironment {
         true
       )
     ).thenResolve('audio url');
-    when(mockedSFProjectService.queryAudioText(anything(), anything())).thenReturn(
-      this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, {}, noopDestroyRef)
-    );
 
     this.audioFile = {
       status: 'uploaded',
