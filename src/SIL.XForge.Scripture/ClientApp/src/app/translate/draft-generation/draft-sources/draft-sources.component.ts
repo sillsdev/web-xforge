@@ -166,7 +166,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   }
 
   get targetLanguageDisplayName(): string | undefined {
-    if (this.trainingTargets.length == 0) {
+    if (this.trainingTargets.length === 0) {
       console.log('not fully initialized');
       return undefined;
     }
