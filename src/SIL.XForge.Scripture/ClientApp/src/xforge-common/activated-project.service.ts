@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
 import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
 import { BehaviorSubject, Observable, of } from 'rxjs';
@@ -133,12 +132,14 @@ export class TestActivatedProjectService extends ActivatedProjectService {
     super(projectService, cacheService, activeProjectIdService);
   }
 
-  static withProjectId(projectId: string): TestActivatedProjectService {
-    const projectService = TestBed.inject(SFProjectService);
-    const permissionsService = TestBed.inject(PermissionsService);
+  static withProjectId(
+    projectId: string,
+    sfProjectService: SFProjectService,
+    permissionsService: PermissionsService
+  ): TestActivatedProjectService {
     return new TestActivatedProjectService(
-      projectService,
-      new CacheService(projectService, permissionsService),
+      sfProjectService,
+      new CacheService(sfProjectService, permissionsService),
       new TestActiveProjectIdService(projectId)
     );
   }
