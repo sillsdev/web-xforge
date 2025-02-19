@@ -357,26 +357,24 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   async cancel(): Promise<void> {
-    if (this.draftJob?.state === BuildStates.Active) {
-      const { dialogRef, result } = this.dialogService.openGenericDialog({
-        title: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_title'),
-        message: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_message'),
-        options: [
-          { value: false, label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_no') },
-          {
-            value: true,
-            label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_yes'),
-            highlight: true
-          }
-        ]
-      });
+    const { dialogRef, result } = this.dialogService.openGenericDialog({
+      title: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_title'),
+      message: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_message'),
+      options: [
+        { value: false, label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_no') },
+        {
+          value: true,
+          label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_yes'),
+          highlight: true
+        }
+      ]
+    });
 
-      this.cancelDialogRef = dialogRef;
-      const isConfirmed: boolean | undefined = await result;
+    this.cancelDialogRef = dialogRef;
+    const isConfirmed: boolean | undefined = await result;
 
-      if (!isConfirmed) {
-        return;
-      }
+    if (!isConfirmed) {
+      return;
     }
 
     this.cancelBuild();
