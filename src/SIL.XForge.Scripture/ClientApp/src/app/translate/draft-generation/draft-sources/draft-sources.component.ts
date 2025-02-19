@@ -166,6 +166,10 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   }
 
   get targetLanguageDisplayName(): string | undefined {
+    if (this.trainingTargets.length == 0) {
+      console.log('not fully initialized');
+      return undefined;
+    }
     if (this.trainingTargets.length !== 1) throw new Error('Multiple training targets not supported');
 
     return this.i18n.getLanguageDisplayName(this.trainingTargets[0]!.writingSystem.tag);
