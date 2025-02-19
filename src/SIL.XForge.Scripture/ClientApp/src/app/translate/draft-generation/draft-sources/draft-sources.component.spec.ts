@@ -6,22 +6,28 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { FeatureFlagService } from '../../../../xforge-common/feature-flags/feature-flag.service';
+import {
+  ActivatedProjectService,
+  TestActivatedProjectService
+} from '../../../../xforge-common/activated-project.service';
+import {
+  createTestFeatureFlag,
+  FeatureFlagService
+} from '../../../../xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from '../../../../xforge-common/i18n.service';
 import { ElementState } from '../../../../xforge-common/models/element-state';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';
 
 const mockedParatextService = mock(ParatextService);
-const mockedActivatedProjectService = mock(ActivatedProjectService);
+let testActivatedProjectService: TestActivatedProjectService | undefined = undefined;
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
@@ -35,7 +41,7 @@ describe('DraftSourcesComponent', () => {
     declarations: [],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
-      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
+      { provide: ActivatedProjectService, useFactory: () => testActivatedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
@@ -341,16 +347,24 @@ class TestEnvironment {
       draftingSources: [instance(mock<DraftSource>())]
     };
     when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(draftProjectSources));
+    testActivatedProjectService = TestActivatedProjectService.withProjectId(
+      'project01',
+      TestBed.inject(SFProjectService),
+      instance(mock(PermissionsService))
+    );
+    when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
+    // TODO return actual list
+    when(mockedSFUserProjectsService.projectDocs$).thenReturn(of([]));
 
-    when(mockedActivatedProjectService.projectId).thenReturn('project01');
-    when(mockedActivatedProjectService.projectDoc).thenReturn({
-      id: 'project01',
-      data: {
-        paratextId: 'project01',
-        shortName: 'PRJ1',
-        writingSystem: { tag: 'en' }
-      }
-    } as SFProjectProfileDoc);
+    // when(mockedActivatedProjectService.projectId).thenReturn('project01');
+    // when(mockedActivatedProjectService.projectDoc).thenReturn({
+    //   id: 'project01',
+    //   data: {
+    //     paratextId: 'project01',
+    //     shortName: 'PRJ1',
+    //     writingSystem: { tag: 'en' }
+    //   }
+    // } as SFProjectProfileDoc);
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;
