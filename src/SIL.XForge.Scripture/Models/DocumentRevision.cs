@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 using SIL.XForge.Realtime;
 
 namespace SIL.XForge.Scripture.Models;
@@ -6,14 +7,11 @@ namespace SIL.XForge.Scripture.Models;
 /// <summary>
 /// A revision of a document in ShareDB and/or Paratext.
 /// </summary>
+/// <remarks>
+/// This is used as a DTO for the Machine and Paratext Web APIs.
+/// </remarks>
 public class DocumentRevision
 {
-    /// <summary>
-    /// Gets the date and time of the revision in UTC.
-    /// </summary>
-    [Obsolete("For backwards compatibility with older frontend clients. Deprecated July 2024.")]
-    public DateTime Key => Timestamp;
-
     /// <summary>
     /// Gets the source of the revision, if known.
     /// </summary>
@@ -21,6 +19,7 @@ public class DocumentRevision
     /// The source of the op/ops that comprise this revision.
     /// </value>
     /// <remarks>The source will be serialized as a string.</remarks>
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public OpSource? Source { get; init; }
 
     /// <summary>
@@ -33,11 +32,6 @@ public class DocumentRevision
     /// Gets the identifier of the user who made the revision.
     /// </summary>
     /// <value>The user identifier.</value>
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public string? UserId { get; init; }
-
-    /// <summary>
-    /// Gets a brief summary of the revision.
-    /// </summary>
-    [Obsolete("For backwards compatibility with older frontend clients. Deprecated July 2024.")]
-    public string Value => Source == OpSource.Paratext ? "Updated in Paratext" : "Updated in Scripture Forge";
 }

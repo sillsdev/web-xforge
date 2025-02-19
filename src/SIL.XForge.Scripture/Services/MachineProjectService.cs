@@ -616,7 +616,6 @@ public class MachineProjectService(
             {
                 if (preTranslate)
                 {
-                    u.Set(p => p.ServalData.PreTranslationLastUserId, curUserId);
                     u.Unset(p => p.ServalData.PreTranslationJobId);
                     u.Unset(p => p.ServalData.PreTranslationQueuedAt);
                 }
