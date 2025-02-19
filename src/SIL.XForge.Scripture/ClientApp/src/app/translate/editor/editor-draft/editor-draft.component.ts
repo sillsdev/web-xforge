@@ -20,7 +20,9 @@ import {
   throttleTime
 } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { CommandError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -71,7 +73,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     readonly onlineStatusService: OnlineStatusService,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private errorReportingService: ErrorReportingService
   ) {}
 
   ngOnChanges(): void {
@@ -177,8 +180,13 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
       this.isDraftApplied = true;
       this.userAppliedDraft = true;
-    } catch {
+    } catch (err) {
       this.noticeService.showError(translate('editor_draft_tab.error_applying_draft'));
+      if (err instanceof CommandError && err.message.includes('504 Gateway Timeout')) return;
+      this.errorReportingService.silentError(
+        'Error applying a draft to a chapter',
+        ErrorReportingService.normalizeError(err)
+      );
     }
   }
 
