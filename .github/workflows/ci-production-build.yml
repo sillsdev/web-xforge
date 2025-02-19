@@ -28,6 +28,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
+          cache: "npm"
+          cache-dependency-path: src/SIL.XForge.Scripture/ClientApp
       - name: Upgrade npm
         run: npm install -g npm@${{ matrix.npm_version }}
       - name: Build Realtime server dependencies for Angular
