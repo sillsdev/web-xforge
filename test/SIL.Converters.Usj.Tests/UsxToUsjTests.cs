@@ -1,4 +1,5 @@
 using System.Xml;
+using System.Xml.Linq;
 using NUnit.Framework;
 
 namespace SIL.Converters.Usj.Tests;
@@ -26,6 +27,13 @@ public class UsxToUsjTests
     public void ShouldConvertFromNullToUsj()
     {
         Usj usj = UsxToUsj.UsxStringToUsj(null);
+        Assert.That(usj, Is.EqualTo(TestData.UsjEmpty).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromNullXDocumentToUsj()
+    {
+        Usj usj = UsxToUsj.UsxXDocumentToUsj(null);
         Assert.That(usj, Is.EqualTo(TestData.UsjEmpty).UsingPropertiesComparer());
     }
 
@@ -216,6 +224,26 @@ public class UsxToUsjTests
         string expected = TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1WithTable);
         expected = TestData.RemoveEidElements(expected);
         Assert.That(usx, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void ShouldConvertFromXDocumentToUsj()
+    {
+        XDocument document = XDocument.Parse(TestData.UsxGen1V1, LoadOptions.PreserveWhitespace);
+        Usj usj = UsxToUsj.UsxXDocumentToUsj(document);
+        Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromXDocumentToUsj_Roundtrip()
+    {
+        string usx = TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1);
+        usx = TestData.RemoveEidElements(usx);
+        XDocument document = XDocument.Parse(usx, LoadOptions.PreserveWhitespace);
+        Usj usj = UsxToUsj.UsxXDocumentToUsj(document);
+
+        XDocument actualUsx = UsjToUsx.UsjToUsxXDocument(usj);
+        Assert.That(actualUsx, Is.EqualTo(document).UsingPropertiesComparer());
     }
 
     [Test]
