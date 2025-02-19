@@ -126,6 +126,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: src/SIL.XForge.Scripture/ClientApp
       - name: "Deps: npm"
         run: npm install --global npm@${{matrix.npm_version}}
       - name: Pre-build report
