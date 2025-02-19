@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace SIL.Converters.Usj
 {
@@ -16,7 +18,12 @@ namespace SIL.Converters.Usj
     /// </remarks>
     public static class UsjToUsx
     {
-        private static void SetAttributes(XmlElement element, UsjMarker markerContent)
+        /// <summary>
+        /// Sets the attributes for an element via a delegate.
+        /// </summary>
+        /// <param name="markerContent">The USJ marker.</param>
+        /// <param name="setAttribute">The delegate. This will be either XmlElement.SetAttribute or XElement.SetAttributeValue</param>
+        private static void SetAttributes(UsjMarker markerContent, Action<string, string> setAttribute)
         {
             // Get the standard attributes
             // This order is based on the order in ParatextData's UsxUsfmParserSink
@@ -37,7 +44,7 @@ namespace SIL.Converters.Usj
             // Add the standard attributes
             foreach (var kvp in attributes.Where(kvp => kvp.Value != null))
             {
-                element.SetAttribute(kvp.Key, kvp.Value);
+                setAttribute(kvp.Key, kvp.Value);
             }
 
             // Add the non-standard attributes
@@ -53,11 +60,18 @@ namespace SIL.Converters.Usj
                 //  - Content is a collection handled in ConvertUsjRecurse.
                 if (nonStandardAttribute.Value is string value && key != "type" && key != "marker" && key != "content")
                 {
-                    element.SetAttribute(key, value);
+                    setAttribute(key, value);
                 }
             }
         }
 
+        /// <summary>
+        /// Recursively converts USJ content to USX for an <see cref="XmlDocument"/>.
+        /// </summary>
+        /// <param name="markerContent">The marker content. This will be a <see cref="UsjMarker"/> or <see cref="string"/>.</param>
+        /// <param name="parentElement">The parent element.</param>
+        /// <param name="usxDoc">The USX document</param>
+        /// <exception cref="ArgumentOutOfRangeException">The markerContent is an invalid type.</exception>
         private static void ConvertUsjRecurse(object markerContent, XmlElement parentElement, XmlDocument usxDoc)
         {
             XmlNode node;
@@ -71,7 +85,7 @@ namespace SIL.Converters.Usj
                     string type = usjMarker.Type.Replace("table:", string.Empty);
                     XmlElement element = usxDoc.CreateElement(type);
                     node = element;
-                    SetAttributes(element, usjMarker);
+                    SetAttributes(usjMarker, element.SetAttribute);
 
                     if (usjMarker.Content != null)
                     {
@@ -90,12 +104,60 @@ namespace SIL.Converters.Usj
             parentElement.AppendChild(node);
         }
 
-        private static void UsjToUsxDom(IUsj usj, XmlDocument usxDoc)
+        /// <summary>
+        /// Recursively converts USJ content to USX for an <see cref="XDocument"/>.
+        /// </summary>
+        /// <param name="markerContent">The marker content. This will be a <see cref="UsjMarker"/> or <see cref="string"/>.</param>
+        /// <param name="parentElement">The parent element.</param>
+        /// <exception cref="ArgumentOutOfRangeException">The markerContent is an invalid type.</exception>
+        private static void ConvertUsjRecurse(object markerContent, XElement parentElement)
         {
-            foreach (object content in usj.Content)
+            XNode node;
+            switch (markerContent)
             {
-                ConvertUsjRecurse(content, usxDoc.DocumentElement, usxDoc);
+                case string markerText:
+                    node = new XText(markerText);
+                    break;
+                case UsjMarker usjMarker:
+                {
+                    string type = usjMarker.Type.Replace("table:", string.Empty);
+                    XElement element = new XElement(type);
+                    node = element;
+                    SetAttributes(usjMarker, (name, value) => element.SetAttributeValue(name, value));
+
+                    if (usjMarker.Content != null)
+                    {
+                        foreach (object content in usjMarker.Content)
+                        {
+                            ConvertUsjRecurse(content, element);
+                        }
+                    }
+
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(markerContent));
             }
+
+            parentElement.Add(node);
+        }
+
+        /// <summary>
+        /// Converts a USJ object to a USX <see cref="XDocument"/>.
+        /// </summary>
+        /// <param name="usj">The USJ object.</param>
+        /// <returns>The XDocument.</returns>
+        /// <remarks>Refer to remarks for <seealso cref="UsjToUsxString"/>.</remarks>
+        public static XDocument UsjToUsxXDocument(IUsj usj)
+        {
+            // Create the USX document
+            XElement documentElement = new XElement(Usx.UsxType, new XAttribute("version", Usx.UsxVersion));
+            foreach (object content in usj.Content ?? new ArrayList())
+            {
+                ConvertUsjRecurse(content, documentElement);
+            }
+
+            return new XDocument(documentElement);
         }
 
         /// <summary>
@@ -111,9 +173,9 @@ namespace SIL.Converters.Usj
             XmlElement documentElement = usxDoc.CreateElement(Usx.UsxType);
             documentElement.SetAttribute("version", Usx.UsxVersion);
             usxDoc.AppendChild(documentElement);
-            if (usj.Content != null)
+            foreach (object content in usj.Content ?? new ArrayList())
             {
-                UsjToUsxDom(usj, usxDoc);
+                ConvertUsjRecurse(content, usxDoc.DocumentElement, usxDoc);
             }
 
             return usxDoc;
