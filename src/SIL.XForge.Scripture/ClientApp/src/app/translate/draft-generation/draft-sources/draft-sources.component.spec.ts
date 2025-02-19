@@ -6,10 +6,7 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import {
-  ActivatedProjectService,
-  TestActivatedProjectService
-} from '../../../../xforge-common/activated-project.service';
+import { TestActivatedProjectModule } from '../../../../xforge-common/activated-project.service';
 import {
   createTestFeatureFlag,
   FeatureFlagService
@@ -27,24 +24,27 @@ import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft
 import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';
 
 const mockedParatextService = mock(ParatextService);
-let testActivatedProjectService: TestActivatedProjectService | undefined = undefined;
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedSFUserProjectsService = mock(SFUserProjectsService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedPermissionsService = mock(PermissionsService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule, TestTranslocoModule],
+    imports: [
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      NoopAnimationsModule,
+      TestTranslocoModule,
+      TestActivatedProjectModule.forRoot('project01', mockedSFProjectService, mockedPermissionsService)
+    ],
     declarations: [],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
-      { provide: ActivatedProjectService, useFactory: () => testActivatedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
-      { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: DraftSourcesService, useMock: mockedDraftSourcesService },
       { provide: SFUserProjectsService, useMock: mockedSFUserProjectsService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
@@ -347,11 +347,6 @@ class TestEnvironment {
       draftingSources: [instance(mock<DraftSource>())]
     };
     when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(draftProjectSources));
-    testActivatedProjectService = TestActivatedProjectService.withProjectId(
-      'project01',
-      TestBed.inject(SFProjectService),
-      instance(mock(PermissionsService))
-    );
     when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
     // TODO return actual list
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of([]));
