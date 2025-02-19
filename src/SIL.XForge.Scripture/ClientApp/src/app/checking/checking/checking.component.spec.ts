@@ -1227,7 +1227,8 @@ describe('CheckingComponent', () => {
       const newAnswer = env.component.answersPanel!.answers[0];
       expect(newAnswer.audioUrl).toEqual('blob://audio');
       expect(env.component.answersPanel?.getFileSource(newAnswer.audioUrl)).toBeDefined();
-      verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio'));
+      // TODO SF-3218 This may be incorrect: once() seems more appropriate than twice()
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio')).twice();
       flush();
       discardPeriodicTasks();
     }));
