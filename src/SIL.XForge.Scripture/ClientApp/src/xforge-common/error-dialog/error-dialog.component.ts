@@ -20,7 +20,13 @@ export class ErrorDialogComponent implements OnInit {
   browserUnsupported = !supportedBrowser();
   outsideAngularErrorDialog?: OutsideAngularErrorDialog;
 
-  issueEmailLink = getLinkHTML(environment.issueEmail, issuesEmailTemplate(this.data.eventId));
+  issueEmailLink = getLinkHTML(
+    environment.issueEmail,
+    issuesEmailTemplate({
+      errorId: this.data.eventId,
+      errorMessage: this.data.message
+    })
+  );
 
   constructor(
     public dialogRef: MatDialogRef<ErrorDialogComponent>,
@@ -49,7 +55,10 @@ export class ErrorDialogComponent implements OnInit {
   openOutsideAngularErrorDialog(): void {
     this.outsideAngularErrorDialog = new OutsideAngularErrorDialog(
       this.data.message,
-      issuesEmailTemplate(this.data.eventId)
+      issuesEmailTemplate({
+        errorId: this.data.eventId,
+        errorMessage: this.data.message
+      })
     );
   }
 }

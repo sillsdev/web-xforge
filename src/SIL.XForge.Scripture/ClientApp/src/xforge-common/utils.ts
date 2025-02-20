@@ -90,7 +90,7 @@ export function audioRecordingMimeType(): string {
   }
 }
 
-export function issuesEmailTemplate(errorId?: string): string {
+export function issuesEmailTemplate(errorInfo?: { errorMessage: string; errorId: string }): string {
   const bowser = Bowser.getParser(window.navigator.userAgent);
 
   const technicalDetails = Object.entries({
@@ -99,7 +99,8 @@ export function issuesEmailTemplate(errorId?: string): string {
     ...(isBrave() ? { Brave: 'Yes' } : {}),
     [bowser.getOSName()]: bowser.getOSVersion() ?? translate('issue_email.unknown'),
     URL: location.href,
-    ...(errorId ? { 'Error ID': errorId } : {})
+    ...(errorInfo?.errorId ? { 'Error ID': errorInfo?.errorId } : {}),
+    ...(errorInfo?.errorMessage ? { 'Error Message': errorInfo?.errorMessage } : {})
   })
     .map(([key, value]) => `${key}: ${value}`)
     .join('\n');
