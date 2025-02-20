@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -14,7 +15,6 @@ using Newtonsoft.Json;
 using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.ObjectModel;
-using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -31,6 +31,7 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
+    IDeltaUsxMapper deltaUsxMapper,
     IExceptionHandler exceptionHandler,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
@@ -401,38 +402,33 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
-
-        // If the user is a serval admin, get the highest ranked user on the project
-        string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
-
         // Do not allow retrieving the entire book as a delta
         if (chapterNum == 0)
         {
             throw new DataNotFoundException("Chapter not specified");
         }
 
-        try
+        // Get the USJ document
+        Usj usj = await GetPreTranslationUsjAsync(
+            curUserId,
+            sfProjectId,
+            bookNum,
+            chapterNum,
+            isServalAdmin,
+            timestamp,
+            cancellationToken
+        );
+
+        // Then convert it to USX
+        XDocument usxDoc = UsjToUsx.UsjToUsxXDocument(usj);
+
+        // The convert it to a Delta
+        return new Snapshot<TextData>
         {
-            string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
-                sfProjectId,
-                bookNum,
-                chapterNum,
-                cancellationToken
-            );
-            return new Snapshot<TextData>
-            {
-                Id = TextData.GetTextDocId(sfProjectId, bookNum, chapterNum),
-                Version = 0,
-                Data = new TextData(await paratextService.GetDeltaFromUsfmAsync(userId, sfProjectId, usfm, bookNum)),
-            };
-        }
-        catch (ServalApiException e)
-        {
-            ProcessServalApiException(e);
-            throw;
-        }
+            Id = TextData.GetTextDocId(sfProjectId, bookNum, chapterNum),
+            Version = 0,
+            Data = new TextData(deltaUsxMapper.ToChapterDeltas(usxDoc).First().Delta),
+        };
     }
 
     /// <summary>
@@ -625,22 +621,34 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
-        try
+        // If the user is a serval admin, get the highest ranked user on the project
+        string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
+
+        // Retrieve the user secret
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
+        if (!attempt.TryResult(out UserSecret userSecret))
         {
-            return await preTranslationService.GetPreTranslationUsfmAsync(
-                sfProjectId,
-                bookNum,
-                chapterNum,
-                cancellationToken
-            );
+            throw new DataNotFoundException("The user does not exist.");
         }
-        catch (ServalApiException e)
-        {
-            ProcessServalApiException(e);
-            throw;
-        }
+
+        // Get the USJ document
+        Usj usj = await GetPreTranslationUsjAsync(
+            curUserId,
+            sfProjectId,
+            bookNum,
+            chapterNum,
+            isServalAdmin,
+            timestamp,
+            cancellationToken
+        );
+
+        // Then convert it to USX
+        XDocument usx = UsjToUsx.UsjToUsxXDocument(usj);
+
+        // Then convert it to USFM
+        return paratextService.ConvertUsxToUsfm(userSecret, project.ParatextId, bookNum, usx);
     }
 
     public async Task<Usj> GetPreTranslationUsjAsync(
@@ -656,6 +664,20 @@ public class MachineApiService(
         // Ensure that the user has permission
         SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
+        // Connect to the realtime server
+        await using IConnection connection = await realtimeService.ConnectAsync(curUserId);
+        string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
+        Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(id, timestamp);
+        if (snapshot.Data is not null)
+        {
+            return new Usj
+            {
+                Type = snapshot.Data.Type,
+                Version = snapshot.Data.Version,
+                Content = snapshot.Data.Content,
+            };
+        }
+
         // If the user is a serval admin, get the highest ranked user on the project
         string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
 
@@ -666,8 +688,10 @@ public class MachineApiService(
             throw new DataNotFoundException("The user does not exist.");
         }
 
+        // There is no snapshot so retrieve the draft from Serval
         try
         {
+            // TODO: Save the updated draft to the realtime service
             string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
                 sfProjectId,
                 bookNum,
@@ -694,34 +718,17 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
-
-        // If the user is a serval admin, get the highest ranked user on the project
-        string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
-
-        // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
-        if (!attempt.TryResult(out UserSecret userSecret))
-        {
-            throw new DataNotFoundException("The user does not exist.");
-        }
-
-        try
-        {
-            string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
-                sfProjectId,
-                bookNum,
-                chapterNum,
-                cancellationToken
-            );
-            return paratextService.GetBookText(userSecret, project.ParatextId, bookNum, usfm);
-        }
-        catch (ServalApiException e)
-        {
-            ProcessServalApiException(e);
-            throw;
-        }
+        // Get the USJ then convert to USX
+        Usj usj = await GetPreTranslationUsjAsync(
+            curUserId,
+            sfProjectId,
+            bookNum,
+            chapterNum,
+            isServalAdmin,
+            timestamp,
+            cancellationToken
+        );
+        return UsjToUsx.UsjToUsxString(usj);
     }
 
     public async Task<WordGraph> GetWordGraphAsync(
@@ -1229,12 +1236,10 @@ public class MachineApiService(
             int chapterNum = 0;
 
             // Get the USFM
-            string usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
-                translationEngineId,
-                parallelCorpusId,
-                Canon.BookNumberToId(bookNum),
-                PretranslationUsfmTextOrigin.OnlyPretranslated,
-                PretranslationUsfmTemplate.Source,
+            string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
+                sfProjectId,
+                bookNum,
+                chapterNum,
                 cancellationToken
             );
 

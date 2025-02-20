@@ -42,6 +42,7 @@ public interface IParatextService
     );
     bool ResourceDocsNeedUpdating(SFProject project, ParatextResource resource);
 
+    string ConvertUsxToUsfm(UserSecret userSecret, string paratextId, int bookNum, XDocument usx);
     IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
     string GetBookText(UserSecret userSecret, string paratextId, int bookNum, string? usfm = null);
     Task<int> PutBookText(

@@ -1026,6 +1026,31 @@ public class ParatextService : DisposableBase, IParatextService
         }
     }
 
+    /// <summary>
+    /// Converts USX to USFM.
+    /// </summary>
+    /// <param name="userSecret">The user secret</param>
+    /// <param name="paratextId">The Paratext identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="usx">The USX XDocument.</param>
+    /// <returns>The USFM.</returns>
+    /// <exception cref="DataNotFoundException">The Paratext user or project does not exist.</exception>
+    public string ConvertUsxToUsfm(UserSecret userSecret, string paratextId, int bookNum, XDocument usx)
+    {
+        ArgumentNullException.ThrowIfNull(userSecret, nameof(userSecret));
+        ArgumentException.ThrowIfNullOrWhiteSpace(paratextId, nameof(paratextId));
+        ArgumentNullException.ThrowIfNull(usx, nameof(usx));
+
+        // Get the username
+        string username =
+            GetParatextUsername(userSecret) ?? throw new DataNotFoundException("Paratext username not found");
+
+        using ScrText scrText =
+            ScrTextCollection.FindById(username, paratextId)
+            ?? throw new DataNotFoundException("Paratext project not found");
+        return ConvertXDocumentToUsfm(scrText, bookNum, usx);
+    }
+
     /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
     /// <remarks> It is up to the caller to determine whether the project text is editable. </remarks>
     public async Task<int> PutBookText(
@@ -1063,19 +1088,7 @@ public class ParatextService : DisposableBase, IParatextService
 
             // We add this here so we can dispose in the finally
             scrTexts.Add(userSecret.Id, scrText);
-            log.AppendLine($"Imported XDocument with {usx.Elements().Count()} elements.");
-            UsxFragmenter.FindFragments(
-                scrText.ScrStylesheet(bookNum),
-                usx.CreateNavigator(),
-                XPathExpression.Compile("*[false()]"),
-                out string usfm,
-                scrText.Settings.AllowInvisibleChars
-            );
-            log.AppendLine($"Created usfm of {usfm}");
-            // Among other things, normalizing the USFM will remove trailing spaces at the end of verses,
-            // which may cause some churn. This is similar to running "Standardize whitespace" in Paratext.
-            usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
-            log.AppendLine($"Normalized usfm to {usfm}");
+            string usfm = ConvertXDocumentToUsfm(scrText!, bookNum, usx, log);
 
             if (chapNumToAuthorSFUserIdMap == null || chapNumToAuthorSFUserIdMap.Count == 0)
             {
@@ -2214,6 +2227,33 @@ public class ParatextService : DisposableBase, IParatextService
             UserRoles.Observer => SFProjectRole.PTObserver,
             _ => string.Empty,
         };
+
+    /// <summary>
+    /// Converts USX as an XDocument to USFM.
+    /// </summary>
+    /// <param name="scrText">The Paratext scripture text.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="usx">The USX XDocument.</param>
+    /// <param name="log">The log (optional).</param>
+    /// <returns>The USFM.</returns>
+    private static string ConvertXDocumentToUsfm(ScrText scrText, int bookNum, XDocument usx, StringBuilder? log = null)
+    {
+        log?.AppendLine($"Imported XDocument with {usx.Elements().Count()} elements.");
+        UsxFragmenter.FindFragments(
+            scrText.ScrStylesheet(bookNum),
+            usx.CreateNavigator(),
+            XPathExpression.Compile("*[false()]"),
+            out string usfm,
+            scrText.Settings.AllowInvisibleChars
+        );
+        log?.AppendLine($"Created usfm of {usfm}");
+
+        // Among other things, normalizing the USFM will remove trailing spaces at the end of verses,
+        // which may cause some churn. This is similar to running "Standardize whitespace" in Paratext.
+        usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
+        log?.AppendLine($"Normalized usfm to {usfm}");
+        return usfm;
+    }
 
     /// <summary>
     /// Converts a Paratext language code into a language-country code for the frontend.
