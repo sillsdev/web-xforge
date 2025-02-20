@@ -24,6 +24,7 @@
     https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/8.0/rid-graph
     -->
     <UseRidGraph>true</UseRidGraph>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="33.0.1" />
