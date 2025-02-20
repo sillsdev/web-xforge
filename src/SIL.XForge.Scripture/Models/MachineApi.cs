@@ -1,3 +1,4 @@
+using System.Linq;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
 
@@ -37,15 +38,15 @@ public static class MachineApi
     /// <summary>
     /// Ensures that a user has permission to perform actions to the Serval/Machine API.
     /// </summary>
-    /// <param name="userId">The user id.</param>
+    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="project">The project.</param>
     /// <exception cref="ForbiddenException">
     /// The user does not have permission to access the Serval/Machine API.
     /// </exception>
-    public static void EnsureProjectPermission(string userId, Project project)
+    public static void EnsureProjectPermission(IUserAccessor userAccessor, Project project)
     {
         // Check for permission
-        if (!HasPermission(userId, project))
+        if (!HasPermission(userAccessor, project))
         {
             throw new ForbiddenException();
         }
@@ -64,11 +65,16 @@ public static class MachineApi
     /// <summary>
     /// Determines if a user has permission to perform actions to the Serval/Machine API.
     /// </summary>
-    /// <param name="userId">The user id.</param>
+    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="project">The project.</param>
     /// <returns><c>true</c> if the user has permission; otherwise, <c>false</c>.</returns>
-    private static bool HasPermission(string? userId, Project project) =>
-        !string.IsNullOrWhiteSpace(userId)
-        && project.UserRoles.TryGetValue(userId, out string role)
-        && role is SFProjectRole.Administrator or SFProjectRole.Translator;
+    private static bool HasPermission(IUserAccessor userAccessor, Project project)
+    {
+        if (string.IsNullOrWhiteSpace(userAccessor.UserId))
+            return false;
+
+        project.UserRoles.TryGetValue(userAccessor.UserId, out string role);
+        return (role is SFProjectRole.Administrator or SFProjectRole.Translator)
+            || userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+    }
 }

@@ -36,7 +36,12 @@ public class TrainingDataService(
         HasHeaderRecord = false,
     };
 
-    public async Task DeleteTrainingDataAsync(string userId, string projectId, string ownerId, string dataId)
+    public async Task DeleteTrainingDataAsync(
+        IUserAccessor userAccessor,
+        string projectId,
+        string ownerId,
+        string dataId
+    )
     {
         // Validate input
         if (!StringUtils.ValidateId(dataId))
@@ -45,7 +50,7 @@ public class TrainingDataService(
         }
 
         // Load the project so we can check permissions
-        await using IConnection conn = await realtimeService.ConnectAsync(userId);
+        await using IConnection conn = await realtimeService.ConnectAsync(userAccessor.UserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
         {
@@ -53,19 +58,22 @@ public class TrainingDataService(
         }
 
         // Ensure permission to access the Machine API
-        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data);
 
         // Ensure the user is the owner of the file, or an administrator
         if (
-            userId != ownerId
-            && !(projectDoc.Data.UserRoles.TryGetValue(userId, out string role) && role is SFProjectRole.Administrator)
+            userAccessor.UserId != ownerId
+            && !(
+                projectDoc.Data.UserRoles.TryGetValue(userAccessor.UserId, out string role)
+                && role is SFProjectRole.Administrator
+            )
         )
         {
             throw new ForbiddenException();
         }
 
         // Delete the file, if it exists
-        string filePath = GetTrainingDataFilePath(userId, projectDoc.Id, dataId);
+        string filePath = GetTrainingDataFilePath(userAccessor.UserId, projectDoc.Id, dataId);
         if (fileSystemService.FileExists(filePath))
         {
             fileSystemService.DeleteFile(filePath);
@@ -75,28 +83,28 @@ public class TrainingDataService(
     /// <summary>
     /// Gets the source and target texts for the training data files.
     /// </summary>
-    /// <param name="userId">The user identifier</param>
+    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="projectId">The project identifier.</param>
     /// <param name="dataIds">The data identifiers to retrieve.</param>
     /// <param name="sourceTexts">The source texts (output).</param>
     /// <param name="targetTexts">The target texts (output).</param>
     /// <returns>The asynchronous task.</returns>
     public async Task GetTextsAsync(
-        string userId,
+        IUserAccessor userAccessor,
         string projectId,
         IEnumerable<string> dataIds,
         IList<ISFText> sourceTexts,
         IList<ISFText> targetTexts
     )
     {
-        await using IConnection conn = await realtimeService.ConnectAsync(userId);
+        await using IConnection conn = await realtimeService.ConnectAsync(userAccessor.UserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
         {
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data);
 
         // Ensure that the training data directory exists
         string trainingDataDir = Path.Combine(siteOptions.Value.SiteDir, DirectoryName, projectId);
@@ -177,7 +185,7 @@ public class TrainingDataService(
     /// <summary>
     /// Saves the training data to the file system, performing conversion if necessary
     /// </summary>
-    /// <param name="userId">The user identifier</param>
+    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="projectId">The project identifier.</param>
     /// <param name="dataId">The data identifier.</param>
     /// <param name="path">The path to the temporary file.</param>
@@ -185,23 +193,28 @@ public class TrainingDataService(
     /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     /// <exception cref="ForbiddenException">The user does not have access to upload.</exception>
     /// <exception cref="FormatException">The data id or CSV file were not in the correct format.</exception>
-    public async Task<Uri> SaveTrainingDataAsync(string userId, string projectId, string dataId, string path)
+    public async Task<Uri> SaveTrainingDataAsync(
+        IUserAccessor userAccessor,
+        string projectId,
+        string dataId,
+        string path
+    )
     {
-        await using IConnection conn = await realtimeService.ConnectAsync(userId);
+        await using IConnection conn = await realtimeService.ConnectAsync(userAccessor.UserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
         {
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data);
 
         if (!StringUtils.ValidateId(dataId))
         {
             throw new FormatException($"{nameof(dataId)} is not a valid id.");
         }
 
-        string outputPath = GetTrainingDataFilePath(userId, projectDoc.Id, dataId);
+        string outputPath = GetTrainingDataFilePath(userAccessor.UserId, projectDoc.Id, dataId);
 
         // Delete the existing file, if it exists
         if (fileSystemService.FileExists(outputPath))

@@ -129,12 +129,7 @@ public class SFProjectsUploadController : ControllerBase
         {
             // Upload, convert and save the training data file
             (dataId, path, projectId) = await HandleFileUploadAsync();
-            Uri relativeUri = await _trainingDataService.SaveTrainingDataAsync(
-                _userAccessor.UserId,
-                projectId,
-                dataId,
-                path
-            );
+            Uri relativeUri = await _trainingDataService.SaveTrainingDataAsync(_userAccessor, projectId, dataId, path);
             Uri uri = new Uri(_httpRequestAccessor.SiteRoot, relativeUri);
             return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
         }
