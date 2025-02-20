@@ -28,6 +28,8 @@ public class SFProjectsRpcController(
     IUserAccessor userAccessor
 ) : RpcControllerBase(userAccessor, exceptionHandler)
 {
+    private readonly IUserAccessor _userAccessor = userAccessor;
+
     internal const string AlreadyProjectMemberResponse = "alreadyProjectMember";
 
     // Keep a reference in this class to prevent duplicate allocation (Warning CS9107)
@@ -597,7 +599,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            await trainingDataService.DeleteTrainingDataAsync(UserId, projectId, ownerId, dataId);
+            await trainingDataService.DeleteTrainingDataAsync(this._userAccessor, projectId, ownerId, dataId);
             return Ok();
         }
         catch (ForbiddenException)
