@@ -8,6 +8,12 @@
       </h1>
     }
 
+    @if (isDraftingOnlyEnabledBecauseUserIsServalAdmin) {
+      <app-notice mode="fill-dark" icon="info">
+        Drafting is not yet enabled on this project. You can only access drafting due to being a Serval admin.
+      </app-notice>
+    }
+
     <section>
       @if (isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
         <div class="drafting-instructions">

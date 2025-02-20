@@ -131,8 +131,16 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   readonly draftDurationHours = 2.5;
 
-  get draftEnabled(): boolean {
+  get isDraftingEnabledForNormalUsers(): boolean {
     return this.isBackTranslationMode || this.isPreTranslationApproved;
+  }
+
+  get draftEnabled(): boolean {
+    return this.isDraftingEnabledForNormalUsers || this.isServalAdmin();
+  }
+
+  get isDraftingOnlyEnabledBecauseUserIsServalAdmin(): boolean {
+    return !this.isDraftingEnabledForNormalUsers && this.isServalAdmin();
   }
 
   get issueEmail(): string {
@@ -172,13 +180,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get isPreviewSupported(): boolean {
-    return (
-      (!this.isBackTranslationMode || this.isBackTranslation) &&
-      this.isTargetLanguageSupported &&
-      this.isSourceProjectSet &&
-      this.canAccessDraftSourceIfAvailable(this.source) &&
-      (this.isBackTranslationMode || this.isPreTranslationApproved)
-    );
+    // return (
+    //   (!this.isBackTranslationMode || this.isBackTranslation) &&
+    //   this.isTargetLanguageSupported &&
+    //   this.isSourceProjectSet &&
+    //   this.canAccessDraftSourceIfAvailable(this.source) &&
+    //   (this.isBackTranslationMode || this.isPreTranslationApproved)
+    // );
+    return this.draftEnabled;
   }
 
   /**

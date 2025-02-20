@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
+import { AuthService } from 'xforge-common/auth.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -109,7 +111,8 @@ export class NmtDraftAuthGuard extends RouterGuard {
     authGuard: AuthGuard,
     projectService: SFProjectService,
     private userService: UserService,
-    private readonly featureFlagService: FeatureFlagService
+    private readonly featureFlagService: FeatureFlagService,
+    private readonly authService: AuthService
   ) {
     super(authGuard, projectService);
   }
@@ -130,6 +133,8 @@ export class NmtDraftAuthGuard extends RouterGuard {
     if (!this.featureFlagService.showNmtDrafting.enabled) {
       return false;
     }
+
+    if (this.authService.currentUserRoles.includes(SystemRole.ServalAdmin)) return true;
 
     const isBackTranslationProject = projectDoc.data.translateConfig?.projectType === ProjectType.BackTranslation;
     if (!isBackTranslationProject && !this.featureFlagService.allowForwardTranslationNmtDrafting.enabled) {
