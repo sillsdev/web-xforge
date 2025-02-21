@@ -160,14 +160,12 @@ export class TestActivatedProjectServiceModule {
         { provide: SFProjectService, useValue: instance(sfProjectService) },
         { provide: PermissionsService, useValue: instance(permissionsService) },
         {
-          // TODO Or should this provide just `ActivatedProjectService`?
-          provide: TestActivatedProjectService,
-          useFactory: () =>
-            new TestActivatedProjectService(
-              instance(sfProjectService),
-              new CacheService(instance(sfProjectService), instance(permissionsService)),
-              new TestActiveProjectIdService(projectId)
-            )
+          provide: ActivatedProjectService,
+          useValue: new TestActivatedProjectService(
+            instance(sfProjectService),
+            new CacheService(instance(sfProjectService), instance(permissionsService)),
+            new TestActiveProjectIdService(projectId)
+          )
         }
       ]
     };

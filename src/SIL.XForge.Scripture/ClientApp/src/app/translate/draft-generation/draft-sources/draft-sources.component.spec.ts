@@ -4,11 +4,11 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { TestActivatedProjectModule } from '../../../../xforge-common/activated-project.service';
+import { TestActivatedProjectServiceModule } from '../../../../xforge-common/activated-project.service';
 import {
   createTestFeatureFlag,
   FeatureFlagService
@@ -19,6 +19,7 @@ import { NoticeService } from '../../../../xforge-common/notice.service';
 import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
@@ -51,7 +52,7 @@ describe('DraftSourcesComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       NoopAnimationsModule,
       TestTranslocoModule,
-      TestActivatedProjectModule.forRoot('project01', mockedSFProjectService, mockedPermissionsService)
+      TestActivatedProjectServiceModule.forRoot('project01', mockedSFProjectService, mockedPermissionsService)
     ],
     declarations: [],
     providers: [
@@ -439,8 +440,11 @@ class TestEnvironment {
     // };
     // when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(draftProjectSources));
     when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
-    // TODO return actual list
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of(sfProjectDocs));
+
+    when(mockedSFProjectService.getProfile(anyString())).thenCall(sfProjectId =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, sfProjectId)
+    );
 
     // when(mockedActivatedProjectService.projectId).thenReturn('project01');
     // when(mockedActivatedProjectService.projectDoc).thenReturn({
