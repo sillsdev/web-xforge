@@ -854,6 +854,7 @@ describe('DraftGenerationStepsComponent', () => {
       })
     } as SFProjectProfileDoc;
     const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
+    const mockTrainingDataDoc = mock(TrainingDataDoc);
 
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
@@ -863,7 +864,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
         instance(mockTrainingDataQuery)
       );
-      when(mockTrainingDataQuery.docs).thenReturn([]);
+      when(mockTrainingDataQuery.docs).thenReturn([mockTrainingDataDoc]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
@@ -873,6 +874,7 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('should allow additional training data', () => {
       expect(component.trainingDataFilesAvailable).toBe(true);
+      expect(component.availableTrainingFiles.length).toBe(1);
     });
 
     it('updates available training data file after uploaded or deleted', () => {
@@ -886,20 +888,20 @@ describe('DraftGenerationStepsComponent', () => {
       component.onTranslatedBookSelect([2]);
       fixture.detectChanges();
       component.tryAdvanceStep();
-      expect(component.availableTrainingFiles.length).toEqual(0);
-
-      // Upload a training data file
-      const mockTrainingDataDoc = mock(TrainingDataDoc);
-      when(mockTrainingDataQuery.docs).thenReturn([mockTrainingDataDoc]);
-      trainingDataQueryLocalChanges$.next();
-      fixture.detectChanges();
       expect(component.availableTrainingFiles.length).toEqual(1);
 
       // Delete a training data file
+      const mockTrainingDataDoc = mock(TrainingDataDoc);
       when(mockTrainingDataQuery.docs).thenReturn([]);
       trainingDataQueryLocalChanges$.next();
       fixture.detectChanges();
       expect(component.availableTrainingFiles.length).toEqual(0);
+
+      // Upload a training data file
+      when(mockTrainingDataQuery.docs).thenReturn([mockTrainingDataDoc]);
+      trainingDataQueryLocalChanges$.next();
+      fixture.detectChanges();
+      expect(component.availableTrainingFiles.length).toEqual(1);
     });
 
     it('generates draft with training data file', () => {
@@ -913,17 +915,13 @@ describe('DraftGenerationStepsComponent', () => {
       component.onTranslatedBookSelect([2]);
       fixture.detectChanges();
       component.tryAdvanceStep();
-      expect(component.availableTrainingFiles.length).toEqual(0);
-
-      // Upload a training data file
-      const mockTrainingDataDoc = mock(TrainingDataDoc);
-      when(mockTrainingDataQuery.docs).thenReturn([mockTrainingDataDoc]);
-      trainingDataQueryLocalChanges$.next();
-      fixture.detectChanges();
       expect(component.availableTrainingFiles.length).toEqual(1);
+      expect(component.selectedTrainingFileIds).toEqual([]);
 
       const fileIds = ['file1'];
       component.onTrainingDataSelect(fileIds);
+      fixture.detectChanges();
+      expect(component.selectedTrainingFileIds).toEqual(fileIds);
       spyOn(component.done, 'emit');
       component.tryAdvanceStep();
       fixture.detectChanges();
