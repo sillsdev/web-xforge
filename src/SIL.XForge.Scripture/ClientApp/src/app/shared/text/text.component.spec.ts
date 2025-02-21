@@ -31,7 +31,7 @@ import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getEmptyChapterDoc, getPoetryVerseTextDoc, getTextDoc } from '../test-utils';
-import { getAttributesAtPosition } from './quill-scripture';
+import { getAttributesAtPosition } from './quill-util';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
 import {
   EDITOR_READY_TIMEOUT,

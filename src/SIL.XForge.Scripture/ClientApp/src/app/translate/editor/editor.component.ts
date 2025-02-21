@@ -105,7 +105,7 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
 import { TabAddRequestService } from '../../shared/sf-tab-group/base-services/tab-add-request.service';
-import { getRetainCount } from '../../shared/text/quill-scripture';
+import { getRetainCount } from '../../shared/text/quill-util';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,

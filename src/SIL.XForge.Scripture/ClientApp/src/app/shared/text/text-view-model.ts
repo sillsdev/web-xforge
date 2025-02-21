@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
-import { getAttributesAtPosition, getRetainCount } from './quill-scripture';
+import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
 /** See also DeltaUsxMapper.cs ParagraphPoetryListStyles. */

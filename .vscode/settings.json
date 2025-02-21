@@ -5,6 +5,7 @@
   "csharp.format.enable": true,
   "cSpell.words": [
     "appbuilder",
+    "attributors",
     "backout",
     "bowser",
     "bson",
