@@ -3,7 +3,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -317,8 +317,9 @@ class TestEnvironment {
   readonly realtimeService: TestRealtimeService;
 
   private readonly mockProjects: SelectableProject[] = [
-    { paratextId: 'project01', name: 'Project 1', shortName: 'PRJ1' },
-    { paratextId: 'project02', name: 'Project 2', shortName: 'PRJ2' }
+    { paratextId: 'paratextId1', name: 'Test project 1', shortName: 'P1' },
+    { paratextId: 'paratextId2', name: 'Test project 2', shortName: 'P2' },
+    { paratextId: 'paratextId3', name: 'Test project 3', shortName: 'P3' }
   ];
 
   private readonly mockResources: SelectableProjectWithLanguageCode[] = [
@@ -333,31 +334,53 @@ class TestEnvironment {
     when(mockedParatextService.getResources()).thenResolve(this.mockResources);
     when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
     when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
-    const draftProjectSources: DraftSourcesAsArrays = {
-      trainingSources: [instance(mock<DraftSource>()), instance(mock<DraftSource>())],
-      trainingTargets: [
-        {
-          paratextId: 'project01',
-          shortName: 'PRJ1',
-          writingSystem: { tag: 'en' }
-        } as DraftSource
-      ],
-      draftingSources: [instance(mock<DraftSource>())]
-    };
-    when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(draftProjectSources));
 
-    when(mockedActivatedProjectService.projectId).thenReturn('project01');
-    when(mockedActivatedProjectService.projectDoc).thenReturn({
-      id: 'project01',
-      data: {
-        paratextId: 'project01',
-        shortName: 'PRJ1',
-        writingSystem: { tag: 'en' }
-      }
-    } as SFProjectProfileDoc);
-
-    const sfProjectProfileDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
+    const sfProjectProfileDoc = {
+      data: createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            alternateSourceEnabled: true,
+            alternateSource: {
+              paratextId: 'paratextId2',
+              projectRef: 'sfp2',
+              name: 'Test project 2',
+              shortName: 'P2',
+              writingSystem: { tag: 'en' },
+              isRightToLeft: false
+            },
+            alternateTrainingSourceEnabled: true,
+            alternateTrainingSource: {
+              paratextId: 'resource02',
+              projectRef: 'sfr2',
+              name: 'Resource 2',
+              shortName: 'RSC2',
+              writingSystem: { tag: 'en' },
+              isRightToLeft: false
+            },
+            additionalTrainingSourceEnabled: true,
+            additionalTrainingSource: {
+              paratextId: 'paratextId3',
+              projectRef: 'sfp3',
+              name: 'Test project 3',
+              shortName: 'P3',
+              writingSystem: { tag: 'en' },
+              isRightToLeft: false
+            }
+          },
+          source: {
+            paratextId: 'resource01',
+            projectRef: 'sfr1',
+            name: 'Resource 1',
+            shortName: 'RSC1',
+            writingSystem: { tag: 'en' },
+            isRightToLeft: false
+          }
+        }
+      })
+    } as SFProjectProfileDoc;
     when(mockedActivatedProjectService.changes$).thenReturn(of(sfProjectProfileDoc));
+    when(mockedActivatedProjectService.projectDoc).thenReturn(sfProjectProfileDoc);
+    when(mockedActivatedProjectService.projectId).thenReturn(sfProjectProfileDoc.id);
     when(mockedActivatedProjectService.projectDoc).thenReturn(sfProjectProfileDoc);
     when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of([sfProjectProfileDoc]));
