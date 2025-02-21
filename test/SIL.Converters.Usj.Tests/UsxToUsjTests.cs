@@ -1,5 +1,5 @@
-using System;
 using System.Xml;
+using System.Xml.Linq;
 using NUnit.Framework;
 
 namespace SIL.Converters.Usj.Tests;
@@ -27,6 +27,20 @@ public class UsxToUsjTests
     public void ShouldConvertFromNullToUsj()
     {
         Usj usj = UsxToUsj.UsxStringToUsj(null);
+        Assert.That(usj, Is.EqualTo(TestData.UsjEmpty).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromNullXDocumentToUsj()
+    {
+        Usj usj = UsxToUsj.UsxXDocumentToUsj(null);
+        Assert.That(usj, Is.EqualTo(TestData.UsjEmpty).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromNullXmlDocumentToUsj()
+    {
+        Usj usj = UsxToUsj.UsxXmlDocumentToUsj(null);
         Assert.That(usj, Is.EqualTo(TestData.UsjEmpty).UsingPropertiesComparer());
     }
 
@@ -213,6 +227,26 @@ public class UsxToUsjTests
     }
 
     [Test]
+    public void ShouldConvertFromXDocumentToUsj()
+    {
+        XDocument document = XDocument.Parse(TestData.UsxGen1V1, LoadOptions.PreserveWhitespace);
+        Usj usj = UsxToUsj.UsxXDocumentToUsj(document);
+        Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromXDocumentToUsj_Roundtrip()
+    {
+        string usx = TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1);
+        usx = TestData.RemoveEidElements(usx);
+        XDocument document = XDocument.Parse(usx, LoadOptions.PreserveWhitespace);
+        Usj usj = UsxToUsj.UsxXDocumentToUsj(document);
+
+        XDocument actualUsx = UsjToUsx.UsjToUsxXDocument(usj);
+        Assert.That(actualUsx, Is.EqualTo(document).UsingPropertiesComparer());
+    }
+
+    [Test]
     public void ShouldConvertFromXmlDocumentToUsj()
     {
         XmlDocument document = new XmlDocument { PreserveWhitespace = true };
@@ -233,12 +267,4 @@ public class UsxToUsjTests
         XmlDocument actualUsx = UsjToUsx.UsjToUsxXmlDocument(usj);
         Assert.That(actualUsx, Is.EqualTo(document).UsingPropertiesComparer());
     }
-
-    [Test]
-    public void ShouldNotConvertFromNullXmlDocumentToUsj() =>
-        Assert.Throws<ArgumentException>(() => UsxToUsj.UsxXmlDocumentToUsj(null));
-
-    [Test]
-    public void ShouldNotConvertFromNonPreserveWhitespaceXmlDocumentToUsj() =>
-        Assert.Throws<ArgumentException>(() => UsxToUsj.UsxXmlDocumentToUsj(new XmlDocument()));
 }

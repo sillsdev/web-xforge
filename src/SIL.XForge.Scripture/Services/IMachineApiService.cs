@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac.Extras.DynamicProxy;
@@ -58,6 +60,16 @@ public interface IMachineApiService
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        bool isServalAdmin,
+        DateTime timestamp,
+        CancellationToken cancellationToken
+    );
+    IAsyncEnumerable<DocumentRevision> GetPreTranslationRevisionsAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<string> GetPreTranslationUsfmAsync(
@@ -66,6 +78,7 @@ public interface IMachineApiService
         int bookNum,
         int chapterNum,
         bool isServalAdmin,
+        DateTime timestamp,
         CancellationToken cancellationToken
     );
     Task<Usj> GetPreTranslationUsjAsync(
@@ -73,6 +86,8 @@ public interface IMachineApiService
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        bool isServalAdmin,
+        DateTime timestamp,
         CancellationToken cancellationToken
     );
     Task<string> GetPreTranslationUsxAsync(
@@ -80,6 +95,8 @@ public interface IMachineApiService
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        bool isServalAdmin,
+        DateTime timestamp,
         CancellationToken cancellationToken
     );
     Task<WordGraph> GetWordGraphAsync(

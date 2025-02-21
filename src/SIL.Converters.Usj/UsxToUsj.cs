@@ -1,9 +1,9 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace SIL.Converters.Usj
 {
@@ -170,24 +170,40 @@ namespace SIL.Converters.Usj
         }
 
         /// <summary>
-        /// Converts a USX Xml Document to USJ.
+        /// Converts a USX XDocument to USJ.
         /// </summary>
-        /// <param name="xmlDocument">The XML document.</param>
+        /// <param name="document">The XML document.</param>
         /// <returns>The USJ.</returns>
-        /// <remarks>
-        /// The <see cref="XmlDocument"/> should have <see cref="XmlDocument.PreserveWhitespace"/> set to <c>true</c>.
-        /// </remarks>
-        public static Usj UsxXmlDocumentToUsj(XmlDocument xmlDocument)
+        public static Usj UsxXDocumentToUsj(XDocument document)
         {
-            if (xmlDocument?.PreserveWhitespace != true)
+            if (document == null)
             {
-                throw new ArgumentException(
-                    "The XmlDocument should have PreserveWhitespace set to true.",
-                    nameof(xmlDocument)
-                );
+                return UsxDomToUsj(null);
+            }
+
+            // Convert the XDocument to an XmlDocument, as the conversion logic is heavily dependent on XmlDocument
+            XmlDocument xmlDocument = new XmlDocument
+            {
+                PreserveWhitespace = true, // Whitespace inside nodes is important
+            };
+            using (var reader = document.CreateReader())
+            {
+                xmlDocument.Load(reader);
             }
 
             return UsxDomToUsj(xmlDocument.DocumentElement);
         }
+
+        /// <summary>
+        /// Converts a USX XmlDocument to USJ.
+        /// </summary>
+        /// <param name="document">The XML document.</param>
+        /// <returns>The USJ.</returns>
+        /// <remarks>
+        /// The <see cref="XmlDocument"/> should have <see cref="XmlDocument.PreserveWhitespace"/> set to <c>true</c>,
+        /// if you have loaded it directly from a text file. <see cref="XmlDocument"/> objects created by ParatextData
+        /// will not have this set as they are created using an <see cref="XmlWriter"/>.
+        /// </remarks>
+        public static Usj UsxXmlDocumentToUsj(XmlDocument document) => UsxDomToUsj(document?.DocumentElement);
     }
 }
