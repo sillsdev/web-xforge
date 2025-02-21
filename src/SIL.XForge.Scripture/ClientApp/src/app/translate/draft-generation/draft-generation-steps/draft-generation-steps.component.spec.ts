@@ -3,7 +3,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -12,6 +12,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
@@ -33,9 +34,11 @@ describe('DraftGenerationStepsComponent', () => {
   const mockNoticeService = mock(NoticeService);
   const mockDraftSourceService = mock(DraftSourcesService);
   const mockAuthService = mock(AuthService);
+  const mockUserService = mock(UserService);
 
   const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
-  when(mockTrainingDataQuery.localChanges$).thenReturn(of());
+  const localChanges$: Subject<void> = new Subject<void>();
+  when(mockTrainingDataQuery.localChanges$).thenReturn(localChanges$);
   when(mockTrainingDataQuery.ready$).thenReturn(of(true));
   when(mockTrainingDataQuery.remoteChanges$).thenReturn(of());
   when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
@@ -52,7 +55,8 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: ProgressService, useMock: mockProgressService },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: NoticeService, useMock: mockNoticeService },
-      { provide: AuthService, useMock: mockAuthService }
+      { provide: AuthService, useMock: mockAuthService },
+      { provide: UserService, useMock: mockUserService }
     ]
   }));
 
@@ -869,6 +873,25 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('should allow additional training data', () => {
       expect(component.trainingDataFilesAvailable).toBe(true);
+    });
+
+    it('shows training data file after uploaded', () => {
+      fixture.detectChanges();
+      clickConfirmLanguages(fixture);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.onTranslateBookSelect([3]);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      component.onTranslatedBookSelect([2]);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      expect(component.availableTrainingFiles.length).toEqual(0);
+      const mockTrainingDataDoc = mock(TrainingDataDoc);
+      when(mockTrainingDataQuery.docs).thenReturn([mockTrainingDataDoc]);
+      localChanges$.next();
+      fixture.detectChanges();
+      expect(component.availableTrainingFiles.length).toEqual(1);
     });
   });
 

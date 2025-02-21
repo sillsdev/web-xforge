@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'training_data_multi_select'">
   <div class="flex-row">
-    @for (trainingData of trainingDataOptions; track trainingData) {
+    @for (trainingData of trainingDataOptions; track trainingData.value.dataId) {
       <mat-chip-listbox
         class="training-data-multi-select"
         hideSingleSelectionIndicator
