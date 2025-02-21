@@ -917,7 +917,6 @@ describe('DraftGenerationStepsComponent', () => {
 
       // Upload a training data file
       const mockTrainingDataDoc = mock(TrainingDataDoc);
-      when(mockTrainingDataDoc.id);
       when(mockTrainingDataQuery.docs).thenReturn([mockTrainingDataDoc]);
       trainingDataQueryLocalChanges$.next();
       fixture.detectChanges();
