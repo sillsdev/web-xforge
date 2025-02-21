@@ -1,14 +1,13 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
-import { anyString, anything, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { TestActivatedProjectServiceModule } from '../../../../xforge-common/activated-project.service';
+import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import {
   createTestFeatureFlag,
   FeatureFlagService
@@ -18,47 +17,32 @@ import { ElementState } from '../../../../xforge-common/models/element-state';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
-import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
-import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';
 
-interface PTProjectMultiMetadata {
-  sfProjectId?: string;
-  selectableProject?: SelectableProject;
-  selectableProjectWithLanguageCode?: SelectableProjectWithLanguageCode;
-  paratextProject?: ParatextProject;
-  sfProjectProfile?: SFProjectProfile;
-  sfProject?: SFProject;
-  isResource?: boolean;
-}
-
 const mockedParatextService = mock(ParatextService);
+const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedSFUserProjectsService = mock(SFUserProjectsService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
-const mockedPermissionsService = mock(PermissionsService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NoopAnimationsModule,
-      TestTranslocoModule,
-      TestActivatedProjectServiceModule.forRoot('project01', mockedSFProjectService, mockedPermissionsService)
-    ],
+    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule, TestTranslocoModule],
     declarations: [],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
+      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
+      { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: DraftSourcesService, useMock: mockedDraftSourcesService },
       { provide: SFUserProjectsService, useMock: mockedSFUserProjectsService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
@@ -332,129 +316,51 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<DraftSourcesComponent>;
   readonly realtimeService: TestRealtimeService;
 
+  private readonly mockProjects: SelectableProject[] = [
+    { paratextId: 'project01', name: 'Project 1', shortName: 'PRJ1' },
+    { paratextId: 'project02', name: 'Project 2', shortName: 'PRJ2' }
+  ];
+
+  private readonly mockResources: SelectableProjectWithLanguageCode[] = [
+    { paratextId: 'resource01', name: 'Resource 1', shortName: 'RSC1', languageTag: 'en' },
+    { paratextId: 'resource02', name: 'Resource 2', shortName: 'RSC2', languageTag: 'en' }
+  ];
+
   constructor() {
     this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-    const sfProjectDocs: SFProjectDoc[] = [
-      {
-        id: 'sfp1',
-        data: createTestProject({
-          paratextId: 'ptp1',
-          shortName: 'PRJ1',
-          writingSystem: { tag: 'en' }
-        })
-      },
-      {
-        id: 'sfp2',
-        data: createTestProject({
-          paratextId: 'ptp2',
-          shortName: 'PRJ2',
-          writingSystem: { tag: 'en' }
-        })
-      },
-      {
-        id: 'sfp3',
-        data: createTestProject({
-          paratextId: 'ptp3',
-          shortName: 'PRJ3',
-          writingSystem: { tag: 'en' },
-          resourceConfig: {
-            createdTimestamp: Date.now(),
-            manifestChecksum: '123',
-            permissionsChecksum: '123',
-            revision: 1
-          }
-        })
-      }
-    ] as SFProjectDoc[];
-
-    // Projects that are not in SF yet.
-    const moreProjects: SelectableProjectWithLanguageCode[] = [
-      { paratextId: 'project01', name: 'Project 1', shortName: 'PRJ1', languageTag: 'en' },
-      { paratextId: 'project02', name: 'Project 2', shortName: 'PRJ2', languageTag: 'en' }
-    ];
-
-    const userPTProjectsAsMulti: PTProjectMultiMetadata[] = sfProjectDocs.map<PTProjectMultiMetadata>(doc => ({
-      sfProjectId: doc.id,
-      sfProject: doc.data,
-      paratextProject: {
-        paratextId: doc.data!.paratextId,
-        name: doc.data!.name,
-        shortName: doc.data!.shortName,
-        languageTag: doc.data!.writingSystem.tag,
-        projectId: doc.id,
-        isConnectable: true,
-        isConnected: true
-      }
-    }));
-
-    const moreProjectsAsMulti: PTProjectMultiMetadata[] = moreProjects.map<PTProjectMultiMetadata>(project => ({
-      paratextProject: {
-        paratextId: project.paratextId,
-        name: project.name,
-        shortName: project.shortName,
-        languageTag: project.languageTag,
-        isConnectable: true,
-        isConnected: false
-      }
-    }));
-
-    const userPTResourcesAsMulti: PTProjectMultiMetadata[] = sfProjectDocs
-      .filter(x => x.data!.resourceConfig != null)
-      .map<PTProjectMultiMetadata>(doc => ({
-        sfProjectId: doc.id,
-        selectableProjectWithLanguageCode: {
-          name: doc.data!.name,
-          shortName: doc.data!.shortName,
-          paratextId: doc.data!.paratextId,
-          languageTag: doc.data!.writingSystem.tag
-        }
-      }));
-
-    // Resources that are not in SF yet.
-    const moreResources: SelectableProjectWithLanguageCode[] = [
-      { paratextId: 'resource01', name: 'Resource 1', shortName: 'RSC1', languageTag: 'en' },
-      { paratextId: 'resource02', name: 'Resource 2', shortName: 'RSC2', languageTag: 'en' }
-    ];
-
-    when(mockedParatextService.getProjects()).thenResolve(
-      [...userPTProjectsAsMulti.map(x => x.paratextProject), ...moreProjectsAsMulti.map(x => x.paratextProject)].filter(
-        x => x != null
-      )
-    );
-    when(mockedParatextService.getResources()).thenResolve(
-      [...userPTResourcesAsMulti.map(x => x.selectableProjectWithLanguageCode), ...moreResources].filter(x => x != null)
-    );
+    when(mockedParatextService.getProjects()).thenResolve(this.mockProjects as ParatextProject[]);
+    when(mockedParatextService.getResources()).thenResolve(this.mockResources);
     when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
     when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
-    // const draftProjectSources: DraftSourcesAsArrays = {
-    //   trainingSources: [instance(mock<DraftSource>()), instance(mock<DraftSource>())],
-    //   trainingTargets: [
-    //     {
-    //       paratextId: 'project01',
-    //       shortName: 'PRJ1',
-    //       writingSystem: { tag: 'en' }
-    //     } as DraftSource
-    //   ],
-    //   draftingSources: [instance(mock<DraftSource>())]
-    // };
-    // when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(draftProjectSources));
+    const draftProjectSources: DraftSourcesAsArrays = {
+      trainingSources: [instance(mock<DraftSource>()), instance(mock<DraftSource>())],
+      trainingTargets: [
+        {
+          paratextId: 'project01',
+          shortName: 'PRJ1',
+          writingSystem: { tag: 'en' }
+        } as DraftSource
+      ],
+      draftingSources: [instance(mock<DraftSource>())]
+    };
+    when(mockedDraftSourcesService.getDraftProjectSources()).thenReturn(of(draftProjectSources));
+
+    when(mockedActivatedProjectService.projectId).thenReturn('project01');
+    when(mockedActivatedProjectService.projectDoc).thenReturn({
+      id: 'project01',
+      data: {
+        paratextId: 'project01',
+        shortName: 'PRJ1',
+        writingSystem: { tag: 'en' }
+      }
+    } as SFProjectProfileDoc);
+
+    const sfProjectProfileDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
+    when(mockedActivatedProjectService.changes$).thenReturn(of(sfProjectProfileDoc));
+    when(mockedActivatedProjectService.projectDoc).thenReturn(sfProjectProfileDoc);
     when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
-    when(mockedSFUserProjectsService.projectDocs$).thenReturn(of(sfProjectDocs));
-
-    when(mockedSFProjectService.getProfile(anyString())).thenCall(sfProjectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, sfProjectId)
-    );
-
-    // when(mockedActivatedProjectService.projectId).thenReturn('project01');
-    // when(mockedActivatedProjectService.projectDoc).thenReturn({
-    //   id: 'project01',
-    //   data: {
-    //     paratextId: 'project01',
-    //     shortName: 'PRJ1',
-    //     writingSystem: { tag: 'en' }
-    //   }
-    // } as SFProjectProfileDoc);
+    when(mockedSFUserProjectsService.projectDocs$).thenReturn(of([sfProjectProfileDoc]));
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;
