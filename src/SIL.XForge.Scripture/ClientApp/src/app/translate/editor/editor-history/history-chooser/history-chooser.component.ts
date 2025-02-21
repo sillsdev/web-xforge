@@ -15,7 +15,9 @@ import {
   startWith,
   tap
 } from 'rxjs';
+import { CommandError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -67,7 +69,8 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     private readonly noticeService: NoticeService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
-    private readonly textDocService: TextDocService
+    private readonly textDocService: TextDocService,
+    private readonly errorReportingService: ErrorReportingService
   ) {}
 
   get canRestoreSnapshot(): boolean {
@@ -156,19 +159,29 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       return;
     }
 
-    // Revert to the snapshot
-    const delta: Delta = new Delta(this.selectedSnapshot.data.ops);
-    const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
-    await this.textDocService.overwrite(textDocId, delta, 'History');
-    await this.projectService.onlineSetIsValid(
-      textDocId.projectId,
-      textDocId.bookNum,
-      textDocId.chapterNum,
-      this.selectedSnapshot.isValid
-    );
+    try {
+      // Revert to the snapshot
+      const delta: Delta = new Delta(this.selectedSnapshot.data.ops);
+      const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
+      await this.projectService.onlineSetIsValid(
+        textDocId.projectId,
+        textDocId.bookNum,
+        textDocId.chapterNum,
+        this.selectedSnapshot.isValid
+      );
+      await this.textDocService.overwrite(textDocId, delta, 'History');
 
-    // Force the history editor to reload
-    this.revisionSelect.emit({ revision: this.selectedRevision, snapshot: this.selectedSnapshot });
+      this.noticeService.show(translate('history_chooser.revert_successful'));
+      // Force the history editor to reload
+      this.revisionSelect.emit({ revision: this.selectedRevision, snapshot: this.selectedSnapshot });
+    } catch (err) {
+      this.noticeService.showError(translate('history_chooser.revert_error'));
+      if (err instanceof CommandError && err.message.includes('504 Gateway Timeout')) return;
+      this.errorReportingService.silentError(
+        'Error occurred restoring a snapshot',
+        ErrorReportingService.normalizeError(err)
+      );
+    }
   }
 
   toggleDiff(): void {
