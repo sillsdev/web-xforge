@@ -1,10 +1,9 @@
-import { Inject, Injectable, ModuleWithProviders, NgModule } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter, map, startWith, switchMap } from 'rxjs/operators';
-import { instance } from 'ts-mockito';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { PermissionsService } from '../app/core/permissions.service';
 import { SFProjectService } from '../app/core/sf-project.service';
@@ -135,39 +134,12 @@ export class TestActivatedProjectService extends ActivatedProjectService {
   }
 
   static withProjectId(projectId: string): TestActivatedProjectService {
-    if (TestBed.inject(TestActivatedProjectServiceModule, null) == null) {
-      throw new Error(
-        'TestActivatedProjectService.withProjectId() requires TestActivatedProjectModule. ' +
-          'Please add to TestBed imports:\n' +
-          'imports: [TestActivatedProjectModule.forRoot({ projectId, sfProjectService, permissionsService })]'
-      );
-    }
-    return TestBed.inject(TestActivatedProjectService);
-  }
-}
-
-/** Provides test environment for components needing ActivatedProjectService */
-@NgModule({})
-export class TestActivatedProjectServiceModule {
-  static forRoot(
-    projectId: string,
-    sfProjectService: SFProjectService,
-    permissionsService: PermissionsService
-  ): ModuleWithProviders<TestActivatedProjectServiceModule> {
-    return {
-      ngModule: TestActivatedProjectServiceModule,
-      providers: [
-        { provide: SFProjectService, useValue: instance(sfProjectService) },
-        { provide: PermissionsService, useValue: instance(permissionsService) },
-        {
-          provide: ActivatedProjectService,
-          useValue: new TestActivatedProjectService(
-            instance(sfProjectService),
-            new CacheService(instance(sfProjectService), instance(permissionsService)),
-            new TestActiveProjectIdService(projectId)
-          )
-        }
-      ]
-    };
+    const projectService = TestBed.inject(SFProjectService);
+    const permissionsService = TestBed.inject(PermissionsService);
+    return new TestActivatedProjectService(
+      projectService,
+      new CacheService(projectService, permissionsService),
+      new TestActiveProjectIdService(projectId)
+    );
   }
 }
