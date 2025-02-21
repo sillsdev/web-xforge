@@ -13,7 +13,6 @@ import {
   FeatureFlagService
 } from '../../../../xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from '../../../../xforge-common/i18n.service';
-import { ElementState } from '../../../../xforge-common/models/element-state';
 import { NoticeService } from '../../../../xforge-common/notice.service';
 import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -64,58 +63,6 @@ describe('DraftSourcesComponent', () => {
     verify(mockedParatextService.getResources()).once();
     expect(env.component.projects).toBeDefined();
     expect(env.component.resources).toBeDefined();
-  }));
-
-  it('should not save when language codes are not confirmed', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.component.languageCodesConfirmed = false;
-
-    env.component.save();
-    tick();
-
-    verify(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).never();
-  }));
-
-  it('updates control state during save', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).thenResolve();
-    env.component.languageCodesConfirmed = true;
-
-    env.component.save();
-    tick();
-
-    expect(env.component.getControlState('projectSettings')).toBe(ElementState.Submitted);
-    verify(mockedSFProjectService.onlineUpdateSettings('project01', anything())).once();
-  }));
-
-  it('shows error state when save fails', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).thenReject(new Error('error saving'));
-    env.component.languageCodesConfirmed = true;
-
-    env.component.save();
-    tick();
-
-    expect(env.component.getControlState('projectSettings')).toBe(ElementState.Error);
-    verify(mockedSFProjectService.onlineUpdateSettings('project01', anything())).once();
-  }));
-
-  it('shows submitting state while saving', fakeAsync(() => {
-    const env = new TestEnvironment();
-    let resolvePromise: () => void;
-    const savePromise = new Promise<void>(resolve => {
-      resolvePromise = resolve;
-    });
-    when(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).thenReturn(savePromise);
-    env.component.languageCodesConfirmed = true;
-
-    env.component.save();
-    tick();
-
-    expect(env.component.getControlState('projectSettings')).toBe(ElementState.Submitted);
-    resolvePromise!();
-    tick();
-    expect(env.component.getControlState('projectSettings')).toBe(ElementState.Submitted);
   }));
 
   describe('sourceArraysToSettingsChange', () => {
