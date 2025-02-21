@@ -96,6 +96,22 @@ mat-card:active {
   flex-direction: column;
 }
 
+.user-update-project {
+  display: grid;
+  grid-template-areas:
+    'project-name project-name'
+    'description empty';
+  background-color: #e8fafd;
+}
+
+.user-update-project-btn {
+  background-color: #51d6f0 !important;
+}
+
+.user-update-project-btn:hover {
+  background-color: white !important;
+}
+
 .loading-card {
   display: grid;
   grid-template-areas:
