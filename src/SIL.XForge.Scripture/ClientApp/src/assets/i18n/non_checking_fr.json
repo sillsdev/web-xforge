@@ -108,10 +108,7 @@
     "share_with_others": "Partager avec d'autres"
   },
   "confirm_draft_sources": {
-    "confirm_lang_codes_correct": "Tous les codes de langue sont corrects.",
     "drafting_from_heading": "Rédaction à partir de {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
-    "how_to_change_language_codes": "Les codes de langue peuvent être modifiés dans Paratext en allant dans Paramètres du projet > Propriétés du projet > Langue.",
-    "incorrect_language_codes_reduce_quality": "Les codes de langue incorrects réduiront considérablement la qualité des ébauches.",
     "language_code": "Code de la langue :",
     "references_heading": "Références ({{ referenceLanguage }})",
     "review_draft_setup": "Revoir la configuration d'une ébauche",
@@ -193,14 +190,11 @@
     "generate_draft_button": "Générer une ébauche",
     "generate_forward_translation_drafts_header": "Générer des brouillons de traduction",
     "generate_new_draft": "Nouvelle ébauche",
-    "info_alert_different_additional_training_and_source_language": "La langue de votre texte de formation supplémentaire ({{ additionalTrainingSourceLanguageDisplayName }}) doit être la même que la langue source de la formation ({{ alternateTrainingSourceLanguageDisplayName }}). Sélectionnez un autre texte de formation supplémentaire sur la page [link:projectSettingsUrl]paramètres[/link].",
-    "info_alert_different_training_and_source_language": "La langue de votre texte de formation alternatif ({{ alternateTrainingSourceLanguageDisplayName }}) doit être la même que la langue source ({{ sourceLanguageDisplayName }}). Sélectionnez un texte de formation alternatif différent sur la page [link:projectSettingsUrl]paramètres[/link].",
     "info_alert_last_sync_failed": "Votre projet n'a pas réussi à se synchroniser. Il sera synchronisé lorsque vous générerez votre prochaine ébauche.",
     "info_alert_no_source_access": "Vous n'avez pas accès au projet de traduction {{ name }}. Veuillez contacter votre administrateur Paratext pour obtenir l'accès, puis [link:connectProjectUrl]connectez-vous à ce projet[/link] avant de pouvoir générer une ébauche.",
     "info_alert_no_training_source_access": "Vous n'avez pas accès au projet source de formation {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
     "info_alert_download_error": "Un problème est survenu lors du téléchargement de votre ébauche. Veuillez vérifier votre connexion Internet et réessayer dans quelques minutes.",
     "info_alert_no_additional_training_source_access": "Vous n'avez pas accès au projet source de formation supplémentaire {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
-    "info_alert_same_source_and_target_language": "La langue de votre texte source doit être différente de la langue cible ({{ targetLanguageDisplayName }}). Sélectionnez un texte source différent sur la page [link:projectSettingsUrl]settings[/link].",
     "info_alert_source_text_not_selected": "Votre projet n'a pas de texte source sélectionné. Ceci est nécessaire pour produire une ébauche. Sélectionnez un texte source sur la [link:projectSettingsUrl]page des paramètres[/link].",
     "instructions_draft_process": "La génération d'une ébauche prend généralement au moins {{ count }} heures.",
     "instructions_draft_process_subtext": "Cela peut prendre beaucoup plus de temps lorsque le système est occupé.",
@@ -211,9 +205,6 @@
     "instructions_scripture_forge_assist_back_translation_subtext": "Si votre équipe a déjà rédigé un ou plusieurs livres et retraduit un ou plusieurs d'entre eux, Scripture Forge peut utiliser les livres retraduits pour générer une ébauche du prochain livre sur lequel vous travaillez.",
     "instructions_scripture_forge_assist_forward_translation": "Scripture Forge peut vous aider à ébaucher une traduction.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "En fonction de votre progression de traduction existante, vous pouvez utiliser les livres que vous avez déjà traduits pour générer une ébauche du prochain livre sur lequel vous travaillez.",
-    "non_pa_info_alert_different_additional_training_and_source_language": "La langue de votre texte de formation supplémentaire ({{ additionalTrainingSourceLanguageDisplayName }}) doit être la même que la langue de la source de formation ({{ alternateTrainingSourceLanguageDisplayName }}). Veuillez demander à votre administrateur Paratext de sélectionner un autre texte de formation supplémentaire.",
-    "non_pa_info_alert_different_training_and_source_language": "La langue de votre texte de formation alternatif ({{ alternateTrainingSourceLanguageDisplayName }}) doit être la même que la langue source ({{ sourceLanguageDisplayName }}). Veuillez demander à votre administrateur Paratext de sélectionner un autre texte de formation.",
-    "non_pa_info_alert_same_source_and_target_language": "La langue de votre texte source doit être différente de la langue cible ({{ targetLanguageDisplayName }}). Veuillez demander à votre administrateur Paratext de modifier la source avant de pouvoir générer une ébauche.",
     "non_pa_info_alert_source_text_not_selected": "Votre projet n'a pas de texte source sélectionné. Ceci est requis pour produire une traduction ébauchée. Veuillez avoir votre administrateur Paratext de sélectionner une source avant de pouvoir générer une ébauche.",
     "offline_message": "La génération d'une ébauche n'est pas disponible hors connexion.",
     "preview_draft_button": "Prévisualiser l'ébauche",
@@ -405,6 +396,20 @@
     "transcelerator_paratext": "{1}Transcelerator{2} est un plugin pour {3}Paratext{4} pour aider à la création et à la traduction des questions de vérification des écritures.",
     "transcelerator_some_questions_already_imported": "Remarque : Certaines questions sélectionnées ont déjà été importées. Les questions qui ont été modifiées dans Transcelerator seront mises à jour dans Scripture Forge, et les doublons seront ignorés.",
     "update_transcelerator": "La version de Transcelerator utilisée dans ce projet n'est pas prise en charge. Veuillez mettre à jour Transcelerator, vers au moins la version 1.5.3."
+  },
+  "language_codes_confirmation": {
+    "all_sources_should_be_same_language": "Tous les projets de source et de référence doivent être dans la même langue",
+    "change_source_projects_on_settings_page": "Les projets sources peuvent être modifiés sur la page de [link:projectSettingsUrl]paramètres[/link]",
+    "confirm_lang_codes_correct": "Tous les codes de langue sont corrects",
+    "contact_project_administrator_to_change_settings": "Contactez l'administrateur de votre projet si les paramètres de langue doivent être mis à jour",
+    "how_to_change_language_codes": "Les codes de langue peuvent être modifiés dans Paratext en allant dans Paramètres du projet > Propriétés du projet > Langue.",
+    "incorrect_language_codes_reduce_quality": "Les codes de langue incorrects réduiront considérablement la qualité des ébauches.",
+    "i_understand_and_accept": "Je comprends le problème et je veux continuer quand même",
+    "please_make_sure_codes_correct": "Veuillez vous assurer que tous les codes de langue sont corrects avant de continuer.",
+    "source_and_reference_languages_different": "Les projets de source et de référence ont actuellement les codes de langue suivants : {{ languageCodes }}. L'utilisation de codes de langue incorrects, ou l'utilisation de projets de source ou de référence qui ne sont pas tous dans la même langue, peuvent réduire considérablement la qualité de l'ébauche.",
+    "source_and_target_languages_same": "Les langues source et cible sont à la fois {{ displayLanguage }}",
+    "source_and_target_projects_all_have_language_code": "Les projets source et cible ont tous le code de langue [b]{{ languageCode }}[/b] . Si vous traduisez dans un dialecte ou une langue connexe qui n'a pas de code ISO séparé, ces paramètres peuvent être corrects. Pour tous les autres projets, le fait d'avoir les projets source et cible fixés dans la même langue peut considérablement réduire la qualité du brouillon.",
+    "sources_must_be_same_language": "La source de formation doit être dans la même langue que la source de rédaction. Vous pouvez mettre à jour vos textes sources sur la [link:projectSettingsUrl]page des paramètres[/link]"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} autres observateurs"

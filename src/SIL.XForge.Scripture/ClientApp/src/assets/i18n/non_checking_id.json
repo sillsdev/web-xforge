@@ -108,10 +108,7 @@
     "share_with_others": "Bagikan dengan orang lain"
   },
   "confirm_draft_sources": {
-    "confirm_lang_codes_correct": "All the language codes are correct.",
     "drafting_from_heading": "Drafting from {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
-    "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
-    "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
     "language_code": "Language code: ",
     "references_heading": "References ({{ referenceLanguage }})",
     "review_draft_setup": "Review draft setup",
@@ -193,14 +190,11 @@
     "generate_draft_button": "Buat konsep",
     "generate_forward_translation_drafts_header": "Membuat konsep terjemahan",
     "generate_new_draft": "Draf baru",
-    "info_alert_different_additional_training_and_source_language": "Bahasa untuk teks pelatihan tambahan Anda ({{ additionalTrainingSourceLanguageDisplayName }}) harus sama dengan bahasa sumber pelatihan ({{ alternateTrainingSourceLanguageDisplayName }}). Pilih teks pelatihan tambahan yang berbeda pada [link:projectSettingsUrl]halaman pengaturan[/link].",
-    "info_alert_different_training_and_source_language": "Bahasa untuk teks pelatihan alternatif ({{ alternateTrainingSourceLanguageDisplayName }}) harus sama dengan bahasa sumber ({{ sourceLanguageDisplayName }}). Pilih teks pelatihan alternatif yang berbeda pada [link:projectSettingsUrl]halaman pengaturan[/link].",
     "info_alert_last_sync_failed": "Proyek Anda gagal disinkronkan. Ini akan disinkronkan saat Anda membuat draf berikutnya.",
     "info_alert_no_source_access": "Anda tidak memiliki akses ke proyek sumber terjemahan {{ name }}. Silakan hubungi Administrator Paratext Anda untuk mendapatkan akses, kemudian [link:connectProjectUrl] sambungkan ke proyek ini [/link] sebelum Anda dapat membuat konsep.",
     "info_alert_no_training_source_access": "You do not have access to the training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_download_error": "Ada masalah saat mengunduh draf Anda. Periksa koneksi Internet Anda dan coba lagi dalam beberapa menit.",
     "info_alert_no_additional_training_source_access": "Anda tidak memiliki akses ke proyek sumber pelatihan tambahan {{ name }}. Silakan hubungi Administrator Paratext Anda untuk mendapatkan akses, kemudian [link:connectProjectUrl] sambungkan ke proyek ini [/link] sebelum Anda dapat membuat draf.",
-    "info_alert_same_source_and_target_language": "Bahasa untuk teks sumber Anda harus berbeda dengan bahasa target ({{ targetLanguageDisplayName }}). Pilih teks sumber yang berbeda pada [link:projectSettingsUrl]halaman pengaturan[/link].",
     "info_alert_source_text_not_selected": "Proyek Anda tidak memiliki teks sumber yang dipilih. Hal ini diperlukan untuk menghasilkan konsep terjemahan. Pilih teks sumber pada [link:projectSettingsUrl]halaman pengaturan[/link].",
     "instructions_draft_process": "Membuat draf biasanya membutuhkan waktu setidaknya {{ count }} jam.",
     "instructions_draft_process_subtext": "Hal ini dapat memakan waktu lebih lama apabila sistem sedang sibuk.",
@@ -211,9 +205,6 @@
     "instructions_scripture_forge_assist_back_translation_subtext": "Jika tim Anda telah membuat draf satu atau beberapa kitab dan kemudian menerjemahkan kembali satu atau beberapa di antaranya, Scripture Forge dapat menggunakan kitab-kitab yang telah diterjemahkan kembali untuk membuat draf kitab berikutnya yang sedang Anda kerjakan.",
     "instructions_scripture_forge_assist_forward_translation": "Scripture Forge dapat membantu dalam menyusun sebuah terjemahan.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "Berdasarkan kemajuan penerjemahan yang ada, Anda dapat menggunakan kitab-kitab yang telah Anda terjemahkan untuk membuat draf kitab berikutnya yang sedang Anda kerjakan.",
-    "non_pa_info_alert_different_additional_training_and_source_language": "Bahasa untuk teks pelatihan tambahan Anda ({{ additionalTrainingSourceLanguageDisplayName }}) harus sama dengan bahasa sumber pelatihan ({{ alternateTrainingSourceLanguageDisplayName }}). Mintalah Administrator Paratext Anda untuk memilih teks pelatihan tambahan yang berbeda.",
-    "non_pa_info_alert_different_training_and_source_language": "Bahasa untuk teks pelatihan alternatif ({{ alternateTrainingSourceLanguageDisplayName }}) harus sama dengan bahasa sumber ({{ sourceLanguageDisplayName }}). Mintalah Administrator Paratext Anda untuk memilih teks pelatihan alternatif yang berbeda.",
-    "non_pa_info_alert_same_source_and_target_language": "Bahasa untuk teks sumber Anda harus berbeda dengan bahasa target ({{ targetLanguageDisplayName }}). Mohon minta Administrator Paratext Anda mengubah sumber sebelum Anda dapat membuat draf.",
     "non_pa_info_alert_source_text_not_selected": "Proyek Anda tidak memiliki teks sumber yang dipilih. Hal ini diperlukan untuk menghasilkan draf terjemahan. Silakan minta Administrator Paratext Anda memilih sumber sebelum Anda dapat membuat draf.",
     "offline_message": "Pembuatan konsep tidak tersedia saat luring.",
     "preview_draft_button": "Pratinjau konsep",
@@ -405,6 +396,20 @@
     "transcelerator_paratext": "{1}Transcelerator{2} adalah sebuah plugin di {3}Paratext{4} untuk membantu dalam membuat dan menerjemahkan pertanyaan-pertanyaan pemeriksaan Alkitab.",
     "transcelerator_some_questions_already_imported": "Catatan: Beberapa pertanyaan yang dipilih telah diimpor. Pertanyaan yang telah disunting di Transcelerator akan diperbarui di Scripture Forge, dan pertanyaan ganda yang sama akan diabaikan.",
     "update_transcelerator": "Versi Transcelerator yang digunakan dalam proyek ini tidak didukung. Harap perbarui ke versi Transcelerator minimal 1.5.3."
+  },
+  "language_codes_confirmation": {
+    "all_sources_should_be_same_language": "All source and reference projects should be in the same language",
+    "change_source_projects_on_settings_page": "Source projects can be changed on the [link:projectSettingsUrl]settings page[/link]",
+    "confirm_lang_codes_correct": "All the language codes are correct",
+    "contact_project_administrator_to_change_settings": "Contact your project administrator if language settings need to be updated",
+    "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
+    "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
+    "i_understand_and_accept": "I understand the problem and want to continue anyways",
+    "please_make_sure_codes_correct": "Please make sure all the language codes are correct before continuing.",
+    "source_and_reference_languages_different": "Source and reference projects currently have the following language codes: {{ languageCodes }}. Using incorrect language codes, or using source or reference projects that are not all in the same language, may significantly reduce the draft quality.",
+    "source_and_target_languages_same": "Source and target languages are both {{ displayLanguage }}",
+    "source_and_target_projects_all_have_language_code": "The source and target projects all have the [b]{{ languageCode }}[/b] language code. If you are translating into a dialect or related language that does not have a separate ISO code, these settings may be correct. For all other projects, having the source and target projects set to the same language may significantly reduce the draft quality.",
+    "sources_must_be_same_language": "The training source must be the same language as the drafting source. You can update your source texts on the [link:projectSettingsUrl]settings page[/link]"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} penonton lain"
