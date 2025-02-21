@@ -108,10 +108,7 @@
     "share_with_others": "Mit anderen teilen"
   },
   "confirm_draft_sources": {
-    "confirm_lang_codes_correct": "Alle Sprachcodes sind korrekt.",
     "drafting_from_heading": "Entwurf von {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
-    "how_to_change_language_codes": "Die Sprachcodes können in Paratext unter Projekteinstellungen > Projekteigenschaften > Sprache geändert werden.",
-    "incorrect_language_codes_reduce_quality": "Falsche Sprachcodes beeinträchtigen die Qualität des Entwurfs erheblich.",
     "language_code": "Sprachcode: ",
     "references_heading": "Bezug auf ({{ referenceLanguage }})",
     "review_draft_setup": "Einstellung für Entwürfe überprüfen",
@@ -193,14 +190,11 @@
     "generate_draft_button": "Entwurf generieren",
     "generate_forward_translation_drafts_header": "Übersetzungsentwurf generieren",
     "generate_new_draft": "Neuer Entwurf",
-    "info_alert_different_additional_training_and_source_language": "Die Sprache für Deinen zusätzlichen Schulungstext ({{ additionalTrainingSourceLanguageDisplayName }}) muss die gleiche sein wie die Sprache der Schulungsquelle ({{ alternateTrainingSourceLanguageDisplayName }}). Wähle einen anderen zusätzlichen Schulungstext auf der [link:projectSettingsUrl]Einstellungsseite[/link].",
-    "info_alert_different_training_and_source_language": "Die Sprache für Deinen alternativen Schulungstext ({{ alternateTrainingSourceLanguageDisplayName }}) muss dieselbe sein wie die Ausgangssprache ({{ sourceLanguageDisplayName }}). Wähle einen anderen alternativen Schulungstext auf der [link:projectSettingsUrl]Einstellungsseite[/link].",
     "info_alert_last_sync_failed": "Dein Projekt konnte nicht synchronisiert werden. Es wird synchronisiert, wenn Du das nächste Mal einen Entwurf generierst.",
     "info_alert_no_source_access": "Du hast keinen Zugriff auf das Übersetzungsprojekt {{ name }}. Bitte wende Dich an Deinen Paratext-Administrator, um Zugang zu erhalten, und stelle dann eine [link:connectProjectUrl]Verbindung zu diesem Projekt[/link] her, bevor Du einen Entwurf generieren kannst.",
     "info_alert_no_training_source_access": "Du hast keinen Zugriff auf das Quellprojekt für Schulung {{ name }}. Bitte wende Dich an Deinen Paratext-Administrator, um Zugang zu erhalten, und stelle dann eine [link:connectProjectUrl]Verbindung zu diesem Projekt[/link] her, bevor Du einen Entwurf generieren kannst.",
     "info_alert_download_error": "Beim Herunterladen Deines Entwurfs ist ein Problem aufgetreten. Bitte überprüfe Deine Internetverbindung und versuche es in einigen Minuten erneut.",
     "info_alert_no_additional_training_source_access": "Du hast keinen Zugriff auf das zusätzliche Quellprojekt für die Schulung {{ name }}. Bitte wende Dich an Deinen Paratext-Administrator, um Zugang zu erhalten, und stelle dann eine [link:connectProjectUrl]Verbindung zu diesem Projekt[/link] her, bevor Du einen Entwurf generieren kannst.",
-    "info_alert_same_source_and_target_language": "Die Sprache für Deinen Quelltext muss sich von der Zielsprache unterscheiden ({{ targetLanguageDisplayName }}). Wähle einen anderen Ausgangstext auf der [link:projectSettingsUrl]Einstellungsseite[/link].",
     "info_alert_source_text_not_selected": "Dein Projekt hat keinen Quelltext ausgewählt. Dies ist erforderlich, um einen Übersetzungsentwurf zu erstellen. Wähle einen Quelltext auf der [link:projectSettingsUrl]Einstellungsseite[/link].",
     "instructions_draft_process": "Das Generieren eines Entwurfs dauert in der Regel mindestens {{ count }} Stunden.",
     "instructions_draft_process_subtext": "Wenn das System ausgelastet ist, kann es viel länger dauern.",
@@ -211,9 +205,6 @@
     "instructions_scripture_forge_assist_back_translation_subtext": "Wenn Dein Team bereits ein oder mehrere Bücher verfasst und dann eines oder mehrere davon rückübersetzt hat, kann Scripture Forge die rückübersetzten Bücher verwenden, um einen Entwurf für das nächste Buch zu generieren, an dem Du gerade arbeitest.",
     "instructions_scripture_forge_assist_forward_translation": "Scripture Forge kann beim Entwurf einer Übersetzung helfen.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "Basierend auf Deinem bisherigen Übersetzungsfortschritt kannst Du mit den bereits übersetzten Büchern einen Entwurf des nächsten Buches, an dem Du arbeitest, generieren.",
-    "non_pa_info_alert_different_additional_training_and_source_language": "Die Sprache für Deinen zusätzlichen Schulungstext ({{ additionalTrainingSourceLanguageDisplayName }}) muss dieselbe sein wie die Sprache der Ausgangssprache der Schulung ({{ alternateTrainingSourceLanguageDisplayName }}). Bitte lass Dein Paratext-Administrator einen anderen zusätzlichen Schulungstext auswählen.",
-    "non_pa_info_alert_different_training_and_source_language": "Die Sprache für Deinen zusätzlichen Schulungstext ({{ alternateTrainingSourceLanguageDisplayName }}) muss dieselbe sein wie die Ausgangssprache ({{ sourceLanguageDisplayName }}). Bitte lass Deinen Paratext-Administrator einen anderen zusätzlichen Schulungstext auswählen.",
-    "non_pa_info_alert_same_source_and_target_language": "Die Sprache Deines Ausgangstextes muss sich von der Zielsprache unterscheiden ({{ targetLanguageDisplayName }}). Bitte lass Deinen Paratext-Administrator die Quelle ändern, bevor Du einen Entwurf generieren kannst.",
     "non_pa_info_alert_source_text_not_selected": "Dein Projekt hat keinen Ausgangstext ausgewählt. Dies ist erforderlich, um einen Übersetzungsentwurf zu erstellen. Bitte lass Deinen Paratext Administrator einen Ausgangstext auswählen, bevor Du einen Entwurf generieren kannst.",
     "offline_message": "Generieren eines Entwurfs ist offline nicht verfügbar.",
     "preview_draft_button": "Vorschau des Entwurfs",
@@ -405,6 +396,20 @@
     "transcelerator_paratext": "{1}Transcelerator{2} ist ein Plugin für {3}Paratext{4} zur Unterstützung bei der Erstellung und Übersetzung von Fragen zur Überprüfung von Bibeltexten.",
     "transcelerator_some_questions_already_imported": "Bemerkung: Einige ausgewählte Fragen sind bereits importiert worden. Fragen, die in Transcelerator bearbeitet wurden, werden in Scripture Forge aktualisiert, und exakte Duplikate werden übersprungen.",
     "update_transcelerator": "Die in diesem Projekt verwendete Version von Transcelerator wird nicht unterstützt. Bitte aktualisiere auf mindestens Transcelerator Version 1.5.3."
+  },
+  "language_codes_confirmation": {
+    "all_sources_should_be_same_language": "Alle Quell- und Referenzprojekte sollten in derselben Sprache sein",
+    "change_source_projects_on_settings_page": "Quellprojekte können auf der [link:projectSettingsUrl]Einstellungsseite[/link] geändert werden",
+    "confirm_lang_codes_correct": "Alle Sprachcodes sind korrekt",
+    "contact_project_administrator_to_change_settings": "Kontaktiere Deinen Projektadministrator, wenn die Spracheinstellungen aktualisiert werden müssen",
+    "how_to_change_language_codes": "Die Sprachcodes können in Paratext unter Projekteinstellungen > Projekteigenschaften > Sprache geändert werden.",
+    "incorrect_language_codes_reduce_quality": "Falsche Sprachcodes beeinträchtigen die Qualität des Entwurfs erheblich.",
+    "i_understand_and_accept": "Ich verstehe das Problem und möchte trotzdem fortfahren",
+    "please_make_sure_codes_correct": "Bitte vergewissere Dich, dass die Sprachcodes korrekt sind, bevor Du fortfährst.",
+    "source_and_reference_languages_different": "Quell- und Referenzprojekte haben derzeit die folgenden Sprachcodes: {{ languageCodes }}. Die Verwendung falscher Sprachcodes oder die Verwendung von Quellen- oder Referenzprojekten, die nicht alle in derselben Sprache verfasst sind, kann die Qualität des Entwurfs erheblich beeinträchtigen.",
+    "source_and_target_languages_same": "Ausgangs- und Zielsprache sind beide {{ displayLanguage }}",
+    "source_and_target_projects_all_have_language_code": "Die Ausgangs- und Zielprojekte haben alle den Sprachcode [b]{{ languageCode }}[/b]. Wenn Du in einen Dialekt oder eine verwandte Sprache übersetzest, die keinen eigenen ISO-Code hat, sind diese Einstellungen möglicherweise richtig. Bei allen anderen Projekten kann es die Qualität des Entwurfs erheblich beeinträchtigen, wenn Ausgangs- und Zielprojekt auf dieselbe Sprache eingestellt sind.",
+    "sources_must_be_same_language": "Der Ausgangstext für die Schulung muss in dieselbe Sprache wie die des Entwurfs sein. Du kannst Deinen Ausgangstext auf der Seite [link:projectSettingsUrl]settings[/link] aktualisieren"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} andere Betrachter"
