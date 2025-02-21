@@ -37,8 +37,8 @@ describe('DraftGenerationStepsComponent', () => {
   const mockUserService = mock(UserService);
 
   const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
-  const localChanges$: Subject<void> = new Subject<void>();
-  when(mockTrainingDataQuery.localChanges$).thenReturn(localChanges$);
+  const trainingDataQueryLocalChanges$: Subject<void> = new Subject<void>();
+  when(mockTrainingDataQuery.localChanges$).thenReturn(trainingDataQueryLocalChanges$);
   when(mockTrainingDataQuery.ready$).thenReturn(of(true));
   when(mockTrainingDataQuery.remoteChanges$).thenReturn(of());
   when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
@@ -875,7 +875,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.trainingDataFilesAvailable).toBe(true);
     });
 
-    it('shows training data file after uploaded', () => {
+    it('updates available training data file after uploaded or deleted', () => {
       fixture.detectChanges();
       clickConfirmLanguages(fixture);
       component.tryAdvanceStep();
@@ -887,11 +887,55 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
       expect(component.availableTrainingFiles.length).toEqual(0);
+
+      // Upload a training data file
       const mockTrainingDataDoc = mock(TrainingDataDoc);
       when(mockTrainingDataQuery.docs).thenReturn([mockTrainingDataDoc]);
-      localChanges$.next();
+      trainingDataQueryLocalChanges$.next();
       fixture.detectChanges();
       expect(component.availableTrainingFiles.length).toEqual(1);
+
+      // Delete a training data file
+      when(mockTrainingDataQuery.docs).thenReturn([]);
+      trainingDataQueryLocalChanges$.next();
+      fixture.detectChanges();
+      expect(component.availableTrainingFiles.length).toEqual(0);
+    });
+
+    it('generates draft with training data file', () => {
+      fixture.detectChanges();
+      clickConfirmLanguages(fixture);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.onTranslateBookSelect([3]);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      component.onTranslatedBookSelect([2]);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      expect(component.availableTrainingFiles.length).toEqual(0);
+
+      // Upload a training data file
+      const mockTrainingDataDoc = mock(TrainingDataDoc);
+      when(mockTrainingDataDoc.id);
+      when(mockTrainingDataQuery.docs).thenReturn([mockTrainingDataDoc]);
+      trainingDataQueryLocalChanges$.next();
+      fixture.detectChanges();
+      expect(component.availableTrainingFiles.length).toEqual(1);
+
+      const fileIds = ['file1'];
+      component.onTrainingDataSelect(fileIds);
+      spyOn(component.done, 'emit');
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.done.emit).toHaveBeenCalledWith({
+        trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'EXO' }],
+        translationScriptureRange: 'LEV',
+        trainingDataFiles: fileIds,
+        fastTraining: false
+      });
     });
   });
 
