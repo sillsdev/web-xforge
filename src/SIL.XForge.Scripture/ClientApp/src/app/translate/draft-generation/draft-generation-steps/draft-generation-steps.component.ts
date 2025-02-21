@@ -105,7 +105,8 @@ export class DraftGenerationStepsComponent implements OnInit {
   protected translatedBooksWithNoSource: number[] = [];
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
-  private trainingDataQuerySubject: Subject<void> = new Subject<void>();
+  /** Emits when the training data query results change */
+  private trainingDataQueryUpdate$: Subject<void> = new Subject<void>();
   private trainingDataQuerySubscription?: Subscription;
   private isTrainingDataInitialized: boolean = false;
 
@@ -231,7 +232,7 @@ export class DraftGenerationStepsComponent implements OnInit {
         this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id, this.destroyRef);
         this.trainingDataQuerySubscription?.unsubscribe();
 
-        // Subscribe to the training data query changes
+        // Subscribe to the training data query results changes
         this.trainingDataQuerySubscription = merge(
           this.trainingDataQuery.localChanges$,
           this.trainingDataQuery.ready$,
@@ -239,10 +240,10 @@ export class DraftGenerationStepsComponent implements OnInit {
           this.trainingDataQuery.remoteDocChanges$
         )
           .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe(() => this.trainingDataQuerySubject.next());
+          .subscribe(() => this.trainingDataQueryUpdate$.next());
       });
 
-    this.trainingDataQuerySubject.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.trainingDataQueryUpdate$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.availableTrainingFiles = [];
       if (this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.additionalTrainingData) {
         this.availableTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
