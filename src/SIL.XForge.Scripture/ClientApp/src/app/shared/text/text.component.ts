@@ -44,7 +44,9 @@ import {
   getVerseStrFromSegmentRef,
   VERSE_REGEX
 } from '../utils';
-import { getAttributesAtPosition, getRetainCount, registerScripture } from './quill-scripture';
+
+import { registerScripture } from './quill-editor-registration/quill-registrations';
+import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { Segment } from './segment';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
 import { EditorRange, TextViewModel } from './text-view-model';
