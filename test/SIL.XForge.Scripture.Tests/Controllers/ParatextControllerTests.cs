@@ -389,8 +389,9 @@ public class ParatextControllerTests
 
         var resources = (Dictionary<string, string[]>)((OkObjectResult)actual.Result!).Value!;
         Assert.AreEqual(env.TestParatextResources[0].ParatextId, resources.Keys.First());
-        Assert.AreEqual(env.TestParatextResources[0].ShortName, resources.Values.First().First());
-        Assert.AreEqual(env.TestParatextResources[0].Name, resources.Values.First().Last());
+        Assert.AreEqual(env.TestParatextResources[0].ShortName, resources.Values.First().ElementAt(0));
+        Assert.AreEqual(env.TestParatextResources[0].Name, resources.Values.First().ElementAt(1));
+        Assert.AreEqual(env.TestParatextResources[0].LanguageTag, resources.Values.First().ElementAt(2));
     }
 
     [Test]
@@ -416,6 +417,7 @@ public class ParatextControllerTests
                 Name = "Resource 01",
                 ParatextId = "res01",
                 ShortName = "res",
+                LanguageTag = "en",
             },
         ];
         public readonly DocumentRevision TestRevision = new DocumentRevision

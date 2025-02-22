@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
@@ -14,6 +15,11 @@ import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+
+/** Reports as to whether a given project is actively syncing right now. */
+export function isSFProjectSyncing(project: SFProjectProfile): boolean {
+  return project.sync.queuedCount > 0;
+}
 
 enum SyncErrorCodes {
   UserPermission = -1
@@ -208,7 +214,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     if (this.projectDoc.data.syncDisabled != null) {
       this.syncDisabled = this.projectDoc.data.syncDisabled;
     }
-    this._syncActive = this.projectDoc.data.sync.queuedCount > 0;
+    this._syncActive = isSFProjectSyncing(this.projectDoc.data);
     if (this.projectDoc.data.sync.lastSyncSuccessful) {
       this.previousLastSyncDate = this.lastSyncDate;
     }
