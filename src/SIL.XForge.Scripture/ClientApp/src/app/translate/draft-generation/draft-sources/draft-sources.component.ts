@@ -12,22 +12,22 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { DataLoadingComponent } from '../../../../xforge-common/data-loading-component';
-import { DialogService } from '../../../../xforge-common/dialog.service';
-import { FeatureFlagService } from '../../../../xforge-common/feature-flags/feature-flag.service';
-import { I18nService } from '../../../../xforge-common/i18n.service';
-import { ElementState } from '../../../../xforge-common/models/element-state';
-import { NoticeService } from '../../../../xforge-common/notice.service';
-import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
-import { XForgeCommonModule } from '../../../../xforge-common/xforge-common.module';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { I18nService } from 'xforge-common/i18n.service';
+import { ElementState } from 'xforge-common/models/element-state';
+import { NoticeService } from 'xforge-common/notice.service';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
+import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
-import { countNonEquivalentLanguageCodes } from '../draft-utils';
+import { countNonEquivalentLanguageCodes, projectToDraftSources } from '../draft-utils';
 
 function translateSourceToSelectableProjectWithLanguageTag(
   project: TranslateSource
@@ -46,58 +46,6 @@ export interface ProjectStatus {
   knownToBeOnSF: boolean;
   isSyncing?: boolean;
   lastSyncSuccessful?: boolean;
-}
-
-export interface DraftSourcesAsArrays {
-  trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 });
-  trainingTargets: [SFProjectProfile];
-  draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 });
-}
-/**
- * Takes a SFProjectProfile and returns the training and drafting sources for the project as three arrays.
- *
- * This considers properties such as alternateTrainingSourceEnabled and alternateTrainingSource and makes sure to only
- * include a source if it's enabled and not null. It also considers whether the project source is implicitly the
- * training and/or drafting source.
- *
- * This method is also intended to be act as an abstraction layer to allow changing the data model in the future without
- * needing to change all the places that use this method.
- *
- * Currently this method provides guarantees via the type system that there will be at most 2 training sources, exactly
- * 1 training target, and at most 1 drafting source. Consumers of this method that cannot accept an arbitrary length for
- * each of these arrays are encouraged to write there code in such a way that it will noticeably break (preferably at
- * build time) if these guarantees are changed, to make it easier to find code that relies on the current limit on the
- * number of sources in each category.
- * @param project The project to get the sources for
- * @returns An object with three arrays: trainingSources, trainingTargets, and draftingSources
- */
-export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAsArrays {
-  const trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 }) = [];
-  const draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 }) = [];
-  const trainingTargets: [SFProjectProfile] = [project];
-  const draftConfig = project.translateConfig.draftConfig;
-  let trainingSource: TranslateSource | undefined;
-  if (draftConfig.alternateTrainingSourceEnabled && draftConfig.alternateTrainingSource != null) {
-    trainingSource = draftConfig.alternateTrainingSource;
-  } else {
-    trainingSource = project.translateConfig.source;
-  }
-  if (trainingSource != null) {
-    trainingSources.push(trainingSource);
-  }
-  if (draftConfig.additionalTrainingSourceEnabled && draftConfig.additionalTrainingSource != null) {
-    trainingSources.push(draftConfig.additionalTrainingSource);
-  }
-  let draftingSource: TranslateSource | undefined;
-  if (draftConfig.alternateSourceEnabled && draftConfig.alternateSource != null) {
-    draftingSource = draftConfig.alternateSource;
-  } else {
-    draftingSource = project.translateConfig.source;
-  }
-  if (draftingSource != null) {
-    draftingSources.push(draftingSource);
-  }
-  return { trainingSources, trainingTargets, draftingSources };
 }
 
 /** Enables user to configure settings for drafting. */
@@ -135,6 +83,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
 
   projects?: SelectableProject[];
   resources?: SelectableProject[];
+  // Projects that can be an already selected value, but not necessarily given as an option in the menu
+  nonSelectableProjects: SelectableProject[] = [];
 
   languageCodesConfirmed = false;
   changesMade = false;
@@ -248,6 +198,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
         if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
+
+        this.nonSelectableProjects = [...mappedTrainingSources, ...mappedDraftingSources];
       }
     });
 
