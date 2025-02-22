@@ -15,6 +15,7 @@
           [isDisabled]="loading"
           [projects]="projects"
           [resources]="resources"
+          [nonSelectableProjects]="nonSelectableProjects"
           [value]="loading ? undefined : source?.paratextId"
           (valueChange)="sourceSelected(draftingSources, $index, $event)"
           [placeholder]="projectPlaceholder(source)"
@@ -47,6 +48,7 @@
           [isDisabled]="loading"
           [projects]="projects"
           [resources]="resources"
+          [nonSelectableProjects]="nonSelectableProjects"
           [value]="loading ? undefined : source?.paratextId"
           (valueChange)="sourceSelected(trainingSources, $index, $event)"
           [placeholder]="projectPlaceholder(source)"
@@ -83,6 +85,7 @@
           [isDisabled]="true"
           [projects]="projects"
           [resources]="resources"
+          [nonSelectableProjects]="nonSelectableProjects"
           [value]="loading ? undefined : source?.paratextId"
           [placeholder]="projectPlaceholder(source)"
         ></app-project-select>
