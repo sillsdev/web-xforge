@@ -5,13 +5,10 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { DialogService } from '../../../../xforge-common/dialog.service';
-import {
-  createTestFeatureFlag,
-  FeatureFlagService
-} from '../../../../xforge-common/feature-flags/feature-flag.service';
-import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
@@ -36,7 +33,49 @@ const defaultArgs: DraftSourcesComponentStoryState = {
   mixedSource: true
 };
 
-const testProjectDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
+const testProjectDoc = {
+  data: createTestProjectProfile({
+    translateConfig: {
+      translationSuggestionsEnabled: false,
+      preTranslate: true,
+      draftConfig: {
+        additionalTrainingSourceEnabled: true,
+        alternateSourceEnabled: true,
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSource: {
+          paratextId: 'pt1',
+          projectRef: 'sf1',
+          name: 'Alternate Training Source',
+          shortName: 'ATS',
+          writingSystem: { script: 'Latn', tag: 'es' }
+        },
+        additionalTrainingSource: {
+          paratextId: 'pt2',
+          projectRef: 'sf2',
+          name: 'Additional Training Source',
+          shortName: 'ATS',
+          writingSystem: { script: 'Latn', tag: 'es' }
+        },
+        alternateSource: {
+          paratextId: 'pt3',
+          projectRef: 'sf3',
+          name: 'Alternate Source',
+          shortName: 'AS',
+          writingSystem: { script: 'Latn', tag: 'es' }
+        }
+      },
+      // projectType: 'Standard',
+      source: {
+        paratextId: 'pt0',
+        projectRef: 'sf0',
+        name: 'Source',
+        shortName: 'SOURCE',
+        writingSystem: { script: 'Latn', tag: 'es' }
+      }
+    }
+  })
+} as SFProjectProfileDoc;
+
 when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 when(mockActivatedProjectService.projectDoc).thenReturn(testProjectDoc);
 when(mockFeatureFlags.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
