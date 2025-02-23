@@ -81,7 +81,7 @@ public interface IMachineApiService
         DateTime timestamp,
         CancellationToken cancellationToken
     );
-    Task<Usj> GetPreTranslationUsjAsync(
+    Task<IUsj> GetPreTranslationUsjAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,

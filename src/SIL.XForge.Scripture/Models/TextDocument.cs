@@ -18,6 +18,24 @@ public class TextDocument : Json0Snapshot, IUsj
     /// </summary>
     public const string Target = "target";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TextDocument"/> class.
+    /// </summary>
+    public TextDocument() { }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TextDocument"/> class from a <see cref="IUsj"/> interface.
+    /// </summary>
+    /// <param name="id">The text document identifier.</param>
+    /// <param name="usj">The USJ.</param>
+    public TextDocument(string id, IUsj usj)
+    {
+        Id = id;
+        Content = usj.Content;
+        Type = usj.Type;
+        Version = usj.Version;
+    }
+
     public static string GetDocId(string projectId, int book, int chapter, string textType = Target) =>
         $"{projectId}:{Canon.BookNumberToId(book)}:{chapter}:{textType}";
 

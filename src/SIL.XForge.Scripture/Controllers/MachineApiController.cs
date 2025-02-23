@@ -438,6 +438,7 @@ public class MachineApiController : ControllerBase
     /// <param name="chapterNum">The chapter number. If zero, the entire book is returned.</param>
     /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <remarks>If the <paramref name="chapterNum"/> is zero, <paramref name="timestamp"/> will be ignored.</remarks>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
@@ -498,6 +499,7 @@ public class MachineApiController : ControllerBase
     /// <param name="chapterNum">The chapter number. If zero, the entire book is returned.</param>
     /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <remarks>If the <paramref name="chapterNum"/> is zero, <paramref name="timestamp"/> will be ignored.</remarks>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
@@ -516,7 +518,7 @@ public class MachineApiController : ControllerBase
         try
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
-            Usj usj = await _machineApiService.GetPreTranslationUsjAsync(
+            IUsj usj = await _machineApiService.GetPreTranslationUsjAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 bookNum,
@@ -558,6 +560,7 @@ public class MachineApiController : ControllerBase
     /// <param name="chapterNum">The chapter number. If zero, the entire book is returned.</param>
     /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    /// <remarks>If the <paramref name="chapterNum"/> is zero, <paramref name="timestamp"/> will be ignored.</remarks>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
