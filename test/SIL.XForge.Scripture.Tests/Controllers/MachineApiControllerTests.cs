@@ -1408,7 +1408,7 @@ public class MachineApiControllerTests
                 Arg.Any<DateTime>(),
                 CancellationToken.None
             )
-            .Returns(Task.FromResult(new Usj()));
+            .Returns(Task.FromResult<IUsj>(new Usj()));
 
         // SUT
         ActionResult<Usj> actual = await env.Controller.GetPreTranslationUsjAsync(
