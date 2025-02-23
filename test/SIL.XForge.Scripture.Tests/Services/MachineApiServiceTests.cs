@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
@@ -16,7 +17,6 @@ using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Converters.Usj;
-using SIL.Scripture;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -53,6 +53,12 @@ public class MachineApiServiceTests
     private const string TestUsx =
         "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
         + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
+    private static readonly Usj TestEmptyUsj = new Usj
+    {
+        Type = Usj.UsjType,
+        Version = Usj.UsjVersion,
+        Content = [],
+    };
     private static readonly Usj TestUsj = new Usj
     {
         Type = Usj.UsjType,
@@ -1247,8 +1253,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
-        env.ParatextService.GetDeltaFromUsfmAsync(User01, Project01, Arg.Any<string>(), 40)
-            .Returns(Task.FromResult(expected));
+        env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
 
         // SUT
         Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
@@ -1271,8 +1276,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
-        env.ParatextService.GetDeltaFromUsfmAsync(User01, Project01, Arg.Any<string>(), 40)
-            .Returns(Task.FromResult(expected));
+        env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
 
         // SUT
         Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
@@ -1467,13 +1471,35 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetPreTranslationUsfmAsync_MissingUserSecret()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.UserSecrets.DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.GetPreTranslationUsfmAsync(
+                    User01,
+                    Project01,
+                    40,
+                    1,
+                    false,
+                    DateTime.UtcNow,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
     public async Task GetPreTranslationUsfmAsync_ServalAdminDoesNotNeedPermission()
     {
         // Set up test environment
         var env = new TestEnvironment();
         const string expected = "\\c 1 \\v1 Verse 1";
-        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
-            .Returns(Task.FromResult(expected));
+        env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
+            .Returns(expected);
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -1494,8 +1520,8 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const string expected = "\\c 1 \\v1 Verse 1";
-        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
-            .Returns(Task.FromResult(expected));
+        env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
+            .Returns(expected);
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -1534,6 +1560,32 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetPreTranslationUsjAsync_DoesNotSaveIfChapterZero()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 0, CancellationToken.None)
+            .Returns(Task.FromResult(TestUsfm));
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
+
+        // SUT
+        IUsj actual = await env.Service.GetPreTranslationUsjAsync(
+            User01,
+            Project01,
+            40,
+            0,
+            false,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
+        Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
+
+        // Ensure that no document was saved
+        long count = await env.TextDocuments.CountDocumentsAsync(_ => true);
+        Assert.That(count, Is.Zero);
+    }
+
+    [Test]
     public async Task GetPreTranslationUsjAsync_MissingUserSecret()
     {
         // Set up test environment
@@ -1556,6 +1608,55 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetPreTranslationUsjAsync_NoSnapshotAtTimestamp()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        string id = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
+        env.TextDocuments.Add(new TextDocument(id, TestUsj));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.GetPreTranslationUsjAsync(
+                    User01,
+                    Project01,
+                    40,
+                    1,
+                    false,
+                    DateTime.MinValue,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_RetrievesFromServalIfNoLocalCopy()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(TestUsfm));
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
+
+        // SUT
+        IUsj actual = await env.Service.GetPreTranslationUsjAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            false,
+            DateTime.UtcNow,
+            CancellationToken.None
+        );
+        Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
+
+        // See if a document was saved
+        long count = await env.TextDocuments.CountDocumentsAsync(_ => true);
+        Assert.That(count, Is.Not.Zero);
+    }
+
+    [Test]
     public async Task GetPreTranslationUsjAsync_ServalAdminDoesNotNeedPermission()
     {
         // Set up test environment
@@ -1565,7 +1666,7 @@ public class MachineApiServiceTests
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
 
         // SUT
-        Usj actual = await env.Service.GetPreTranslationUsjAsync(
+        IUsj actual = await env.Service.GetPreTranslationUsjAsync(
             User02,
             Project01,
             40,
@@ -1582,12 +1683,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
-            .Returns(Task.FromResult(TestUsfm));
-        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
+        string id = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
+        env.TextDocuments.Add(new TextDocument(id, TestUsj));
 
         // SUT
-        Usj actual = await env.Service.GetPreTranslationUsjAsync(
+        IUsj actual = await env.Service.GetPreTranslationUsjAsync(
             User01,
             Project01,
             40,
@@ -1596,7 +1696,9 @@ public class MachineApiServiceTests
             DateTime.UtcNow,
             CancellationToken.None
         );
-        Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
+
+        // We compare to a TextDocument, as that is what is returned underneath the IUsj interface
+        Assert.That(actual, Is.EqualTo(new TextDocument(id, TestUsj)).UsingPropertiesComparer());
     }
 
     [Test]
@@ -1650,15 +1752,16 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const string usfm = "\\c 1 \\v1 Verse 1";
-        const string expected =
+        const string usx =
             "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
             + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
         env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
             .Returns(Task.FromResult(usfm));
-        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(expected);
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
+        string expected = UsjToUsx.UsjToUsxString(TestUsj);
 
         // SUT
-        string usx = await env.Service.GetPreTranslationUsxAsync(
+        string actual = await env.Service.GetPreTranslationUsxAsync(
             User02,
             Project01,
             40,
@@ -1667,7 +1770,7 @@ public class MachineApiServiceTests
             DateTime.UtcNow,
             CancellationToken.None
         );
-        Assert.AreEqual(expected, usx);
+        Assert.AreEqual(expected, actual);
     }
 
     [Test]
@@ -1676,15 +1779,16 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const string usfm = "\\c 1 \\v1 Verse 1";
-        const string expected =
+        const string usx =
             "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
             + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
         env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
             .Returns(Task.FromResult(usfm));
-        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(expected);
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
+        string expected = UsjToUsx.UsjToUsxString(TestUsj);
 
         // SUT
-        string usx = await env.Service.GetPreTranslationUsxAsync(
+        string actual = await env.Service.GetPreTranslationUsxAsync(
             User01,
             Project01,
             40,
@@ -1693,7 +1797,7 @@ public class MachineApiServiceTests
             DateTime.UtcNow,
             CancellationToken.None
         );
-        Assert.AreEqual(expected, usx);
+        Assert.AreEqual(expected, actual);
     }
 
     [Test]
@@ -2895,15 +2999,8 @@ public class MachineApiServiceTests
         await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
 
         await env
-            .TranslationEnginesClient.Received(1)
-            .GetPretranslatedUsfmAsync(
-                TranslationEngine01,
-                ParallelCorpusId01,
-                Canon.BookNumberToId(bookNum),
-                PretranslationUsfmTextOrigin.OnlyPretranslated,
-                PretranslationUsfmTemplate.Source,
-                CancellationToken.None
-            );
+            .PreTranslationService.Received(1)
+            .GetPreTranslationUsfmAsync(Project01, bookNum, 0, CancellationToken.None);
         env.ParatextService.Received(1).GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, TestUsfm);
         Assert.AreEqual(1, await env.TextDocuments.CountDocumentsAsync(_ => true));
         Assert.IsNotEmpty(env.TextDocuments.Get(textDocumentId).Content!);
@@ -2987,15 +3084,8 @@ public class MachineApiServiceTests
         await env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None);
 
         await env
-            .TranslationEnginesClient.Received(1)
-            .GetPretranslatedUsfmAsync(
-                TranslationEngine01,
-                ParallelCorpusId01,
-                Canon.BookNumberToId(bookNum),
-                PretranslationUsfmTextOrigin.OnlyPretranslated,
-                PretranslationUsfmTemplate.Source,
-                CancellationToken.None
-            );
+            .PreTranslationService.Received(1)
+            .GetPreTranslationUsfmAsync(Project01, bookNum, 0, CancellationToken.None);
         env.ParatextService.Received(1).GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, Arg.Any<string>());
         Assert.AreEqual(1, await env.TextDocuments.CountDocumentsAsync(_ => true));
         Assert.IsNotEmpty(env.TextDocuments.Get(textDocumentId).Content!);
@@ -3007,6 +3097,7 @@ public class MachineApiServiceTests
         {
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
+            DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
 
             var machineProjectService = Substitute.For<IMachineProjectService>();
@@ -3111,6 +3202,7 @@ public class MachineApiServiceTests
 
             Service = Substitute.ForPartsOf<MachineApiService>(
                 BackgroundJobClient,
+                DeltaUsxMapper,
                 ExceptionHandler,
                 MockLogger,
                 machineProjectService,
@@ -3128,6 +3220,7 @@ public class MachineApiServiceTests
         }
 
         public IBackgroundJobClient BackgroundJobClient { get; }
+        public IDeltaUsxMapper DeltaUsxMapper { get; }
         public IExceptionHandler ExceptionHandler { get; }
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
@@ -3193,29 +3286,14 @@ public class MachineApiServiceTests
         /// </param>
         public void SetupTextDocument(string textDocumentId, int bookNum, bool alreadyExists)
         {
-            TranslationEnginesClient
-                .GetPretranslatedUsfmAsync(
-                    TranslationEngine01,
-                    ParallelCorpusId01,
-                    Canon.BookNumberToId(bookNum),
-                    PretranslationUsfmTextOrigin.OnlyPretranslated,
-                    PretranslationUsfmTemplate.Source,
-                    CancellationToken.None
-                )
+            PreTranslationService
+                .GetPreTranslationUsfmAsync(Project01, bookNum, 0, CancellationToken.None)
                 .Returns(Task.FromResult(TestUsfm));
             ParatextService.GetChaptersAsUsj(Arg.Any<UserSecret>(), Paratext01, bookNum, TestUsfm).Returns([TestUsj]);
 
             if (alreadyExists)
             {
-                TextDocuments.Add(
-                    new TextDocument
-                    {
-                        Content = [],
-                        Id = textDocumentId,
-                        Type = TestUsj.Type,
-                        Version = TestUsj.Version,
-                    }
-                );
+                TextDocuments.Add(new TextDocument(textDocumentId, TestEmptyUsj));
 
                 // Add two ops for this text document
                 Op[] ops =

@@ -1011,6 +1011,16 @@ public class ParatextService : DisposableBase, IParatextService
         return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
     }
 
+    /// <summary>
+    /// Gets the chapters of a book in USJ format.
+    /// </summary>
+    /// <param name="userSecret">The user secret</param>
+    /// <param name="paratextId">The Paratext identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="usfm">The USFM string.</param>
+    /// <returns>A collection of Usj objects.</returns>
+    /// <exception cref="ForbiddenException">The user secret is invalid.</exception>
+    /// <exception cref="DataNotFoundException">The Paratext project could not be found.</exception>
     public IEnumerable<Usj> GetChaptersAsUsj(UserSecret userSecret, string paratextId, int bookNum, string usfm)
     {
         string username = GetParatextUsername(userSecret) ?? throw new ForbiddenException();
@@ -1024,6 +1034,35 @@ public class ParatextService : DisposableBase, IParatextService
                 UsfmToUsx.ConvertToXmlDocument(scrText, scrText.ScrStylesheet(bookNum), chapterUsfm, forExport: false)
             );
         }
+    }
+
+    /// <summary>
+    /// Converts USX to USFM.
+    /// </summary>
+    /// <param name="userSecret">The user secret</param>
+    /// <param name="paratextId">The Paratext identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="usx">The USX XDocument.</param>
+    /// <returns>The USFM.</returns>
+    /// <exception cref="ArgumentException">The <paramref name="paratextId"/> parameter is not defined.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// The <paramref name="userSecret"/> or <paramref name="usx"/> parameters are not defined.
+    /// </exception>
+    /// <exception cref="ForbiddenException">The user secret is invalid.</exception>
+    /// <exception cref="DataNotFoundException">The Paratext user or project does not exist.</exception>
+    public string ConvertUsxToUsfm(UserSecret userSecret, string paratextId, int bookNum, XDocument usx)
+    {
+        ArgumentNullException.ThrowIfNull(userSecret, nameof(userSecret));
+        ArgumentException.ThrowIfNullOrWhiteSpace(paratextId, nameof(paratextId));
+        ArgumentNullException.ThrowIfNull(usx, nameof(usx));
+
+        // Get the username
+        string username = GetParatextUsername(userSecret) ?? throw new ForbiddenException();
+
+        using ScrText scrText =
+            ScrTextCollection.FindById(username, paratextId)
+            ?? throw new DataNotFoundException("Paratext project not found");
+        return ConvertXDocumentToUsfm(scrText, bookNum, usx);
     }
 
     /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
@@ -1063,19 +1102,7 @@ public class ParatextService : DisposableBase, IParatextService
 
             // We add this here so we can dispose in the finally
             scrTexts.Add(userSecret.Id, scrText);
-            log.AppendLine($"Imported XDocument with {usx.Elements().Count()} elements.");
-            UsxFragmenter.FindFragments(
-                scrText.ScrStylesheet(bookNum),
-                usx.CreateNavigator(),
-                XPathExpression.Compile("*[false()]"),
-                out string usfm,
-                scrText.Settings.AllowInvisibleChars
-            );
-            log.AppendLine($"Created usfm of {usfm}");
-            // Among other things, normalizing the USFM will remove trailing spaces at the end of verses,
-            // which may cause some churn. This is similar to running "Standardize whitespace" in Paratext.
-            usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
-            log.AppendLine($"Normalized usfm to {usfm}");
+            string usfm = ConvertXDocumentToUsfm(scrText!, bookNum, usx, log);
 
             if (chapNumToAuthorSFUserIdMap == null || chapNumToAuthorSFUserIdMap.Count == 0)
             {
@@ -2214,6 +2241,33 @@ public class ParatextService : DisposableBase, IParatextService
             UserRoles.Observer => SFProjectRole.PTObserver,
             _ => string.Empty,
         };
+
+    /// <summary>
+    /// Converts USX as an XDocument to USFM.
+    /// </summary>
+    /// <param name="scrText">The Paratext scripture text.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="usx">The USX XDocument.</param>
+    /// <param name="log">The log (optional).</param>
+    /// <returns>The USFM.</returns>
+    private static string ConvertXDocumentToUsfm(ScrText scrText, int bookNum, XDocument usx, StringBuilder? log = null)
+    {
+        log?.AppendLine($"Imported XDocument with {usx.Elements().Count()} elements.");
+        UsxFragmenter.FindFragments(
+            scrText.ScrStylesheet(bookNum),
+            usx.CreateNavigator(),
+            XPathExpression.Compile("*[false()]"),
+            out string usfm,
+            scrText.Settings.AllowInvisibleChars
+        );
+        log?.AppendLine($"Created usfm of {usfm}");
+
+        // Among other things, normalizing the USFM will remove trailing spaces at the end of verses,
+        // which may cause some churn. This is similar to running "Standardize whitespace" in Paratext.
+        usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
+        log?.AppendLine($"Normalized usfm to {usfm}");
+        return usfm;
+    }
 
     /// <summary>
     /// Converts a Paratext language code into a language-country code for the frontend.
