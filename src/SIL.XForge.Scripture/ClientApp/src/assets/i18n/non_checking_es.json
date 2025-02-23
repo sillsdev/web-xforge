@@ -108,10 +108,7 @@
     "share_with_others": "Compartir con otros"
   },
   "confirm_draft_sources": {
-    "confirm_lang_codes_correct": "Todos los códigos de idioma son correctos.",
     "drafting_from_heading": "Redacción a partir de {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
-    "how_to_change_language_codes": "Los códigos de idioma pueden cambiarse en Paratext yendo a Configuración del proyecto > Propiedades del proyecto > Idioma.",
-    "incorrect_language_codes_reduce_quality": "Los códigos de idioma incorrectos reducirán drásticamente la calidad del borrador.",
     "language_code": "Código de idioma: ",
     "references_heading": "Referencias ({{ referenceLanguage }})",
     "review_draft_setup": "Revisar la configuración del borrador",
@@ -193,14 +190,11 @@
     "generate_draft_button": "Generar borrador",
     "generate_forward_translation_drafts_header": "Generar borradores de traducción",
     "generate_new_draft": "Nuevo borrador",
-    "info_alert_different_additional_training_and_source_language": "El idioma de su texto de formación adicional ({{ additionalTrainingSourceLanguageDisplayName }}) debe ser el mismo que el idioma de la fuente de formación ({{ alternateTrainingSourceLanguageDisplayName }}). Seleccione un texto de formación adicional diferente en la página [link:projectSettingsUrl]de configuración[/link].",
-    "info_alert_different_training_and_source_language": "El idioma de su texto de formación alternativo ({{ alternateTrainingSourceLanguageDisplayName }}) debe ser el mismo que el idioma de origen ({{ sourceLanguageDisplayName }}). Seleccione un texto de formación alternativo diferente en la [link:projectSettingsUrl]página de configuración[/link].",
     "info_alert_last_sync_failed": "Su proyecto no se ha sincronizado. Se sincronizará la próxima vez que genere un borrador.",
     "info_alert_no_source_access": "No tiene acceso al proyecto fuente de traducción {{ name }}. Póngase en contacto con su administrador de Paratext para obtener acceso y, a continuación, [link:connectProjectUrl]conéctese a este proyecto[/link] antes de poder generar un borrador.",
     "info_alert_no_training_source_access": "No tiene acceso al proyecto fuente de formación {{ name }}. Póngase en contacto con su administrador de Paratext para obtener acceso y, a continuación, [link:connectProjectUrl]conéctese a este proyecto[/link] antes de poder generar un borrador.",
     "info_alert_download_error": "Ha habido un problema al descargar su borrador. Por favor, compruebe su conexión a Internet e inténtelo de nuevo en varios minutos.",
     "info_alert_no_additional_training_source_access": "No tiene acceso al proyecto fuente de formación adicional {{ name }}. Póngase en contacto con su administrador de Paratext para obtener acceso y, a continuación, [link:connectProjectUrl]conéctese a este proyecto[/link] antes de poder generar un borrador.",
-    "info_alert_same_source_and_target_language": "El idioma de su texto de origen debe ser diferente del idioma de destino ({{ targetLanguageDisplayName }}). Seleccione un texto de origen diferente en la [link:projectSettingsUrl]página de configuración[/link].",
     "info_alert_source_text_not_selected": "Su proyecto no tiene ningún texto fuente seleccionado. Esto es necesario para producir un borrador de traducción. Seleccione un texto fuente en la página de [link:projectSettingsUrl]ajustes[/link].",
     "instructions_draft_process": "Generar un borrador suele llevar al menos {{ count }} horas.",
     "instructions_draft_process_subtext": "Puede tardar mucho más cuando el sistema está ocupado.",
@@ -211,9 +205,6 @@
     "instructions_scripture_forge_assist_back_translation_subtext": "Si su equipo ya ha redactado uno o varios libros y luego ha retrotraducido uno o varios de ellos, Scripture Forge puede utilizar los libros retrotraducidos para generar un borrador del siguiente libro en el que esté trabajando.",
     "instructions_scripture_forge_assist_forward_translation": "Scripture Forge puede ayudarle a redactar una traducción.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "Basándose en su progreso de traducción actual, puede utilizar los libros que ya ha traducido para generar un borrador del próximo libro en el que esté trabajando.",
-    "non_pa_info_alert_different_additional_training_and_source_language": "El idioma de su texto de formación adicional ({{ additionalTrainingSourceLanguageDisplayName }}) debe ser el mismo que el idioma de la fuente de formación ({{ alternateTrainingSourceLanguageDisplayName }}). Pida a su administrador de Paratext que seleccione un texto de formación adicional diferente.",
-    "non_pa_info_alert_different_training_and_source_language": "El idioma de su texto de formación alternativo ({{ alternateTrainingSourceLanguageDisplayName }}) debe ser el mismo que el idioma de origen ({{ sourceLanguageDisplayName }}). Pida a su administrador de Paratext que seleccione un texto de formación alternativo diferente.",
-    "non_pa_info_alert_same_source_and_target_language": "El idioma de su texto de origen debe ser diferente del idioma de destino ({{ targetLanguageDisplayName }}). Haga que su administrador de Paratext cambie la fuente antes de poder generar un borrador.",
     "non_pa_info_alert_source_text_not_selected": "Su proyecto no tiene ningún texto fuente seleccionado. Esto es necesario para poder generar un borrador de traducción. Por favor, haga que su administrador de Paratext seleccione una fuente antes de poder generar un borrador.",
     "offline_message": "La generación de borradores no está disponible cuando se está desconectado.",
     "preview_draft_button": "Vista previa del borrador",
@@ -405,6 +396,20 @@
     "transcelerator_paratext": "{1}Transcelerator{2} es un complemento para {3}Paratext{4} para ayudar a crear y traducir las preguntas de comprobación de la escritura.",
     "transcelerator_some_questions_already_imported": "Nota: Algunas preguntas seleccionadas ya han sido importadas. Las preguntas que se han editado en Transcelerator se actualizarán en Scripture Forge, y se omitirán los duplicados idénticos.",
     "update_transcelerator": "La versión de Transcelerator utilizada en este proyecto no está soportada. Por favor, actualice al menos a la versión 1.5.3 de Transcelerator."
+  },
+  "language_codes_confirmation": {
+    "all_sources_should_be_same_language": "All source and reference projects should be in the same language",
+    "change_source_projects_on_settings_page": "Source projects can be changed on the [link:projectSettingsUrl]settings page[/link]",
+    "confirm_lang_codes_correct": "All the language codes are correct",
+    "contact_project_administrator_to_change_settings": "Contact your project administrator if language settings need to be updated",
+    "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
+    "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
+    "i_understand_and_accept": "I understand the problem and want to continue anyways",
+    "please_make_sure_codes_correct": "Please make sure all the language codes are correct before continuing.",
+    "source_and_reference_languages_different": "Source and reference projects currently have the following language codes: {{ languageCodes }}. Using incorrect language codes, or using source or reference projects that are not all in the same language, may significantly reduce the draft quality.",
+    "source_and_target_languages_same": "Source and target languages are both {{ displayLanguage }}",
+    "source_and_target_projects_all_have_language_code": "The source and target projects all have the [b]{{ languageCode }}[/b] language code. If you are translating into a dialect or related language that does not have a separate ISO code, these settings may be correct. For all other projects, having the source and target projects set to the same language may significantly reduce the draft quality.",
+    "sources_must_be_same_language": "The training source must be the same language as the drafting source. You can update your source texts on the [link:projectSettingsUrl]settings page[/link]"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} otros observadores"

@@ -108,10 +108,7 @@
     "share_with_others": "ꤘꤛꤢꤩ ꤕꤢꤩ ꤢꤨ꤭ꤚꤟꤌꤣ꤬"
   },
   "confirm_draft_sources": {
-    "confirm_lang_codes_correct": "All the language codes are correct.",
     "drafting_from_heading": "Drafting from {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})",
-    "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
-    "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
     "language_code": "Language code: ",
     "references_heading": "References ({{ referenceLanguage }})",
     "review_draft_setup": "Review draft setup",
@@ -193,14 +190,11 @@
     "generate_draft_button": "Generate draft",
     "generate_forward_translation_drafts_header": "Generate translation drafts",
     "generate_new_draft": "New draft",
-    "info_alert_different_additional_training_and_source_language": "The language for your additional training text ({{ additionalTrainingSourceLanguageDisplayName }}) must be the same as the training source language ({{ alternateTrainingSourceLanguageDisplayName }}). Select a different additional training text on the [link:projectSettingsUrl]settings page[/link].",
-    "info_alert_different_training_and_source_language": "The language for your alternate training text ({{ alternateTrainingSourceLanguageDisplayName }}) must be the same as the source language ({{ sourceLanguageDisplayName }}). Select a different alternate training text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_last_sync_failed": "Your project failed to synchronize. It will be synchronized when you next generate a draft.",
     "info_alert_no_source_access": "You do not have access to the translation source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_no_training_source_access": "You do not have access to the training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_download_error": "There was a problem downloading your draft. Please check your Internet connection and try again in several minutes.",
     "info_alert_no_additional_training_source_access": "You do not have access to the additional training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
-    "info_alert_same_source_and_target_language": "The language for your source text must be different than the target language ({{ targetLanguageDisplayName }}). Select a different source text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_source_text_not_selected": "Your project has no source text selected. This is required in order to produce a draft translation. Select a source text on the [link:projectSettingsUrl]settings page[/link].",
     "instructions_draft_process": "Generating a draft usually takes at least {{ count }} hours.",
     "instructions_draft_process_subtext": "It can take much longer when the system is busy.",
@@ -211,9 +205,6 @@
     "instructions_scripture_forge_assist_back_translation_subtext": "If your team has already drafted one or more books and then back translated one or more of them, Scripture Forge can use the back translated books to generate a draft of the next book you are working on.",
     "instructions_scripture_forge_assist_forward_translation": "Scripture Forge can assist with drafting a translation.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "Based on your existing translation progress you can use the books you have already translated to generate a draft of the next book you are working on.",
-    "non_pa_info_alert_different_additional_training_and_source_language": "The language for your additional training text ({{ additionalTrainingSourceLanguageDisplayName }}) must be the same as the training source language ({{ alternateTrainingSourceLanguageDisplayName }}). Please have your Paratext Administrator select a different additional training text.",
-    "non_pa_info_alert_different_training_and_source_language": "The language for your alternate training text ({{ alternateTrainingSourceLanguageDisplayName }}) must be the same as the source language ({{ sourceLanguageDisplayName }}). Please have your Paratext Administrator select a different alternate training text.",
-    "non_pa_info_alert_same_source_and_target_language": "The language for your source text must be different than the target language ({{ targetLanguageDisplayName }}). Please have your Paratext Administrator change the source before you can generate a draft.",
     "non_pa_info_alert_source_text_not_selected": "Your project has no source text selected. This is required in order to produce a draft translation. Please have your Paratext Administrator select a source before you can generate a draft.",
     "offline_message": "Draft generation is not available when offline.",
     "preview_draft_button": "Preview draft",
@@ -405,6 +396,20 @@
     "transcelerator_paratext": "{1}Transcelerator{2} is a plugin for {3}Paratext{4} to aid with creating and translating scripture checking questions.",
     "transcelerator_some_questions_already_imported": "Note: Some selected questions have already been imported. Questions that have been edited in Transcelerator will be updated in Scripture Forge, and exact duplicates will be skipped.",
     "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
+  },
+  "language_codes_confirmation": {
+    "all_sources_should_be_same_language": "All source and reference projects should be in the same language",
+    "change_source_projects_on_settings_page": "Source projects can be changed on the [link:projectSettingsUrl]settings page[/link]",
+    "confirm_lang_codes_correct": "All the language codes are correct",
+    "contact_project_administrator_to_change_settings": "Contact your project administrator if language settings need to be updated",
+    "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",
+    "incorrect_language_codes_reduce_quality": "Incorrect language codes will dramatically reduce draft quality.",
+    "i_understand_and_accept": "I understand the problem and want to continue anyways",
+    "please_make_sure_codes_correct": "Please make sure all the language codes are correct before continuing.",
+    "source_and_reference_languages_different": "Source and reference projects currently have the following language codes: {{ languageCodes }}. Using incorrect language codes, or using source or reference projects that are not all in the same language, may significantly reduce the draft quality.",
+    "source_and_target_languages_same": "Source and target languages are both {{ displayLanguage }}",
+    "source_and_target_projects_all_have_language_code": "The source and target projects all have the [b]{{ languageCode }}[/b] language code. If you are translating into a dialect or related language that does not have a separate ISO code, these settings may be correct. For all other projects, having the source and target projects set to the same language may significantly reduce the draft quality.",
+    "sources_must_be_same_language": "The training source must be the same language as the drafting source. You can update your source texts on the [link:projectSettingsUrl]settings page[/link]"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} other viewers"
