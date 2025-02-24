@@ -1,12 +1,11 @@
 name: Grit check
+permissions: {}
 
 on:
   push:
     branches: [master, develop, sf-qa, sf-live]
   pull_request:
     branches: [master, develop]
-
-permissions: {}
 
 jobs:
   grit-check:

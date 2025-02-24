@@ -1,4 +1,5 @@
 name: GitHub Actions Security Analysis with zizmor
+permissions: {}
 
 on:
   push:

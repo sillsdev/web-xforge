@@ -1,4 +1,5 @@
 name: Build Docker development images
+permissions: {}
 
 # Allow the images to be built manually until we have CI set up
 on:

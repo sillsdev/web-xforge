@@ -1,4 +1,5 @@
 name: Update Localizations
+permissions: {}
 
 on:
   schedule:

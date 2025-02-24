@@ -1,4 +1,5 @@
 name: "Release"
+permissions: {}
 
 on:
   workflow_call:

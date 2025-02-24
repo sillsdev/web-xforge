@@ -1,4 +1,5 @@
 name: "Compute next version"
+permissions: {}
 
 on:
   workflow_call:

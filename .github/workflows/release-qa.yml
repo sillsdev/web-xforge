@@ -1,5 +1,6 @@
 # Releases from master branch to QA staging server.
 name: "Release to QA"
+permissions: {}
 
 concurrency: deploy-staging
 
