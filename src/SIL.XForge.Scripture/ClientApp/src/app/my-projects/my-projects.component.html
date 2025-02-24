@@ -20,7 +20,7 @@
       <mat-card
         id="user-update-project-card-{{ ptProject.projectId }}"
         [attr.data-pt-project-id]="ptProject.projectId"
-        class="user-update-project mat-elevation-z4"
+        class="user-update-project"
       >
         <span class="project-name">
           <b>{{ ptProject.shortName }}</b> - {{ ptProject.name }}
@@ -31,6 +31,7 @@
         <button
           class="user-update-project-btn"
           mat-flat-button
+          color="primary"
           [disabled]="(isOnline | async) === false"
           (click)="syncUserRole(ptProject.projectId!)"
         >
