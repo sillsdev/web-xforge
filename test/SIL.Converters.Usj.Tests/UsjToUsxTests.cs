@@ -182,6 +182,17 @@ public class UsjToUsxTests
     }
 
     [Test]
+    public void ShouldConvertFromUsjToUsxWithNbsp()
+    {
+        string usx = UsjToUsx.UsjToUsxString(TestData.UsjGen1V1Nbsp);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+
+        string expected = TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1Nbsp);
+        expected = TestData.RemoveEidElements(expected);
+        Assert.That(usx, Is.EqualTo(expected));
+    }
+
+    [Test]
     public void ShouldConvertFromUsjWithNonStandardFeaturesToUsx()
     {
         string usx = UsjToUsx.UsjToUsxString(TestData.UsjGen1V1Nonstandard);
