@@ -151,6 +151,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       this.selectedRevision == null ||
       this.selectedSnapshot?.data.ops == null ||
       this.projectId == null ||
+      this.projectDoc?.data == null ||
       this.bookNum == null ||
       this.chapter == null ||
       !this.canRestoreSnapshot
@@ -163,12 +164,17 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       // Revert to the snapshot
       const delta: Delta = new Delta(this.selectedSnapshot.data.ops);
       const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
-      await this.projectService.onlineSetIsValid(
-        textDocId.projectId,
-        textDocId.bookNum,
-        textDocId.chapterNum,
-        this.selectedSnapshot.isValid
-      );
+      if (
+        this.projectDoc.data?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
+          ?.isValid !== this.selectedSnapshot.isValid
+      ) {
+        await this.projectService.onlineSetIsValid(
+          textDocId.projectId,
+          textDocId.bookNum,
+          textDocId.chapterNum,
+          this.selectedSnapshot.isValid
+        );
+      }
       await this.textDocService.overwrite(textDocId, delta, 'History');
 
       this.noticeService.show(translate('history_chooser.revert_successful'));
