@@ -28,7 +28,7 @@ import { SFProjectService } from '../core/sf-project.service';
   styleUrls: ['./my-projects.component.scss']
 })
 export class MyProjectsComponent extends SubscriptionDisposable implements OnInit {
-  /** PT projects that the user can access that they are not connected to on SF. */
+  /** PT projects that the user can access. */
   private userParatextProjects: ParatextProject[] = [];
 
   /** SF projects that the current user is on at SF. */
@@ -119,13 +119,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     return `${drafting}${checking}`;
   }
 
-  userRoleNeedsUpdated(projectId: string): boolean {
-    return (
-      this.userIsPTUser &&
-      (this.userParatextProjects?.find(project => project.projectId === projectId)?.hasUserRoleChanged ?? false)
-    );
-  }
-
   async joinProject(projectId: string): Promise<void> {
     try {
       this.noticeService.loadingStarted(this.constructor.name);
@@ -163,12 +156,12 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     this.loadingPTProjects = true;
     this.problemGettingPTProjects = false;
     try {
-      const getPtProjects = await this.paratextService.getProjects();
-      if (getPtProjects == null) {
+      const userPtProjects = await this.paratextService.getProjects();
+      if (userPtProjects == null) {
         this.problemGettingPTProjects = true;
         return;
       }
-      this.userParatextProjects = getPtProjects;
+      this.userParatextProjects = userPtProjects;
     } catch (err) {
       if (err instanceof HttpErrorResponse && err.status === HttpStatusCode.ServiceUnavailable) {
         this.errorMessage = 'failed_to_connect_to_pt_server';

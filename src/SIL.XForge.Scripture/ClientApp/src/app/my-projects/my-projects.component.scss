@@ -54,10 +54,16 @@ mat-card {
   grid-template-columns: 1fr auto;
   cursor: pointer;
   transition: all 0.1s;
+  &.user-update-project {
+    cursor: default;
+  }
 }
 
 mat-card:hover {
   filter: brightness(90%);
+  &.user-update-project {
+    filter: none;
+  }
 }
 
 mat-card:active {
@@ -101,7 +107,7 @@ mat-card:active {
   grid-template-areas:
     'project-name project-name'
     'description empty';
-  background-color: #e8fafd;
+  background-color: variables.$info-color;
 }
 
 .user-update-project-btn {
