@@ -46,7 +46,9 @@ jobs:
         run: git checkout sf-qa
       - name: Use specific QA version
         if: ${{ github.event.inputs.skip-branch-update == 'false' && github.event.inputs.from-staging-version != '' }}
-        run: git checkout "SF-QAv${{ github.event.inputs.from-staging-version }}"
+        env:
+          FROM_STAGING_VERSION: ${{ github.event.inputs.from-staging-version }}
+        run: git checkout "SF-QAv${FROM_STAGING_VERSION}"
       - name: Get commit
         id: get_commit
         run: |
@@ -54,9 +56,11 @@ jobs:
           build_commit="$(git rev-parse HEAD)"
           echo "build_commit=${build_commit}" >> $GITHUB_OUTPUT
       - name: Details on selected build commit
+        env:
+          BUILD_COMMIT: ${{ steps.get_commit.outputs.build_commit }}
         run: |
           set -u
-          build_commit="${{ steps.get_commit.outputs.build_commit }}"
+          build_commit="${BUILD_COMMIT}"
           echo "Using build_commit: ${build_commit}"
           echo " "
           echo "git describe: $(git describe "${build_commit}")"
