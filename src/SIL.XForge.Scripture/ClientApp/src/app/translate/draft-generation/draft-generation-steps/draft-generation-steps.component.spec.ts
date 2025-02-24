@@ -1,3 +1,5 @@
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -6,14 +8,14 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
@@ -33,8 +35,6 @@ describe('DraftGenerationStepsComponent', () => {
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
   const mockDraftSourceService = mock(DraftSourcesService);
-  const mockAuthService = mock(AuthService);
-  const mockUserService = mock(UserService);
 
   const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
   const trainingDataQueryLocalChanges$: Subject<void> = new Subject<void>();
@@ -45,7 +45,7 @@ describe('DraftGenerationStepsComponent', () => {
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, NoopAnimationsModule],
+    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftSourcesService, useMock: mockDraftSourceService },
@@ -55,8 +55,8 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: ProgressService, useMock: mockProgressService },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: NoticeService, useMock: mockNoticeService },
-      { provide: AuthService, useMock: mockAuthService },
-      { provide: UserService, useMock: mockUserService }
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting()
     ]
   }));
 
@@ -891,7 +891,6 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.availableTrainingFiles.length).toEqual(1);
 
       // Delete a training data file
-      const mockTrainingDataDoc = mock(TrainingDataDoc);
       when(mockTrainingDataQuery.docs).thenReturn([]);
       trainingDataQueryLocalChanges$.next();
       fixture.detectChanges();
