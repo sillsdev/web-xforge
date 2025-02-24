@@ -15,6 +15,7 @@ vagrant_ansible_inventory_*
 artifacts/
 dist/
 src/RealtimeServer/lib/
+storybook-static/
 
 # VS files
 .vs
