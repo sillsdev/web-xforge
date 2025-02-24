@@ -1,5 +1,6 @@
 # Releases from sf-qa branch to Live production server.
 name: "Release to Live"
+permissions: {}
 
 concurrency: deploy-prod
 

@@ -2,6 +2,7 @@
 # See: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
 name: Lint and Prettier
+permissions: {}
 
 on:
   push:

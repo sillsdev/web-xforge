@@ -1,6 +1,7 @@
 # Github Action to build and run tests
 
 name: Build
+permissions: {}
 
 on:
   push:

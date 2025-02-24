@@ -3,6 +3,7 @@
 # See: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
 name: Angular Production Build
+permissions: {}
 
 on:
   push:
