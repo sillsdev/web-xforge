@@ -19,6 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           fetch-depth: 0 # Chromatic requires git history
           ref: ${{ github.event.pull_request.head.sha }} # Chromatic needs the PR branch, not the merge to master
       - name: "Deps: Node"

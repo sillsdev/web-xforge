@@ -13,6 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: true
           ssh-key: ${{ secrets.SF_PUSH_KEY }}
 
       - name: Set up Deno
