@@ -160,6 +160,25 @@ public class UsxToUsjTests
     }
 
     [Test]
+    public void ShouldConvertFromUsxToUsjWithNbsp()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1Nbsp);
+        Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1Nbsp).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsxToUsjWithNbsp_Roundtrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1Nbsp);
+        string usx = UsjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+
+        string expected = TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1Nbsp);
+        expected = TestData.RemoveEidElements(expected);
+        Assert.That(usx, Is.EqualTo(expected));
+    }
+
+    [Test]
     public void ShouldConvertFromUsxToUsjWithNonStandardFeatures()
     {
         Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1Nonstandard);
@@ -167,7 +186,7 @@ public class UsxToUsjTests
     }
 
     [Test]
-    public void ShouldConvertFromUsxToUsjWithNonStandardFeatures_RoundTrip()
+    public void ShouldConvertFromUsxToUsjWithNonStandardFeatures_Roundtrip()
     {
         Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1Nonstandard);
         string usx = UsjToUsx.UsjToUsxString(usj);
