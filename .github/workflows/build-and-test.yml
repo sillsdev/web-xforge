@@ -37,8 +37,9 @@ jobs:
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
-          # This assumes that this package-lock.json file is the preferred file for a cache hit
-          cache-dependency-path: src/SIL.XForge.Scripture/ClientApp/package-lock.json
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
       - name: "Deps: npm"
         run: npm install --global npm@${{matrix.npm_version}}
       - name: Pre-build report
@@ -134,8 +135,9 @@ jobs:
         with:
           node-version: ${{matrix.node_version}}
           cache: "npm"
-          # This assumes that this package-lock.json file is the preferred file for a cache hit
-          cache-dependency-path: src/SIL.XForge.Scripture/ClientApp/package-lock.json
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
       - name: "Deps: npm"
         run: npm install --global npm@${{matrix.npm_version}}
       - name: Pre-build report
