@@ -27,6 +27,7 @@ jobs:
         with:
           languages: javascript
           config-file: ./.github/codeql/codeql-javascript-config.yml
+          dependency-caching: true
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
@@ -51,6 +52,7 @@ jobs:
         with:
           languages: csharp
           queries: security-and-quality
+          dependency-caching: true
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
@@ -91,6 +93,7 @@ jobs:
         with:
           languages: python
           queries: security-and-quality
+          dependency-caching: true
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
