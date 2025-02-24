@@ -83,6 +83,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          persist-credentials: true
           ref: ${{inputs.build_commit}}
           fetch-depth: "0"
       - name: "Deps: .NET"

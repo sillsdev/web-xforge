@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Build and tag Docker images
         run: |
           docker build --tag ghcr.io/${{ github.repository }}/realtimeserver:latest \

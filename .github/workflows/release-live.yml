@@ -36,6 +36,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           fetch-depth: "0"
       - name: Use existing branch sf-live
         if: ${{ github.event.inputs.skip-branch-update == 'true' }}

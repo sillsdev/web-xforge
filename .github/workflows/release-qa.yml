@@ -32,6 +32,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           fetch-depth: "0"
       - name: Use latest branch master
         if: ${{ github.event.inputs.skip-branch-update == 'false' }}
@@ -74,6 +75,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           ref: ${{ needs.determine_build_commit.outputs.build_commit }}
           fetch-depth: "0"
       - name: Check if already built

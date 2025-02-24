@@ -35,6 +35,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           # Use the python code from the same commit that the workflow files are being used from, when the workflow is
           # triggered from schedule or workflow_dispatch. Then workflow file expectations can more easily match the
           # python code.
