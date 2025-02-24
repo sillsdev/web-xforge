@@ -32,7 +32,11 @@ jobs:
             src/SIL.XForge.Scripture/ClientApp/package-lock.json
             src/RealtimeServer/package-lock.json
       - name: Upgrade npm
-        run: npm install -g npm@${{matrix.npm_version}}
+        env:
+          NPM_VERSION: ${{ matrix.npm_version }}
+        run: |
+          set -xueo pipefail
+          npm install -g npm@${NPM_VERSION}
       - name: Realtime Server Lint check
         run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci)) && npm run lint
       - name: Realtime Server Prettier format check

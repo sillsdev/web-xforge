@@ -22,11 +22,13 @@ jobs:
         with:
           persist-credentials: false
       - name: Build and tag Docker images
+        env:
+          REPOSITORY: ${{ github.repository }}
         run: |
-          docker build --tag ghcr.io/${{ github.repository }}/realtimeserver:latest \
+          docker build --tag ghcr.io/${REPOSITORY}/realtimeserver:latest \
           --build-arg MIGRATOR_ENVIRONMENT=Development \
           -f src/RealtimeServer/Dockerfile .
-          docker build --tag ghcr.io/${{ github.repository }}:latest \
+          docker build --tag ghcr.io/${REPOSITORY}:latest \
           --build-arg AngularConfig=development \
           --build-arg configuration=Debug \
           --build-arg version=9.9.9 \
@@ -38,6 +40,9 @@ jobs:
           username: ${{github.actor}}
           password: ${{secrets.GITHUB_TOKEN}}
       - name: Push Docker images
+        env:
+          REPOSITORY: ${{ github.repository }}
         run: |
-          docker push ghcr.io/${{ github.repository }}/realtimeserver:latest
-          docker push ghcr.io/${{ github.repository }}:latest
+          set -xueo pipefail
+          docker push ghcr.io/${REPOSITORY}/realtimeserver:latest
+          docker push ghcr.io/${REPOSITORY}:latest
