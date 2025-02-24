@@ -61,12 +61,12 @@ describe('Quill history', () => {
       {
         name: 'commenter selection removal',
         input: new Delta().insert('text', {
-          segment: 'verse-1',
+          segment: 'verse_1_1',
           'highlight-segment': true,
           'commenter-selection': true
         }),
         expectedAttrs: {
-          segment: 'verse-1',
+          segment: 'verse_1_1',
           'highlight-segment': true,
           'commenter-selection': null
         }
@@ -74,11 +74,11 @@ describe('Quill history', () => {
       {
         name: 'default highlight segment',
         input: new Delta().insert('text', {
-          segment: 'verse-1',
+          segment: 'verse_1_1',
           'commenter-selection': true
         }),
         expectedAttrs: {
-          segment: 'verse-1',
+          segment: 'verse_1_1',
           'highlight-segment': false,
           'commenter-selection': null
         }
@@ -125,7 +125,7 @@ describe('Quill history', () => {
     });
 
     it('should clean up highlighting during undo', () => {
-      const delta = new Delta().insert('text', { segment: 'verse-1' });
+      const delta = new Delta().insert('text', { segment: 'verse_1_1' });
       history.stack.undo = [{ delta, range: { index: 0, length: 4 } }];
 
       history.change('undo', 'redo');
