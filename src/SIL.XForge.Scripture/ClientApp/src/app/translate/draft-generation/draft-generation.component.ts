@@ -131,6 +131,16 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   readonly draftDurationHours = 2.5;
 
+  // TODO: Remove the SF-3219 notice entirely after it has expired
+  readonly improvedDraftGenerationNotice = this.i18n.interpolate('draft_generation.improved_draft_generation_notice');
+
+  // Stop showing the improved draft generation notice 60 days after it went live
+  readonly improvedDraftGenerationNoticeExpired = new Date() > new Date('2025-04-01');
+
+  get showImprovedDraftGenerationNotice(): boolean {
+    return this.draftEnabled && !this.improvedDraftGenerationNoticeExpired;
+  }
+
   get draftEnabled(): boolean {
     return this.isBackTranslationMode || this.isPreTranslationApproved;
   }
