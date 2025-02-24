@@ -2790,6 +2790,26 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task DeleteProjectAsync_MissingProject()
+    {
+        var env = new TestEnvironment();
+        await env.RealtimeService.GetRepository<SFProject>().DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.DeleteProjectAsync(User01, Project01));
+    }
+
+    [Test]
+    public async Task DeleteProjectAsync_MissingUser()
+    {
+        var env = new TestEnvironment();
+        await env.RealtimeService.GetRepository<User>().DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.DeleteProjectAsync(User01, Project01));
+    }
+
+    [Test]
     public async Task DeleteProjectAsync_Success()
     {
         var env = new TestEnvironment();
@@ -2804,6 +2824,17 @@ public class SFProjectServiceTests
             e => e.Message!.Contains(Project01) && e.Message.Contains(User01),
             "The deletion should be logged"
         );
+        await env
+            .EventMetricService.Received(1)
+            .SaveEventMetricAsync(
+                Project01,
+                User01,
+                nameof(SFProjectService.DeleteProjectAsync),
+                EventScope.Settings,
+                Arg.Any<Dictionary<string, object>>(),
+                Arg.Any<object?>(),
+                Arg.Any<Exception?>()
+            );
         Assert.That(env.ContainsProject(Project01), Is.False);
         User user = env.GetUser(User01);
         Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Project01));
@@ -2824,6 +2855,17 @@ public class SFProjectServiceTests
             e => e.Message!.Contains(SourceOnly) && e.Message.Contains(User01),
             "The deletion should be logged"
         );
+        await env
+            .EventMetricService.Received(1)
+            .SaveEventMetricAsync(
+                SourceOnly,
+                User01,
+                nameof(SFProjectService.DeleteProjectAsync),
+                EventScope.Settings,
+                Arg.Any<Dictionary<string, object>>(),
+                Arg.Any<object?>(),
+                Arg.Any<Exception?>()
+            );
         await env
             .MachineProjectService.Received()
             .RemoveProjectAsync(SourceOnly, preTranslate: false, CancellationToken.None);
