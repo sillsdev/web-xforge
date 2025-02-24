@@ -255,9 +255,35 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             if (projectDoc.Data.Sync.QueuedCount > 0)
                 throw new InvalidOperationException("A project cannot be deleted while it is syncing.");
 
+            // Get the user information who is deleting the project
+            IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+            if (!userDoc.IsLoaded)
+                throw new ForbiddenException();
+
+            // Log this event to the event metrics
+            // We do this here to record additional information about the user and project
             string ptProjectId = projectDoc.Data.ParatextId;
+            var arguments = new Dictionary<string, object>
+            {
+                { nameof(projectId), projectId },
+                { nameof(curUserId), curUserId },
+                { "paratextId", ptProjectId },
+                { "user", new { name = userDoc.Data.Name, email = userDoc.Data.Email } },
+            };
+            await _eventMetricService.SaveEventMetricAsync(
+                projectId,
+                curUserId,
+                nameof(DeleteProjectAsync),
+                EventScope.Settings,
+                arguments,
+                result: null,
+                exception: null
+            );
+
+            // Log this to the system log
             _logger.LogInformation(
-                "The project {projectId} ({shortName} - {name}) with Paratext id {ptProjectId} is being deleted by user {curUserId}.",
+                "The project {projectId} ({shortName} - {name}) with Paratext id {ptProjectId} is being deleted by "
+                    + "user {curUserId}",
                 projectId,
                 projectDoc.Data.ShortName,
                 projectDoc.Data.Name,
@@ -1904,40 +1930,42 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private string[] GetAvailableRoles(SFProject project, string userRole)
     {
         bool checkUserRole = userRole is SFProjectRole.Administrator or SFProjectRole.Translator;
-        return new Dictionary<string, bool>
-        {
+        return
+        [
+            .. new Dictionary<string, bool>
             {
-                SFProjectRole.CommunityChecker,
-                project.CheckingConfig.CheckingEnabled
-                    && _projectRights.RoleHasRight(
+                {
+                    SFProjectRole.CommunityChecker,
+                    project.CheckingConfig.CheckingEnabled
+                        && _projectRights.RoleHasRight(
+                            project,
+                            role: checkUserRole ? userRole : SFProjectRole.CommunityChecker,
+                            SFProjectDomain.UserInvites,
+                            Operation.Create
+                        )
+                },
+                {
+                    SFProjectRole.Viewer,
+                    _projectRights.RoleHasRight(
                         project,
-                        role: checkUserRole ? userRole : SFProjectRole.CommunityChecker,
+                        role: checkUserRole ? userRole : SFProjectRole.Viewer,
                         SFProjectDomain.UserInvites,
                         Operation.Create
                     )
-            },
-            {
-                SFProjectRole.Viewer,
-                _projectRights.RoleHasRight(
-                    project,
-                    role: checkUserRole ? userRole : SFProjectRole.Viewer,
-                    SFProjectDomain.UserInvites,
-                    Operation.Create
-                )
-            },
-            {
-                SFProjectRole.Commenter,
-                _projectRights.RoleHasRight(
-                    project,
-                    role: checkUserRole ? userRole : SFProjectRole.Commenter,
-                    SFProjectDomain.UserInvites,
-                    Operation.Create
-                )
-            },
-        }
-            .Where(entry => entry.Value)
-            .Select(entry => entry.Key)
-            .ToArray();
+                },
+                {
+                    SFProjectRole.Commenter,
+                    _projectRights.RoleHasRight(
+                        project,
+                        role: checkUserRole ? userRole : SFProjectRole.Commenter,
+                        SFProjectDomain.UserInvites,
+                        Operation.Create
+                    )
+                },
+            }
+                .Where(entry => entry.Value)
+                .Select(entry => entry.Key),
+        ];
     }
 
     /// <summary>
