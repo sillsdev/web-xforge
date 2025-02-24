@@ -22,7 +22,7 @@ describe('DisableHtmlClipboard', () => {
     clipboard = new DisableHtmlClipboard(quill, { textComponent: instance(textComponentMock) });
 
     mockRange = { index: 5, length: 0 };
-    mockFormat = { segment: 'verse-1', bold: true };
+    mockFormat = { segment: 'verse_1_1', bold: true };
   });
 
   describe('onCapturePaste', () => {
