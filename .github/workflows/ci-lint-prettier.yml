@@ -25,6 +25,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
       - name: Upgrade npm
         run: npm install -g npm@${{matrix.npm_version}}
       - name: Realtime Server Lint check
