@@ -1,5 +1,6 @@
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { SelectableProjectWithLanguageCode } from '../../core/paratext.service';
 
 export function englishNameFromCode(code: string): string {
   const locale = new Intl.Locale(code);
@@ -25,11 +26,49 @@ export function countNonEquivalentLanguageCodes(languageCodes: string[]): number
   return new Set(Array.from(uniqueTags).map(englishNameFromCode)).size;
 }
 
-export interface DraftSourcesAsArrays {
+/** Represents draft sources as a set of two {@link TranslateSource} arrays, and one {@link SFProjectProfile} array. */
+export interface DraftSourcesAsTranslateSourceArrays {
   trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 });
   trainingTargets: [SFProjectProfile];
   draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 });
 }
+
+/** Represents draft sources as a set of three {@link SelectableProjectWithLanguageCode} arrays. */
+export interface DraftSourcesAsSelectableProjectArrays {
+  trainingSources: SelectableProjectWithLanguageCode[];
+  trainingTargets: SelectableProjectWithLanguageCode[];
+  draftingSources: SelectableProjectWithLanguageCode[];
+}
+
+/**
+ * Maps from a {@link TranslateSource} to a {@link SelectableProjectWithLanguageCode}. While the two types are used in
+ * similar contexts, a SelectableProjectWithLanguageCode may represent a project or resource that has not yet been
+ * connected, and therefore does not have some of the properties of a TranslateSource. For example, there's no
+ * projectRef on a SelectableProjectWithLanguageCode because it may not be a connected project.
+ *
+ * Alternatively, this can take an entire {@link SFProjectProfile} as an input, which contains a superset of what a
+ * TranslateSource contains.
+ */
+export function translateSourceToSelectableProjectWithLanguageTag(
+  project: TranslateSource | SFProjectProfile
+): SelectableProjectWithLanguageCode {
+  return {
+    paratextId: project.paratextId,
+    name: project.name,
+    shortName: project.shortName,
+    languageTag: project.writingSystem.tag
+  };
+}
+
+// export function draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays(
+//   sources: DraftSourcesAsTranslateSourceArrays
+// ): DraftSourcesAsSelectableProjectArrays {
+//   return {
+//     draftingSources: sources.draftingSources.map(translateSourceToSelectableProjectWithLanguageTag),
+//     trainingSources: sources.trainingSources.map(translateSourceToSelectableProjectWithLanguageTag),
+//     trainingTargets: sources.trainingTargets.map(translateSourceToSelectableProjectWithLanguageTag)
+//   };
+// }
 
 /**
  * Takes a SFProjectProfile and returns the training and drafting sources for the project as three arrays.
@@ -49,7 +88,7 @@ export interface DraftSourcesAsArrays {
  * @param project The project to get the sources for
  * @returns An object with three arrays: trainingSources, trainingTargets, and draftingSources
  */
-export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAsArrays {
+export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAsTranslateSourceArrays {
   const trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 }) = [];
   const draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 }) = [];
   const trainingTargets: [SFProjectProfile] = [project];

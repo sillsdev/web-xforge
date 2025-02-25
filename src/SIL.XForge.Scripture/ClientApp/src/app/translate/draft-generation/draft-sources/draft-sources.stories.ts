@@ -2,10 +2,12 @@ import { DestroyRef } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -22,6 +24,7 @@ const mockProjectService = mock(SFProjectService);
 const mockUserProjectsService = mock(SFUserProjectsService);
 const mockRouter = mock(Router);
 const mockFeatureFlags = mock(FeatureFlagService);
+const mockAuthService = mock(AuthService);
 
 interface DraftSourcesComponentStoryState {
   project: SFProjectProfileDoc;
@@ -79,6 +82,7 @@ const testProjectDoc = {
 when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 when(mockActivatedProjectService.projectDoc).thenReturn(testProjectDoc);
 when(mockFeatureFlags.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
+when(mockAuthService.currentUserId).thenReturn('user1');
 
 const languageCodes = ['en', 'fr', 'es', 'pt', 'de', 'ru', 'zh', 'ar', 'hi', 'bn'];
 
@@ -120,7 +124,9 @@ export default {
         { provide: SFProjectService, useValue: instance(mockProjectService) },
         { provide: SFUserProjectsService, useValue: instance(mockUserProjectsService) },
         { provide: Router, useValue: instance(mockRouter) },
-        { provide: FeatureFlagService, useValue: instance(mockFeatureFlags) }
+        { provide: FeatureFlagService, useValue: instance(mockFeatureFlags) },
+        { provide: AuthService, useValue: instance(mockAuthService) },
+        defaultTranslocoMarkupTranspilers()
       ]
     })
   ],
