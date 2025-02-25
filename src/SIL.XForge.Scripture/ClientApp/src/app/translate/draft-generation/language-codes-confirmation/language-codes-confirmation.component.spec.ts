@@ -13,7 +13,7 @@ import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DraftSourcesAsArrays } from '../draft-sources.service';
 import { LanguageCodesConfirmationComponent } from './language-codes-confirmation.component';
 
-fdescribe('LanguageCodesConfirmationComponent', () => {
+describe('LanguageCodesConfirmationComponent', () => {
   let component: LanguageCodesConfirmationComponent;
   let fixture: ComponentFixture<LanguageCodesConfirmationComponent>;
 
