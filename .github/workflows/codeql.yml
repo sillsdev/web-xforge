@@ -43,9 +43,34 @@ jobs:
       contents: read
       security-events: write
 
+    strategy:
+      matrix:
+        dotnet_version: ["8.0.x"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: "Deps: .NET"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{matrix.dotnet_version}}
+          cache: true
+          cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
+
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node_version }}
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
+
+      - name: Upgrade npm
+        run: npm install -g npm@${{matrix.npm_version}}
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
