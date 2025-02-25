@@ -51,7 +51,7 @@ describe('DisableHtmlClipboard', () => {
       expect(true).toBe(true); // Prevent SPEC HAS NO EXPECTATIONS warning
     });
 
-    it('should replace multiple newlines with single space (testing regex)', () => {
+    it('should replace multiple newlines and tabs with single space', () => {
       const testCases = [
         {
           input: 'first\n\nsecond',
@@ -68,6 +68,18 @@ describe('DisableHtmlClipboard', () => {
         {
           input: '\n\nstart\nmiddle\n\nend\n\n',
           expected: ' start middle end '
+        },
+        {
+          input: 'first\tsecond\t\tthird',
+          expected: 'first second third'
+        },
+        {
+          input: '\t\tstart\tmiddle\t\tend\t\t',
+          expected: ' start middle end '
+        },
+        {
+          input: 'first\n\t\nsecond\t\n\tthird',
+          expected: 'first second third'
         }
       ];
 
@@ -98,8 +110,8 @@ describe('DisableHtmlClipboard', () => {
       }
     });
 
-    it('should handle mixed newlines and backslashes', () => {
-      const inputText = 'line1\\\r\n\\line2\n\\\nline3\\';
+    it('should handle mixed newlines, tabs, and backslashes', () => {
+      const inputText = 'line1\\\t\r\n\\line2\n\t\\\nline3\\';
       const expected = 'line1 line2 line3';
 
       // Override convert to capture the cleaned text passed for conversion
