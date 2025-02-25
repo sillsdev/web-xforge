@@ -4,17 +4,14 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { I18nService } from 'xforge-common/i18n.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import {
-  createTestFeatureFlag,
-  FeatureFlagService
-} from '../../../../xforge-common/feature-flags/feature-flag.service';
-import { I18nService } from '../../../../xforge-common/i18n.service';
-import { NoticeService } from '../../../../xforge-common/notice.service';
-import { SFUserProjectsService } from '../../../../xforge-common/user-projects.service';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
