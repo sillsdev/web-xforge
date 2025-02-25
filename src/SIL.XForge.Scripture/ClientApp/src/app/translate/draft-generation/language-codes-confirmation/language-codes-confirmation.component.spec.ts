@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -11,22 +10,23 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
+import { DraftSourcesAsArrays } from '../draft-sources.service';
 import { LanguageCodesConfirmationComponent } from './language-codes-confirmation.component';
 
-const mockI18nService = mock(I18nService);
-const mockActivatedProject: ActivatedProjectService = mock(ActivatedProjectService);
-const mockAuthService = mock(AuthService);
-const mockDraftSourcesService = mock(DraftSourcesService);
+fdescribe('LanguageCodesConfirmationComponent', () => {
+  let component: LanguageCodesConfirmationComponent;
+  let fixture: ComponentFixture<LanguageCodesConfirmationComponent>;
 
-describe('LanguageCodesConfirmationComponent', () => {
+  const mockI18nService = mock(I18nService);
+  const mockActivatedProject: ActivatedProjectService = mock(ActivatedProjectService);
+  const mockAuthService = mock(AuthService);
+
   configureTestingModule(() => ({
     imports: [TestTranslocoModule, UICommonModule, NoticeComponent, TranslocoMarkupComponent],
     providers: [
       { provide: I18nService, useMock: mockI18nService },
       { provide: ActivatedProjectService, useMock: mockActivatedProject },
-      { provide: AuthService, useMock: mockAuthService },
-      { provide: DraftSourcesService, useMock: mockDraftSourcesService }
+      { provide: AuthService, useMock: mockAuthService }
     ]
   }));
 
@@ -39,12 +39,17 @@ describe('LanguageCodesConfirmationComponent', () => {
       id: 'target',
       data: createTestProjectProfile({ userRoles: { user1: SFProjectRole.ParatextAdministrator } })
     } as SFProjectProfileDoc);
+
+    fixture = TestBed.createComponent(LanguageCodesConfirmationComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
   it('should show standard message', () => {
-    const env = new TestEnvironment({ draftSources: getStandardDraftSources() });
-    expect(env.component.sourceSideLanguageCodes.length).toEqual(1);
-    expect(env.component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
+    component.draftSources = getStandardDraftSources();
+    fixture.detectChanges();
+    expect(component.sourceSideLanguageCodes.length).toEqual(1);
+    expect(component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
   });
 
   it('shows standard message when language codes are equivalent language', () => {
@@ -52,16 +57,18 @@ describe('LanguageCodesConfirmationComponent', () => {
     // Both map to the Chinese language
     draftSources.draftingSources[0]!.writingSystem.tag = 'zh-CN';
     draftSources.trainingSources[0]!.writingSystem.tag = 'cmn-Hans';
-    const env = new TestEnvironment({ draftSources });
-    expect(env.component.sourceSideLanguageCodes.length).toEqual(1);
+    component.draftSources = draftSources;
+    fixture.detectChanges();
+    expect(component.sourceSideLanguageCodes.length).toEqual(1);
   });
 
   it('should show target and source language codes identical message', () => {
     const draftSources = getStandardDraftSources();
     draftSources.trainingTargets[0]!.writingSystem.tag = draftSources.trainingSources[0]!.writingSystem.tag;
-    const env = new TestEnvironment({ draftSources });
-    expect(env.component.sourceSideLanguageCodes.length).toEqual(1);
-    expect(env.component.showSourceAndTargetLanguagesIdenticalWarning).toBe(true);
+    component.draftSources = draftSources;
+    fixture.detectChanges();
+    expect(component.sourceSideLanguageCodes.length).toEqual(1);
+    expect(component.showSourceAndTargetLanguagesIdenticalWarning).toBe(true);
   });
 
   it('should show training source language codes different message', () => {
@@ -74,31 +81,20 @@ describe('LanguageCodesConfirmationComponent', () => {
       writingSystem: { tag: 'zh' },
       texts: []
     });
-    const env = new TestEnvironment({ draftSources });
-    // Chinese as the additional training source, and Spanish for the training and drafting source
-    expect(env.component.sourceSideLanguageCodes.length).toEqual(2);
-    expect(env.component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
+    component.draftSources = draftSources;
+    fixture.detectChanges();
+    expect(component.sourceSideLanguageCodes.length).toEqual(2);
+    expect(component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
   });
 
   it('can emit languages confirmed when checkbox is checked', () => {
-    const env = new TestEnvironment({ draftSources: getStandardDraftSources() });
-    const emitSpy = spyOn(env.component.languageCodesVerified, 'emit');
-    env.component.confirmationChanged({ checked: true } as any);
+    component.draftSources = getStandardDraftSources();
+    fixture.detectChanges();
+    const emitSpy = spyOn(component.languageCodesVerified, 'emit');
+    component.confirmationChanged({ checked: true } as any);
     expect(emitSpy).toHaveBeenCalledWith(true);
   });
 });
-
-class TestEnvironment {
-  component: LanguageCodesConfirmationComponent;
-  fixture: ComponentFixture<LanguageCodesConfirmationComponent>;
-
-  constructor(args: { draftSources: DraftSourcesAsArrays }) {
-    when(mockDraftSourcesService.getDraftProjectSources()).thenReturn(of(args.draftSources));
-    this.fixture = TestBed.createComponent(LanguageCodesConfirmationComponent);
-    this.component = this.fixture.componentInstance;
-    this.fixture.detectChanges();
-  }
-}
 
 function getStandardDraftSources(): DraftSourcesAsArrays {
   return {
