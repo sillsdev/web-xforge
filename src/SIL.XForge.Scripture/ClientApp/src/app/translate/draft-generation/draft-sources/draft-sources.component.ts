@@ -10,7 +10,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -25,20 +24,13 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
-import { countNonEquivalentLanguageCodes, projectToDraftSources } from '../draft-utils';
-
-function translateSourceToSelectableProjectWithLanguageTag(
-  project: TranslateSource
-): SelectableProjectWithLanguageCode {
-  return {
-    paratextId: project.paratextId,
-    name: project.name,
-    shortName: project.shortName,
-    languageTag: project.writingSystem.tag
-  };
-}
+import {
+  countNonEquivalentLanguageCodes,
+  projectToDraftSources,
+  translateSourceToSelectableProjectWithLanguageTag
+} from '../draft-utils';
+import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
 
 /** Status for a project, which may or may not be at SF. */
 export interface ProjectStatus {
@@ -60,9 +52,9 @@ export interface ProjectStatus {
     MatCardModule,
     CommonModule,
     TranslocoModule,
-    NoticeComponent,
     MatCheckboxModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    LanguageCodesConfirmationComponent
   ],
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
@@ -77,9 +69,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
 
   step = 1;
 
-  trainingSources: [SelectableProjectWithLanguageCode?, SelectableProjectWithLanguageCode?] = [];
-  trainingTargets: [SFProjectProfile] | [] = [];
-  draftingSources: [SelectableProjectWithLanguageCode?] = [];
+  trainingSources: (SelectableProjectWithLanguageCode | undefined)[] = [];
+  trainingTargets: SFProjectProfile[] = [];
+  draftingSources: (SelectableProjectWithLanguageCode | undefined)[] = [];
 
   projects?: SelectableProject[];
   resources?: SelectableProject[];
@@ -184,22 +176,21 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
       if (projectDoc?.data != null) {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
         if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
+        if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
+        if (trainingTargets.length !== 1) throw new Error('Exactly 1 training target is required');
 
-        const mappedTrainingSources = trainingSources.map(
-          translateSourceToSelectableProjectWithLanguageTag
-        ) as SelectableProjectWithLanguageCode[] & ({ length: 0 } | { length: 1 } | { length: 2 });
+        this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag);
 
-        this.trainingSources = mappedTrainingSources;
         this.trainingTargets = trainingTargets;
-        const mappedDraftingSources: SelectableProjectWithLanguageCode[] = draftingSources.map(
-          translateSourceToSelectableProjectWithLanguageTag
-        );
-        this.draftingSources = [mappedDraftingSources[0]];
+        this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
+
+        this.nonSelectableProjects = [
+          ...this.trainingSources.filter(s => s != null),
+          ...this.draftingSources.filter(s => s != null)
+        ];
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
         if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
-
-        this.nonSelectableProjects = [...mappedTrainingSources, ...mappedDraftingSources];
       }
     });
 
@@ -220,6 +211,20 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
       this.paratextService.getResources()
     ]);
     this.loadingFinished();
+  }
+
+  get draftSourcesAsArray(): {
+    draftingSources: SelectableProjectWithLanguageCode[];
+    trainingSources: SelectableProjectWithLanguageCode[];
+    trainingTargets: SelectableProjectWithLanguageCode[];
+  } {
+    return {
+      draftingSources: this.draftingSources.filter(s => s != null),
+      trainingSources: this.trainingSources.filter(s => s != null),
+      trainingTargets: this.trainingTargets
+        .filter(s => s != null)
+        .map(t => translateSourceToSelectableProjectWithLanguageTag(t))
+    };
   }
 
   projectPlaceholder(project: SelectableProject | undefined): string {
@@ -327,9 +332,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     if (this.activatedProjectService.projectDoc.data == null) throw new Error('Project doc data is null');
     const currentProjectParatextId: string = this.activatedProjectService.projectDoc.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
-      this.trainingSources,
-      this.draftingSources,
-      this.trainingTargets,
+      this.trainingSources as [SelectableProject, SelectableProject?],
+      this.draftingSources as [SelectableProject?],
+      this.trainingTargets as [SFProjectProfile],
       currentProjectParatextId
     );
     const projectSettingsChange: SFProjectSettings = sourcesSettingsChange;

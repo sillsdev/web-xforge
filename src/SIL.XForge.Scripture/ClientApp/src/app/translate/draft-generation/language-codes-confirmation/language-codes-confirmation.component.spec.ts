@@ -1,8 +1,8 @@
+import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -11,13 +11,12 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
+import { DraftSourcesAsArrays } from '../draft-sources.service';
 import { LanguageCodesConfirmationComponent } from './language-codes-confirmation.component';
 
 const mockI18nService = mock(I18nService);
 const mockActivatedProject: ActivatedProjectService = mock(ActivatedProjectService);
 const mockAuthService = mock(AuthService);
-const mockDraftSourcesService = mock(DraftSourcesService);
 
 describe('LanguageCodesConfirmationComponent', () => {
   configureTestingModule(() => ({
@@ -25,8 +24,7 @@ describe('LanguageCodesConfirmationComponent', () => {
     providers: [
       { provide: I18nService, useMock: mockI18nService },
       { provide: ActivatedProjectService, useMock: mockActivatedProject },
-      { provide: AuthService, useMock: mockAuthService },
-      { provide: DraftSourcesService, useMock: mockDraftSourcesService }
+      { provide: AuthService, useMock: mockAuthService }
     ]
   }));
 
@@ -43,8 +41,8 @@ describe('LanguageCodesConfirmationComponent', () => {
 
   it('should show standard message', () => {
     const env = new TestEnvironment({ draftSources: getStandardDraftSources() });
-    expect(env.component.sourceSideLanguageCodes.length).toEqual(1);
-    expect(env.component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
+    expect(env.sourceSideLanguageCodes.length).toEqual(1);
+    expect(env.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
   });
 
   it('shows standard message when language codes are equivalent language', () => {
@@ -53,15 +51,15 @@ describe('LanguageCodesConfirmationComponent', () => {
     draftSources.draftingSources[0]!.writingSystem.tag = 'zh-CN';
     draftSources.trainingSources[0]!.writingSystem.tag = 'cmn-Hans';
     const env = new TestEnvironment({ draftSources });
-    expect(env.component.sourceSideLanguageCodes.length).toEqual(1);
+    expect(env.sourceSideLanguageCodes.length).toEqual(1);
   });
 
   it('should show target and source language codes identical message', () => {
     const draftSources = getStandardDraftSources();
     draftSources.trainingTargets[0]!.writingSystem.tag = draftSources.trainingSources[0]!.writingSystem.tag;
     const env = new TestEnvironment({ draftSources });
-    expect(env.component.sourceSideLanguageCodes.length).toEqual(1);
-    expect(env.component.showSourceAndTargetLanguagesIdenticalWarning).toBe(true);
+    expect(env.sourceSideLanguageCodes.length).toEqual(1);
+    expect(env.showSourceAndTargetLanguagesIdenticalWarning).toBe(true);
   });
 
   it('should show training source language codes different message', () => {
@@ -76,27 +74,49 @@ describe('LanguageCodesConfirmationComponent', () => {
     });
     const env = new TestEnvironment({ draftSources });
     // Chinese as the additional training source, and Spanish for the training and drafting source
-    expect(env.component.sourceSideLanguageCodes.length).toEqual(2);
-    expect(env.component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
+    expect(env.sourceSideLanguageCodes.length).toEqual(2);
+    expect(env.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
   });
 
   it('can emit languages confirmed when checkbox is checked', () => {
     const env = new TestEnvironment({ draftSources: getStandardDraftSources() });
-    const emitSpy = spyOn(env.component.languageCodesVerified, 'emit');
-    env.component.confirmationChanged({ checked: true } as any);
+    const emitSpy = spyOn(env.component.component!.languageCodesVerified, 'emit');
+    env.confirmationCheckbox.click();
     expect(emitSpy).toHaveBeenCalledWith(true);
   });
 });
 
+@Component({ template: `<app-language-codes-confirmation [sources]="sources"></app-language-codes-confirmation>` })
+class HostComponent {
+  @ViewChild(LanguageCodesConfirmationComponent) component?: LanguageCodesConfirmationComponent;
+  sources: DraftSourcesAsArrays = getStandardDraftSources();
+}
+
 class TestEnvironment {
-  component: LanguageCodesConfirmationComponent;
-  fixture: ComponentFixture<LanguageCodesConfirmationComponent>;
+  component: HostComponent;
+  fixture: ComponentFixture<HostComponent>;
 
   constructor(args: { draftSources: DraftSourcesAsArrays }) {
-    when(mockDraftSourcesService.getDraftProjectSources()).thenReturn(of(args.draftSources));
-    this.fixture = TestBed.createComponent(LanguageCodesConfirmationComponent);
+    TestBed.configureTestingModule({
+      declarations: [HostComponent],
+      imports: [UICommonModule, TestTranslocoModule, LanguageCodesConfirmationComponent]
+    });
+    this.fixture = TestBed.createComponent(HostComponent);
     this.component = this.fixture.componentInstance;
+    this.component.sources = args.draftSources;
     this.fixture.detectChanges();
+  }
+
+  get sourceSideLanguageCodes(): string[] {
+    return this.component.component!.sourceSideLanguageCodes;
+  }
+
+  get showSourceAndTargetLanguagesIdenticalWarning(): boolean {
+    return this.component.component!.showSourceAndTargetLanguagesIdenticalWarning;
+  }
+
+  get confirmationCheckbox(): HTMLInputElement {
+    return this.fixture.nativeElement.querySelector('mat-checkbox input[type="checkbox"]');
   }
 }
 

@@ -157,7 +157,12 @@
   </ng-container>
 </div>
 
-<div class="confirm-language-codes">
+<app-language-codes-confirmation
+  class="confirm-language-codes"
+  [sources]="draftSourcesAsArray"
+></app-language-codes-confirmation>
+
+<!-- <div class="confirm-language-codes">
   <ng-container *transloco="let t; read: 'confirm_draft_sources'">
     @if (multipleSourceSideLanguages) {
       <app-notice mode="fill-dark" type="warning">
@@ -201,7 +206,7 @@
       </app-notice>
     }
   </ng-container>
-</div>
+</div> -->
 
 <div class="component-footer">
   <div class="page-actions">

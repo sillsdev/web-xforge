@@ -41,6 +41,7 @@ export interface SelectableProject {
   paratextId: string;
 }
 
+/** Like {@link SelectableProject}, but includes the language code. */
 export interface SelectableProjectWithLanguageCode extends SelectableProject {
   languageTag: string;
 }
