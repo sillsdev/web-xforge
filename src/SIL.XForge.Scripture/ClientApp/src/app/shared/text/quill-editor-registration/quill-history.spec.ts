@@ -38,6 +38,36 @@ describe('Quill history', () => {
         name: 'retain followed by insert',
         delta: new Delta().retain(3).insert('test'),
         expected: 7
+      },
+      {
+        name: 'single embed insert',
+        delta: new Delta().insert({ image: 'test.jpg' }),
+        expected: 0
+      },
+      {
+        name: 'text followed by embed',
+        delta: new Delta().insert('hello').insert({ image: 'test.jpg' }),
+        expected: 5
+      },
+      {
+        name: 'embed followed by text',
+        delta: new Delta().insert({ image: 'test.jpg' }).insert('hello'),
+        expected: 6
+      },
+      {
+        name: 'mixed text and embeds with trailing text',
+        delta: new Delta().insert({ blank: true }).insert('text').insert({ image: 'test.jpg' }).insert('more'),
+        expected: 10
+      },
+      {
+        name: 'mixed text and embeds with trailing embed',
+        delta: new Delta().insert({ blank: true }).insert('text').insert({ image: 'test.jpg' }),
+        expected: 5
+      },
+      {
+        name: 'retain followed by embed',
+        delta: new Delta().retain(3).insert({ image: 'test.jpg' }),
+        expected: 3
       }
     ];
 
