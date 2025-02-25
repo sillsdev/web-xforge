@@ -1,6 +1,15 @@
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.XPath;
 using NUnit.Framework;
+using Paratext.Data;
+using Paratext.Data.Languages;
+using Paratext.Data.Users;
+using SIL.WritingSystems;
 
 namespace SIL.Converters.Usj.Tests;
 
@@ -285,5 +294,112 @@ public class UsxToUsjTests
 
         XmlDocument actualUsx = UsjToUsx.UsjToUsxXmlDocument(usj);
         Assert.That(actualUsx, Is.EqualTo(document).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public async Task ShouldRoundtripProjects()
+    {
+        // Set up the test environment
+        if (!Sldr.IsInitialized)
+        {
+            Sldr.Initialize(true);
+        }
+
+        RegistrationInfo.Implementation = new TestRegistrationInfo();
+        ICUDllLocator.Initialize();
+        WritingSystemRepository.Initialize();
+        ScrTextCollection.Initialize();
+        using var scrText = new DummyScrText();
+        ScrTextCollection.Add(scrText);
+
+        // Iterate over every zip file in the test directory
+        foreach (string zipFilePath in Directory.EnumerateFiles(@"D:\Downloads\Open.Bible", "*.zip"))
+        {
+            await using FileStream zipFileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
+            using ZipArchive archive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
+            foreach (ZipArchiveEntry entry in archive.Entries)
+            {
+                if (
+                    entry.Name.EndsWith(".usfm", StringComparison.OrdinalIgnoreCase)
+                    || entry.Name.EndsWith(".sfm", StringComparison.OrdinalIgnoreCase)
+                )
+                {
+                    // Load the USFM
+                    await using Stream entryStream = entry.Open();
+                    using StreamReader reader = new StreamReader(entryStream);
+                    string usfm = await reader.ReadToEndAsync();
+
+                    // Normalize the USFM
+                    string normalizedUsfm = UsfmToken.NormalizeUsfm(
+                        scrText.DefaultStylesheet,
+                        usfm,
+                        preserveWhitespace: false,
+                        scrText.RightToLeft,
+                        scrText
+                    );
+
+                    // Convert the USFM to USX
+                    XmlDocument usx = UsfmToUsx.ConvertToXmlDocument(
+                        scrText,
+                        scrText.DefaultStylesheet,
+                        normalizedUsfm
+                    );
+
+                    // Convert the USX to USFM to handle any variance from ParatextData
+                    UsxFragmenter.FindFragments(
+                        scrText.DefaultStylesheet,
+                        usx.CreateNavigator(),
+                        XPathExpression.Compile("*[false()]"),
+                        out string cleanedUsfm,
+                        allowInvisibleChars: false
+                    );
+
+                    // Normalize the cleaned USFM, to get the expected USFM
+                    string expectedUsfm = UsfmToken.NormalizeUsfm(
+                        scrText.DefaultStylesheet,
+                        cleanedUsfm,
+                        preserveWhitespace: false,
+                        scrText.RightToLeft,
+                        scrText
+                    );
+
+                    // Convert the USX to USJ
+                    Usj usj = UsxToUsj.UsxXmlDocumentToUsj(usx);
+
+                    // Convert the USJ to USX
+                    XmlDocument actualUsx = UsjToUsx.UsjToUsxXmlDocument(usj);
+
+                    // Convert the USX to USFM
+                    UsxFragmenter.FindFragments(
+                        scrText.DefaultStylesheet,
+                        actualUsx.CreateNavigator(),
+                        XPathExpression.Compile("*[false()]"),
+                        out string convertedUsfm,
+                        allowInvisibleChars: false
+                    );
+
+                    // Normalize the USFM
+                    string actualUsfm = UsfmToken.NormalizeUsfm(
+                        scrText.DefaultStylesheet,
+                        convertedUsfm,
+                        preserveWhitespace: false,
+                        scrText.RightToLeft,
+                        scrText
+                    );
+
+                    // This is for a breakpoint to debug a specific file
+                    if (actualUsfm != expectedUsfm)
+                    {
+                        Console.WriteLine($"USFM mismatch in {entry.Name} in {Path.GetFileName(zipFilePath)}");
+                    }
+
+                    Assert.That(actualUsfm, Is.EqualTo(expectedUsfm));
+                }
+                else
+                {
+                    Console.WriteLine($"Unknown File {entry.Name} in {Path.GetFileName(zipFilePath)}");
+                }
+            }
+        }
     }
 }
