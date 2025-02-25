@@ -1,6 +1,7 @@
 # Github Action to build and run tests
 
 name: Build
+permissions: {}
 
 on:
   push:
@@ -25,6 +26,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Deps: .NET"
         uses: actions/setup-dotnet@v4
@@ -41,7 +44,11 @@ jobs:
             src/SIL.XForge.Scripture/ClientApp/package-lock.json
             src/RealtimeServer/package-lock.json
       - name: "Deps: npm"
-        run: npm install --global npm@${{matrix.npm_version}}
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
       - name: Pre-build report
         run: |
           set -xueo pipefail
@@ -59,10 +66,13 @@ jobs:
           chromium-browser --version
       - name: "Ensure desired tool versions"
         # The build machine may come with newer tools than we are ready for.
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
         run: |
           set -xueo pipefail
-          [[ $(node --version) == v${{matrix.node_version}} ]]
-          [[ $(npm --version) == ${{matrix.npm_version}} ]]
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
 
       - name: "Deps: reportgenerator tool"
         run: dotnet tool install --global dotnet-reportgenerator-globaltool
@@ -123,6 +133,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Deps: .NET"
         uses: actions/setup-dotnet@v4
@@ -139,7 +151,11 @@ jobs:
             src/SIL.XForge.Scripture/ClientApp/package-lock.json
             src/RealtimeServer/package-lock.json
       - name: "Deps: npm"
-        run: npm install --global npm@${{matrix.npm_version}}
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
       - name: Pre-build report
         run: |
           set -xueo pipefail
@@ -156,10 +172,13 @@ jobs:
           which chromium-browser
           chromium-browser --version
       - name: "Ensure desired tool versions"
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
         run: |
           set -xueo pipefail
-          [[ $(node --version) == v${{matrix.node_version}} ]]
-          [[ $(npm --version) == ${{matrix.npm_version}} ]]
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
 
       - name: "Production build"
         run: scripts/build-production

@@ -3,6 +3,7 @@
 # See: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
 name: Angular Production Build
+permissions: {}
 
 on:
   push:
@@ -24,6 +25,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Use Node.js ${{ matrix.node_version }}
         uses: actions/setup-node@v4
         with:
@@ -33,7 +36,11 @@ jobs:
             src/SIL.XForge.Scripture/ClientApp/package-lock.json
             src/RealtimeServer/package-lock.json
       - name: Upgrade npm
-        run: npm install -g npm@${{ matrix.npm_version }}
+        env:
+          NPM_VERSION: ${{ matrix.npm_version }}
+        run: |
+          set -xueo pipefail
+          npm install -g npm@${NPM_VERSION}
       - name: Build Realtime server dependencies for Angular
         run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
       - name: Angular Frontend Production Build

@@ -1,5 +1,6 @@
 # Releases from master branch to QA staging server.
 name: "Release to QA"
+permissions: {}
 
 concurrency: deploy-staging
 
@@ -32,6 +33,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           fetch-depth: "0"
       - name: Use latest branch master
         if: ${{ github.event.inputs.skip-branch-update == 'false' }}
@@ -46,9 +48,11 @@ jobs:
           build_commit="$(git rev-parse HEAD)"
           echo "build_commit=${build_commit}" >> $GITHUB_OUTPUT
       - name: Details on selected build commit
+        env:
+          BUILD_COMMIT: ${{ steps.get_commit.outputs.build_commit }}
         run: |
           set -u
-          build_commit="${{ steps.get_commit.outputs.build_commit }}"
+          build_commit="${BUILD_COMMIT}"
           echo "Using build_commit: ${build_commit}"
           echo " "
           echo "git describe: $(git describe "${build_commit}")"
@@ -74,13 +78,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           ref: ${{ needs.determine_build_commit.outputs.build_commit }}
           fetch-depth: "0"
       - name: Check if already built
         id: check_if_already_built
+        env:
+          BUILD_COMMIT: ${{ needs.determine_build_commit.outputs.build_commit }}
         run: |
           set -xueo pipefail
-          TAGS=$(git tag --points-at "${{ needs.determine_build_commit.outputs.build_commit }}")
+          TAGS=$(git tag --points-at "${BUILD_COMMIT}")
           PATTERN='^SF-QAv[0-9.]+$'
           # Does the current commit have any tags like this?
           MATCH=false
@@ -105,7 +112,21 @@ jobs:
   deploy:
     name: "Deploy to QA"
     needs: [determine_build_commit, determine_version]
-    secrets: inherit
+    secrets:
+      deploy_known_hosts: ${{ secrets.deploy_known_hosts }}
+      deploy_ssh_private_key: ${{ secrets.deploy_ssh_private_key }}
+      deploy_server: ${{ secrets.deploy_server }}
+      alternate_domain: ${{ secrets.alternate_domain }}
+      paratext_client_id: ${{ secrets.paratext_client_id }}
+      serval_client_id: ${{ secrets.serval_client_id }}
+      auth_backend_secret: ${{ secrets.auth_backend_secret }}
+      auth_webhook_password: ${{ secrets.auth_webhook_password }}
+      auth_health_check_api_key: ${{ secrets.auth_health_check_api_key }}
+      paratext_api_token: ${{ secrets.paratext_api_token }}
+      paratext_resource_password_base64: ${{ secrets.paratext_resource_password_base64 }}
+      paratext_resource_password_hash: ${{ secrets.paratext_resource_password_hash }}
+      serval_client_secret: ${{ secrets.serval_client_secret }}
+      serval_webhook_secret: ${{ secrets.serval_webhook_secret }}
     uses: ./.github/workflows/release.yml
     with:
       environment: "qa_deploy"

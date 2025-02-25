@@ -1,4 +1,5 @@
 name: "Release"
+permissions: {}
 
 on:
   workflow_call:
@@ -75,14 +76,18 @@ jobs:
     runs-on: ${{inputs.os}}
     steps:
       - name: Place SSH deploy credentials
+        env:
+          SECRETS_DEPLOY_KNOWN_HOSTS: ${{secrets.deploy_known_hosts}}
+          SECRETS_DEPLOY_SSH_PRIVATE_KEY: ${{secrets.deploy_ssh_private_key}}
         run: |
           set -xueo pipefail
           install --mode=700 --directory ~/.ssh
-          install --mode=600 /dev/stdin ~/.ssh/known_hosts <<< "${{secrets.deploy_known_hosts}}"
-          install --mode=600 /dev/stdin ~/.ssh/deploy_key <<< "${{secrets.deploy_ssh_private_key}}"
+          install --mode=600 /dev/stdin ~/.ssh/known_hosts <<< "${SECRETS_DEPLOY_KNOWN_HOSTS}"
+          install --mode=600 /dev/stdin ~/.ssh/deploy_key <<< "${SECRETS_DEPLOY_SSH_PRIVATE_KEY}"
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          persist-credentials: true
           ref: ${{inputs.build_commit}}
           fetch-depth: "0"
       - name: "Deps: .NET"
@@ -100,7 +105,11 @@ jobs:
             src/SIL.XForge.Scripture/ClientApp/package-lock.json
             src/RealtimeServer/package-lock.json
       - name: "Deps: npm"
-        run: npm install --global npm@${{inputs.npm_version}}
+        env:
+          NPM_VERSION: ${{inputs.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
       - name: Pre-build report
         run: |
           set -xueo pipefail
@@ -115,10 +124,13 @@ jobs:
           which npm
           npm --version
       - name: "Ensure desired tool versions"
+        env:
+          NODE_VERSION: ${{inputs.node_version}}
+          NPM_VERSION: ${{inputs.npm_version}}
         run: |
           set -xueo pipefail
-          [[ $(node --version) == v${{inputs.node_version}} ]]
-          [[ $(npm --version) == ${{inputs.npm_version}} ]]
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
       - name: "Deps: rsync"
         run: sudo apt-get install rsync
       - name: "Build and ship"
@@ -145,12 +157,20 @@ jobs:
           SERVAL_CLIENT_SECRET: ${{secrets.serval_client_secret}}
           SERVAL_WEBHOOK_SECRET: ${{secrets.serval_webhook_secret}}
       - name: Update release branch
-        run: git push --force origin ${{ inputs.build_commit }}:${{ inputs.release_branch }}
+        env:
+          BUILD_COMMIT: ${{inputs.build_commit}}
+          RELEASE_BRANCH: ${{inputs.release_branch}}
+        run: |
+          set -xueo pipefail
+          git push --force origin ${BUILD_COMMIT}:${RELEASE_BRANCH}
       - name: "Tag release"
+        env:
+          VCS_TAG_PREFIX: ${{inputs.vcs_tag_prefix}}
+          VERSION_NUMBER: ${{inputs.version_number}}
         run: |
           set -xueo pipefail
           git config --global user.name "ci"
           git config --global user.email "ci"
-          tag="${{inputs.vcs_tag_prefix}}${{inputs.version_number}}"
+          tag="${VCS_TAG_PREFIX}${VERSION_NUMBER}"
           git tag --annotate --message "Release ${tag}" "${tag}"
           git push origin "${tag}"

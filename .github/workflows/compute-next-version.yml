@@ -1,4 +1,5 @@
 name: "Compute next version"
+permissions: {}
 
 on:
   workflow_call:
@@ -35,6 +36,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           # Use the python code from the same commit that the workflow files are being used from, when the workflow is
           # triggered from schedule or workflow_dispatch. Then workflow file expectations can more easily match the
           # python code.
@@ -43,24 +45,32 @@ jobs:
       - name: Compute next version
         id: compute_next_version
         working-directory: .github/workflows
+        env:
+          RELEASE_BRANCH: ${{ inputs.release_branch }}
+          VERSIONING_SYSTEM: ${{ inputs.versioning-system }}
+          RELEASE_LEVEL: ${{ inputs.release-level }}
+          TAG_PREFIX: ${{ inputs.tag_prefix }}
         run: |
           set -xueo pipefail
           next_version="$(python3 compute-next-version.py \
-            --from-commit origin/${{ inputs.release_branch }} \
-            --versioning-system ${{ inputs.versioning-system }} \
-            --release-level ${{ inputs.release-level }} \
-            --tag-prefix ${{ inputs.tag_prefix }})"
+            --from-commit origin/${RELEASE_BRANCH} \
+            --versioning-system ${VERSIONING_SYSTEM} \
+            --release-level ${RELEASE_LEVEL} \
+            --tag-prefix ${TAG_PREFIX})"
           echo "next_version=${next_version}" >> $GITHUB_OUTPUT
       - name: Details on chosen version
+        env:
+          NEXT_VERSION: ${{ steps.compute_next_version.outputs.next_version }}
+          RELEASE_BRANCH: ${{ inputs.release_branch }}
         run: |
           set -u
-          echo "Using next_version: ${{ steps.compute_next_version.outputs.next_version }}"
+          echo "Using next_version: ${NEXT_VERSION}"
           echo " "
           echo "Considered the prior tag history from commit:"
-          git log --decorate=short --oneline --abbrev=9 --max-count 1 origin/${{ inputs.release_branch }}
+          git log --decorate=short --oneline --abbrev=9 --max-count 1 origin/${RELEASE_BRANCH}
           echo " "
           echo "All existing tags pointing at that commit are:"
-          git tag --points-at origin/${{ inputs.release_branch }}
+          git tag --points-at origin/${RELEASE_BRANCH}
           echo " "
           echo "Some recently created tags are:"
           git for-each-ref --sort=-creatordate --format '%(refname:strip=2) %(creatordate:iso8601)' refs/tags | head --line=14
