@@ -92,7 +92,7 @@ export function removeObsoleteSegmentAttrs(delta: Delta): Delta {
 
 /**
  * Finds the index where the last insert/delete occurs in the delta. This function has been modified from the
- * original in the Quill history module.
+ * original in the Quill history module.  Trailing inserted embeds ops are not counted when determining the last edit.
  *
  * @param {QuillScrollBlot} scroll The Quill scroll.
  * @param {Delta} delta The undo/redo delta.
@@ -102,7 +102,7 @@ export function getLastChangeIndex(scroll: QuillScrollBlot, delta: Delta): numbe
   if (delta.ops == null) {
     return 0;
   }
-  // skip inserted embeds when determining last edit
+  // Skip trailing inserted embed ops when determining last edit
   let changeIndex = 0;
   let curIndex = 0;
   for (const op of delta.ops) {
@@ -111,7 +111,7 @@ export function getLastChangeIndex(scroll: QuillScrollBlot, delta: Delta): numbe
         curIndex += op.insert.length;
         changeIndex = curIndex;
       } else {
-        curIndex++;
+        curIndex++; // Won't be assigned to 'changeIndex' if it is a trailing embed op
       }
     } else if (op.retain != null) {
       const retainCount: number = getRetainCount(op)!;
