@@ -6,7 +6,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { I18nService } from 'xforge-common/i18n.service';
-import { DraftSourcesService } from '../draft-sources.service';
+import { DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
 
 @Component({
@@ -22,6 +22,7 @@ export class ConfirmSourcesComponent implements OnInit {
   trainingSources: TranslateSource[] = [];
   trainingTargets: TranslateSource[] = [];
   draftingSources: TranslateSource[] = [];
+  draftSources?: DraftSourcesAsArrays;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -50,6 +51,7 @@ export class ConfirmSourcesComponent implements OnInit {
       .getDraftProjectSources()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(async ({ trainingTargets, trainingSources, draftingSources }) => {
+        this.draftSources = { trainingTargets, trainingSources, draftingSources };
         this.trainingSources = trainingSources.filter(s => s !== undefined);
         this.trainingTargets = trainingTargets.filter(t => t !== undefined);
         this.draftingSources = draftingSources.filter(s => s !== undefined);

@@ -3,12 +3,13 @@ import { MatCheckboxChange } from '@angular/material/checkbox';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
+import { DraftSourcesAsArrays } from '../draft-sources.service';
 import { englishNameFromCode } from '../draft-utils';
 
 @Component({
@@ -19,30 +20,32 @@ import { englishNameFromCode } from '../draft-utils';
   styleUrl: './language-codes-confirmation.component.scss'
 })
 export class LanguageCodesConfirmationComponent {
-  @Input() sources: {
-    draftingSources: SelectableProjectWithLanguageCode[];
-    trainingSources: SelectableProjectWithLanguageCode[];
-    trainingTargets: SelectableProjectWithLanguageCode[];
-  } = { draftingSources: [], trainingSources: [], trainingTargets: [] };
   @Output() languageCodesVerified = new EventEmitter<boolean>(false);
+  @Input() set draftSources(value: DraftSourcesAsArrays | undefined) {
+    if (value == null) return;
+    this.draftingSources = value.draftingSources;
+    this.trainingSources = value.trainingSources;
+    this.targetLanguageTag = value.trainingTargets[0]?.writingSystem.tag;
+  }
 
+  draftingSources: [TranslateSource?] = [];
+  trainingSources: [TranslateSource?, TranslateSource?] = [];
   languageCodesConfirmed: boolean = false;
   targetLanguageTag?: string;
+  projectSettingsUrl: string = '';
 
   constructor(
     readonly i18n: I18nService,
     private readonly activatedProject: ActivatedProjectService,
     private readonly authService: AuthService
-  ) {}
-
-  get projectSettingsUrl(): string {
-    return `/projects/${this.activatedProject.projectId}/settings`;
+  ) {
+    this.projectSettingsUrl = `/projects/${this.activatedProject.projectId}/settings`;
   }
 
   get sourceSideLanguageCodes(): string[] {
-    const sourceLanguagesCodes: string[] = [...this.sources.draftingSources, ...this.sources.trainingSources]
+    const sourceLanguagesCodes: string[] = [...this.draftingSources, ...this.trainingSources]
       .filter(s => s != null)
-      .map(s => s.languageTag);
+      .map(s => s.writingSystem.tag);
     const languageNames: string[] = Array.from(new Set(sourceLanguagesCodes.map(s => englishNameFromCode(s))));
     if (languageNames.length < 2) {
       return [sourceLanguagesCodes[0]];
