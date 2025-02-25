@@ -2,9 +2,12 @@ import { CommonModule } from '@angular/common';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { defaultTranslocoMarkupTranspilers, TranslocoMarkupComponent } from 'ngx-transloco-markup';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftSource, DraftSourcesAsArrays } from '../draft-sources.service';
 import { LanguageCodesConfirmationComponent } from './language-codes-confirmation.component';
 
@@ -51,6 +54,10 @@ const draftSources: DraftSourcesAsArrays = {
 const defaultArgs = { draftSources };
 
 when(mockActivatedProject.projectId).thenReturn('test-proj');
+when(mockActivatedProject.projectDoc).thenReturn({
+  id: 'test-proj',
+  data: createTestProjectProfile({ userRoles: { user1: SFProjectRole.ParatextAdministrator } })
+} as SFProjectProfileDoc);
 when(mockAuthService.currentUserId).thenReturn('user1');
 
 const meta: Meta = {
