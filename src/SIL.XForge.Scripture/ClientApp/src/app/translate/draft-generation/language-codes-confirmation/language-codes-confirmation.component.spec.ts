@@ -1,4 +1,3 @@
-import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -14,11 +13,14 @@ import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DraftSourcesAsArrays } from '../draft-sources.service';
 import { LanguageCodesConfirmationComponent } from './language-codes-confirmation.component';
 
-const mockI18nService = mock(I18nService);
-const mockActivatedProject: ActivatedProjectService = mock(ActivatedProjectService);
-const mockAuthService = mock(AuthService);
-
 describe('LanguageCodesConfirmationComponent', () => {
+  let component: LanguageCodesConfirmationComponent;
+  let fixture: ComponentFixture<LanguageCodesConfirmationComponent>;
+
+  const mockI18nService = mock(I18nService);
+  const mockActivatedProject: ActivatedProjectService = mock(ActivatedProjectService);
+  const mockAuthService = mock(AuthService);
+
   configureTestingModule(() => ({
     imports: [TestTranslocoModule, UICommonModule, NoticeComponent, TranslocoMarkupComponent],
     providers: [
@@ -37,12 +39,17 @@ describe('LanguageCodesConfirmationComponent', () => {
       id: 'target',
       data: createTestProjectProfile({ userRoles: { user1: SFProjectRole.ParatextAdministrator } })
     } as SFProjectProfileDoc);
+
+    fixture = TestBed.createComponent(LanguageCodesConfirmationComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
   it('should show standard message', () => {
-    const env = new TestEnvironment({ draftSources: getStandardDraftSources() });
-    expect(env.sourceSideLanguageCodes.length).toEqual(1);
-    expect(env.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
+    component.draftSources = getStandardDraftSources();
+    fixture.detectChanges();
+    expect(component.sourceSideLanguageCodes.length).toEqual(1);
+    expect(component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
   });
 
   it('shows standard message when language codes are equivalent language', () => {
@@ -50,16 +57,18 @@ describe('LanguageCodesConfirmationComponent', () => {
     // Both map to the Chinese language
     draftSources.draftingSources[0]!.writingSystem.tag = 'zh-CN';
     draftSources.trainingSources[0]!.writingSystem.tag = 'cmn-Hans';
-    const env = new TestEnvironment({ draftSources });
-    expect(env.sourceSideLanguageCodes.length).toEqual(1);
+    component.draftSources = draftSources;
+    fixture.detectChanges();
+    expect(component.sourceSideLanguageCodes.length).toEqual(1);
   });
 
   it('should show target and source language codes identical message', () => {
     const draftSources = getStandardDraftSources();
     draftSources.trainingTargets[0]!.writingSystem.tag = draftSources.trainingSources[0]!.writingSystem.tag;
-    const env = new TestEnvironment({ draftSources });
-    expect(env.sourceSideLanguageCodes.length).toEqual(1);
-    expect(env.showSourceAndTargetLanguagesIdenticalWarning).toBe(true);
+    component.draftSources = draftSources;
+    fixture.detectChanges();
+    expect(component.sourceSideLanguageCodes.length).toEqual(1);
+    expect(component.showSourceAndTargetLanguagesIdenticalWarning).toBe(true);
   });
 
   it('should show training source language codes different message', () => {
@@ -72,53 +81,20 @@ describe('LanguageCodesConfirmationComponent', () => {
       writingSystem: { tag: 'zh' },
       texts: []
     });
-    const env = new TestEnvironment({ draftSources });
-    // Chinese as the additional training source, and Spanish for the training and drafting source
-    expect(env.sourceSideLanguageCodes.length).toEqual(2);
-    expect(env.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
+    component.draftSources = draftSources;
+    fixture.detectChanges();
+    expect(component.sourceSideLanguageCodes.length).toEqual(2);
+    expect(component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
   });
 
   it('can emit languages confirmed when checkbox is checked', () => {
-    const env = new TestEnvironment({ draftSources: getStandardDraftSources() });
-    const emitSpy = spyOn(env.component.component!.languageCodesVerified, 'emit');
-    env.confirmationCheckbox.click();
+    component.draftSources = getStandardDraftSources();
+    fixture.detectChanges();
+    const emitSpy = spyOn(component.languageCodesVerified, 'emit');
+    component.confirmationChanged({ checked: true } as any);
     expect(emitSpy).toHaveBeenCalledWith(true);
   });
 });
-
-@Component({ template: `<app-language-codes-confirmation [sources]="sources"></app-language-codes-confirmation>` })
-class HostComponent {
-  @ViewChild(LanguageCodesConfirmationComponent) component?: LanguageCodesConfirmationComponent;
-  sources: DraftSourcesAsArrays = getStandardDraftSources();
-}
-
-class TestEnvironment {
-  component: HostComponent;
-  fixture: ComponentFixture<HostComponent>;
-
-  constructor(args: { draftSources: DraftSourcesAsArrays }) {
-    TestBed.configureTestingModule({
-      declarations: [HostComponent],
-      imports: [UICommonModule, TestTranslocoModule, LanguageCodesConfirmationComponent]
-    });
-    this.fixture = TestBed.createComponent(HostComponent);
-    this.component = this.fixture.componentInstance;
-    this.component.sources = args.draftSources;
-    this.fixture.detectChanges();
-  }
-
-  get sourceSideLanguageCodes(): string[] {
-    return this.component.component!.sourceSideLanguageCodes;
-  }
-
-  get showSourceAndTargetLanguagesIdenticalWarning(): boolean {
-    return this.component.component!.showSourceAndTargetLanguagesIdenticalWarning;
-  }
-
-  get confirmationCheckbox(): HTMLInputElement {
-    return this.fixture.nativeElement.querySelector('mat-checkbox input[type="checkbox"]');
-  }
-}
 
 function getStandardDraftSources(): DraftSourcesAsArrays {
   return {
