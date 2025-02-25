@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -6,6 +6,12 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+
+    <!--
+    This is for compatibility between ICU4C (a dependency of ParatextData) and .NET 8.0 see:
+    https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/8.0/rid-graph
+    -->
+    <UseRidGraph>true</UseRidGraph>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +25,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="NUnit" Version="4.2.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+    <PackageReference Include="ParatextData" Version="9.5.0.9" />
+    <PackageReference Include="ParatextData.Tests" Version="9.5.0.8" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\SIL.Converters.Usj\SIL.Converters.Usj.csproj" />
