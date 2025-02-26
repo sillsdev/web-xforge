@@ -60,7 +60,7 @@
         [selectedIndex]="tabGroup.value.selectedIndex"
         [connectedTo]="(tabState.groupIds$ | async) ?? []"
       >
-        @for (tab of tabGroup.value.tabs; track tab) {
+        @for (tab of tabGroup.value.tabs; track tab.type + tab.headerText) {
           <app-tab [closeable]="tab.closeable" [movable]="tab.movable" [tooltip]="tab.tooltip">
             <ng-template sf-tab-header>
               @if (tab.svgIcon) {
