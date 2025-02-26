@@ -5,6 +5,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -28,6 +29,7 @@ const mockedDraftSourcesService = mock(DraftSourcesService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedSFUserProjectsService = mock(SFUserProjectsService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedAuthService = mock(AuthService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
@@ -41,7 +43,8 @@ describe('DraftSourcesComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: DraftSourcesService, useMock: mockedDraftSourcesService },
       { provide: SFUserProjectsService, useMock: mockedSFUserProjectsService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
+      { provide: AuthService, useMock: mockedAuthService }
     ]
   }));
 
