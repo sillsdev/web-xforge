@@ -90,6 +90,45 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
 
   private controlStates = new Map<string, ElementState>();
 
+  constructor(
+    private readonly activatedProjectService: ActivatedProjectService,
+    private readonly destroyRef: DestroyRef,
+    private readonly paratextService: ParatextService,
+    private readonly dialogService: DialogService,
+    private readonly projectService: SFProjectService,
+    private readonly userProjectsService: SFUserProjectsService,
+    private readonly router: Router,
+    private readonly featureFlags: FeatureFlagService,
+    readonly i18n: I18nService,
+    noticeService: NoticeService
+  ) {
+    super(noticeService);
+
+    this.activatedProjectService.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
+      if (projectDoc?.data != null) {
+        const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
+        if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
+        if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
+        if (trainingTargets.length !== 1) throw new Error('Exactly 1 training target is required');
+
+        this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag);
+
+        this.trainingTargets = trainingTargets;
+        this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
+
+        this.nonSelectableProjects = [
+          ...this.trainingSources.filter(s => s != null),
+          ...this.draftingSources.filter(s => s != null)
+        ];
+
+        if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
+        if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
+      }
+    });
+
+    this.loadProjects();
+  }
+
   get loading(): boolean {
     return !this.isLoaded;
   }
@@ -157,45 +196,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
 
   get targetLanguageTag(): string {
     return this.trainingTargets[0]!.writingSystem.tag;
-  }
-
-  constructor(
-    private readonly activatedProjectService: ActivatedProjectService,
-    private readonly destroyRef: DestroyRef,
-    private readonly paratextService: ParatextService,
-    private readonly dialogService: DialogService,
-    private readonly projectService: SFProjectService,
-    private readonly userProjectsService: SFUserProjectsService,
-    private readonly router: Router,
-    private readonly featureFlags: FeatureFlagService,
-    readonly i18n: I18nService,
-    noticeService: NoticeService
-  ) {
-    super(noticeService);
-
-    this.activatedProjectService.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
-      if (projectDoc?.data != null) {
-        const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
-        if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
-        if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
-        if (trainingTargets.length !== 1) throw new Error('Exactly 1 training target is required');
-
-        this.trainingSources = trainingSources.map(translateSourceToSelectableProjectWithLanguageTag);
-
-        this.trainingTargets = trainingTargets;
-        this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
-
-        this.nonSelectableProjects = [
-          ...this.trainingSources.filter(s => s != null),
-          ...this.draftingSources.filter(s => s != null)
-        ];
-
-        if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
-        if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
-      }
-    });
-
-    this.loadProjects();
   }
 
   async ngOnInit(): Promise<void> {

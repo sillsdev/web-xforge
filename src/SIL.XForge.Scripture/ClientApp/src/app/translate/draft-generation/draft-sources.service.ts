@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, defer, from, Observable } from 'rxjs';
@@ -25,11 +24,6 @@ export interface DraftSourcesAsArrays {
   trainingSources: [DraftSource?, DraftSource?];
   trainingTargets: [DraftSource?];
   draftingSources: [DraftSource?];
-}
-
-/** This type can be downcast as a DraftSource. */
-export interface SFProjectProfileWithProjectRef extends SFProjectProfile {
-  projectRef: string;
 }
 
 @Injectable({
