@@ -27,6 +27,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
 import {
   countNonEquivalentLanguageCodes,
+  DraftSourcesAsSelectableProjectArrays,
   projectToDraftSources,
   translateSourceToSelectableProjectWithLanguageTag
 } from '../draft-utils';
@@ -213,11 +214,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     this.loadingFinished();
   }
 
-  get draftSourcesAsArray(): {
-    draftingSources: SelectableProjectWithLanguageCode[];
-    trainingSources: SelectableProjectWithLanguageCode[];
-    trainingTargets: SelectableProjectWithLanguageCode[];
-  } {
+  get draftSourcesAsArray(): DraftSourcesAsSelectableProjectArrays {
     return {
       draftingSources: this.draftingSources.filter(s => s != null),
       trainingSources: this.trainingSources.filter(s => s != null),

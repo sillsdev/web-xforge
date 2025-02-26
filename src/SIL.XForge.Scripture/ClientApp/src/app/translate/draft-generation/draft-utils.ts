@@ -60,15 +60,15 @@ export function translateSourceToSelectableProjectWithLanguageTag(
   };
 }
 
-// export function draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays(
-//   sources: DraftSourcesAsTranslateSourceArrays
-// ): DraftSourcesAsSelectableProjectArrays {
-//   return {
-//     draftingSources: sources.draftingSources.map(translateSourceToSelectableProjectWithLanguageTag),
-//     trainingSources: sources.trainingSources.map(translateSourceToSelectableProjectWithLanguageTag),
-//     trainingTargets: sources.trainingTargets.map(translateSourceToSelectableProjectWithLanguageTag)
-//   };
-// }
+export function draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays(
+  sources: DraftSourcesAsTranslateSourceArrays
+): DraftSourcesAsSelectableProjectArrays {
+  return {
+    draftingSources: sources.draftingSources.map(translateSourceToSelectableProjectWithLanguageTag),
+    trainingSources: sources.trainingSources.map(translateSourceToSelectableProjectWithLanguageTag),
+    trainingTargets: sources.trainingTargets.map(translateSourceToSelectableProjectWithLanguageTag)
+  };
+}
 
 /**
  * Takes a SFProjectProfile and returns the training and drafting sources for the project as three arrays.
