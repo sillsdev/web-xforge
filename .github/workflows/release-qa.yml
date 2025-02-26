@@ -112,6 +112,8 @@ jobs:
   deploy:
     name: "Deploy to QA"
     needs: [determine_build_commit, determine_version]
+    permissions:
+      contents: write
     uses: ./.github/workflows/release.yml
     secrets:
       deploy_known_hosts: ${{ secrets.deploy_known_hosts }}
