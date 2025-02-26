@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -153,7 +154,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
     protected readonly noticeService: NoticeService,
-    protected readonly urlService: ExternalUrlService
+    protected readonly urlService: ExternalUrlService,
+    private readonly destroyRef: DestroyRef
   ) {
     super(noticeService);
   }
@@ -442,6 +444,18 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   startBuild(buildConfig: BuildConfig): void {
+    this.draftGenerationService
+      .getBuildProgress(buildConfig.projectId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(job => {
+        if (this.isDraftInProgress(job)) {
+          this.draftJob = job;
+          this.currentPage = 'initial';
+          this.noticeService.show(this.i18n.translateStatic('draft_generation.draft_already_running'));
+          return;
+        }
+      });
+
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
       this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig).pipe(
