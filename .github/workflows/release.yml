@@ -95,7 +95,7 @@ jobs:
         with:
           dotnet-version: ${{inputs.dotnet_version}}
           cache: true
-          cache-dependency-path: src/SIL.XForge.Scripture/package.lock.json
+          cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
       - name: "Deps: Node"
         uses: actions/setup-node@v4
         with:
