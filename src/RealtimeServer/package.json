@@ -31,7 +31,7 @@
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^2.1.2",
     "lodash-es": "^4.17.21",
-    "mongodb": "^4.6.0",
+    "mongodb": "^4.17.2",
     "ot-json0": "^1.1.0",
     "rich-text": "^4.1.0",
     "sharedb": "^5.1.1",
