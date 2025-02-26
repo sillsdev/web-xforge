@@ -3,8 +3,11 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -26,6 +29,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
 const mockedTextDocService = mock(TextDocService);
+const mockedErrorReportingService = mock(ErrorReportingService);
 
 describe('HistoryChooserComponent', () => {
   configureTestingModule(() => ({
@@ -43,7 +47,8 @@ describe('HistoryChooserComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: TextDocService, useMock: mockedTextDocService }
+      { provide: TextDocService, useMock: mockedTextDocService },
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService }
     ]
   }));
 
@@ -156,6 +161,82 @@ describe('HistoryChooserComponent', () => {
     verify(mockedDialogService.confirm(anything(), anything())).once();
     verify(mockedTextDocService.overwrite(anything(), anything(), anything())).once();
     verify(mockedProjectService.onlineSetIsValid(anything(), anything(), anything(), env.isSnapshotValid)).once();
+    verify(mockedNoticeService.show(anything())).once();
+    verify(mockedErrorReportingService.silentError(anything(), anything())).never();
+  }));
+
+  it('should revert to the snapshot without updating chapter validity', fakeAsync(() => {
+    const env = new TestEnvironment({
+      texts: [
+        {
+          bookNum: 40,
+          chapters: [{ number: 1, isValid: true, lastVerse: 30, permissions: { user1: TextInfoPermission.Write } }],
+          permissions: { user1: TextInfoPermission.Write },
+          hasSource: false
+        }
+      ]
+    });
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    env.triggerNgOnChanges();
+    env.wait();
+    expect(env.component.selectedRevision).toBeDefined();
+    expect(env.component.selectedSnapshot?.data.ops).toBeDefined();
+    expect(env.component.projectId).toBeDefined();
+    expect(env.component.bookNum).toBeDefined();
+    expect(env.component.chapter).toBeDefined();
+
+    env.clickRevertHistoryButton();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).once();
+    verify(mockedProjectService.onlineSetIsValid(anything(), anything(), anything(), anything())).never();
+    verify(mockedNoticeService.show(anything())).once();
+    verify(mockedErrorReportingService.silentError(anything(), anything())).never();
+  }));
+
+  it('shows message if failed to restore previous version', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    env.triggerNgOnChanges();
+    env.wait();
+    expect(env.component.selectedRevision).toBeDefined();
+    expect(env.component.selectedSnapshot?.data.ops).toBeDefined();
+    expect(env.component.projectId).toBeDefined();
+    expect(env.component.bookNum).toBeDefined();
+    expect(env.component.chapter).toBeDefined();
+
+    when(mockedProjectService.onlineSetIsValid(anything(), anything(), anything(), anything())).thenReject(
+      new CommandError(CommandErrorCode.Other, '504 Gateway Timeout')
+    );
+    env.clickRevertHistoryButton();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).never();
+    verify(mockedProjectService.onlineSetIsValid(anything(), anything(), anything(), env.isSnapshotValid)).once();
+    verify(mockedNoticeService.showError(anything())).once();
+    verify(mockedNoticeService.show(anything())).never();
+    verify(mockedErrorReportingService.silentError(anything(), anything())).never();
+  }));
+
+  it('shows message and report to bugsnag if failed to restore previous version', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    env.triggerNgOnChanges();
+    env.wait();
+    expect(env.component.selectedRevision).toBeDefined();
+    expect(env.component.selectedSnapshot?.data.ops).toBeDefined();
+    expect(env.component.projectId).toBeDefined();
+    expect(env.component.bookNum).toBeDefined();
+    expect(env.component.chapter).toBeDefined();
+
+    when(mockedProjectService.onlineSetIsValid(anything(), anything(), anything(), anything())).thenReject(
+      new CommandError(CommandErrorCode.Other, 'Unknown Error')
+    );
+    env.clickRevertHistoryButton();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).never();
+    verify(mockedProjectService.onlineSetIsValid(anything(), anything(), anything(), env.isSnapshotValid)).once();
+    verify(mockedNoticeService.showError(anything())).once();
+    verify(mockedNoticeService.show(anything())).never();
+    verify(mockedErrorReportingService.silentError(anything(), anything())).once();
   }));
 
   it('should show message if user is offline and clicks revert button', fakeAsync(() => {
@@ -183,7 +264,7 @@ describe('HistoryChooserComponent', () => {
     readonly testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     isSnapshotValid = true;
 
-    constructor() {
+    constructor(projectData: Partial<SFProjectProfile> = {}) {
       this.fixture = TestBed.createComponent(HistoryChooserComponent);
       this.component = this.fixture.componentInstance;
       this.component.projectId = 'project01';
@@ -192,7 +273,7 @@ describe('HistoryChooserComponent', () => {
 
       this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
         id: 'project01',
-        data: createTestProjectProfile()
+        data: createTestProjectProfile(projectData)
       });
 
       when(mockedParatextService.getRevisions('project01', 'MAT', 1)).thenResolve([{ timestamp: 'date_here' }]);
