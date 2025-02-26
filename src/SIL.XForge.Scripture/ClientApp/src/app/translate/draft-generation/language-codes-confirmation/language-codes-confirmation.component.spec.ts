@@ -10,7 +10,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSourcesAsArrays } from '../draft-sources.service';
+import { DraftSourcesAsSelectableProjectArrays } from '../draft-utils';
 import { LanguageCodesConfirmationComponent } from './language-codes-confirmation.component';
 
 describe('LanguageCodesConfirmationComponent', () => {
@@ -55,8 +55,8 @@ describe('LanguageCodesConfirmationComponent', () => {
   it('shows standard message when language codes are equivalent language', () => {
     const draftSources = getStandardDraftSources();
     // Both map to the Chinese language
-    draftSources.draftingSources[0]!.writingSystem.tag = 'zh-CN';
-    draftSources.trainingSources[0]!.writingSystem.tag = 'cmn-Hans';
+    draftSources.draftingSources[0]!.languageTag = 'zh-CN';
+    draftSources.trainingSources[0]!.languageTag = 'cmn-Hans';
     component.draftSources = draftSources;
     fixture.detectChanges();
     expect(component.sourceSideLanguageCodes.length).toEqual(1);
@@ -64,7 +64,7 @@ describe('LanguageCodesConfirmationComponent', () => {
 
   it('should show target and source language codes identical message', () => {
     const draftSources = getStandardDraftSources();
-    draftSources.trainingTargets[0]!.writingSystem.tag = draftSources.trainingSources[0]!.writingSystem.tag;
+    draftSources.trainingTargets[0]!.languageTag = draftSources.trainingSources[0]!.languageTag;
     component.draftSources = draftSources;
     fixture.detectChanges();
     expect(component.sourceSideLanguageCodes.length).toEqual(1);
@@ -74,12 +74,10 @@ describe('LanguageCodesConfirmationComponent', () => {
   it('should show training source language codes different message', () => {
     const draftSources = getStandardDraftSources();
     draftSources.trainingSources.push({
-      projectRef: 'source2',
       shortName: 'SP2',
       name: 'Source Project 2',
       paratextId: 'pt-sp2',
-      writingSystem: { tag: 'zh' },
-      texts: []
+      languageTag: 'zh'
     });
     component.draftSources = draftSources;
     fixture.detectChanges();
@@ -96,36 +94,30 @@ describe('LanguageCodesConfirmationComponent', () => {
   });
 });
 
-function getStandardDraftSources(): DraftSourcesAsArrays {
+function getStandardDraftSources(): DraftSourcesAsSelectableProjectArrays {
   return {
     trainingSources: [
       {
-        projectRef: 'source',
         shortName: 'SP',
         name: 'Source Project',
         paratextId: 'pt-sp',
-        writingSystem: { tag: 'es' },
-        texts: []
+        languageTag: 'es'
       }
     ],
     trainingTargets: [
       {
-        projectRef: 'target',
         shortName: 'TA',
         name: 'Target Project',
         paratextId: 'pt-ta',
-        writingSystem: { tag: 'xyz' },
-        texts: []
+        languageTag: 'xyz'
       }
     ],
     draftingSources: [
       {
-        projectRef: 'source',
         shortName: 'SP',
         name: 'Source Project',
         paratextId: 'pt-sp',
-        writingSystem: { tag: 'es' },
-        texts: []
+        languageTag: 'es'
       }
     ]
   };
