@@ -30,6 +30,7 @@
         <app-book-multi-select
           [availableBooks]="availableTranslateBooks"
           [selectedBooks]="booksToTranslate()"
+          [basicMode]="true"
           (bookSelect)="onTranslateBookSelect($event)"
           data-test-id="draft-stepper-translate-books"
         ></app-book-multi-select>
