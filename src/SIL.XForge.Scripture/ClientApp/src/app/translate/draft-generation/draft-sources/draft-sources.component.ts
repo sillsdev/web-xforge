@@ -310,6 +310,11 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   }
 
   async save(): Promise<void> {
+    if (this.activatedProjectService.projectDoc == null) throw new Error('Project doc is null');
+    if (this.activatedProjectService.projectDoc.data == null) throw new Error('Project doc data is null');
+    const currentSFProjectId = this.activatedProjectService.projectId;
+    if (currentSFProjectId == null) throw new Error('Project ID is null');
+
     const definedSources = this.draftingSources.filter(s => s != null);
     const definedReferences = this.trainingSources.filter(s => s != null);
 
@@ -326,8 +331,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
       return;
     }
 
-    if (this.activatedProjectService.projectDoc == null) throw new Error('Project doc is null');
-    if (this.activatedProjectService.projectDoc.data == null) throw new Error('Project doc data is null');
     const currentProjectParatextId: string = this.activatedProjectService.projectDoc.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
       this.trainingSources as [SelectableProject, SelectableProject?],
@@ -336,8 +339,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
       currentProjectParatextId
     );
     const projectSettingsChange: SFProjectSettings = sourcesSettingsChange;
-    const currentSFProjectId = this.activatedProjectService.projectId;
-    if (currentSFProjectId == null) throw new Error('Project ID is null');
     await this.checkUpdateStatus(
       'projectSettings',
       this.projectService.onlineUpdateSettings(currentSFProjectId, projectSettingsChange)
