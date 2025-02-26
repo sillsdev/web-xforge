@@ -182,6 +182,7 @@
     "download_draft": "Download draft",
     "draft_active_detail": "Generating draft; this usually takes at least {{ count }} hours.",
     "draft_active_header": "Draft in progress",
+    "draft_already_running": "Draft generation has already been requested for this project. Wait until the current job finishes to start a new draft.",
     "draft_finishing_detail": "Your draft is being finalized and saved.",
     "draft_finishing_header": "Draft is finishing",
     "draft_is_ready": "Your draft is ready",
