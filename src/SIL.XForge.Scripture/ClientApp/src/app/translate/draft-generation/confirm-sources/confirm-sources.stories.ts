@@ -31,7 +31,7 @@ when(mockActivatedProject.projectDoc$).thenReturn(
           alternateTrainingSourceEnabled: true,
           alternateTrainingSource: {
             projectRef: 'alternate-training-source',
-            shortName: 'ATS',
+            shortName: 'ALT-TS',
             name: 'Alternate Training Source',
             paratextId: 'alternate-training-source',
             writingSystem: { tag: 'es' }
@@ -39,7 +39,7 @@ when(mockActivatedProject.projectDoc$).thenReturn(
           additionalTrainingSourceEnabled: true,
           additionalTrainingSource: {
             projectRef: 'additional-training-source',
-            shortName: 'ATS',
+            shortName: 'ADD-TS',
             name: 'Additional Training Source',
             paratextId: 'additional-training-source',
             writingSystem: { tag: 'es' }

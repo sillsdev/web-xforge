@@ -49,14 +49,14 @@ const testProjectDoc = {
           paratextId: 'pt1',
           projectRef: 'sf1',
           name: 'Alternate Training Source',
-          shortName: 'ATS',
+          shortName: 'ALT-TS',
           writingSystem: { script: 'Latn', tag: 'es' }
         },
         additionalTrainingSource: {
           paratextId: 'pt2',
           projectRef: 'sf2',
           name: 'Additional Training Source',
-          shortName: 'ATS',
+          shortName: 'ADD-TS',
           writingSystem: { script: 'Latn', tag: 'es' }
         },
         alternateSource: {

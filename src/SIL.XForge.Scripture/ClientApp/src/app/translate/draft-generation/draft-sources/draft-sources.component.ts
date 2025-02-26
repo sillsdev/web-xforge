@@ -24,9 +24,9 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { projectLabel } from '../../../shared/utils';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
 import {
-  countNonEquivalentLanguageCodes,
   DraftSourcesAsSelectableProjectArrays,
   projectToDraftSources,
   translateSourceToSelectableProjectWithLanguageTag
@@ -173,27 +173,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     return value ? `(${value})` : '';
   }
 
-  get multipleSourceSideLanguages(): boolean {
-    return countNonEquivalentLanguageCodes(this.sourceSideLanguageCodes) > 1;
-  }
-
-  get sourceSideLanguageCodes(): string[] {
-    return Array.from(
-      new Set([...this.draftingSources, ...this.trainingSources].filter(s => s != null).map(s => s.languageTag))
-    );
-  }
-
-  get showSourceAndTargetLanguagesIdenticalWarning(): boolean {
-    // Show the warning when there's only one language on the source side, but that one language is equivalent to the
-    // target language.
-    const sourceCodes = this.sourceSideLanguageCodes;
-    return (
-      sourceCodes.length > 0 &&
-      countNonEquivalentLanguageCodes(sourceCodes) === 1 &&
-      countNonEquivalentLanguageCodes([sourceCodes[0], this.targetLanguageTag]) < 2
-    );
-  }
-
   get targetLanguageTag(): string {
     return this.trainingTargets[0]!.writingSystem.tag;
   }
@@ -225,7 +204,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
   }
 
   projectPlaceholder(project: SelectableProject | undefined): string {
-    return project == null ? '' : `${project.shortName} - ${project.name}`;
+    return project == null ? '' : projectLabel(project);
   }
 
   sourceSelected(
@@ -285,6 +264,13 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     );
   }
 
+  get allProjectsSavedAndSynced(): boolean {
+    return (
+      this.getControlState('projectSettings') === ElementState.Submitted &&
+      Array.from(this.syncStatus.values()).every(entry => entry.isSyncing === false)
+    );
+  }
+
   async cancel(): Promise<void> {
     const leavePage =
       !this.changesMade ||
@@ -300,13 +286,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
 
   navigateToDrafting(): void {
     this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
-  }
-
-  get allProjectsSavedAndSynced(): boolean {
-    return (
-      this.getControlState('projectSettings') === ElementState.Submitted &&
-      Array.from(this.syncStatus.values()).every(entry => entry.isSyncing === false)
-    );
   }
 
   async save(): Promise<void> {
