@@ -239,6 +239,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
     const selectedProject: SelectableProject | null =
       this.projects?.find(p => p.paratextId === paratextId) ??
       this.resources?.find(r => r.paratextId === paratextId) ??
+      this.nonSelectableProjects.find(p => p.paratextId === paratextId) ??
       null;
 
     // The project select component will "select" the project we programmatically set, so prevent mistakenly indicating

@@ -17,14 +17,14 @@ import { ParatextService, SelectableProjectWithLanguageCode } from '../../../cor
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSourcesComponent } from '../../../translate/draft-generation/draft-sources/draft-sources.component';
 
-const mockActivatedProjectService = mock(ActivatedProjectService);
-const mockDestroyRef = mock(DestroyRef);
-const mockParatextService = mock(ParatextService);
-const mockProjectService = mock(SFProjectService);
-const mockUserProjectsService = mock(SFUserProjectsService);
-const mockRouter = mock(Router);
-const mockFeatureFlags = mock(FeatureFlagService);
-const mockAuthService = mock(AuthService);
+const mockedActivatedProjectService = mock(ActivatedProjectService);
+const mockedDestroyRef = mock(DestroyRef);
+const mockedParatextService = mock(ParatextService);
+const mockedProjectService = mock(SFProjectService);
+const mockedUserProjectsService = mock(SFUserProjectsService);
+const mockedRouter = mock(Router);
+const mockedFeatureFlags = mock(FeatureFlagService);
+const mockedAuthService = mock(AuthService);
 
 interface DraftSourcesComponentStoryState {
   project: SFProjectProfileDoc;
@@ -79,10 +79,10 @@ const testProjectDoc = {
   })
 } as SFProjectProfileDoc;
 
-when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-when(mockActivatedProjectService.projectDoc).thenReturn(testProjectDoc);
-when(mockFeatureFlags.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
-when(mockAuthService.currentUserId).thenReturn('user1');
+when(mockedActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+when(mockedActivatedProjectService.projectDoc).thenReturn(testProjectDoc);
+when(mockedFeatureFlags.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
+when(mockedAuthService.currentUserId).thenReturn('user1');
 
 const languageCodes = ['en', 'fr', 'es', 'pt', 'de', 'ru', 'zh', 'ar', 'hi', 'bn'];
 
@@ -107,8 +107,9 @@ const projects: ParatextProject[] = new Array(10).fill(0).map((_, i) => ({
   isConnected: true
 }));
 
-when(mockParatextService.getResources()).thenResolve(resources);
-when(mockParatextService.getProjects()).thenResolve(projects);
+when(mockedParatextService.getResources()).thenResolve(resources);
+when(mockedParatextService.getProjects()).thenResolve(projects);
+when(mockedUserProjectsService.projectDocs$).thenReturn(of([testProjectDoc]));
 
 export default {
   title: 'Draft/DraftSources',
@@ -117,15 +118,15 @@ export default {
     moduleMetadata({
       imports: [MatDialogModule],
       providers: [
-        { provide: ActivatedProjectService, useValue: instance(mockActivatedProjectService) },
-        { provide: DestroyRef, useValue: instance(mockDestroyRef) },
-        { provide: ParatextService, useValue: instance(mockParatextService) },
+        { provide: ActivatedProjectService, useValue: instance(mockedActivatedProjectService) },
+        { provide: DestroyRef, useValue: instance(mockedDestroyRef) },
+        { provide: ParatextService, useValue: instance(mockedParatextService) },
         { provide: DialogService, useClass: DialogService },
-        { provide: SFProjectService, useValue: instance(mockProjectService) },
-        { provide: SFUserProjectsService, useValue: instance(mockUserProjectsService) },
-        { provide: Router, useValue: instance(mockRouter) },
-        { provide: FeatureFlagService, useValue: instance(mockFeatureFlags) },
-        { provide: AuthService, useValue: instance(mockAuthService) },
+        { provide: SFProjectService, useValue: instance(mockedProjectService) },
+        { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) },
+        { provide: Router, useValue: instance(mockedRouter) },
+        { provide: FeatureFlagService, useValue: instance(mockedFeatureFlags) },
+        { provide: AuthService, useValue: instance(mockedAuthService) },
         defaultTranslocoMarkupTranspilers()
       ]
     })
