@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit } from '@angular/core';
+import { Component, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -60,7 +60,7 @@ export interface ProjectStatus {
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
 })
-export class DraftSourcesComponent extends DataLoadingComponent implements OnInit {
+export class DraftSourcesComponent extends DataLoadingComponent {
   /** Indicator that a project setting change is for clearing a value. */
   static readonly projectSettingValueUnset = 'unset';
 
@@ -126,6 +126,13 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
       }
     });
 
+    this.userProjectsService.projectDocs$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((projects?: SFProjectProfileDoc[]) => {
+        if (projects == null) return;
+        this.userConnectedProjectsAndResources = projects.filter(project => project.data != null);
+      });
+
     this.loadProjects();
   }
 
@@ -175,13 +182,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements OnIni
 
   get targetLanguageTag(): string {
     return this.trainingTargets[0]!.writingSystem.tag;
-  }
-
-  async ngOnInit(): Promise<void> {
-    this.subscribe(this.userProjectsService.projectDocs$, (projects?: SFProjectProfileDoc[]) => {
-      if (projects == null) return;
-      this.userConnectedProjectsAndResources = projects.filter(project => project.data != null);
-    });
   }
 
   async loadProjects(): Promise<void> {
