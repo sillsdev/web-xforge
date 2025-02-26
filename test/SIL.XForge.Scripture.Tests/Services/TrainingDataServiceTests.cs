@@ -34,6 +34,10 @@ public class TrainingDataServiceTests
     private const string User02 = "user02";
     private const string User03 = "user03";
 
+    private static IUserAccessor UserAccessor01 => new MockUserAccessor { UserId = User01 };
+    private static IUserAccessor UserAccessor02 => new MockUserAccessor { UserId = User02 };
+    private static IUserAccessor UserAccessor03 => new MockUserAccessor { UserId = User03 };
+
     [Test]
     public void DeleteTrainingDataAsync_InvalidDataId()
     {
@@ -41,7 +45,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<FormatException>(
-            () => env.Service.DeleteTrainingDataAsync(User01, Project01, User01, "invalid_data_id")
+            () => env.Service.DeleteTrainingDataAsync(UserAccessor01, Project01, User01, "invalid_data_id")
         );
     }
 
@@ -52,7 +56,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.DeleteTrainingDataAsync(User01, "invalid_project_id", User01, Data01)
+            () => env.Service.DeleteTrainingDataAsync(UserAccessor01, "invalid_project_id", User01, Data01)
         );
     }
 
@@ -63,7 +67,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.DeleteTrainingDataAsync(User02, Project01, User01, Data01)
+            () => env.Service.DeleteTrainingDataAsync(UserAccessor02, Project01, User01, Data01)
         );
     }
 
@@ -73,7 +77,7 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.DeleteTrainingDataAsync(User01, Project01, User01, Data01);
+        await env.Service.DeleteTrainingDataAsync(UserAccessor01, Project01, User01, Data01);
         env.FileSystemService.Received().DeleteFile(Arg.Any<string>());
     }
 
@@ -90,7 +94,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data01)), FileMode.Open).Returns(fileStream);
 
         // SUT
-        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
+        await env.Service.GetTextsAsync(UserAccessor01, Project01, dataIds, sourceTexts, targetTexts);
         Assert.AreEqual(1, sourceTexts.Count);
         Assert.AreEqual(0, sourceTexts.First().Segments.Count());
     }
@@ -114,7 +118,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data02)), FileMode.Open).Returns(fileStream2);
 
         // SUT
-        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
+        await env.Service.GetTextsAsync(UserAccessor01, Project01, dataIds, sourceTexts, targetTexts);
         Assert.AreEqual(2, sourceTexts.Count);
         Assert.AreEqual(2, sourceTexts.First().Segments.Count());
         Assert.AreEqual("001", sourceTexts.First().Segments.First().SegmentRef);
@@ -145,7 +149,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetTextsAsync(User01, "invalid_project_id", dataIds, sourceTexts, targetTexts)
+            () => env.Service.GetTextsAsync(UserAccessor01, "invalid_project_id", dataIds, sourceTexts, targetTexts)
         );
     }
 
@@ -160,7 +164,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts)
+            () => env.Service.GetTextsAsync(UserAccessor01, Project01, dataIds, sourceTexts, targetTexts)
         );
     }
 
@@ -174,7 +178,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetTextsAsync(User03, Project01, dataIds, sourceTexts, targetTexts)
+            () => env.Service.GetTextsAsync(UserAccessor03, Project01, dataIds, sourceTexts, targetTexts)
         );
     }
 
@@ -187,7 +191,7 @@ public class TrainingDataServiceTests
         var targetTexts = new List<ISFText>();
 
         // SUT
-        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
+        await env.Service.GetTextsAsync(UserAccessor01, Project01, dataIds, sourceTexts, targetTexts);
         env.FileSystemService.DidNotReceive().FileExists(Arg.Any<string>());
         env.FileSystemService.DidNotReceive().OpenFile(Arg.Any<string>(), FileMode.Open);
     }
@@ -202,7 +206,7 @@ public class TrainingDataServiceTests
         var targetTexts = new List<ISFText>();
 
         // SUT
-        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
+        await env.Service.GetTextsAsync(UserAccessor01, Project01, dataIds, sourceTexts, targetTexts);
         env.FileSystemService.Received().FileExists(Arg.Any<string>());
         env.FileSystemService.DidNotReceive().OpenFile(Arg.Any<string>(), FileMode.Open);
     }
@@ -221,7 +225,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
+            () => env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, FileExcel2003)
         );
     }
 
@@ -240,7 +244,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
+            () => env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, FileExcel2003)
         );
     }
 
@@ -251,7 +255,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, "invalid_data_id", FileCsv)
+            () => env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, "invalid_data_id", FileCsv)
         );
     }
 
@@ -262,7 +266,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, "test.doc")
+            () => env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, "test.doc")
         );
     }
 
@@ -273,7 +277,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SaveTrainingDataAsync(User01, "invalid_project_id", Data01, FileCsv)
+            () => env.Service.SaveTrainingDataAsync(UserAccessor01, "invalid_project_id", Data01, FileCsv)
         );
     }
 
@@ -284,7 +288,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SaveTrainingDataAsync(User03, Project01, Data01, FileCsv)
+            () => env.Service.SaveTrainingDataAsync(UserAccessor03, Project01, Data01, FileCsv)
         );
     }
 
@@ -299,7 +303,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
+            () => env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, FileCsv)
         );
     }
 
@@ -317,7 +321,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(false);
 
         // SUT
-        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv);
+        Uri actual = await env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, FileCsv);
         Assert.That(
             actual
                 .ToString()
@@ -340,7 +344,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileTsv, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileTsv);
+        Uri actual = await env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, FileTsv);
         Assert.That(
             actual
                 .ToString()
@@ -362,7 +366,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileTxt, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileTxt);
+        Uri actual = await env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, FileTxt);
         Assert.That(
             actual
                 .ToString()
@@ -400,7 +404,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.CreateFile(path).Returns(outputStream);
 
         // SUT
-        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003);
+        Uri actual = await env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, FileExcel2003);
         Assert.That(
             actual
                 .ToString()
@@ -442,7 +446,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.CreateFile(path).Returns(outputStream);
 
         // SUT
-        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2007);
+        Uri actual = await env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, FileExcel2007);
         Assert.That(
             actual
                 .ToString()
@@ -468,7 +472,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
+            () => env.Service.SaveTrainingDataAsync(UserAccessor01, Project01, Data01, FileCsv)
         );
     }
 

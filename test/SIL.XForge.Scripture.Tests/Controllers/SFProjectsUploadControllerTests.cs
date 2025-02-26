@@ -174,7 +174,7 @@ public class SFProjectsUploadControllerTests
         using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Throw the exception when saving the training data
-        env.TrainingDataService.SaveTrainingDataAsync(User01, Project01, Data01, Arg.Any<string>())
+        env.TrainingDataService.SaveTrainingDataAsync(env.UserAccessor, Project01, Data01, Arg.Any<string>())
             .Throws(new ForbiddenException());
 
         // SUT
@@ -194,7 +194,7 @@ public class SFProjectsUploadControllerTests
         using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Throw the exception when saving the training data
-        env.TrainingDataService.SaveTrainingDataAsync(User01, Project01, Data01, Arg.Any<string>())
+        env.TrainingDataService.SaveTrainingDataAsync(env.UserAccessor, Project01, Data01, Arg.Any<string>())
             .Throws(new DataNotFoundException("The project does not exist."));
 
         // SUT
@@ -214,7 +214,7 @@ public class SFProjectsUploadControllerTests
         using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Throw the exception when saving the training data
-        env.TrainingDataService.SaveTrainingDataAsync(User01, Project01, Data01, Arg.Any<string>())
+        env.TrainingDataService.SaveTrainingDataAsync(env.UserAccessor, Project01, Data01, Arg.Any<string>())
             .Throws(new ArgumentNullException());
 
         // SUT
@@ -237,7 +237,7 @@ public class SFProjectsUploadControllerTests
             $"/assets/{TrainingDataService.DirectoryName}/{Project01}/{fileName}?t={DateTime.UtcNow.ToFileTime()}",
             UriKind.Relative
         );
-        env.TrainingDataService.SaveTrainingDataAsync(User01, Project01, Data01, Arg.Any<string>())
+        env.TrainingDataService.SaveTrainingDataAsync(env.UserAccessor, Project01, Data01, Arg.Any<string>())
             .Returns(relativeUri);
 
         // SUT
@@ -263,16 +263,16 @@ public class SFProjectsUploadControllerTests
             httpRequestAccessor.SiteRoot.Returns(new Uri("https://scriptureforge.org", UriKind.Absolute));
             SFProjectService = Substitute.For<ISFProjectService>();
             TrainingDataService = Substitute.For<ITrainingDataService>();
-            var userAccessor = Substitute.For<IUserAccessor>();
-            userAccessor.UserId.Returns(User01);
-            userAccessor.SystemRoles.Returns(Roles);
+            UserAccessor = Substitute.For<IUserAccessor>();
+            UserAccessor.UserId.Returns(User01);
+            UserAccessor.SystemRoles.Returns(Roles);
             Controller = new SFProjectsUploadController(
                 ExceptionHandler,
                 FileSystemService,
                 httpRequestAccessor,
                 SFProjectService,
                 TrainingDataService,
-                userAccessor
+                UserAccessor
             );
         }
 
@@ -281,6 +281,7 @@ public class SFProjectsUploadControllerTests
         public IFileSystemService FileSystemService { get; }
         public ITrainingDataService TrainingDataService { get; }
         public ISFProjectService SFProjectService { get; }
+        public IUserAccessor UserAccessor { get; }
 
         public void CreateEmptyRequest()
         {

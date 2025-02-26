@@ -14,12 +14,12 @@ namespace SIL.XForge.Scripture.Services;
 [Intercept(typeof(EventMetricLogger))]
 public interface ISFProjectService : IProjectService
 {
-    Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings);
+    Task<string> CreateProjectAsync(IUserAccessor userAccessor, SFProjectCreateSettings settings);
     Task<string> CreateResourceProjectAsync(string curUserId, string paratextId, bool addUser);
     Task DeleteProjectAsync(string curUserId, string projectId);
-    Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings);
+    Task UpdateSettingsAsync(IUserAccessor userAccessor, string projectId, SFProjectSettings settings);
     Task AddTranslateMetricsAsync(string curUserId, string projectId, TranslateMetrics metrics);
-    Task<string> SyncAsync(string curUserId, string projectId);
+    Task<string> SyncAsync(IUserAccessor userAccessor, string projectId);
     Task CancelSyncAsync(string curUserId, string projectId);
     Task<bool> InviteAsync(
         string curUserId,

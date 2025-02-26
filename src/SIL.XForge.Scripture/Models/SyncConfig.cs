@@ -1,3 +1,5 @@
+using SIL.XForge.Services;
+
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
@@ -42,7 +44,7 @@ public class SyncConfig
     /// The user who is initiating the sync.
     /// </summary>
     /// <value>
-    /// Required. The user id.
+    /// Required. The user accessor.
     /// </value>
-    public required string UserId { get; init; }
+    public required IUserAccessor UserAccessor { get; init; }
 }

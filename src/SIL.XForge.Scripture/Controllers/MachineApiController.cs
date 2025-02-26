@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Converters.Usj;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -108,16 +106,9 @@ public class MachineApiController : ControllerBase
         {
             // First, check for a queued build
             ServalBuildDto? build = null;
-            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             if (buildId is null)
             {
-                build = await _machineApiService.GetQueuedStateAsync(
-                    _userAccessor,
-                    sfProjectId,
-                    preTranslate,
-                    isServalAdmin,
-                    cancellationToken
-                );
+                build = await _machineApiService.GetQueuedStateAsync(_userAccessor, sfProjectId, preTranslate);
 
                 // If a build is still being uploaded, we need to wait for Serval to report the first revision
                 if (build?.State == MachineApiService.BuildStateQueued && minRevision > 0)
@@ -133,7 +124,6 @@ public class MachineApiController : ControllerBase
                     sfProjectId,
                     minRevision,
                     preTranslate,
-                    isServalAdmin,
                     cancellationToken
                 )
                 : await _machineApiService.GetBuildAsync(
@@ -142,7 +132,6 @@ public class MachineApiController : ControllerBase
                     buildId,
                     minRevision,
                     preTranslate,
-                    isServalAdmin,
                     cancellationToken
                 );
 
@@ -226,11 +215,9 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             ServalBuildDto? build = await _machineApiService.GetLastCompletedPreTranslationBuildAsync(
                 _userAccessor,
                 sfProjectId,
-                isServalAdmin,
                 cancellationToken
             );
 
@@ -390,13 +377,11 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             string usfm = await _machineApiService.GetPreTranslationUsfmAsync(
                 _userAccessor,
                 sfProjectId,
                 bookNum,
                 chapterNum,
-                isServalAdmin,
                 cancellationToken
             );
             return Ok(usfm);
@@ -625,9 +610,7 @@ public class MachineApiController : ControllerBase
             ServalBuildDto? build = await _machineApiService.GetQueuedStateAsync(
                 _userAccessor,
                 sfProjectId,
-                preTranslate: false,
-                isServalAdmin: false,
-                cancellationToken
+                preTranslate: false
             );
             return Ok(build);
         }

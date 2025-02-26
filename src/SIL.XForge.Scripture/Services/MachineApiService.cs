@@ -193,17 +193,13 @@ public class MachineApiService(
         string buildId,
         long? minRevision,
         bool preTranslate,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -235,17 +231,13 @@ public class MachineApiService(
     public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         IUserAccessor userAccessor,
         string sfProjectId,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
 
         // Get the translation engine
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
@@ -282,17 +274,13 @@ public class MachineApiService(
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
 
         // Otherwise execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -436,26 +424,19 @@ public class MachineApiService(
     /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="preTranslate">If <c>true</c>, check the status of the NMT/Pre-Translation build.</param>
-    /// <param name="isServalAdmin">If <c>true</c>, the user is a Serval administrator.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>
     /// A <see cref="ServalBuildDto"/> if the build is being uploaded to Serval; otherwise, <c>null</c>.
     /// </returns>
     public async Task<ServalBuildDto?> GetQueuedStateAsync(
         IUserAccessor userAccessor,
         string sfProjectId,
-        bool preTranslate,
-        bool isServalAdmin,
-        CancellationToken cancellationToken
+        bool preTranslate
     )
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
 
         // If there is a job queued, return a build dto with a status showing it is queued
         if (
@@ -535,15 +516,11 @@ public class MachineApiService(
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
-        // Ensure that the user has permission, if they are not a Serval administrator
-        if (!isServalAdmin)
-        {
-            await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
-        }
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId);
 
         try
         {
@@ -745,14 +722,14 @@ public class MachineApiService(
 
         // Sync the source and target before running the build
         // We use project service, as it provides permission and token checks
-        string syncJobId = await projectService.SyncAsync(userAccessor.UserId, sfProjectId);
+        string syncJobId = await projectService.SyncAsync(userAccessor, sfProjectId);
 
         // Run the training after the sync has completed. If the sync failed or stopped, retrain anyway
         string buildJobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
             syncJobId,
             r =>
                 r.BuildProjectForBackgroundJobAsync(
-                    userAccessor.UserId,
+                    userAccessor,
                     new BuildConfig { ProjectId = sfProjectId },
                     false,
                     CancellationToken.None
@@ -890,7 +867,7 @@ public class MachineApiService(
 
         // Sync the source and target before running the build
         // We use project service, as it provides permission and token checks
-        string jobId = await projectService.SyncAsync(userAccessor.UserId, buildConfig.ProjectId);
+        string jobId = await projectService.SyncAsync(userAccessor, buildConfig.ProjectId);
 
         // If we have an alternate source, sync that first
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
@@ -905,7 +882,7 @@ public class MachineApiService(
                     ParentJobId = jobId,
                     ProjectId = alternateSourceProjectId,
                     TargetOnly = true,
-                    UserId = userAccessor.UserId,
+                    UserAccessor = userAccessor,
                 }
             );
         }
@@ -928,7 +905,7 @@ public class MachineApiService(
                     ParentJobId = jobId,
                     ProjectId = alternateTrainingSourceProjectId,
                     TargetOnly = true,
-                    UserId = userAccessor.UserId,
+                    UserAccessor = userAccessor,
                 }
             );
         }
@@ -951,7 +928,7 @@ public class MachineApiService(
                     ParentJobId = jobId,
                     ProjectId = additionalTrainingSourceProjectId,
                     TargetOnly = true,
-                    UserId = userAccessor.UserId,
+                    UserAccessor = userAccessor,
                 }
             );
         }
@@ -959,7 +936,7 @@ public class MachineApiService(
         // Run the training after the sync has completed
         jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
             jobId,
-            r => r.BuildProjectForBackgroundJobAsync(userAccessor.UserId, buildConfig, true, CancellationToken.None)
+            r => r.BuildProjectForBackgroundJobAsync(userAccessor, buildConfig, true, CancellationToken.None)
         );
 
         // Set the pre-translation queued date and time, and hang fire job id

@@ -22,6 +22,9 @@ public class SyncServiceTests
     private const string Project02 = "project02";
     private const string Project03 = "project03";
     private const string Project04 = "project04";
+    private const string User01 = "user01";
+
+    private static IUserAccessor UserAccessor => new MockUserAccessor { UserId = User01 };
 
     [Test]
     public async Task SyncAsync_CancelSourceAndTarget()
@@ -31,7 +34,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserAccessor = UserAccessor });
 
         // Verify that the jobs were queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -48,7 +51,7 @@ public class SyncServiceTests
         Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
 
         // Cancel sync
-        await env.Service.CancelSyncAsync("userid", Project03);
+        await env.Service.CancelSyncAsync(User01, Project03);
 
         // Verify that the job was cancelled correctly
         env.BackgroundJobClient.Received(2).ChangeState("jobid", Arg.Any<DeletedState>(), null); // Same as Delete()
@@ -74,7 +77,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserAccessor = UserAccessor });
 
         // Verify that the jobs were queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -91,7 +94,7 @@ public class SyncServiceTests
         Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
 
         // Cancel sync
-        await env.Service.CancelSyncAsync("userid", Project01);
+        await env.Service.CancelSyncAsync(User01, Project01);
 
         // Verify that the job was cancelled correctly
         env.BackgroundJobClient.Received(1).ChangeState("jobid", Arg.Any<DeletedState>(), null); // Same as Delete()
@@ -117,7 +120,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserAccessor = UserAccessor });
 
         // Verify that the job was queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -134,7 +137,7 @@ public class SyncServiceTests
         Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.Zero);
 
         // Cancel sync
-        await env.Service.CancelSyncAsync("userid", Project01);
+        await env.Service.CancelSyncAsync(User01, Project01);
 
         // Verify that the job was cancelled correctly
         env.BackgroundJobClient.Received(1).ChangeState("jobid", Arg.Any<DeletedState>(), null); // Same as Delete()
@@ -164,7 +167,7 @@ public class SyncServiceTests
             new SyncConfig
             {
                 ProjectId = Project01,
-                UserId = "userid",
+                UserAccessor = UserAccessor,
                 TrainEngine = true,
             }
         );
@@ -180,7 +183,7 @@ public class SyncServiceTests
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).SyncDisabled, Is.False);
         // SUT
         Assert.DoesNotThrowAsync(
-            () => env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" })
+            () => env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserAccessor = UserAccessor })
         );
     }
 
@@ -191,7 +194,8 @@ public class SyncServiceTests
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).SyncDisabled, Is.False);
         // SUT
         Assert.ThrowsAsync<ArgumentException>(
-            async () => await env.Service.SyncAsync(new SyncConfig { ProjectId = Project04, UserId = "userid" })
+            async () =>
+                await env.Service.SyncAsync(new SyncConfig { ProjectId = Project04, UserAccessor = UserAccessor })
         );
     }
 
@@ -208,7 +212,7 @@ public class SyncServiceTests
             {
                 ProjectId = Project03,
                 TargetOnly = true,
-                UserId = "userid",
+                UserAccessor = UserAccessor,
             }
         );
 
@@ -239,7 +243,7 @@ public class SyncServiceTests
             new SyncConfig
             {
                 ProjectId = Project03,
-                UserId = "userid",
+                UserAccessor = UserAccessor,
                 TrainEngine = true,
             }
         );
@@ -261,7 +265,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserAccessor = UserAccessor });
 
         // Verify that the jobs were queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -286,7 +290,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserAccessor = UserAccessor });
 
         // Verify that the job was queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -308,7 +312,7 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserAccessor = UserAccessor });
 
         // Verify that the sync metrics ids are recorded in the project secrets
         string syncMetricsId = env.ProjectSecrets.Get(Project01).SyncMetricsIds.First();
@@ -316,7 +320,7 @@ public class SyncServiceTests
         Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
         Assert.That(env.ProjectSecrets.Get(Project03).SyncMetricsIds, Is.Empty);
 
-        await env.Service.CancelSyncAsync("userid", Project01);
+        await env.Service.CancelSyncAsync(User01, Project01);
 
         // Verify that the sync metrics are cleared from the project secrets
         Assert.That(env.ProjectSecrets.Get(Project01).SyncMetricsIds, Is.Empty);
@@ -329,7 +333,7 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserAccessor = UserAccessor });
 
         // Verify that the sync metrics ids are recorded in the project secrets
         string syncMetricsId01 = env.ProjectSecrets.Get(Project01).SyncMetricsIds.First();
@@ -338,7 +342,7 @@ public class SyncServiceTests
         Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
         Assert.That(env.SyncMetrics.Get(syncMetricsId03), Is.Not.Null);
 
-        await env.Service.CancelSyncAsync("userid", Project03);
+        await env.Service.CancelSyncAsync(User01, Project03);
 
         // Verify that the sync metrics are cleared from the project secrets
         Assert.That(env.ProjectSecrets.Get(Project01).SyncMetricsIds, Is.Empty);
@@ -351,7 +355,7 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserAccessor = UserAccessor });
 
         // Verify that the sync metrics ids are recorded in the project secrets
         string syncMetricsId01 = env.ProjectSecrets.Get(Project01).SyncMetricsIds.First();
@@ -360,7 +364,7 @@ public class SyncServiceTests
         Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
         Assert.That(env.SyncMetrics.Get(syncMetricsId03), Is.Not.Null);
 
-        await env.Service.CancelSyncAsync("userid", Project01);
+        await env.Service.CancelSyncAsync(User01, Project01);
 
         // Verify that the sync metrics are only cleared from the target project secrets
         Assert.That(env.ProjectSecrets.Get(Project01).SyncMetricsIds, Is.Empty);
@@ -374,7 +378,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserAccessor = UserAccessor });
 
         // Verify the sync metrics as queued
         Assert.That(
@@ -386,7 +390,7 @@ public class SyncServiceTests
             Is.EqualTo(SyncStatus.Queued)
         );
 
-        await env.Service.CancelSyncAsync("userid", Project03);
+        await env.Service.CancelSyncAsync(User01, Project03);
 
         // Verify the sync metrics as cancelled
         Assert.That(
@@ -405,7 +409,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserAccessor = UserAccessor });
 
         // Verify the sync metrics
         Assert.That(
@@ -424,7 +428,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserAccessor = UserAccessor });
 
         // Verify the sync metrics as queued
         Assert.That(
@@ -436,7 +440,7 @@ public class SyncServiceTests
             Is.EqualTo(SyncStatus.Queued)
         );
 
-        await env.Service.CancelSyncAsync("userid", Project01);
+        await env.Service.CancelSyncAsync(User01, Project01);
 
         // Verify the sync metrics as cancelled
         Assert.That(
@@ -455,7 +459,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserAccessor = UserAccessor });
 
         // Verify the sync metrics
         string sourceId = env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Id;
@@ -471,7 +475,7 @@ public class SyncServiceTests
         DateTime beforeSync = DateTime.UtcNow;
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserAccessor = UserAccessor });
         DateTime afterSync = DateTime.UtcNow;
 
         // Verify the sync metrics
@@ -487,12 +491,11 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
-        const string curUserId = "userid";
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = curUserId });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserAccessor = UserAccessor });
 
         // Verify the sync metrics
-        Assert.That(env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).UserRef, Is.EqualTo(curUserId));
+        Assert.That(env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).UserRef, Is.EqualTo(User01));
     }
 
     [Test]
@@ -501,7 +504,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserAccessor = UserAccessor });
 
         // Verify the sync metrics as queued
         Assert.That(
@@ -509,7 +512,7 @@ public class SyncServiceTests
             Is.EqualTo(SyncStatus.Queued)
         );
 
-        await env.Service.CancelSyncAsync("userid", Project01);
+        await env.Service.CancelSyncAsync(User01, Project01);
 
         // Verify the sync metrics as cancelled
         Assert.That(
@@ -524,7 +527,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserAccessor = UserAccessor });
 
         // Verify the sync metrics
         Assert.That(
@@ -539,7 +542,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).SyncDisabled, Is.True, "setup");
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SyncAsync(new SyncConfig { ProjectId = Project02, UserId = "userid" })
+            () => env.Service.SyncAsync(new SyncConfig { ProjectId = Project02, UserAccessor = UserAccessor })
         );
     }
 

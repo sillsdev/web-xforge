@@ -92,7 +92,7 @@ public class MachineProjectService(
     /// <summary>
     /// Executes <see cref="BuildProjectAsync"/>, and traps any errors during execution.
     /// </summary>
-    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
+    /// <param name="userAccessor">The IUserAccessor for the acting user.</param>
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -513,7 +513,7 @@ public class MachineProjectService(
     /// <summary>
     /// Builds a project on Serval, including syncing and any required setup.
     /// </summary>
-    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
+    /// <param name="userAccessor">The IUserAccessor for the acting user.</param>
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -1381,7 +1381,7 @@ public class MachineProjectService(
     /// <summary>
     /// Synchronizes the additional training data for a pre-translation project.
     /// </summary>
-    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
+    /// <param name="userAccessor">The IUserAccessor for the acting user.</param>
     /// <param name="project">The project.</param>
     /// <param name="translationEngineId">The translation engine identifier.</param>
     /// <param name="buildConfig">The build configuration from the user.</param>
@@ -1502,7 +1502,7 @@ public class MachineProjectService(
     /// <summary>
     /// Synchronizes the corpora and files with Serval.
     /// </summary>
-    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
+    /// <param name="userAccessor">The IUserAccessor for the acting user.</param>
     /// <param name="buildConfig">The build configuration from the user.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <param name="cancellationToken">The cancellation token.</param>

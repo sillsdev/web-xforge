@@ -13,7 +13,7 @@ namespace SIL.XForge.Scripture.Services;
 [Intercept(typeof(EventMetricLogger))]
 public interface IMachineApiService
 {
-    [LogEventMetric(EventScope.Drafting, nameof(userAccessor), nameof(sfProjectId))]
+    [LogEventMetric(EventScope.Drafting, userId: "userAccessor.UserId", nameof(sfProjectId))]
     Task CancelPreTranslationBuildAsync(
         IUserAccessor userAccessor,
         string sfProjectId,
@@ -26,7 +26,6 @@ public interface IMachineApiService
         string buildId,
         long? minRevision,
         bool preTranslate,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<ServalBuildDto?> GetCurrentBuildAsync(
@@ -34,7 +33,6 @@ public interface IMachineApiService
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<ServalEngineDto> GetEngineAsync(
@@ -45,7 +43,6 @@ public interface IMachineApiService
     Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         IUserAccessor userAccessor,
         string sfProjectId,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<PreTranslationDto> GetPreTranslationAsync(
@@ -55,13 +52,7 @@ public interface IMachineApiService
         int chapterNum,
         CancellationToken cancellationToken
     );
-    Task<ServalBuildDto?> GetQueuedStateAsync(
-        IUserAccessor userAccessor,
-        string sfProjectId,
-        bool preTranslate,
-        bool isServalAdmin,
-        CancellationToken cancellationToken
-    );
+    Task<ServalBuildDto?> GetQueuedStateAsync(IUserAccessor userAccessor, string sfProjectId, bool preTranslate);
     Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(
         IUserAccessor userAccessor,
         string sfProjectId,
@@ -74,7 +65,6 @@ public interface IMachineApiService
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<Usj> GetPreTranslationUsjAsync(
@@ -100,10 +90,10 @@ public interface IMachineApiService
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
     Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
 
-    [LogEventMetric(EventScope.Drafting, nameof(userAccessor), nameof(sfProjectId))]
+    [LogEventMetric(EventScope.Drafting, userId: "userAccessor.UserId", nameof(sfProjectId))]
     Task StartBuildAsync(IUserAccessor userAccessor, string sfProjectId, CancellationToken cancellationToken);
 
-    [LogEventMetric(EventScope.Drafting, nameof(userAccessor), projectId: "buildConfig.ProjectId")]
+    [LogEventMetric(EventScope.Drafting, userId: "userAccessor.UserId", projectId: "buildConfig.ProjectId")]
     Task StartPreTranslationBuildAsync(
         IUserAccessor userAccessor,
         BuildConfig buildConfig,

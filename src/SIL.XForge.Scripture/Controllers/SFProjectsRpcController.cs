@@ -39,7 +39,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            string projectId = await projectService.CreateProjectAsync(UserId, settings);
+            string projectId = await projectService.CreateProjectAsync(_userAccessor, settings);
             return Ok(projectId);
         }
         catch (ForbiddenException)
@@ -129,7 +129,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            await projectService.UpdateSettingsAsync(UserId, projectId, settings);
+            await projectService.UpdateSettingsAsync(_userAccessor, projectId, settings);
             return Ok();
         }
         catch (ForbiddenException)
@@ -517,7 +517,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            await projectService.SyncAsync(UserId, projectId);
+            await projectService.SyncAsync(_userAccessor, projectId);
             return Ok();
         }
         catch (Exception ex) when (ex is ForbiddenException or UnauthorizedAccessException)
