@@ -68,6 +68,35 @@ on:
         description: "The domain name that will be hosting the application."
         type: string
         required: true
+    secrets:
+      deploy_known_hosts:
+        required: true
+      deploy_ssh_private_key:
+        required: true
+      deploy_server:
+        required: true
+      alternate_domain:
+        required: true
+      paratext_client_id:
+        required: true
+      serval_client_id:
+        required: true
+      auth_backend_secret:
+        required: true
+      auth_webhook_password:
+        required: true
+      auth_health_check_api_key:
+        required: true
+      paratext_api_token:
+        required: true
+      paratext_resource_password_base64:
+        required: true
+      paratext_resource_password_hash:
+        required: true
+      serval_client_secret:
+        required: true
+      serval_webhook_secret:
+        required: true
 
 jobs:
   deploy:
