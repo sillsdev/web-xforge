@@ -180,6 +180,7 @@
     "download_draft": "Download draft",
     "draft_active_detail": "Generating draft; this usually takes at least {{ count }} hours.",
     "draft_active_header": "Draft in progress",
+    "draft_already_running": "A draft job for this project is already queued. Wait until the current job finishes to start a new job.",
     "draft_is_ready": "Your draft is ready",
     "draft_syncing": "Draft initializing",
     "draft_syncing_detail": "Your project is being synced before queuing the draft.",
