@@ -296,7 +296,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   async save(): Promise<void> {
     if (this.activatedProjectService.projectDoc == null) throw new Error('Project doc is null');
     if (this.activatedProjectService.projectDoc.data == null) throw new Error('Project doc data is null');
-    const currentSFProjectId = this.activatedProjectService.projectId;
+    const currentSFProjectId = this.activatedProjectService.projectDoc.id;
     if (currentSFProjectId == null) throw new Error('Project ID is null');
 
     const definedSources = this.draftingSources.filter(s => s != null);
