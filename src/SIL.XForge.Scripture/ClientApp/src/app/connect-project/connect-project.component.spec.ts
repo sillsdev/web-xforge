@@ -22,7 +22,7 @@ import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
-import { ParatextService, SelectableProject } from '../core/paratext.service';
+import { ParatextService, SelectableProjectWithLanguageCode } from '../core/paratext.service';
 import { ProjectNotificationService } from '../core/project-notification.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
@@ -326,14 +326,20 @@ class TestEnvironment {
     }
   ];
 
-  private resources: SelectableProject[] = [
-    { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
+  private resources: SelectableProjectWithLanguageCode[] = [
+    { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL', languageTag: 'en' },
     {
       paratextId: '5e51f89e89947acb',
       name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
-      shortName: 'ANT'
+      shortName: 'ANT',
+      languageTag: 'en'
     },
-    { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
+    {
+      paratextId: '9bb76cd3e5a7f9b4',
+      name: 'Revised Version with Apocrypha 1885, 1895',
+      shortName: 'RVA',
+      languageTag: 'en'
+    }
   ];
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -486,7 +492,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setupProjectsResources(projects?: ParatextProject[], resources?: SelectableProject[]): void {
+  setupProjectsResources(projects?: ParatextProject[], resources?: SelectableProjectWithLanguageCode[]): void {
     when(mockedParatextService.getProjects()).thenResolve(projects);
     when(mockedParatextService.getResources()).thenResolve(resources);
   }

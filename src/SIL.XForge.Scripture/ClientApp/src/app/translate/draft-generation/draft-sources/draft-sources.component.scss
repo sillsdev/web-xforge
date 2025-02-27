@@ -1,0 +1,230 @@
+@use 'src/breakpoints';
+@use 'src/variables';
+
+$active-color: #edf5e9;
+$active-hover-color: lighten($active-color, 4%);
+
+:host {
+  display: grid;
+  grid-column-gap: 2em;
+  grid-row-gap: 1em;
+  align-items: start;
+  grid-template-columns: 1fr 2fr;
+  grid-template-areas: 'title title' 'accordion overview' 'codes codes' 'footer footer';
+}
+
+@include breakpoints.media-breakpoint-down(lg) {
+  :host {
+    grid-template-columns: auto;
+    grid-template-areas: 'title' 'accordion' 'codes' 'footer';
+  }
+}
+
+app-notice h3 {
+  margin: 0;
+}
+
+h1 {
+  grid-area: title;
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+strong {
+  font-weight: 500;
+}
+
+.draft-sources-stepper {
+  grid-area: accordion;
+}
+
+.step-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.step-title {
+  font-weight: 500;
+}
+
+.step-subtitle {
+  font-size: 0.9em;
+  color: #444;
+}
+
+.step-header {
+  background-color: #eee;
+  cursor: pointer;
+  &:hover {
+    background-color: $active-hover-color;
+  }
+}
+
+.step-header,
+.step-body {
+  padding: 1rem;
+}
+
+.step:not(.active) .step-body {
+  display: none;
+}
+
+.step.active .step-header,
+.overview .active {
+  background-color: $active-color;
+}
+
+.step:not(.active):not(:last-child) {
+  border-bottom: 1px solid #ccc;
+}
+
+.step-button-wrapper {
+  display: flex;
+  .spacer {
+    flex-grow: 1;
+  }
+}
+
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  grid-area: overview;
+}
+
+.overview mat-card-content {
+  display: flex;
+  gap: 1em;
+  padding-top: 1em;
+}
+
+.arrow mat-icon {
+  scale: 2;
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+}
+
+.project {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25em;
+}
+
+.project-name {
+  font-size: 1.1em;
+}
+
+.language-code {
+  font-size: 0.9em;
+}
+
+.sources,
+.targets,
+.translation-data {
+  cursor: pointer;
+  border-radius: 16px;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-basis: 50%;
+
+  &.active {
+    background: $active-color;
+  }
+  &:hover {
+    background: $active-hover-color;
+  }
+}
+
+.overview h3 {
+  margin: 0;
+}
+
+.blank-project {
+  .project-name {
+    width: 100%;
+    max-width: 15em;
+  }
+  .language-code {
+    width: 70%;
+    max-width: 10em;
+  }
+}
+
+.blank-project > * {
+  height: 1em;
+  background: #eee;
+}
+.active .blank-project > * {
+  background: #b6d7a8;
+}
+
+.page-actions {
+  display: flex;
+  gap: 0.5em;
+  justify-content: flex-end;
+}
+
+.add-another-project {
+  margin-bottom: 1em;
+}
+
+// small devices only
+@include breakpoints.media-breakpoint-down(lg) {
+  :host {
+    grid-template-columns: auto;
+  }
+
+  .overview {
+    display: none;
+  }
+  .draft-sources-stepper {
+    width: unset;
+  }
+}
+
+.component-footer {
+  grid-area: footer;
+}
+
+.confirm-language-codes {
+  grid-area: codes;
+}
+
+:host:has(.saving) > :not(.saving):not(h1) {
+  display: none;
+}
+
+.saving {
+  grid-column-start: 1;
+  grid-column-end: 3;
+  width: auto;
+  margin-inline: auto;
+}
+
+.saving .mat-mdc-card-content {
+  display: flex;
+  gap: 1em;
+  flex-direction: column;
+  padding-block: 1em;
+
+  & > * {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+}
+
+.success {
+  color: green;
+}
+.failure {
+  color: variables.$errorColor;
+}

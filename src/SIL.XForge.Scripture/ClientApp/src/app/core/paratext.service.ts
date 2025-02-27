@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
@@ -30,10 +30,20 @@ export interface Revision {
   userId?: string;
 }
 
+/**
+ * Defines the minimum information needed to list a project (connected or not) for a user to select. This includes
+ * enough human identifiable information to allow the user to select the project (name and shortName), as well as
+ * Paratext project ID.
+ */
 export interface SelectableProject {
   name: string;
   shortName: string;
   paratextId: string;
+}
+
+/** Like {@link SelectableProject}, but includes the language code. */
+export interface SelectableProjectWithLanguageCode extends SelectableProject {
+  languageTag: string;
 }
 
 @Injectable({
@@ -70,18 +80,22 @@ export class ParatextService {
     );
   }
 
-  getResources(): Promise<SelectableProject[] | undefined> {
+  getResources(): Promise<SelectableProjectWithLanguageCode[] | undefined> {
     return firstValueFrom(
-      this.http.get<{ [id: string]: [shortName: string, name: string] }>(`${PARATEXT_API_NAMESPACE}/resources`, {
-        headers: this.headers
-      })
+      this.http.get<{ [id: string]: [shortName: string, name: string, languageTag: string] }>(
+        `${PARATEXT_API_NAMESPACE}/resources`,
+        {
+          headers: this.headers
+        }
+      )
     ).then(result =>
       result == null
         ? undefined
-        : Object.entries(result).map(([paratextId, [shortName, projectName]]) => ({
+        : Object.entries(result).map(([paratextId, [shortName, name, languageTag]]) => ({
             paratextId,
             shortName,
-            name: projectName
+            name,
+            languageTag
           }))
     );
   }

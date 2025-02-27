@@ -8,7 +8,7 @@ import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
+import { DraftSourcesService } from '../draft-sources.service';
 import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
 import { ConfirmSourcesComponent } from './confirm-sources.component';
 
@@ -16,43 +16,46 @@ const mockDraftService = mock(DraftSourcesService);
 const mockActivatedProject = mock(ActivatedProjectService);
 const mockAuthService = mock(AuthService);
 
-when(mockDraftService.getDraftProjectSources()).thenReturn(
+when(mockActivatedProject.projectDoc$).thenReturn(
   of({
-    draftingSources: [
-      {
-        projectRef: 'alternate-drafting-source',
-        shortName: 'ADS',
-        name: 'Alternate Drafting Source',
-        paratextId: 'alternate-drafting-source',
-        writingSystem: { tag: 'es' }
-      } as DraftSource
-    ],
-    trainingSources: [
-      {
-        projectRef: 'alternate-training-source',
-        shortName: 'ATS',
-        name: 'Alternate Training Source',
-        paratextId: 'alternate-training-source',
-        writingSystem: { tag: 'es' }
-      } as DraftSource,
-      {
-        projectRef: 'additional-training-source',
-        shortName: 'ATS',
-        name: 'Additional Training Source',
-        paratextId: 'additional-training-source',
-        writingSystem: { tag: 'es' }
-      } as DraftSource
-    ],
-    trainingTargets: [
-      {
-        projectRef: 'test-proj',
-        shortName: 'TP',
-        name: 'Test Project',
-        paratextId: 'test-proj-id',
-        writingSystem: { tag: 'eng' }
-      } as DraftSource
-    ]
-  } as DraftSourcesAsArrays)
+    data: createTestProjectProfile({
+      name: 'Test Project',
+      translateConfig: {
+        source: {
+          projectRef: 'source-project',
+          shortName: 'SP',
+          name: 'THIS PROJECT SHOULD NOT BE SHOWN!!!!!****',
+          paratextId: 'source-project'
+        },
+        draftConfig: {
+          alternateTrainingSourceEnabled: true,
+          alternateTrainingSource: {
+            projectRef: 'alternate-training-source',
+            shortName: 'ALT-TS',
+            name: 'Alternate Training Source',
+            paratextId: 'alternate-training-source',
+            writingSystem: { tag: 'es' }
+          },
+          additionalTrainingSourceEnabled: true,
+          additionalTrainingSource: {
+            projectRef: 'additional-training-source',
+            shortName: 'ADD-TS',
+            name: 'Additional Training Source',
+            paratextId: 'additional-training-source',
+            writingSystem: { tag: 'es' }
+          },
+          alternateSourceEnabled: true,
+          alternateSource: {
+            projectRef: 'alternate-drafting-source',
+            shortName: 'ADS',
+            name: 'Alternate Drafting Source',
+            paratextId: 'alternate-drafting-source',
+            writingSystem: { tag: 'es' }
+          }
+        }
+      }
+    })
+  } as SFProjectProfileDoc)
 );
 
 when(mockActivatedProject.projectId).thenReturn('test-proj');
