@@ -9,7 +9,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, EMPTY, of, Subject, throwError } from 'rxjs';
-import { instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -1043,6 +1043,7 @@ describe('DraftGenerationComponent', () => {
   describe('startBuild', () => {
     it('should start the draft build', () => {
       const env = new TestEnvironment();
+      mockDraftGenerationService.getBuildProgress.and.returnValue(of(undefined));
 
       env.component.currentPage = 'steps';
       env.component.startBuild({
@@ -1064,6 +1065,27 @@ describe('DraftGenerationComponent', () => {
       env.startedOrActiveBuild$.next(buildDto);
       env.fixture.detectChanges();
       expect(env.component.currentPage).toBe('initial');
+    });
+
+    it('should not start a build if one is already running', () => {
+      const env = new TestEnvironment();
+      env.component['draftJob'] = undefined; //clear the known draft job
+      expect(mockDraftGenerationService.getBuildProgress(projectId)).not.toBeNull();
+
+      env.component.currentPage = 'steps';
+      env.component.startBuild({
+        trainingDataFiles: [],
+        trainingScriptureRanges: [],
+        translationScriptureRanges: [],
+        fastTraining: false,
+        projectId: projectId
+      });
+      env.fixture.detectChanges();
+
+      expect(env.component.currentPage).toBe('initial');
+      expect(env.component['draftJob']).not.toBeNull();
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
+      expect(mockNoticeService.showError).toHaveBeenCalledTimes(1);
     });
 
     it('should not attempt "cancel dialog" close for queued build', () => {
