@@ -102,6 +102,8 @@ jobs:
   deploy:
     name: "Deploy"
     environment: "${{inputs.environment}}"
+    permissions:
+      contents: write
     runs-on: ${{inputs.os}}
     steps:
       - name: Place SSH deploy credentials

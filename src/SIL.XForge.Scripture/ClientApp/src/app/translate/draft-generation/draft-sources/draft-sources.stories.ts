@@ -27,9 +27,10 @@ const mockedRouter = mock(Router);
 const mockedFeatureFlags = mock(FeatureFlagService);
 const mockedAuthService = mock(AuthService);
 
-const blankProjectDoc = { data: createTestProjectProfile({}) } as SFProjectProfileDoc;
+const blankProjectDoc = { id: 'project1', data: createTestProjectProfile() } as SFProjectProfileDoc;
 
 const projectDocWithExistingSources = {
+  id: 'project1',
   data: createTestProjectProfile({
     translateConfig: {
       translationSuggestionsEnabled: false,
@@ -230,15 +231,15 @@ export const SelectAllAndSave: Story = {
 
     // // Click save and ensure we are informed that we need to confirm language codes
     await userEvent.click(await canvas.findByRole('button', { name: /Save & sync/ }));
-    expect(canvas.getByRole('heading').textContent).toContain(
-      'Please confirm that the language codes are correct before saving'
-    );
+    expect(
+      canvas.getByRole('heading', { name: 'Please confirm that the language codes are correct before saving.' })
+    ).not.toBeNull();
     await userEvent.click(canvas.getByRole('button', { name: /Close/ }));
 
     // Click the checkbox to confirm the language codes are correct
     await userEvent.click(await canvas.findByRole('checkbox'));
     await userEvent.click(canvas.getByRole('button', { name: /Save & sync/ }));
-    expect(canvas.getByText('Saving draft sources')).not.toBeNull();
+    canvas.getByText('Saving draft sources');
   }
 };
 
@@ -318,9 +319,7 @@ export const CannotSaveWithoutDraftingSource = {
     const canvas = within(canvasElement);
     await clearSource(canvasElement);
     await userEvent.click(canvas.getByRole('button', { name: /Save & sync/ }));
-    expect(canvas.getByRole('heading').textContent).toContain(
-      'Please select at least one source project before saving'
-    );
+    canvas.getByRole('heading', { name: 'Please select at least one source project before saving.' });
   }
 };
 
@@ -336,9 +335,7 @@ export const CannotSaveWithoutReferenceProject = {
     // The number of project selects drops to 1 only after both are cleared
     expect(canvas.getAllByRole('combobox').length).toBe(1);
     await userEvent.click(canvas.getByRole('button', { name: /Save & sync/ }));
-    expect(canvas.getByRole('heading').textContent).toContain(
-      'Please select at least one reference project before saving'
-    );
+    canvas.getByRole('heading', { name: 'Please select at least one reference project before saving.' });
   }
 };
 
@@ -363,6 +360,6 @@ export const CannotSelectSameProjectTwiceInOneStep: Story = {
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
     await userEvent.click(canvas.getByRole('button', { name: /Back/ }));
     expect(canvas.getAllByRole('combobox').length).toBe(1);
-    expect(canvas.getByRole('button', { name: /Add another reference project/ })).not.toBeNull();
+    canvas.getByRole('button', { name: /Add another reference project/ });
   }
 };
