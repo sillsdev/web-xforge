@@ -231,9 +231,7 @@ export const SelectAllAndSave: Story = {
 
     // // Click save and ensure we are informed that we need to confirm language codes
     await userEvent.click(await canvas.findByRole('button', { name: /Save & sync/ }));
-    expect(
-      canvas.getByRole('heading', { name: 'Please confirm that the language codes are correct before saving.' })
-    ).not.toBeNull();
+    canvas.getByRole('heading', { name: 'Please confirm that the language codes are correct before saving.' });
     await userEvent.click(canvas.getByRole('button', { name: /Close/ }));
 
     // Click the checkbox to confirm the language codes are correct
