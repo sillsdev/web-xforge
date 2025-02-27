@@ -1,5 +1,4 @@
-import { Component, DestroyRef, EventEmitter, OnInit, Output } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
@@ -10,7 +9,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSourcesService } from '../draft-sources.service';
+import { DraftSourcesAsArrays } from '../draft-sources.service';
 import { englishNameFromCode } from '../draft-utils';
 
 @Component({
@@ -20,21 +19,25 @@ import { englishNameFromCode } from '../draft-utils';
   templateUrl: './language-codes-confirmation.component.html',
   styleUrl: './language-codes-confirmation.component.scss'
 })
-export class LanguageCodesConfirmationComponent implements OnInit {
+export class LanguageCodesConfirmationComponent {
   @Output() languageCodesVerified = new EventEmitter<boolean>(false);
+  @Input() set draftSources(value: DraftSourcesAsArrays | undefined) {
+    if (value == null) return;
+    this.draftingSources = value.draftingSources;
+    this.trainingSources = value.trainingSources;
+    this.targetLanguageTag = value.trainingTargets[0]?.writingSystem.tag;
+  }
 
   draftingSources: [TranslateSource?] = [];
   trainingSources: [TranslateSource?, TranslateSource?] = [];
   languageCodesConfirmed: boolean = false;
   targetLanguageTag?: string;
-  projectSettingsUrl: string;
+  projectSettingsUrl: string = '';
 
   constructor(
     readonly i18n: I18nService,
     private readonly activatedProject: ActivatedProjectService,
-    private readonly authService: AuthService,
-    private readonly draftSourcesService: DraftSourcesService,
-    private readonly destroyRef: DestroyRef
+    private readonly authService: AuthService
   ) {
     this.projectSettingsUrl = `/projects/${this.activatedProject.projectId}/settings`;
   }
@@ -59,17 +62,6 @@ export class LanguageCodesConfirmationComponent implements OnInit {
     const userId = this.authService.currentUserId;
     if (userId == null) return false;
     return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
-  }
-
-  ngOnInit(): void {
-    this.draftSourcesService
-      .getDraftProjectSources()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(({ trainingSources, trainingTargets, draftingSources }) => {
-        this.trainingSources = trainingSources;
-        this.draftingSources = draftingSources;
-        this.targetLanguageTag = trainingTargets[0]?.writingSystem.tag;
-      });
   }
 
   confirmationChanged(event: MatCheckboxChange): void {
