@@ -21,7 +21,7 @@ describe('EditorTabFactoryService', () => {
 
   it('should create a "biblical terms" tab', async () => {
     const tab = await service.createTab('biblical-terms');
-    expect(tab.id?.length).toBeTruthy();
+    expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.type).toEqual('biblical-terms');
     expect(tab.svgIcon).toEqual('biblical_terms');
     expect(tab.headerText).toEqual('Test Header Text');
@@ -32,7 +32,7 @@ describe('EditorTabFactoryService', () => {
 
   it('should create a "history" tab', async () => {
     const tab = await service.createTab('history');
-    expect(tab.id?.length).toBeTruthy();
+    expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.type).toEqual('history');
     expect(tab.icon).toEqual('history');
     expect(tab.headerText).toEqual('Test Header Text');
@@ -43,7 +43,7 @@ describe('EditorTabFactoryService', () => {
 
   it('should create a "draft" tab', async () => {
     const tab = await service.createTab('draft');
-    expect(tab.id?.length).toBeTruthy();
+    expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.type).toEqual('draft');
     expect(tab.icon).toEqual('auto_awesome');
     expect(tab.headerText).toEqual('Test Header Text');
@@ -54,7 +54,7 @@ describe('EditorTabFactoryService', () => {
 
   it('should create a "project-target" tab', async () => {
     const tab = await service.createTab('project-target', { projectId: 'project1', headerText: 'Project 1' });
-    expect(tab.id?.length).toBeTruthy();
+    expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.projectId).toEqual('project1');
     expect(tab.type).toEqual('project-target');
     expect(tab.icon).toEqual('book');
@@ -66,7 +66,7 @@ describe('EditorTabFactoryService', () => {
 
   it('should create a "project-source" tab', async () => {
     const tab = await service.createTab('project-source', { projectId: 'project1', headerText: 'Project 1' });
-    expect(tab.id?.length).toBeTruthy();
+    expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.projectId).toEqual('project1');
     expect(tab.type).toEqual('project-source');
     expect(tab.icon).toEqual('book');
@@ -78,7 +78,7 @@ describe('EditorTabFactoryService', () => {
 
   it('should create a "project-resource" tab', async () => {
     const tab = await service.createTab('project-resource', { projectId: 'project1', headerText: 'Project 1' });
-    expect(tab.id?.length).toBeTruthy();
+    expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.projectId).toEqual('project1');
     expect(tab.type).toEqual('project-resource');
     expect(tab.icon).toEqual('library_books');
