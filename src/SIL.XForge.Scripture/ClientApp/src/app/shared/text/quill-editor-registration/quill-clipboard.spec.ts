@@ -1,5 +1,5 @@
 import Quill, { Delta, Range } from 'quill';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { TextComponent } from '../text.component';
 import { DisableHtmlClipboard } from './quill-clipboard';
 
@@ -51,19 +51,84 @@ describe('DisableHtmlClipboard', () => {
       expect(true).toBe(true); // Prevent SPEC HAS NO EXPECTATIONS warning
     });
 
-    it('should clean and paste text with attributes', () => {
-      const inputText = 'test\ntext\\with\\backslashes';
-      const expectedText = 'test text with backslashes';
+    it('should replace multiple newlines and tabs with single space', () => {
+      const testCases = [
+        {
+          input: 'first\n\nsecond',
+          expected: 'first second'
+        },
+        {
+          input: 'first\r\n\r\nsecond',
+          expected: 'first second'
+        },
+        {
+          input: 'first\r\n\nsecond\n\r\nthird',
+          expected: 'first second third'
+        },
+        {
+          input: '\n\nstart\nmiddle\n\nend\n\n',
+          expected: ' start middle end '
+        },
+        {
+          input: 'first\tsecond\t\tthird',
+          expected: 'first second third'
+        },
+        {
+          input: '\t\tstart\tmiddle\t\tend\t\t',
+          expected: ' start middle end '
+        },
+        {
+          input: 'first\n\t\nsecond\t\n\tthird',
+          expected: 'first second third'
+        }
+      ];
+
+      for (const testCase of testCases) {
+        // Override convert to capture the cleaned text passed for conversion
+        let capturedText = '';
+        clipboard.convert = (arg: { text: string }) => {
+          capturedText = arg.text;
+          return new Delta().insert(arg.text);
+        };
+
+        const event = createPasteEvent(testCase.input);
+        clipboard.onCapturePaste(event);
+
+        expect(capturedText).toBe(testCase.expected);
+
+        // Also verify that updateContents was called correctly
+        verify(
+          quillMock.updateContents(
+            deepEqual(
+              new Delta().retain(mockRange.index).insert(testCase.expected, mockFormat).delete(mockRange.length)
+            ),
+            'user'
+          )
+        ).once();
+
+        resetCalls(quillMock);
+      }
+    });
+
+    it('should handle mixed newlines, tabs, and backslashes', () => {
+      const inputText = 'line1\\\t\r\n\\line2\n\t\\\nline3\\';
+      const expected = 'line1 line2 line3';
+
+      // Override convert to capture the cleaned text passed for conversion
+      let capturedText = '';
+      clipboard.convert = (arg: { text: string }) => {
+        capturedText = arg.text;
+        return new Delta().insert(arg.text);
+      };
 
       const event = createPasteEvent(inputText);
-      const pasteDelta = new Delta().insert(expectedText);
-      clipboard.convert = () => pasteDelta;
-
       clipboard.onCapturePaste(event);
+
+      expect(capturedText).toBe(expected);
 
       verify(
         quillMock.updateContents(
-          deepEqual(new Delta().retain(mockRange.index).insert(expectedText, mockFormat).delete(mockRange.length)),
+          deepEqual(new Delta().retain(mockRange.index).insert(expected, mockFormat).delete(mockRange.length)),
           'user'
         )
       ).once();

@@ -34,8 +34,8 @@ export class DisableHtmlClipboard extends QuillClipboard {
 
     const text = e.clipboardData.getData('text/plain');
     const cleanedText = text
-      .replace(/(?:\r?\n)+/, ' ') // Replace new lines with spaces
-      .replace(/\\/g, ''); // Remove backslashes
+      .replace(/\\/g, '') // Remove all backslashes first
+      .replace(/(?:\r?\n|\t)+/g, ' '); // Replace all new lines and tabs with space
 
     const pasteDelta = this.convert({ text: cleanedText });
 
