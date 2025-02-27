@@ -90,6 +90,10 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     return ['/projects', this.activatedProjectService.projectId!, 'event-log'];
   }
 
+  get draftSourcesLink(): string[] {
+    return ['/projects', this.activatedProjectService.projectId!, 'draft-sources'];
+  }
+
   get isOnline(): boolean {
     return this.onlineStatusService.isOnline;
   }
