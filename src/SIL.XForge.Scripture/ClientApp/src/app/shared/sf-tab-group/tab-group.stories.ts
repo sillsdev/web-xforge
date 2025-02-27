@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { Observable, of } from 'rxjs';
+import { v4 as uuid } from 'uuid';
 import {
   SFTabsModule,
   TabFactoryService,
@@ -27,13 +28,13 @@ import {
     `
   ],
   template: `
-    @for (tabGroup of tabState.tabGroups$ | async | keyvalue; track tabGroup) {
+    @for (tabGroup of tabState.tabGroups$ | async | keyvalue; track tabGroup.key) {
       <app-tab-group
         [groupId]="tabGroup.key"
         [selectedIndex]="tabGroup.value.selectedIndex"
         [connectedTo]="tabState.groupIds$ | async"
       >
-        @for (tab of tabGroup.value.tabs; track tab) {
+        @for (tab of tabGroup.value.tabs; track tab.id) {
           <app-tab [closeable]="tab.closeable" [movable]="tab.movable">
             <ng-template sf-tab-header><div [innerHTML]="tab.headerText"></div></ng-template>
             <p><span [innerHTML]="tab.headerText"></span> in {{ tabGroup.key }}</p>
@@ -92,6 +93,7 @@ export default {
               switch (tabType) {
                 case 'blank':
                   tab = {
+                    id: uuid(),
                     type: 'blank',
                     headerText: 'New tab',
                     closeable: true,
@@ -100,6 +102,7 @@ export default {
                   break;
                 case 'type-a':
                   tab = {
+                    id: uuid(),
                     type: 'type-a',
                     headerText: 'Tab A',
                     closeable: true,
@@ -109,6 +112,7 @@ export default {
                 case 'type-b':
                 default:
                   tab = {
+                    id: uuid(),
                     type: 'type-b',
                     headerText: 'Tab B',
                     closeable: true,
@@ -131,18 +135,21 @@ type Story = StoryObj<SFTabGroupStoriesComponent>;
 const tabGroups: TabGroup<string, TabInfo<string>>[] = [
   new TabGroup<string, TabInfo<string>>('group-1', [
     {
+      id: uuid(),
       type: 'type-a',
       headerText: 'Uncloseable, unmovable Tab 1 is great!',
       closeable: false,
       movable: false
     },
     {
+      id: uuid(),
       type: 'type-b',
       headerText: 'Tab 2 <em>wow!</em>',
       closeable: true,
       movable: true
     },
     {
+      id: uuid(),
       type: 'type-c',
       headerText: 'Tab 3',
       icon: 'book',
@@ -180,14 +187,15 @@ export const TabReorderAndMove: Story = {
       ...tabGroups,
       new TabGroup<string, TabInfo<string>>('group-2', [
         {
+          id: uuid(),
           type: 'type-a',
           headerText: 'Uncloseable, unmovable Tab 1',
           closeable: false,
           movable: false
         },
-        { type: 'type-b', headerText: 'Tab 2', closeable: true, movable: true },
-        { type: 'type-c', headerText: 'Tab 3', closeable: true, movable: true },
-        { type: 'type-c', headerText: 'Tab 4', closeable: true, movable: true }
+        { id: uuid(), type: 'type-b', headerText: 'Tab 2', closeable: true, movable: true },
+        { id: uuid(), type: 'type-c', headerText: 'Tab 3', closeable: true, movable: true },
+        { id: uuid(), type: 'type-c', headerText: 'Tab 4', closeable: true, movable: true }
       ])
     ]
   }
