@@ -54,6 +54,7 @@ public interface ISFProjectService : IProjectService
     Task<IReadOnlyList<InviteeStatus>> InvitedUsersAsync(string curUserId, string projectId);
     bool IsSourceProject(string projectId);
     Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestionsAsync(string curUserId, string projectId);
+    Task SyncUserRoleAsync(string curUserId, string projectId);
     Task UpdatePermissionsAsync(
         string curUserId,
         IDocument<SFProject> projectDoc,

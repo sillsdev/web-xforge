@@ -71,6 +71,11 @@ public class ParatextProject
     public bool HasDraft { get; init; }
 
     /// <summary>
+    /// If the user's role in the project needs to be updated.
+    /// </summary>
+    public bool HasUserRoleChanged { get; init; }
+
+    /// <summary>
     /// A descriptive string of object's properties, for debugging.
     /// </summary>
     /// <returns>
@@ -94,6 +99,7 @@ public class ParatextProject
                 IsDraftingEnabled.ToString(),
                 HasDraft.ToString(),
                 IsRightToLeft?.ToString(),
+                HasUserRoleChanged.ToString(),
             }
         )
         {
