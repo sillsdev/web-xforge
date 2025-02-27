@@ -17,6 +17,7 @@
           [resources]="resources"
           [nonSelectableProjects]="nonSelectableProjects"
           [value]="loading ? undefined : source?.paratextId"
+          [hiddenParatextIds]="otherParatextIds(draftingSources, source?.paratextId)"
           (valueChange)="sourceSelected(draftingSources, $index, $event)"
           [placeholder]="projectPlaceholder(source)"
         ></app-project-select>
@@ -50,6 +51,7 @@
           [resources]="resources"
           [nonSelectableProjects]="nonSelectableProjects"
           [value]="loading ? undefined : source?.paratextId"
+          [hiddenParatextIds]="otherParatextIds(trainingSources, source?.paratextId)"
           (valueChange)="sourceSelected(trainingSources, $index, $event)"
           [placeholder]="projectPlaceholder(source)"
         ></app-project-select>
@@ -87,6 +89,7 @@
           [resources]="resources"
           [nonSelectableProjects]="nonSelectableProjects"
           [value]="loading ? undefined : source?.paratextId"
+          [hiddenParatextIds]="otherParatextIds(trainingTargets, source?.paratextId)"
           [placeholder]="projectPlaceholder(source)"
         ></app-project-select>
       }
