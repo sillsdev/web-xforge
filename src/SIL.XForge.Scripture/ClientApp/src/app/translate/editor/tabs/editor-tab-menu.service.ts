@@ -6,7 +6,7 @@ import {
   editorTabTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { Observable, combineLatest, forkJoin, map, of } from 'rxjs';
+import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
 import { shareReplay, switchMap, take } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -49,7 +49,11 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$]);
       }),
       switchMap(([projectDoc, isOnline, existingTabs]) => {
-        const showDraft = isOnline && projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
+        const showDraft =
+          isOnline &&
+          projectDoc.data != null &&
+          SFProjectService.hasDraft(projectDoc.data) &&
+          this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId);
         const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {
