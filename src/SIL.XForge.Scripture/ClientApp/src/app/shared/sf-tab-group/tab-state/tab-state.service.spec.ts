@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs';
+import { v4 as uuid } from 'uuid';
 import { TabGroup } from './tab-group';
 import { TabInfo, TabStateService } from './tab-state.service';
 
@@ -7,8 +8,8 @@ describe('TabStateService', () => {
   let service: TabStateService<string, TabInfo<string>>;
   const groupId = 'testGroup';
   const tabs: TabInfo<string>[] = [
-    { type: 'tab1', headerText: 'Tab 1', closeable: true, movable: true },
-    { type: 'tab2', headerText: 'Tab 2', closeable: false, movable: true }
+    { id: uuid(), type: 'tab1', headerText: 'Tab 1', closeable: true, movable: true },
+    { id: uuid(), type: 'tab2', headerText: 'Tab 2', closeable: false, movable: true }
   ];
 
   beforeEach(() => {
@@ -48,8 +49,8 @@ describe('TabStateService', () => {
         const groupId1: string = 'group1';
         const groupId2: string = 'group2';
         const tabs: TabInfo<string>[] = [
-          { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
+          { id: uuid(), type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
         ];
         service['groups'].set(groupId1, new TabGroup<string, any>(groupId1, tabs));
         service['groups'].set(groupId2, new TabGroup<string, any>(groupId2, tabs));
@@ -71,12 +72,12 @@ describe('TabStateService', () => {
       const groupId1: string = 'group1';
       const groupId2: string = 'group2';
       const tabs1: TabInfo<string>[] = [
-        { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
-        { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
+        { id: uuid(), type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
+        { id: uuid(), type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
       ];
       const tabs2: TabInfo<string>[] = [
-        { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
-        { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true }
+        { id: uuid(), type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
+        { id: uuid(), type: 'type-a', headerText: 'Header 1', closeable: true, movable: true }
       ];
       service['groups'].set(groupId1, new TabGroup<string, any>(groupId1, tabs1));
       service['groups'].set(groupId2, new TabGroup<string, any>(groupId2, tabs2));
@@ -89,8 +90,8 @@ describe('TabStateService', () => {
       const groupId1: string = 'group1';
       const groupId2: string = 'group2';
       const tabs: TabInfo<string>[] = [
-        { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
-        { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
+        { id: uuid(), type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
+        { id: uuid(), type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
       ];
       service['groups'].set(groupId1, new TabGroup<string, any>(groupId1, tabs));
       service['groups'].set(groupId2, new TabGroup<string, any>(groupId2, tabs));
@@ -104,6 +105,7 @@ describe('TabStateService', () => {
     it('should add a tab', () => {
       const groupId: string = 'source';
       const tab: TabInfo<string> = {
+        id: uuid(),
         type: 'type-a',
         headerText: 'Header',
         closeable: true,
@@ -117,6 +119,7 @@ describe('TabStateService', () => {
     it('should remove a tab', () => {
       const groupId: string = 'source';
       const tab: TabInfo<string> = {
+        id: uuid(),
         type: 'type-a',
         headerText: 'Header',
         closeable: true,
@@ -132,12 +135,14 @@ describe('TabStateService', () => {
       const groupId: string = 'source';
       const tabs: TabInfo<string>[] = [
         {
+          id: uuid(),
           type: 'type-a',
           headerText: 'Header 1',
           closeable: true,
           movable: true
         },
         {
+          id: uuid(),
           type: 'type-a',
           headerText: 'Header 2',
           closeable: true,
@@ -153,9 +158,9 @@ describe('TabStateService', () => {
       it('should move a tab within the same group', () => {
         const groupId: string = 'source';
         const tabs: TabInfo<string>[] = [
-          { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
-          { type: 'type-c', headerText: 'Header 3', closeable: true, movable: true }
+          { id: uuid(), type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
+          { id: uuid(), type: 'type-c', headerText: 'Header 3', closeable: true, movable: true }
         ];
         service['groups'].set(groupId, new TabGroup<string, any>(groupId, tabs));
         service.moveTab({ groupId, index: 0 }, { groupId, index: 2 });
@@ -165,9 +170,9 @@ describe('TabStateService', () => {
       it('should update selected index when moving a tab within the same group', () => {
         const groupId: string = 'source';
         const tabs: TabInfo<string>[] = [
-          { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
-          { type: 'type-c', headerText: 'Header 3', closeable: true, movable: true }
+          { id: uuid(), type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
+          { id: uuid(), type: 'type-c', headerText: 'Header 3', closeable: true, movable: true }
         ];
         const group = new TabGroup<string, any>(groupId, tabs);
         service['groups'].set(groupId, group);
@@ -193,12 +198,12 @@ describe('TabStateService', () => {
         const fromGroupId: string = 'source';
         const toGroupId: string = 'target';
         const fromTabs: TabInfo<string>[] = [
-          { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
+          { id: uuid(), type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
         ];
         const toTabs: TabInfo<string>[] = [
-          { type: 'type-c', headerText: 'Header 3', closeable: true, movable: true },
-          { type: 'type-d', headerText: 'Header 4', closeable: true, movable: true }
+          { id: uuid(), type: 'type-c', headerText: 'Header 3', closeable: true, movable: true },
+          { id: uuid(), type: 'type-d', headerText: 'Header 4', closeable: true, movable: true }
         ];
         service['groups'].set(fromGroupId, new TabGroup<string, any>(fromGroupId, fromTabs));
         service['groups'].set(toGroupId, new TabGroup<string, any>(toGroupId, toTabs));
@@ -211,14 +216,14 @@ describe('TabStateService', () => {
         const fromGroupId: string = 'source';
         const toGroupId: string = 'target';
         const fromTabs: TabInfo<string>[] = [
-          { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Header 3', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Header 4', closeable: true, movable: true }
+          { id: uuid(), type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Header 3', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Header 4', closeable: true, movable: true }
         ];
         const toTabs: TabInfo<string>[] = [
-          { type: 'type-c', headerText: 'Header 3', closeable: true, movable: true },
-          { type: 'type-d', headerText: 'Header 4', closeable: true, movable: true }
+          { id: uuid(), type: 'type-c', headerText: 'Header 3', closeable: true, movable: true },
+          { id: uuid(), type: 'type-d', headerText: 'Header 4', closeable: true, movable: true }
         ];
         const fromGroup = new TabGroup<string, any>(fromGroupId, fromTabs);
         const toGroup = new TabGroup<string, any>(toGroupId, toTabs);
@@ -246,17 +251,17 @@ describe('TabStateService', () => {
 
       beforeEach(() => {
         sourceTabs = [
-          { type: 'type-a', headerText: 'Source Header 1', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Source Header 2', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Source Header 3', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Source Header 4', closeable: true, movable: true }
+          { id: uuid(), type: 'type-a', headerText: 'Source Header 1', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Source Header 2', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Source Header 3', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Source Header 4', closeable: true, movable: true }
         ];
 
         targetTabs = [
-          { type: 'type-a', headerText: 'Target Header 1', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Target Header 2', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Target Header 3', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Target Header 4', closeable: true, movable: true }
+          { id: uuid(), type: 'type-a', headerText: 'Target Header 1', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Target Header 2', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Target Header 3', closeable: true, movable: true },
+          { id: uuid(), type: 'type-b', headerText: 'Target Header 4', closeable: true, movable: true }
         ];
 
         service['groups'].set('source', new TabGroup<string, any>('source', sourceTabs));
@@ -289,9 +294,9 @@ describe('TabStateService', () => {
       });
 
       it('should add tabs to restore list and consolidated group when tabs are added after consolidation and before deconsolidation', () => {
-        const tabsToAdd = [
-          { type: 'type-c', headerText: 'added source Source Header 5', closeable: true, movable: true },
-          { type: 'type-c', headerText: 'added source Source Header 6', closeable: true, movable: true }
+        const tabsToAdd: TabInfo<string>[] = [
+          { id: uuid(), type: 'type-c', headerText: 'added source Source Header 5', closeable: true, movable: true },
+          { id: uuid(), type: 'type-c', headerText: 'added source Source Header 6', closeable: true, movable: true }
         ];
 
         service.consolidateTabGroups('target');
@@ -305,7 +310,13 @@ describe('TabStateService', () => {
       });
 
       it('should select added tab when tab with selection is added after consolidation and before deconsolidation', () => {
-        const tabToAdd = { type: 'type-c', headerText: 'added source Source Header 5', closeable: true, movable: true };
+        const tabToAdd: TabInfo<string> = {
+          id: uuid(),
+          type: 'type-c',
+          headerText: 'added source Source Header 5',
+          closeable: true,
+          movable: true
+        };
 
         service.consolidateTabGroups('target');
         service['groups'].get('source')?.addTab(tabToAdd);
