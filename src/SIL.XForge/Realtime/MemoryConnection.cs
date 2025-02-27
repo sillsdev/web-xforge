@@ -90,6 +90,13 @@ public class MemoryConnection(MemoryRealtimeService realtimeService) : IConnecti
     {
         var doc = Get<T>(id);
         await doc.FetchAsync();
+
+        // Handle no snapshot present if the timestamp is too old
+        if (timestamp == DateTime.MinValue)
+        {
+            return new Snapshot<T> { Id = doc.Id };
+        }
+
         return new Snapshot<T>
         {
             Data = doc.Data,

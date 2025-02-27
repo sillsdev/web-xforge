@@ -233,6 +233,14 @@
                     }
                   </div>
                 </section>
+              } @else if (isDraftFinishing(draftJob)) {
+                <section>
+                  <h3>{{ t("draft_finishing_header") }}</h3>
+                  <div class="progress-text">
+                    <p>{{ t("draft_finishing_detail") }}</p>
+                  </div>
+                  <app-working-animated-indicator></app-working-animated-indicator>
+                </section>
               }
               @if (isDraftComplete(draftJob) || hasAnyCompletedBuild) {
                 <section class="draft-complete">

@@ -13,6 +13,7 @@ namespace SIL.Converters.Usj.Tests;
 public static partial class TestData
 {
     private const string IDEOGRAPHIC_SPACE = "\u3000";
+    private const string NBSP = "\u00A0";
     private const string THIN_SPACE = "\u2009";
 
     [GeneratedRegex(@"(?!>)[ \r\n\t]{2,}(?=<)", RegexOptions.Compiled)]
@@ -474,6 +475,35 @@ public static partial class TestData
           <verse number="4" style="v" />
         </usx>
         """;
+
+    /// <summary>
+    /// Tests handling of non-breaking spaces, which .Net recognizes as whitespace, but XML does not.
+    /// </summary
+    public static readonly string UsxGen1V1Nbsp = $"""
+        <usx version="{Usx.UsxVersion}">
+          <book code="GEN" style="id" />
+          <chapter number="1" style="c" sid="GEN 1" />
+          <verse number="1" style="v" sid="GEN 1:1" /><char style="nd">{NBSP}</char>{NBSP}<char style="wj">{NBSP}</char><verse eid="GEN 1:1" />
+          <chapter eid="GEN 1" />
+        </usx>
+        """;
+
+    public static readonly Usj UsjGen1V1Nbsp = JsonConvert.DeserializeObject<Usj>(
+        $$"""
+        {
+          type: "{{Usj.UsjType}}",
+          version: "{{Usj.UsjVersion}}",
+          content: [
+            { type: "book", marker: "id", code: "GEN" },
+            { type: "chapter", marker: "c", number: "1", sid: "GEN 1" },
+            { type: "verse", marker: "v", number: "1", sid: "GEN 1:1" },
+            { type: "char", marker: "nd", content: ["{{NBSP}}"] },
+            "{{NBSP}}",
+            { type: "char", marker: "wj", content: ["{{NBSP}}"] },
+          ],
+        }
+        """
+    )!;
 
     /// <summary>
     /// Mark 1:1 in USX (with poetic formatting).
