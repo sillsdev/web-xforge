@@ -1,5 +1,6 @@
 using System;
 using System.Xml;
+using System.Xml.Linq;
 using NUnit.Framework;
 
 namespace SIL.Converters.Usj.Tests;
@@ -42,6 +43,46 @@ public class UsjToUsxTests
     }
 
     [Test]
+    public void ShouldConvertFromUsjToUsxXDocument()
+    {
+        // Setup
+        string expected = TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1);
+        expected = TestData.RemoveEidElements(expected);
+        XDocument expectedUsx = XDocument.Parse(expected, LoadOptions.PreserveWhitespace);
+
+        // SUT
+        XDocument actualUsx = UsjToUsx.UsjToUsxXDocument(TestData.UsjGen1V1);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsjToUsxXDocumentWithNullContent()
+    {
+        // Setup
+        string expected = TestData.RemoveXmlWhiteSpace(TestData.UsxEmpty);
+        expected = TestData.RemoveEidElements(expected);
+        XDocument expectedUsx = XDocument.Parse(expected, LoadOptions.PreserveWhitespace);
+        Usj usj = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content = null,
+        };
+
+        // SUT
+        XDocument actualUsx = UsjToUsx.UsjToUsxXDocument(usj);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsjToUsxXDocument_Roundtrip()
+    {
+        XDocument usx = UsjToUsx.UsjToUsxXDocument(TestData.UsjGen1V1);
+        Usj usj = UsxToUsj.UsxXDocumentToUsj(usx);
+        Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1).UsingPropertiesComparer());
+    }
+
+    [Test]
     public void ShouldConvertFromUsjToUsxXmlDocument()
     {
         // Setup
@@ -52,7 +93,27 @@ public class UsjToUsxTests
 
         // SUT
         XmlDocument actualUsx = UsjToUsx.UsjToUsxXmlDocument(TestData.UsjGen1V1);
-        Assert.That(actualUsx, Is.EqualTo(expectedUsx));
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsjToUsxXmlDocumentWithNullContent()
+    {
+        // Setup
+        var expectedUsx = new XmlDocument { PreserveWhitespace = true };
+        string expected = TestData.RemoveXmlWhiteSpace(TestData.UsxEmpty);
+        expected = TestData.RemoveEidElements(expected);
+        expectedUsx.LoadXml(expected);
+        Usj usj = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content = null,
+        };
+
+        // SUT
+        XmlDocument actualUsx = UsjToUsx.UsjToUsxXmlDocument(usj);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx).UsingPropertiesComparer());
     }
 
     [Test]
@@ -118,6 +179,17 @@ public class UsjToUsxTests
         string usx = UsjToUsx.UsjToUsxString(TestData.UsjGen1V1ImpliedPara);
         Usj usj = UsxToUsj.UsxStringToUsj(usx);
         Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1ImpliedPara).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public void ShouldConvertFromUsjToUsxWithNbsp()
+    {
+        string usx = UsjToUsx.UsjToUsxString(TestData.UsjGen1V1Nbsp);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+
+        string expected = TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1Nbsp);
+        expected = TestData.RemoveEidElements(expected);
+        Assert.That(usx, Is.EqualTo(expected));
     }
 
     [Test]
@@ -194,6 +266,14 @@ public class UsjToUsxTests
     }
 
     [Test]
-    public void ShouldNotAllowInvalidContent() =>
+    public void ShouldNotAllowInvalidContent_String() =>
         Assert.Throws<ArgumentOutOfRangeException>(() => UsjToUsx.UsjToUsxString(new Usj { Content = [new Usj()] }));
+
+    [Test]
+    public void ShouldNotAllowInvalidContent_XDocument() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => UsjToUsx.UsjToUsxXDocument(new Usj { Content = [new Usj()] }));
+
+    [Test]
+    public void ShouldNotAllowInvalidContent_XmlDocument() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => UsjToUsx.UsjToUsxXDocument(new Usj { Content = [new Usj()] }));
 }

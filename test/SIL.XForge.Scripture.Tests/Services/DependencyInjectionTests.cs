@@ -4,6 +4,7 @@ using Castle.DynamicProxy;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.XForge.Configuration;
@@ -34,6 +35,18 @@ public class DependencyInjectionTests
         IServiceCollection services = env.Services.AddEventMetrics();
         Assert.AreEqual(env.Services, services);
         env.Services.Received().Add(Arg.Any<ServiceDescriptor>());
+    }
+
+    [Test]
+    public void AddSFRealtimeServer_Success()
+    {
+        // We test using ServiceCollection due to AddHttpClient() querying the collection
+        var env = new TestEnvironment();
+        var services = new ServiceCollection();
+
+        // SUT
+        services.AddSFRealtimeServer(env.LoggerFactory, env.Configuration);
+        Assert.IsNotEmpty(services);
     }
 
     [Test]
@@ -111,6 +124,7 @@ public class DependencyInjectionTests
         public IApplicationBuilder ApplicationBuilder { get; } = Substitute.For<IApplicationBuilder>();
         public IConfiguration Configuration { get; } = Substitute.For<IConfiguration>();
         public ContainerBuilder ContainerBuilder { get; } = new ContainerBuilder();
+        public ILoggerFactory LoggerFactory { get; } = Substitute.For<ILoggerFactory>();
         public IServiceCollection Services { get; } = Substitute.For<IServiceCollection>();
     }
 }
