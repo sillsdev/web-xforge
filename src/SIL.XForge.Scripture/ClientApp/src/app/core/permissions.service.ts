@@ -51,6 +51,12 @@ export class PermissionsService {
     return currentUserDoc?.data?.sites[environment.siteId].projects.includes(projectId) ?? false;
   }
 
+  async hasParatextRole(projectId: string): Promise<boolean> {
+    const currentUserDoc = await this.userService.getCurrentUser();
+    const currentProject = await this.projectService.get(projectId);
+    return isParatextRole(currentProject?.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
+  }
+
   async canAccessText(textDocId: TextDocId): Promise<boolean> {
     // Get the project doc, if the user is on that project
     let projectDoc: SFProjectProfileDoc | undefined;

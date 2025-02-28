@@ -646,7 +646,13 @@ class TestEnvironment {
     };
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
-      data: createTestUser()
+      data: createTestUser({
+        sites: {
+          sf: {
+            projects: ['project01']
+          }
+        }
+      })
     });
 
     this.dialogRef = TestBed.inject(MatDialog).open(QuestionDialogComponent, config);

@@ -142,6 +142,21 @@ describe('TextComponent', () => {
     env.id = undefined;
     env.waitForEditor();
     expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+
+    const callback: (env: TestEnvironment) => void = (env: TestEnvironment) => {
+      env.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+        id: 'user02',
+        data: createTestUser({}, 2)
+      });
+      when(mockedUserService.getCurrentUser()).thenCall(() =>
+        env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02')
+      );
+    };
+    const env2: TestEnvironment = new TestEnvironment({ callback });
+    env2.fixture.detectChanges();
+    env2.id = env2.matTextDocId;
+    env2.waitForEditor();
+    expect(env2.component.placeholder).toEqual('text.permission_denied');
   }));
 
   it('placeholder uses specified placeholder input', fakeAsync(() => {
@@ -584,7 +599,7 @@ describe('TextComponent', () => {
       const callback: (env: TestEnvironment) => void = (env: TestEnvironment) => {
         env.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
           id: 'user02',
-          data: createTestUser({ displayName: '' }, 2)
+          data: createTestUser({ displayName: '', sites: { sf: { projects: ['project01'] } } }, 2)
         });
         when(mockedUserService.getCurrentUser()).thenCall(() =>
           env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02')
@@ -1704,7 +1719,16 @@ class TestEnvironment {
     ]);
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
-      data: createTestUser({}, 1)
+      data: createTestUser(
+        {
+          sites: {
+            sf: {
+              projects: ['project01']
+            }
+          }
+        },
+        1
+      )
     });
 
     when(mockedProjectService.getText(anything())).thenCall(id =>
