@@ -29,6 +29,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { getBrowserEngine, objectId } from 'xforge-common/utils';
+import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -236,7 +237,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _segment?: Segment;
   private contentSet: boolean = false;
   /** State that the component is in with respect to loading content. */
-  private loadingState: 'loading' | 'offline-or-loading' | 'no-content' | 'empty-viewModel' | 'unloaded' = 'loading';
+  private loadingState:
+    | 'loading'
+    | 'offline-or-loading'
+    | 'no-content'
+    | 'empty-viewModel'
+    | 'unloaded'
+    | 'permission-denied' = 'loading';
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
   private initialSegmentChecksum?: number;
@@ -310,6 +317,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         }
       case 'empty-viewModel':
         return this.transloco.translate('text.book_is_empty');
+      case 'permission-denied':
+        return this.transloco.translate('text.permission_denied');
       case 'unloaded':
       default:
         return '';
@@ -489,6 +498,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
    */
   private get isPresenceEnabled(): boolean {
     return this.enablePresence;
+  }
+
+  get projectId(): string {
+    return this.id?.projectId ?? '';
+  }
+
+  get userProjects(): string[] {
+    return this.currentUserDoc?.data?.sites[environment.siteId]?.projects ?? [];
   }
 
   ngAfterViewInit(): void {
@@ -935,11 +952,22 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   async projectHasText(): Promise<boolean> {
     if (this.id == null) throw new Error('Invalid state. id is null.');
     const id: TextDocId = this.id;
-    const profile: SFProjectProfileDoc = await this.projectService.getProfile(this.id.projectId);
+
+    if (!this.userProjects?.includes(this.projectId)) {
+      this.loadingState = 'permission-denied';
+      return false;
+    }
+    const profile: SFProjectProfileDoc = await this.projectService.getProfile(this.projectId);
     if (profile.data == null) throw new Error('Failed to fetch project profile.');
-    return profile.data.texts.some(
-      text => text.bookNum === id.bookNum && text.chapters.some(chapter => chapter.number === id.chapterNum)
-    );
+    if (
+      profile.data.texts.some(
+        text => text.bookNum === id.bookNum && text.chapters.some(chapter => chapter.number === id.chapterNum)
+      )
+    ) {
+      return true;
+    }
+    this.loadingState = 'no-content';
+    return false;
   }
 
   private attachPresences(textDoc: TextDoc): void {
@@ -1007,7 +1035,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     if (!(await this.projectHasText())) {
-      this.loadingState = 'no-content';
       return;
     }
 
@@ -1713,8 +1740,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this.id == null) {
       return;
     }
-
-    const project = (await this.projectService.getProfile(this.id.projectId)).data;
+    if (!this.userProjects?.includes(this.projectId)) {
+      return;
+    }
+    const project = (await this.projectService.getProfile(this.projectId)).data;
     if (project == null) {
       return;
     }
