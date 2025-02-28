@@ -20,7 +20,7 @@ const routes: Routes = [
     canActivate: [NmtDraftAuthGuard]
   },
   {
-    path: 'projects/:projectId/draft-sources',
+    path: 'projects/:projectId/draft-generation/sources',
     component: DraftSourcesComponent,
     canActivate: [NmtDraftAuthGuard]
   }
