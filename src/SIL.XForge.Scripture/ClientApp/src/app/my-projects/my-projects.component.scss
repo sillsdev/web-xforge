@@ -54,10 +54,16 @@ mat-card {
   grid-template-columns: 1fr auto;
   cursor: pointer;
   transition: all 0.1s;
+  &.user-update-project {
+    cursor: unset;
+  }
 }
 
 mat-card:hover {
   filter: brightness(90%);
+  &.user-update-project {
+    filter: none;
+  }
 }
 
 mat-card:active {
@@ -94,6 +100,18 @@ mat-card:active {
 .user-unconnected-project.cannot-connect {
   display: flex;
   flex-direction: column;
+}
+
+.user-update-project {
+  display: grid;
+  grid-template-areas:
+    'project-name project-name'
+    'description empty';
+  background-color: lighten(variables.$info-color, 40%);
+}
+
+.user-update-project-btn:not(:hover):not(:disabled) {
+  background-color: variables.$info-color !important;
 }
 
 .loading-card {
