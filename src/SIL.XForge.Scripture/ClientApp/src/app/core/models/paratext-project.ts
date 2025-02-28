@@ -7,4 +7,5 @@ export interface ParatextProject {
   projectId?: string;
   isConnectable: boolean;
   isConnected: boolean;
+  hasUserRoleChanged?: boolean;
 }
