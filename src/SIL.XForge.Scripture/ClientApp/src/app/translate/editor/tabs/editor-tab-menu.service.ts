@@ -1,4 +1,6 @@
-import { DestroyRef, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   EditorTabGroupType,
@@ -6,7 +8,7 @@ import {
   editorTabTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { Observable, combineLatest, forkJoin, map, of } from 'rxjs';
+import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
 import { shareReplay, switchMap, take } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -25,7 +27,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   private readonly menuItems$: Observable<TabMenuItem[]> = this.initMenuItems();
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly userService: UserService,
     private readonly activatedProject: ActivatedProjectService,
     private readonly onlineStatus: OnlineStatusService,

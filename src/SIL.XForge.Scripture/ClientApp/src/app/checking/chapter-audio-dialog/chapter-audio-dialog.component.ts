@@ -1,4 +1,6 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Canon } from '@sillsdev/scripture';
 import { cloneDeep, reject } from 'lodash-es';
@@ -65,7 +67,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private _loadingAudio: boolean = false;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: ChapterAudioDialogData,
     private readonly csvService: CsvService,

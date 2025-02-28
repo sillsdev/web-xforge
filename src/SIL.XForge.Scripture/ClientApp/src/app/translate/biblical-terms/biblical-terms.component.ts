@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Sort } from '@angular/material/sort';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -201,7 +203,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   @ViewChild('biblicalTerms', { read: ElementRef }) biblicalTerms?: ElementRef;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly dialogService: DialogService,

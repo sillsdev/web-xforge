@@ -1,4 +1,6 @@
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -52,7 +54,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly dialogService: DialogService,
     readonly featureFlags: FeatureFlagService,

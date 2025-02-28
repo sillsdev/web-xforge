@@ -1,4 +1,6 @@
 import { CommonModule } from '@angular/common';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { Component, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -91,7 +93,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly paratextService: ParatextService,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,

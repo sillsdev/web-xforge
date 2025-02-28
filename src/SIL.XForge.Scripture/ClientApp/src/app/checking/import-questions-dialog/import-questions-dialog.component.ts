@@ -1,4 +1,6 @@
-import { Component, DestroyRef, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -104,7 +106,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   transceleratorInfo = this.i18n.interpolate('import_questions_dialog.transcelerator_paratext');
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,
     projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,

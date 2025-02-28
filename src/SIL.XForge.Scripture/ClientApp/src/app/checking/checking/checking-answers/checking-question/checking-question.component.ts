@@ -1,14 +1,6 @@
-import {
-  Component,
-  DestroyRef,
-  EventEmitter,
-  Input,
-  OnChanges,
-  OnDestroy,
-  Output,
-  SimpleChanges,
-  ViewChild
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -63,7 +55,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   private isDestroyed = false;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly projectService: SFProjectService,
     private readonly i18n: I18nService
   ) {

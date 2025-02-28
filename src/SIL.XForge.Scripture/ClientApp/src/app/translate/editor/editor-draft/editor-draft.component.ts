@@ -1,4 +1,6 @@
-import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -60,7 +62,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftHandlingService: DraftHandlingService,

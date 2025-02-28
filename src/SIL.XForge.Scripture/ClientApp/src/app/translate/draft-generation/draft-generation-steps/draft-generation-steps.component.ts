@@ -1,4 +1,6 @@
-import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatStepper } from '@angular/material/stepper';
 import { translate, TranslocoModule } from '@ngneat/transloco';
@@ -111,7 +113,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   private isTrainingDataInitialized: boolean = false;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     protected readonly activatedProject: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
     protected readonly featureFlags: FeatureFlagService,

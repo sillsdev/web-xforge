@@ -1,4 +1,6 @@
-import { DestroyRef, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { IDestroyRef } from 'xforge-common/utils';
+
 import { merge } from 'lodash-es';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -53,7 +55,7 @@ export class CheckingQuestionsService {
   queryQuestions(
     projectId: string,
     options: { bookNum?: number; chapterNum?: number; activeOnly?: boolean; sort?: boolean } = {},
-    destroyRef: DestroyRef
+    destroyRef: IDestroyRef
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const queryParams: QueryParameters = {
       [obj<Question>().pathStr(q => q.projectRef)]: projectId
@@ -91,7 +93,7 @@ export class CheckingQuestionsService {
     relativeTo: Question | VerseRefData,
     questionFilter: QuestionFilter,
     prevOrNext: 'prev' | 'next',
-    destroyRef: DestroyRef
+    destroyRef: IDestroyRef
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const verseRef: VerseRefData = this.isVerseRefData(relativeTo) ? relativeTo : relativeTo.verseRef;
     const currentQuestion: Question | undefined = this.isVerseRefData(relativeTo) ? undefined : relativeTo;
@@ -158,7 +160,7 @@ export class CheckingQuestionsService {
   async queryFirstUnansweredQuestion(
     projectId: string,
     userId: string,
-    destroyRef: DestroyRef
+    destroyRef: IDestroyRef
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const queryParams: QueryParameters = {
       [obj<Question>().pathStr(q => q.projectRef)]: projectId,

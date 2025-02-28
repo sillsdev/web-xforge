@@ -1,15 +1,7 @@
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  DestroyRef,
-  EventEmitter,
-  Inject,
-  Input,
-  OnDestroy,
-  OnInit,
-  Output,
-  ViewChild
-} from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -87,7 +79,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly dialogService: DialogService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: QuietDestroyRef
   ) {
     this.showCountdown = data?.countdown ?? false;
     if (data?.audio != null) {

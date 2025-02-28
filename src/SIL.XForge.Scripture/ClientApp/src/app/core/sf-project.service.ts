@@ -1,4 +1,6 @@
-import { DestroyRef, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -138,7 +140,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     sfProjectId: string,
     bookNum: number,
     chapterNum: number,
-    destroyRef: DestroyRef
+    destroyRef: QuietDestroyRef
   ): Promise<RealtimeQuery<NoteThreadDoc>> {
     const queryParams: QueryParameters = {
       [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
@@ -149,21 +151,24 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams, destroyRef);
   }
 
-  queryAudioText(sfProjectId: string, destroyRef: DestroyRef): Promise<RealtimeQuery<TextAudioDoc>> {
+  queryAudioText(sfProjectId: string, destroyRef: QuietDestroyRef): Promise<RealtimeQuery<TextAudioDoc>> {
     const queryParams: QueryParameters = {
       [obj<TextAudio>().pathStr(t => t.projectRef)]: sfProjectId
     };
     return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams, destroyRef);
   }
 
-  queryBiblicalTerms(sfProjectId: string, destroyRef: DestroyRef): Promise<RealtimeQuery<BiblicalTermDoc>> {
+  queryBiblicalTerms(sfProjectId: string, destroyRef: QuietDestroyRef): Promise<RealtimeQuery<BiblicalTermDoc>> {
     const queryParams: QueryParameters = {
       [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
     };
     return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, queryParams, destroyRef);
   }
 
-  queryBiblicalTermNoteThreads(sfProjectId: string, destroyRef: DestroyRef): Promise<RealtimeQuery<NoteThreadDoc>> {
+  queryBiblicalTermNoteThreads(
+    sfProjectId: string,
+    destroyRef: QuietDestroyRef
+  ): Promise<RealtimeQuery<NoteThreadDoc>> {
     const parameters: QueryParameters = {
       [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
       [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }

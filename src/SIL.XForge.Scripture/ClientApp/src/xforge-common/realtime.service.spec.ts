@@ -1,4 +1,6 @@
 import { DestroyRef } from '@angular/core';
+import { IDestroyRef } from 'xforge-common/utils';
+
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
@@ -16,7 +18,7 @@ describe('RealtimeService', () => {
 
   describe('manageQuery', () => {
     let service: RealtimeService;
-    let destroyRef: DestroyRef;
+    let destroyRef: IDestroyRef;
     let mockQuery: RealtimeQuery<RealtimeDoc>;
     let queryInstance: RealtimeQuery<RealtimeDoc>;
     let ready$: BehaviorSubject<boolean>;
@@ -34,7 +36,7 @@ describe('RealtimeService', () => {
         onDestroy: (callback: () => void) => {
           onDestroyCallback = callback;
         }
-      } as DestroyRef;
+      } as IDestroyRef;
     });
 
     afterEach(() => {

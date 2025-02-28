@@ -1,14 +1,6 @@
-import {
-  AfterViewInit,
-  Component,
-  DestroyRef,
-  EventEmitter,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-  ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Delta } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
@@ -45,7 +37,7 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
   projectDoc: SFProjectProfileDoc | undefined;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly editorHistoryService: EditorHistoryService,
     readonly fontService: FontService,
     private readonly i18nService: I18nService,

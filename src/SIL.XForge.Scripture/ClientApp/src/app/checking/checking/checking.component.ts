@@ -1,5 +1,7 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationBehaviorOptions, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { SplitComponent } from 'angular-split';
@@ -159,7 +161,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private _showScriptureAudioPlayer: boolean = false;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,

@@ -1,10 +1,11 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { ComponentType } from '@angular/cdk/portal';
 import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   ElementRef,
   Inject,
   OnDestroy,
@@ -293,7 +294,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly editorTabPersistenceService: EditorTabPersistenceService,
     private readonly textDocService: TextDocService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
     private readonly permissionsService: PermissionsService

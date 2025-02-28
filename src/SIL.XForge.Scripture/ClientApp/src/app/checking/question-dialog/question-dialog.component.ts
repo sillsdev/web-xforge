@@ -1,4 +1,6 @@
-import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -64,7 +66,7 @@ export class QuestionDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) private data: QuestionDialogData,
     readonly i18n: I18nService,
     readonly dialogService: DialogService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: QuietDestroyRef
   ) {}
 
   get scriptureStart(): AbstractControl {

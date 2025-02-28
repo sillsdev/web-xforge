@@ -1,9 +1,11 @@
+import { DestroyRef, Injectable } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
 import locales from '../../../locales.json';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { hasStringProp } from '../type-utils';
 import { Locale } from './models/i18n-locale';
 
 const BROWSER = Bowser.getParser(window.navigator.userAgent);
@@ -180,3 +182,39 @@ export function tryParseJSON(data: unknown): unknown {
     return null;
   }
 }
+
+export interface IDestroyRef {
+  onDestroy(callback: () => void): () => void;
+}
+
+@Injectable({ providedIn: 'root' })
+export class QuietDestroyRef {
+  constructor(private readonly destroyRef: DestroyRef) {}
+
+  onDestroy(callback: () => void): () => void {
+    const originalStack = new Error().stack;
+    try {
+      return this.destroyRef.onDestroy(callback);
+    } catch (error) {
+      if (hasStringProp(error, 'message') && error.message.includes('NG0911')) {
+        console.warn('NG0911 error caught and ignored. Original stack: ', originalStack);
+      } else throw error;
+    }
+    return () => {};
+  }
+}
+
+// /**
+//  * Like {@link takeUntilDestroyed}, but with two distinct advantages:
+//  * - Catches and logs NG0911 rather than throwing it, preventing it from being annoying to the user
+//  * - Logs the location where the `QuietDestroyRef` is used, rather than the location where the error is thrown
+//  *
+//  * This function could either be seen as a temporary workaround to ease the migration to using `QuietDestroyRef`, or a more
+//  * robust permanent solution to the problem of `takeUntilDestroyed` throwing errors if the `QuietDestroyRef` is destroyed.
+//  *
+//  * @param QuietDestroyRef A {@link QuietDestroyRef} instance.
+//  * @returns An RxJS operator that unsubscribes when the component is destroyed.
+//  */
+// export function quietTakeUntilDestroyed<T>(QuietDestroyRef: QuietDestroyRef): MonoTypeOperatorFunction<T> {
+//   return takeUntilDestroyed(new QuietDestroyRef(QuietDestroyRef) satisfies QuietDestroyRef);
+// }
