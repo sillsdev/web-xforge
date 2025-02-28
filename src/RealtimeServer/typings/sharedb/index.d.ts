@@ -1,4 +1,4 @@
-// Type definitions for sharedb 1.0
+// Type definitions for sharedb 5.1.1
 // Project: https://github.com/share/sharedb
 // Definitions by: Steve Oney <https://github.com/soney>
 //                 Eric Hwang <https://github.com/ericyhwang>
@@ -35,6 +35,7 @@ declare class ShareDB {
     presence?: boolean;
     disableDocAction?: boolean;
     disableSpaceDelimitedActions?: boolean;
+    doNotForwardSendPresenceErrorsToClient?: boolean;
   });
   connect(connection?: Connection, req?: any): Connection;
   /**
