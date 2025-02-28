@@ -8,46 +8,43 @@ import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { DraftSource, DraftSourcesAsArrays } from '../draft-sources.service';
+import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { DraftSourcesAsSelectableProjectArrays } from '../draft-utils';
 import { LanguageCodesConfirmationComponent } from './language-codes-confirmation.component';
 
 const mockAuthService = mock(AuthService);
 const mockActivatedProject = mock(ActivatedProjectService);
 
-const draftSources: DraftSourcesAsArrays = {
+const draftSources: DraftSourcesAsSelectableProjectArrays = {
   draftingSources: [
     {
-      projectRef: 'alternate-drafting-source',
       shortName: 'ADS',
       name: 'Alternate Drafting Source',
       paratextId: 'alternate-drafting-source',
-      writingSystem: { tag: 'es' }
-    } as DraftSource
+      languageTag: 'es'
+    }
   ],
   trainingSources: [
     {
-      projectRef: 'alternate-training-source',
-      shortName: 'ATS',
+      shortName: 'ALT-TS',
       name: 'Alternate Training Source',
       paratextId: 'alternate-training-source',
-      writingSystem: { tag: 'es' }
-    } as DraftSource,
+      languageTag: 'es'
+    },
     {
-      projectRef: 'additional-training-source',
-      shortName: 'ATS',
+      shortName: 'ADD-TS',
       name: 'Additional Training Source',
       paratextId: 'additional-training-source',
-      writingSystem: { tag: 'es' }
-    } as DraftSource
+      languageTag: 'es'
+    }
   ],
   trainingTargets: [
     {
-      projectRef: 'test-proj',
       shortName: 'TP',
       name: 'Test Project',
       paratextId: 'test-proj-id',
-      writingSystem: { tag: 'eng' }
-    } as DraftSource
+      languageTag: 'eng'
+    }
   ]
 };
 
@@ -97,12 +94,11 @@ export const DifferentSourceCodes: Story = {
     ...defaultArgs,
     draftingSources: [
       {
-        projectRef: 'alternate-drafting-source',
         shortName: 'ADS',
         name: 'Alternate Drafting Source',
         paratextId: 'alternate-drafting-source',
-        writingSystem: { tag: 'cat' }
-      } as DraftSource
+        languageTag: 'cat'
+      } satisfies SelectableProjectWithLanguageCode
     ]
   }
 };

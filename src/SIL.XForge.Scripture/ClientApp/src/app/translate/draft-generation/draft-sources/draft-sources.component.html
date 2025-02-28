@@ -1,0 +1,235 @@
+<h1>Configure draft sources</h1>
+
+<mat-card class="draft-sources-stepper">
+  <!-- The value on app-project-select is intentionally set to null until sources load, otherwise it won't correctly load -->
+
+  <div class="step" [class.active]="step === 1">
+    <div class="step-header" matRipple (click)="goToStep(1)">
+      <span class="step-title">Draft source</span>
+      <span class="step-subtitle">{{ sourceSubtitle }}</span>
+    </div>
+    <div class="step-body">
+      <p>Select the project to translate.</p>
+      @for (source of draftingSources; track $index) {
+        <app-project-select
+          [isDisabled]="loading"
+          [projects]="projects"
+          [resources]="resources"
+          [nonSelectableProjects]="nonSelectableProjects"
+          [value]="loading ? undefined : source?.paratextId"
+          [hiddenParatextIds]="otherParatextIds(draftingSources, source?.paratextId)"
+          (valueChange)="sourceSelected(draftingSources, $index, $event)"
+          [placeholder]="projectPlaceholder(source)"
+        ></app-project-select>
+      }
+      <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
+    </div>
+  </div>
+
+  <div class="step" [class.active]="step === 2">
+    <div class="step-header" matRipple (click)="goToStep(2)">
+      <span class="step-title">Reference projects</span>
+      <span class="step-subtitle">{{ referencesSubtitle }}</span>
+    </div>
+    <div class="step-body">
+      <p>
+        Select projects that should be used on the source side when training the language model. Choosing a back
+        translation often improves the model.
+
+        @if (sourceLanguageDisplayName) {
+          All these should be in the same language as the draft source (<strong>{{ sourceLanguageDisplayName }}</strong
+          >).
+        } @else {
+          All these should be in the same language as the draft source.
+        }
+      </p>
+
+      @for (source of trainingSources; track $index) {
+        <app-project-select
+          [isDisabled]="loading"
+          [projects]="projects"
+          [resources]="resources"
+          [nonSelectableProjects]="nonSelectableProjects"
+          [value]="loading ? undefined : source?.paratextId"
+          [hiddenParatextIds]="otherParatextIds(trainingSources, source?.paratextId)"
+          (valueChange)="sourceSelected(trainingSources, $index, $event)"
+          [placeholder]="projectPlaceholder(source)"
+        ></app-project-select>
+      }
+
+      @if (allowAddingATrainingSource) {
+        <button
+          mat-button
+          (click)="trainingSources.push(undefined); $event.preventDefault()"
+          class="add-another-project"
+        >
+          <mat-icon>add</mat-icon> Add another reference project
+        </button>
+      }
+
+      <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
+    </div>
+  </div>
+
+  <div class="step" [class.active]="step === 3">
+    <div class="step-header" matRipple (click)="goToStep(3)">
+      <span class="step-title">Target language data</span>
+      <span class="step-subtitle">{{ targetSubtitle }}</span>
+    </div>
+    <div class="step-body">
+      <p>
+        Your project (<strong>{{ currentProjectShortName }}</strong
+        >) will always be used to train the language model.
+        <!-- Select here any other projects to be used on the target side. All of these should be in the language of the target (<strong>{{ targetLanguageDisplayName }}</strong>). -->
+      </p>
+      @for (source of trainingTargets; track $index) {
+        <app-project-select
+          [isDisabled]="true"
+          [projects]="projects"
+          [resources]="resources"
+          [nonSelectableProjects]="nonSelectableProjects"
+          [value]="loading ? undefined : source?.paratextId"
+          [hiddenParatextIds]="otherParatextIds(trainingTargets, source?.paratextId)"
+          [placeholder]="projectPlaceholder(source)"
+        ></app-project-select>
+      }
+      <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
+    </div>
+  </div>
+</mat-card>
+
+<div class="overview">
+  <ng-container *transloco="let t; read: 'confirm_draft_sources'">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ t("training_language_model") }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="training-data">
+        <div class="sources" (click)="goToStep(2)" [class.active]="step === 2" matRipple>
+          <h3>Reference {{ parentheses(referenceLanguageDisplayName) }}</h3>
+          @for (project of trainingSources; track $index) {
+            @if (project == null) {
+              <ng-container *ngTemplateOutlet="blankProject"></ng-container>
+            } @else {
+              <div class="project">
+                <span class="project-name">{{ project.name }}</span>
+                <span class="language-code">
+                  {{ t("language_code") }} <strong>{{ project.languageTag }}</strong>
+                </span>
+              </div>
+            }
+          }
+        </div>
+        <span class="arrow mirror-rtl"><mat-icon>arrow_right_alt</mat-icon></span>
+        <div class="targets" (click)="goToStep(3)" [class.active]="step === 3" matRipple>
+          <h3>Translated project {{ parentheses(targetLanguageDisplayName) }}</h3>
+          @for (project of trainingTargets; track $index) {
+            <div class="project">
+              <span class="project-name">{{ project.name }}</span>
+              <span class="language-code">
+                {{ t("language_code") }} <strong>{{ project.writingSystem.tag }}</strong>
+              </span>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title> Generate draft from language model </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="translation-data" (click)="goToStep(1)" [class.active]="step === 1" matRipple>
+          <h3>Source {{ parentheses(sourceLanguageDisplayName) }}</h3>
+          @for (project of draftingSources; track $index) {
+            @if (project == null) {
+              <ng-container *ngTemplateOutlet="blankProject"></ng-container>
+            } @else {
+              <div class="project">
+                <span class="project-name">{{ project.name }}</span>
+                <span class="language-code">
+                  {{ t("language_code") }} <strong>{{ project.languageTag }}</strong>
+                </span>
+              </div>
+            }
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+</div>
+
+<app-language-codes-confirmation
+  class="confirm-language-codes"
+  [draftSources]="draftSourcesAsArray"
+  [informUserWhereToChangeDraftSources]="false"
+  (languageCodesVerified)="languageCodesConfirmed = $event"
+></app-language-codes-confirmation>
+
+<div class="component-footer">
+  <div class="page-actions">
+    <button mat-button (click)="cancel()"><mat-icon>close</mat-icon> Cancel</button>
+    <button mat-flat-button color="primary" (click)="save()"><mat-icon>check</mat-icon> Save & sync</button>
+  </div>
+</div>
+
+@if (getControlState("projectSettings") != null) {
+  <mat-card class="saving">
+    <mat-card-header>
+      <mat-card-title>Saving draft sources</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (getControlState("projectSettings") === ElementState.Submitting) {
+        <div class="saving-indicator"><mat-spinner [diameter]="24" color="primary"></mat-spinner> Saving</div>
+      } @else {
+        <div class="saving-indicator"><mat-icon class="success">checkmark</mat-icon> All changes saved</div>
+      }
+      @for (entry of syncStatus | keyvalue; track entry.key) {
+        <div>
+          @if (entry.value.knownToBeOnSF) {
+            @if (entry.value.isSyncing) {
+              <mat-spinner [diameter]="24"></mat-spinner> {{ entry.value.shortName }} - syncing
+            } @else {
+              @if (entry.value.lastSyncSuccessful) {
+                <mat-icon class="success">check</mat-icon> {{ entry.value.shortName }} - sync successful
+              } @else {
+                <mat-icon class="failure">error</mat-icon> {{ entry.value.shortName }} - There was an error syncing
+              }
+            }
+          } @else {
+            <mat-spinner [diameter]="24"></mat-spinner> {{ entry.value.shortName }} - Connecting
+          }
+        </div>
+      }
+    </mat-card-content>
+    @if (allProjectsSavedAndSynced) {
+      <mat-card-actions align="end">
+        <button mat-button (click)="navigateToDrafting()"><mat-icon>close</mat-icon> Close</button>
+      </mat-card-actions>
+    }
+  </mat-card>
+}
+
+<ng-template #blankProject>
+  <div class="project blank-project">
+    <span class="project-name"></span>
+    <span class="language-code"></span>
+  </div>
+</ng-template>
+
+<ng-template #navigationButtons>
+  <div class="step-button-wrapper">
+    @if (step !== 1) {
+      <button mat-stroked-button (click)="goToStep(step - 1)">
+        <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> Back
+      </button>
+    }
+    <span class="spacer"></span>
+    @if (step !== 3) {
+      <button mat-flat-button color="primary" (click)="goToStep(step + 1)">
+        Next <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+      </button>
+    }
+  </div>
+</ng-template>

@@ -37,7 +37,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   readonly paratextIdControl = new UntypedFormControl('', [SFValidators.selectableProject(true)]);
   @Input() projects?: SelectableProject[];
   @Input() resources?: SelectableProject[];
-  /** Projects that can be an already selected value, but not given as an option in the menu */
+  /** Projects that can be an already selected value, but not necessarily given as an option in the menu */
   @Input() nonSelectableProjects?: SelectableProject[];
   @Input() invalidMessageMapper?: { [key: string]: string };
   readonly matcher = new ShowOnDirtyErrorStateMatcher();
@@ -93,7 +93,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     );
   }
 
-  @Input() set value(id: string) {
+  @Input() set value(id: string | undefined) {
     if (this.paratextIdControl?.value.paratextId === id) return;
     const project =
       this.projects?.find(p => p.paratextId === id) ||
