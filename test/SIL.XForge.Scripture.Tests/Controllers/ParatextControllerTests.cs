@@ -445,7 +445,7 @@ public class ParatextControllerTests
             UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
 
             MemoryRepository<UserSecret> userSecrets = new MemoryRepository<UserSecret>(
-                new[] { new UserSecret { Id = User01 } }
+                [new UserSecret { Id = User01 }]
             );
 
             MachineProjectService = Substitute.For<IMachineProjectService>();

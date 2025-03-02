@@ -6,84 +6,83 @@ using SIL.Converters.Usj;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
 
 [Intercept(typeof(EventMetricLogger))]
 public interface IMachineApiService
 {
-    [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]
-    Task CancelPreTranslationBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    [LogEventMetric(EventScope.Drafting, userId: "userAccessor.UserId", nameof(sfProjectId))]
+    Task CancelPreTranslationBuildAsync(
+        IUserAccessor userAccessor,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    );
     Task ExecuteWebhookAsync(string json, string signature);
     Task<ServalBuildDto?> GetBuildAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         string buildId,
         long? minRevision,
         bool preTranslate,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<ServalBuildDto?> GetCurrentBuildAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     );
-    Task<ServalEngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
-    Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
-        string curUserId,
+    Task<ServalEngineDto> GetEngineAsync(
+        IUserAccessor userAccessor,
         string sfProjectId,
-        bool isServalAdmin,
+        CancellationToken cancellationToken
+    );
+    Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
+        IUserAccessor userAccessor,
+        string sfProjectId,
         CancellationToken cancellationToken
     );
     Task<PreTranslationDto> GetPreTranslationAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
         CancellationToken cancellationToken
     );
-    Task<ServalBuildDto?> GetQueuedStateAsync(
-        string curUserId,
-        string sfProjectId,
-        bool preTranslate,
-        bool isServalAdmin,
-        CancellationToken cancellationToken
-    );
+    Task<ServalBuildDto?> GetQueuedStateAsync(IUserAccessor userAccessor, string sfProjectId, bool preTranslate);
     Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
         CancellationToken cancellationToken
     );
     Task<string> GetPreTranslationUsfmAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<Usj> GetPreTranslationUsjAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
         CancellationToken cancellationToken
     );
     Task<string> GetPreTranslationUsxAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
         CancellationToken cancellationToken
     );
     Task<WordGraph> GetWordGraphAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         string segment,
         CancellationToken cancellationToken
@@ -91,25 +90,29 @@ public interface IMachineApiService
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
     Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
 
-    [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]
-    Task StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    [LogEventMetric(EventScope.Drafting, userId: "userAccessor.UserId", nameof(sfProjectId))]
+    Task StartBuildAsync(IUserAccessor userAccessor, string sfProjectId, CancellationToken cancellationToken);
 
-    [LogEventMetric(EventScope.Drafting, nameof(curUserId), projectId: "buildConfig.ProjectId")]
-    Task StartPreTranslationBuildAsync(string curUserId, BuildConfig buildConfig, CancellationToken cancellationToken);
+    [LogEventMetric(EventScope.Drafting, userId: "userAccessor.UserId", projectId: "buildConfig.ProjectId")]
+    Task StartPreTranslationBuildAsync(
+        IUserAccessor userAccessor,
+        BuildConfig buildConfig,
+        CancellationToken cancellationToken
+    );
     Task TrainSegmentAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         SegmentPair segmentPair,
         CancellationToken cancellationToken
     );
     Task<TranslationResult> TranslateAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         string segment,
         CancellationToken cancellationToken
     );
     Task<TranslationResult[]> TranslateNAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int n,
         string segment,

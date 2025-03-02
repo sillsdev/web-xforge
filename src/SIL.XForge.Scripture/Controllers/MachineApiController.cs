@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Converters.Usj;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -59,11 +57,7 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            await _machineApiService.CancelPreTranslationBuildAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                cancellationToken
-            );
+            await _machineApiService.CancelPreTranslationBuildAsync(_userAccessor, sfProjectId, cancellationToken);
             return Ok();
         }
         catch (BrokenCircuitException e)
@@ -112,16 +106,9 @@ public class MachineApiController : ControllerBase
         {
             // First, check for a queued build
             ServalBuildDto? build = null;
-            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             if (buildId is null)
             {
-                build = await _machineApiService.GetQueuedStateAsync(
-                    _userAccessor.UserId,
-                    sfProjectId,
-                    preTranslate,
-                    isServalAdmin,
-                    cancellationToken
-                );
+                build = await _machineApiService.GetQueuedStateAsync(_userAccessor, sfProjectId, preTranslate);
 
                 // If a build is still being uploaded, we need to wait for Serval to report the first revision
                 if (build?.State == MachineApiService.BuildStateQueued && minRevision > 0)
@@ -133,20 +120,18 @@ public class MachineApiController : ControllerBase
             // If a build identifier is not specified, get the current build
             build ??= string.IsNullOrWhiteSpace(buildId)
                 ? await _machineApiService.GetCurrentBuildAsync(
-                    _userAccessor.UserId,
+                    _userAccessor,
                     sfProjectId,
                     minRevision,
                     preTranslate,
-                    isServalAdmin,
                     cancellationToken
                 )
                 : await _machineApiService.GetBuildAsync(
-                    _userAccessor.UserId,
+                    _userAccessor,
                     sfProjectId,
                     buildId,
                     minRevision,
                     preTranslate,
-                    isServalAdmin,
                     cancellationToken
                 );
 
@@ -191,7 +176,7 @@ public class MachineApiController : ControllerBase
         try
         {
             ServalEngineDto engine = await _machineApiService.GetEngineAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
                 cancellationToken
             );
@@ -230,11 +215,9 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             ServalBuildDto? build = await _machineApiService.GetLastCompletedPreTranslationBuildAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
-                isServalAdmin,
                 cancellationToken
             );
 
@@ -288,7 +271,7 @@ public class MachineApiController : ControllerBase
         try
         {
             PreTranslationDto preTranslation = await _machineApiService.GetPreTranslationAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
                 bookNum,
                 chapterNum,
@@ -339,7 +322,7 @@ public class MachineApiController : ControllerBase
         try
         {
             Snapshot<TextData> delta = await _machineApiService.GetPreTranslationDeltaAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
                 bookNum,
                 chapterNum,
@@ -394,13 +377,11 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             string usfm = await _machineApiService.GetPreTranslationUsfmAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
                 bookNum,
                 chapterNum,
-                isServalAdmin,
                 cancellationToken
             );
             return Ok(usfm);
@@ -452,7 +433,7 @@ public class MachineApiController : ControllerBase
         try
         {
             Usj usj = await _machineApiService.GetPreTranslationUsjAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
                 bookNum,
                 chapterNum,
@@ -507,7 +488,7 @@ public class MachineApiController : ControllerBase
         try
         {
             string usx = await _machineApiService.GetPreTranslationUsxAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
                 bookNum,
                 chapterNum,
@@ -559,7 +540,7 @@ public class MachineApiController : ControllerBase
         try
         {
             WordGraph wordGraph = await _machineApiService.GetWordGraphAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
                 segment,
                 cancellationToken
@@ -625,13 +606,11 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            await _machineApiService.StartBuildAsync(_userAccessor.UserId, sfProjectId, cancellationToken);
+            await _machineApiService.StartBuildAsync(_userAccessor, sfProjectId, cancellationToken);
             ServalBuildDto? build = await _machineApiService.GetQueuedStateAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
-                preTranslate: false,
-                isServalAdmin: false,
-                cancellationToken
+                preTranslate: false
             );
             return Ok(build);
         }
@@ -676,11 +655,7 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            await _machineApiService.StartPreTranslationBuildAsync(
-                _userAccessor.UserId,
-                buildConfig,
-                cancellationToken
-            );
+            await _machineApiService.StartPreTranslationBuildAsync(_userAccessor, buildConfig, cancellationToken);
             return Ok();
         }
         catch (BrokenCircuitException e)
@@ -721,12 +696,7 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            await _machineApiService.TrainSegmentAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                segmentPair,
-                cancellationToken
-            );
+            await _machineApiService.TrainSegmentAsync(_userAccessor, sfProjectId, segmentPair, cancellationToken);
             return Ok();
         }
         catch (BrokenCircuitException e)
@@ -764,7 +734,7 @@ public class MachineApiController : ControllerBase
         try
         {
             TranslationResult translationResult = await _machineApiService.TranslateAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
                 segment,
                 cancellationToken
@@ -808,7 +778,7 @@ public class MachineApiController : ControllerBase
         try
         {
             TranslationResult[] translationResults = await _machineApiService.TranslateNAsync(
-                _userAccessor.UserId,
+                _userAccessor,
                 sfProjectId,
                 n,
                 segment,

@@ -1,3 +1,4 @@
+using System.Linq;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
 
@@ -37,15 +38,16 @@ public static class MachineApi
     /// <summary>
     /// Ensures that a user has permission to perform actions to the Serval/Machine API.
     /// </summary>
-    /// <param name="userId">The user id.</param>
+    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="project">The project.</param>
+    /// <param name="mustBeOnProject">If <c>true</c>, the user must be on the project.</param>
     /// <exception cref="ForbiddenException">
     /// The user does not have permission to access the Serval/Machine API.
     /// </exception>
-    public static void EnsureProjectPermission(string userId, Project project)
+    public static void EnsureProjectPermission(IUserAccessor userAccessor, Project project, bool mustBeOnProject)
     {
         // Check for permission
-        if (!HasPermission(userId, project))
+        if (!HasPermission(userAccessor, project, mustBeOnProject))
         {
             throw new ForbiddenException();
         }
@@ -64,11 +66,29 @@ public static class MachineApi
     /// <summary>
     /// Determines if a user has permission to perform actions to the Serval/Machine API.
     /// </summary>
-    /// <param name="userId">The user id.</param>
+    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="project">The project.</param>
+    /// <param name="mustBeOnProject">If <c>true</c>, the user must be on the project as a Paratext user.</param>
     /// <returns><c>true</c> if the user has permission; otherwise, <c>false</c>.</returns>
-    private static bool HasPermission(string? userId, Project project) =>
-        !string.IsNullOrWhiteSpace(userId)
-        && project.UserRoles.TryGetValue(userId, out string role)
-        && role is SFProjectRole.Administrator or SFProjectRole.Translator;
+    /// <remarks>
+    /// A user must be an Administrator or Translator, or a Serval Admin.
+    /// </remarks>
+    private static bool HasPermission(IUserAccessor userAccessor, Project project, bool mustBeOnProject)
+    {
+        if (string.IsNullOrWhiteSpace(userAccessor.UserId))
+        {
+            return false;
+        }
+
+        bool isOnProject = project.UserRoles.TryGetValue(userAccessor.UserId, out string role);
+        if (
+            userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin)
+            && (!mustBeOnProject || isOnProject && SFProjectRole.IsParatextRole(role))
+        )
+        {
+            return true;
+        }
+
+        return isOnProject && role is SFProjectRole.Administrator or SFProjectRole.Translator;
+    }
 }
