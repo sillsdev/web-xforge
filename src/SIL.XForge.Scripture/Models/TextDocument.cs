@@ -1,4 +1,4 @@
-using System.Collections;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using SIL.Converters.Usj;
 using SIL.Scripture;
@@ -36,7 +36,7 @@ public class TextDocument : Json0Snapshot, IUsj
         Version = usj.Version;
     }
 
-    public static string GetDocId(string projectId, int book, int chapter, string textType = Target) =>
+    public static string GetDocId(string projectId, int book, int chapter, string textType) =>
         $"{projectId}:{Canon.BookNumberToId(book)}:{chapter}:{textType}";
 
     /// <summary>
@@ -44,7 +44,7 @@ public class TextDocument : Json0Snapshot, IUsj
     /// </summary>
     /// <value>This will either be a <see cref="UsjMarker"/> or <see cref="string"/>.</value>
     [JsonConverter(typeof(UsjContentConverter))]
-    public ArrayList? Content { get; set; }
+    public ICollection<object>? Content { get; set; }
 
     /// <summary>
     /// The USJ spec type.

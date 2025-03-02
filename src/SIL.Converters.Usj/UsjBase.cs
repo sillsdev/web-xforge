@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -28,7 +27,7 @@ namespace SIL.Converters.Usj
         /// The contents will be laid out in order.
         /// </remarks>
         [JsonConverter(typeof(UsjContentConverter))]
-        public ArrayList Content { get; set; }
+        public ICollection<object> Content { get; set; }
 
         /// <summary>
         /// Additional attributes that are not a part of the USJ specification.

@@ -36,7 +36,7 @@ export class TextDocumentService extends DocService<TextDocument> {
         }
       }
     },
-    additionalProperties: false // TODO: Change to true after testing
+    additionalProperties: true
   };
 
   constructor() {
