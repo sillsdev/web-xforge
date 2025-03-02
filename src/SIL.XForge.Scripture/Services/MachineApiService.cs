@@ -81,13 +81,13 @@ public class MachineApiService(
         SequenceEqualityComparer.Create(EqualityComparer<ProjectScriptureRange>.Default);
 
     public async Task CancelPreTranslationBuildAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         // If we have pre-translation job information
         if (
@@ -169,6 +169,7 @@ public class MachineApiService(
         }
 
         // Retrieve the translation engine id from the delivery
+        // ReSharper disable once ConstantConditionalAccessQualifier
         string translationEngineId = delivery.Payload?.Engine?.Id;
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
@@ -200,19 +201,18 @@ public class MachineApiService(
     }
 
     public async Task<ServalBuildDto?> GetBuildAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         string buildId,
         long? minRevision,
         bool preTranslate,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -242,16 +242,15 @@ public class MachineApiService(
     }
 
     public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         // Get the translation engine
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
@@ -284,18 +283,17 @@ public class MachineApiService(
     }
 
     public async Task<ServalBuildDto?> GetCurrentBuildAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
-        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         // Otherwise execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -333,13 +331,13 @@ public class MachineApiService(
     }
 
     public async Task<ServalEngineDto> GetEngineAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
 
@@ -362,7 +360,7 @@ public class MachineApiService(
     }
 
     public async Task<PreTranslationDto> GetPreTranslationAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
@@ -373,7 +371,7 @@ public class MachineApiService(
         PreTranslationDto preTranslation = new PreTranslationDto();
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         try
         {
@@ -393,15 +391,17 @@ public class MachineApiService(
     }
 
     public async Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        bool isServalAdmin,
         DateTime timestamp,
         CancellationToken cancellationToken
     )
     {
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
+
         // Do not allow retrieving the entire book as a delta
         if (chapterNum == 0)
         {
@@ -410,11 +410,10 @@ public class MachineApiService(
 
         // Get the USJ document
         IUsj usj = await GetPreTranslationUsjAsync(
-            curUserId,
+            userAccessor,
             sfProjectId,
             bookNum,
             chapterNum,
-            isServalAdmin,
             timestamp,
             cancellationToken
         );
@@ -434,26 +433,22 @@ public class MachineApiService(
     /// <summary>
     /// Retrieves the state of an NMT or SMT build before the build is started on Serval.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="preTranslate">If <c>true</c>, check the status of the NMT/Pre-Translation build.</param>
-    /// <param name="isServalAdmin">If <c>true</c>, the user is a Serval administrator.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>
     /// A <see cref="ServalBuildDto"/> if the build is being uploaded to Serval; otherwise, <c>null</c>.
     /// </returns>
     public async Task<ServalBuildDto?> GetQueuedStateAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
-        bool preTranslate,
-        bool isServalAdmin,
-        CancellationToken cancellationToken
+        bool preTranslate
     )
     {
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         // If there is a job queued, return a build dto with a status showing it is queued
         if (
@@ -543,11 +538,10 @@ public class MachineApiService(
     /// <summary>
     /// Gets the pre-translation draft revisions present for the specified book and chapter.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="userAccessor">The user accessor</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number.</param>
-    /// <param name="isServalAdmin">If <c>true</c>, the user is a serval administrator.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The document revisions.</returns>
     /// <exception cref="DataNotFoundException">The project does not exist.</exception>
@@ -555,18 +549,17 @@ public class MachineApiService(
     /// The user does not have permission to access the Serval/Machine API.
     /// </exception>
     public async IAsyncEnumerable<DocumentRevision> GetPreTranslationRevisionsAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        bool isServalAdmin,
         [EnumeratorCancellation] CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
-        await using IConnection connection = await realtimeService.ConnectAsync(curUserId);
+        await using IConnection connection = await realtimeService.ConnectAsync(userAccessor.UserId);
         string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
         Op[] ops = await connection.GetOpsAsync<TextDocument>(id);
 
@@ -574,9 +567,8 @@ public class MachineApiService(
         if (ops.Length == 0)
         {
             ServalBuildDto? build = await GetLastCompletedPreTranslationBuildAsync(
-                curUserId,
+                userAccessor,
                 sfProjectId,
-                isServalAdmin,
                 cancellationToken
             );
             if (build is not null)
@@ -611,23 +603,19 @@ public class MachineApiService(
     }
 
     public async Task<string> GetPreTranslationUsfmAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        bool isServalAdmin,
         DateTime timestamp,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
-
-        // If the user is a serval admin, get the highest ranked user on the project
-        string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
+        SFProject project = await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userAccessor.UserId);
         if (!attempt.TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("The user does not exist.");
@@ -635,11 +623,10 @@ public class MachineApiService(
 
         // Get the USJ document
         IUsj usj = await GetPreTranslationUsjAsync(
-            curUserId,
+            userAccessor,
             sfProjectId,
             bookNum,
             chapterNum,
-            isServalAdmin,
             timestamp,
             cancellationToken
         );
@@ -652,23 +639,19 @@ public class MachineApiService(
     }
 
     public async Task<IUsj> GetPreTranslationUsjAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        bool isServalAdmin,
         DateTime timestamp,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
-
-        // If the user is a serval admin, get the highest ranked user on the project
-        string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
+        SFProject project = await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         // Connect to the realtime server
-        await using IConnection connection = await realtimeService.ConnectAsync(userId);
+        await using IConnection connection = await realtimeService.ConnectAsync(userAccessor.UserId);
         string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
 
         // First, see if the document exists in the realtime service, if the chapter is not 0
@@ -691,7 +674,7 @@ public class MachineApiService(
         }
 
         // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userAccessor.UserId);
         if (!attempt.TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("The user does not exist.");
@@ -725,22 +708,20 @@ public class MachineApiService(
     }
 
     public async Task<string> GetPreTranslationUsxAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        bool isServalAdmin,
         DateTime timestamp,
         CancellationToken cancellationToken
     )
     {
         // Get the USJ then convert to USX
         IUsj usj = await GetPreTranslationUsjAsync(
-            curUserId,
+            userAccessor,
             sfProjectId,
             bookNum,
             chapterNum,
-            isServalAdmin,
             timestamp,
             cancellationToken
         );
@@ -748,14 +729,14 @@ public class MachineApiService(
     }
 
     public async Task<WordGraph> GetWordGraphAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         string segment,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
         try
@@ -844,10 +825,14 @@ public class MachineApiService(
         }
     }
 
-    public async Task StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
+    public async Task StartBuildAsync(
+        IUserAccessor userAccessor,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
     {
         // Load the project from the realtime service
-        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await realtimeService.ConnectAsync(userAccessor.UserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
         if (!projectDoc.IsLoaded)
         {
@@ -855,18 +840,18 @@ public class MachineApiService(
         }
 
         // Ensure that the user has permission on the project
-        MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
+        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data, mustBeOnProject: true);
 
         // Sync the source and target before running the build
         // We use project service, as it provides permission and token checks
-        string syncJobId = await projectService.SyncAsync(curUserId, sfProjectId);
+        string syncJobId = await projectService.SyncAsync(userAccessor, sfProjectId);
 
         // Run the training after the sync has completed. If the sync failed or stopped, retrain anyway
         string buildJobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
             syncJobId,
             r =>
                 r.BuildProjectForBackgroundJobAsync(
-                    curUserId,
+                    userAccessor,
                     new BuildConfig { ProjectId = sfProjectId },
                     false,
                     CancellationToken.None
@@ -888,7 +873,7 @@ public class MachineApiService(
     }
 
     public async Task StartPreTranslationBuildAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         BuildConfig buildConfig,
         CancellationToken cancellationToken
     )
@@ -950,7 +935,7 @@ public class MachineApiService(
         }
 
         // Load the project from the realtime service
-        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await realtimeService.ConnectAsync(userAccessor.UserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
         if (!projectDoc.IsLoaded)
         {
@@ -958,7 +943,7 @@ public class MachineApiService(
         }
 
         // Ensure that the user has permission on the project
-        MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
+        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data, mustBeOnProject: true);
 
         // Save the selected books
         await projectDoc.SubmitJson0OpAsync(op =>
@@ -1004,7 +989,7 @@ public class MachineApiService(
 
         // Sync the source and target before running the build
         // We use project service, as it provides permission and token checks
-        string jobId = await projectService.SyncAsync(curUserId, buildConfig.ProjectId);
+        string jobId = await projectService.SyncAsync(userAccessor, buildConfig.ProjectId);
 
         // If we have an alternate source, sync that first
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
@@ -1019,7 +1004,7 @@ public class MachineApiService(
                     ParentJobId = jobId,
                     ProjectId = alternateSourceProjectId,
                     TargetOnly = true,
-                    UserId = curUserId,
+                    UserAccessor = userAccessor,
                 }
             );
         }
@@ -1042,7 +1027,7 @@ public class MachineApiService(
                     ParentJobId = jobId,
                     ProjectId = alternateTrainingSourceProjectId,
                     TargetOnly = true,
-                    UserId = curUserId,
+                    UserAccessor = userAccessor,
                 }
             );
         }
@@ -1065,7 +1050,7 @@ public class MachineApiService(
                     ParentJobId = jobId,
                     ProjectId = additionalTrainingSourceProjectId,
                     TargetOnly = true,
-                    UserId = curUserId,
+                    UserAccessor = userAccessor,
                 }
             );
         }
@@ -1073,7 +1058,7 @@ public class MachineApiService(
         // Run the training after the sync has completed
         jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
             jobId,
-            r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
+            r => r.BuildProjectForBackgroundJobAsync(userAccessor, buildConfig, true, CancellationToken.None)
         );
 
         // Set the pre-translation queued date and time, and hang fire job id
@@ -1089,14 +1074,14 @@ public class MachineApiService(
     }
 
     public async Task TrainSegmentAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         SegmentPair segmentPair,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
         try
@@ -1110,14 +1095,14 @@ public class MachineApiService(
     }
 
     public async Task<TranslationResult> TranslateAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         string segment,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
         try
@@ -1132,7 +1117,7 @@ public class MachineApiService(
     }
 
     public async Task<TranslationResult[]> TranslateNAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         int n,
         string segment,
@@ -1142,7 +1127,7 @@ public class MachineApiService(
         IEnumerable<TranslationResult> translationResults = Array.Empty<TranslationResult>();
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(userAccessor, sfProjectId, mustBeOnProject: false);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
         if (!string.IsNullOrWhiteSpace(translationEngineId))
@@ -1215,9 +1200,6 @@ public class MachineApiService(
         {
             throw new DataNotFoundException("The parallel corpus ID cannot be found.");
         }
-
-        // Ensure that the user has permission on the project
-        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
 
         // For every text we have a draft applied to, get the pre-translation
         foreach (TextInfo textInfo in projectDoc.Data.Texts.Where(t => t.Chapters.Any(c => c.HasDraft == true)))
@@ -1408,18 +1390,18 @@ public class MachineApiService(
     /// <summary>
     /// Ensures that the user has permission to access Serval and the project.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId"></param>
-    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="userAccessor">The user accessor.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="mustBeOnProject">If <c>true</c>, the user must be on the project.</param>
     /// <returns>The project.</returns>
-    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     /// <exception cref="ForbiddenException">
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     /// The user does not have permission to access the Serval/Machine API.
     /// </exception>
     private async Task<SFProject> EnsureProjectPermissionAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
-        bool isServalAdmin = false
+        bool mustBeOnProject
     )
     {
         // Load the project from the realtime service
@@ -1430,10 +1412,7 @@ public class MachineApiService(
         }
 
         // Check for permission
-        if (!isServalAdmin)
-        {
-            MachineApi.EnsureProjectPermission(curUserId, project);
-        }
+        MachineApi.EnsureProjectPermission(userAccessor, project, mustBeOnProject);
 
         // Return the project, in case the caller needs it
         return project;

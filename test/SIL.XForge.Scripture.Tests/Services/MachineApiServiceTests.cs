@@ -87,6 +87,9 @@ public class MachineApiServiceTests
         ],
     };
 
+    private static UserAccessorDto UserAccessor01 => new UserAccessorDto { UserId = User01 };
+    private static UserAccessorDto UserAccessor02 => new UserAccessorDto { UserId = User02 };
+
     [Test]
     public void CancelPreTranslationBuildAsync_NoPermission()
     {
@@ -95,7 +98,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User02, Project01, CancellationToken.None)
+            () => env.Service.CancelPreTranslationBuildAsync(UserAccessor02, Project01, CancellationToken.None)
         );
     }
 
@@ -107,7 +110,8 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, "invalid_project_id", CancellationToken.None)
+            () =>
+                env.Service.CancelPreTranslationBuildAsync(UserAccessor01, "invalid_project_id", CancellationToken.None)
         );
     }
 
@@ -121,7 +125,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            () => env.Service.CancelPreTranslationBuildAsync(UserAccessor01, Project01, CancellationToken.None)
         );
     }
 
@@ -133,7 +137,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, Project03, CancellationToken.None)
+            () => env.Service.CancelPreTranslationBuildAsync(UserAccessor01, Project03, CancellationToken.None)
         );
     }
 
@@ -147,7 +151,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            () => env.Service.CancelPreTranslationBuildAsync(UserAccessor01, Project01, CancellationToken.None)
         );
 
         env.BackgroundJobClient.Received(1).ChangeState(JobId, Arg.Any<DeletedState>(), null); // Same as Delete()
@@ -163,7 +167,7 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(preTranslate: true);
 
         // SUT
-        await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+        await env.Service.CancelPreTranslationBuildAsync(UserAccessor01, Project01, CancellationToken.None);
 
         await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
         env.BackgroundJobClient.Received(1).ChangeState(JobId, Arg.Any<DeletedState>(), null); // Same as Delete()
@@ -262,12 +266,11 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetBuildAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     Build01,
                     minRevision,
                     preTranslate: false,
-                    isServalAdmin: false,
                     CancellationToken.None
                 )
         );
@@ -283,12 +286,11 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetBuildAsync(
-            User01,
+            UserAccessor01,
             Project01,
             Build01,
             minRevision: null,
             preTranslate: false,
-            isServalAdmin: false,
             CancellationToken.None
         );
 
@@ -305,12 +307,11 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<ForbiddenException>(
             () =>
                 env.Service.GetBuildAsync(
-                    User02,
+                    UserAccessor02,
                     Project01,
                     Build01,
                     minRevision: null,
                     preTranslate: false,
-                    isServalAdmin: false,
                     CancellationToken.None
                 )
         );
@@ -326,12 +327,11 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetBuildAsync(
-                    User01,
+                    UserAccessor01,
                     "invalid_project_id",
                     Build01,
                     minRevision: null,
                     preTranslate: false,
-                    isServalAdmin: false,
                     CancellationToken.None
                 )
         );
@@ -347,12 +347,11 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetBuildAsync(
-                    User01,
+                    UserAccessor01,
                     Project03,
                     Build01,
                     minRevision: null,
                     preTranslate: false,
-                    isServalAdmin: false,
                     CancellationToken.None
                 )
         );
@@ -373,12 +372,14 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetBuildAsync(
-            User02,
+            UserAccessor02 with
+            {
+                SystemRoles = [SystemRole.ServalAdmin],
+            },
             Project01,
             Build01,
             minRevision: null,
             preTranslate: true,
-            isServalAdmin: true,
             CancellationToken.None
         );
 
@@ -418,12 +419,11 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetBuildAsync(
-            User01,
+            UserAccessor01,
             Project01,
             Build01,
             minRevision: null,
             preTranslate: false,
-            isServalAdmin: false,
             CancellationToken.None
         );
 
@@ -546,12 +546,11 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetBuildAsync(
-            User01,
+            UserAccessor01,
             Project01,
             Build01,
             minRevision: null,
             preTranslate: false,
-            isServalAdmin: false,
             CancellationToken.None
         );
 
@@ -594,11 +593,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetCurrentBuildAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     minRevision,
                     preTranslate: false,
-                    isServalAdmin: false,
                     CancellationToken.None
                 )
         );
@@ -614,11 +612,10 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
-            User01,
+            UserAccessor01,
             Project01,
             minRevision: null,
             preTranslate: false,
-            isServalAdmin: false,
             CancellationToken.None
         );
 
@@ -635,11 +632,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<ForbiddenException>(
             () =>
                 env.Service.GetCurrentBuildAsync(
-                    User02,
+                    UserAccessor02,
                     Project01,
                     minRevision: null,
                     preTranslate: false,
-                    isServalAdmin: false,
                     CancellationToken.None
                 )
         );
@@ -655,11 +651,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetCurrentBuildAsync(
-                    User01,
+                    UserAccessor01,
                     "invalid_project_id",
                     minRevision: null,
                     preTranslate: false,
-                    isServalAdmin: false,
                     CancellationToken.None
                 )
         );
@@ -675,11 +670,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetCurrentBuildAsync(
-                    User01,
+                    UserAccessor01,
                     Project03,
                     minRevision: null,
                     preTranslate: false,
-                    isServalAdmin: false,
                     CancellationToken.None
                 )
         );
@@ -699,11 +693,13 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
-            User02,
+            UserAccessor02 with
+            {
+                SystemRoles = [SystemRole.ServalAdmin],
+            },
             Project01,
             minRevision: null,
             preTranslate: true,
-            isServalAdmin: true,
             CancellationToken.None
         );
 
@@ -742,11 +738,10 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
-            User01,
+            UserAccessor01,
             Project01,
             minRevision: null,
             preTranslate: false,
-            isServalAdmin: false,
             CancellationToken.None
         );
 
@@ -798,11 +793,10 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
-            User01,
+            UserAccessor01,
             Project01,
             minRevision: null,
             preTranslate: true,
-            isServalAdmin: false,
             CancellationToken.None
         );
 
@@ -835,11 +829,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetCurrentBuildAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     minRevision: null,
                     preTranslate: true,
-                    isServalAdmin: false,
                     CancellationToken.None
                 )
         );
@@ -853,7 +846,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetEngineAsync(User02, Project01, CancellationToken.None)
+            () => env.Service.GetEngineAsync(UserAccessor02, Project01, CancellationToken.None)
         );
     }
 
@@ -865,7 +858,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetEngineAsync(User01, "invalid_project_id", CancellationToken.None)
+            () => env.Service.GetEngineAsync(UserAccessor01, "invalid_project_id", CancellationToken.None)
         );
     }
 
@@ -879,7 +872,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
+            () => env.Service.GetEngineAsync(UserAccessor01, Project01, CancellationToken.None)
         );
     }
 
@@ -891,7 +884,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetEngineAsync(User01, Project03, CancellationToken.None)
+            () => env.Service.GetEngineAsync(UserAccessor01, Project03, CancellationToken.None)
         );
     }
 
@@ -905,7 +898,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
+            () => env.Service.GetEngineAsync(UserAccessor01, Project01, CancellationToken.None)
         );
     }
 
@@ -938,7 +931,7 @@ public class MachineApiServiceTests
             );
 
         // SUT
-        ServalEngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
+        ServalEngineDto actual = await env.Service.GetEngineAsync(UserAccessor01, Project01, CancellationToken.None);
 
         Assert.AreEqual(confidence / 100.0, actual.Confidence);
         Assert.AreEqual(corpusSize, actual.TrainedSegmentCount);
@@ -975,9 +968,8 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             Project01,
-            false,
             CancellationToken.None
         );
 
@@ -992,7 +984,8 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User02, Project01, false, CancellationToken.None)
+            () =>
+                env.Service.GetLastCompletedPreTranslationBuildAsync(UserAccessor02, Project01, CancellationToken.None)
         );
     }
 
@@ -1006,9 +999,8 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetLastCompletedPreTranslationBuildAsync(
-                    User01,
+                    UserAccessor01,
                     "invalid_project_id",
-                    false,
                     CancellationToken.None
                 )
         );
@@ -1022,7 +1014,8 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project03, false, CancellationToken.None)
+            () =>
+                env.Service.GetLastCompletedPreTranslationBuildAsync(UserAccessor01, Project03, CancellationToken.None)
         );
     }
 
@@ -1035,7 +1028,8 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
+            () =>
+                env.Service.GetLastCompletedPreTranslationBuildAsync(UserAccessor01, Project01, CancellationToken.None)
         );
     }
 
@@ -1049,9 +1043,11 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
-            User02,
+            UserAccessor02 with
+            {
+                SystemRoles = [SystemRole.ServalAdmin],
+            },
             Project01,
-            true,
             CancellationToken.None
         );
 
@@ -1089,9 +1085,8 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             Project01,
-            false,
             CancellationToken.None
         );
 
@@ -1116,7 +1111,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+            () => env.Service.GetPreTranslationAsync(UserAccessor01, Project01, 40, 1, CancellationToken.None)
         );
     }
 
@@ -1130,7 +1125,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+            () => env.Service.GetPreTranslationAsync(UserAccessor01, Project01, 40, 1, CancellationToken.None)
         );
     }
 
@@ -1142,7 +1137,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetPreTranslationAsync(User02, Project01, 40, 1, CancellationToken.None)
+            () => env.Service.GetPreTranslationAsync(UserAccessor02, Project01, 40, 1, CancellationToken.None)
         );
     }
 
@@ -1154,7 +1149,8 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationAsync(User01, "invalid_project_id", 40, 1, CancellationToken.None)
+            () =>
+                env.Service.GetPreTranslationAsync(UserAccessor01, "invalid_project_id", 40, 1, CancellationToken.None)
         );
     }
 
@@ -1168,7 +1164,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+            () => env.Service.GetPreTranslationAsync(UserAccessor01, Project01, 40, 1, CancellationToken.None)
         );
     }
 
@@ -1191,7 +1187,7 @@ public class MachineApiServiceTests
 
         // SUT
         PreTranslationDto actual = await env.Service.GetPreTranslationAsync(
-            User01,
+            UserAccessor01,
             Project01,
             40,
             1,
@@ -1214,11 +1210,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<NotSupportedException>(
             () =>
                 env.Service.GetPreTranslationDeltaAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     40,
                     1,
-                    false,
                     DateTime.UtcNow,
                     CancellationToken.None
                 )
@@ -1235,11 +1230,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetPreTranslationDeltaAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     40,
                     0,
-                    false,
                     DateTime.UtcNow,
                     CancellationToken.None
                 )
@@ -1257,11 +1251,13 @@ public class MachineApiServiceTests
 
         // SUT
         Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
-            User02,
+            UserAccessor02 with
+            {
+                SystemRoles = [SystemRole.ServalAdmin],
+            },
             Project01,
             40,
             1,
-            true,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1280,11 +1276,10 @@ public class MachineApiServiceTests
 
         // SUT
         Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
-            User01,
+            UserAccessor01,
             Project01,
             40,
             1,
-            false,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1305,11 +1300,10 @@ public class MachineApiServiceTests
         // SUT
         await foreach (
             DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User01,
+                UserAccessor01,
                 Project01,
                 40,
                 1,
-                isServalAdmin: false,
                 cancellationTokenSource.Token
             )
         )
@@ -1350,11 +1344,10 @@ public class MachineApiServiceTests
         // SUT
         await foreach (
             DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User01,
+                UserAccessor01,
                 Project01,
                 40,
                 1,
-                isServalAdmin: false,
                 CancellationToken.None
             )
         )
@@ -1378,11 +1371,10 @@ public class MachineApiServiceTests
         // SUT
         await foreach (
             DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User01,
+                UserAccessor01,
                 Project01,
                 40,
                 1,
-                isServalAdmin: false,
                 CancellationToken.None
             )
         )
@@ -1405,11 +1397,13 @@ public class MachineApiServiceTests
         // SUT
         await foreach (
             DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User02,
+                UserAccessor02 with
+                {
+                    SystemRoles = [SystemRole.ServalAdmin],
+                },
                 Project01,
                 40,
                 1,
-                isServalAdmin: true,
                 CancellationToken.None
             )
         )
@@ -1432,11 +1426,10 @@ public class MachineApiServiceTests
         // SUT
         await foreach (
             DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User01,
+                UserAccessor01,
                 Project01,
                 40,
                 1,
-                isServalAdmin: false,
                 CancellationToken.None
             )
         )
@@ -1459,11 +1452,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<NotSupportedException>(
             () =>
                 env.Service.GetPreTranslationUsfmAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     40,
                     1,
-                    false,
                     DateTime.UtcNow,
                     CancellationToken.None
                 )
@@ -1481,11 +1473,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetPreTranslationUsfmAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     40,
                     1,
-                    false,
                     DateTime.UtcNow,
                     CancellationToken.None
                 )
@@ -1503,11 +1494,13 @@ public class MachineApiServiceTests
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
-            User02,
+            UserAccessor02 with
+            {
+                SystemRoles = [SystemRole.ServalAdmin],
+            },
             Project01,
             40,
             1,
-            true,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1525,11 +1518,10 @@ public class MachineApiServiceTests
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
-            User01,
+            UserAccessor01,
             Project01,
             40,
             1,
-            false,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1548,11 +1540,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<NotSupportedException>(
             () =>
                 env.Service.GetPreTranslationUsjAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     40,
                     1,
-                    false,
                     DateTime.UtcNow,
                     CancellationToken.None
                 )
@@ -1570,11 +1561,10 @@ public class MachineApiServiceTests
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
-            User01,
+            UserAccessor01,
             Project01,
             40,
             0,
-            false,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1596,11 +1586,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetPreTranslationUsjAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     40,
                     1,
-                    false,
                     DateTime.UtcNow,
                     CancellationToken.None
                 )
@@ -1619,11 +1608,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetPreTranslationUsjAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     40,
                     1,
-                    false,
                     DateTime.MinValue,
                     CancellationToken.None
                 )
@@ -1641,11 +1629,10 @@ public class MachineApiServiceTests
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
-            User01,
+            UserAccessor01,
             Project01,
             40,
             1,
-            false,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1667,11 +1654,13 @@ public class MachineApiServiceTests
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
-            User02,
+            UserAccessor02 with
+            {
+                SystemRoles = [SystemRole.ServalAdmin],
+            },
             Project01,
             40,
             1,
-            true,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1688,11 +1677,10 @@ public class MachineApiServiceTests
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
-            User01,
+            UserAccessor01,
             Project01,
             40,
             1,
-            false,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1713,11 +1701,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<NotSupportedException>(
             () =>
                 env.Service.GetPreTranslationUsxAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     40,
                     1,
-                    false,
                     DateTime.UtcNow,
                     CancellationToken.None
                 )
@@ -1735,11 +1722,10 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.GetPreTranslationUsxAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     40,
                     1,
-                    false,
                     DateTime.UtcNow,
                     CancellationToken.None
                 )
@@ -1762,11 +1748,13 @@ public class MachineApiServiceTests
 
         // SUT
         string actual = await env.Service.GetPreTranslationUsxAsync(
-            User02,
+            UserAccessor02 with
+            {
+                SystemRoles = [SystemRole.ServalAdmin],
+            },
             Project01,
             40,
             1,
-            true,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1789,11 +1777,10 @@ public class MachineApiServiceTests
 
         // SUT
         string actual = await env.Service.GetPreTranslationUsxAsync(
-            User01,
+            UserAccessor01,
             Project01,
             40,
             1,
-            false,
             DateTime.UtcNow,
             CancellationToken.None
         );
@@ -1808,7 +1795,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetWordGraphAsync(User02, Project01, Segment, CancellationToken.None)
+            () => env.Service.GetWordGraphAsync(UserAccessor02, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -1820,7 +1807,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetWordGraphAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
+            () => env.Service.GetWordGraphAsync(UserAccessor01, "invalid_project_id", Segment, CancellationToken.None)
         );
     }
 
@@ -1832,7 +1819,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetWordGraphAsync(User01, Project03, Segment, CancellationToken.None)
+            () => env.Service.GetWordGraphAsync(UserAccessor01, Project03, Segment, CancellationToken.None)
         );
     }
 
@@ -1846,7 +1833,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
+            () => env.Service.GetWordGraphAsync(UserAccessor01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -1870,7 +1857,12 @@ public class MachineApiServiceTests
             );
 
         // SUT
-        WordGraph actual = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
+        WordGraph actual = await env.Service.GetWordGraphAsync(
+            UserAccessor01,
+            Project01,
+            Segment,
+            CancellationToken.None
+        );
 
         Assert.IsNotNull(actual);
         Assert.AreEqual(initialStateScore, actual.InitialStateScore);
@@ -1888,7 +1880,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
+            () => env.Service.GetWordGraphAsync(UserAccessor01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -1901,13 +1893,7 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(preTranslate: false, DateTime.UtcNow.AddHours(-6), errorMessage);
 
         // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: false,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(UserAccessor01, Project01, preTranslate: false);
         Assert.AreEqual(MachineApiService.BuildStateFaulted, actual?.State);
         Assert.AreEqual(errorMessage, actual?.Message);
     }
@@ -1920,13 +1906,7 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(preTranslate: false, DateTime.UtcNow.AddHours(-6));
 
         // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: false,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(UserAccessor01, Project01, preTranslate: false);
         Assert.AreEqual(MachineApiService.BuildStateFaulted, actual?.State);
         Assert.IsFalse(string.IsNullOrWhiteSpace(actual?.Message));
     }
@@ -1939,13 +1919,7 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(preTranslate: false);
 
         // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: false,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(UserAccessor01, Project01, preTranslate: false);
         Assert.AreEqual(MachineApiService.BuildStateQueued, actual?.State);
         Assert.AreEqual(Project01, actual?.Id);
     }
@@ -1957,13 +1931,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: false,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(UserAccessor01, Project01, preTranslate: false);
         Assert.IsNull(actual);
     }
 
@@ -1976,13 +1944,7 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(preTranslate: true, DateTime.UtcNow.AddHours(-6), errorMessage);
 
         // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: true,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(UserAccessor01, Project01, preTranslate: true);
         Assert.AreEqual(MachineApiService.BuildStateFaulted, actual?.State);
         Assert.AreEqual(errorMessage, actual?.Message);
     }
@@ -1995,13 +1957,7 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(preTranslate: true, DateTime.UtcNow.AddHours(-6));
 
         // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: true,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(UserAccessor01, Project01, preTranslate: true);
         Assert.AreEqual(MachineApiService.BuildStateFaulted, actual?.State);
         Assert.IsFalse(string.IsNullOrWhiteSpace(actual?.Message));
     }
@@ -2014,13 +1970,7 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(preTranslate: true);
 
         // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: true,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(UserAccessor01, Project01, preTranslate: true);
         Assert.AreEqual(MachineApiService.BuildStateQueued, actual?.State);
     }
 
@@ -2031,13 +1981,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: true,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(UserAccessor01, Project01, preTranslate: true);
         Assert.IsNull(actual);
     }
 
@@ -2049,14 +1993,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.GetQueuedStateAsync(
-                    User02,
-                    Project01,
-                    preTranslate: true,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+            () => env.Service.GetQueuedStateAsync(UserAccessor02, Project01, preTranslate: true)
         );
     }
 
@@ -2068,11 +2005,12 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User02,
+            UserAccessor02 with
+            {
+                SystemRoles = [SystemRole.ServalAdmin],
+            },
             Project01,
-            preTranslate: true,
-            isServalAdmin: true,
-            CancellationToken.None
+            preTranslate: true
         );
         Assert.IsNull(actual);
     }
@@ -2091,11 +2029,9 @@ public class MachineApiServiceTests
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
+            UserAccessor01,
             Project01,
-            preTranslate: true,
-            isServalAdmin: false,
-            CancellationToken.None
+            preTranslate: true
         );
         Assert.AreEqual(MachineApiService.BuildStateFinishing, actual?.State);
         Assert.IsFalse(string.IsNullOrWhiteSpace(actual?.Message));
@@ -2237,7 +2173,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.StartBuildAsync(User02, Project01, CancellationToken.None)
+            () => env.Service.StartBuildAsync(UserAccessor02, Project01, CancellationToken.None)
         );
     }
 
@@ -2249,7 +2185,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartBuildAsync(User01, "invalid_project_id", CancellationToken.None)
+            () => env.Service.StartBuildAsync(UserAccessor01, "invalid_project_id", CancellationToken.None)
         );
     }
 
@@ -2260,9 +2196,9 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        await env.Service.StartBuildAsync(UserAccessor01, Project01, CancellationToken.None);
 
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        await env.ProjectService.Received(1).SyncAsync(UserAccessor01, Project01);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.TranslationQueuedAt);
@@ -2277,14 +2213,16 @@ public class MachineApiServiceTests
 
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             new BuildConfig { ProjectId = Project02 },
             CancellationToken.None
         );
 
         await env
             .SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserId == User01));
+            .SyncAsync(
+                Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserAccessor.UserId == User01)
+            );
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
@@ -2313,17 +2251,21 @@ public class MachineApiServiceTests
 
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             new BuildConfig { ProjectId = Project02 },
             CancellationToken.None
         );
 
         await env
             .SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserId == User01));
+            .SyncAsync(
+                Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserAccessor.UserId == User01)
+            );
         await env
             .SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
+            .SyncAsync(
+                Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserAccessor.UserId == User01)
+            );
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
@@ -2340,7 +2282,7 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<ForbiddenException>(
             () =>
                 env.Service.StartPreTranslationBuildAsync(
-                    User02,
+                    UserAccessor02,
                     new BuildConfig { ProjectId = Project01 },
                     CancellationToken.None
                 )
@@ -2357,7 +2299,7 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.StartPreTranslationBuildAsync(
-                    User01,
+                    UserAccessor01,
                     new BuildConfig { ProjectId = "invalid_project_id" },
                     CancellationToken.None
                 )
@@ -2374,7 +2316,7 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.StartPreTranslationBuildAsync(
-                    User01,
+                    UserAccessor01,
                     new BuildConfig
                     {
                         ProjectId = Project01,
@@ -2396,7 +2338,7 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.StartPreTranslationBuildAsync(
-                    User01,
+                    UserAccessor01,
                     new BuildConfig
                     {
                         ProjectId = Project01,
@@ -2421,7 +2363,7 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.StartPreTranslationBuildAsync(
-                    User01,
+                    UserAccessor01,
                     new BuildConfig
                     {
                         ProjectId = Project01,
@@ -2446,7 +2388,7 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.StartPreTranslationBuildAsync(
-                    User01,
+                    UserAccessor01,
                     new BuildConfig
                     {
                         ProjectId = Project01,
@@ -2468,7 +2410,7 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.StartPreTranslationBuildAsync(
-                    User01,
+                    UserAccessor01,
                     new BuildConfig
                     {
                         ProjectId = Project01,
@@ -2493,7 +2435,7 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.StartPreTranslationBuildAsync(
-                    User01,
+                    UserAccessor01,
                     new BuildConfig
                     {
                         ProjectId = Project01,
@@ -2516,12 +2458,12 @@ public class MachineApiServiceTests
 
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
 
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        await env.ProjectService.Received(1).SyncAsync(UserAccessor01, Project01);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
@@ -2539,12 +2481,12 @@ public class MachineApiServiceTests
 
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             new BuildConfig { ProjectId = Project01, TranslationBooks = { 1, 2 } },
             CancellationToken.None
         );
 
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        await env.ProjectService.Received(1).SyncAsync(UserAccessor01, Project01);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
@@ -2565,7 +2507,7 @@ public class MachineApiServiceTests
 
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             new BuildConfig
             {
                 ProjectId = Project01,
@@ -2576,7 +2518,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        await env.ProjectService.Received(1).SyncAsync(UserAccessor01, Project01);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
@@ -2607,7 +2549,7 @@ public class MachineApiServiceTests
 
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             new BuildConfig
             {
                 ProjectId = Project01,
@@ -2623,7 +2565,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        await env.ProjectService.Received(1).SyncAsync(UserAccessor01, Project01);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
@@ -2682,14 +2624,16 @@ public class MachineApiServiceTests
 
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             new BuildConfig { ProjectId = Project02 },
             CancellationToken.None
         );
 
         await env
             .SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
+            .SyncAsync(
+                Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserAccessor.UserId == User01)
+            );
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
@@ -2716,14 +2660,16 @@ public class MachineApiServiceTests
 
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
-            User01,
+            UserAccessor01,
             new BuildConfig { ProjectId = Project02 },
             CancellationToken.None
         );
 
         await env
             .SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
+            .SyncAsync(
+                Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserAccessor.UserId == User01)
+            );
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
@@ -2738,7 +2684,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.TrainSegmentAsync(User02, Project01, new SegmentPair(), CancellationToken.None)
+            () => env.Service.TrainSegmentAsync(UserAccessor02, Project01, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -2750,7 +2696,13 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TrainSegmentAsync(User01, "invalid_project_id", new SegmentPair(), CancellationToken.None)
+            () =>
+                env.Service.TrainSegmentAsync(
+                    UserAccessor01,
+                    "invalid_project_id",
+                    new SegmentPair(),
+                    CancellationToken.None
+                )
         );
     }
 
@@ -2762,7 +2714,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TrainSegmentAsync(User01, Project03, new SegmentPair(), CancellationToken.None)
+            () => env.Service.TrainSegmentAsync(UserAccessor01, Project03, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -2780,7 +2732,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None)
+            () => env.Service.TrainSegmentAsync(UserAccessor01, Project01, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -2791,7 +2743,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None);
+        await env.Service.TrainSegmentAsync(UserAccessor01, Project01, new SegmentPair(), CancellationToken.None);
 
         await env
             .TranslationEnginesClient.Received(1)
@@ -2806,7 +2758,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.TranslateAsync(User02, Project01, Segment, CancellationToken.None)
+            () => env.Service.TranslateAsync(UserAccessor02, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -2818,7 +2770,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
+            () => env.Service.TranslateAsync(UserAccessor01, "invalid_project_id", Segment, CancellationToken.None)
         );
     }
 
@@ -2830,7 +2782,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateAsync(User01, Project03, Segment, CancellationToken.None)
+            () => env.Service.TranslateAsync(UserAccessor01, Project03, Segment, CancellationToken.None)
         );
     }
 
@@ -2844,7 +2796,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
+            () => env.Service.TranslateAsync(UserAccessor01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -2873,7 +2825,12 @@ public class MachineApiServiceTests
             );
 
         // SUT
-        TranslationResult actual = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
+        TranslationResult actual = await env.Service.TranslateAsync(
+            UserAccessor01,
+            Project01,
+            Segment,
+            CancellationToken.None
+        );
 
         Assert.IsNotNull(actual);
         Assert.AreEqual(1, actual.SourceTokens.Count);
@@ -2894,7 +2851,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.TranslateNAsync(User02, Project01, n, Segment, CancellationToken.None)
+            () => env.Service.TranslateNAsync(UserAccessor02, Project01, n, Segment, CancellationToken.None)
         );
     }
 
@@ -2907,7 +2864,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateNAsync(User01, "invalid_project_id", n, Segment, CancellationToken.None)
+            () => env.Service.TranslateNAsync(UserAccessor01, "invalid_project_id", n, Segment, CancellationToken.None)
         );
     }
 
@@ -2920,7 +2877,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateNAsync(User01, Project03, n, Segment, CancellationToken.None)
+            () => env.Service.TranslateNAsync(UserAccessor01, Project03, n, Segment, CancellationToken.None)
         );
     }
 
@@ -2935,7 +2892,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None)
+            () => env.Service.TranslateNAsync(UserAccessor01, Project01, n, Segment, CancellationToken.None)
         );
     }
 
@@ -2968,7 +2925,7 @@ public class MachineApiServiceTests
 
         // SUT
         TranslationResult[] actual = await env.Service.TranslateNAsync(
-            User01,
+            UserAccessor01,
             Project01,
             n,
             Segment,
@@ -3169,7 +3126,7 @@ public class MachineApiServiceTests
             );
             TextDocuments = new MemoryRepository<TextDocument>();
             ProjectService = Substitute.For<ISFProjectService>();
-            ProjectService.SyncAsync(User01, Arg.Any<string>()).Returns(Task.FromResult(JobId));
+            ProjectService.SyncAsync(UserAccessor01, Arg.Any<string>()).Returns(Task.FromResult(JobId));
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
@@ -3195,6 +3152,11 @@ public class MachineApiServiceTests
                     new UserSecret
                     {
                         Id = User01,
+                        ParatextTokens = new Tokens { AccessToken = accessToken1, RefreshToken = "refresh_token_1234" },
+                    },
+                    new UserSecret
+                    {
+                        Id = User02,
                         ParatextTokens = new Tokens { AccessToken = accessToken1, RefreshToken = "refresh_token_1234" },
                     },
                 ]

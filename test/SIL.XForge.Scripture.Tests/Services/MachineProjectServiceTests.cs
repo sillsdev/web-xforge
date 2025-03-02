@@ -105,7 +105,7 @@ public class MachineProjectServiceTests
         ServalApiException ex = ServalApiExceptions.BuildInProgress;
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None)
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -116,7 +116,7 @@ public class MachineProjectServiceTests
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
-            User01,
+            env.UserAccessor,
             buildConfig,
             preTranslate: true,
             CancellationToken.None
@@ -137,7 +137,7 @@ public class MachineProjectServiceTests
         ServalApiException ex = ServalApiExceptions.BuildInProgress;
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: false, CancellationToken.None)
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: false, CancellationToken.None)
             .ThrowsAsync(ex);
 
         // An SMT translation job has been queued
@@ -148,7 +148,7 @@ public class MachineProjectServiceTests
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
-            User01,
+            env.UserAccessor,
             buildConfig,
             preTranslate: false,
             CancellationToken.None
@@ -169,7 +169,7 @@ public class MachineProjectServiceTests
         var ex = new TaskCanceledException();
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None)
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -177,7 +177,7 @@ public class MachineProjectServiceTests
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
-            User01,
+            env.UserAccessor,
             buildConfig,
             preTranslate: true,
             CancellationToken.None
@@ -196,7 +196,7 @@ public class MachineProjectServiceTests
         var ex = new TaskCanceledException();
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: false, CancellationToken.None)
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: false, CancellationToken.None)
             .ThrowsAsync(ex);
 
         // An SMT translation job has been queued
@@ -204,7 +204,7 @@ public class MachineProjectServiceTests
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
-            User01,
+            env.UserAccessor,
             buildConfig,
             preTranslate: false,
             CancellationToken.None
@@ -223,12 +223,12 @@ public class MachineProjectServiceTests
         var ex = new DataNotFoundException("Not Found");
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None)
             .ThrowsAsync(ex);
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
-            User01,
+            env.UserAccessor,
             buildConfig,
             preTranslate: true,
             CancellationToken.None
@@ -238,6 +238,7 @@ public class MachineProjectServiceTests
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
     }
 
+    [Test]
     public static async Task BuildProjectForBackgroundJobAsync_InvalidDataException()
     {
         // Set up test environment
@@ -245,7 +246,7 @@ public class MachineProjectServiceTests
         var ex = new InvalidDataException("Source project language not specified");
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None)
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -256,7 +257,7 @@ public class MachineProjectServiceTests
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
-            User01,
+            env.UserAccessor,
             buildConfig,
             preTranslate: true,
             CancellationToken.None
@@ -277,7 +278,7 @@ public class MachineProjectServiceTests
         ServalApiException ex = ServalApiExceptions.Forbidden;
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None)
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
@@ -288,7 +289,7 @@ public class MachineProjectServiceTests
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
-            User01,
+            env.UserAccessor,
             buildConfig,
             preTranslate: true,
             CancellationToken.None
@@ -310,7 +311,7 @@ public class MachineProjectServiceTests
         ServalApiException ex = ServalApiExceptions.Forbidden;
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: false, CancellationToken.None)
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: false, CancellationToken.None)
             .ThrowsAsync(ex);
 
         // An SMT translation job has been queued
@@ -321,7 +322,7 @@ public class MachineProjectServiceTests
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
-            User01,
+            env.UserAccessor,
             buildConfig,
             preTranslate: false,
             CancellationToken.None
@@ -342,12 +343,12 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None)
             .Returns(Task.CompletedTask);
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
-            User01,
+            env.UserAccessor,
             buildConfig,
             preTranslate: true,
             CancellationToken.None
@@ -355,7 +356,7 @@ public class MachineProjectServiceTests
 
         await env
             .Service.Received(1)
-            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None);
+            .BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None);
     }
 
     [Test]
@@ -392,7 +393,7 @@ public class MachineProjectServiceTests
             )
             .Returns(Task.CompletedTask);
         env.Service.Configure()
-            .SyncProjectCorporaAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .SyncProjectCorporaAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None)
             .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
         var translationBuildConfig = new TranslationBuildConfig();
         env.Service.Configure()
@@ -405,7 +406,7 @@ public class MachineProjectServiceTests
             .Returns(translationBuildConfig);
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None);
+        await env.Service.BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
         await env
@@ -447,11 +448,11 @@ public class MachineProjectServiceTests
             )
             .Returns(Task.CompletedTask);
         env.Service.Configure()
-            .SyncProjectCorporaAsync(User01, buildConfig, preTranslate: false, CancellationToken.None)
+            .SyncProjectCorporaAsync(env.UserAccessor, buildConfig, preTranslate: false, CancellationToken.None)
             .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, buildConfig, preTranslate: false, CancellationToken.None);
+        await env.Service.BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: false, CancellationToken.None);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationQueuedAt);
         await env
@@ -470,7 +471,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.BuildProjectAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
                     CancellationToken.None
@@ -489,7 +490,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.BuildProjectAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
                     CancellationToken.None
@@ -507,7 +508,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<InvalidDataException>(
             () =>
                 env.Service.BuildProjectAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project04 },
                     preTranslate: false,
                     CancellationToken.None
@@ -543,12 +544,13 @@ public class MachineProjectServiceTests
             )
             .Returns(Task.CompletedTask);
         env.Service.Configure()
-            .SyncProjectCorporaAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .SyncProjectCorporaAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None)
             .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            () =>
+                env.Service.BuildProjectAsync(env.UserAccessor, buildConfig, preTranslate: true, CancellationToken.None)
         );
     }
 
@@ -565,7 +567,7 @@ public class MachineProjectServiceTests
 
         // SUT
         await env.Service.BuildProjectAsync(
-            User01,
+            env.UserAccessor,
             new BuildConfig { ProjectId = Project01 },
             preTranslate: true,
             CancellationToken.None
@@ -2563,7 +2565,7 @@ public class MachineProjectServiceTests
 
         // SUT
         ServalAdditionalTrainingData actual = await env.Service.SyncAdditionalTrainingData(
-            User01,
+            env.UserAccessor,
             project,
             TranslationEngine01,
             buildConfig,
@@ -2599,7 +2601,7 @@ public class MachineProjectServiceTests
 
         // SUT
         ServalAdditionalTrainingData actual = await env.Service.SyncAdditionalTrainingData(
-            User01,
+            env.UserAccessor,
             project,
             TranslationEngine01,
             buildConfig,
@@ -2630,7 +2632,7 @@ public class MachineProjectServiceTests
 
         // SUT
         ServalAdditionalTrainingData actual = await env.Service.SyncAdditionalTrainingData(
-            User01,
+            env.UserAccessor,
             project,
             TranslationEngine01,
             buildConfig,
@@ -2712,7 +2714,7 @@ public class MachineProjectServiceTests
 
         // SUT
         ServalAdditionalTrainingData actual = await env.Service.SyncAdditionalTrainingData(
-            User01,
+            env.UserAccessor,
             project,
             TranslationEngine01,
             buildConfig,
@@ -2725,7 +2727,7 @@ public class MachineProjectServiceTests
         await env
             .TrainingDataService.Received(1)
             .GetTextsAsync(
-                Arg.Any<string>(),
+                env.UserAccessor,
                 Arg.Any<string>(),
                 Arg.Any<IEnumerable<string>>(),
                 Arg.Any<IList<ISFText>>(),
@@ -2780,7 +2782,7 @@ public class MachineProjectServiceTests
 
         // SUT
         ServalAdditionalTrainingData actual = await env.Service.SyncAdditionalTrainingData(
-            User01,
+            env.UserAccessor,
             project,
             TranslationEngine01,
             buildConfig,
@@ -2794,7 +2796,7 @@ public class MachineProjectServiceTests
         await env
             .TrainingDataService.Received(1)
             .GetTextsAsync(
-                Arg.Any<string>(),
+                env.UserAccessor,
                 Arg.Any<string>(),
                 Arg.Any<IEnumerable<string>>(),
                 Arg.Any<IList<ISFText>>(),
@@ -2812,7 +2814,7 @@ public class MachineProjectServiceTests
 
         // SUT
         ServalAdditionalTrainingData actual = await env.Service.SyncAdditionalTrainingData(
-            User01,
+            env.UserAccessor,
             project,
             TranslationEngine01,
             buildConfig,
@@ -2855,7 +2857,7 @@ public class MachineProjectServiceTests
             .Returns(ParallelCorpus01);
         env.Service.Configure()
             .SyncAdditionalTrainingData(
-                User01,
+                env.UserAccessor,
                 Arg.Any<SFProject>(),
                 options.PreTranslate ? TranslationEngine01 : TranslationEngine02,
                 Arg.Any<BuildConfig>(),
@@ -2866,7 +2868,7 @@ public class MachineProjectServiceTests
 
         // SUT 1
         IList<ServalCorpusSyncInfo> actual = await env.Service.SyncProjectCorporaAsync(
-            User01,
+            env.UserAccessor,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: options.PreTranslate,
             CancellationToken.None
@@ -2878,7 +2880,7 @@ public class MachineProjectServiceTests
 
         // SUT 2
         actual = await env.Service.SyncProjectCorporaAsync(
-            User01,
+            env.UserAccessor,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: options.PreTranslate,
             CancellationToken.None
@@ -2915,7 +2917,7 @@ public class MachineProjectServiceTests
 
         // SUT 3
         actual = await env.Service.SyncProjectCorporaAsync(
-            User01,
+            env.UserAccessor,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: options.PreTranslate,
             CancellationToken.None
@@ -2934,7 +2936,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: true,
                     CancellationToken.None
@@ -2953,7 +2955,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
                     CancellationToken.None
@@ -2972,7 +2974,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
                     CancellationToken.None
@@ -2991,7 +2993,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
                     CancellationToken.None
@@ -3011,7 +3013,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<InvalidDataException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
                     CancellationToken.None
@@ -3031,7 +3033,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<InvalidDataException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: true,
                     CancellationToken.None
@@ -3050,7 +3052,7 @@ public class MachineProjectServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
-                    User01,
+                    env.UserAccessor,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
                     CancellationToken.None
@@ -4092,6 +4094,9 @@ public class MachineProjectServiceTests
                 TranslationEnginesClient,
                 userSecrets
             );
+
+            UserAccessor = Substitute.For<IUserAccessor>();
+            UserAccessor.UserId.Returns(User01);
         }
 
         public MachineProjectService Service { get; }
@@ -4108,6 +4113,7 @@ public class MachineProjectServiceTests
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MockLogger<MachineProjectService> MockLogger { get; }
         public IExceptionHandler ExceptionHandler { get; }
+        public IUserAccessor UserAccessor { get; }
 
         /// <summary>
         /// Asserts whether the correct API calls have bene made for SyncProjectCorporaAsync.
@@ -4228,7 +4234,7 @@ public class MachineProjectServiceTests
             await Service
                 .Received(options.PreTranslate ? 1 : 0)
                 .SyncAdditionalTrainingData(
-                    User01,
+                    UserAccessor,
                     Arg.Any<SFProject>(),
                     TranslationEngine01,
                     Arg.Any<BuildConfig>(),
@@ -4365,7 +4371,7 @@ public class MachineProjectServiceTests
             );
             TrainingDataService
                 .GetTextsAsync(
-                    Arg.Any<string>(),
+                    UserAccessor,
                     Arg.Any<string>(),
                     Arg.Any<IEnumerable<string>>(),
                     Arg.Any<IList<ISFText>>(),

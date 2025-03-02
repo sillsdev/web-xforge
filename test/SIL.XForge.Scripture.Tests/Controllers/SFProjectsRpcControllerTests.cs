@@ -107,14 +107,14 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.DeleteTrainingData(Project01, User02, Data01);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
-        await env.TrainingDataService.Received().DeleteTrainingDataAsync(User01, Project01, User02, Data01);
+        await env.TrainingDataService.Received().DeleteTrainingDataAsync(env.UserAccessor, Project01, User02, Data01);
     }
 
     [Test]
     public async Task DeleteTrainingData_Forbidden()
     {
         var env = new TestEnvironment();
-        env.TrainingDataService.DeleteTrainingDataAsync(User01, Project01, User02, Data01)
+        env.TrainingDataService.DeleteTrainingDataAsync(env.UserAccessor, Project01, User02, Data01)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -128,7 +128,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string errorMessage = "Invalid Format";
-        env.TrainingDataService.DeleteTrainingDataAsync(User01, Project01, User02, Data01)
+        env.TrainingDataService.DeleteTrainingDataAsync(env.UserAccessor, Project01, User02, Data01)
             .Throws(new FormatException(errorMessage));
 
         // SUT
@@ -142,7 +142,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string errorMessage = "Not Found";
-        env.TrainingDataService.DeleteTrainingDataAsync(User01, Project01, User02, Data01)
+        env.TrainingDataService.DeleteTrainingDataAsync(env.UserAccessor, Project01, User02, Data01)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -156,7 +156,7 @@ public class SFProjectsRpcControllerTests
     public void DeleteTrainingData_UnknownError()
     {
         var env = new TestEnvironment();
-        env.TrainingDataService.DeleteTrainingDataAsync(User01, Project01, User02, Data01)
+        env.TrainingDataService.DeleteTrainingDataAsync(env.UserAccessor, Project01, User02, Data01)
             .Throws(new ArgumentNullException());
 
         // SUT
@@ -889,14 +889,14 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.Sync(Project01);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
-        await env.SFProjectService.Received().SyncAsync(User01, Project01);
+        await env.SFProjectService.Received().SyncAsync(env.UserAccessor, Project01);
     }
 
     [Test]
     public async Task Sync_Forbidden()
     {
         var env = new TestEnvironment();
-        env.SFProjectService.SyncAsync(User01, Project01).Throws(new ForbiddenException());
+        env.SFProjectService.SyncAsync(env.UserAccessor, Project01).Throws(new ForbiddenException());
 
         // SUT
         var result = await env.Controller.Sync(Project01);
@@ -909,7 +909,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string errorMessage = "Not Found";
-        env.SFProjectService.SyncAsync(User01, Project01).Throws(new DataNotFoundException(errorMessage));
+        env.SFProjectService.SyncAsync(env.UserAccessor, Project01).Throws(new DataNotFoundException(errorMessage));
 
         // SUT
         var result = await env.Controller.Sync(Project01);
@@ -922,7 +922,7 @@ public class SFProjectsRpcControllerTests
     public async Task Sync_Unauthorized()
     {
         var env = new TestEnvironment();
-        env.SFProjectService.SyncAsync(User01, Project01).Throws(new UnauthorizedAccessException());
+        env.SFProjectService.SyncAsync(env.UserAccessor, Project01).Throws(new UnauthorizedAccessException());
 
         // SUT
         var result = await env.Controller.Sync(Project01);
@@ -934,7 +934,7 @@ public class SFProjectsRpcControllerTests
     public void Sync_UnknownError()
     {
         var env = new TestEnvironment();
-        env.SFProjectService.SyncAsync(User01, Project01).Throws(new ArgumentNullException());
+        env.SFProjectService.SyncAsync(env.UserAccessor, Project01).Throws(new ArgumentNullException());
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Sync(Project01));
@@ -999,7 +999,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.UpdateSettings(Project01, settings);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
-        await env.SFProjectService.Received().UpdateSettingsAsync(User01, Project01, settings);
+        await env.SFProjectService.Received().UpdateSettingsAsync(env.UserAccessor, Project01, settings);
     }
 
     [Test]
@@ -1007,7 +1007,8 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         var settings = new SFProjectSettings();
-        env.SFProjectService.UpdateSettingsAsync(User01, Project01, settings).Throws(new ForbiddenException());
+        env.SFProjectService.UpdateSettingsAsync(env.UserAccessor, Project01, settings)
+            .Throws(new ForbiddenException());
 
         // SUT
         var result = await env.Controller.UpdateSettings(Project01, settings);
@@ -1021,7 +1022,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         var settings = new SFProjectSettings();
         const string errorMessage = "Not Found";
-        env.SFProjectService.UpdateSettingsAsync(User01, Project01, settings)
+        env.SFProjectService.UpdateSettingsAsync(env.UserAccessor, Project01, settings)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -1050,7 +1051,8 @@ public class SFProjectsRpcControllerTests
             TranslationSuggestionsEnabled = true,
             UsersSeeEachOthersResponses = true,
         };
-        env.SFProjectService.UpdateSettingsAsync(User01, Project01, settings).Throws(new ArgumentNullException());
+        env.SFProjectService.UpdateSettingsAsync(env.UserAccessor, Project01, settings)
+            .Throws(new ArgumentNullException());
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.UpdateSettings(Project01, settings));
@@ -1067,16 +1069,16 @@ public class SFProjectsRpcControllerTests
             httpRequestAccessor.SiteRoot.Returns(WebsiteUrl);
             SFProjectService = Substitute.For<ISFProjectService>();
             TrainingDataService = Substitute.For<ITrainingDataService>();
-            var userAccessor = Substitute.For<IUserAccessor>();
-            userAccessor.UserId.Returns(User01);
-            userAccessor.SystemRoles.Returns(Roles);
+            UserAccessor = Substitute.For<IUserAccessor>();
+            UserAccessor.UserId.Returns(User01);
+            UserAccessor.SystemRoles.Returns(Roles);
             Controller = new SFProjectsRpcController(
                 BackgroundJobClient,
                 ExceptionHandler,
                 httpRequestAccessor,
                 SFProjectService,
                 TrainingDataService,
-                userAccessor
+                UserAccessor
             );
         }
 
@@ -1085,5 +1087,6 @@ public class SFProjectsRpcControllerTests
         public SFProjectsRpcController Controller { get; }
         public ISFProjectService SFProjectService { get; }
         public ITrainingDataService TrainingDataService { get; }
+        public IUserAccessor UserAccessor { get; }
     }
 }

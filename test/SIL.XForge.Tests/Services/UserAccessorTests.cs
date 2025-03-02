@@ -3,6 +3,7 @@ using System.Net;
 using System.Security.Claims;
 using IdentityModel;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.XForge.Models;
@@ -19,12 +20,59 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         const string expected = "auth_id";
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, expected) })
+            new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, expected)])
         );
 
         // SUT
         string actual = env.Service.AuthId;
         Assert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public void UserAccessor_InterfaceConvertsToAndFromJson()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+        var expected = new UserAccessorDto
+        {
+            AuthId = "User's Auth Id",
+            IsAuthenticated = true,
+            Name = "User's Full Name",
+            SystemRoles = [SystemRole.ServalAdmin],
+            UserId = "user01",
+        };
+        env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
+            new ClaimsIdentity(
+                [
+                    new Claim(ClaimTypes.NameIdentifier, expected.AuthId),
+                    new Claim(JwtClaimTypes.Subject, expected.Name),
+                    new Claim(XFClaimTypes.Role, expected.SystemRoles.Single()),
+                    new Claim(XFClaimTypes.UserId, expected.UserId),
+                ],
+                "AuthType"
+            )
+        );
+
+        // Verify that the UserAccessor is functioning as expected
+        Assert.That(env.Service.AuthId, Is.EqualTo(expected.AuthId));
+        Assert.That(env.Service.IsAuthenticated, Is.True);
+        Assert.That(env.Service.Name, Is.EqualTo(expected.Name));
+        Assert.That(env.Service.SystemRoles, Is.EqualTo(expected.SystemRoles));
+        Assert.That(env.Service.UserId, Is.EqualTo(expected.UserId));
+
+        // Serialize the IUserAccessor to JSON
+        string json = JsonConvert.SerializeObject(env.Service);
+
+        // Clear the HTTP context to simulate deserialization in another context
+        env.HttpContextAccessor.HttpContext = null;
+
+        // SUT
+        IUserAccessor actual = JsonConvert.DeserializeObject<IUserAccessor>(json);
+        Assert.That(actual.AuthId, Is.EqualTo(expected.AuthId));
+        Assert.That(actual.IsAuthenticated, Is.True);
+        Assert.That(actual.Name, Is.EqualTo(expected.Name));
+        Assert.That(actual.SystemRoles, Is.EqualTo(expected.SystemRoles));
+        Assert.That(actual.UserId, Is.EqualTo(expected.UserId));
     }
 
     [Test]
@@ -53,7 +101,7 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         const string expected = "user_name";
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(new[] { new Claim(JwtClaimTypes.Subject, expected) })
+            new ClaimsIdentity([new Claim(JwtClaimTypes.Subject, expected)])
         );
 
         // SUT
@@ -119,11 +167,7 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
             new ClaimsIdentity(
-                new[]
-                {
-                    new Claim(XFClaimTypes.Role, SystemRole.SystemAdmin),
-                    new Claim(XFClaimTypes.Role, SystemRole.User),
-                }
+                [new Claim(XFClaimTypes.Role, SystemRole.SystemAdmin), new Claim(XFClaimTypes.Role, SystemRole.User)]
             )
         );
 
@@ -140,7 +184,7 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         const string expected = SystemRole.SystemAdmin;
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(new[] { new Claim(XFClaimTypes.Role, expected) })
+            new ClaimsIdentity([new Claim(XFClaimTypes.Role, expected)])
         );
 
         // SUT
@@ -155,7 +199,7 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         const string expected = "user_id";
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(new[] { new Claim(XFClaimTypes.UserId, expected) })
+            new ClaimsIdentity([new Claim(XFClaimTypes.UserId, expected)])
         );
 
         // SUT

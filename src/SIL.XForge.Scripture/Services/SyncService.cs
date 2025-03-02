@@ -35,7 +35,7 @@ public class SyncService(
     /// <exception cref="ArgumentException">The source or target project cannot be found.</exception>
     public async Task<string> SyncAsync(SyncConfig syncConfig)
     {
-        await using IConnection conn = await realtimeService.ConnectAsync(syncConfig.UserId);
+        await using IConnection conn = await realtimeService.ConnectAsync(syncConfig.UserAccessor.UserId);
         // Load the project document
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(syncConfig.ProjectId);
         if (projectDoc.Data.SyncDisabled)
@@ -73,7 +73,7 @@ public class SyncService(
                     Id = ObjectId.GenerateNewId().ToString()!,
                     ProjectRef = sourceProjectId,
                     Status = SyncStatus.Queued,
-                    UserRef = syncConfig.UserId,
+                    UserRef = syncConfig.UserAccessor.UserId,
                 };
                 await metrics.InsertAsync(sourceSyncMetrics);
                 var targetSyncMetrics = new SyncMetrics
@@ -83,7 +83,7 @@ public class SyncService(
                     ProjectRef = syncConfig.ProjectId,
                     RequiresId = sourceSyncMetrics.Id,
                     Status = SyncStatus.Queued,
-                    UserRef = syncConfig.UserId,
+                    UserRef = syncConfig.UserAccessor.UserId,
                 };
                 await metrics.InsertAsync(targetSyncMetrics);
 
@@ -98,7 +98,7 @@ public class SyncService(
                         r =>
                             r.RunAsync(
                                 sourceProjectId,
-                                syncConfig.UserId,
+                                syncConfig.UserAccessor,
                                 sourceSyncMetrics.Id,
                                 false,
                                 CancellationToken.None
@@ -110,7 +110,7 @@ public class SyncService(
                         r =>
                             r.RunAsync(
                                 sourceProjectId,
-                                syncConfig.UserId,
+                                syncConfig.UserAccessor,
                                 sourceSyncMetrics.Id,
                                 false,
                                 CancellationToken.None
@@ -122,7 +122,7 @@ public class SyncService(
                     r =>
                         r.RunAsync(
                             syncConfig.ProjectId,
-                            syncConfig.UserId,
+                            syncConfig.UserAccessor,
                             targetSyncMetrics.Id,
                             syncConfig.TrainEngine,
                             CancellationToken.None
@@ -195,7 +195,7 @@ public class SyncService(
                         targetJobId,
                         r =>
                             r.BuildProjectForBackgroundJobAsync(
-                                syncConfig.UserId,
+                                syncConfig.UserAccessor,
                                 new BuildConfig { ProjectId = syncConfig.ProjectId },
                                 false,
                                 CancellationToken.None
@@ -240,7 +240,7 @@ public class SyncService(
             Id = ObjectId.GenerateNewId().ToString()!,
             ProjectRef = syncConfig.ProjectId,
             Status = SyncStatus.Queued,
-            UserRef = syncConfig.UserId,
+            UserRef = syncConfig.UserAccessor.UserId,
         };
         await metrics.InsertAsync(syncMetrics);
 
@@ -252,7 +252,7 @@ public class SyncService(
                 r =>
                     r.RunAsync(
                         syncConfig.ProjectId,
-                        syncConfig.UserId,
+                        syncConfig.UserAccessor,
                         syncMetrics.Id,
                         syncConfig.TrainEngine,
                         CancellationToken.None
@@ -264,7 +264,7 @@ public class SyncService(
                 r =>
                     r.RunAsync(
                         syncConfig.ProjectId,
-                        syncConfig.UserId,
+                        syncConfig.UserAccessor,
                         syncMetrics.Id,
                         syncConfig.TrainEngine,
                         CancellationToken.None

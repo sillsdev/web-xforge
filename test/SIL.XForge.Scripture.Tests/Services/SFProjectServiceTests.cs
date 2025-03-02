@@ -55,6 +55,10 @@ public class SFProjectServiceTests
         SFProjectRights.JoinRight(SFProjectDomain.Answers, Operation.Create),
         SFProjectRights.JoinRight(SFProjectDomain.AnswerComments, Operation.Create),
     ];
+    private static UserAccessorDto UserAccessor01 => new UserAccessorDto { UserId = User01 };
+    private static UserAccessorDto UserAccessor02 => new UserAccessorDto { UserId = User02 };
+    private static UserAccessorDto UserAccessor03 => new UserAccessorDto { UserId = User03 };
+    private static UserAccessorDto UserAccessor05 => new UserAccessorDto { UserId = User05 };
 
     [Test]
     public async Task InviteAsync_ProjectAdminSharingDisabled_UserInvited()
@@ -179,13 +183,8 @@ public class SFProjectServiceTests
             "setup"
         );
         var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-        Assert.That(
-            invitees.Select(i => i.Email),
-            Is.EquivalentTo(
-                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }
-            ),
-            "setup"
-        );
+        string[] expected = ["bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com"];
+        Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expected), "setup");
         Assert.That(invitees[0].Role == initialRole);
 
         await env.Service.InviteAsync(User01, Project03, email, "en", endingRole, TestEnvironment.WebsiteUrl);
@@ -213,12 +212,8 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(endingRole));
 
         invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-        Assert.That(
-            invitees.Select(i => i.Email),
-            Is.EquivalentTo(
-                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }
-            )
-        );
+        expected = ["bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com"];
+        Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expected));
     }
 
     [Test]
@@ -443,7 +438,7 @@ public class SFProjectServiceTests
     public async Task GetLinkSharingKeyAsync_LinkDoesNotExist_NewShareKeyCreated()
     {
         var env = new TestEnvironment();
-        await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings());
+        await env.Service.UpdateSettingsAsync(UserAccessor01, Project03, new SFProjectSettings());
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == null), Is.False);
         env.SecurityService.GenerateKey().Returns("newkey");
@@ -703,13 +698,8 @@ public class SFProjectServiceTests
 
         Assert.That(project.UserRoles.ContainsKey(User04), Is.False, "setup");
         var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-        Assert.That(
-            invitees.Select(i => i.Email),
-            Is.EquivalentTo(
-                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }
-            ),
-            "setup"
-        );
+        string[] expected = ["bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com"];
+        Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expected), "setup");
 
         // Use the sharekey linked to user03
         await env.Service.JoinWithShareKeyAsync(User04, "key1234");
@@ -718,10 +708,8 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.ContainsKey(User04), Is.True, "User should have been added to project");
 
         invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-        Assert.That(
-            invitees.Select(i => i.Email),
-            Is.EquivalentTo(new[] { "bob@example.com", "expired@example.com", "bill@example.com" })
-        );
+        expected = ["bob@example.com", "expired@example.com", "bill@example.com"];
+        Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expected));
     }
 
     [Test]
@@ -755,12 +743,8 @@ public class SFProjectServiceTests
         );
 
         var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-        Assert.That(
-            invitees.Select(i => i.Email),
-            Is.EquivalentTo(
-                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }
-            )
-        );
+        string[] expected = ["bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com"];
+        Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expected));
     }
 
     [Test]
@@ -1503,8 +1487,9 @@ public class SFProjectServiceTests
 
         // Project with one specific shareKey and one link sharing shareKey record
         IReadOnlyList<InviteeStatus> invitees = await env.Service.InvitedUsersAsync(User02, Project02);
+        string[] expected = ["user03@example.com"];
         Assert.That(invitees.Count, Is.EqualTo(1));
-        Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(new string[] { "user03@example.com" }));
+        Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expected));
 
         // Project with several outstanding invitations
         invitees = await env.Service.InvitedUsersAsync(User01, Project03);
@@ -2222,7 +2207,7 @@ public class SFProjectServiceTests
         Assert.That(env.Service.IsSourceProject(Project01), Is.False);
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project03,
             new SFProjectSettings { AlternateSourceParatextId = paratextId }
         );
@@ -2239,7 +2224,7 @@ public class SFProjectServiceTests
         Assert.That(env.Service.IsSourceProject(Project01), Is.False);
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project03,
             new SFProjectSettings { AlternateTrainingSourceParatextId = paratextId }
         );
@@ -2256,7 +2241,7 @@ public class SFProjectServiceTests
         Assert.That(env.Service.IsSourceProject(Project01), Is.False);
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project03,
             new SFProjectSettings { AdditionalTrainingSourceParatextId = paratextId }
         );
@@ -2282,7 +2267,7 @@ public class SFProjectServiceTests
         const string paratextId = "paratext_" + Project01;
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { AlternateSourceParatextId = paratextId }
         );
@@ -2316,7 +2301,7 @@ public class SFProjectServiceTests
 
         // SUT
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { AlternateSourceParatextId = newProjectParatextId }
         );
@@ -2355,7 +2340,7 @@ public class SFProjectServiceTests
         const string paratextId = "paratext_" + Project01;
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { AlternateTrainingSourceParatextId = paratextId }
         );
@@ -2388,7 +2373,7 @@ public class SFProjectServiceTests
         );
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { AlternateTrainingSourceParatextId = "changedId" }
         );
@@ -2427,7 +2412,7 @@ public class SFProjectServiceTests
         const string paratextId = "paratext_" + Project01;
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { AdditionalTrainingSourceParatextId = paratextId }
         );
@@ -2459,7 +2444,7 @@ public class SFProjectServiceTests
 
         // SUT
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { AdditionalTrainingSourceParatextId = newProjectParatextId }
         );
@@ -2500,7 +2485,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { AdditionalTrainingSourceEnabled = true }
         );
@@ -2523,7 +2508,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { AlternateSourceEnabled = true }
         );
@@ -2546,7 +2531,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { AlternateTrainingSourceEnabled = true }
         );
@@ -2579,7 +2564,7 @@ public class SFProjectServiceTests
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(new Attempt<string>(SFProjectRole.Translator)));
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { SourceParatextId = "paratext_" + Project02 }
         );
@@ -2615,7 +2600,7 @@ public class SFProjectServiceTests
         env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Resource01PTId)
             .Returns(resource.Texts.Select(t => t.BookNum).ToList());
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project03,
             new SFProjectSettings { SourceParatextId = Resource01PTId }
         );
@@ -2642,7 +2627,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings { SourceParatextId = "changedId", TranslationSuggestionsEnabled = true }
         );
@@ -2663,7 +2648,7 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         await env.Service.UpdateSettingsAsync(
-            User02,
+            UserAccessor02,
             Project02,
             new SFProjectSettings { SourceParatextId = "changedId" }
         );
@@ -2687,7 +2672,7 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project03,
             new SFProjectSettings { TranslationSuggestionsEnabled = true }
         );
@@ -2708,7 +2693,7 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         await env.Service.UpdateSettingsAsync(
-            User01,
+            UserAccessor01,
             Project01,
             new SFProjectSettings
             {
@@ -2735,7 +2720,11 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
 
-        await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { CheckingEnabled = true });
+        await env.Service.UpdateSettingsAsync(
+            UserAccessor01,
+            Project01,
+            new SFProjectSettings { CheckingEnabled = true }
+        );
 
         SFProject project = env.GetProject(Project01);
         Assert.That(project.CheckingConfig.CheckingEnabled, Is.True);
@@ -2759,7 +2748,7 @@ public class SFProjectServiceTests
         Assert.ThrowsAsync<ForbiddenException>(
             () =>
                 env.Service.UpdateSettingsAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     new SFProjectSettings { CheckingShareEnabled = true }
                 )
@@ -2777,7 +2766,7 @@ public class SFProjectServiceTests
         Assert.ThrowsAsync<ForbiddenException>(
             () =>
                 env.Service.UpdateSettingsAsync(
-                    User01,
+                    UserAccessor01,
                     Project01,
                     new SFProjectSettings { TranslateShareEnabled = true }
                 )
@@ -2898,8 +2887,8 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
         // SUT
         string sfProjectId = await env.Service.CreateProjectAsync(
-            User01,
-            new SFProjectCreateSettings() { ParatextId = "ptProject123" }
+            UserAccessor01,
+            new SFProjectCreateSettings { ParatextId = "ptProject123" }
         );
         Assert.That(env.ContainsProject(sfProjectId), Is.True);
         Assert.That(
@@ -2925,8 +2914,8 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(TextInfoPermission.Read));
         // SUT
         string sfProjectId = await env.Service.CreateProjectAsync(
-            User01,
-            new SFProjectCreateSettings() { ParatextId = "ptProject123", SourceParatextId = "resource_project" }
+            UserAccessor01,
+            new SFProjectCreateSettings { ParatextId = "ptProject123", SourceParatextId = "resource_project" }
         );
         Assert.That(env.ContainsProject(sfProjectId), Is.True);
         Assert.That(
@@ -2968,8 +2957,8 @@ public class SFProjectServiceTests
         InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(
             () =>
                 env.Service.CreateProjectAsync(
-                    User01,
-                    new SFProjectCreateSettings() { ParatextId = existingSfProject.ParatextId }
+                    UserAccessor01,
+                    new SFProjectCreateSettings { ParatextId = existingSfProject.ParatextId }
                 )
         );
         Assert.That(thrown.Message, Does.Contain("A directory for this project already exists."));
@@ -2996,8 +2985,8 @@ public class SFProjectServiceTests
         InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(
             () =>
                 env.Service.CreateProjectAsync(
-                    User01,
-                    new SFProjectCreateSettings() { ParatextId = existingSfProject.ParatextId }
+                    UserAccessor01,
+                    new SFProjectCreateSettings { ParatextId = existingSfProject.ParatextId }
                 )
         );
         Assert.That(thrown.Message, Does.Contain(SFProjectService.ErrorAlreadyConnectedKey));
@@ -3043,24 +3032,24 @@ public class SFProjectServiceTests
         env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
-        var bookList = new List<int>() { 40, 41 };
+        List<int> bookList = [40, 41];
         env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
 
         // PT will answer with these permissions.
         // Note that in the case of checking permissions for the target project, SF won't actually get to the
         // point where it queries for the PT permissions. But leaving these settings here in case
-        // UpdatePermissionsAsync() is later modified and it starts doing that.
-        var ptBookPermissions = new Dictionary<string, string>()
+        // UpdatePermissionsAsync() is later modified, and it starts doing that.
+        var ptBookPermissions = new Dictionary<string, string>
         {
             { User03, TextInfoPermission.Read },
             { User01, TextInfoPermission.Read },
         };
-        var ptChapterPermissions = new Dictionary<string, string>()
+        var ptChapterPermissions = new Dictionary<string, string>
         {
             { User03, TextInfoPermission.Write },
             { User01, TextInfoPermission.Read },
         };
-        var ptSourcePermissions = new Dictionary<string, string>()
+        var ptSourcePermissions = new Dictionary<string, string>
         {
             { User03, userDBLPermissionForResource },
             { User01, TextInfoPermission.None },
@@ -3069,7 +3058,7 @@ public class SFProjectServiceTests
         const int chapterValueToIndicateWholeBook = 0;
         env.ParatextService.GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
+                Arg.Is<SFProject>(project => project.ParatextId == targetProjectPTId),
                 Arg.Any<IReadOnlyDictionary<string, string>>(),
                 Arg.Any<int>(),
                 chapterValueToIndicateWholeBook
@@ -3077,15 +3066,15 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(ptBookPermissions));
         env.ParatextService.GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
+                Arg.Is<SFProject>(project => project.ParatextId == targetProjectPTId),
                 Arg.Any<IReadOnlyDictionary<string, string>>(),
                 Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
+                Arg.Is<int>(arg => arg > 0)
             )
             .Returns(Task.FromResult(ptChapterPermissions));
         env.ParatextService.GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == sourceProjectPTId),
+                Arg.Is<SFProject>(project => project.ParatextId == sourceProjectPTId),
                 Arg.Any<IReadOnlyDictionary<string, string>>(),
                 bookValueToIndicateWholeResource,
                 chapterValueToIndicateWholeBook
@@ -3102,8 +3091,8 @@ public class SFProjectServiceTests
 
         // SUT
         string sfProjectId = await env.Service.CreateProjectAsync(
-            User03,
-            new SFProjectCreateSettings() { ParatextId = targetProjectPTId, SourceParatextId = sourceProjectPTId }
+            UserAccessor03,
+            new SFProjectCreateSettings { ParatextId = targetProjectPTId, SourceParatextId = sourceProjectPTId }
         );
 
         SFProject project = env.GetProject(sfProjectId);
@@ -3120,7 +3109,9 @@ public class SFProjectServiceTests
         // permissions on them.
         await env
             .SyncService.Received()
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == sfProjectId && !s.TrainEngine && s.UserId == User03));
+            .SyncAsync(
+                Arg.Is<SyncConfig>(s => s.ProjectId == sfProjectId && !s.TrainEngine && s.UserAccessor.UserId == User03)
+            );
 
         // Don't check that permissions were added to the target project, because we mock the Sync functionality.
         // But we can show that source resource permissions were set:
@@ -3319,7 +3310,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        string actual = await env.Service.SyncAsync(User01, Project01);
+        string actual = await env.Service.SyncAsync(UserAccessor01, Project01);
         Assert.AreEqual("jobId", actual);
     }
 
@@ -3330,7 +3321,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        string actual = await env.Service.SyncAsync(User05, Project01);
+        string actual = await env.Service.SyncAsync(UserAccessor05, Project01);
         Assert.AreEqual("jobId", actual);
     }
 
@@ -3341,7 +3332,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        string actual = await env.Service.SyncAsync(User01, Resource01);
+        string actual = await env.Service.SyncAsync(UserAccessor01, Resource01);
         Assert.AreEqual("jobId", actual);
     }
 
@@ -3352,7 +3343,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync(User02, Project01));
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync(UserAccessor02, Project01));
     }
 
     [Test]
@@ -3363,7 +3354,7 @@ public class SFProjectServiceTests
         env.ParatextService.CanUserAuthenticateToPTArchivesAsync(User01).Returns(false);
 
         // SUT
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(UserAccessor01, Project01));
     }
 
     [Test]
@@ -3374,7 +3365,7 @@ public class SFProjectServiceTests
         env.ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>()).Returns(false);
 
         // SUT
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(UserAccessor01, Project01));
     }
 
     [Test]
@@ -3384,7 +3375,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(User01, "invalid_project"));
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(UserAccessor01, "invalid_project"));
     }
 
     [Test]
@@ -3395,7 +3386,7 @@ public class SFProjectServiceTests
         await env.UserSecrets.DeleteAsync(User01);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(User01, Project01));
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(UserAccessor01, Project01));
     }
 
     [Test]

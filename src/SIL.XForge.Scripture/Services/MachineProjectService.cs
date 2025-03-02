@@ -96,8 +96,34 @@ public class MachineProjectService(
     /// This cannot be run multiple times in different threads.
     /// </remarks>
     [Mutex]
-    public async Task BuildProjectForBackgroundJobAsync(
+    [Obsolete("For backwards compatibility with any queued jobs. Deprecated March 2025.")]
+    public Task BuildProjectForBackgroundJobAsync(
         string curUserId,
+        BuildConfig buildConfig,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    ) =>
+        BuildProjectForBackgroundJobAsync(
+            new UserAccessorDto { UserId = curUserId },
+            buildConfig,
+            preTranslate,
+            cancellationToken
+        );
+
+    /// <summary>
+    /// Executes <see cref="BuildProjectAsync"/>, and traps any errors during execution.
+    /// </summary>
+    /// <param name="userAccessor">The IUserAccessor for the acting user.</param>
+    /// <param name="buildConfig">The build configuration.</param>
+    /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>An asynchronous task.</returns>
+    /// <remarks>
+    /// This cannot be run multiple times in different threads.
+    /// </remarks>
+    [Mutex]
+    public async Task BuildProjectForBackgroundJobAsync(
+        IUserAccessor userAccessor,
         BuildConfig buildConfig,
         bool preTranslate,
         CancellationToken cancellationToken
@@ -105,7 +131,7 @@ public class MachineProjectService(
     {
         try
         {
-            await BuildProjectAsync(curUserId, buildConfig, preTranslate, cancellationToken);
+            await BuildProjectAsync(userAccessor, buildConfig, preTranslate, cancellationToken);
         }
         catch (TaskCanceledException e) when (e.InnerException is not TimeoutException)
         {
@@ -508,7 +534,7 @@ public class MachineProjectService(
     /// <summary>
     /// Builds a project on Serval, including syncing and any required setup.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="userAccessor">The IUserAccessor for the acting user.</param>
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -517,7 +543,7 @@ public class MachineProjectService(
     /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual async Task BuildProjectAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         BuildConfig buildConfig,
         bool preTranslate,
         CancellationToken cancellationToken
@@ -530,7 +556,7 @@ public class MachineProjectService(
         }
 
         // Load the project from the realtime service
-        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await realtimeService.ConnectAsync(userAccessor.UserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
         if (!projectDoc.IsLoaded)
         {
@@ -542,7 +568,7 @@ public class MachineProjectService(
 
         // Ensure we have a translation engine id or a pre-translation engine id, and that it exists
         string translationEngineId = await EnsureTranslationEngineExistsAsync(
-            curUserId,
+            userAccessor.UserId,
             projectDoc,
             projectSecret,
             preTranslate,
@@ -559,7 +585,7 @@ public class MachineProjectService(
 
         // Perform the file and corpora sync with Serval
         IList<ServalCorpusSyncInfo> corporaSyncInfo = await SyncProjectCorporaAsync(
-            curUserId,
+            userAccessor,
             buildConfig,
             preTranslate,
             cancellationToken
@@ -1378,7 +1404,7 @@ public class MachineProjectService(
     /// <summary>
     /// Synchronizes the additional training data for a pre-translation project.
     /// </summary>
-    /// <param name="curUserId">The current user identifier</param>
+    /// <param name="userAccessor">The IUserAccessor for the acting user.</param>
     /// <param name="project">The project.</param>
     /// <param name="translationEngineId">The translation engine identifier.</param>
     /// <param name="buildConfig">The build configuration from the user.</param>
@@ -1391,7 +1417,7 @@ public class MachineProjectService(
     /// This can be mocked in unit tests.
     /// </remarks>
     protected internal virtual async Task<ServalAdditionalTrainingData?> SyncAdditionalTrainingData(
-        string curUserId,
+        IUserAccessor userAccessor,
         SFProject project,
         string translationEngineId,
         BuildConfig buildConfig,
@@ -1406,7 +1432,7 @@ public class MachineProjectService(
             List<ISFText> sourceTexts = [];
             List<ISFText> targetTexts = [];
             await trainingDataService.GetTextsAsync(
-                curUserId,
+                userAccessor,
                 project.Id,
                 buildConfig.TrainingDataFiles,
                 sourceTexts,
@@ -1499,7 +1525,7 @@ public class MachineProjectService(
     /// <summary>
     /// Synchronizes the corpora and files with Serval.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="userAccessor">The IUserAccessor for the acting user.</param>
     /// <param name="buildConfig">The build configuration from the user.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -1515,7 +1541,7 @@ public class MachineProjectService(
     /// </exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual async Task<IList<ServalCorpusSyncInfo>> SyncProjectCorporaAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         BuildConfig buildConfig,
         bool preTranslate,
         CancellationToken cancellationToken
@@ -1763,7 +1789,7 @@ public class MachineProjectService(
             // NOTE: We do not record the corpus sync info for the additional training data
             // You can get that information from ServalData.AdditionalTrainingData
             additionalTrainingData = await SyncAdditionalTrainingData(
-                curUserId,
+                userAccessor,
                 project,
                 translationEngineId,
                 buildConfig,

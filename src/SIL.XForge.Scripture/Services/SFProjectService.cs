@@ -90,9 +90,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <summary>
     /// Returns SF project id of created project.
     /// </summary>
-    public async Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings)
+    public async Task<string> CreateProjectAsync(IUserAccessor userAccessor, SFProjectCreateSettings settings)
     {
-        Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+        Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userAccessor.UserId);
         if (!userSecretAttempt.TryResult(out UserSecret userSecret))
             throw new DataNotFoundException("The user does not exist.");
 
@@ -125,12 +125,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 AnswerExportMethod = settings.AnswerExportMethod,
             },
         };
-        Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
+        Attempt<string> attempt = await TryGetProjectRoleAsync(project, userAccessor.UserId);
         if (!attempt.TryResult(out string projectRole) || projectRole != SFProjectRole.Administrator)
             throw new ForbiddenException();
 
         string projectId = ObjectId.GenerateNewId().ToString();
-        await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+        await using (IConnection conn = await RealtimeService.ConnectAsync(userAccessor.UserId))
         {
             if (
                 this
@@ -143,7 +143,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             IDocument<SFProject> projectDoc = await conn.CreateAsync<SFProject>(projectId, project);
             await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
-            IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+            IDocument<User> userDoc = await conn.FetchAsync<User>(userAccessor.UserId);
             await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator);
 
             // Add the source after the project has been created
@@ -151,7 +151,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
             {
                 TranslateSource source = await GetTranslateSourceAsync(
-                    curUserId,
+                    userAccessor,
                     projectDoc.Id,
                     settings.SourceParatextId,
                     syncIfCreated: false,
@@ -167,7 +167,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 ProjectId = projectId,
                 TrainEngine = false,
-                UserId = curUserId,
+                UserAccessor = userAccessor,
             }
         );
         return projectId;
@@ -335,7 +335,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await ProjectSecrets.DeleteAsync(projectId);
     }
 
-    public async Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings)
+    public async Task UpdateSettingsAsync(IUserAccessor userAccessor, string projectId, SFProjectSettings settings)
     {
         // Throw an exception if obsolete settings are specified
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -346,11 +346,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 #pragma warning restore CS0618 // Type or member is obsolete
 
         // Connect to the realtime server
-        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await RealtimeService.ConnectAsync(userAccessor.UserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
             throw new DataNotFoundException("The project does not exist.");
-        if (!IsProjectAdmin(projectDoc.Data, curUserId))
+        if (!IsProjectAdmin(projectDoc.Data, userAccessor.UserId))
             throw new ForbiddenException();
 
         bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
@@ -369,7 +369,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             || (settings.AdditionalTrainingSourceParatextId != null && !unsetAdditionalTrainingSourceProject)
         )
         {
-            Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+            Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userAccessor.UserId);
             if (!userSecretAttempt.TryResult(out UserSecret userSecret))
                 throw new DataNotFoundException("The user does not exist.");
 
@@ -381,7 +381,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (settings.SourceParatextId != null && !unsetSourceProject)
         {
             source = await GetTranslateSourceAsync(
-                curUserId,
+                userAccessor,
                 projectId,
                 settings.SourceParatextId,
                 syncIfCreated: false,
@@ -400,7 +400,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
         {
             alternateSource = await GetTranslateSourceAsync(
-                curUserId,
+                userAccessor,
                 projectId,
                 settings.AlternateSourceParatextId,
                 syncIfCreated: true,
@@ -419,7 +419,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (settings.AlternateTrainingSourceParatextId != null && !unsetAlternateTrainingSourceProject)
         {
             alternateTrainingSource = await GetTranslateSourceAsync(
-                curUserId,
+                userAccessor,
                 projectId,
                 settings.AlternateTrainingSourceParatextId,
                 syncIfCreated: true,
@@ -438,7 +438,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (settings.AdditionalTrainingSourceParatextId != null && !unsetAdditionalTrainingSourceProject)
         {
             additionalTrainingSource = await GetTranslateSourceAsync(
-                curUserId,
+                userAccessor,
                 projectId,
                 settings.AdditionalTrainingSourceParatextId,
                 syncIfCreated: true,
@@ -534,7 +534,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         );
                     }
 
-                    await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
+                    await EnsureWritingSystemTagIsSetAsync(userAccessor.UserId, projectDoc, ptProjects);
                     await _machineProjectService.AddSmtProjectAsync(projectId, CancellationToken.None);
                     trainEngine = true;
                 }
@@ -554,7 +554,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 {
                     ProjectId = projectId,
                     TrainEngine = trainEngine,
-                    UserId = curUserId,
+                    UserAccessor = userAccessor,
                 }
             );
         }
@@ -578,13 +578,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <summary>
     /// Starts the sync for the specified project.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="userAccessor">The user accessor.</param>
     /// <param name="projectId">The paratext project identifier.</param>
     /// <returns>The job identifier.</returns>
     /// <exception cref="DataNotFoundException">The project or user does not exist.</exception>
     /// <exception cref="ForbiddenException">The user is not an administrator or translator.</exception>
     /// <exception cref="UnauthorizedAccessException">The user cannot access the Paratext Registry or Archives.</exception>
-    public async Task<string> SyncAsync(string curUserId, string projectId)
+    public async Task<string> SyncAsync(IUserAccessor userAccessor, string projectId)
     {
         // Ensure the project exists
         Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
@@ -592,20 +592,20 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new DataNotFoundException("The project does not exist.");
 
         // Ensure that the user has a Paratext role
-        if (!HasParatextRole(project, curUserId))
+        if (!HasParatextRole(project, userAccessor.UserId))
             throw new ForbiddenException();
 
         // Project syncs require admin or translator role. Resources can sync with any Paratext role.
         if (
             !_paratextService.IsResource(project.ParatextId)
-            && !(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId))
+            && !(IsProjectAdmin(project, userAccessor.UserId) || IsProjectTranslator(project, userAccessor.UserId))
         )
         {
             throw new ForbiddenException();
         }
 
         // Retrieve the user's secrets
-        Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+        Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userAccessor.UserId);
         if (!userSecretAttempt.TryResult(out UserSecret userSecret))
             throw new DataNotFoundException("The user does not exist.");
 
@@ -615,11 +615,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new UnauthorizedAccessException();
 
         // Ensure that the user can access the Paratext archives
-        if (!await _paratextService.CanUserAuthenticateToPTArchivesAsync(curUserId))
+        if (!await _paratextService.CanUserAuthenticateToPTArchivesAsync(userAccessor.UserId))
             throw new UnauthorizedAccessException();
 
         // Queue the sync
-        return await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
+        return await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserAccessor = userAccessor });
     }
 
     public async Task CancelSyncAsync(string curUserId, string projectId)
@@ -1843,9 +1843,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     }
 
     /// <summary>
-    /// Gets the translate source asynchronously.
+    /// Gets the translation source asynchronously.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="userAccessor">The user accessor.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="paratextId">The paratext identifier.</param>
     /// <param name="syncIfCreated">If <c>true</c> sync the project if it is created.</param>
@@ -1854,7 +1854,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <returns>The <see cref="TranslateSource"/> object for the specified resource.</returns>
     /// <exception cref="DataNotFoundException">The source paratext project does not exist.</exception>
     private async Task<TranslateSource> GetTranslateSourceAsync(
-        string curUserId,
+        IUserAccessor userAccessor,
         string sfProjectId,
         string paratextId,
         bool syncIfCreated,
@@ -1867,7 +1867,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (sourcePTProject == null)
         {
             // If it is not a project, see if there is a matching resource
-            IReadOnlyList<ParatextResource> resources = await _paratextService.GetResourcesAsync(curUserId);
+            IReadOnlyList<ParatextResource> resources = await _paratextService.GetResourcesAsync(userAccessor.UserId);
             sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
             if (sourcePTProject == null)
             {
@@ -1876,7 +1876,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // Get the users who will access this source resource or project
-        IEnumerable<string> userIds = userRoles != null ? userRoles.Keys : new string[] { curUserId };
+        IEnumerable<string> userIds = userRoles != null ? userRoles.Keys : [userAccessor.UserId];
 
         // Get the project reference
         SFProject sourceProject = RealtimeService
@@ -1890,11 +1890,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
         else
         {
-            sourceProjectRef = await CreateResourceProjectAsync(curUserId, paratextId, addUser: false);
+            sourceProjectRef = await CreateResourceProjectAsync(userAccessor.UserId, paratextId, addUser: false);
             projectCreated = true;
         }
 
-        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await RealtimeService.ConnectAsync(userAccessor.UserId);
         IDocument<SFProject> projectDoc = projectCreated ? null : await GetProjectDocAsync(sourceProjectRef, conn);
         // Add each user in the target project to the source project so they can access it
         foreach (string userId in userIds)
@@ -1926,14 +1926,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (projectCreated && syncIfCreated)
         {
             string jobId = await _syncService.SyncAsync(
-                new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId }
+                new SyncConfig { ProjectId = sourceProjectRef, UserAccessor = userAccessor }
             );
 
             // After syncing the source project (which will take some time), ensure that the writing system matches
             // what is in the project document
             _backgroundJobClient.ContinueJobWith<MachineProjectService>(
                 jobId,
-                r => r.UpdateTranslationSourcesAsync(curUserId, sfProjectId)
+                r => r.UpdateTranslationSourcesAsync(userAccessor.UserId, sfProjectId)
             );
         }
 

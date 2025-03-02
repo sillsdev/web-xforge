@@ -30,14 +30,15 @@ public class SFProjectsRpcController(
 {
     internal const string AlreadyProjectMemberResponse = "alreadyProjectMember";
 
-    // Keep a reference in this class to prevent duplicate allocation (Warning CS9107)
+    // Keep references in this class to prevent duplicate allocation (Warning CS9107)
     private readonly IExceptionHandler _exceptionHandler = exceptionHandler;
+    private readonly IUserAccessor _userAccessor = userAccessor;
 
     public async Task<IRpcMethodResult> Create(SFProjectCreateSettings settings)
     {
         try
         {
-            string projectId = await projectService.CreateProjectAsync(UserId, settings);
+            string projectId = await projectService.CreateProjectAsync(_userAccessor, settings);
             return Ok(projectId);
         }
         catch (ForbiddenException)
@@ -127,7 +128,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            await projectService.UpdateSettingsAsync(UserId, projectId, settings);
+            await projectService.UpdateSettingsAsync(_userAccessor, projectId, settings);
             return Ok();
         }
         catch (ForbiddenException)
@@ -539,7 +540,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            await projectService.SyncAsync(UserId, projectId);
+            await projectService.SyncAsync(_userAccessor, projectId);
             return Ok();
         }
         catch (Exception ex) when (ex is ForbiddenException or UnauthorizedAccessException)
@@ -621,7 +622,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            await trainingDataService.DeleteTrainingDataAsync(UserId, projectId, ownerId, dataId);
+            await trainingDataService.DeleteTrainingDataAsync(_userAccessor, projectId, ownerId, dataId);
             return Ok();
         }
         catch (ForbiddenException)

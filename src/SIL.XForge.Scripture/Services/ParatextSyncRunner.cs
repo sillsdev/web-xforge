@@ -53,12 +53,12 @@ namespace SIL.XForge.Scripture.Services;
 /// └─────┘  └─────┘  └───────────┘
 /// </code>
 /// </summary>
-public class ParatextSyncRunner : IParatextSyncRunner
+public partial class ParatextSyncRunner : IParatextSyncRunner
 {
     private static readonly double _numberOfPhases = Enum.GetValues(typeof(SyncPhase)).Length;
     private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
         SequenceEqualityComparer.Create(new ChapterEqualityComparer());
-    private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
+    private static readonly SequenceEqualityComparer<string> _listStringComparer = SequenceEqualityComparer.Create(
         EqualityComparer<string>.Default
     );
     private static readonly IEqualityComparer<IList<int>> _listIntComparer = SequenceEqualityComparer.Create(
@@ -71,10 +71,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// The regular expression for finding whitespace before XML tags.
     /// </summary>
     /// <remarks>This is used by <see cref="ParseText"/>.</remarks>
-    private static readonly Regex WhitespaceBeforeTagsRegex = new Regex(
-        @"\n\s*<",
-        RegexOptions.CultureInvariant | RegexOptions.Compiled
-    );
+    [GeneratedRegex(@"\n\s*<", RegexOptions.CultureInvariant | RegexOptions.Compiled)]
+    private static partial Regex WhitespaceBeforeTagsRegex();
+
+    /// <summary>
+    /// The regular expression to remove whitespace at the beginning of the text.
+    /// </summary>
+    /// <remarks>This is used by <see cref="UsxToXDocument"/>.</remarks>
+    [GeneratedRegex(@"^\s*", RegexOptions.CultureInvariant | RegexOptions.Compiled)]
+    private static partial Regex WhitespaceAtBeginningOfText();
+
+    /// <summary>
+    /// The regular expression to remove whitespace at the beginning of the rest of the lines, and remove line breaks.
+    /// </summary>
+    /// <remarks>This is used by <see cref="UsxToXDocument"/>.</remarks>
+    [GeneratedRegex(@"\r?\n\s*", RegexOptions.CultureInvariant | RegexOptions.Compiled)]
+    private static partial Regex WhitespaceAtBeginningOfLines();
 
     private readonly IRepository<UserSecret> _userSecrets;
     private readonly IUserService _userService;
@@ -144,19 +156,42 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// restricts the execution of this method as a background job to one instance at a time.
     /// </remarks>
     [Mutex]
-    public async Task RunAsync(
+    [Obsolete("For backwards compatibility with any queued jobs. Deprecated March 2025.")]
+    public Task RunAsync(
         string projectSFId,
         string userId,
         string syncMetricsId,
         bool trainEngine,
         CancellationToken token
+    ) => RunAsync(projectSFId, new UserAccessorDto { UserId = userId }, syncMetricsId, trainEngine, token);
+
+    /// <summary>
+    /// Synchronize content and user permissions in SF DB with Paratext SendReceive servers and PT Registry, for
+    /// a project.
+    /// </summary>
+    /// <param name="projectSFId">The project's Scripture Forge identifier.</param>
+    /// <param name="userAccessor">The user accessor.</param>
+    /// <param name="syncMetricsId">The sync metrics identifier.</param>
+    /// <param name="trainEngine">No longer used. This is kept to ensure backwards compatibility with previously created jobs.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <remarks>
+    /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex that
+    /// restricts the execution of this method as a background job to one instance at a time.
+    /// </remarks>
+    [Mutex]
+    public async Task RunAsync(
+        string projectSFId,
+        IUserAccessor userAccessor,
+        string syncMetricsId,
+        bool trainEngine,
+        CancellationToken token
     )
     {
-        // Whether or not we can rollback Paratext
+        // Whether we can roll back Paratext
         bool canRollbackParatext = false;
         try
         {
-            if (!await InitAsync(projectSFId, userId, syncMetricsId, token))
+            if (!await InitAsync(projectSFId, userAccessor, syncMetricsId, token))
             {
                 await CompleteSync(false, canRollbackParatext, token);
                 return;
@@ -340,11 +375,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     // NOTE: The following additions/removals not included in the transaction
 
                     // Add new PT users who are in the target project, but not the source project
-                    List<string> usersToAdd = _projectDoc
-                        .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
-                        .Select(u => u.Key)
-                        .Except(sourceProject.Data.UserRoles.Keys)
-                        .ToList();
+                    List<string> usersToAdd =
+                    [
+                        .. _projectDoc
+                            .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
+                            .Select(u => u.Key)
+                            .Except(sourceProject.Data.UserRoles.Keys),
+                    ];
                     foreach (string uid in usersToAdd)
                     {
                         // As resource projects do not have administrators, we connect as the user we are to add
@@ -361,11 +398,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     }
 
                     // Remove PT users who are in the target project, and no longer have access to the resource
-                    List<string> usersToCheck = _projectDoc
-                        .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
-                        .Select(u => u.Key)
-                        .Except(usersToAdd)
-                        .ToList();
+                    List<string> usersToCheck =
+                    [
+                        .. _projectDoc
+                            .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
+                            .Select(u => u.Key)
+                            .Except(usersToAdd),
+                    ];
                     foreach (string uid in usersToCheck)
                     {
                         string permission = await _paratextService.GetResourcePermissionAsync(
@@ -444,7 +483,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
             {
                 LogMetric("Updating permissions");
-                await _projectService.UpdatePermissionsAsync(userId, _projectDoc, _paratextUsers, token);
+                await _projectService.UpdatePermissionsAsync(userAccessor.UserId, _projectDoc, _paratextUsers, token);
             }
 
             await NotifySyncProgress(SyncPhase.Phase9, 40.0);
@@ -499,18 +538,19 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private async Task GetAndUpdateParatextBooksAndNotes(
         SyncPhase syncPhase,
         string paratextId,
-        IDictionary<int, SortedList<int, IDocument<TextData>>> textDocsByBook,
-        IDictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
-        IDictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook,
+        Dictionary<int, SortedList<int, IDocument<TextData>>> textDocsByBook,
+        Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
+        Dictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook,
         List<IDocument<NoteThread>> biblicalTermNoteThreadDocs
     )
     {
         // Get the Text Data
-        List<string> textIds = _projectDoc
-            .Data.Texts.SelectMany(t =>
+        List<string> textIds =
+        [
+            .. _projectDoc.Data.Texts.SelectMany(t =>
                 t.Chapters.Select(c => TextData.GetTextDocId(_projectDoc.Id, t.BookNum, c.Number))
-            )
-            .ToList();
+            ),
+        ];
         IReadOnlyCollection<IDocument<TextData>> textDocs = await _conn.GetAndFetchDocsAsync<TextData>(textIds);
 
         // Get the Note Threads
@@ -563,9 +603,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
                 }
 
-                List<IDocument<NoteThread>> noteThreadDocs = noteDocs
-                    .Where(n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null)
-                    .ToList();
+                List<IDocument<NoteThread>> noteThreadDocs =
+                [
+                    .. noteDocs.Where(n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null),
+                ];
                 noteThreadDocsByBook[text.BookNum] = noteThreadDocs;
             }
         }
@@ -579,9 +620,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 await UpdateTranslateNoteTag(paratextId);
 
             // Only update Paratext if there are editable notes
-            List<IDocument<NoteThread>> editableNotes = noteDocs
-                .Where(nt => nt.Data.Notes.Any(n => n.Editable == true) && nt.Data?.BiblicalTermId == null)
-                .ToList();
+            List<IDocument<NoteThread>> editableNotes =
+            [
+                .. noteDocs.Where(nt => nt.Data.Notes.Any(n => n.Editable == true) && nt.Data?.BiblicalTermId == null),
+            ];
             if (editableNotes.Count > 0)
             {
                 int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
@@ -650,7 +692,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 op.Set(p => p.BiblicalTermsConfig.HasRenderings, biblicalTermsChanges.HasRenderings);
 
                 // If there are no Biblical Terms or Renderings, disable Biblical Terms
-                if (!biblicalTermDocs.Any())
+                if (biblicalTermDocs.Count == 0)
                 {
                     op.Set(p => p.BiblicalTermsConfig.BiblicalTermsEnabled, false);
                 }
@@ -968,7 +1010,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
     internal async Task<bool> InitAsync(
         string projectSFId,
-        string userId,
+        IUserAccessor userAccessor,
         string syncMetricsId,
         CancellationToken token
     )
@@ -977,7 +1019,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _logger.LogInformation($"Initializing sync for project {projectSFId} with sync metrics id {syncMetricsId}");
         if (!(await _syncMetricsRepository.TryGetAsync(syncMetricsId)).TryResult(out _syncMetrics))
         {
-            Log($"Could not find sync metrics.", syncMetricsId, userId);
+            Log("Could not find sync metrics.", syncMetricsId, userAccessor.UserId);
             return false;
         }
 
@@ -1014,7 +1056,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _projectDoc = await _conn.FetchAsync<SFProject>(projectSFId);
         if (!_projectDoc.IsLoaded)
         {
-            Log($"Project doc was not loaded.", projectSFId, userId);
+            Log("Project doc was not loaded.", projectSFId, userAccessor.UserId);
             return false;
         }
 
@@ -1022,17 +1064,17 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         if (!(await _projectSecrets.TryGetAsync(projectSFId)).TryResult(out _projectSecret))
         {
-            Log($"Could not find project secret.", projectSFId, userId);
+            Log("Could not find project secret.", projectSFId, userAccessor.UserId);
             return false;
         }
         _userIdsToDisplayNames = await _userService.DisplayNamesFromUserIds(
-            userId,
+            userAccessor.UserId,
             [.. _projectDoc.Data.UserRoles.Keys]
         );
 
-        if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
+        if (!(await _userSecrets.TryGetAsync(userAccessor.UserId)).TryResult(out _userSecret))
         {
-            Log($"Could not find user secret.", projectSFId, userId);
+            Log("Could not find user secret.", projectSFId, userAccessor.UserId);
             return false;
         }
 
@@ -1045,7 +1087,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
         catch (ForbiddenException)
         {
-            Log($"User does not have permission to sync project {projectSFId}.", projectSFId, userId);
+            Log($"User does not have permission to sync project {projectSFId}.", projectSFId, userAccessor.UserId);
             await _projectDoc.SubmitJson0OpAsync(op =>
                 op.Set(pd => pd.Sync.LastSyncErrorCode, (int)SyncErrorCodes.UserPermissionError)
             );
@@ -1081,9 +1123,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // intact, and request XDocument.Parse to preserve whitespace.
 
         // Remove whitespace at the beginning of the text.
-        bookUsx = Regex.Replace(bookUsx, @"^\s*", "", RegexOptions.CultureInvariant);
+        bookUsx = WhitespaceAtBeginningOfText().Replace(bookUsx, string.Empty);
+
         // Remove whitespace at the beginning of the rest of the lines, and remove line breaks.
-        bookUsx = Regex.Replace(bookUsx, @"\r?\n\s*", "", RegexOptions.CultureInvariant);
+        bookUsx = WhitespaceAtBeginningOfLines().Replace(bookUsx, string.Empty);
 
         // When the input to XDocument.Parse is one line with no initial whitespace, it does perceive this input
         // as "indented", and so honours the request to preserve whitespace.
@@ -1133,7 +1176,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         SortedList<int, IDocument<TextData>> textDocs
     )
     {
-        // Get all of the last editors for the chapters.
+        // Get all the last editors for the chapters.
         var chapterAuthors = new Dictionary<int, string>();
         foreach (Chapter chapter in text.Chapters)
         {
@@ -1533,10 +1576,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 _syncMetrics.Notes.Added++;
             }
 
-            List<int> removedIndices = change
-                .NoteIdsRemoved.Select(id => threadDoc.Data.Notes.FindIndex(n => n.DataId == id))
-                .Where(index => index >= 0)
-                .ToList();
+            List<int> removedIndices =
+            [
+                .. change
+                    .NoteIdsRemoved.Select(id => threadDoc.Data.Notes.FindIndex(n => n.DataId == id))
+                    .Where(index => index >= 0),
+            ];
             // Go through the indices in reverse order so subsequent removal indices are not affected
             removedIndices.Sort((a, b) => b.CompareTo(a));
             foreach (int index in removedIndices)
@@ -1590,7 +1635,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private static XElement ParseText(string text)
     {
         text = text.Trim().Replace("\r\n", "\n");
-        text = WhitespaceBeforeTagsRegex.Replace(text, "<");
+        text = WhitespaceBeforeTagsRegex().Replace(text, "<");
         return XElement.Parse(text, LoadOptions.PreserveWhitespace);
     }
 
@@ -1630,7 +1675,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             .Select(n => n.Id);
         // Make a record of the note thread doc ids to return since they are removed
         // from noteThreadDocIds after the docs are deleted.
-        List<string> deletedNoteThreadDocIds = new List<string>(noteThreadDocIds);
+        List<string> deletedNoteThreadDocIds = [.. noteThreadDocIds];
 
         var tasks = new List<Task>();
         foreach (string noteThreadDocId in deletedNoteThreadDocIds)
@@ -1666,13 +1711,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         LogMetric("Completing sync");
         bool updateRoles = true;
-        IReadOnlyDictionary<string, string> ptUserRoles;
+        Dictionary<string, string> ptUserRoles;
         if (!successful || _paratextService.IsResource(_projectDoc.Data.ParatextId) || token.IsCancellationRequested)
         {
             // Do not update permissions on sync, if this is a resource project, as then,
             // permission updates will be performed when a target project is synchronized.
             // If the token is cancelled, do not update permissions as GetProjectRolesAsync will fail.
-            ptUserRoles = new Dictionary<string, string>();
+            ptUserRoles = [];
             updateRoles = false;
         }
         else
@@ -1900,13 +1945,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         // If we have an id in the job ids collection, remove the first one, and/or if we have a
         // sync metrics id, we will remove that specific id from the project secrets.
-        if (_projectSecret.JobIds.Any() || _projectSecret.SyncMetricsIds.Contains(_syncMetrics?.Id))
+        if (_projectSecret.JobIds.Count > 0 || _projectSecret.SyncMetricsIds.Contains(_syncMetrics?.Id))
         {
             await _projectSecrets.UpdateAsync(
                 _projectSecret.Id,
                 u =>
                 {
-                    if (_projectSecret.JobIds.Any())
+                    if (_projectSecret.JobIds.Count > 0)
                     {
                         u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
                     }
