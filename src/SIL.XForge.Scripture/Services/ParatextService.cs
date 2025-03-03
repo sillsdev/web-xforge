@@ -846,7 +846,7 @@ public class ParatextService : DisposableBase, IParatextService
         else
         {
             // Get the scripture text so we can retrieve the permissions from the XML
-            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), sfProject.ParatextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, sfProject.ParatextId);
 
             // Calculate the project and resource permissions
             foreach (string uid in sfProject.UserRoles.Keys)
@@ -855,7 +855,7 @@ public class ParatextService : DisposableBase, IParatextService
                 if (
                     !ptUsernameMapping.TryGetValue(uid, out string userName)
                     || string.IsNullOrWhiteSpace(userName)
-                    || scrText.Permissions.GetRole(userName) == UserRoles.None
+                    || scrText!.Permissions.GetRole(userName) == UserRoles.None
                 )
                 {
                     permissions.Add(uid, TextInfoPermission.None);
@@ -863,39 +863,46 @@ public class ParatextService : DisposableBase, IParatextService
                 else
                 {
                     string textInfoPermission = TextInfoPermission.Read;
-                    if (book == 0)
+
+                    // Observers and Consultants can have EditAllBooks set to true,
+                    // so we must check whether the role is read-only.
+                    // NOTE: We check for UserRoles.None in the block above.
+                    if (scrText.Permissions.GetRole(userName) is not (UserRoles.Observer or UserRoles.Consultant))
                     {
-                        // Project level
-                        if (scrText.Permissions.CanEditAllBooks(userName))
+                        if (book == 0)
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Project level
+                            if (scrText.Permissions.CanEditAllBooks(userName))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
-                    }
-                    else if (chapter == 0)
-                    {
-                        // Book level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
-                            PermissionSet.Merged,
-                            userName
-                        );
-                        // Check if they can edit all books or the specified book
-                        if (scrText.Permissions.CanEditAllBooks(userName) || editable.Contains(book))
+                        else if (chapter == 0)
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Book level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
+                                PermissionSet.Merged,
+                                userName
+                            );
+                            // Check if they can edit all books or the specified book
+                            if (scrText.Permissions.CanEditAllBooks(userName) || editable.Contains(book))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
-                    }
-                    else
-                    {
-                        // Chapter level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(
-                            book,
-                            scrText.Settings.Versification,
-                            userName,
-                            PermissionSet.Merged
-                        );
-                        if (editable?.Contains(chapter) ?? false)
+                        else
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Chapter level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(
+                                book,
+                                scrText.Settings.Versification,
+                                userName,
+                                PermissionSet.Merged
+                            );
+                            if (editable?.Contains(chapter) ?? false)
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
                     }
 
