@@ -1,0 +1,26 @@
+@use '@angular/material' as mat;
+@import 'default';
+@import 'dark';
+
+/* All themes share the common default Material structure */
+html {
+  @include mat.core();
+  @include mat.all-component-themes($default-theme);
+  @include mat.all-component-typographies($default-theme);
+  @include mat.typography-hierarchy($default-theme);
+}
+
+/** Helper class names to help consistently match Material typography */
+$headings: (
+  'h1': '.mat-display-small',
+  'h2': '.mat-title-large',
+  'h3': '.mat-title-medium',
+  'h4': '.mat-title-small'
+);
+
+@each $class, $extend in $headings {
+  #{$class},
+  .#{$class} {
+    @extend #{$extend};
+  }
+}

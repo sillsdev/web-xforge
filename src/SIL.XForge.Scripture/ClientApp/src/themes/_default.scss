@@ -1,0 +1,149 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+@use 'src/material-styles' as mat-styles;
+
+// Styles for angular material components. Refer to https://material.angular.io/guide/theming
+// Note: Color palettes are generated from primary: #BECC63, secondary: #9BA26D, tertiary: #F3D479
+$_palettes: (
+  primary: (
+    0: #000000,
+    10: #191e00,
+    20: #2d3400,
+    25: #383f00,
+    30: #424b00,
+    35: #4e5800,
+    40: #596400,
+    50: #717e1c,
+    60: #8b9835,
+    70: #a5b34d,
+    80: #c1cf65,
+    90: #ddeb7e,
+    95: #ebfa8b,
+    98: #f7ffbb,
+    99: #fdffdb,
+    100: #ffffff
+  ),
+  secondary: (
+    0: #000000,
+    10: #191e00,
+    20: #2e3309,
+    25: #393f14,
+    30: #444a1e,
+    35: #505629,
+    40: #5c6234,
+    50: #747b4a,
+    60: #8e9561,
+    70: #a9b07a,
+    80: #c4cb93,
+    90: #e0e7ad,
+    95: #eff6ba,
+    98: #f7fec2,
+    99: #fcffdb,
+    100: #ffffff
+  ),
+  tertiary: (
+    0: #000000,
+    10: #231b00,
+    20: #3c2f00,
+    25: #493a00,
+    30: #574500,
+    35: #655000,
+    40: #725c09,
+    50: #8d7524,
+    60: #a98e3b,
+    70: #c5a953,
+    80: #e2c46b,
+    90: #ffe086,
+    95: #fff0cb,
+    98: #fff8f0,
+    99: #fffbff,
+    100: #ffffff
+  ),
+  neutral: (
+    0: #000000,
+    4: #0b0b0b,
+    6: #101111,
+    10: #1b1c1c,
+    12: #1f2020,
+    17: #2a2a2a,
+    20: #303030,
+    22: #343434,
+    24: #393939,
+    25: #3b3b3b,
+    30: #474747,
+    35: #525252,
+    40: #5f5e5e,
+    50: #777777,
+    60: #919090,
+    70: #acabab,
+    80: #c8c6c6,
+    87: #dcdad9,
+    90: #e4e2e1,
+    92: #eae8e7,
+    94: #efeded,
+    95: #f2f0f0,
+    96: #f5f3f3,
+    98: #fbf9f8,
+    99: #fefcfb,
+    100: #ffffff
+  ),
+  neutral-variant: (
+    0: #000000,
+    10: #1b1d10,
+    20: #303123,
+    25: #3b3d2e,
+    30: #464839,
+    35: #525444,
+    40: #5e604f,
+    50: #777867,
+    60: #919280,
+    70: #acac99,
+    80: #c7c8b4,
+    90: #e4e4cf,
+    95: #f2f2dd,
+    98: #fbfbe5,
+    99: #fefee8,
+    100: #ffffff
+  ),
+  error: (
+    0: #000000,
+    10: #410002,
+    20: #690005,
+    25: #7e0007,
+    30: #93000a,
+    35: #a80710,
+    40: #ba1a1a,
+    50: #de3730,
+    60: #ff5449,
+    70: #ff897d,
+    80: #ffb4ab,
+    90: #ffdad6,
+    95: #ffedea,
+    98: #fff8f7,
+    99: #fffbff,
+    100: #ffffff
+  )
+);
+$_rest: (
+  secondary: map.get($_palettes, secondary),
+  neutral: map.get($_palettes, neutral),
+  neutral-variant: map.get($_palettes, neutral-variant),
+  error: map.get($_palettes, error)
+);
+$primary: map.merge(map.get($_palettes, primary), $_rest);
+$tertiary: map.merge(map.get($_palettes, tertiary), $_rest);
+
+$default-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: $primary,
+      tertiary: $tertiary
+    )
+  )
+);
+
+html.theme-light {
+  color-scheme: light;
+  @include mat-styles.theme($default-theme);
+}

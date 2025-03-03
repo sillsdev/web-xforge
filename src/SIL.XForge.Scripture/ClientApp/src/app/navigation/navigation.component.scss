@@ -1,6 +1,3 @@
-@use 'src/variables';
-@use 'src/material-styles';
-
 mat-nav-list .mdc-list-item {
   font-weight: 500;
   font-size: 14px;
@@ -8,18 +5,19 @@ mat-nav-list .mdc-list-item {
   --mat-list-active-indicator-shape: 0;
 
   mat-icon {
-    color: variables.$purpleMedium;
-    fill: variables.$purpleMedium;
+    color: var(--sf-navigation-icon);
+    fill: var(--sf-navigation-icon);
     transition: color 0.15s;
     padding: 4px;
     box-sizing: content-box;
   }
+
   &:hover,
   &.activated-nav-item,
   &.active {
     mat-icon {
-      color: variables.$purpleLight;
-      fill: variables.$purpleLight;
+      color: var(--sf-navigation-icon-active);
+      fill: var(--sf-navigation-icon-active);
     }
   }
 
@@ -41,7 +39,7 @@ mat-nav-list .mdc-list-item {
 
   &.activated-nav-item,
   &.active {
-    background-color: var(--sf-list-item-active-background-color);
+    background-color: var(--sf-navigation-list-item-active-background-color);
   }
 }
 
@@ -78,7 +76,7 @@ mat-nav-list .mdc-list-item {
 #sync-icon ::ng-deep .mat-badge-content {
   font-family: 'Material Icons';
   background: transparent;
-  color: variables.$errorColor;
+  color: var(--sf-error-foreground);
   font-weight: normal;
   font-size: 1.4rem;
   top: 4px;
@@ -96,7 +94,7 @@ mat-nav-list .mdc-list-item {
 .mat-mdc-nav-list.disabled-offline ::ng-deep .mat-mdc-list-item-unscoped-content {
   &,
   mat-icon {
-    color: variables.$disabled-text-color !important;
+    color: var(--sf-disabled-foreground) !important;
   }
 }
 
