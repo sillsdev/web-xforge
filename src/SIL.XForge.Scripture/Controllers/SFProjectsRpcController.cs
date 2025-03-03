@@ -564,7 +564,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            await projectService.CancelSyncAsync(UserId, projectId);
+            await projectService.CancelSyncAsync(_userAccessor, projectId);
             return Ok();
         }
         catch (ForbiddenException)

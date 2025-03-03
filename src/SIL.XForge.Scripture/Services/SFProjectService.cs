@@ -598,13 +598,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!HasParatextRole(project, userAccessor.UserId))
             throw new ForbiddenException();
 
-        // Project syncs require admin or translator role. Resources can sync with any Paratext role.
+        // Project syncs require admin or translator role, or consultant if a Serval Admin.
+        // Resources can sync with any paratext role.
         if (
             !_paratextService.IsResource(project.ParatextId)
             && !(
                 IsProjectAdmin(project, userAccessor.UserId)
                 || IsProjectTranslator(project, userAccessor.UserId)
-                || userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin)
+                || (
+                    userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin)
+                    && IsProjectConsultant(project, userAccessor.UserId)
+                )
             )
         )
         {
@@ -629,20 +633,30 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         return await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserAccessor = userAccessor });
     }
 
-    public async Task CancelSyncAsync(string curUserId, string projectId)
+    public async Task CancelSyncAsync(IUserAccessor userAccessor, string projectId)
     {
         SFProject project = await GetProjectAsync(projectId);
-        if (!HasParatextRole(project, curUserId))
+        if (!HasParatextRole(project, userAccessor.UserId))
             throw new ForbiddenException();
 
-        // Project syncs require admin or translator role.  Resources can sync with any paratext role.
+        // Project syncs require admin or translator role, or consultant if a Serval Admin.
+        // Resources can sync with any paratext role.
         if (!_paratextService.IsResource(project.ParatextId))
         {
-            if (!(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId)))
+            if (
+                !(
+                    IsProjectAdmin(project, userAccessor.UserId)
+                    || IsProjectTranslator(project, userAccessor.UserId)
+                    || (
+                        userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin)
+                        && IsProjectConsultant(project, userAccessor.UserId)
+                    )
+                )
+            )
                 throw new ForbiddenException();
         }
 
-        await _syncService.CancelSyncAsync(curUserId, projectId);
+        await _syncService.CancelSyncAsync(userAccessor.UserId, projectId);
     }
 
     public async Task<bool> InviteAsync(
@@ -1735,6 +1749,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </remarks>
     private static bool IsProjectTranslator(SFProject project, string userId) =>
         project.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Translator;
+
+    /// <summary>
+    /// Determines whether the user is a consultant for the specified project.
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <returns>
+    ///   <c>true</c> if a consultant for the project; otherwise, <c>false</c>.
+    /// </returns>
+    private static bool IsProjectConsultant(SFProject project, string userId) =>
+        project.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Consultant;
 
     private static bool HasParatextRole(SFProject project, string userId) =>
         project.UserRoles.TryGetValue(userId, out string role) && SFProjectRole.IsParatextRole(role);

@@ -40,14 +40,25 @@ public static class MachineApi
     /// </summary>
     /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="project">The project.</param>
-    /// <param name="mustBeOnProject">If <c>true</c>, the user must be on the project.</param>
+    /// <param name="requiredRolesIfServalAdmin">
+    /// Optional. If defined and the user is a Serval Admin,
+    /// the user must be on the project as one of the specified roles.
+    /// </param>
     /// <exception cref="ForbiddenException">
     /// The user does not have permission to access the Serval/Machine API.
     /// </exception>
-    public static void EnsureProjectPermission(IUserAccessor userAccessor, Project project, bool mustBeOnProject)
+    /// <remarks>
+    /// A user must be a Translator, Administrator, or a Serval Admin.
+    /// <paramref name="requiredRolesIfServalAdmin"/> can be empty if the user is a Serval Admin.
+    /// </remarks>
+    public static void EnsureProjectPermission(
+        IUserAccessor userAccessor,
+        Project project,
+        string[]? requiredRolesIfServalAdmin = null
+    )
     {
         // Check for permission
-        if (!HasPermission(userAccessor, project, mustBeOnProject))
+        if (!HasPermission(userAccessor, project, requiredRolesIfServalAdmin ?? []))
         {
             throw new ForbiddenException();
         }
@@ -68,12 +79,15 @@ public static class MachineApi
     /// </summary>
     /// <param name="userAccessor">An IUserAccessor for the acting user.</param>
     /// <param name="project">The project.</param>
-    /// <param name="mustBeOnProject">If <c>true</c>, the user must be on the project as a Paratext user.</param>
+    /// <param name="requiredRolesIfServalAdmin">
+    /// If defined and the user is a Serval Admin, the user must be on the project as one of the specified roles.
+    /// </param>
     /// <returns><c>true</c> if the user has permission; otherwise, <c>false</c>.</returns>
     /// <remarks>
-    /// A user must be an Administrator or Translator, or a Serval Admin.
+    /// A user must be a Translator, Administrator, or a Serval Admin.
+    /// <paramref name="requiredRolesIfServalAdmin"/> can be empty if the user is a Serval Admin.
     /// </remarks>
-    private static bool HasPermission(IUserAccessor userAccessor, Project project, bool mustBeOnProject)
+    private static bool HasPermission(IUserAccessor userAccessor, Project project, string[] requiredRolesIfServalAdmin)
     {
         if (string.IsNullOrWhiteSpace(userAccessor.UserId))
         {
@@ -83,7 +97,7 @@ public static class MachineApi
         bool isOnProject = project.UserRoles.TryGetValue(userAccessor.UserId, out string role);
         if (
             userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin)
-            && (!mustBeOnProject || isOnProject && SFProjectRole.IsParatextRole(role))
+            && (requiredRolesIfServalAdmin.Length == 0 || isOnProject && requiredRolesIfServalAdmin.Contains(role))
         )
         {
             return true;
