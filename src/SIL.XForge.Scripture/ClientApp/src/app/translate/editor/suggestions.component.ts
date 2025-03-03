@@ -1,6 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { MatListOption, MatSelectionList } from '@angular/material/list';
-import isEqual from 'lodash-es/isEqual';
+import { isEqual } from 'lodash-es';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
 import { filter, first } from 'rxjs/operators';

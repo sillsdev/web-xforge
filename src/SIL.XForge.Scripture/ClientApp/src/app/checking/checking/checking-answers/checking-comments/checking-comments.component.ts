@@ -1,12 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
-import cloneDeep from 'lodash-es/cloneDeep';
-import sortBy from 'lodash-es/sortBy';
+import { cloneDeep, sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { debounceTime } from 'rxjs/operators';
 import { DialogService } from 'xforge-common/dialog.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';

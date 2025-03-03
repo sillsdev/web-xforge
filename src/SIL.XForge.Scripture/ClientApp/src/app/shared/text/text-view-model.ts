@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { cloneDeep } from 'lodash-es';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import { DeltaOperation, StringMap } from 'rich-text';
 import { Subscription } from 'rxjs';

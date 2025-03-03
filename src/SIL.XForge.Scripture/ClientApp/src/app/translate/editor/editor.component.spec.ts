@@ -23,8 +23,7 @@ import {
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import userEvent, { UserEvent } from '@testing-library/user-event';
-import { merge } from 'lodash-es';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { cloneDeep, merge } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import Quill, { Delta, EmitterSource, Range } from 'quill';

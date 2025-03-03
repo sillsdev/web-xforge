@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Input, NgZone, QueryList, ViewChildren } from '@angular/core';
-import isEqual from 'lodash-es/isEqual';
+import { isEqual } from 'lodash-es';
 import { SubscriptionDisposable } from '../subscription-disposable';
 
 const DEFAULT_SIZE = 100;

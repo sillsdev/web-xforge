@@ -13,8 +13,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router, RouterMo
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
-import { cloneDeep } from 'lodash-es';
-import clone from 'lodash-es/clone';
+import { clone, cloneDeep } from 'lodash-es';
 import { Delta } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';

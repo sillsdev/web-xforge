@@ -3,8 +3,7 @@ import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, Vi
 import { ActivatedRoute, NavigationBehaviorOptions, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { SplitComponent } from 'angular-split';
-import { debounce } from 'lodash-es';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { cloneDeep, debounce } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';

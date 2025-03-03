@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Inject, Injectable, InjectionToken, Optional } from '@angular/core';
 import { HashMap, Translation, TranslocoConfig, TranslocoLoader, TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
-import merge from 'lodash-es/merge';
+import { merge } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { BehaviorSubject, Observable, of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
