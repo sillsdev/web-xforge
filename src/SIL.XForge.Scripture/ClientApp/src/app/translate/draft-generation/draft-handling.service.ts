@@ -190,7 +190,17 @@ export class DraftHandlingService {
    * @param draftDelta The draft delta to overwrite the current text document with.
    */
   async applyChapterDraftAsync(textDocId: TextDocId, draftDelta: Delta): Promise<void> {
-    await this.projectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true);
+    const verseOps: DeltaOperation[] = draftDelta.ops.filter(
+      op => typeof op.insert === 'object' && op.insert.verse != null
+    );
+    const lastVerse: number = verseOps.length > 0 ? (verseOps[verseOps.length - 1].insert!['verse']['number'] ?? 0) : 0;
+    await this.projectService.onlineSetDraftApplied(
+      textDocId.projectId,
+      textDocId.bookNum,
+      textDocId.chapterNum,
+      true,
+      lastVerse
+    );
     await this.projectService.onlineSetIsValid(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true);
     await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
   }

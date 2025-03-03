@@ -8,10 +8,10 @@
   padding-bottom: 0;
 
   .form-error {
-    visibility: hidden;
+    display: none;
 
     &.visible {
-      visibility: visible;
+      display: block;
     }
   }
 }
@@ -40,6 +40,7 @@ a {
   }
 }
 
-.overwrite-content {
+.overwrite-content,
+.create-chapters {
   inset-inline-start: -8px;
 }

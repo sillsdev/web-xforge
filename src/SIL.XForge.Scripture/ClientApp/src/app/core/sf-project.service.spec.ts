@@ -44,6 +44,24 @@ describe('SFProjectService', () => {
     }));
   });
 
+  describe('onlineAddChapters', () => {
+    it('should invoke the command service', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      await env.service.onlineAddChapters('project01', 1, [2, 3]);
+      verify(mockedCommandService.onlineInvoke(anything(), 'addChapters', anything())).once();
+      expect().nothing();
+    }));
+  });
+
+  describe('onlineSetDraftApplied', () => {
+    it('should invoke the command service', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      await env.service.onlineSetDraftApplied('project01', 1, 1, true, 25);
+      verify(mockedCommandService.onlineInvoke(anything(), 'setDraftApplied', anything())).once();
+      expect().nothing();
+    }));
+  });
+
   describe('onlineEventMetrics', () => {
     it('should invoke the command service', fakeAsync(async () => {
       const env = new TestEnvironment();
