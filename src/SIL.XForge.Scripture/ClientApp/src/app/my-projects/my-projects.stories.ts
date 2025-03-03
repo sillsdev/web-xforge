@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -191,7 +191,6 @@ const meta: Meta = {
   decorators: [
     moduleMetadata({
       imports: [
-        HttpClientTestingModule,
         UICommonModule,
         SharedModule,
         RouterModule.forChild([
@@ -204,6 +203,7 @@ const meta: Meta = {
       declarations: [MyProjectsComponent],
       providers: [
         provideAnimations(),
+        provideHttpClientTesting(),
         {
           provide: SFProjectService,
           useValue: instance(mockedSFProjectService)
