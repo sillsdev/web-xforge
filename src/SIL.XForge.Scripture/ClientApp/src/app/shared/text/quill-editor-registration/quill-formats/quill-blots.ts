@@ -1,8 +1,11 @@
+import { omit } from 'lodash-es';
+import { Blot, Scope } from 'parchment';
 import QuillBlockBlot, { BlockEmbed as QuillBlockEmbedBlot } from 'quill/blots/block';
 import QuillEmbedBlot from 'quill/blots/embed';
 import QuillInlineBlot from 'quill/blots/inline';
 import QuillScrollBlot from 'quill/blots/scroll';
 import QuillTextBlot from 'quill/blots/text';
+import { isString } from '../../../../../type-utils';
 import { Chapter, Figure, Note, NoteThread, Para, Ref, Unmatched, UsxStyle, Verse } from './quill-blot-value-types';
 
 /** Zero-width space */
@@ -33,6 +36,72 @@ function customAttributeName(key: string): string {
 export class NotNormalizedText extends QuillTextBlot {
   static value(domNode: Text): string {
     return domNode.data;
+  }
+}
+
+/**
+ * This class overrides the Quill `ScrollBlot` 'create' method so that it can handle unknown blot types.
+ * If an unregistered blot type is encountered, it will be rendered as the 'unknown' blot type.
+ */
+export class ScrollBlot extends QuillScrollBlot {
+  static unknownBlots: Set<string> = new Set<string>();
+
+  create(input: Node | string | Scope, value?: any): Blot {
+    // Try to create the blot.  If blot type not registered, fallback to the custom 'unknown' blot
+    try {
+      return super.create(input, value);
+    } catch (e) {
+      // Create 'unknown' blot for string input only
+      if (!isString(input)) {
+        throw e;
+      }
+
+      // Add to list for error reporting
+      ScrollBlot.unknownBlots.add(input);
+
+      // Throw error after render with message including list of unknown blot types
+      setTimeout(() => {
+        // Ensure this only runs once
+        if (ScrollBlot.unknownBlots.size === 0) {
+          return;
+        }
+
+        try {
+          const unknownBlotList = Array.from(ScrollBlot.unknownBlots)
+            .map(name => `'${name}'`)
+            .join(', ');
+          throw new Error(`Unable to create blot${ScrollBlot.unknownBlots.size > 1 ? 's' : ''}: ${unknownBlotList}.`);
+        } finally {
+          // Clear unrendered blot list after reporting error
+          ScrollBlot.unknownBlots.clear();
+        }
+      });
+
+      // Pass name of attempted blot
+      value[UnknownBlot.origBlotNameProp] = input;
+
+      return super.create('unknown', value);
+    }
+  }
+}
+
+/**
+ * Fallback blot for when Quill encounters a blot type that is not registered.
+ */
+export class UnknownBlot extends QuillEmbedBlot {
+  static blotName = 'unknown';
+  static tagName = 'sf-unknown';
+  static origBlotNameProp = 'origBlotName';
+
+  static create(value: any): Node {
+    const node = super.create(value) as HTMLElement;
+    setUsxValue(node, omit(value, UnknownBlot.origBlotNameProp));
+    node.innerText = `[Unknown format: '${value[UnknownBlot.origBlotNameProp] || 'unknown'}']`;
+    return node;
+  }
+
+  static value(node: HTMLElement): any {
+    return getUsxValue(node);
   }
 }
 
