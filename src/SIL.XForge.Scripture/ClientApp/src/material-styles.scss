@@ -1,286 +1,80 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
+@use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
+@use 'src/app/navigation/navigation-theme' as sf-navigation;
 
-@function get-palette-color($type, $shade: 50) {
-  $color-palette: map.get($_palettes, $type);
-  @if $color-palette {
-    $color-value: map.get($color-palette, $shade);
-    @if $color-value {
-      @return $color-value;
-    } @else {
-      @error "Shade `#{$shade}` not found in `#{$type}` palette.";
-    }
-  } @else {
-    @error "Color type `#{$type}` not found.";
-  }
-}
+@mixin theme($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
 
-// Styles for angular material components. Refer to https://material.angular.io/guide/theming
-// Note: Color palettes are generated from primary: #343A31, secondary: #B8D432, tertiary: #A065E3, neutral: #ffffff
-$_palettes: (
-  primary: (
-    0: #000000,
-    10: #1a1c1c,
-    20: #2f3131,
-    25: #3a3c3c,
-    30: #454747,
-    35: #515353,
-    40: #5d5f5f,
-    50: #767777,
-    60: #909191,
-    70: #aaabab,
-    80: #c6c6c7,
-    90: #e2e2e2,
-    95: #f0f1f1,
-    98: #f9f9f9,
-    99: #fcfcfc,
-    100: #ffffff
-  ),
-  secondary: (
-    0: #000000,
-    10: #191e00,
-    20: #2d3400,
-    25: #383f00,
-    30: #424b00,
-    35: #4e5800,
-    40: #596400,
-    50: #717e1c,
-    60: #8b9835,
-    70: #a5b34d,
-    80: #c1cf65,
-    90: #ddeb7e,
-    95: #ebfa8b,
-    98: #f7ffbb,
-    99: #fdffdb,
-    100: #ffffff
-  ),
-  tertiary: (
-    0: #000000,
-    10: #231b00,
-    20: #3c2f00,
-    25: #493a00,
-    30: #574500,
-    35: #655000,
-    40: #725c09,
-    50: #8d7524,
-    60: #a98e3b,
-    70: #c5a953,
-    80: #e2c46b,
-    90: #ffe086,
-    95: #fff0cb,
-    98: #fff8f0,
-    99: #fffbff,
-    100: #ffffff
-  ),
-  neutral: (
-    0: #000000,
-    4: #0b0b0b,
-    6: #101111,
-    10: #1b1c1c,
-    12: #1f2020,
-    17: #2a2a2a,
-    20: #303030,
-    22: #343434,
-    24: #393939,
-    25: #3b3b3b,
-    30: #474747,
-    35: #525252,
-    40: #5f5e5e,
-    50: #777777,
-    60: #919090,
-    70: #acabab,
-    80: #c8c6c6,
-    87: #dcdad9,
-    90: #e4e2e1,
-    92: #eae8e7,
-    94: #efeded,
-    95: #f2f0f0,
-    96: #f5f3f3,
-    98: #fbf9f8,
-    99: #fefcfb,
-    100: #ffffff
-  ),
-  neutral-variant: (
-    0: #000000,
-    10: #181c1d,
-    20: #2d3132,
-    25: #383c3d,
-    30: #444748,
-    35: #4f5354,
-    40: #5b5f60,
-    50: #747878,
-    60: #8e9192,
-    70: #a8acac,
-    80: #c4c7c8,
-    90: #e0e3e3,
-    95: #eef1f2,
-    98: #f7fafa,
-    99: #fafdfd,
-    100: #ffffff
-  ),
-  error: (
-    0: #000000,
-    10: #410002,
-    20: #690005,
-    25: #7e0007,
-    30: #93000a,
-    35: #a80710,
-    40: #ba1a1a,
-    50: #de3730,
-    60: #ff5449,
-    70: #ff897d,
-    80: #ffb4ab,
-    90: #ffdad6,
-    95: #ffedea,
-    98: #fff8f7,
-    99: #fffbff,
-    100: #ffffff
-  )
-);
+  // Global styles
+  @include mat.system-level-colors($theme);
 
-$_rest: (
-  secondary: map.get($_palettes, secondary),
-  neutral: map.get($_palettes, neutral),
-  neutral-variant: map.get($_palettes, neutral-variant),
-  error: map.get($_palettes, error)
-);
-$_primary: map.merge(map.get($_palettes, primary), $_rest);
-$_tertiary: map.merge(map.get($_palettes, tertiary), $_rest);
+  // Custom components
+  @include sf-tab-group.theme($theme);
+  @include sf-navigation.theme($theme);
 
-$light-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: light,
-      primary: $_primary,
-      tertiary: $_tertiary
+  // Custom variables
+  --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
+  --sf-error-foreground: #{mat.get-theme-color($theme, error, if($is-dark, 80, 40))};
+  --sf-language-font-family: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
+
+  // Overwrite component styles
+  @include mat.card-overrides(
+    (
+      title-text-size: 24px
     )
-  )
-);
-$dark-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: dark,
-      primary: $_primary,
-      tertiary: $_tertiary
+  );
+
+  @include mat.dialog-overrides(
+    (
+      container-max-width: initial,
+      container-color: mat.get-theme-color($theme, neutral, if($is-dark, 20, 100))
     )
-  )
-);
+  );
 
-html {
-  @include mat.core();
-  @include mat.all-component-themes($light-theme);
-  @include mat.system-level-colors($light-theme);
-  @include mat.all-component-typographies($light-theme);
-  @include mat.typography-hierarchy($light-theme);
+  @include mat.sidenav-overrides(
+    (
+      container-width: auto,
+      container-background-color: mat.get-theme-color($theme, neutral, if($is-dark, 10, 98))
+    )
+  );
 
-  /* Overwrites */
-  --mat-sidenav-container-width: auto !important;
-  .cdk-overlay-pane {
-    --mat-dialog-container-max-width: initial;
-  }
+  @include mat.stepper-overrides(
+    (
+      container-color: transparent
+    )
+  );
 
-  /* Light theme overwrites */
-  &:has(body.theme-light) {
-    color-scheme: light;
-    --sf-list-item-active-background-color: rgba(0, 0, 0, 0.12);
-    --mdc-dialog-container-color: #fff;
-    .mat-toolbar {
-      --mat-toolbar-container-text-color: #fff;
-      --mdc-icon-button-icon-color: #fff;
+  @include mat.toolbar-overrides(
+    (
+      container-background-color: mat.get-theme-color($theme, primary, 20),
+      container-text-color: mat.get-theme-color($theme, primary, 100)
+    )
+  );
+  @if not $is-dark {
+    @include mat.icon-overrides(
+      (
+        color: mat.get-theme-color($theme, primary, 40)
+      )
+    );
+
+    mat-toolbar {
+      @include mat.icon-overrides(
+        (
+          color: mat.get-theme-color($theme, primary, 100)
+        )
+      );
     }
-  }
 
-  /* Dark theme overwrites */
-  &:has(body.theme-dark) {
-    color-scheme: dark;
-    @include mat.all-component-colors($dark-theme);
-    @include mat.system-level-colors($dark-theme);
-    --sf-list-item-active-background-color: rgba(225, 225, 225, 0.32);
-    --mat-sidenav-container-background-color: #{get-palette-color(primary, 10)};
-  }
-}
-
-$languageFonts: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
-//
-//$app-typography: mat.m2-define-typography-config(
-//  $body-1: mat.m2-define-typography-level(16px, 1.2em)
-//);
-//
-//$dialog-typography: mat.m2-define-typography-config(
-//  $body-1: mat.m2-define-typography-level(14px, 1.5em)
-//);
-//
-//$material-app-theme: mat.m2-define-light-theme(
-//  (
-//    color: (
-//      primary: $matGreyPalette,
-//      accent: $matGreenLightPalette,
-//      warn: $matErrorPalette
-//    ),
-//    typography: $app-typography
-//  )
-//);
-//
-//// A Material input uses the accent color for the asterisk, but light green is an odd color to use there.
-//// This theme uses the error color for accent and can be applied only where needed.
-//$material-theme-accent-error: mat.m2-define-light-theme(
-//  (
-//    color: (
-//      primary: $matGreyPalette,
-//      accent: $matErrorPalette,
-//      warn: $matErrorPalette
-//    )
-//  )
-//);
-//
-
-//// Use theme with custom components
-//@include sf-tab-group.theme($material-app-theme);
-//
-// Remove letter spacing (added by Material v15+) that may not work with some language scripts (e.g. Arabic).
-// TODO: Add to this list as needed as we migrate to Material v15+
-html,
-.mdc-tab,
-.mdc-button,
-.mat-mdc-menu-item-text {
-  letter-spacing: initial;
-  --mat-menu-item-label-text-tracking: initial;
-  --mdc-text-button-label-text-tracking: initial;
-  --mdc-filled-button-label-text-tracking: initial;
-}
-
-mat-list-item {
-  --mdc-list-list-item-label-text-tracking: initial;
-}
-
-// Workaround for compatibility between mat-card and mat-elevation class
-// https://github.com/angular/components/issues/26094#issuecomment-1490245622
-@for $i from 0 through 24 {
-  .mat-mdc-card.mat-elevation-z#{$i} {
-    //@include mat.elevation($i);
-  }
-}
-
-// Restore the tab header underline from Material pre-v15
-.mat-mdc-tab-header {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-mat-card-title {
-  --mat-card-title-text-size: 24px;
-}
-
-/** Helper class names to help consistently match Material typography */
-$headings: (
-  'h1': '.mat-display-small',
-  'h2': '.mat-title-large',
-  'h3': '.mat-title-medium',
-  'h4': '.mat-title-small'
-);
-
-@each $class, $extend in $headings {
-  #{$class},
-  .#{$class} {
-    @extend #{$extend};
+    .mdc-button {
+      &.mat-primary,
+      &.mat-secondary {
+        @include mat.icon-overrides(
+          (
+            color: mat.get-theme-color($theme, primary, 100)
+          )
+        );
+      }
+    }
   }
 }
