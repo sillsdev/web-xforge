@@ -44,8 +44,6 @@ export class NotNormalizedText extends QuillTextBlot {
  * If an unregistered blot type is encountered, it will be rendered as the 'unknown' blot type.
  */
 export class ScrollBlot extends QuillScrollBlot {
-  static unknownBlots: Set<string> = new Set<string>();
-
   create(input: Node | string | Scope, value?: any): Blot {
     // Try to create the blot.  If blot type not registered, fallback to the custom 'unknown' blot
     try {
@@ -56,26 +54,7 @@ export class ScrollBlot extends QuillScrollBlot {
         throw e;
       }
 
-      // Add to list for error reporting
-      ScrollBlot.unknownBlots.add(input);
-
-      // Throw error after render with message including list of unknown blot types
-      setTimeout(() => {
-        // Ensure this only runs once
-        if (ScrollBlot.unknownBlots.size === 0) {
-          return;
-        }
-
-        try {
-          const unknownBlotList = Array.from(ScrollBlot.unknownBlots)
-            .map(name => `'${name}'`)
-            .join(', ');
-          throw new Error(`Unable to create blot${ScrollBlot.unknownBlots.size > 1 ? 's' : ''}: ${unknownBlotList}.`);
-        } finally {
-          // Clear unrendered blot list after reporting error
-          ScrollBlot.unknownBlots.clear();
-        }
-      });
+      console.error(`Unable to create blot: '${input}'.`);
 
       // Pass name of attempted blot
       value[UnknownBlot.origBlotNameProp] = input;
