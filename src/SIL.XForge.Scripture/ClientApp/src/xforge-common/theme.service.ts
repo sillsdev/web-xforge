@@ -34,9 +34,9 @@ export class ThemeService {
     }
 
     if (this._theme !== Theme.NotSet) {
-      this.renderer.removeClass(this.document.body, this._theme);
+      this.renderer.removeClass(this.document.documentElement, this._theme);
     }
-    this.renderer.addClass(this.document.body, theme);
+    this.renderer.addClass(this.document.documentElement, theme);
     this._theme = theme;
     this.localSettings.set('theme', theme);
   }

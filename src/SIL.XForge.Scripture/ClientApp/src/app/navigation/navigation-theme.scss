@@ -1,0 +1,14 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+  --sf-navigation-icon: #{mat.get-theme-color($theme, primary, 50)};
+  --sf-navigation-icon-active: #{mat.get-theme-color($theme, primary, if($is-dark, 80, 20))};
+  --sf-navigation-list-item-active-background-color: #{if($is-dark, rgba(225, 225, 225, 0.32), rgba(0, 0, 0, 0.12))};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
