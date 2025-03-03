@@ -76,7 +76,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 }
 
 .locale-fonts mat-option {
-  font-family: variables.$languageFonts;
+  font-family: var(--sf-language-font-family);
 }
 
 // Titles with icons need extra padding above the text

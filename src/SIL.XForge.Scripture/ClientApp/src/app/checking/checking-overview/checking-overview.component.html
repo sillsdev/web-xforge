@@ -13,7 +13,7 @@
             class="add-question-button hide-lt-sm"
             mat-flat-button
             type="button"
-            color="primary"
+            color="secondary"
             (click)="questionDialog()"
           >
             <mat-icon class="mirror-rtl">post_add</mat-icon> <span>{{ t("add_question") }}</span>
@@ -45,7 +45,7 @@
       }
       @for (text of texts; track text.bookNum) {
         @if (bookQuestionCount(text) > 0 || bookHasChapterAudio(text)) {
-          <mat-expansion-panel [togglePosition]="'before'" class="book-expander mat-elevation-z0">
+          <mat-expansion-panel [togglePosition]="'before'" class="book-expander">
             <mat-expansion-panel-header>
               <mat-panel-title>
                 <span class="flex">{{ getBookName(text) }}</span>
