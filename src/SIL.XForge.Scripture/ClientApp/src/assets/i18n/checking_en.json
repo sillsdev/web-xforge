@@ -396,8 +396,8 @@
     "offline-accessible": "Offline Access",
     "open": "Open",
     "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help.",
-    "update": "Update",
-    "updates": "Updates",
+    "update_role": "Update role",
+    "updated_roles": "Updated roles",
     "update_paratext_role": "Your role on this project has changed in Paratext.",
     "user_role_updated": "Your role on this project has been updated successfully."
   },
