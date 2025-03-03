@@ -3,8 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
 import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import {
   DraftSourcesAsSelectableProjectArrays,

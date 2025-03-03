@@ -11,8 +11,7 @@ import {
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
-import isEqual from 'lodash-es/isEqual';
-import merge from 'lodash-es/merge';
+import { isEqual, merge } from 'lodash-es';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';

@@ -1,9 +1,8 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { DatePipe } from '@angular/common';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ErrorHandler, NgModule } from '@angular/core';
+import { APP_ID, ErrorHandler, NgModule } from '@angular/core';
 import { MatRipple } from '@angular/material/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -65,7 +64,6 @@ import { UsersModule } from './users/users.module';
   ],
   bootstrap: [AppComponent],
   imports: [
-    BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     BrowserAnimationsModule,
     CoreModule,
     ServiceWorkerModule.register('sf-service-worker.js', {
@@ -87,6 +85,7 @@ import { UsersModule } from './users/users.module';
     QuillModule.forRoot()
   ],
   providers: [
+    { provide: APP_ID, useValue: 'ng-cli-universal' },
     CookieService,
     DatePipe,
     provideTranslationMarkupTranspiler(EmTextTranspiler),
