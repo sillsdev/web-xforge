@@ -1877,7 +1877,7 @@ public class SFProjectServiceTests
         Assert.That(project03.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(source.UserRoles.ContainsKey(User03), Is.False, "setup");
         User user = env.GetUser(User03);
-        Assert.That(user.Sites[SiteId].Projects, Is.Empty);
+        Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project01 }));
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
@@ -1887,7 +1887,7 @@ public class SFProjectServiceTests
         Assert.That(project03.UserRoles.ContainsKey(User03));
         Assert.That(source.UserRoles.ContainsKey(User03));
         user = env.GetUser(User03);
-        Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project03, SourceOnly }));
+        Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project01, Project03, SourceOnly }));
     }
 
     [Test]
@@ -3260,7 +3260,17 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Project01));
+        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(UserAccessor01, Project01));
+    }
+
+    [Test]
+    public void CancelSyncAsync_ConsultantsCannotCancelSyncProject()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(UserAccessor03, Project01));
     }
 
     [Test]
@@ -3270,7 +3280,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User05, Project01));
+        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(UserAccessor05, Project01));
     }
 
     [Test]
@@ -3280,7 +3290,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Resource01));
+        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(UserAccessor01, Resource01));
     }
 
     [Test]
@@ -3290,7 +3300,19 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(User02, Project01));
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(UserAccessor02, Project01));
+    }
+
+    [Test]
+    public void CancelSyncAsync_ServalAdminsCanSyncProject()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(
+            () => env.Service.CancelSyncAsync(UserAccessor05 with { SystemRoles = [SystemRole.ServalAdmin] }, Project01)
+        );
     }
 
     [Test]
@@ -3300,7 +3322,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(User03, Project01));
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(UserAccessor03, Project01));
     }
 
     [Test]
@@ -3315,6 +3337,16 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void SyncAsync_ConsultantsCannotSyncProject()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync(UserAccessor03, Project01));
+    }
+
+    [Test]
     public async Task SyncAsync_ServalAdminsCanSyncProject()
     {
         // Setup
@@ -3322,7 +3354,7 @@ public class SFProjectServiceTests
 
         // SUT
         string actual = await env.Service.SyncAsync(
-            UserAccessor01 with
+            UserAccessor05 with
             {
                 SystemRoles = [SystemRole.ServalAdmin],
             },
@@ -4444,7 +4476,13 @@ public class SFProjectServiceTests
                             Email = "user03@example.com",
                             ParatextId = "pt-user03",
                             Roles = [SystemRole.User],
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
+                            Sites = new Dictionary<string, Site>
+                            {
+                                {
+                                    SiteId,
+                                    new Site { Projects = [Project01] }
+                                },
+                            },
                         },
                         new User
                         {
@@ -4533,6 +4571,7 @@ public class SFProjectServiceTests
                             {
                                 { User01, SFProjectRole.Administrator },
                                 { User02, SFProjectRole.CommunityChecker },
+                                { User03, SFProjectRole.Consultant },
                                 { User05, SFProjectRole.Translator },
                                 { User06, SFProjectRole.Viewer },
                             },
@@ -4816,6 +4855,7 @@ public class SFProjectServiceTests
                     [
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User03) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User06) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },

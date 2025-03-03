@@ -20,7 +20,7 @@ public interface ISFProjectService : IProjectService
     Task UpdateSettingsAsync(IUserAccessor userAccessor, string projectId, SFProjectSettings settings);
     Task AddTranslateMetricsAsync(string curUserId, string projectId, TranslateMetrics metrics);
     Task<string> SyncAsync(IUserAccessor userAccessor, string projectId);
-    Task CancelSyncAsync(string curUserId, string projectId);
+    Task CancelSyncAsync(IUserAccessor userAccessor, string projectId);
     Task<bool> InviteAsync(
         string curUserId,
         string projectId,

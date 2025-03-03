@@ -16,4 +16,6 @@ public static class SFProjectRole
             Administrator or Translator or Consultant or PTObserver => true,
             _ => false,
         };
+
+    public static string[] ParatextRolesThatCanWrite => [Administrator, Translator, Consultant];
 }

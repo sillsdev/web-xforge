@@ -58,7 +58,7 @@ public class TrainingDataService(
         }
 
         // Ensure permission to access the Machine API
-        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data, mustBeOnProject: false);
+        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data);
 
         // Ensure the user is the owner of the file, or an administrator
         if (
@@ -104,7 +104,7 @@ public class TrainingDataService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data, mustBeOnProject: false);
+        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data);
 
         // Ensure that the training data directory exists
         string trainingDataDir = Path.Combine(siteOptions.Value.SiteDir, DirectoryName, projectId);
@@ -207,7 +207,7 @@ public class TrainingDataService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data, mustBeOnProject: false);
+        MachineApi.EnsureProjectPermission(userAccessor, projectDoc.Data);
 
         if (!StringUtils.ValidateId(dataId))
         {
