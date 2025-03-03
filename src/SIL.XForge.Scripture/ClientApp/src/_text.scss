@@ -288,3 +288,14 @@ usx-segment {
     font-family: Roboto, sans-serif;
   }
 }
+
+// Embed blot for unknown attributes
+sf-unknown {
+  display: inline-block;
+  color: #999;
+  background: #f0f0f0;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-style: italic;
+  user-select: none;
+}
