@@ -56,7 +56,7 @@
   "pt_translator": {
     "project_user_configs": ["view_own", "edit_own"],
     "project": ["view"],
-    "texts": ["view", "edit"],
+    "texts": ["create", "view", "edit"],
     "questions": ["view"],
     "answers": ["view", "create", "edit_own", "delete_own"],
     "answer_comments": ["view", "create", "edit_own", "delete_own"],
@@ -73,7 +73,7 @@
   "pt_administrator": {
     "project_user_configs": ["view_own", "edit_own"],
     "project": ["view"],
-    "texts": ["view", "edit"],
+    "texts": ["create", "view", "edit"],
     "questions": ["view", "create", "edit", "delete"],
     "answers": ["view", "create", "delete", "edit_own"],
     "answer_comments": ["view", "create", "edit_own", "delete"],
