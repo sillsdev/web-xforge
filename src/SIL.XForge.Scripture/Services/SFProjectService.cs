@@ -601,7 +601,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // Project syncs require admin or translator role. Resources can sync with any Paratext role.
         if (
             !_paratextService.IsResource(project.ParatextId)
-            && !(IsProjectAdmin(project, userAccessor.UserId) || IsProjectTranslator(project, userAccessor.UserId))
+            && !(
+                IsProjectAdmin(project, userAccessor.UserId)
+                || IsProjectTranslator(project, userAccessor.UserId)
+                || userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin)
+            )
         )
         {
             throw new ForbiddenException();

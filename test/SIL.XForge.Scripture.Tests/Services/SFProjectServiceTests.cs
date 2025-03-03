@@ -3319,6 +3319,23 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task SyncAsync_ServalAdminsCanSyncProject()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        string actual = await env.Service.SyncAsync(
+            UserAccessor01 with
+            {
+                SystemRoles = [SystemRole.ServalAdmin],
+            },
+            Project01
+        );
+        Assert.AreEqual("jobId", actual);
+    }
+
+    [Test]
     public async Task SyncAsync_TranslatorsCanSyncProject()
     {
         // Setup
