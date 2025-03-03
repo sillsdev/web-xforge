@@ -91,7 +91,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   get draftSourcesLink(): string[] {
-    return ['/projects', this.activatedProjectService.projectId!, 'draft-sources'];
+    return ['/projects', this.activatedProjectService.projectId!, 'draft-generation', 'sources'];
   }
 
   get isOnline(): boolean {
