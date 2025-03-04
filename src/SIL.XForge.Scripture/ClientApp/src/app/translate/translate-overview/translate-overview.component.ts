@@ -1,9 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -21,6 +18,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';

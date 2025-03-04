@@ -1,9 +1,6 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Component, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
@@ -15,6 +12,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';

@@ -1,9 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Component, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -27,6 +24,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';

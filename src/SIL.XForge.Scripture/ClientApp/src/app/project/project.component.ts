@@ -1,8 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -13,6 +10,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { PermissionsService } from '../core/permissions.service';

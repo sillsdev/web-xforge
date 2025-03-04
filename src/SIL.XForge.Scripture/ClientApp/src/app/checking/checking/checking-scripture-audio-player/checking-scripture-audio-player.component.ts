@@ -1,13 +1,11 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';

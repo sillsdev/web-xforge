@@ -1,9 +1,8 @@
 import { DOCUMENT } from '@angular/common';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { Component, EventEmitter, HostBinding, Inject, Input, OnInit, Output } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, distinctUntilChanged, fromEvent, merge } from 'rxjs';
+import { QuietDestroyRef } from 'xforge-common/utils';
 
 @Component({
   selector: 'app-tab-scroll-button',

@@ -1,6 +1,4 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { ComponentType } from '@angular/cdk/portal';
 import {
   AfterViewInit,
@@ -87,7 +85,14 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { stripHtml } from 'xforge-common/util/string-util';
-import { browserLinks, getLinkHTML, isBlink, issuesEmailTemplate, objectId } from 'xforge-common/utils';
+import {
+  browserLinks,
+  getLinkHTML,
+  isBlink,
+  issuesEmailTemplate,
+  objectId,
+  QuietDestroyRef
+} from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';

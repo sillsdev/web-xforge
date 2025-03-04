@@ -1,8 +1,5 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { MatDialogConfig } from '@angular/material/dialog';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -10,6 +7,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { DataLoadingComponent } from '../data-loading-component';
 import { DialogService } from '../dialog.service';

@@ -1,8 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Canon } from '@sillsdev/scripture';
 import { cloneDeep, reject } from 'lodash-es';
@@ -18,7 +15,7 @@ import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { objectId } from 'xforge-common/utils';
+import { objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';

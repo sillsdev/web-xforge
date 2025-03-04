@@ -1,9 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Sort } from '@angular/material/sort';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -30,7 +27,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { objectId } from 'xforge-common/utils';
+import { objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';

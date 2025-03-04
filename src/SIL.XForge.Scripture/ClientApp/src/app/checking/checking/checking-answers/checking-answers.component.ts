@@ -1,8 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
@@ -20,6 +17,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';

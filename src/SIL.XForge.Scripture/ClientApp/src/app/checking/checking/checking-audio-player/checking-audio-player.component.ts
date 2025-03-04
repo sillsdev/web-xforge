@@ -1,9 +1,7 @@
 import { AfterViewInit, Component, Input, ViewChild } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { I18nService } from 'xforge-common/i18n.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 
 export interface AudioAttachment {

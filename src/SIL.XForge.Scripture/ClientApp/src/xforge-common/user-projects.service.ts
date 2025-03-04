@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { BehaviorSubject, Observable } from 'rxjs';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { compareProjectsForSorting } from '../app/shared/utils';

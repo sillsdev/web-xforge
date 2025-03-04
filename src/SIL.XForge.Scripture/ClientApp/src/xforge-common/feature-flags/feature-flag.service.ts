@@ -1,11 +1,9 @@
 import { Injectable } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 
 export interface FeatureFlag {
   readonly key: string;

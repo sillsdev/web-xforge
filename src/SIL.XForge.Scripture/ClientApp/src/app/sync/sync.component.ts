@@ -1,8 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -15,6 +12,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';

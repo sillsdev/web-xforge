@@ -1,6 +1,4 @@
 import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import {
   AfterViewInit,
   Component,
@@ -26,6 +24,7 @@ import {
   Subscription
 } from 'rxjs';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { TabMenuItem, TabMenuService } from '../../sf-tab-group';
 import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';

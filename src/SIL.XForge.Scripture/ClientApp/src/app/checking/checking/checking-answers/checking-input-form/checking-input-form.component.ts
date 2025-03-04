@@ -1,9 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -12,6 +9,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextsByBookId } from '../../../../core/models/texts-by-book-id';
 import {

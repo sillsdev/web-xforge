@@ -1,6 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { Component, Inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -8,6 +6,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Observable } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { QuietDestroyRef } from 'xforge-common/utils';
 
 export interface DraftApplyProgress {
   bookNum: number;

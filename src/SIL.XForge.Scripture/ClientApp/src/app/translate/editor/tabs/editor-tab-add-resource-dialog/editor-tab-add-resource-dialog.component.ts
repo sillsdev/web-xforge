@@ -1,11 +1,10 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { map, repeat, take, timer } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { SelectableProject } from '../../../../core/paratext.service';

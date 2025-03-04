@@ -1,14 +1,12 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { translate } from '@ngneat/transloco';
 import { slice } from 'lodash-es';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { combineLatest } from 'rxjs';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 
 export interface MultiCursorViewer extends UserProfile {
   cursorColor: string;

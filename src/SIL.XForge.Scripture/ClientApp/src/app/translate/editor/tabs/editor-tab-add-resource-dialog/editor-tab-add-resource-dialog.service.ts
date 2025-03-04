@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
 

@@ -1,8 +1,5 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -11,6 +8,7 @@ import { filter, repeat, retry, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';

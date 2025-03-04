@@ -1,9 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Component, Input, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -15,6 +12,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';

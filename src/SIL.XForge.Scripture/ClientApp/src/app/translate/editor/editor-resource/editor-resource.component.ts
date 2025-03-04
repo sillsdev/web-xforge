@@ -1,9 +1,8 @@
 import { AfterViewInit, Component, Input, OnChanges, ViewChild } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, combineLatest, startWith, switchMap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';

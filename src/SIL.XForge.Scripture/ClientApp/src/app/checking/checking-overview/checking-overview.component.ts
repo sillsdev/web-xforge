@@ -1,8 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -21,6 +18,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';

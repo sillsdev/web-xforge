@@ -1,8 +1,5 @@
 import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { VerseRef } from '@sillsdev/scripture';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
@@ -11,6 +8,7 @@ import { auditTime } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { TextDocId } from '../core/models/text-doc';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import {

@@ -1,8 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -12,6 +9,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ServalAdministrationService } from './serval-administration.service';
 

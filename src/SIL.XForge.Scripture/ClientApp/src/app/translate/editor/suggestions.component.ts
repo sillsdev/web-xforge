@@ -1,13 +1,11 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { MatListOption, MatSelectionList } from '@angular/material/list';
 import { isEqual } from 'lodash-es';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
 import { filter, first } from 'rxjs/operators';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { TextComponent } from '../../shared/text/text.component';
 
 export interface SuggestionSelectedEvent {

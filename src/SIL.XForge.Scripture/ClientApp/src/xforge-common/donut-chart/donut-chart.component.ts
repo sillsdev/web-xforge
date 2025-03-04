@@ -1,9 +1,7 @@
 import { AfterViewInit, Component, ElementRef, Input, NgZone, QueryList, ViewChildren } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { isEqual } from 'lodash-es';
+import { QuietDestroyRef } from 'xforge-common/utils';
 
 const DEFAULT_SIZE = 100;
 

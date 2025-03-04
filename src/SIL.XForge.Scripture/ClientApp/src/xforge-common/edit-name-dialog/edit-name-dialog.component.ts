@@ -1,12 +1,10 @@
 import { Component, Inject } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { UntypedFormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 
 export interface EditNameDialogResult {

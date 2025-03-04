@@ -1,6 +1,4 @@
 import { Injectable } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -23,6 +21,7 @@ import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { EventMetric } from '../event-metrics/event-metric';
 import { ShareLinkType } from '../shared/share/share-dialog.component';

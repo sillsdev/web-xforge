@@ -1,13 +1,11 @@
 import { Component, Inject } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { UntypedFormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 

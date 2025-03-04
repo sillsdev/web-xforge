@@ -12,10 +12,7 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { MatListItem } from '@angular/material/list';
 import { sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -29,6 +26,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';

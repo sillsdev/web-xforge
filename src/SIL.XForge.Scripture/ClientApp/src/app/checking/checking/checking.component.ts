@@ -1,9 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationBehaviorOptions, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { SplitComponent } from 'angular-split';
@@ -29,7 +26,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { objectId } from 'xforge-common/utils';
+import { objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';

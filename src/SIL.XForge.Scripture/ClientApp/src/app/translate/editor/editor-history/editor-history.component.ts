@@ -1,12 +1,11 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Delta } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';

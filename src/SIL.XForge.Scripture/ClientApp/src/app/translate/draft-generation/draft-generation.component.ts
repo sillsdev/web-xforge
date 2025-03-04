@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';

@@ -1,8 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
@@ -17,6 +14,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';

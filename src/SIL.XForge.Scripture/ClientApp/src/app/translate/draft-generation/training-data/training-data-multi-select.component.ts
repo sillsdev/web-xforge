@@ -1,9 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogConfig } from '@angular/material/dialog';
@@ -17,6 +14,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SharedModule } from '../../../shared/shared.module';
 import {
   TrainingDataUploadDialogComponent,

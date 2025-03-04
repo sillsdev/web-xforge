@@ -1,14 +1,12 @@
 import { Component, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ValidatorFn } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { translate } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';

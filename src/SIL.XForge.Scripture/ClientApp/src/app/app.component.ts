@@ -1,7 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
@@ -34,7 +33,7 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
-import { issuesEmailTemplate, supportedBrowser, QuietDestroyRef } from 'xforge-common/utils';
+import { issuesEmailTemplate, QuietDestroyRef, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';

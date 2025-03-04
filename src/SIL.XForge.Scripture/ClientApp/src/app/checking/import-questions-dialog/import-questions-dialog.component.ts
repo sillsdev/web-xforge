@@ -1,6 +1,4 @@
 import { Component, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -16,7 +14,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { objectId } from 'xforge-common/utils';
+import { objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';

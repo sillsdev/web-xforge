@@ -1,9 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Component, ErrorHandler } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
@@ -18,6 +15,7 @@ import { en, I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { ObjectPaths } from '../../type-utils';
 import { SFProjectService } from '../core/sf-project.service';

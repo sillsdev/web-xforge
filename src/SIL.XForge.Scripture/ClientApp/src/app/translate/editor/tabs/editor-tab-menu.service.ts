@@ -1,6 +1,4 @@
 import { Injectable } from '@angular/core';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   EditorTabGroupType,
@@ -15,6 +13,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';

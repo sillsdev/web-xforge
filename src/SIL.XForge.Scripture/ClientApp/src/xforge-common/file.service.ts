@@ -1,10 +1,8 @@
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { lastValueFrom, Observable, Subject } from 'rxjs';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
