@@ -2798,6 +2798,7 @@ public class ParatextService : DisposableBase, IParatextService
         catch (Exception e)
         {
             _logger.LogError(e, "Exception while updating notes: {0}", e.Message);
+            throw;
         }
 
         return syncMetricInfo;
