@@ -10,12 +10,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { of } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { I18nService } from 'xforge-common/i18n.service';
+import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -280,9 +279,9 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     const leavePage =
       !this.changesMade ||
       (await this.dialogService.confirm(
-        of('Are you sure you want leave the page with unsaved changes?'),
-        of('Leave & discard changes'),
-        of('Stay on page')
+        this.i18n.translate('draft_sources.discard_changes_confirmation'),
+        this.i18n.translate('draft_sources.leave_and_discard'),
+        this.i18n.translate('draft_sources.stay_on_page')
       ));
     if (leavePage) {
       this.navigateToDrafting();
@@ -302,16 +301,15 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     const definedSources = this.draftingSources.filter(s => s != null);
     const definedReferences = this.trainingSources.filter(s => s != null);
 
-    let message: string | undefined;
+    let messageKey: I18nKeyForComponent<'draft_sources'> | undefined;
     if (definedSources.length === 0 && definedReferences.length === 0)
-      message = 'Please select at least one source and one reference project before saving.';
-    else if (definedSources.length === 0) message = 'Please select at least one source project before saving.';
-    else if (definedReferences.length === 0) message = 'Please select at least one reference project before saving.';
-    else if (!this.languageCodesConfirmed)
-      message = 'Please confirm that the language codes are correct before saving.';
+      messageKey = 'select_at_least_one_source_and_reference';
+    else if (definedSources.length === 0) messageKey = 'select_at_least_one_source';
+    else if (definedReferences.length === 0) messageKey = 'select_at_least_one_reference';
+    else if (!this.languageCodesConfirmed) messageKey = 'confirm_language_codes';
 
-    if (message) {
-      this.dialogService.message(of(message));
+    if (messageKey) {
+      this.dialogService.message(this.i18n.translate(`draft_sources.${messageKey}`));
       return;
     }
 
