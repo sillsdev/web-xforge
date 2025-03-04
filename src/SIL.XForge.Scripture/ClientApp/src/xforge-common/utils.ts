@@ -187,6 +187,14 @@ export interface IDestroyRef {
   onDestroy(callback: () => void): () => void;
 }
 
+/**
+ * Like {@link DestroyRef}, but with two distinct advantages:
+ * - Catches and logs NG0911 rather than throwing it, preventing it from being annoying to the user
+ * - Logs the location where the `QuietDestroyRef` is used, rather than the location where the error is thrown
+ *
+ * This could either be seen as a temporary workaround to ease the migration to using `DestroyRef`, or a more robust
+ * permanent solution to the problem of `DestroyRef` throwing errors if the component is destroyed before it is used.
+ */
 @Injectable({ providedIn: 'root' })
 export class QuietDestroyRef {
   constructor(private readonly destroyRef: DestroyRef) {}
@@ -203,18 +211,3 @@ export class QuietDestroyRef {
     return () => {};
   }
 }
-
-// /**
-//  * Like {@link takeUntilDestroyed}, but with two distinct advantages:
-//  * - Catches and logs NG0911 rather than throwing it, preventing it from being annoying to the user
-//  * - Logs the location where the `QuietDestroyRef` is used, rather than the location where the error is thrown
-//  *
-//  * This function could either be seen as a temporary workaround to ease the migration to using `QuietDestroyRef`, or a more
-//  * robust permanent solution to the problem of `takeUntilDestroyed` throwing errors if the `QuietDestroyRef` is destroyed.
-//  *
-//  * @param QuietDestroyRef A {@link QuietDestroyRef} instance.
-//  * @returns An RxJS operator that unsubscribes when the component is destroyed.
-//  */
-// export function quietTakeUntilDestroyed<T>(QuietDestroyRef: QuietDestroyRef): MonoTypeOperatorFunction<T> {
-//   return takeUntilDestroyed(new QuietDestroyRef(QuietDestroyRef) satisfies QuietDestroyRef);
-// }
