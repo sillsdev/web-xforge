@@ -1,3 +1,14 @@
+export function canParatextRoleWrite(role: string | undefined): boolean {
+  switch (role) {
+    case SFProjectRole.ParatextAdministrator:
+    case SFProjectRole.ParatextTranslator:
+    case SFProjectRole.ParatextConsultant:
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function isParatextRole(role: string | undefined): boolean {
   switch (role) {
     case SFProjectRole.ParatextAdministrator:

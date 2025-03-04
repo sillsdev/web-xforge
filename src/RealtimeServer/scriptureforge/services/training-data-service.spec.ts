@@ -35,11 +35,39 @@ describe('TrainingDataService', () => {
     ).resolves.not.toThrow();
   });
 
-  it('does not allow consultant to view training data', async () => {
+  it('allows consultant to create training data', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
     const conn = clientConnect(env.server, 'consultant');
+    await expect(
+      createDoc<TrainingData>(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid02'), {
+        dataId: 'dataid02',
+        projectRef: 'project01',
+        ownerRef: 'consultant',
+        fileUrl: 'project01/consultant_file01.csv?t=123456789123456789',
+        mimeType: 'text/csv',
+        skipRows: 0,
+        title: 'Test File'
+      })
+    ).resolves.not.toThrow();
+  });
+
+  it('allows consultant to view training data', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'consultant');
+    await expect(
+      fetchDoc(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'))
+    ).resolves.not.toThrow();
+  });
+
+  it('does not allow observer to view training data', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'observer');
     await expect(
       fetchDoc(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'))
     ).rejects.toThrow();
@@ -86,6 +114,7 @@ class TestEnvironment {
     await createDoc<User>(conn, USERS_COLLECTION, 'administrator', createTestUser({}, 1));
     await createDoc<User>(conn, USERS_COLLECTION, 'translator', createTestUser({}, 2));
     await createDoc<User>(conn, USERS_COLLECTION, 'consultant', createTestUser({}, 3));
+    await createDoc<User>(conn, USERS_COLLECTION, 'observer', createTestUser({}, 4));
 
     await createDoc<SFProject>(
       conn,
@@ -95,7 +124,8 @@ class TestEnvironment {
         userRoles: {
           administrator: SFProjectRole.ParatextAdministrator,
           translator: SFProjectRole.ParatextTranslator,
-          consultant: SFProjectRole.ParatextConsultant
+          consultant: SFProjectRole.ParatextConsultant,
+          observer: SFProjectRole.ParatextObserver
         }
       })
     );
