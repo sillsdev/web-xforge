@@ -1,4 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Component, ErrorHandler } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -57,7 +61,8 @@ export class JoinComponent extends DataLoadingComponent {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly errorHandler: ErrorHandler,
-    noticeService: NoticeService
+    noticeService: NoticeService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
     const joining$ = this.route.params.pipe(
@@ -72,14 +77,16 @@ export class JoinComponent extends DataLoadingComponent {
       map(([joining, _]) => joining),
       distinctUntilChanged()
     );
-    this.subscribe(checkLinkSharing$, joining => {
+    checkLinkSharing$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(joining => {
       // Set locale only if not logged in
       if (this.authService.currentUserId == null) {
         this.i18nService.setLocale(joining.locale);
       }
       this.initialize(joining.shareKey);
     });
-    this.subscribe(this.onlineStatusService.onlineStatus$, () => this.updateOfflineJoiningStatus());
+    this.onlineStatusService.onlineStatus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateOfflineJoiningStatus());
   }
 
   get isFormEnabled(): boolean {

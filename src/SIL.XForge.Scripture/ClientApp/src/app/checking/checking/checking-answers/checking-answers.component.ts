@@ -1,4 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
@@ -15,7 +19,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -80,7 +83,7 @@ enum LikeAnswerResponse {
   templateUrl: './checking-answers.component.html',
   styleUrls: ['./checking-answers.component.scss']
 })
-export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
+export class CheckingAnswersComponent implements OnInit {
   @ViewChild(CheckingInputFormComponent) answerInput?: CheckingInputFormComponent;
   @ViewChildren(CheckingCommentsComponent) allComments?: QueryList<CheckingCommentsComponent>;
   @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
@@ -121,10 +124,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly i18n: I18nService,
     private readonly fileService: FileService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly projectService: SFProjectService
-  ) {
-    super();
-  }
+    private readonly projectService: SFProjectService,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   get project(): SFProjectProfile | undefined {
     return this._projectProfileDoc?.data;
@@ -139,9 +141,11 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (projectProfileDoc == null) {
       return;
     }
-    this.projectProfileDocChangesSubscription = this.subscribe(projectProfileDoc.changes$, () => {
-      this.setProjectAdmin();
-    });
+    this.projectProfileDocChangesSubscription = projectProfileDoc.changes$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.setProjectAdmin();
+      });
     this.setProjectAdmin();
   }
 
@@ -162,28 +166,30 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this.questionChangeSubscription != null) {
       this.questionChangeSubscription!.unsubscribe();
     }
-    this.questionChangeSubscription = this.subscribe(questionDoc.remoteChanges$, ops => {
-      this.updateQuestionDocAudioUrls();
-      // If the user hasn't added an answer yet and is able to, then
-      // don't hold back any incoming answers from appearing right away
-      // as soon as the user adds their answer.
-      if (this.currentUserTotalAnswers === 0 && this.canAddAnswer && !this.isProjectAdmin) {
-        this.showRemoteAnswers();
-        return;
-      }
-      // If any answers have been edited, identify which ones and highlight it
-      for (const op of ops) {
-        // 'oi' is an insert e.g. when replacing the dateModified on an answer
-        // We're only interested when text is edited
-        if (op['oi'] != null && op.p[0] === 'answers' && op.p[2] === 'text') {
-          const answer = this.allAnswers[op.p[1]];
-          if (this.answersHighlightStatus.has(answer.dataId)) {
-            this.answersHighlightStatus.set(answer.dataId, false);
-            setTimeout(() => this.answersHighlightStatus.set(answer.dataId, true));
+    this.questionChangeSubscription = questionDoc.remoteChanges$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(ops => {
+        this.updateQuestionDocAudioUrls();
+        // If the user hasn't added an answer yet and is able to, then
+        // don't hold back any incoming answers from appearing right away
+        // as soon as the user adds their answer.
+        if (this.currentUserTotalAnswers === 0 && this.canAddAnswer && !this.isProjectAdmin) {
+          this.showRemoteAnswers();
+          return;
+        }
+        // If any answers have been edited, identify which ones and highlight it
+        for (const op of ops) {
+          // 'oi' is an insert e.g. when replacing the dateModified on an answer
+          // We're only interested when text is edited
+          if (op['oi'] != null && op.p[0] === 'answers' && op.p[2] === 'text') {
+            const answer = this.allAnswers[op.p[1]];
+            if (this.answersHighlightStatus.has(answer.dataId)) {
+              this.answersHighlightStatus.set(answer.dataId, false);
+              setTimeout(() => this.answersHighlightStatus.set(answer.dataId, true));
+            }
           }
         }
-      }
-    });
+      });
   }
   get questionDoc(): QuestionDoc | undefined {
     return this._questionDoc;
@@ -286,7 +292,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
-    this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionDocAudioUrls());
+    this.fileService.fileSyncComplete$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateQuestionDocAudioUrls());
   }
 
   async archiveQuestion(): Promise<void> {

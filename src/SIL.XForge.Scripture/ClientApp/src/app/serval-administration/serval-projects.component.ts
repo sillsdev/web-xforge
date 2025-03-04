@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -81,7 +85,8 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly servalAdministrationService: ServalAdministrationService
+    private readonly servalAdministrationService: ServalAdministrationService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');
@@ -94,18 +99,18 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
 
   ngOnInit(): void {
     this.loadingStarted();
-    this.subscribe(
-      this.servalAdministrationService.onlineQuery(this.searchTerm$, this.queryParameters$, [
+    this.servalAdministrationService
+      .onlineQuery(this.searchTerm$, this.queryParameters$, [
         obj<Project>().pathStr(p => p.name),
         obj<SFProjectProfile>().pathStr(p => p.shortName)
-      ]),
-      searchResults => {
+      ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(searchResults => {
         this.projectDocs = searchResults.docs;
         this.length = searchResults.unpagedCount;
         this.generateRows();
         this.loadingFinished();
-      }
-    );
+      });
   }
 
   updateSearchTerm(target: EventTarget | null): void {

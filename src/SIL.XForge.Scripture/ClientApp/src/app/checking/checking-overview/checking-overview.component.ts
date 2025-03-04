@@ -1,4 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { QuietDestroyRef } from 'xforge-common/utils';
 
 import { ActivatedRoute } from '@angular/router';
@@ -206,7 +208,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       }),
       map(params => params['projectId'] as string)
     );
-    this.subscribe(projectId$, async projectId => {
+    projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       this.loadingStarted();
       this.projectId = projectId;
       try {
@@ -245,7 +247,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     this.dataChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
   }

@@ -1,4 +1,6 @@
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
@@ -23,7 +25,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { issuesEmailTemplate } from 'xforge-common/utils';
+import { issuesEmailTemplate, QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -153,7 +155,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
     protected readonly noticeService: NoticeService,
-    protected readonly urlService: ExternalUrlService
+    protected readonly urlService: ExternalUrlService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
   }
@@ -217,71 +220,70 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.loadingStarted();
 
     // Display dialog for supported languages when route fragment is 'supported-languages'
-    this.subscribe(
-      this.route.fragment.pipe(filter(fragment => fragment === this.supportedLanguagesUrl.fragment)),
-      () => {
+    this.route.fragment
+      .pipe(filter(fragment => fragment === this.supportedLanguagesUrl.fragment))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
         const dialogRef = this.dialogService.openMatDialog(SupportedBackTranslationLanguagesDialogComponent);
 
         dialogRef.afterClosed().subscribe(() => {
           this.router.navigate([], { fragment: undefined });
         });
-      }
-    );
+      });
 
-    this.subscribe(
-      combineLatest([
-        this.activatedProject.changes$.pipe(
-          filterNullish(),
-          tap(projectDoc => {
-            const translateConfig = projectDoc.data?.translateConfig;
+    combineLatest([
+      this.activatedProject.changes$.pipe(
+        filterNullish(),
+        tap(projectDoc => {
+          const translateConfig = projectDoc.data?.translateConfig;
 
-            this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
-            this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
-            this.targetLanguage = projectDoc.data?.writingSystem.tag;
+          this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
+          this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
+          this.targetLanguage = projectDoc.data?.writingSystem.tag;
 
-            // If an alternate source is specified, that will be used for drafting (not training)
-            if (
-              (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
-              translateConfig?.draftConfig.alternateSource != null
-            ) {
-              this.sourceLanguage = translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
-            } else {
-              this.sourceLanguage = translateConfig?.source?.writingSystem.tag;
-            }
+          // If an alternate source is specified, that will be used for drafting (not training)
+          if (
+            (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
+            translateConfig?.draftConfig.alternateSource != null
+          ) {
+            this.sourceLanguage = translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
+          } else {
+            this.sourceLanguage = translateConfig?.source?.writingSystem.tag;
+          }
 
-            this.alternateTrainingSourceLanguage =
-              translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
-            this.additionalTrainingSourceLanguage =
-              translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag;
+          this.alternateTrainingSourceLanguage =
+            translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
+          this.additionalTrainingSourceLanguage =
+            translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag;
 
-            this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
+          this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
-            this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
+          this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
 
-            this.hasDraftBooksAvailable = projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
-          })
-        ),
-        this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
-        this.draftSourcesService.getDraftProjectSources().pipe(
-          tap(({ trainingSources, draftingSources }) => {
-            this.source = draftingSources[0];
-            this.trainingSource = trainingSources[0];
-            this.additionalTrainingSource = trainingSources[1];
-          })
-        )
-      ]),
-      async () => {
+          this.hasDraftBooksAvailable = projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
+        })
+      ),
+      this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
+      this.draftSourcesService.getDraftProjectSources().pipe(
+        tap(({ trainingSources, draftingSources }) => {
+          this.source = draftingSources[0];
+          this.trainingSource = trainingSources[0];
+          this.additionalTrainingSource = trainingSources[1];
+        })
+      )
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async () => {
         this.isTargetLanguageSupported =
           !this.isBackTranslationMode || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
 
         if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
           this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
         }
-      }
-    );
+      });
 
-    this.subscribe(
-      this.activatedProject.projectDoc$.pipe(
+    this.activatedProject.projectDoc$
+      .pipe(
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
@@ -290,13 +292,13 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           }
           return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
         })
-      ),
-      (build: BuildDto | undefined) => {
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((build: BuildDto | undefined) => {
         this.lastCompletedBuild = build;
-      }
-    );
+      });
 
-    this.subscribe(this.onlineStatusService.onlineStatus$, (isOnline: boolean) => {
+    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isOnline: boolean) => {
       this.isOnline = isOnline;
 
       // Start polling when app goes online
@@ -307,7 +309,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       }
     });
 
-    this.subscribe(this.i18n.locale$, () => {
+    this.i18n.locale$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
       this.sourceLanguageDisplayName = this.i18n.getLanguageDisplayName(this.sourceLanguage);
       this.alternateTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
@@ -443,8 +445,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   startBuild(buildConfig: BuildConfig): void {
     this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.subscribe(
-      this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig).pipe(
+    this.jobSubscription = this.draftGenerationService
+      .startBuildOrGetActiveBuild(buildConfig)
+      .pipe(
         tap((job?: BuildDto) => {
           this.currentPage = 'initial';
           // Handle automatic closing of dialog if job finishes while cancel dialog is open
@@ -466,15 +469,15 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
           return of(undefined);
         })
-      ),
-      (job?: BuildDto) => (this.draftJob = job)
-    );
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((job?: BuildDto) => (this.draftJob = job));
   }
 
   private pollBuild(): void {
     this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.subscribe(
-      this.activatedProject.projectDoc$.pipe(
+    this.jobSubscription = this.activatedProject.projectDoc$
+      .pipe(
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
@@ -489,8 +492,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
               )
             );
         })
-      ),
-      (job?: BuildDto) => {
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((job?: BuildDto) => {
         this.draftJob = job;
         this.isDraftJobFetched = true;
         this.loadingFinished();
@@ -499,8 +503,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         if (this.isDraftComplete(job)) {
           this.lastCompletedBuild = job;
         }
-      }
-    );
+      });
   }
 
   private cancelBuild(): void {

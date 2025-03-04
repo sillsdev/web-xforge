@@ -1,4 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Component, ErrorHandler, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -56,7 +60,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly errorHandler: ErrorHandler,
-    private readonly translocoService: TranslocoService
+    private readonly translocoService: TranslocoService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
     this.connectProjectForm.disable();
@@ -111,7 +116,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       this.router.navigate(['/projects']);
     }
 
-    this.subscribe(this.onlineStatusService.onlineStatus$, async isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline) {
         if (this.projectsFromParatext == null) {

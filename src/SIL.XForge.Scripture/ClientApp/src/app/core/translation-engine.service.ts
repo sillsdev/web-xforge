@@ -1,4 +1,8 @@
 import { Injectable } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Router } from '@angular/router';
 import { InteractiveTranslator, InteractiveTranslatorFactory, LatinWordTokenizer } from '@sillsdev/machine';
 import { Canon } from '@sillsdev/scripture';
@@ -11,7 +15,6 @@ import { filter, share } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { HttpClient } from '../machine-api/http-client';
 import { RemoteTranslationEngine } from '../machine-api/remote-translation-engine';
 import { EDITED_SEGMENTS, EditedSegmentData } from './models/edited-segment-data';
@@ -23,7 +26,7 @@ import { SFProjectService } from './sf-project.service';
 @Injectable({
   providedIn: 'root'
 })
-export class TranslationEngineService extends SubscriptionDisposable {
+export class TranslationEngineService {
   private onlineStatus$: Observable<boolean>;
   private tokenizer = new LatinWordTokenizer();
   private translationEngines: Map<string, RemoteTranslationEngine> = new Map<string, RemoteTranslationEngine>();
@@ -38,9 +41,9 @@ export class TranslationEngineService extends SubscriptionDisposable {
     private readonly projectService: SFProjectService,
     private readonly machineHttp: HttpClient,
     private readonly noticeService: NoticeService,
-    private readonly router: Router
+    private readonly router: Router,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
     this.onlineStatus$ = this.onlineStatusService.onlineStatus$.pipe(
       filter(online => online),
       share()
@@ -182,7 +185,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
   }
 
   private onlineCallback(callback: () => any): void {
-    this.subscribe(this.onlineStatus$, callback);
+    this.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(callback);
   }
 
   private translationSuggestionId(projectRef: string, bookNum: number, segment: string): string {

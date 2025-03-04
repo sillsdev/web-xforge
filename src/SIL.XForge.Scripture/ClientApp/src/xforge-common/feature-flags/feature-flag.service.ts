@@ -1,8 +1,11 @@
 import { Injectable } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 
 export interface FeatureFlag {
   readonly key: string;
@@ -26,7 +29,7 @@ interface IFeatureFlagStore {
 @Injectable({
   providedIn: 'root'
 })
-export class FeatureFlagStore extends SubscriptionDisposable implements IFeatureFlagStore {
+export class FeatureFlagStore implements IFeatureFlagStore {
   static readonly keyPrefix = 'SF_FEATURE_FLAG_';
   private localFlags: { [key: string]: boolean } = {};
   private remoteFlags: { [key: string]: boolean } = {};
@@ -34,11 +37,11 @@ export class FeatureFlagStore extends SubscriptionDisposable implements IFeature
 
   constructor(
     private readonly anonymousService: AnonymousService,
-    private readonly onlineStatusService: OnlineStatusService
+    private readonly onlineStatusService: OnlineStatusService,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
     // Cause the flags to be reloaded when coming online
-    this.subscribe(onlineStatusService.onlineStatus$, status => {
+    onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status) this.remoteFlagCacheExpiry = new Date();
     });
   }

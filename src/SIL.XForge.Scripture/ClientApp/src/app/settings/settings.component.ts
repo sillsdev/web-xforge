@@ -1,4 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
@@ -113,7 +117,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     readonly authService: AuthService,
     readonly featureFlags: FeatureFlagService,
     readonly externalUrls: ExternalUrlService,
-    private readonly activatedProjectService: ActivatedProjectService
+    private readonly activatedProjectService: ActivatedProjectService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
     this.loading = true;
@@ -200,9 +205,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       tap(() => (this.loading = this.isAppOnline)),
       map(params => params['projectId'] as string)
     );
-    this.subscribe(
-      combineLatest([this.onlineStatusService.onlineStatus$, projectId$]),
-      async ([isOnline, projectId]) => {
+    combineLatest([this.onlineStatusService.onlineStatus$, projectId$])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async ([isOnline, projectId]) => {
         this.isAppOnline = isOnline;
         if (isOnline && this.projects == null) {
           this.loading = true;
@@ -219,7 +224,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             if (this.projectDoc != null) {
               this.updateSettingsInfo();
               this.updateNonSelectableProjects();
-              this.subscribe(this.projectDoc.remoteChanges$, () => {
+              this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
                 this.updateNonSelectableProjects();
                 this.setIndividualControlDisabledStates();
               });
@@ -265,8 +270,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
           this.updateFormEnabled();
         }
-      }
-    );
+      });
   }
 
   logInWithParatext(): void {

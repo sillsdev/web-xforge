@@ -1,9 +1,12 @@
 import { Component, Inject } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { UntypedFormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
 
 export interface EditNameDialogResult {
@@ -15,7 +18,7 @@ export interface EditNameDialogResult {
   styleUrls: ['./edit-name-dialog.component.scss'],
   templateUrl: './edit-name-dialog.component.html'
 })
-export class EditNameDialogComponent extends SubscriptionDisposable {
+export class EditNameDialogComponent {
   static defaultMatDialogConfig: MatDialogConfig = { autoFocus: true };
 
   name: UntypedFormControl = new UntypedFormControl('');
@@ -25,12 +28,14 @@ export class EditNameDialogComponent extends SubscriptionDisposable {
     public dialogRef: MatDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>,
     public i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
-    @Inject(MAT_DIALOG_DATA) public data: { name: string; isConfirmation: boolean }
+    @Inject(MAT_DIALOG_DATA) public data: { name: string; isConfirmation: boolean },
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
     this.name.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     this.name.setValue(data.name);
-    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => (this.isOnline = isOnline));
+    this.onlineStatusService.onlineStatus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(isOnline => (this.isOnline = isOnline));
   }
 
   submitDialog(): void {

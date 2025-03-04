@@ -1,4 +1,8 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
@@ -8,7 +12,6 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextsByBookId } from '../../../../core/models/texts-by-book-id';
 import {
@@ -38,7 +41,7 @@ function isAnswer(value: Answer | Comment | undefined): value is Answer {
   templateUrl: './checking-input-form.component.html',
   styleUrls: ['./checking-input-form.component.scss']
 })
-export class CheckingInputFormComponent extends SubscriptionDisposable {
+export class CheckingInputFormComponent {
   @Input() project?: SFProjectProfile;
   @Input() textSelectionEnabled: boolean = false;
   @Input() textsByBookId?: TextsByBookId;
@@ -62,15 +65,15 @@ export class CheckingInputFormComponent extends SubscriptionDisposable {
     private readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     private readonly breakpointObserver: BreakpointObserver,
-    private readonly mediaBreakpointService: MediaBreakpointService
+    private readonly mediaBreakpointService: MediaBreakpointService,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
-    this.subscribe(
-      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.MD)),
-      (state: BreakpointState) => {
+    this.breakpointObserver
+      .observe(this.mediaBreakpointService.width('<', Breakpoint.MD))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((state: BreakpointState) => {
         this.isScreenSmall = state.matches;
-      }
-    );
+      });
   }
 
   @Input() set questionDoc(value: QuestionDoc | undefined) {

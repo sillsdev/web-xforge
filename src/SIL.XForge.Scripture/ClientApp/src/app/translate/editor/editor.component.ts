@@ -305,7 +305,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.targetWordTokenizer = wordTokenizer;
 
     this.segmentUpdated$ = new Subject<void>();
-    this.subscribe(this.segmentUpdated$.pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT)), () => this.updateSuggestions());
+    this.segmentUpdated$
+      .pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateSuggestions());
     this.mobileNoteControl.setValidators([Validators.required, XFValidators.someNonWhitespace]);
   }
 
@@ -667,16 +670,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(fromEvent(window, 'resize'), () => {
-      this.positionInsertNoteFab();
-    });
+    fromEvent(window, 'resize')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.positionInsertNoteFab();
+      });
 
-    this.subscribe(
-      combineLatest([
-        this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
-        this.targetTextComponent!.changes
-      ]),
-      async ([params, components]) => {
+    combineLatest([
+      this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
+      this.targetTextComponent!.changes
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async ([params, components]) => {
         this.target = components.first;
         this.showSuggestions = false;
         this.sourceLoaded = false;
@@ -794,8 +799,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             );
           }
         }
-      }
-    );
+      });
 
     // Throttle bursts of sync scroll requests
     this.syncScrollRequested$
@@ -821,8 +825,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
-
     this.projectUserConfigChangesSub?.unsubscribe();
     this.trainingSub?.unsubscribe();
     this.projectDataChangesSub?.unsubscribe();
@@ -1899,21 +1901,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.clickSubs.set(
         segment,
         Array.from(elements).map((element: Element) =>
-          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
-            if (this.bookNum == null) {
-              return;
-            }
-            const threadDataId: string | undefined = threadIdFromMouseEvent(event);
-            if (threadDataId != null) {
-              this.showNoteThread(threadDataId);
-              this.target?.formatEmbed(threadDataId, 'note-thread-embed', {
-                ['highlight']: false
-              });
-              this.updateReadNotes(threadDataId);
-            }
-            // stops the event from causing the segment to be selected
-            event.stopPropagation();
-          })
+          fromEvent<MouseEvent>(element, 'click')
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(event => {
+              if (this.bookNum == null) {
+                return;
+              }
+              const threadDataId: string | undefined = threadIdFromMouseEvent(event);
+              if (threadDataId != null) {
+                this.showNoteThread(threadDataId);
+                this.target?.formatEmbed(threadDataId, 'note-thread-embed', {
+                  ['highlight']: false
+                });
+                this.updateReadNotes(threadDataId);
+              }
+              // stops the event from causing the segment to be selected
+              event.stopPropagation();
+            })
         )
       );
     }
@@ -1929,11 +1933,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (segmentElement == null) continue;
 
       this.selectionClickSubs.push(
-        this.subscribe(fromEvent<MouseEvent>(segmentElement, 'click'), event => {
-          if (this.bookNum == null || this.target == null) return;
-          const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this.bookNum);
-          this.toggleVerseRefElement(verseRef);
-        })
+        fromEvent<MouseEvent>(segmentElement, 'click')
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(event => {
+            if (this.bookNum == null || this.target == null) return;
+            const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this.bookNum);
+            this.toggleVerseRefElement(verseRef);
+          })
       );
     }
   }
@@ -1955,21 +1961,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
 
     this.toggleNoteThreadSub?.unsubscribe();
-    this.toggleNoteThreadSub = this.subscribe(
-      merge(
-        this.toggleNoteThreadVerseRefs$,
-        this.noteThreadQuery.ready$.pipe(filter(isReady => isReady)),
-        this.noteThreadQuery.remoteChanges$,
-        this.noteThreadQuery.remoteDocChanges$
-      ),
-      () => {
+    this.toggleNoteThreadSub = merge(
+      this.toggleNoteThreadVerseRefs$,
+      this.noteThreadQuery.ready$.pipe(filter(isReady => isReady)),
+      this.noteThreadQuery.remoteChanges$,
+      this.noteThreadQuery.remoteDocChanges$
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
         this.toggleNoteThreadVerses(false);
         this.toggleNoteThreadVerses(true);
         if (this.userRole != null && this.showAddCommentUI) {
           this.subscribeCommentingSelectionEvents();
         }
-      }
-    );
+      });
   }
 
   private loadProjectUserConfig(chapterFromUrl?: number): void {
@@ -2519,9 +2524,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private subscribeScroll(scrollContainer: Element): void {
     this.scrollSubscription?.unsubscribe();
-    this.scrollSubscription = this.subscribe(fromEvent(scrollContainer, 'scroll'), () => {
-      this.keepInsertNoteFabInView(scrollContainer);
-    });
+    this.scrollSubscription = fromEvent(scrollContainer, 'scroll')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.keepInsertNoteFabInView(scrollContainer);
+      });
   }
 
   private keepInsertNoteFabInView(scrollContainer: Element): void {

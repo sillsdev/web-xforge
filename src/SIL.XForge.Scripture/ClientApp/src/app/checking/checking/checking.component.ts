@@ -1,4 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { QuietDestroyRef } from 'xforge-common/utils';
 
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
@@ -476,9 +478,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   ngOnInit(): void {
-    this.subscribe(
-      combineLatest([this.activatedRoute.params, this.activatedRoute.queryParams]),
-      async ([params, queryParams]) => {
+    combineLatest([this.activatedRoute.params, this.activatedRoute.queryParams])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async ([params, queryParams]) => {
         this.loadingStarted();
 
         // Wrap with try/finally to ensure loadingFinished() is called
@@ -532,33 +534,37 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
             // Subscribe to the projectDoc now that it is defined
             this.projectRemoteChangesSub?.unsubscribe();
-            this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
-              if (this.projectDoc != null && this.projectDoc.data != null) {
-                const roles = this.projectDoc.data.userRoles;
-                const userId = this.userService.currentUserId;
-                if (!(userId in roles)) {
-                  this.onRemovedFromProject();
-                } else if (!this.permissions.canAccessCommunityChecking(this.projectDoc)) {
-                  this.onRemovedFromProject();
+            this.projectRemoteChangesSub = this.projectDoc.remoteChanges$
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe(() => {
+                if (this.projectDoc != null && this.projectDoc.data != null) {
+                  const roles = this.projectDoc.data.userRoles;
+                  const userId = this.userService.currentUserId;
+                  if (!(userId in roles)) {
+                    this.onRemovedFromProject();
+                  } else if (!this.permissions.canAccessCommunityChecking(this.projectDoc)) {
+                    this.onRemovedFromProject();
+                  }
                 }
-              }
-            });
+              });
 
             this.hideTextSub?.unsubscribe();
-            this.hideTextSub = this.subscribe(
-              this.projectDoc.changes$.pipe(
+            this.hideTextSub = this.projectDoc.changes$
+              .pipe(
                 map(() => this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText),
                 startWith(this.projectDoc.data.checkingConfig.hideCommunityCheckingText),
                 distinctUntilChanged()
-              ),
-              () => {
+              )
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe(() => {
                 if (this.hideChapterText) this.showScriptureAudioPlayer = true;
                 this.calculateScriptureSliderPosition();
-              }
-            );
+              });
 
             this.projectDeleteSub?.unsubscribe();
-            this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
+            this.projectDeleteSub = this.projectDoc.delete$
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe(() => this.onRemovedFromProject());
 
             this.projectService
               .isProjectAdmin(routeProjectId, this.userService.currentUserId)
@@ -616,29 +622,27 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               this.destroyRef
             );
             if (this.projectDoc != null) {
-              this.textAudioSub = this.subscribe(
-                merge(this.questionsQuery.ready$, this.projectDoc.remoteChanges$),
-                () => this.updateAudioMissingWarning()
-              );
+              this.textAudioSub = merge(this.questionsQuery.ready$, this.projectDoc.remoteChanges$)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe(() => this.updateAudioMissingWarning());
             }
 
             // TODO (scripture audio) Only fetch the timing data for the currently active chapter
             this.projectService.queryAudioText(routeProjectId, this.destroyRef).then(query => {
               this.textAudioQuery = query;
-              this.audioChangedSub = this.subscribe(
-                merge(this.textAudioQuery.remoteChanges$, this.textAudioQuery.localChanges$),
-                () => {
+              this.audioChangedSub = merge(this.textAudioQuery.remoteChanges$, this.textAudioQuery.localChanges$)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe(() => {
                   if (this.chapterAudioSource === '') {
                     this.hideChapterAudio();
                   }
-                }
-              );
+                });
             });
 
             // TODO: check for remote changes to file data more generically
-            this.questionsRemoteChangesSub = this.subscribe(
-              this.questionsQuery.remoteDocChanges$,
-              (qd: QuestionDoc) => {
+            this.questionsRemoteChangesSub = this.questionsQuery.remoteDocChanges$
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe((qd: QuestionDoc) => {
                 const isActiveQuestionDoc: boolean = qd.id === this.questionsList!.activeQuestionDoc?.id;
 
                 if (isActiveQuestionDoc) {
@@ -653,21 +657,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 }
 
                 this.updateAdjacentQuestions(this.questionsList!.activeQuestionDoc!);
-              }
-            );
+              });
 
             // Determine when to update visible questions
-            this.questionsSub = this.subscribe(
-              merge(
-                this.questionsQuery.ready$.pipe(
-                  // Query 'ready$' will not emit when offline (initial emission of false is due to BehaviorSubject),
-                  // but offline docs may be available.
-                  filter(isReady => isReady || !this.onlineStatusService.isOnline)
-                ),
-                this.questionsQuery.remoteChanges$.pipe(map(() => 'remote')),
-                this.questionsQuery.localChanges$.pipe(map(() => 'local')),
-                this.questionsQuery.remoteDocChanges$
-              ).pipe(
+            this.questionsSub = merge(
+              this.questionsQuery.ready$.pipe(
+                // Query 'ready$' will not emit when offline (initial emission of false is due to BehaviorSubject),
+                // but offline docs may be available.
+                filter(isReady => isReady || !this.onlineStatusService.isOnline)
+              ),
+              this.questionsQuery.remoteChanges$.pipe(map(() => 'remote')),
+              this.questionsQuery.localChanges$.pipe(map(() => 'local')),
+              this.questionsQuery.remoteDocChanges$
+            )
+              .pipe(
                 filter(source => {
                   if (this.projectDoc == null || (this.onlineStatusService.isOnline && !this.questionsQuery!.ready)) {
                     return false;
@@ -688,12 +691,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 // Throttle burst of events, such as when local and remote change events are emitted
                 // at the same time when question is added within scope.
                 throttleTime(100, asyncScheduler, { leading: false, trailing: true })
-              ),
-              () => {
+              )
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe(() => {
                 this.updateAudioMissingWarning();
                 this.updateVisibleQuestions();
-              }
-            );
+              });
           } else {
             // Visible questions didn't change, but active question must update on route change
             this.questionsList?.activateStoredQuestion();
@@ -706,30 +709,32 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         } finally {
           this.loadingFinished();
         }
-      }
-    );
+      });
 
     // Get hook on pre-creation of question so that we can check if will be in scope
     // before deciding to update visible questions.
-    this.subscribe(this.checkingQuestionsService.beforeQuestionCreated$, (data: PreCreationQuestionData) => {
-      this.questionToBeCreated = data;
-    });
+    this.checkingQuestionsService.beforeQuestionCreated$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((data: PreCreationQuestionData) => {
+        this.questionToBeCreated = data;
+      });
 
     // Pre-creation question object is no longer needed after question is actually created
-    this.subscribe(this.checkingQuestionsService.afterQuestionCreated$, (data: QuestionDoc) => {
-      if (data.id === this.questionToBeCreated?.docId) {
-        this.questionToBeCreated = undefined;
-      }
-    });
+    this.checkingQuestionsService.afterQuestionCreated$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((data: QuestionDoc) => {
+        if (data.id === this.questionToBeCreated?.docId) {
+          this.questionToBeCreated = undefined;
+        }
+      });
   }
 
   ngAfterViewInit(): void {
     // Allows scrolling to the active question in the question list once it becomes visible
-    this.subscribe(
-      this.breakpointObserver.observe(
-        this.mediaBreakpointService.width('>', Breakpoint.SM, this.questionsPanel?.nativeElement)
-      ),
-      (state: BreakpointState) => {
+    this.breakpointObserver
+      .observe(this.mediaBreakpointService.width('>', Breakpoint.SM, this.questionsPanel?.nativeElement))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((state: BreakpointState) => {
         this.calculateScriptureSliderPosition();
 
         // `questionsPanel` is undefined until ngAfterViewInit, but setting `isQuestionListPermanent`
@@ -737,20 +742,18 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         setTimeout(() => {
           this.isQuestionListPermanent = state.matches;
         });
-      }
-    );
+      });
 
     // Allows hiding the prev/next chapter buttons for small screens
-    this.subscribe(
-      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.MD)),
-      (state: BreakpointState) => {
+    this.breakpointObserver
+      .observe(this.mediaBreakpointService.width('<', Breakpoint.MD))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((state: BreakpointState) => {
         this.isScreenSmall = state.matches;
-      }
-    );
+      });
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     this.cleanup();
   }
 

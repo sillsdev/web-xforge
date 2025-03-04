@@ -1,4 +1,8 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -34,7 +38,8 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly translationEngineService: TranslationEngineService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
   }
@@ -48,7 +53,7 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
   }
 
   ngOnInit(): void {
-    this.subscribe(this.projectId$, async projectId => {
+    this.projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       if (projectId === '') {
         return;
       }
@@ -77,7 +82,6 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     if (this.projectDataChangesSub != null) {
       this.projectDataChangesSub.unsubscribe();
     }

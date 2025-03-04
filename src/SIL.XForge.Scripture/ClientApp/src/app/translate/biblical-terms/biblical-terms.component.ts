@@ -1,4 +1,6 @@
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { QuietDestroyRef } from 'xforge-common/utils';
 
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
@@ -303,44 +305,46 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     this.biblicalTermQuery?.dispose();
     this.noteThreadQuery?.dispose();
     this.biblicalTermSub?.unsubscribe();
   }
 
   ngOnInit(): void {
-    this.subscribe(this.projectId$.pipe(filter(projectId => projectId !== '')), async projectId => {
-      this.projectDoc = await this.projectService.getProfile(projectId);
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+    this.projectId$
+      .pipe(filter(projectId => projectId !== ''))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async projectId => {
+        this.projectDoc = await this.projectService.getProfile(projectId);
+        this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
 
-      // Subscribe to any project, book, chapter, verse, locale, biblical term, or note changes
-      this.loadingStarted();
-      this.categoriesLoading = true;
-      const biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
+        // Subscribe to any project, book, chapter, verse, locale, biblical term, or note changes
+        this.loadingStarted();
+        this.categoriesLoading = true;
+        const biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
 
-      this.biblicalTermSub?.unsubscribe();
+        this.biblicalTermSub?.unsubscribe();
 
-      this.biblicalTermSub = this.subscribe(
-        combineLatest([
+        this.biblicalTermSub = combineLatest([
           this.bookNum$,
           this.chapter$,
           this.verse$,
           this.i18n.locale$,
           biblicalTermsAndNotesChanges$
-        ]).pipe(filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null)),
-        ([bookNum, chapter, verse]) => {
-          this.filterBiblicalTerms(bookNum, chapter, verse);
-          this.categoriesLoading = false;
-        }
-      );
+        ])
+          .pipe(filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null))
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(([bookNum, chapter, verse]) => {
+            this.filterBiblicalTerms(bookNum, chapter, verse);
+            this.categoriesLoading = false;
+          });
 
-      if (!this.appOnline && biblicalTermsAndNotesChanges$.pipe(filter(val => val == null))) {
-        this.loadingFinished();
-      } else {
-        this.biblicalTermsLoaded = true;
-      }
-    });
+        if (!this.appOnline && biblicalTermsAndNotesChanges$.pipe(filter(val => val == null))) {
+          this.loadingFinished();
+        } else {
+          this.biblicalTermsLoaded = true;
+        }
+      });
   }
 
   async editNoteThread(row: Row): Promise<void> {

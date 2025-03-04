@@ -1,4 +1,8 @@
 import { CommonModule } from '@angular/common';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Component, Input, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
@@ -81,7 +85,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private readonly servalAdministrationService: ServalAdministrationService
+    private readonly servalAdministrationService: ServalAdministrationService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
   }
@@ -99,8 +104,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   ngOnInit(): void {
-    this.subscribe(
-      this.activatedProjectService.projectDoc$.pipe(
+    this.activatedProjectService.projectDoc$
+      .pipe(
         filterNullish(),
         switchMap(projectDoc => {
           if (projectDoc.data == null) return of(undefined);
@@ -203,11 +208,11 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             return of(undefined);
           }
         })
-      ),
-      (build: BuildDto | undefined) => {
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((build: BuildDto | undefined) => {
         this.lastCompletedBuild = build;
-      }
-    );
+      });
   }
 
   async downloadDraft(): Promise<void> {

@@ -1,4 +1,8 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { MatDialogConfig } from '@angular/material/dialog';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -49,7 +53,8 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     private dialogService: DialogService,
     noticeService: NoticeService,
     private readonly userService: UserService,
-    private readonly projectService: ProjectService
+    private readonly projectService: ProjectService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
   }
@@ -60,9 +65,10 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadingStarted();
-    this.subscribe(
-      this.userService.onlineQuery(this.searchTerm$, this.queryParameters$, this.reload$),
-      async searchResults => {
+    this.userService
+      .onlineQuery(this.searchTerm$, this.queryParameters$, this.reload$)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async searchResults => {
         // Process the query for users into Rows that can be displayed.
         this.loadingStarted();
         const projectDocs = await this.getUserProjectDocs(searchResults);
@@ -94,8 +100,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
         }
 
         this.loadingFinished();
-      }
-    );
+      });
   }
 
   updateSearchTerm(target: EventTarget | null): void {

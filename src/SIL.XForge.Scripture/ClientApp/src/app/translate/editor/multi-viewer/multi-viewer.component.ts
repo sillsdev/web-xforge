@@ -1,11 +1,14 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { slice } from 'lodash-es';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { combineLatest } from 'rxjs';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 
 export interface MultiCursorViewer extends UserProfile {
   cursorColor: string;
@@ -17,7 +20,7 @@ export interface MultiCursorViewer extends UserProfile {
   templateUrl: './multi-viewer.component.html',
   styleUrls: ['./multi-viewer.component.scss']
 })
-export class MultiViewerComponent extends SubscriptionDisposable implements OnInit {
+export class MultiViewerComponent implements OnInit {
   @Input() viewers: MultiCursorViewer[] = [];
   @Output() viewerClick: EventEmitter<MultiCursorViewer> = new EventEmitter<MultiCursorViewer>();
   maxAvatars: number = 3;
@@ -25,10 +28,9 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
 
   constructor(
     private readonly breakpointObserver: BreakpointObserver,
-    private readonly breakpointService: MediaBreakpointService
-  ) {
-    super();
-  }
+    private readonly breakpointService: MediaBreakpointService,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   get avatarViewers(): MultiCursorViewer[] {
     if (this.isMenuOpen) return [];
@@ -41,16 +43,15 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
   }
 
   ngOnInit(): void {
-    this.subscribe(
-      combineLatest([
-        this.breakpointObserver.observe(this.breakpointService.width('>', Breakpoint.SM)),
-        this.breakpointObserver.observe(this.breakpointService.width('<=', Breakpoint.XS))
-      ]),
-      ([bigger, xs]) => {
+    combineLatest([
+      this.breakpointObserver.observe(this.breakpointService.width('>', Breakpoint.SM)),
+      this.breakpointObserver.observe(this.breakpointService.width('<=', Breakpoint.XS))
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([bigger, xs]) => {
         // initialize to 3, but if > SM then set to 6, else if <= XS then set to 1
         this.maxAvatars = bigger.matches ? 6 : xs.matches ? 1 : 3;
-      }
-    );
+      });
   }
 
   toggleMenu(): void {

@@ -1,4 +1,8 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
@@ -66,7 +70,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     private readonly onlineStatusService: OnlineStatusService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly dialogService: DialogService,
-    readonly urls: ExternalUrlService
+    readonly urls: ExternalUrlService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
   }
@@ -132,17 +137,18 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   ngOnInit(): void {
     this.loadingStarted();
-    this.subscribe(
-      this.activatedRoute.params.pipe(
+    this.activatedRoute.params
+      .pipe(
         map(params => params['projectId'] as string),
         distinctUntilChanged(),
         filter(projectId => projectId != null)
-      ),
-      async projectId => {
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async projectId => {
         this.loadingStarted();
         this.projectDoc = await this.projectService.get(projectId);
         this.loadUsers();
-        this.subscribe(this.projectDoc.remoteChanges$, async () => {
+        this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async () => {
           this.loadingStarted();
           try {
             await this.loadUsers();
@@ -151,9 +157,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
           }
         });
         this.loadingFinished();
-      }
-    );
-    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
+      });
+    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline && this._userRows == null) {
         this.loadingStarted();
@@ -164,7 +169,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       if (isOnline) {
         this.filterForm.enable();
       } else {

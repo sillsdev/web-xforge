@@ -9,6 +9,8 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { isEqual, merge } from 'lodash-es';
@@ -26,9 +28,8 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
-import { getBrowserEngine, objectId } from 'xforge-common/utils';
+import { getBrowserEngine, objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { isString } from '../../../type-utils';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -98,7 +99,7 @@ export interface EmbedsByVerse {
   styleUrls: ['./text.component.scss'],
   providers: [TextViewModel] // New instance for each text component
 })
-export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
+export class TextComponent implements AfterViewInit, OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
   @Input() enablePresence: boolean = false;
   @Input() markInvalid: boolean = false;
@@ -267,9 +268,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     private readonly transloco: TranslocoService,
     private readonly userService: UserService,
     private readonly viewModel: TextViewModel,
-    private readonly textDocService: TextDocService
+    private readonly textDocService: TextDocService,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
     if (localCursorColor == null) {
       // keep the cursor color from getting too close to white since the text is white
@@ -279,7 +280,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.cursorColor = localCursorColor;
     this.userService.getCurrentUser().then((userDoc: UserDoc) => {
       this.currentUserDoc = userDoc;
-      this.subscribe(this.currentUserDoc.changes$, () => this.submitLocalPresenceChannel(true));
+      this.currentUserDoc.changes$
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.submitLocalPresenceChannel(true));
     });
   }
 
@@ -492,7 +495,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       this.changeDetector.detectChanges();
       if (!isOnline && this._editor != null) {
         const cursors: QuillCursors = this._editor.getModule('cursors') as QuillCursors;
@@ -503,7 +506,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
-    super.ngOnDestroy();
     this.viewModel?.unbind();
     this.loadingState = 'unloaded';
     this.dismissPresences();
@@ -517,8 +519,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this.highlightMarker != null) {
       this.highlightMarker.style.visibility = 'hidden';
     }
-    this.subscribe(fromEvent(this._editor.root, 'scroll'), () => this.updateHighlightMarkerVisibility());
-    this.subscribe(fromEvent(window, 'resize'), () => this.setHighlightMarkerPosition());
+    fromEvent(this._editor.root, 'scroll')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateHighlightMarkerVisibility());
+    fromEvent(window, 'resize')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.setHighlightMarkerPosition());
     this.viewModel.editor = editor;
     this.bindQuill(); // not awaited
     editor.container.addEventListener('beforeinput', (ev: Event) => this.onBeforeinput(ev));
@@ -1053,18 +1059,20 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.clickSubs.set(
         'notes',
         Array.from(elements).map((element: Element) =>
-          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
-            const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
-            const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');
-            this.dialogService.openMatDialog(TextNoteDialogComponent, {
-              width: '600px',
-              data: {
-                type: noteType,
-                text: noteText,
-                isRightToLeft: this.isRtl
-              } as NoteDialogData
-            });
-          })
+          fromEvent<MouseEvent>(element, 'click')
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(event => {
+              const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
+              const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');
+              this.dialogService.openMatDialog(TextNoteDialogComponent, {
+                width: '600px',
+                data: {
+                  type: noteType,
+                  text: noteText,
+                  isRightToLeft: this.isRtl
+                } as NoteDialogData
+              });
+            })
         )
       );
     }

@@ -1,10 +1,13 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { MatListOption, MatSelectionList } from '@angular/material/list';
 import { isEqual } from 'lodash-es';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
 import { filter, first } from 'rxjs/operators';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextComponent } from '../../shared/text/text.component';
 
 export interface SuggestionSelectedEvent {
@@ -23,7 +26,7 @@ export interface Suggestion {
   templateUrl: './suggestions.component.html',
   styleUrls: ['./suggestions.component.scss']
 })
-export class SuggestionsComponent extends SubscriptionDisposable implements OnDestroy {
+export class SuggestionsComponent {
   @Output() selected = new EventEmitter<SuggestionSelectedEvent>();
   @Output() showChange = new EventEmitter<boolean>();
 
@@ -36,8 +39,10 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
   private resizeObserver?: ResizeObserver;
   private top: number = 0;
 
-  constructor(private readonly elemRef: ElementRef) {
-    super();
+  constructor(
+    private readonly elemRef: ElementRef,
+    private destroyRef: QuietDestroyRef
+  ) {
     this.show = false;
     this.root.style.left = '0px';
     this.root.style.top = '0px';
@@ -131,7 +136,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
       return;
     }
 
-    this.subscribe(this.text.updated, () => this.setPosition());
+    this.text.updated.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.setPosition());
 
     this.initEditor();
     if (this.editor == null) {
@@ -145,10 +150,13 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     }
 
     this.observeResize(this.editor);
-    this.subscribe(fromEvent(this.editor.root, 'scroll'), () => this.setPosition());
-    this.subscribe(
-      fromEvent<KeyboardEvent>(this.editor.root, 'keydown').pipe(filter(event => this.isSuggestionEvent(event))),
-      event => {
+    fromEvent(this.editor.root, 'scroll')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.setPosition());
+    fromEvent<KeyboardEvent>(this.editor.root, 'keydown')
+      .pipe(filter(event => this.isSuggestionEvent(event)))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(event => {
         if (this.list == null) {
           return;
         }
@@ -191,8 +199,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
             break;
         }
         event.preventDefault();
-      }
-    );
+      });
   }
 
   private observeResize(editor: Quill): void {

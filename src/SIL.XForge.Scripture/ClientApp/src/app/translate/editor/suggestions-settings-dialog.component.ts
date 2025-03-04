@@ -1,10 +1,13 @@
 import { Component, Inject } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { UntypedFormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 
@@ -19,7 +22,7 @@ export interface SuggestionsSettingsDialogData {
   templateUrl: './suggestions-settings-dialog.component.html',
   styleUrls: ['./suggestions-settings-dialog.component.scss']
 })
-export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
+export class SuggestionsSettingsDialogComponent {
   suggestionsEnabledSwitch = new UntypedFormControl({ disabled: !this.onlineStatusService.isOnline });
 
   private readonly projectDoc: SFProjectProfileDoc;
@@ -28,9 +31,9 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData,
-    readonly onlineStatusService: OnlineStatusService
+    readonly onlineStatusService: OnlineStatusService,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
     this.projectDoc = data.projectDoc;
     this.projectUserConfigDoc = data.projectUserConfigDoc;
 
@@ -51,14 +54,16 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     });
     this.updateSwitches();
 
-    this.subscribe(
-      this.confidenceThreshold$.pipe(
+    this.confidenceThreshold$
+      .pipe(
         skip(1),
         debounceTime(CONFIDENCE_THRESHOLD_TIMEOUT),
         map(value => value / 100)
-      ),
-      threshold => this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
-    );
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(threshold =>
+        this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
+      );
   }
 
   setTranslationSettingsEnabled(value: boolean): void {

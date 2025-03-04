@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -49,7 +53,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogService: DialogService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
   }
@@ -141,7 +146,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.subscribe(this.onlineStatusService.onlineStatus$, async isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async isOnline => {
       this.isAppOnline = isOnline;
       if (this.isAppOnline && this.paratextUsername == null) {
         const username = await firstValueFrom(this.paratextService.getParatextUsername());
@@ -162,13 +167,13 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       map(params => params['projectId'] as string)
     );
 
-    this.subscribe(projectId$, async projectId => {
+    projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       this.projectDoc = await this.projectService.get(projectId);
       this.checkSyncStatus();
       this.loadingFinished();
 
       // Check to see if a sync has started when the project document changes
-      this.subscribe(this.projectDoc.remoteChanges$, () => {
+      this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
         if (!this.syncActive) {
           this.checkSyncStatus();
         }

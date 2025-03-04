@@ -1,4 +1,8 @@
 import { CommonModule } from '@angular/common';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -12,7 +16,6 @@ import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/trai
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { SharedModule } from '../../../shared/shared.module';
 import {
@@ -33,7 +36,7 @@ export interface TrainingDataOption {
   imports: [CommonModule, MatButtonModule, MatChipsModule, MatIconModule, SharedModule, TranslocoModule],
   styleUrls: ['./training-data-multi-select.component.scss']
 })
-export class TrainingDataMultiSelectComponent extends SubscriptionDisposable implements OnChanges, OnInit {
+export class TrainingDataMultiSelectComponent implements OnChanges, OnInit {
   @Input() availableTrainingData: TrainingData[] = [];
   @Input() selectedTrainingDataIds: string[] = [];
   @Output() trainingDataSelect = new EventEmitter<string[]>();
@@ -46,13 +49,12 @@ export class TrainingDataMultiSelectComponent extends SubscriptionDisposable imp
     private readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     private readonly trainingDataService: TrainingDataService,
-    private readonly userService: UserService
-  ) {
-    super();
-  }
+    private readonly userService: UserService,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   ngOnInit(): void {
-    this.subscribe(this.i18n.locale$, () => {
+    this.i18n.locale$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.sourceLanguage = this.getLanguageDisplayName('source');
       this.targetLanguage = this.getLanguageDisplayName('target');
     });

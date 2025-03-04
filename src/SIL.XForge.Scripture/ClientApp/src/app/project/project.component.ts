@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { QuietDestroyRef } from 'xforge-common/utils';
+
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -30,7 +34,8 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly permissions: PermissionsService,
     private readonly resumeCheckingService: ResumeCheckingService,
     private readonly dialogService: DialogService,
-    noticeService: NoticeService
+    noticeService: NoticeService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
   }
@@ -53,16 +58,16 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     const userDoc = await this.userService.getCurrentUser();
     const navigateToProject$: Observable<string> = new Observable(subscriber => {
       let projectId: string | undefined;
-      this.subscribe(projectId$, id => {
+      projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => {
         projectId = id;
         subscriber.next(projectId);
       });
-      this.subscribe(userDoc.remoteChanges$, () => {
+      userDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
         subscriber.next(projectId);
       });
     });
 
-    this.subscribe(navigateToProject$, async projectId => {
+    navigateToProject$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       if (userDoc.data?.sites[environment.siteId].projects?.includes(projectId)) {
         this.navigateToProject(projectId);
       } else {
