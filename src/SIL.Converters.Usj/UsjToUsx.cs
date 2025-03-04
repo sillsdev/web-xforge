@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,6 +17,79 @@ namespace SIL.Converters.Usj
     /// </remarks>
     public static class UsjToUsx
     {
+        /// <summary>
+        /// Converts a USJ object to a USX string.
+        /// </summary>
+        /// <param name="usj">The USJ object.</param>
+        /// <returns>The USX as a string.</returns>
+        /// <remarks>
+        /// The USX is not fully USX compliant as it does not contain <c>vid</c> attributes or <c>eid</c>
+        /// attributes for <c>verse</c> or <c>chapter</c> elements. If you wish to have these,
+        /// please insert via post-processing, or round-tripping via USFM in ParatextData.
+        /// </remarks>
+        public static string UsjToUsxString(IUsj usj)
+        {
+            XmlDocument usxDoc = UsjToUsxXmlDocument(usj);
+
+            // Output as a string
+            using (StringWriter stringWriter = new StringWriter())
+            {
+                // These settings conform to ParatextData.UsfmToUsx
+                XmlWriterSettings xmlWriterSettings = new XmlWriterSettings
+                {
+                    Indent = true,
+                    Encoding = Encoding.UTF8,
+                    OmitXmlDeclaration = true,
+                    NewLineChars = "\r\n",
+                };
+                using (XmlWriter xmlWriter = XmlWriter.Create(stringWriter, xmlWriterSettings))
+                {
+                    usxDoc.WriteTo(xmlWriter);
+                    xmlWriter.Flush();
+                    return stringWriter.ToString();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Converts a USJ object to a USX <see cref="XDocument"/>.
+        /// </summary>
+        /// <param name="usj">The USJ object.</param>
+        /// <returns>The XDocument.</returns>
+        /// <remarks>Refer to remarks for <seealso cref="UsjToUsxString"/>.</remarks>
+        public static XDocument UsjToUsxXDocument(IUsj usj)
+        {
+            // Create the USX document
+            XElement documentElement = new XElement(Usx.UsxType, new XAttribute("version", Usx.UsxVersion));
+            foreach (object content in usj.Content ?? new List<object>())
+            {
+                ConvertUsjRecurse(content, documentElement);
+            }
+
+            return new XDocument(documentElement);
+        }
+
+        /// <summary>
+        /// Converts a USJ object to a USX <see cref="XmlDocument"/>.
+        /// </summary>
+        /// <param name="usj">The USJ object.</param>
+        /// <returns>The XML Document.</returns>
+        /// <remarks>Refer to remarks for <seealso cref="UsjToUsxString"/>.</remarks>
+        public static XmlDocument UsjToUsxXmlDocument(IUsj usj)
+        {
+            // Create the USX document
+            XmlDocument usxDoc = new XmlDocument { PreserveWhitespace = true };
+            XmlElement documentElement = usxDoc.CreateElement(Usx.UsxType);
+            documentElement.SetAttribute("version", Usx.UsxVersion);
+            usxDoc.AppendChild(documentElement);
+            foreach (object content in usj.Content ?? new List<object>())
+            {
+                ConvertUsjRecurse(content, usxDoc.DocumentElement, usxDoc);
+            }
+
+            return usxDoc;
+        }
+
         /// <summary>
         /// Sets the attributes for an element via a delegate.
         /// </summary>
@@ -140,79 +212,6 @@ namespace SIL.Converters.Usj
             }
 
             parentElement.Add(node);
-        }
-
-        /// <summary>
-        /// Converts a USJ object to a USX <see cref="XDocument"/>.
-        /// </summary>
-        /// <param name="usj">The USJ object.</param>
-        /// <returns>The XDocument.</returns>
-        /// <remarks>Refer to remarks for <seealso cref="UsjToUsxString"/>.</remarks>
-        public static XDocument UsjToUsxXDocument(IUsj usj)
-        {
-            // Create the USX document
-            XElement documentElement = new XElement(Usx.UsxType, new XAttribute("version", Usx.UsxVersion));
-            foreach (object content in usj.Content ?? new ArrayList())
-            {
-                ConvertUsjRecurse(content, documentElement);
-            }
-
-            return new XDocument(documentElement);
-        }
-
-        /// <summary>
-        /// Converts a USJ object to a USX <see cref="XmlDocument"/>.
-        /// </summary>
-        /// <param name="usj">The USJ object.</param>
-        /// <returns>The XML Document.</returns>
-        /// <remarks>Refer to remarks for <seealso cref="UsjToUsxString"/>.</remarks>
-        public static XmlDocument UsjToUsxXmlDocument(IUsj usj)
-        {
-            // Create the USX document
-            XmlDocument usxDoc = new XmlDocument { PreserveWhitespace = true };
-            XmlElement documentElement = usxDoc.CreateElement(Usx.UsxType);
-            documentElement.SetAttribute("version", Usx.UsxVersion);
-            usxDoc.AppendChild(documentElement);
-            foreach (object content in usj.Content ?? new ArrayList())
-            {
-                ConvertUsjRecurse(content, usxDoc.DocumentElement, usxDoc);
-            }
-
-            return usxDoc;
-        }
-
-        /// <summary>
-        /// Converts a USJ object to a USX string.
-        /// </summary>
-        /// <param name="usj">The USJ object.</param>
-        /// <returns>The USX as a string.</returns>
-        /// <remarks>
-        /// The USX is not fully USX compliant as it does not contain <c>vid</c> attributes or <c>eid</c>
-        /// attributes for <c>verse</c> or <c>chapter</c> elements. If you wish to have these,
-        /// please insert via post-processing, or round-tripping via USFM in ParatextData.
-        /// </remarks>
-        public static string UsjToUsxString(IUsj usj)
-        {
-            XmlDocument usxDoc = UsjToUsxXmlDocument(usj);
-
-            // Output as a string
-            using (StringWriter stringWriter = new StringWriter())
-            {
-                // These settings conform to ParatextData.UsfmToUsx
-                XmlWriterSettings xmlWriterSettings = new XmlWriterSettings
-                {
-                    Indent = true,
-                    Encoding = Encoding.UTF8,
-                    OmitXmlDeclaration = true,
-                    NewLineChars = "\r\n",
-                };
-                using (XmlWriter xmlWriter = XmlWriter.Create(stringWriter, xmlWriterSettings))
-                {
-                    usxDoc.WriteTo(xmlWriter);
-                    xmlWriter.Flush();
-                    return stringWriter.ToString();
-                }
-            }
         }
     }
 }

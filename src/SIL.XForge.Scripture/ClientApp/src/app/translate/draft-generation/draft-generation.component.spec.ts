@@ -1390,12 +1390,12 @@ describe('DraftGenerationComponent', () => {
 
   describe('isDraftFinishing', () => {
     it('should return true if the draft build is finishing', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftFinishing({ state: BuildStates.Finishing } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build is not active', () => {
-      let env = new TestEnvironment();
+      const env = new TestEnvironment();
       expect(env.component.isDraftFinishing({ state: BuildStates.Active } as BuildDto)).toBe(false);
       expect(env.component.isDraftFinishing({ state: BuildStates.Completed } as BuildDto)).toBe(false);
       expect(env.component.isDraftFinishing({ state: BuildStates.Canceled } as BuildDto)).toBe(false);

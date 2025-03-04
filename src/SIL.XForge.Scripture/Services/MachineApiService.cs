@@ -422,7 +422,7 @@ public class MachineApiService(
         // Then convert it to USX
         XDocument usxDoc = UsjToUsx.UsjToUsxXDocument(usj);
 
-        // The convert it to a Delta
+        // Then convert it to a Delta
         return new Snapshot<TextData>
         {
             Id = TextData.GetTextDocId(sfProjectId, bookNum, chapterNum),
@@ -1166,30 +1166,6 @@ public class MachineApiService(
     }
 
     /// <summary>
-    /// Gets the highest ranked user id on a project.
-    /// </summary>
-    /// <param name="project">The project.</param>
-    /// <returns>The user id.</returns>
-    private static string GetHighestRankedUserId(SFProject project)
-    {
-        // Rank the Paratext roles
-        var rolePriority = new Dictionary<string, int>
-        {
-            { SFProjectRole.Administrator, 1 },
-            { SFProjectRole.Translator, 2 },
-            { SFProjectRole.Consultant, 3 },
-            { SFProjectRole.PTObserver, 4 },
-        };
-
-        // Get the highest ranking user id, if the current user id is not set
-        return project
-            .UserRoles.Where(ur => SFProjectRole.IsParatextRole(ur.Value))
-            .OrderBy(kvp => rolePriority[kvp.Value])
-            .FirstOrDefault()
-            .Key;
-    }
-
-    /// <summary>
     /// Updates the text documents locally with the latest pre-translation drafts.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
@@ -1326,6 +1302,30 @@ public class MachineApiService(
             SourceLanguageTag = translationEngine.SourceLanguage,
             TargetLanguageTag = translationEngine.TargetLanguage,
         };
+
+    /// <summary>
+    /// Gets the highest ranked user id on a project.
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <returns>The user id.</returns>
+    private static string GetHighestRankedUserId(SFProject project)
+    {
+        // Rank the Paratext roles
+        var rolePriority = new Dictionary<string, int>
+        {
+            { SFProjectRole.Administrator, 1 },
+            { SFProjectRole.Translator, 2 },
+            { SFProjectRole.Consultant, 3 },
+            { SFProjectRole.PTObserver, 4 },
+        };
+
+        // Get the highest ranking user id, if the current user id is not set
+        return project
+            .UserRoles.Where(ur => SFProjectRole.IsParatextRole(ur.Value))
+            .OrderBy(kvp => rolePriority[kvp.Value])
+            .FirstOrDefault()
+            .Key;
+    }
 
     /// <summary>
     /// This method maps Serval API exceptions to the exceptions that Machine.js understands.

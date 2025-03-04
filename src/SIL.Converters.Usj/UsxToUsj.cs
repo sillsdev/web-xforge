@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -16,6 +15,63 @@ namespace SIL.Converters.Usj
     /// </remarks>
     public static class UsxToUsj
     {
+        /// <summary>
+        /// Converts a USX string to USJ.
+        /// </summary>
+        /// <param name="usx">The USX string.</param>
+        /// <returns>The USJ.</returns>
+        public static Usj UsxStringToUsj(string usx)
+        {
+            if (string.IsNullOrWhiteSpace(usx))
+            {
+                return UsxDomToUsj(null);
+            }
+
+            XmlDocument xmlDocument = new XmlDocument
+            {
+                PreserveWhitespace = true, // Whitespace inside nodes is important
+            };
+            xmlDocument.LoadXml(usx);
+            return UsxDomToUsj(xmlDocument.DocumentElement);
+        }
+
+        /// <summary>
+        /// Converts a USX XDocument to USJ.
+        /// </summary>
+        /// <param name="document">The XML document.</param>
+        /// <returns>The USJ.</returns>
+        public static Usj UsxXDocumentToUsj(XDocument document)
+        {
+            if (document == null)
+            {
+                return UsxDomToUsj(null);
+            }
+
+            // Convert the XDocument to an XmlDocument, as the conversion logic is heavily dependent on XmlDocument
+            XmlDocument xmlDocument = new XmlDocument
+            {
+                PreserveWhitespace = true, // Whitespace inside nodes is important
+            };
+            using (var reader = document.CreateReader())
+            {
+                xmlDocument.Load(reader);
+            }
+
+            return UsxDomToUsj(xmlDocument.DocumentElement);
+        }
+
+        /// <summary>
+        /// Converts a USX XmlDocument to USJ.
+        /// </summary>
+        /// <param name="document">The XML document.</param>
+        /// <returns>The USJ.</returns>
+        /// <remarks>
+        /// The <see cref="XmlDocument"/> should have <see cref="XmlDocument.PreserveWhitespace"/> set to <c>true</c>,
+        /// if you have loaded it directly from a text file. <see cref="XmlDocument"/> objects created by ParatextData
+        /// will not have this set as they are created using an <see cref="XmlWriter"/>.
+        /// </remarks>
+        public static Usj UsxXmlDocumentToUsj(XmlDocument document) => UsxDomToUsj(document?.DocumentElement);
+
         /// <summary>
         /// Indicates whether a specified string is null, empty, or XML whitespace.
         /// </summary>
@@ -96,7 +152,7 @@ namespace SIL.Converters.Usj
                 text = usxElement.FirstChild.Value;
             }
 
-            outObj.Content = new ArrayList();
+            outObj.Content = new List<object>();
             if (!IsNullOrXmlWhitespace(text))
             {
                 outObj.Content.Add(text);
@@ -148,7 +204,7 @@ namespace SIL.Converters.Usj
             Usj outputJson;
             if (usxDom == null)
             {
-                outputJson = new Usj { Content = new ArrayList() };
+                outputJson = new Usj { Content = new List<object>() };
             }
             else
             {
@@ -159,62 +215,5 @@ namespace SIL.Converters.Usj
             outputJson.Version = Usj.UsjVersion;
             return outputJson;
         }
-
-        /// <summary>
-        /// Converts a USX string to USJ.
-        /// </summary>
-        /// <param name="usx">The USX string.</param>
-        /// <returns>The USJ.</returns>
-        public static Usj UsxStringToUsj(string usx)
-        {
-            if (string.IsNullOrWhiteSpace(usx))
-            {
-                return UsxDomToUsj(null);
-            }
-
-            XmlDocument xmlDocument = new XmlDocument
-            {
-                PreserveWhitespace = true, // Whitespace inside nodes is important
-            };
-            xmlDocument.LoadXml(usx);
-            return UsxDomToUsj(xmlDocument.DocumentElement);
-        }
-
-        /// <summary>
-        /// Converts a USX XDocument to USJ.
-        /// </summary>
-        /// <param name="document">The XML document.</param>
-        /// <returns>The USJ.</returns>
-        public static Usj UsxXDocumentToUsj(XDocument document)
-        {
-            if (document == null)
-            {
-                return UsxDomToUsj(null);
-            }
-
-            // Convert the XDocument to an XmlDocument, as the conversion logic is heavily dependent on XmlDocument
-            XmlDocument xmlDocument = new XmlDocument
-            {
-                PreserveWhitespace = true, // Whitespace inside nodes is important
-            };
-            using (var reader = document.CreateReader())
-            {
-                xmlDocument.Load(reader);
-            }
-
-            return UsxDomToUsj(xmlDocument.DocumentElement);
-        }
-
-        /// <summary>
-        /// Converts a USX XmlDocument to USJ.
-        /// </summary>
-        /// <param name="document">The XML document.</param>
-        /// <returns>The USJ.</returns>
-        /// <remarks>
-        /// The <see cref="XmlDocument"/> should have <see cref="XmlDocument.PreserveWhitespace"/> set to <c>true</c>,
-        /// if you have loaded it directly from a text file. <see cref="XmlDocument"/> objects created by ParatextData
-        /// will not have this set as they are created using an <see cref="XmlWriter"/>.
-        /// </remarks>
-        public static Usj UsxXmlDocumentToUsj(XmlDocument document) => UsxDomToUsj(document?.DocumentElement);
     }
 }
