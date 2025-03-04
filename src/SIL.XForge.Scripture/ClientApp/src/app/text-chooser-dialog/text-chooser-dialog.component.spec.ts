@@ -20,6 +20,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule } from 'xforge-common/test-utils';
+import { UserService } from 'xforge-common/user.service';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -27,6 +28,7 @@ import { TextDoc } from '../core/models/text-doc';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
 const mockedDocument = mock(Document);
+const mockedUserService = mock(UserService);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
@@ -38,7 +40,8 @@ describe('TextChooserDialogComponent', () => {
     ],
     providers: [
       { provide: DOCUMENT, useMock: mockedDocument },
-      { provide: CookieService, useMock: mock(CookieService) }
+      { provide: CookieService, useMock: mock(CookieService) },
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
@@ -433,7 +436,16 @@ class TestEnvironment {
       id: TestEnvironment.PROJECT01,
       data: TestEnvironment.testProject
     });
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, { id: 'user01', data: createTestUser() });
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: createTestUser({
+        sites: {
+          sf: {
+            projects: [TestEnvironment.PROJECT01]
+          }
+        }
+      })
+    });
 
     const dialogRef = TestBed.inject(MatDialog).open(TextChooserDialogComponent, { data: config });
     this.component = dialogRef.componentInstance;
@@ -444,6 +456,9 @@ class TestEnvironment {
     when(dialogSpy.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMatDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    );
 
     this.fixture.detectChanges();
     flush();

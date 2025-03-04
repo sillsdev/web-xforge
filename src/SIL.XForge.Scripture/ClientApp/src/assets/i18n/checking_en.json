@@ -479,7 +479,8 @@
     "book_does_not_exist": "This book does not exist.",
     "book_is_empty": "This book is empty. Add chapters in Paratext.",
     "loading": "Loading...",
-    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
+    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text.",
+    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission."
   },
   "text_chooser_dialog": {
     "cancel": "Cancel",

@@ -104,6 +104,11 @@ function createUser(idSuffix: number, role: string, nameConfirmed: boolean = tru
     id: 'user' + idSuffix,
     user: createTestUser(
       {
+        sites: {
+          sf: {
+            projects: ['project01']
+          }
+        },
         isDisplayNameConfirmed: nameConfirmed
       },
       idSuffix
