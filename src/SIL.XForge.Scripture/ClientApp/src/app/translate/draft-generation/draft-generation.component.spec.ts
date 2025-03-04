@@ -25,12 +25,14 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../core/models/training-data-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TextDocService } from '../../core/text-doc.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ProgressService } from '../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../nllb-language.service';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
+import { DraftHandlingService } from './draft-handling.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
@@ -40,9 +42,11 @@ describe('DraftGenerationComponent', () => {
   let mockDialogService: jasmine.SpyObj<DialogService>;
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
   let mockDraftSourcesService: jasmine.SpyObj<DraftSourcesService>;
+  let mockDraftHandlingService: jasmine.SpyObj<DraftHandlingService>;
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
   let mockProjectService: jasmine.SpyObj<SFProjectService>;
   let mockUserService: jasmine.SpyObj<UserService>;
+  let mockTextDocService: jasmine.SpyObj<TextDocService>;
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
@@ -84,9 +88,11 @@ describe('DraftGenerationComponent', () => {
           { provide: FeatureFlagService, useValue: mockFeatureFlagService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: DraftSourcesService, useValue: mockDraftSourcesService },
+          { provide: DraftHandlingService, useValue: mockDraftHandlingService },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
           { provide: SFProjectService, useValue: mockProjectService },
           { provide: UserService, useValue: mockUserService },
+          { provide: TextDocService, useValue: mockTextDocService },
           { provide: DialogService, useValue: mockDialogService },
           { provide: NoticeService, useValue: mockNoticeService },
           { provide: NllbLanguageService, useValue: mockNllbLanguageService },
