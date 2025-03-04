@@ -894,6 +894,31 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void PutNotes_RethrowsErrors()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        DateTime date = DateTime.Now; // This must be consistent as it is a part of the comment id
+
+        // Configure the Paratext data helper to throw an error
+        var exception = new UnauthorizedAccessException();
+        env.MockParatextDataHelper.When(pd => pd.CommitVersionedText(Arg.Any<ScrText>(), Arg.Any<string>()))
+            .Throws(exception);
+
+        // Add new comment
+        const string threadId = "Answer_0123";
+        const string content = "Content for comment to update.";
+        const string verseRef = "RUT 1:1";
+        XElement updateNotesXml = TestEnvironment.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef);
+        Assert.Throws<UnauthorizedAccessException>(() => env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml));
+
+        // Ensure that the error has logged too
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == exception);
+    }
+
+    [Test]
     public async Task GetNoteThreadChanges_NotePositionUpdated()
     {
         var env = new TestEnvironment();
