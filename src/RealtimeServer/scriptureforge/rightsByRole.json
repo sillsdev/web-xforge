@@ -51,7 +51,8 @@
     "pt_note_threads": ["view", "create", "edit", "delete_own"],
     "sf_note_threads": ["view", "create", "edit", "delete_own"],
     "notes": ["view", "create", "edit_own", "delete_own"],
-    "text_audio": ["view"]
+    "text_audio": ["view"],
+    "training_data": ["view", "create", "edit_own", "delete_own"]
   },
   "pt_translator": {
     "project_user_configs": ["view_own", "edit_own"],
