@@ -1,8 +1,11 @@
+import { omit } from 'lodash-es';
+import { Blot, Scope } from 'parchment';
 import QuillBlockBlot, { BlockEmbed as QuillBlockEmbedBlot } from 'quill/blots/block';
 import QuillEmbedBlot from 'quill/blots/embed';
 import QuillInlineBlot from 'quill/blots/inline';
 import QuillScrollBlot from 'quill/blots/scroll';
 import QuillTextBlot from 'quill/blots/text';
+import { isString } from '../../../../../type-utils';
 import { Chapter, Figure, Note, NoteThread, Para, Ref, Unmatched, UsxStyle, Verse } from './quill-blot-value-types';
 
 /** Zero-width space */
@@ -33,6 +36,51 @@ function customAttributeName(key: string): string {
 export class NotNormalizedText extends QuillTextBlot {
   static value(domNode: Text): string {
     return domNode.data;
+  }
+}
+
+/**
+ * This class overrides the Quill `ScrollBlot` 'create' method so that it can handle unknown blot types.
+ * If an unregistered blot type is encountered, it will be rendered as the 'unknown' blot type.
+ */
+export class ScrollBlot extends QuillScrollBlot {
+  create(input: Node | string | Scope, value?: any): Blot {
+    // Try to create the blot.  If blot type not registered, fallback to the custom 'unknown' blot
+    try {
+      return super.create(input, value);
+    } catch (e) {
+      // Create 'unknown' blot for string input only
+      if (!isString(input)) {
+        throw e;
+      }
+
+      console.error(`Unable to create blot: '${input}'.`);
+
+      // Pass name of attempted blot
+      value[UnknownBlot.origBlotNameProp] = input;
+
+      return super.create('unknown', value);
+    }
+  }
+}
+
+/**
+ * Fallback blot for when Quill encounters a blot type that is not registered.
+ */
+export class UnknownBlot extends QuillEmbedBlot {
+  static blotName = 'unknown';
+  static tagName = 'sf-unknown';
+  static origBlotNameProp = 'origBlotName';
+
+  static create(value: any): Node {
+    const node = super.create(value) as HTMLElement;
+    setUsxValue(node, omit(value, UnknownBlot.origBlotNameProp));
+    node.innerText = `[Unknown format: '${value[UnknownBlot.origBlotNameProp] || 'unknown'}']`;
+    return node;
+  }
+
+  static value(node: HTMLElement): any {
+    return getUsxValue(node);
   }
 }
 
