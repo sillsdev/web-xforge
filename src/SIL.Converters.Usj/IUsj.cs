@@ -1,4 +1,4 @@
-using System.Collections;
+using System.Collections.Generic;
 
 namespace SIL.Converters.Usj
 {
@@ -12,16 +12,16 @@ namespace SIL.Converters.Usj
         /// </summary>
         /// <value>This will either be a <see cref="UsjMarker"/> or <see cref="string"/>.</value>
         /// <remarks>Nullable. The contents will be laid out in order.</remarks>
-        ArrayList Content { get; set; }
+        ICollection<object> Content { get; }
 
         /// <summary>
         /// The USJ spec type.
         /// </summary>
-        string Type { get; set; }
+        string Type { get; }
 
         /// <summary>
         /// The USJ spec version.
         /// </summary>
-        string Version { get; set; }
+        string Version { get; }
     }
 }

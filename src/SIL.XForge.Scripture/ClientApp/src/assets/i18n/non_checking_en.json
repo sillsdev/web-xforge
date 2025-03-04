@@ -180,6 +180,8 @@
     "download_draft": "Download draft",
     "draft_active_detail": "Generating draft; this usually takes at least {{ count }} hours.",
     "draft_active_header": "Draft in progress",
+    "draft_finishing_detail": "Your draft is being finalized and saved.",
+    "draft_finishing_header": "Draft is finishing",
     "draft_is_ready": "Your draft is ready",
     "draft_syncing": "Draft initializing",
     "draft_syncing_detail": "Your project is being synced before queuing the draft.",
