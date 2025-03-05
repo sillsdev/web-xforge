@@ -78,7 +78,7 @@
     "reconnecting-websocket": "^4.4.0",
     "rich-text": "^4.1.0",
     "rxjs": "^7.8.1",
-    "sharedb": "^1.9.2",
+    "sharedb": "^5.1.1",
     "tinycolor2": "^1.4.2",
     "tslib": "^2.4.0",
     "uuid": "^8.3.2",
