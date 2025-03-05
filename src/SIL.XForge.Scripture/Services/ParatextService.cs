@@ -1007,7 +1007,7 @@ public class ParatextService : DisposableBase, IParatextService
             ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId)
             ?? throw new DataNotFoundException("Can't get access to cloned project.");
         usfm ??= scrText.GetText(bookNum);
-        return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
+        return UsfmToUsx.ConvertToXmlString(scrText, scrText.ScrStylesheet(bookNum), usfm, false);
     }
 
     /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
@@ -2144,7 +2144,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <returns>The delta.</returns>
     private ChapterDelta GetDeltaFromUsfm(ScrText scrText, int bookNum, string usfm)
     {
-        string usx = UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
+        string usx = UsfmToUsx.ConvertToXmlString(scrText, scrText.ScrStylesheet(bookNum), usfm, false);
         XDocument usxDoc = XDocument.Parse(usx);
         return _deltaUsxMapper.ToChapterDeltas(usxDoc).First();
     }

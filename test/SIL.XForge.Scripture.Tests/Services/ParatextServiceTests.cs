@@ -604,6 +604,30 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void GetBookText_OverrideUSFM_WithVariantBookId()
+    {
+        const string ruthBookUsfm =
+            "\\id Rut - ProjectNameHere\n \\c 1\n"
+            + "\\v 1 Updated Verse 1 here.\n"
+            + "\\v 2 Updated Verse 2 here.\n"
+            + "\\v 3 New Verse 3 here.";
+        const string ruthBookUsx =
+            "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere"
+            + "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />"
+            + "Updated Verse 1 here. <verse number=\"2\" style=\"v\" />Updated Verse 2 here. "
+            + "<verse number=\"3\" style=\"v\" />New Verse 3 here.</usx>";
+
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        string result = env.Service.GetBookText(null, ptProjectId, 8, ruthBookUsfm);
+        Assert.That(result, Is.EqualTo(ruthBookUsx));
+    }
+
+    [Test]
     public void GetBookText_Works()
     {
         string ruthBookUsx =
@@ -5849,6 +5873,40 @@ public class ParatextServiceTests
 
         // SUT
         var delta = await env.Service.GetDeltaFromUsfmAsync(env.User01, project.Id, env.RuthBookUsfm, 8);
+        Assert.IsTrue(delta.DeepEquals(expected));
+    }
+
+    [Test]
+    public async Task GetDeltaFromUsfmAsync_WithVariantBookId()
+    {
+        // Set up the test environment
+        var env = new TestEnvironment();
+        SFProject project = env.NewSFProject();
+        env.AddProjectRepository(project);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Create the expected delta
+        JToken token1 = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
+        JToken token2 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"1\", \"style\": \"v\" } } }");
+        JToken token3 = JToken.Parse(
+            "{\"insert\": \"Verse 1 here. \", \"attributes\": { \"segment\": \"verse_1_1\" } }"
+        );
+        JToken token4 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"2\", \"style\": \"v\" } } }");
+        JToken token5 = JToken.Parse(
+            "{\"insert\": \"Verse 2 here.\"," + "\"attributes\": { \"segment\": \"verse_1_2\" } }"
+        );
+        JToken token6 = JToken.Parse("{\"insert\": \"\n\" }");
+        Delta expected = new Delta([token1, token2, token3, token4, token5, token6]);
+
+        env.MockDeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>())
+            .Returns([new ChapterDelta(-1, -1, false, expected)]);
+
+        const string ruthBookUsfm =
+            "\\id Rut - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
+        ;
+
+        // SUT
+        var delta = await env.Service.GetDeltaFromUsfmAsync(env.User01, project.Id, ruthBookUsfm, 8);
         Assert.IsTrue(delta.DeepEquals(expected));
     }
 
