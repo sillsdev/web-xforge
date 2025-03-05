@@ -1,8 +1,8 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
+import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { DBL_RESOURCE_ID_LENGTH, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -45,6 +45,8 @@ interface ProjectScenario {
   projIsOnSF: boolean;
   userOnSFProject: boolean;
   isResource: boolean;
+  ptUserRoleNeedsUpdated?: boolean;
+  newPtUserRole?: string;
 }
 
 const projectScenarios: readonly ProjectScenario[] = [
@@ -77,6 +79,18 @@ const projectScenarios: readonly ProjectScenario[] = [
     projIsOnSF: true,
     userOnSFProject: true,
     isResource: false
+  },
+  {
+    code: 'userSFProjectPTRoleNeedsUpdated',
+    shortNameBase: 'PTRoleUpdateSF',
+    nameBase: 'PT role updated',
+    description: 'User PT role updated in Paratext but not SF.',
+    userPTRole: 'pt_translator',
+    projIsOnSF: true,
+    userOnSFProject: true,
+    isResource: false,
+    ptUserRoleNeedsUpdated: true,
+    newPtUserRole: 'pt_administrator'
   },
   {
     code: 'userSFResource',
@@ -162,7 +176,8 @@ const defaultArgs: StoryAppState = {
   userPTAdministratorNotSFConnectedAtAllCount: 0,
   userPTTranslatorNotSFConnectedAtAllCount: 0,
   userPTAdministratorNotConnectedToSFProjectCount: 0,
-  userPTTranslatorNotConnectedToSFProjectCount: 0
+  userPTTranslatorNotConnectedToSFProjectCount: 0,
+  userSFProjectPTRoleNeedsUpdatedCount: 0
 };
 
 const meta: Meta = {
@@ -176,7 +191,6 @@ const meta: Meta = {
   decorators: [
     moduleMetadata({
       imports: [
-        HttpClientTestingModule,
         UICommonModule,
         SharedModule,
         RouterModule.forChild([
@@ -189,6 +203,7 @@ const meta: Meta = {
       declarations: [MyProjectsComponent],
       providers: [
         provideAnimations(),
+        provideHttpClientTesting(),
         {
           provide: SFProjectService,
           useValue: instance(mockedSFProjectService)
@@ -288,7 +303,8 @@ const meta: Meta = {
                 name: projectName,
                 paratextId: ptProjectId,
                 isConnectable: ptProjectIsConnectable,
-                isConnected: sfUserIsOnSFProject
+                isConnected: sfUserIsOnSFProject,
+                hasUserRoleChanged: scenario.ptUserRoleNeedsUpdated
               } as ParatextProject);
             }
           };
@@ -419,6 +435,14 @@ export const PTTranslator: Story = {
     userSFResourceCount: 2,
     userPTTranslatorNotSFConnectedAtAllCount: 1,
     userPTTranslatorNotConnectedToSFProjectCount: 1
+  }
+};
+
+export const PTUserRoleUpdated: Story = {
+  args: {
+    isKnownPTUser: true,
+    userSFProjectPTTranslatorCount: 1,
+    userSFProjectPTRoleNeedsUpdatedCount: 1
   }
 };
 

@@ -12,6 +12,7 @@ export type FlatTabInfo<TGroupId extends string, T extends TabInfo<string>> = T 
 };
 
 export interface TabInfo<TType extends string> {
+  id: string;
   type: TType;
   headerText: string;
 

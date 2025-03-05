@@ -4,6 +4,7 @@ import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scripture
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of, take } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
+import { v4 as uuid } from 'uuid';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -39,7 +40,7 @@ describe('EditorTabMenuService', () => {
 
   it('should get "history", "draft", and "project-resource" menu items', done => {
     const env = new TestEnvironment();
-    env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true, movable: true }]);
+    env.setExistingTabs([{ id: uuid(), type: 'history', headerText: 'History', closeable: true, movable: true }]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
     service['canShowBiblicalTerms'] = () => false;
@@ -56,9 +57,9 @@ describe('EditorTabMenuService', () => {
   it('should get "history", "project-resource", and not "draft" (tab already exists) menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([
-      { type: 'history', headerText: 'History', closeable: true, movable: true },
-      { type: 'draft', headerText: 'Draft', closeable: true, movable: true, unique: true },
-      { type: 'project-resource', headerText: 'ABC', closeable: true, movable: true }
+      { id: uuid(), type: 'history', headerText: 'History', closeable: true, movable: true },
+      { id: uuid(), type: 'draft', headerText: 'Draft', closeable: true, movable: true, unique: true },
+      { id: uuid(), type: 'project-resource', headerText: 'ABC', closeable: true, movable: true }
     ]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
@@ -74,7 +75,7 @@ describe('EditorTabMenuService', () => {
 
   it('should get "history" (enabled), not "draft" (no draft build), and not "project-resource" menu items', done => {
     const env = new TestEnvironment(TestEnvironment.projectDocNoDraft);
-    env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true, movable: true }]);
+    env.setExistingTabs([{ id: uuid(), type: 'history', headerText: 'History', closeable: true, movable: true }]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => false;
     service['canShowBiblicalTerms'] = () => false;

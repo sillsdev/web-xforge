@@ -274,6 +274,30 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> SyncUserRole(string projectId)
+    {
+        try
+        {
+            await projectService.SyncUserRoleAsync(UserId, projectId);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "UpdateUser" }, { "projectId", projectId } }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> Invite(string projectId, string email, string locale, string role)
     {
         try

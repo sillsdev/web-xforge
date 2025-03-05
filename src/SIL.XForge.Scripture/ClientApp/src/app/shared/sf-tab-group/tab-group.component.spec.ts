@@ -1,13 +1,14 @@
 import { QueryList } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { v4 as uuid } from 'uuid';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { TabMenuService } from '../../shared/sf-tab-group';
 import { TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabFactoryService } from './base-services/tab-factory.service';
 import { SFTabsModule } from './sf-tabs.module';
 import { TabGroupComponent } from './tab-group.component';
-import { TabStateService } from './tab-state/tab-state.service';
+import { TabInfo, TabStateService } from './tab-state/tab-state.service';
 import { TabComponent } from './tab/tab.component';
 
 describe('TabGroupComponent', () => {
@@ -59,7 +60,8 @@ describe('TabGroupComponent', () => {
 
   it('should add tab using TabFactory and TabStateService when addTab is called', async () => {
     const newTabType = 'test';
-    const tab = {
+    const tab: TabInfo<string> = {
+      id: uuid(),
       type: 'test',
       headerText: 'Tab Header',
       closeable: false,

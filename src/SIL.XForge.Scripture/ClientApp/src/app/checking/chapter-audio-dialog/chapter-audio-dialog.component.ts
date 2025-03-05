@@ -1,8 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Canon } from '@sillsdev/scripture';
-import { reject } from 'lodash-es';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { cloneDeep, reject } from 'lodash-es';
 import { Chapter, TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';

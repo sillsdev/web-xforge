@@ -1,6 +1,7 @@
 export interface ValidationSchema {
   // Whether or not the schema allows additional properties
   additionalProperties?: boolean;
+  anyOf?: ValidationSchema[];
   bsonType?: string | string[];
   enum?: string[];
   items?: ValidationSchema;

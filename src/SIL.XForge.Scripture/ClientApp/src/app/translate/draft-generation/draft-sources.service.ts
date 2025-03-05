@@ -139,12 +139,12 @@ export class DraftSourcesService {
                 : undefined;
             const target: DraftSource | undefined =
               targetDoc?.data != null ? { ...targetDoc.data, projectRef: targetDoc.id } : undefined;
-
-            return {
-              trainingSources: [trainingSource, additionalTrainingSource] as [DraftSource, DraftSource],
-              trainingTargets: [target] as [DraftSource],
-              draftingSources: [draftingSource] as [DraftSource]
+            const result: DraftSourcesAsArrays = {
+              trainingSources: [trainingSource, additionalTrainingSource],
+              trainingTargets: [target],
+              draftingSources: [draftingSource]
             };
+            return result;
           })
         );
       })

@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { IOutputAreaSizes } from 'angular-split';
-import clone from 'lodash-es/clone';
-import { Observable, Subscription, fromEvent } from 'rxjs';
+import { clone } from 'lodash-es';
+import { fromEvent, Observable, Subscription } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';

@@ -6,6 +6,39 @@
         {{ t("no_projects") }} {{ t("access_another_project") }}
       </app-notice>
     }
+    @if (userUpdateParatextProjects.length > 0) {
+      <h2 id="header-update-projects">
+        {{ t("updated_roles") }}
+      </h2>
+      @if ((isOnline | async) === false) {
+        <app-notice id="message-offline" icon="cloud_off" [type]="userHasProjects ? 'info' : 'error'">
+          {{ t("offline_update") }}
+        </app-notice>
+      }
+    }
+    @for (ptProject of userUpdateParatextProjects; track ptProject) {
+      <mat-card
+        id="user-update-project-card-{{ ptProject.projectId }}"
+        [attr.data-pt-project-id]="ptProject.projectId"
+        class="user-update-project"
+      >
+        <span class="project-name">
+          <b>{{ ptProject.shortName }}</b> - {{ ptProject.name }}
+        </span>
+        <span class="project-description">
+          {{ t("update_paratext_role") }}
+        </span>
+        <button
+          class="user-update-project-btn"
+          mat-flat-button
+          color="primary"
+          [disabled]="(isOnline | async) === false"
+          (click)="syncUserRole(ptProject.projectId!)"
+        >
+          <mat-icon>refresh</mat-icon> {{ t("update_role") }}
+        </button>
+      </mat-card>
+    }
     @if (userConnectedProjects.length > 0 || initialLoadingSFProjects) {
       <h2 id="header-connected-projects">
         {{ t("connected") }}

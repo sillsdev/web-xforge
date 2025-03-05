@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
-import { escapeRegExp } from 'lodash-es';
-import merge from 'lodash-es/merge';
+import { escapeRegExp, merge } from 'lodash-es';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, from, lastValueFrom, Observable } from 'rxjs';

@@ -168,8 +168,9 @@ export class NavigationComponent extends SubscriptionDisposable {
     return this.getProjectLink('draft-generation');
   }
 
-  // draftReviewActive and answerQuestionsActive are needed because appRouterLink only highlights the link if the url
-  // matches exactly. These two modes do not match to a single url, so appRouterLink does not mark them active.
+  // draftReviewActive, answerQuestionsActive, draftGenerationActive are needed because appRouterLink only highlights
+  // the link if the url matches exactly. These modes do not match to a single url, so appRouterLink does not mark them
+  // active.
 
   get draftReviewActive(): boolean {
     return this.urlStartsWithAndHasAnotherPortion(this.getProjectLink('translate').join('/'));
@@ -177,6 +178,10 @@ export class NavigationComponent extends SubscriptionDisposable {
 
   get answerQuestionsActive(): boolean {
     return this.urlStartsWithAndHasAnotherPortion(this.getProjectLink('checking').join('/'));
+  }
+
+  get draftGenerationActive(): boolean {
+    return this.router.url.startsWith(this.getProjectLink('draft-generation').join('/'));
   }
 
   private urlStartsWithAndHasAnotherPortion(link: string): boolean {

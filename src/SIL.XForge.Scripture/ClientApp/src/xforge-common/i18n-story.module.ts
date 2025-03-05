@@ -1,4 +1,4 @@
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER, TranslocoConfig, TranslocoModule } from '@ngneat/transloco';
 import { DecoratorFunction } from '@storybook/types';
@@ -26,13 +26,13 @@ export const I18nStoryDecorator: DecoratorFunction = (Story, context) => {
 };
 
 @NgModule({
-  imports: [HttpClientModule],
   exports: [TranslocoModule],
   providers: [
     { provide: APP_INITIALIZER, useFactory: localizationInit, deps: [I18nService], multi: true },
     { provide: TRANSLOCO_CONFIG, useValue: translocoConfig },
     { provide: TRANSLOCO_LOADER, useClass: TranslationLoader },
-    { provide: IGNORE_COOKIE_LOCALE, useValue: true }
+    { provide: IGNORE_COOKIE_LOCALE, useValue: true },
+    provideHttpClient(withInterceptorsFromDi())
   ]
 })
 export class I18nStoryModule {}

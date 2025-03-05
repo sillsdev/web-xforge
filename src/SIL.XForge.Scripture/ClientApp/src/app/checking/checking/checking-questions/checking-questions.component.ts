@@ -13,14 +13,14 @@ import {
   ViewChildren
 } from '@angular/core';
 import { MatListItem } from '@angular/material/list';
-import sortBy from 'lodash-es/sortBy';
+import { sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -31,7 +31,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
-import { BookChapter, CheckingUtils, bookChapterMatchesVerseRef } from '../../checking.utils';
+import { BookChapter, bookChapterMatchesVerseRef, CheckingUtils } from '../../checking.utils';
 
 export interface QuestionChangeActionSource {
   /** True during events due to a questions doc change such as with a filter. */

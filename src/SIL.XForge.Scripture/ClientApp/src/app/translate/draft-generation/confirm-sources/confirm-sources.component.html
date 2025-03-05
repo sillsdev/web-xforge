@@ -10,11 +10,11 @@
       <h3>{{ t("targets_heading", { targetLanguage }) }}</h3>
     </div>
     <div class="sources">
-      @for (project of trainingSources; track project!.paratextId) {
+      @for (project of trainingSources; track project.paratextId) {
         <div class="project">
-          <span class="project-name">{{ project!.name }}</span>
+          <span class="project-name">{{ project.name }}</span>
           <span class="language-code">
-            {{ t("language_code") }} <strong>{{ project!.writingSystem.tag }}</strong>
+            {{ t("language_code") }} <strong>{{ project.languageTag }}</strong>
           </span>
         </div>
       }
@@ -25,7 +25,7 @@
         <div class="project">
           <span class="project-name">{{ project.name }}</span>
           <span class="language-code">
-            {{ t("language_code") }} <strong>{{ project.writingSystem.tag }}</strong>
+            {{ t("language_code") }} <strong>{{ project.languageTag }}</strong>
           </span>
         </div>
       }
@@ -34,11 +34,11 @@
 
   <h2>{{ t("drafting_from_heading", { draftingSourceShortNames, draftingSourceLanguage }) }}</h2>
   <div class="translation-data">
-    @for (project of draftingSources; track project!.paratextId) {
+    @for (project of draftingSources; track project.paratextId) {
       <div class="project">
-        <span class="project-name">{{ project!.name }}</span>
+        <span class="project-name">{{ project.name }}</span>
         <span class="language-code">
-          {{ t("language_code") }} <strong>{{ project!.writingSystem.tag }}</strong>
+          {{ t("language_code") }} <strong>{{ project.languageTag }}</strong>
         </span>
       </div>
     }
@@ -46,6 +46,7 @@
 
   <app-language-codes-confirmation
     class="confirm-codes"
+    [draftSources]="draftSources"
     (languageCodesVerified)="confirmationChanged($event)"
   ></app-language-codes-confirmation>
 </ng-container>

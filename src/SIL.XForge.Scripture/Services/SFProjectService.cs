@@ -1262,6 +1262,28 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     }
 
     /// <summary>
+    /// Checks Paratext if User Role has changed and syncs the role and permissions to the SF project.
+    /// </summary>
+    public async Task SyncUserRoleAsync(string curUserId, string projectId)
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+
+        // Throwing a ForbiddenException so the user is notified to contact the project administrator.
+        // We do not want to inadvertently remove the user from the project if there was an issue
+        // connecting to the Paratext registry.
+        if (!(await TryGetProjectRoleAsync(projectDoc.Data, curUserId)).TryResult(out string ptRole))
+            throw new ForbiddenException();
+
+        if (projectDoc.Data.UserRoles[curUserId] != ptRole)
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[curUserId], ptRole));
+        }
+
+        await UpdatePermissionsAsync(curUserId, projectDoc);
+    }
+
+    /// <summary>
     /// Update all user permissions on books and chapters in an SF project, from PT project permissions. For Paratext
     /// projects, permissions are acquired from ScrText objects, and so presumably only what was received from
     /// Paratext in the last synchronize. For Resources, permissions are fetched from a DBL server, and so permissions

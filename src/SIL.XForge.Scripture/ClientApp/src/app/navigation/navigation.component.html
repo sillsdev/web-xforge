@@ -13,7 +13,7 @@
         {{ t("edit_review") }}
       </a>
       @if (canGenerateDraft$ | async) {
-        <a mat-list-item [appRouterLink]="draftGenerationLink">
+        <a mat-list-item [appRouterLink]="draftGenerationLink" [class.active]="draftGenerationActive">
           <mat-icon class="mirror-rtl">auto_awesome</mat-icon>
           {{ t("generate_draft") }} <span class="nav-label">{{ t("beta") }}</span>
         </a>
