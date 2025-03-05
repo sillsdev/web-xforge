@@ -497,7 +497,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set(setting, ElementState.Submitting);
     updatePromise
       .then(() => this.controlStates.set(setting, ElementState.Submitted))
-      .catch(() => this.controlStates.set(setting, ElementState.Error));
+      .catch(err => {
+        this.controlStates.set(setting, ElementState.Error);
+        console.warn(`Error updating ${setting}`);
+        console.warn(err.message);
+      });
   }
 
   private updateSettingsInfo(): void {
