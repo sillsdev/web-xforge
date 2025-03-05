@@ -136,6 +136,13 @@ describe('PermissionsService', () => {
     expect(await env.service.isUserOnProject('project01')).toBe(false);
   }));
 
+  it('checks the project doc to determine if user has a Paratext role on the project', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(true);
+    env.setCurrentUser('other');
+    expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(false);
+  }));
+
   describe('canSync', () => {
     it('returns false when projectDoc.data is undefined', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -225,6 +232,10 @@ class TestEnvironment {
     this.service = TestBed.inject(PermissionsService);
 
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+    );
+
+    when(mockedProjectService.get(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
 

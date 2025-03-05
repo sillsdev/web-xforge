@@ -459,7 +459,13 @@ class TestEnvironment {
 
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
-      data: createTestUser()
+      data: createTestUser({
+        sites: {
+          sf: {
+            projects: ['project01', 'project02']
+          }
+        }
+      })
     });
 
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
