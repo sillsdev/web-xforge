@@ -1892,7 +1892,7 @@ public class SFProjectServiceTests
         Assert.That(project03.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(source.UserRoles.ContainsKey(User03), Is.False, "setup");
         User user = env.GetUser(User03);
-        Assert.That(user.Sites[SiteId].Projects, Is.Empty);
+        Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project01 }));
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
@@ -1902,7 +1902,7 @@ public class SFProjectServiceTests
         Assert.That(project03.UserRoles.ContainsKey(User03));
         Assert.That(source.UserRoles.ContainsKey(User03));
         user = env.GetUser(User03);
-        Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project03, SourceOnly }));
+        Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project01, Project03, SourceOnly }));
     }
 
     [Test]
@@ -4298,7 +4298,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task SyncUserRoleAsync_Success()
+    public async Task SyncUserRoleAsync_DowngradesRole()
     {
         var env = new TestEnvironment();
         var user = env.GetProject(Project01).UserRoles[User01];
@@ -4310,6 +4310,7 @@ public class SFProjectServiceTests
         await env.Service.SyncUserRoleAsync(User01, Project01);
         user = env.GetProject(Project01).UserRoles[User01];
         Assert.AreEqual(SFProjectRole.Translator, user);
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -4323,6 +4324,22 @@ public class SFProjectServiceTests
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Failure(SFProjectRole.Translator)));
         Assert.ThrowsAsync<ForbiddenException>(async () => await env.Service.SyncUserRoleAsync(User01, Project01));
+    }
+
+    [Test]
+    public async Task SyncUserRoleAsync_UpgradesRole()
+    {
+        var env = new TestEnvironment();
+        var user = env.GetProject(Project01).UserRoles[User03];
+        Assert.AreEqual(SFProjectRole.Consultant, user);
+
+        // SUT
+        env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
+        await env.Service.SyncUserRoleAsync(User03, Project01);
+        user = env.GetProject(Project01).UserRoles[User03];
+        Assert.AreEqual(SFProjectRole.Translator, user);
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     private class TestEnvironment
@@ -4371,7 +4388,13 @@ public class SFProjectServiceTests
                             Email = "user03@example.com",
                             ParatextId = "pt-user03",
                             Roles = [SystemRole.User],
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
+                            Sites = new Dictionary<string, Site>
+                            {
+                                {
+                                    SiteId,
+                                    new Site { Projects = [Project01] }
+                                },
+                            },
                         },
                         new User
                         {
@@ -4460,6 +4483,7 @@ public class SFProjectServiceTests
                             {
                                 { User01, SFProjectRole.Administrator },
                                 { User02, SFProjectRole.CommunityChecker },
+                                { User03, SFProjectRole.Consultant },
                                 { User05, SFProjectRole.Translator },
                                 { User06, SFProjectRole.Viewer },
                             },
@@ -4742,6 +4766,7 @@ public class SFProjectServiceTests
                     [
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User03) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User06) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
