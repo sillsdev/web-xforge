@@ -1,27 +1,27 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace SIL.Converters.Usj
 {
     /// <summary>
-    /// Converts the contents of the Content <see cref="ArrayList"/> to and from JSON, preserving
+    /// Converts the contents of the Content <see cref="ICollection{T}"/> to and from JSON, preserving
     /// the two supported content types: <see cref="string"/> and <see cref="UsjMarker"/>.
     /// </summary>
-    public class UsjContentConverter : JsonConverter<ArrayList>
+    public class UsjContentConverter : JsonConverter<ICollection<object>>
     {
         /// <inheritdoc />
-        public override ArrayList ReadJson(
+        public override ICollection<object> ReadJson(
             JsonReader reader,
             Type objectType,
-            ArrayList existingValue,
+            ICollection<object> existingValue,
             bool hasExistingValue,
             JsonSerializer serializer
         )
         {
             var jArray = JArray.Load(reader);
-            var list = new ArrayList();
+            var list = new List<object>();
 
             foreach (JToken item in jArray)
             {
@@ -40,7 +40,7 @@ namespace SIL.Converters.Usj
         }
 
         /// <inheritdoc />
-        public override void WriteJson(JsonWriter writer, ArrayList value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, ICollection<object> value, JsonSerializer serializer)
         {
             JArray jArray = new JArray();
             foreach (object item in value)

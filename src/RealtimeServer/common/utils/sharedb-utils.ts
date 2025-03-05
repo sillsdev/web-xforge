@@ -38,11 +38,15 @@ export function docSubmitOp(doc: Doc, components: any, source: boolean | any | u
   });
 }
 
-export async function docSubmitJson0Op<T>(doc: Doc, build: (op: Json0OpBuilder<T>) => void): Promise<boolean> {
+export async function docSubmitJson0Op<T>(
+  doc: Doc,
+  build: (op: Json0OpBuilder<T>) => void,
+  source: boolean | any | undefined = undefined
+): Promise<boolean> {
   const builder = new Json0OpBuilder<T>(doc.data);
   build(builder);
   if (builder.op.length > 0) {
-    await docSubmitOp(doc, builder.op);
+    await docSubmitOp(doc, builder.op, source);
     return true;
   }
   return false;
