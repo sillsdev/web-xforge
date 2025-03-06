@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgressBarMode } from '@angular/material/progress-bar';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -6,8 +7,7 @@ import { BehaviorSubject, map, merge, Observable } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -38,7 +38,7 @@ enum SyncPhase {
   templateUrl: './sync-progress.component.html',
   styleUrl: '../sync.component.scss'
 })
-export class SyncProgressComponent extends SubscriptionDisposable {
+export class SyncProgressComponent {
   @Input() showSyncStatus: boolean = true;
   @Output() inProgress: EventEmitter<boolean> = new EventEmitter<boolean>();
 
@@ -69,12 +69,14 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     private readonly projectNotificationService: ProjectNotificationService,
     private readonly featureFlags: FeatureFlagService,
     private readonly errorReportingService: ErrorReportingService,
-    private readonly onlineStatus: OnlineStatusService
+    private readonly onlineStatus: OnlineStatusService,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
-
     this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) => {
       this.updateProgressState(projectId, progressState);
+    });
+    this.destroyRef.onDestroy(async () => {
+      await this.projectNotificationService.stop();
     });
   }
 
@@ -129,15 +131,10 @@ export class SyncProgressComponent extends SubscriptionDisposable {
       this.sourceProjectDoc == null
         ? this._projectDoc.remoteChanges$
         : merge(this._projectDoc.remoteChanges$, this.sourceProjectDoc.remoteChanges$);
-    this.subscribe(checkSyncStatus$, () => this.checkSyncStatus());
+    checkSyncStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.checkSyncStatus());
 
     // Subscribe to SignalR notifications for the target project
     await this.projectNotificationService.subscribeToProject(this._projectDoc.id);
-  }
-
-  override async dispose(): Promise<void> {
-    await this.projectNotificationService.stop();
-    super.dispose();
   }
 
   public updateProgressState(projectId: string, progressState: ProgressState): void {

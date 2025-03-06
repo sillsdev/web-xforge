@@ -1,4 +1,5 @@
 import { Component, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -6,14 +7,13 @@ import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Subject } from 'rxjs';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -68,7 +68,7 @@ type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progres
   templateUrl: './import-questions-dialog.component.html',
   styleUrls: ['./import-questions-dialog.component.scss']
 })
-export class ImportQuestionsDialogComponent extends SubscriptionDisposable implements OnDestroy {
+export class ImportQuestionsDialogComponent implements OnDestroy {
   questionSource: null | 'transcelerator' | 'csv_file' = null;
 
   questionList: DialogListItem[] = [];
@@ -116,9 +116,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     readonly i18n: I18nService,
     readonly urls: ExternalUrlService
   ) {
-    super();
-
-    this.subscribe(this.filterForm.valueChanges, () => {
+    this.filterForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       const searchTerm: string = (this.filterControl.value || '').toLowerCase();
       const fromRef = VerseRef.tryParse(this.fromControl.value || '');
       const toRef = VerseRef.tryParse(this.toControl.value || '');
@@ -135,7 +133,9 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       this.updateSelectAllCheckbox();
     });
 
-    this.transceleratorRequest = projectService.transceleratorQuestions(this.data.projectId, this.ngUnsubscribe);
+    const unsubscribe = new Subject<void>();
+    this.destroyRef.onDestroy(() => unsubscribe.next());
+    this.transceleratorRequest = projectService.transceleratorQuestions(this.data.projectId, unsubscribe);
 
     this.promiseForTransceleratorQuestions = this.transceleratorRequest.promiseForResult.catch((error: unknown) => {
       if (typeof error === 'object' && /Transcelerator version unsupported/.test(error?.['message'])) {
@@ -208,7 +208,6 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     this.promiseForQuestionDocQuery.then(query => query.dispose());
   }
 
