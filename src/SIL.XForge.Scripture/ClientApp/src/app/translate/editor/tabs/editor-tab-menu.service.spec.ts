@@ -3,7 +3,7 @@ import { invert } from 'lodash-es';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of, take } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { v4 as uuid } from 'uuid';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -14,6 +14,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { PermissionsService } from '../../../core/permissions.service';
 import { TabStateService } from '../../../shared/sf-tab-group';
 import { EditorTabMenuService } from './editor-tab-menu.service';
 import { EditorTabInfo } from './editor-tabs.types';
@@ -22,6 +23,7 @@ let service: EditorTabMenuService;
 const activatedProjectMock = mock(ActivatedProjectService);
 const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
+const mockPermissionsService = mock(PermissionsService);
 
 describe('EditorTabMenuService', () => {
   configureTestingModule(() => ({
@@ -31,6 +33,7 @@ describe('EditorTabMenuService', () => {
       { provide: ActivatedProjectService, useMock: activatedProjectMock },
       { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
+      { provide: PermissionsService, useMock: mockPermissionsService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
@@ -135,8 +138,22 @@ describe('EditorTabMenuService', () => {
     });
   });
 
+  it('should not get "draft" if the user cannot view drafts', done => {
+    const env = new TestEnvironment();
+    when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(false);
+    env.setExistingTabs([]);
+    service['canShowHistory'] = () => true;
+
+    service.getMenuItems().subscribe(items => {
+      expect(items.length).toBe(1);
+      expect(items[0].type).toBe('history');
+      done();
+    });
+  });
+
   it('should get "biblical terms" menu item', done => {
     const env = new TestEnvironment();
+    when(mockPermissionsService.canAccessBiblicalTerms(anything())).thenReturn(true);
     env.setExistingTabs([]);
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => false;
@@ -273,6 +290,7 @@ class TestEnvironment {
     const projectDoc: SFProjectProfileDoc = explicitProjectDoc ?? this.projectDoc;
     when(activatedProjectMock.projectDoc$).thenReturn(of(projectDoc));
     when(mockUserService.currentUserId).thenReturn('user01');
+    when(mockPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
     service = TestBed.inject(EditorTabMenuService);
   }
 

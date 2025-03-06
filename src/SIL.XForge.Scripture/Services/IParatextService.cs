@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using SIL.Converters.Usj;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
@@ -41,6 +42,7 @@ public interface IParatextService
     );
     bool ResourceDocsNeedUpdating(SFProject project, ParatextResource resource);
 
+    string ConvertUsxToUsfm(UserSecret userSecret, string paratextId, int bookNum, XDocument usx);
     IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
     string GetBookText(UserSecret userSecret, string paratextId, int bookNum, string? usfm = null);
     Task<int> PutBookText(
@@ -98,6 +100,20 @@ public interface IParatextService
     );
 
     Task<Delta> GetDeltaFromUsfmAsync(string curUserId, string sfProjectId, string usfm, int bookNum);
+
+    /// <summary>
+    /// Gets the chapters in the USFM file as individual USJ objects.
+    /// </summary>
+    /// <param name="userSecret">The user secret.</param>
+    /// <param name="paratextId">The project's paratext identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="usfm">The book USFM.</param>
+    /// <returns>The chapters enumerated in order from chapter 1 until the last chapter.</returns>
+    /// <remarks>
+    /// If chapters are missing, they will be present in the collection at the correct position,
+    /// but will have an empty Content array.
+    /// </remarks>
+    IEnumerable<Usj> GetChaptersAsUsj(UserSecret userSecret, string paratextId, int bookNum, string usfm);
 
     Task<ParatextProject> SendReceiveAsync(
         UserSecret userSecret,

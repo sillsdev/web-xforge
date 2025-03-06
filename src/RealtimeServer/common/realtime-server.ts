@@ -152,7 +152,8 @@ export class RealtimeServer extends ShareDB {
       milestoneDb,
       presence: true,
       disableDocAction: true,
-      disableSpaceDelimitedActions: true
+      disableSpaceDelimitedActions: true,
+      doNotForwardSendPresenceErrorsToClient: true
     });
     shareDBAccess(this);
 
@@ -167,6 +168,7 @@ export class RealtimeServer extends ShareDB {
     this.use('commit', (context, callback) => {
       switch (context.collection) {
         case 'texts':
+        case 'text_documents':
           // Save a milestone for texts, every 1000 ops (about 7-10 verses typed live)
           if (context.snapshot != null) {
             context.saveMilestoneSnapshot = context.snapshot.v % 1000 === 0;

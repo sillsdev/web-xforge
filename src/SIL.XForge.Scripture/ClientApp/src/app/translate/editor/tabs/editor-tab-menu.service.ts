@@ -50,7 +50,11 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$]);
       }),
       switchMap(([projectDoc, isOnline, existingTabs]) => {
-        const showDraft = isOnline && projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
+        const showDraft =
+          isOnline &&
+          projectDoc.data != null &&
+          SFProjectService.hasDraft(projectDoc.data) &&
+          this.permissionsService.canAccessDrafts(projectDoc, this.userService.currentUserId);
         const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {

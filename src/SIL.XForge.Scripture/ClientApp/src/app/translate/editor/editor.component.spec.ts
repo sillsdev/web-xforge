@@ -1002,7 +1002,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('no source', fakeAsync(() => {
+    it('source is missing book/text', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
@@ -1017,7 +1017,6 @@ describe('EditorComponent', () => {
       expect(selection!.length).toBe(0);
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
 
@@ -1058,7 +1057,8 @@ describe('EditorComponent', () => {
       let selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
-      expect(env.isSourceAreaHidden).toBe(true);
+      let sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
+      expect(sourceText).toEqual('This book does not exist.');
 
       env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
@@ -1070,7 +1070,8 @@ describe('EditorComponent', () => {
       selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
-      expect(env.isSourceAreaHidden).toBe(false);
+      sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
+      expect(sourceText).not.toEqual('This book does not exist.');
 
       env.dispose();
     }));
@@ -1088,7 +1089,6 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
 
@@ -1107,7 +1107,8 @@ describe('EditorComponent', () => {
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
       expect(env.outOfSyncWarning).toBeNull();
-      expect(env.isSourceAreaHidden).toBe(true);
+      const sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
+      expect(sourceText).toEqual('This book is empty. Add chapters in Paratext.');
 
       env.setDataInSync('project01', false);
       expect(env.component.canEdit).toBe(false);
@@ -1140,7 +1141,6 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
 
@@ -1249,7 +1249,7 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
-      expect(env.isSourceAreaHidden).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(false);
       env.dispose();
     }));
 
@@ -1264,7 +1264,8 @@ describe('EditorComponent', () => {
       expect(env.component.targetLabel).toEqual('TRG');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
+      const sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
+      expect(sourceText).not.toEqual('This book does not exist.');
       expect(env.component.target!.readOnlyEnabled).toBe(true);
       env.dispose();
     }));
@@ -3485,7 +3486,6 @@ describe('EditorComponent', () => {
       expect(env.component.target!.segmentRef).toEqual('');
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
-      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
 
@@ -3504,7 +3504,6 @@ describe('EditorComponent', () => {
       expect(selection!.length).toBe(0);
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
 
@@ -3523,7 +3522,6 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
 
@@ -3542,7 +3540,6 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
-      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
 
@@ -3563,7 +3560,7 @@ describe('EditorComponent', () => {
       expect(env.component.userHasGeneralEditRight).toBe(true);
       expect(env.component.hasChapterEditPermission).toBe(false);
       expect(env.component.canEdit).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(false);
       expect(env.noChapterEditPermissionMessage).toBeTruthy();
       env.dispose();
     }));
@@ -3602,7 +3599,6 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
-      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
 
@@ -4617,6 +4613,12 @@ class TestEnvironment {
 
   get sourceTextEditor(): HTMLElement {
     return this.sourceTextArea.query(By.css('.ql-container')).nativeElement;
+  }
+
+  get sourceTextEditorPlaceholder(): HTMLElement {
+    return this.sourceTextEditor.querySelector(
+      '#source-text-area > app-tab-body > div > div > app-text > quill-editor > div > div.ql-editor.ql-blank'
+    )!;
   }
 
   get invalidWarning(): DebugElement {

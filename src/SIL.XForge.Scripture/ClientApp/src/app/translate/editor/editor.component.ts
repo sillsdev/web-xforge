@@ -46,7 +46,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -246,6 +246,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   projectDoc?: SFProjectProfileDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private paratextUsers: ParatextUserProfile[] = [];
+  private isParatextUserRole: boolean = false;
   private projectUserConfigChangesSub?: Subscription;
   private text?: TextInfo;
   private sourceText?: TextInfo;
@@ -445,7 +446,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   get hasSourceViewRight(): boolean {
     const sourceProject = this.sourceProjectDoc?.data;
     if (sourceProject == null) {
-      return false;
+      return this.isParatextUserRole;
     }
 
     if (
@@ -455,13 +456,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const chapter = this.sourceText?.chapters.find(c => c.number === this._chapter);
       // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
       // is accessed after migration
-      if (chapter != null && chapter.permissions != null) {
+      if (chapter != null && chapter.permissions != null && !this.isParatextUserRole) {
         const chapterPermission: string = chapter.permissions[this.userService.currentUserId];
         return chapterPermission === TextInfoPermission.Write || chapterPermission === TextInfoPermission.Read;
       }
     }
 
-    return false;
+    return this.isParatextUserRole;
   }
 
   get canEdit(): boolean {
@@ -584,11 +585,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private get hasSource(): boolean {
-    if (this.text == null || this.currentUser === undefined || this.sourceProjectId === undefined) {
+    if (
+      (this.text == null && !this.isParatextUserRole) ||
+      this.currentUser === undefined ||
+      this.sourceProjectId === undefined
+    ) {
       return false;
     } else {
+      // The case where user is paratext role but does not have source in user projects due
+      // to permissions issue we want to show the source
       const projects = this.currentUser.sites[environment.siteId].projects;
-      return this.text.hasSource && projects.includes(this.sourceProjectId);
+      return (this.text?.hasSource && projects.includes(this.sourceProjectId)) || this.isParatextUserRole;
     }
   }
 
@@ -706,7 +713,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.getProfile(projectId);
 
-          const userRole: string | undefined = this.projectDoc?.data?.userRoles[this.userService.currentUserId];
+          const userRole: string | undefined = this.userRole;
           if (userRole != null) {
             const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);
             if (projectDoc?.data?.paratextUsers != null) {
@@ -714,6 +721,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             }
           }
           this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
+          this.isParatextUserRole = isParatextRole(this.userRole);
           this.projectUserConfigDoc = await this.projectService.getUserConfig(
             projectId,
             this.userService.currentUserId
@@ -791,7 +799,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           if (this.metricsSession != null) {
             this.metricsSession.dispose();
           }
-          if (this.target != null && this.source != null) {
+          if (
+            this.target != null &&
+            this.source != null &&
+            this.sourceProjectDoc?.data?.userRoles[this.userService.currentUserId] != null
+          ) {
             this.metricsSession = new TranslateMetricsSession(
               this.projectService,
               this.projectDoc.id,
@@ -1005,7 +1017,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         break;
     }
 
-    if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
+    if ((!this.hasSource || this.sourceLoaded || this.isParatextUserRole) && this.targetLoaded) {
       this.loadingFinished();
       // Toggle the segment the cursor is focused in - the timeout allows for Quill to get its focus set
       setTimeout(() => {
@@ -1273,7 +1285,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
         let canViewSource = false;
         if (projectSource != null) {
-          canViewSource = await this.permissionsService.isUserOnProject(projectSource?.projectRef);
+          canViewSource =
+            (await this.permissionsService.isUserOnProject(projectSource?.projectRef)) ||
+            (await this.permissionsService.userHasParatextRoleOnProject(projectDoc.id));
         }
 
         if (projectSource != null && canViewSource) {

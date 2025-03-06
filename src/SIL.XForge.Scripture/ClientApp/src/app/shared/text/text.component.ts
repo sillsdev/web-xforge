@@ -9,7 +9,6 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { isEqual, merge } from 'lodash-es';
@@ -27,8 +26,10 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
-import { getBrowserEngine, objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { getBrowserEngine, objectId } from 'xforge-common/utils';
+import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -98,7 +99,7 @@ export interface EmbedsByVerse {
   styleUrls: ['./text.component.scss'],
   providers: [TextViewModel] // New instance for each text component
 })
-export class TextComponent implements AfterViewInit, OnDestroy {
+export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
   @Input() enablePresence: boolean = false;
   @Input() markInvalid: boolean = false;
@@ -236,7 +237,13 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private _segment?: Segment;
   private contentSet: boolean = false;
   /** State that the component is in with respect to loading content. */
-  private loadingState: 'loading' | 'offline-or-loading' | 'no-content' | 'empty-viewModel' | 'unloaded' = 'loading';
+  private loadingState:
+    | 'loading'
+    | 'offline-or-loading'
+    | 'no-content'
+    | 'empty-viewModel'
+    | 'unloaded'
+    | 'permission-denied' = 'loading';
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
   private initialSegmentChecksum?: number;
@@ -267,9 +274,9 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     private readonly transloco: TranslocoService,
     private readonly userService: UserService,
     private readonly viewModel: TextViewModel,
-    private readonly textDocService: TextDocService,
-    private destroyRef: QuietDestroyRef
+    private readonly textDocService: TextDocService
   ) {
+    super();
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
     if (localCursorColor == null) {
       // keep the cursor color from getting too close to white since the text is white
@@ -279,9 +286,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.cursorColor = localCursorColor;
     this.userService.getCurrentUser().then((userDoc: UserDoc) => {
       this.currentUserDoc = userDoc;
-      this.currentUserDoc.changes$
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.submitLocalPresenceChannel(true));
+      this.subscribe(this.currentUserDoc.changes$, () => this.submitLocalPresenceChannel(true));
     });
   }
 
@@ -312,6 +317,8 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         }
       case 'empty-viewModel':
         return this.transloco.translate('text.book_is_empty');
+      case 'permission-denied':
+        return this.transloco.translate('text.permission_denied');
       case 'unloaded':
       default:
         return '';
@@ -493,8 +500,16 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     return this.enablePresence;
   }
 
+  get projectId(): string {
+    return this.id?.projectId ?? '';
+  }
+
+  get userProjects(): string[] {
+    return this.currentUserDoc?.data?.sites[environment.siteId]?.projects ?? [];
+  }
+
   ngAfterViewInit(): void {
-    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
+    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
       this.changeDetector.detectChanges();
       if (!isOnline && this._editor != null) {
         const cursors: QuillCursors = this._editor.getModule('cursors') as QuillCursors;
@@ -505,6 +520,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.isDestroyed = true;
+    super.ngOnDestroy();
     this.viewModel?.unbind();
     this.loadingState = 'unloaded';
     this.dismissPresences();
@@ -518,12 +534,8 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (this.highlightMarker != null) {
       this.highlightMarker.style.visibility = 'hidden';
     }
-    fromEvent(this._editor.root, 'scroll')
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateHighlightMarkerVisibility());
-    fromEvent(window, 'resize')
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.setHighlightMarkerPosition());
+    this.subscribe(fromEvent(this._editor.root, 'scroll'), () => this.updateHighlightMarkerVisibility());
+    this.subscribe(fromEvent(window, 'resize'), () => this.setHighlightMarkerPosition());
     this.viewModel.editor = editor;
     this.bindQuill(); // not awaited
     editor.container.addEventListener('beforeinput', (ev: Event) => this.onBeforeinput(ev));
@@ -940,11 +952,22 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   async projectHasText(): Promise<boolean> {
     if (this.id == null) throw new Error('Invalid state. id is null.');
     const id: TextDocId = this.id;
-    const profile: SFProjectProfileDoc = await this.projectService.getProfile(this.id.projectId);
+
+    if (!this.userProjects?.includes(this.projectId)) {
+      this.loadingState = 'permission-denied';
+      return false;
+    }
+    const profile: SFProjectProfileDoc = await this.projectService.getProfile(this.projectId);
     if (profile.data == null) throw new Error('Failed to fetch project profile.');
-    return profile.data.texts.some(
-      text => text.bookNum === id.bookNum && text.chapters.some(chapter => chapter.number === id.chapterNum)
-    );
+    if (
+      profile.data.texts.some(
+        text => text.bookNum === id.bookNum && text.chapters.some(chapter => chapter.number === id.chapterNum)
+      )
+    ) {
+      return true;
+    }
+    this.loadingState = 'no-content';
+    return false;
   }
 
   private attachPresences(textDoc: TextDoc): void {
@@ -1012,7 +1035,6 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
 
     if (!(await this.projectHasText())) {
-      this.loadingState = 'no-content';
       return;
     }
 
@@ -1058,20 +1080,18 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       this.clickSubs.set(
         'notes',
         Array.from(elements).map((element: Element) =>
-          fromEvent<MouseEvent>(element, 'click')
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(event => {
-              const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
-              const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');
-              this.dialogService.openMatDialog(TextNoteDialogComponent, {
-                width: '600px',
-                data: {
-                  type: noteType,
-                  text: noteText,
-                  isRightToLeft: this.isRtl
-                } as NoteDialogData
-              });
-            })
+          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
+            const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
+            const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');
+            this.dialogService.openMatDialog(TextNoteDialogComponent, {
+              width: '600px',
+              data: {
+                type: noteType,
+                text: noteText,
+                isRightToLeft: this.isRtl
+              } as NoteDialogData
+            });
+          })
         )
       );
     }
@@ -1720,8 +1740,10 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (this.id == null) {
       return;
     }
-
-    const project = (await this.projectService.getProfile(this.id.projectId)).data;
+    if (!this.userProjects?.includes(this.projectId)) {
+      return;
+    }
+    const project = (await this.projectService.getProfile(this.projectId)).data;
     if (project == null) {
       return;
     }

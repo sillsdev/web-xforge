@@ -422,6 +422,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return (job?.state as BuildStates) === BuildStates.Active;
   }
 
+  isDraftFinishing(job?: BuildDto): boolean {
+    return (job?.state as BuildStates) === BuildStates.Finishing;
+  }
+
   isDraftComplete(job?: BuildDto): boolean {
     return (job?.state as BuildStates) === BuildStates.Completed;
   }
