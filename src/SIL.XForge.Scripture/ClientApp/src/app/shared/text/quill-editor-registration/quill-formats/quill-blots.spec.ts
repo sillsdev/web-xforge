@@ -15,6 +15,7 @@ import {
   RefInline,
   SegmentInline,
   TextAnchorInline,
+  UnknownBlot,
   UnmatchedEmbed,
   VerseEmbed
 } from './quill-blots';
@@ -25,6 +26,20 @@ describe('Quill blots', () => {
       const nfdText = 'e\u0301'; // é as NFD
       const textNode = document.createTextNode(nfdText);
       expect(NotNormalizedText.value(textNode)).toBe(nfdText);
+    });
+  });
+
+  describe('UnknownBlot', () => {
+    it('should create node with unknown format message', () => {
+      const value = {
+        origBlotName: 'test-format',
+        data: 'test-data'
+      };
+
+      const node = UnknownBlot.create(value) as HTMLElement;
+
+      expect(node.tagName.toLowerCase()).toBe('sf-unknown');
+      expect(node.innerText).toBe(`[Unknown format: 'test-format']`);
     });
   });
 
