@@ -6,6 +6,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { BehaviorSubject, firstValueFrom, map, Observable, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -15,7 +16,10 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
+import { TextDocService } from '../../../core/text-doc.service';
 import {
   DraftApplyDialogComponent,
   DraftApplyDialogConfig as DraftApplyDialogData,
@@ -72,10 +76,12 @@ export class DraftPreviewBooksComponent {
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly projectService: SFProjectService,
     private readonly i18n: I18nService,
     private readonly userService: UserService,
     private readonly draftHandlingService: DraftHandlingService,
     private readonly dialogService: DialogService,
+    private readonly textDocService: TextDocService,
     private readonly errorReportingService: ErrorReportingService,
     private readonly router: Router
   ) {}
@@ -125,6 +131,20 @@ export class DraftPreviewBooksComponent {
       return;
     }
 
+    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(result.projectId);
+    const projectTextInfo: TextInfo = projectDoc.data?.texts.find(
+      t => t.bookNum === bookWithDraft.bookNumber && t.chapters
+    )!;
+
+    const projectChapters: number[] = projectTextInfo.chapters.map(c => c.number);
+    const missingChapters: number[] = bookWithDraft.chaptersWithDrafts.filter(c => !projectChapters.includes(c));
+    if (missingChapters.length > 0) {
+      await this.projectService.onlineAddChapters(result.projectId, bookWithDraft.bookNumber, missingChapters);
+      for (const chapter of missingChapters) {
+        const textDocId = new TextDocId(result.projectId, bookWithDraft.bookNumber, chapter);
+        await this.textDocService.createTextDoc(textDocId);
+      }
+    }
     await this.applyBookDraftAsync(bookWithDraft, result.projectId);
   }
 

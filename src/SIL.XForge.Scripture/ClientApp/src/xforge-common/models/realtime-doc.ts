@@ -139,8 +139,8 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     await this.realtimeService.onLocalDocUpdate(this);
   }
 
-  async create(data: T): Promise<void> {
-    this.adapter.create(data).then(() => this.updateOfflineData(true));
+  async create(data: T, type?: string): Promise<void> {
+    this.adapter.create(data, type).then(() => this.updateOfflineData(true));
     this.loadOfflineDataPromise = Promise.resolve();
     await this.updateOfflineData(true);
     await this.realtimeService.onLocalDocUpdate(this);

@@ -6,7 +6,9 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { type } from 'rich-text';
 import { Observable, Subject } from 'rxjs';
+import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { TextDoc, TextDocId, TextDocSource } from './models/text-doc';
 import { SFProjectService } from './sf-project.service';
@@ -19,7 +21,8 @@ export class TextDocService {
 
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly realtimeService: RealtimeService
   ) {}
 
   /**
@@ -61,6 +64,20 @@ export class TextDocService {
       this.isDataInSync(project) &&
       !this.isEditingDisabled(project)
     );
+  }
+
+  async createTextDoc(textDocId: TextDocId, data?: TextData): Promise<TextDoc> {
+    let textDoc: TextDoc = await this.projectService.getText(textDocId);
+
+    if (textDoc?.data != null) {
+      throw new Error(`Text Doc already exists for ${textDocId}`);
+    }
+
+    if (data == null) {
+      data = { ops: [] };
+    }
+    textDoc = await this.realtimeService.create(TextDoc.COLLECTION, textDocId.toString(), data, type.uri);
+    return textDoc;
   }
 
   /**

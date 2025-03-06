@@ -1268,6 +1268,54 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToUsx_NewChapter_Added()
+    {
+        var chapterDeltas = new[]
+        {
+            new ChapterDelta(
+                1,
+                2,
+                true,
+                Delta
+                    .New()
+                    .InsertChapter("1")
+                    .InsertVerse("1")
+                    .InsertText("This is verse 1.", "verse_1_1")
+                    .InsertVerse("2")
+                    .InsertText("This is verse 2.", "verse_1_2")
+                    .InsertPara("p")
+            ),
+            new ChapterDelta(
+                2,
+                2,
+                true,
+                Delta
+                    .New()
+                    .InsertChapter("2")
+                    .InsertVerse("1")
+                    .InsertText("New chapter verse 1", "verse_2_1")
+                    .InsertVerse("2")
+                    .InsertText("New chapter verse 2", "verse_2_2")
+                    .InsertPara("p")
+            ),
+        };
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+
+        XDocument expected = Usx(
+            "PHM",
+            Chapter("1"),
+            Para("p", Verse("1"), "This is verse 1.", Verse("2"), "This is verse 2."),
+            Chapter("2"),
+            Para("p", Verse("1"), "New chapter verse 1", Verse("2"), "New chapter verse 2")
+        );
+
+        // SUT
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), chapterDeltas);
+        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+    }
+
+    [Test]
     public void ToUsx_BlankLine()
     {
         var chapterDelta = new ChapterDelta(

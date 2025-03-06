@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using Newtonsoft.Json.Linq;
+using SIL.Extensions;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
@@ -1416,6 +1417,52 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         });
     }
 
+    public async Task AddChaptersAsync(string userId, string projectId, int book, int[] chapters)
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
+        if (textIndex == -1)
+        {
+            throw new DataNotFoundException("The book does not exist.");
+        }
+
+        if (
+            !projectDoc.Data.Texts[textIndex].Permissions.TryGetValue(userId, out string permission)
+            || permission != TextInfoPermission.Write
+        )
+        {
+            throw new ForbiddenException();
+        }
+
+        IEnumerable<int> chaptersToAdd = chapters.Except(
+            projectDoc.Data.Texts[textIndex].Chapters.Select(c => c.Number)
+        );
+        await projectDoc.SubmitJson0OpAsync(op =>
+        {
+            IList<Chapter> chapters = [.. projectDoc.Data.Texts[textIndex].Chapters];
+            foreach (int chapter in chaptersToAdd)
+            {
+                chapters.Add(
+                    new Chapter
+                    {
+                        Number = chapter,
+                        Permissions = new Dictionary<string, string> { { userId, TextInfoPermission.Write } },
+                        IsValid = true,
+                        LastVerse = 0,
+                    }
+                );
+            }
+            chapters.Sort((a, b) => a.Number - b.Number);
+            op.Set(pd => pd.Texts[textIndex].Chapters, chapters);
+        });
+    }
+
     /// <summary>
     /// Sets the draft applied flag for the specified text.
     /// </summary>
@@ -1424,6 +1471,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <param name="book">The book number.</param>
     /// <param name="chapter">The chapter number.</param>
     /// <param name="draftApplied"><c>true</c> if the draft is applied; otherwise, <c>false</c>.</param>
+    /// <param name="lastVerse">The last verse number for the chapter.</param>
     /// <returns>The asynchronous task.</returns>
     /// <exception cref="DataNotFoundException">
     /// The project does not exist.
@@ -1431,7 +1479,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <exception cref="ForbiddenException">
     /// The user does not have permission to set this flag for the specified text.
     /// </exception>
-    public async Task SetDraftAppliedAsync(string userId, string projectId, int book, int chapter, bool draftApplied)
+    public async Task SetDraftAppliedAsync(
+        string userId,
+        string projectId,
+        int book,
+        int chapter,
+        bool draftApplied,
+        int lastVerse
+    )
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(userId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -1479,8 +1534,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Update the draft applied flag
         await projectDoc.SubmitJson0OpAsync(op =>
-            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].DraftApplied, draftApplied)
-        );
+        {
+            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].DraftApplied, draftApplied);
+            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].LastVerse, lastVerse);
+        });
     }
 
     /// <summary>
