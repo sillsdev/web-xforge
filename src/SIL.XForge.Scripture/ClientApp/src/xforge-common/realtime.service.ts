@@ -1,8 +1,7 @@
 import { DestroyRef, Injectable, Optional } from '@angular/core';
-import { IDestroyRef } from 'xforge-common/utils';
-
 import { filter, race, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
+import { IDestroyRef } from 'xforge-common/utils';
 import { FileService } from './file.service';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';

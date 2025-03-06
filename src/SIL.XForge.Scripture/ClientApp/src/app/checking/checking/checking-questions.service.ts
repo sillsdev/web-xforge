@@ -1,6 +1,4 @@
 import { Injectable } from '@angular/core';
-import { IDestroyRef } from 'xforge-common/utils';
-
 import { merge } from 'lodash-es';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -12,6 +10,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ComparisonOperator, PropertyFilter, QueryParameters, Sort } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
+import { IDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 
 export enum QuestionFilter {
