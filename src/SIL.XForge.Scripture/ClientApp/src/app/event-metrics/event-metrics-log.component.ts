@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -13,6 +14,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from './event-metric';
 import { EventMetricDialogComponent } from './event-metric-dialog.component';
@@ -70,7 +72,8 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
     private readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
   }
@@ -88,13 +91,15 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
       this.columnsToDisplay.push('details');
     }
     this.loadingStarted();
-    this.subscribe(
-      combineLatest([
-        this.activatedProjectService.projectId$.pipe(filterNullish()),
-        this.pageIndex$,
-        this.pageSize$,
-        this.onlineStatusService.onlineStatus$
-      ]).pipe(
+
+    // TODO Not sure if this pattern with an empty subscribe() is the best way to handle this
+    combineLatest([
+      this.activatedProjectService.projectId$.pipe(filterNullish()),
+      this.pageIndex$,
+      this.pageSize$,
+      this.onlineStatusService.onlineStatus$
+    ])
+      .pipe(
         switchMap(async ([projectId, pageIndex, pageSize, isOnline]) => {
           this.loadingStarted();
           if (isOnline) {
@@ -110,7 +115,8 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
           this.loadingFinished();
         })
       )
-    );
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
   }
 
   openDetailsDialog(dialogData: EventMetric): void {

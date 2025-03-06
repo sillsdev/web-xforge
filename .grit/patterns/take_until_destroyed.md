@@ -18,7 +18,10 @@ pattern ensureTakeUntilDestroyedImport() {
 }
 
 pattern mapSubscriptions() {
-  `this.subscribe( $thing, $callback )` => `$thing.pipe(takeUntilDestroyed(this.destroyRef)).subscribe( $callback )`
+  or {
+    `this.subscribe( $thing, $callback )` => `$thing.pipe(takeUntilDestroyed(this.destroyRef)).subscribe( $callback )`,
+    `this.subscribe( $thing )` => `$thing.pipe(takeUntilDestroyed(this.destroyRef)).subscribe()`
+  }
 }
 
 pattern removeExtends() {
