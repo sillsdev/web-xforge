@@ -155,7 +155,8 @@ describe('DraftPreviewBooks', () => {
     when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
       instance(mockedDialogRef)
     );
-    env.component.chooseProjectToAddDraft(env.booksWithDrafts[0], 'project01');
+    expect(env.component['projectParatextId']).toEqual(env.paratextId);
+    env.component.chooseProjectToAddDraft(env.booksWithDrafts[0], env.paratextId);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
@@ -169,7 +170,7 @@ describe('DraftPreviewBooks', () => {
     env = new TestEnvironment();
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
-    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'project01' }));
+    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'otherProject' }));
     when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
       instance(mockedDialogRef)
     );
@@ -180,10 +181,10 @@ describe('DraftPreviewBooks', () => {
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(
       env.booksWithDrafts[0].chaptersWithDrafts.length
     );
-    verify(mockedProjectService.onlineAddChapters('project01', anything(), anything())).never();
+    verify(mockedProjectService.onlineAddChapters('otherProject', anything(), anything())).never();
   }));
 
-  it('does not show add draft to different project option if user is not an admin', fakeAsync(async () => {
+  it('translators can add draft to different project', fakeAsync(async () => {
     env = new TestEnvironment();
     when(mockedUserService.currentUserId).thenReturn('user02');
     const moreButton: HTMLElement = env.getBookButtonAtIndex(0).querySelector('.book-more')!;
@@ -192,7 +193,7 @@ describe('DraftPreviewBooks', () => {
     env.fixture.detectChanges();
     const harness: MatMenuHarness = await env.moreMenuHarness();
     const items = await harness.getItems();
-    expect(items.length).toEqual(1);
+    expect(items.length).toEqual(2);
     harness.close();
     tick();
     env.fixture.detectChanges();
@@ -294,8 +295,10 @@ class TestEnvironment {
   draftApplyProgress?: DraftApplyProgress;
   progressSubscription?: Subscription;
   loader: HarnessLoader;
+  readonly paratextId = 'pt01';
   mockProjectDoc: SFProjectProfileDoc = {
     data: createTestProjectProfile({
+      paratextId: this.paratextId,
       texts: [
         {
           bookNum: 1,

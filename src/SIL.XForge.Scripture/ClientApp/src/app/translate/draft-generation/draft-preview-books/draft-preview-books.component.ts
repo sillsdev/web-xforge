@@ -5,7 +5,6 @@ import { Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { BehaviorSubject, firstValueFrom, map, Observable, tap } from 'rxjs';
@@ -47,6 +46,8 @@ export interface BookWithDraft {
 })
 export class DraftPreviewBooksComponent {
   booksWithDrafts$: Observable<BookWithDraft[]> = this.activatedProjectService.changes$.pipe(
+    filterNullish(),
+    tap(p => (this.projectParatextId = p.data?.paratextId)),
     map(projectDoc => {
       if (projectDoc?.data == null) {
         return [];
@@ -85,14 +86,6 @@ export class DraftPreviewBooksComponent {
     private readonly errorReportingService: ErrorReportingService,
     private readonly router: Router
   ) {}
-
-  get isProjectAdmin$(): Observable<boolean> {
-    return this.activatedProjectService.changes$.pipe(
-      filterNullish(),
-      tap(p => (this.projectParatextId = p.data?.paratextId)),
-      map(p => p.data?.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator)
-    );
-  }
 
   get numChaptersApplied(): number {
     return this.chaptersApplied.length;
