@@ -9,31 +9,31 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { projectLabel } from '../shared/utils';
+import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import { ServalAdministrationService } from './serval-administration.service';
 
 class Row {
-  constructor(public readonly projectDoc: SFProjectProfileDoc) {}
+  private draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
 
-  get alternateSource(): string {
-    const alternateDraftingSource = this.projectDoc.data?.translateConfig.draftConfig.alternateSource;
-    return alternateDraftingSource == null
-      ? 'None'
-      : alternateDraftingSource.shortName + ' - ' + alternateDraftingSource.name;
+  constructor(public readonly projectDoc: SFProjectProfileDoc) {
+    this.draftSources = projectDoc.data == null ? undefined : projectToDraftSources(projectDoc.data);
   }
 
-  get alternateSourceId(): string | undefined {
-    return this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.projectRef;
+  get draftingSource(): string {
+    return this.draftSources?.draftingSources[0] == null ? 'None' : projectLabel(this.draftSources.draftingSources[0]);
   }
 
-  get alternateTrainingSource(): string {
-    const alternateTrainingSource = this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource;
-    return alternateTrainingSource == null
-      ? 'None'
-      : alternateTrainingSource.shortName + ' - ' + alternateTrainingSource.name;
+  get draftingSourceId(): string | undefined {
+    return this.draftSources?.draftingSources[0]?.projectRef;
   }
 
-  get alternateTrainingSourceId(): string | undefined {
-    return this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.projectRef;
+  get trainingSource(): string {
+    return this.draftSources?.trainingSources[0] == null ? 'None' : projectLabel(this.draftSources.trainingSources[0]);
+  }
+
+  get trainingSourceId(): string | undefined {
+    return this.draftSources?.trainingSources[0]?.projectRef;
   }
 
   get id(): string {
@@ -66,7 +66,7 @@ class Row {
   imports: [UICommonModule]
 })
 export class ServalProjectsComponent extends DataLoadingComponent implements OnInit {
-  columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'alternateSource', 'alternateTrainingSource'];
+  columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'draftingSource', 'trainingSource'];
   rows: Row[] = [];
 
   length: number = 0;
