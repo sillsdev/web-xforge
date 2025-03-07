@@ -36,20 +36,24 @@
       <ng-container matColumnDef="draftingSource">
         <th mat-header-cell *matHeaderCellDef>Drafting Source</th>
         <td mat-cell *matCellDef="let row">
-          @if (row.draftingSourceId != null) {
-            <a [appRouterLink]="['/serval-administration', row.draftingSourceId]">{{ row.draftingSource }}</a>
-          } @else {
-            <span>{{ row.draftingSource }}</span>
+          @for (source of row.draftingSources; track source.id) {
+            <p>
+              <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
+            </p>
+          } @empty {
+            <span>None</span>
           }
         </td>
       </ng-container>
       <ng-container matColumnDef="trainingSource">
         <th mat-header-cell *matHeaderCellDef>Training Source</th>
         <td mat-cell *matCellDef="let row">
-          @if (row.trainingSourceId != null) {
-            <a [appRouterLink]="['/serval-administration', row.trainingSourceId]">{{ row.trainingSource }}</a>
-          } @else {
-            <span>{{ row.trainingSource }}</span>
+          @for (source of row.trainingSources; track source.id) {
+            <p>
+              <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
+            </p>
+          } @empty {
+            <span>None</span>
           }
         </td>
       </ng-container>
