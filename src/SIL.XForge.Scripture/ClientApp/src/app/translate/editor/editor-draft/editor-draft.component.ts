@@ -20,7 +20,7 @@ import {
   throttleTime
 } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { CommandError } from 'xforge-common/command.service';
+import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FontService } from 'xforge-common/font.service';
@@ -181,11 +181,12 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       this.userAppliedDraft = true;
     } catch (err) {
       this.noticeService.showError(translate('editor_draft_tab.error_applying_draft'));
-      if (err instanceof CommandError && err.message.includes('504 Gateway Timeout')) return;
-      this.errorReportingService.silentError(
-        'Error applying a draft to a chapter',
-        ErrorReportingService.normalizeError(err)
-      );
+      if (!isNetworkError(err)) {
+        this.errorReportingService.silentError(
+          'Error applying a draft to a chapter',
+          ErrorReportingService.normalizeError(err)
+        );
+      }
     }
   }
 
