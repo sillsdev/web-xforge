@@ -123,20 +123,20 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             fileName: project.shortName + '.zip'
           });
 
+          let i = 1;
           // Add the drafting source
-          if (draftSources.draftingSources[0] != null) {
-            const draftingSource: TranslateSource = draftSources.draftingSources[0];
+          for (const draftingSource of draftSources.draftingSources) {
             rows.push({
               id: draftingSource.projectRef,
               type: projectType(draftingSource),
               name: projectLabel(draftingSource),
-              category: 'Drafting Source',
+              category: 'Drafting Source ' + i++,
               fileName: draftingSource.shortName + '.zip'
             });
           }
 
           // Add the training sources
-          let i = 1;
+          i = 1;
           for (const trainingSource of draftSources.trainingSources) {
             rows.push({
               id: trainingSource.projectRef,
