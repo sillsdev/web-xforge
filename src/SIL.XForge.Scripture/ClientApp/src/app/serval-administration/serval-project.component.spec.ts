@@ -127,7 +127,7 @@ describe('ServalProjectComponent', () => {
 
     it('should have a download button', fakeAsync(() => {
       const env = new TestEnvironment();
-      expect(env.downloadButtions.length).toBe(5);
+      expect(env.downloadButtions.length).toBe(4);
       expect(env.firstDownloadButton.innerText).toContain('Download');
       expect(env.firstDownloadButton.disabled).toBe(false);
     }));
@@ -260,18 +260,21 @@ describe('ServalProjectComponent', () => {
           ],
           translateConfig: {
             draftConfig: {
+              alternateSourceEnabled: true,
               alternateSource: {
                 paratextId: 'ptproject03',
                 projectRef: 'project03',
                 name: 'Project 03',
                 shortName: 'P3'
               },
+              alternateTrainingSourceEnabled: true,
               alternateTrainingSource: {
                 paratextId: 'ptproject04',
                 projectRef: 'project04',
                 name: 'Project 04',
                 shortName: 'P4'
               },
+              additionalTrainingSourceEnabled: true,
               additionalTrainingSource: {
                 paratextId: 'ptproject05',
                 projectRef: 'project05',
