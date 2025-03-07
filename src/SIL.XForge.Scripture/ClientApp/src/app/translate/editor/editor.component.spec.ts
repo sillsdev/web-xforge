@@ -1057,7 +1057,7 @@ describe('EditorComponent', () => {
       let selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
-      let sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
+      let sourceText = env.sourceTextEditorPlaceholder?.getAttribute('data-placeholder');
       expect(sourceText).toEqual('This book does not exist.');
 
       env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
@@ -1070,7 +1070,7 @@ describe('EditorComponent', () => {
       selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
-      sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
+      sourceText = env.sourceTextEditorPlaceholder?.getAttribute('data-placeholder');
       expect(sourceText).not.toEqual('This book does not exist.');
 
       env.dispose();
@@ -1107,7 +1107,7 @@ describe('EditorComponent', () => {
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
       expect(env.outOfSyncWarning).toBeNull();
-      const sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
+      const sourceText = env.sourceTextEditorPlaceholder?.getAttribute('data-placeholder');
       expect(sourceText).toEqual('This book is empty. Add chapters in Paratext.');
 
       env.setDataInSync('project01', false);
@@ -1264,7 +1264,7 @@ describe('EditorComponent', () => {
       expect(env.component.targetLabel).toEqual('TRG');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
-      const sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
+      const sourceText = env.sourceTextEditorPlaceholder?.getAttribute('data-placeholder');
       expect(sourceText).not.toEqual('This book does not exist.');
       expect(env.component.target!.readOnlyEnabled).toBe(true);
       env.dispose();
@@ -4616,9 +4616,7 @@ class TestEnvironment {
   }
 
   get sourceTextEditorPlaceholder(): HTMLElement {
-    return this.sourceTextEditor.querySelector(
-      '#source-text-area > app-tab-body > div > div > app-text > quill-editor > div > div.ql-editor.ql-blank'
-    )!;
+    return this.sourceTextEditor.querySelector('.ql-editor.ql-blank')!;
   }
 
   get invalidWarning(): DebugElement {
