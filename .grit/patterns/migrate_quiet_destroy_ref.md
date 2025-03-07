@@ -7,8 +7,8 @@ tags: [archived_migration]
 - Replaces injection of `DestroyRef` with `QuietDestroyRef`
 - Ensures the import of `QuietDestroyRef` from `'xforge-common/utils'`
 
-This migration will probably not be useful into the future, but is checked in to document how the migration was done,
-and as a reference for future migrations. It's conceivable that a similar migration might be done in the future.
+This migration will probably not be useful in the future, but is checked in to document how the migration was done, and
+as a reference for future migrations. It's conceivable that a similar migration might be done in the future.
 
 ```grit
 language js

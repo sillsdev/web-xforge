@@ -1,4 +1,3 @@
-import { DestroyRef } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
@@ -58,7 +57,7 @@ describe('RealtimeService', () => {
         onDestroy: () => {
           throw new Error('View destroyed');
         }
-      } as DestroyRef;
+      } as IDestroyRef;
 
       service['manageQuery'](queryPromise, destroyedRef);
       tick();

@@ -3,10 +3,9 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { NoticeService } from './notice.service';
 
 /**
- * This is the abstract base class for components that load data from the backend.
- *
- * It automatically unsubscribes from observables by extending the SubscriptionDisposable class and properly handles
- * loading status using the NoticeService.
+ * This is the abstract base class for components that need to indicate when they are loading data in order to display
+ * the loading indicator. Subclasses call `loadingStarted()` and `loadingFinished()` to indicate when they are loading
+ * data. When the component is destroyed, it automatically calls `loadingFinished()`.
  */
 // Decorator required by Angular compiler
 @Directive()

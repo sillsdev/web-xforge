@@ -12,7 +12,7 @@ tags: [archived_migration]
 - Removes `super()` and `super.method()` calls
 - Removes the import of `SubscriptionDisposable` from the file
 
-This migration will probably not be useful into the future, but is checked in to document how the migration was done,
+This migration will probably not be useful in the future, but is checked in to document how the migration was done,
 and as a reference for future migrations.
 
 ```grit
