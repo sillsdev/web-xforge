@@ -152,8 +152,10 @@ export class SuggestionsComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.setPosition());
     fromEvent<KeyboardEvent>(this.editor.root, 'keydown')
-      .pipe(filter(event => this.isSuggestionEvent(event)))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        filter(event => this.isSuggestionEvent(event)),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(event => {
         if (this.list == null) {
           return;

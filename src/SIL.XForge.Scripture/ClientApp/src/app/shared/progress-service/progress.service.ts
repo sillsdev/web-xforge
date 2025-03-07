@@ -63,9 +63,9 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         tap(async project => {
           this.initialize(project.id);
         }),
-        throttleTime(1000, asyncScheduler, { leading: false, trailing: true })
+        throttleTime(1000, asyncScheduler, { leading: false, trailing: true }),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(project => {
         this.initialize(project.id);
       });

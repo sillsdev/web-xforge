@@ -62,8 +62,7 @@ export class ProjectSelectComponent implements ControlValueAccessor {
 
   constructor(private destroyRef: QuietDestroyRef) {
     this.paratextIdControl.valueChanges
-      .pipe(distinctUntilChanged())
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe((value: SelectableProject) => {
         this.valueChange.next(value.paratextId);
 
@@ -79,9 +78,9 @@ export class ProjectSelectComponent implements ControlValueAccessor {
             p.length === 1 &&
             typeof this.paratextIdControl.value === 'string' &&
             p[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
-        )
+        ),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(projects => this.paratextIdControl.setValue(projects[0]));
     this.resources$
       .pipe(
@@ -90,9 +89,9 @@ export class ProjectSelectComponent implements ControlValueAccessor {
             r.length === 1 &&
             typeof this.paratextIdControl.value === 'string' &&
             r[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
-        )
+        ),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(resources => this.paratextIdControl.setValue(resources[0]));
   }
 

@@ -312,8 +312,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     this.segmentUpdated$ = new Subject<void>();
     this.segmentUpdated$
-      .pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateSuggestions());
     this.mobileNoteControl.setValidators([Validators.required, XFValidators.someNonWhitespace]);
   }

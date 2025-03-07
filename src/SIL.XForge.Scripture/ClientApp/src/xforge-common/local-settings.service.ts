@@ -16,15 +16,14 @@ export class LocalSettingsService {
   readonly remoteChanges$: Observable<LocalSettingChangeEvent>;
 
   constructor() {
-    this.remoteChanges$ = fromEvent<StorageEvent>(window, 'storage')
-      .pipe(filter(evt => evt.storageArea === localStorage))
-      .pipe(
-        map(evt => ({
-          key: evt.key,
-          oldValue: evt.oldValue != null ? parseJSON(evt.oldValue) : undefined,
-          newValue: evt.newValue != null ? parseJSON(evt.newValue) : undefined
-        }))
-      );
+    this.remoteChanges$ = fromEvent<StorageEvent>(window, 'storage').pipe(
+      filter(evt => evt.storageArea === localStorage),
+      map(evt => ({
+        key: evt.key,
+        oldValue: evt.oldValue != null ? parseJSON(evt.oldValue) : undefined,
+        newValue: evt.newValue != null ? parseJSON(evt.newValue) : undefined
+      }))
+    );
   }
 
   get<T>(key: string): T | undefined {

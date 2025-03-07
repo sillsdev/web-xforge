@@ -205,9 +205,9 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           } else {
             return of(undefined);
           }
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((build: BuildDto | undefined) => {
         this.lastCompletedBuild = build;
       });

@@ -470,8 +470,10 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.textAudioQuery.ready$
-      .pipe(filter(ready => ready))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        filter(ready => ready),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(() => {
         const textAudioId: string = getTextAudioId(this.data.projectId, this.book, this.chapter);
         const doc = this.textAudioQuery?.docs.find(t => t.id === textAudioId)?.data;

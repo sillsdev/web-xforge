@@ -550,9 +550,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               .pipe(
                 map(() => this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText),
                 startWith(this.projectDoc.data.checkingConfig.hideCommunityCheckingText),
-                distinctUntilChanged()
+                distinctUntilChanged(),
+                takeUntilDestroyed(this.destroyRef)
               )
-              .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe(() => {
                 if (this.hideChapterText) this.showScriptureAudioPlayer = true;
                 this.calculateScriptureSliderPosition();
@@ -687,9 +687,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 }),
                 // Throttle burst of events, such as when local and remote change events are emitted
                 // at the same time when question is added within scope.
-                throttleTime(100, asyncScheduler, { leading: false, trailing: true })
+                throttleTime(100, asyncScheduler, { leading: false, trailing: true }),
+                takeUntilDestroyed(this.destroyRef)
               )
-              .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe(() => {
                 this.updateAudioMissingWarning();
                 this.updateVisibleQuestions();

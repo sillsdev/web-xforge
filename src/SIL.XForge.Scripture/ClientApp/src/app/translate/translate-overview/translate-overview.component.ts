@@ -95,8 +95,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   ngOnInit(): void {
     this.activatedRoute.params
-      .pipe(map(params => params['projectId']))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        map(params => params['projectId']),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(async projectId => {
         this.projectDoc = await this.projectService.getProfile(projectId);
 

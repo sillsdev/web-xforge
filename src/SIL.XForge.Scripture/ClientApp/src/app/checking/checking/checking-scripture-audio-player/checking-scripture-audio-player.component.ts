@@ -186,9 +186,9 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
       this.audioSubscription = audioPlayer.isAudioAvailable$
         .pipe(
           filter(a => a),
-          first()
+          first(),
+          takeUntilDestroyed(this.destroyRef)
         )
-        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(() => {
           if (audioPlayer.audio == null) {
             console.log(`warning: audio player unexpectedly null.`);
@@ -207,9 +207,9 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
     this.verseChangeSubscription = audio.timeUpdated$
       .pipe(
         map(() => this.getCurrentIndexInTimings(audio.currentTime)),
-        distinctUntilChanged()
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         if (this._textDocId == null) return;
         this.verseLabel = this.currentVerseLabel;
@@ -239,8 +239,7 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
   private subscribeToAudioFinished(audio: AudioPlayer): void {
     this.finishedSubscription?.unsubscribe();
     this.finishedSubscription = audio.finishedPlaying$
-      .pipe(first())
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(first(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         if (this.canClose) this.close();
       });

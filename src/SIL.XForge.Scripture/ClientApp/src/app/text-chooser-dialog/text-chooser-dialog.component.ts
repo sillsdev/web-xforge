@@ -67,8 +67,7 @@ export class TextChooserDialogComponent {
     // Edge 42 with EdgeHTML 17 also fires the events.
     // Firefox and Chrome also support it. We can degrade gracefully by getting the selection when the dialog closes.
     fromEvent(this.document, 'selectionchange')
-      .pipe(auditTime(100))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(auditTime(100), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateSelection());
 
     this.bookNum = this.data.bookNum;

@@ -56,9 +56,9 @@ export class SuggestionsSettingsDialogComponent {
       .pipe(
         skip(1),
         debounceTime(CONFIDENCE_THRESHOLD_TIMEOUT),
-        map(value => value / 100)
+        map(value => value / 100),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(threshold =>
         this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
       );

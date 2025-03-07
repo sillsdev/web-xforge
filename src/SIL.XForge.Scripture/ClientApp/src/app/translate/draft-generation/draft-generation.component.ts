@@ -220,8 +220,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     // Display dialog for supported languages when route fragment is 'supported-languages'
     this.route.fragment
-      .pipe(filter(fragment => fragment === this.supportedLanguagesUrl.fragment))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        filter(fragment => fragment === this.supportedLanguagesUrl.fragment),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(() => {
         const dialogRef = this.dialogService.openMatDialog(SupportedBackTranslationLanguagesDialogComponent);
 
@@ -290,9 +292,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
             return of(undefined);
           }
           return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((build: BuildDto | undefined) => {
         this.lastCompletedBuild = build;
       });
@@ -471,9 +473,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           }
 
           return of(undefined);
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((job?: BuildDto) => (this.draftJob = job));
   }
 
@@ -494,9 +496,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
                 this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectDoc.id) : of(job)
               )
             );
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((job?: BuildDto) => {
         this.draftJob = job;
         this.isDraftJobFetched = true;

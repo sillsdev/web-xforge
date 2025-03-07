@@ -113,9 +113,9 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
             this.generateRows();
           }
           this.loadingFinished();
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
   }
 

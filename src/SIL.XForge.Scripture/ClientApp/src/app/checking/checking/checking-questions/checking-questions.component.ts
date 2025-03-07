@@ -139,12 +139,9 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
-    this.activeQuestionDoc$
-      .pipe(debounceTime(2000))
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(questionDoc => {
-        this.updateElementsRead(questionDoc);
-      });
+    this.activeQuestionDoc$.pipe(debounceTime(2000), takeUntilDestroyed(this.destroyRef)).subscribe(questionDoc => {
+      this.updateElementsRead(questionDoc);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {

@@ -139,9 +139,9 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       .pipe(
         map(params => params['projectId'] as string),
         distinctUntilChanged(),
-        filter(projectId => projectId != null)
+        filter(projectId => projectId != null),
+        takeUntilDestroyed(this.destroyRef)
       )
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(async projectId => {
         this.loadingStarted();
         this.projectDoc = await this.projectService.get(projectId);

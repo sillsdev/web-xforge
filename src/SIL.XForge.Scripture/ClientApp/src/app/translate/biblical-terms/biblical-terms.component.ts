@@ -309,8 +309,10 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
 
   ngOnInit(): void {
     this.projectId$
-      .pipe(filter(projectId => projectId !== ''))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        filter(projectId => projectId !== ''),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(async projectId => {
         this.projectDoc = await this.projectService.getProfile(projectId);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
@@ -329,8 +331,10 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           this.i18n.locale$,
           biblicalTermsAndNotesChanges$
         ])
-          .pipe(filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null))
-          .pipe(takeUntilDestroyed(this.destroyRef))
+          .pipe(
+            filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null),
+            takeUntilDestroyed(this.destroyRef)
+          )
           .subscribe(([bookNum, chapter, verse]) => {
             this.filterBiblicalTerms(bookNum, chapter, verse);
             this.categoriesLoading = false;
