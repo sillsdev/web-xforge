@@ -76,8 +76,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   additionalTrainingSourceLanguage?: string;
   additionalTrainingSourceLanguageDisplayName?: string;
 
-  trainingSourceLanguage?: string;
-  trainingSourceLanguageDisplayName?: string;
+  alternateTrainingSourceLanguage?: string;
+  alternateTrainingSourceLanguageDisplayName?: string;
 
   sourceLanguage?: string;
   sourceLanguageDisplayName?: string;
@@ -239,6 +239,21 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
             this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
 
+            // If an alternate source is specified, that will be used for drafting (not training)
+            if (
+              (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
+              translateConfig?.draftConfig.alternateSource != null
+            ) {
+              this.sourceLanguage = translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
+            } else {
+              this.sourceLanguage = translateConfig?.source?.writingSystem.tag;
+            }
+
+            this.alternateTrainingSourceLanguage =
+              translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
+            this.additionalTrainingSourceLanguage =
+              translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag;
+
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
@@ -252,10 +267,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
             this.source = draftingSources[0];
             this.trainingSource = trainingSources[0];
             this.additionalTrainingSource = trainingSources[1];
-
-            this.sourceLanguage = this.source?.writingSystem.tag;
-            this.trainingSourceLanguage = this.trainingSource?.writingSystem.tag;
-            this.additionalTrainingSourceLanguage = this.additionalTrainingSource?.writingSystem.tag;
           })
         )
       ]),
@@ -299,7 +310,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.subscribe(this.i18n.locale$, () => {
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
       this.sourceLanguageDisplayName = this.i18n.getLanguageDisplayName(this.sourceLanguage);
-      this.trainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(this.trainingSourceLanguage);
+      this.alternateTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
+        this.alternateTrainingSourceLanguage
+      );
       this.additionalTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
         this.additionalTrainingSourceLanguage
       );

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -13,6 +14,11 @@ import { projectLabel } from '../shared/utils';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import { ServalAdministrationService } from './serval-administration.service';
 
+interface SourceData {
+  id: string;
+  label: string;
+}
+
 class Row {
   private draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
 
@@ -20,20 +26,12 @@ class Row {
     this.draftSources = projectDoc.data == null ? undefined : projectToDraftSources(projectDoc.data);
   }
 
-  get draftingSource(): string {
-    return this.draftSources?.draftingSources[0] == null ? 'None' : projectLabel(this.draftSources.draftingSources[0]);
+  get draftingSources(): SourceData[] {
+    return this.draftSources == null ? [] : this.draftSources.draftingSources.map(s => Row.sourceAsSourceData(s));
   }
 
-  get draftingSourceId(): string | undefined {
-    return this.draftSources?.draftingSources[0]?.projectRef;
-  }
-
-  get trainingSource(): string {
-    return this.draftSources?.trainingSources[0] == null ? 'None' : projectLabel(this.draftSources.trainingSources[0]);
-  }
-
-  get trainingSourceId(): string | undefined {
-    return this.draftSources?.trainingSources[0]?.projectRef;
+  get trainingSources(): SourceData[] {
+    return this.draftSources == null ? [] : this.draftSources.trainingSources.map(s => Row.sourceAsSourceData(s));
   }
 
   get id(): string {
@@ -41,7 +39,7 @@ class Row {
   }
 
   get name(): string {
-    return this.projectDoc.data == null ? 'N/A' : this.projectDoc.data.shortName + ' - ' + this.projectDoc.data.name;
+    return this.projectDoc.data == null ? 'N/A' : projectLabel(this.projectDoc.data);
   }
 
   get preTranslate(): boolean {
@@ -50,11 +48,15 @@ class Row {
 
   get source(): string {
     const source = this.projectDoc.data?.translateConfig.source;
-    return source == null ? 'None' : source.shortName + ' - ' + source.name;
+    return source == null ? 'None' : projectLabel(source);
   }
 
   get sourceId(): string | undefined {
     return this.projectDoc.data?.translateConfig.source?.projectRef;
+  }
+
+  static sourceAsSourceData(source: TranslateSource): SourceData {
+    return { id: source.projectRef, label: projectLabel(source) };
   }
 }
 
