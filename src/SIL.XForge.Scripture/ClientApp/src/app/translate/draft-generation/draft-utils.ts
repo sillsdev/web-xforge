@@ -28,9 +28,9 @@ export function countNonEquivalentLanguageCodes(languageCodes: string[]): number
 
 /** Represents draft sources as a set of two {@link TranslateSource} arrays, and one {@link SFProjectProfile} array. */
 export interface DraftSourcesAsTranslateSourceArrays {
-  trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 });
-  trainingTargets: [SFProjectProfile];
-  draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 });
+  trainingSources: TranslateSource[];
+  trainingTargets: SFProjectProfile[];
+  draftingSources: TranslateSource[];
 }
 
 /** Represents draft sources as a set of three {@link SelectableProjectWithLanguageCode} arrays. */
