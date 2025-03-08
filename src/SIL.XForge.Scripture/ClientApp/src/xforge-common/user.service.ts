@@ -12,6 +12,7 @@ import { CommandService } from './command.service';
 import { DialogService } from './dialog.service';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog/edit-name-dialog.component';
 import { LocalSettingsService } from './local-settings.service';
+import { DocSubscriberInfo } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
@@ -64,12 +65,12 @@ export class UserService {
   }
 
   /** Get currently-logged in user. */
-  getCurrentUser(): Promise<UserDoc> {
-    return this.get(this.currentUserId);
+  getCurrentUser(subscription?: DocSubscriberInfo): Promise<UserDoc> {
+    return this.get(this.currentUserId, subscription);
   }
 
-  get(id: string): Promise<UserDoc> {
-    return this.realtimeService.subscribe(UserDoc.COLLECTION, id);
+  get(id: string, subscription?: DocSubscriberInfo): Promise<UserDoc> {
+    return this.realtimeService.subscribe(UserDoc.COLLECTION, id, subscription);
   }
 
   getProfile(id: string): Promise<UserProfileDoc> {

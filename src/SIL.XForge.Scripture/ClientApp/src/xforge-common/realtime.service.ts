@@ -2,7 +2,7 @@ import { DestroyRef, Injectable, Optional } from '@angular/core';
 import { filter, race, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
 import { FileService } from './file.service';
-import { RealtimeDoc } from './models/realtime-doc';
+import { DocSubscriberInfo, DocSubscription, FETCH_WITHOUT_SUBSCRIBE, RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { OfflineStore } from './offline-store';
 import { QueryParameters } from './query-parameters';
@@ -55,26 +55,50 @@ export class RealtimeService {
     return this.docs.size;
   }
 
-  get docsCountByCollection(): { [key: string]: { docs: number; subscribers: number; queries: number } } {
-    const countsByCollection: { [key: string]: { docs: number; subscribers: number; queries: number } } = {};
+  get queriesByCollection(): { [key: string]: number } {
+    const queriesByCollection: { [key: string]: number } = {};
+    for (const [collection, queries] of this.subscribeQueries.entries()) {
+      queriesByCollection[collection] = queries.size;
+    }
+    return queriesByCollection;
+  }
+
+  get docsCountByCollection(): {
+    [key: string]: { docs: number; subscribers: number; activeDocSubscriptionsCount: number };
+  } {
+    const countsByCollection: {
+      [key: string]: { docs: number; subscribers: number; activeDocSubscriptionsCount: number };
+    } = {};
     for (const [id, doc] of this.docs.entries()) {
       const collection = id.split(':')[0];
       if (countsByCollection[collection] == null) {
-        countsByCollection[collection] = { docs: 0, subscribers: 0, queries: 0 };
+        countsByCollection[collection] = { docs: 0, subscribers: 0, activeDocSubscriptionsCount: 0 };
       }
       countsByCollection[collection].docs++;
-      countsByCollection[collection].subscribers += doc.subscriberCount;
-    }
-    for (const [collection, queries] of this.subscribeQueries.entries()) {
-      if (countsByCollection[collection] == null) {
-        countsByCollection[collection] = { docs: 0, subscribers: 0, queries: 0 };
-      }
-      countsByCollection[collection].queries += queries.size;
+      countsByCollection[collection].subscribers += doc.docSubscriptionsCount;
+      countsByCollection[collection].activeDocSubscriptionsCount += doc.activeDocSubscriptionsCount;
     }
     return countsByCollection;
   }
 
-  get<T extends RealtimeDoc>(collection: string, id: string): T {
+  get subscriberCountsByContext(): { [key: string]: { [key: string]: number } } {
+    const countsByContext: { [key: string]: { [key: string]: number } } = {};
+    for (const [id, doc] of this.docs.entries()) {
+      const collection = id.split(':')[0];
+      if (countsByContext[collection] == null) {
+        countsByContext[collection] = {};
+      }
+      for (const subscriber of doc.docSubscriptions) {
+        if (countsByContext[collection][subscriber.callerContext] == null) {
+          countsByContext[collection][subscriber.callerContext] = 0;
+        }
+        countsByContext[collection][subscriber.callerContext]++;
+      }
+    }
+    return countsByContext;
+  }
+
+  get<T extends RealtimeDoc>(collection: string, id: string, docSubscription?: DocSubscriberInfo): T {
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
     if (doc == null) {
@@ -91,6 +115,10 @@ export class RealtimeService {
       }
       this.docs.set(key, doc);
     }
+    if (docSubscription !== FETCH_WITHOUT_SUBSCRIBE) {
+      doc.addSubscriber(docSubscription ?? DocSubscription.UnknownSubscriber);
+    }
+
     return doc as T;
   }
 
@@ -109,8 +137,8 @@ export class RealtimeService {
    * @param {string} id The id.
    * @returns {Promise<T>} The real-time doc.
    */
-  async subscribe<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
-    const doc = this.get<T>(collection, id);
+  async subscribe<T extends RealtimeDoc>(collection: string, id: string, subscription?: DocSubscriberInfo): Promise<T> {
+    const doc = this.get<T>(collection, id, subscription);
     await doc.subscribe();
     return doc;
   }
