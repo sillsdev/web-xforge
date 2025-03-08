@@ -190,12 +190,14 @@ class TestEnvironment {
           name: 'Project 01',
           translateConfig: {
             draftConfig: {
+              alternateSourceEnabled: true,
               alternateSource: {
                 paratextId: 'ptproject03',
                 projectRef: 'project03',
                 name: 'Project 03',
                 shortName: 'P3'
               },
+              alternateTrainingSourceEnabled: true,
               alternateTrainingSource: {
                 paratextId: 'ptproject04',
                 projectRef: 'project04',
@@ -232,12 +234,14 @@ class TestEnvironment {
           shortName: 'P3',
           translateConfig: {
             draftConfig: {
+              alternateSourceEnabled: true,
               alternateSource: {
                 paratextId: 'resource16char02',
                 projectRef: 'resource02',
                 name: 'Resource 02',
                 shortName: 'R2'
               },
+              alternateTrainingSourceEnabled: true,
               alternateTrainingSource: {
                 paratextId: 'resource16char03',
                 projectRef: 'resource03',

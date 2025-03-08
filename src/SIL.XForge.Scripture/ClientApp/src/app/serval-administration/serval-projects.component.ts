@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -9,31 +10,28 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { projectLabel } from '../shared/utils';
+import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import { ServalAdministrationService } from './serval-administration.service';
 
+interface SourceData {
+  id: string;
+  label: string;
+}
+
 class Row {
-  constructor(public readonly projectDoc: SFProjectProfileDoc) {}
+  private draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
 
-  get alternateSource(): string {
-    const alternateDraftingSource = this.projectDoc.data?.translateConfig.draftConfig.alternateSource;
-    return alternateDraftingSource == null
-      ? 'None'
-      : alternateDraftingSource.shortName + ' - ' + alternateDraftingSource.name;
+  constructor(public readonly projectDoc: SFProjectProfileDoc) {
+    this.draftSources = projectDoc.data == null ? undefined : projectToDraftSources(projectDoc.data);
   }
 
-  get alternateSourceId(): string | undefined {
-    return this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.projectRef;
+  get draftingSources(): SourceData[] {
+    return this.draftSources == null ? [] : this.draftSources.draftingSources.map(s => Row.sourceAsSourceData(s));
   }
 
-  get alternateTrainingSource(): string {
-    const alternateTrainingSource = this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource;
-    return alternateTrainingSource == null
-      ? 'None'
-      : alternateTrainingSource.shortName + ' - ' + alternateTrainingSource.name;
-  }
-
-  get alternateTrainingSourceId(): string | undefined {
-    return this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.projectRef;
+  get trainingSources(): SourceData[] {
+    return this.draftSources == null ? [] : this.draftSources.trainingSources.map(s => Row.sourceAsSourceData(s));
   }
 
   get id(): string {
@@ -41,7 +39,7 @@ class Row {
   }
 
   get name(): string {
-    return this.projectDoc.data == null ? 'N/A' : this.projectDoc.data.shortName + ' - ' + this.projectDoc.data.name;
+    return this.projectDoc.data == null ? 'N/A' : projectLabel(this.projectDoc.data);
   }
 
   get preTranslate(): boolean {
@@ -50,11 +48,15 @@ class Row {
 
   get source(): string {
     const source = this.projectDoc.data?.translateConfig.source;
-    return source == null ? 'None' : source.shortName + ' - ' + source.name;
+    return source == null ? 'None' : projectLabel(source);
   }
 
   get sourceId(): string | undefined {
     return this.projectDoc.data?.translateConfig.source?.projectRef;
+  }
+
+  static sourceAsSourceData(source: TranslateSource): SourceData {
+    return { id: source.projectRef, label: projectLabel(source) };
   }
 }
 
@@ -66,7 +68,7 @@ class Row {
   imports: [UICommonModule]
 })
 export class ServalProjectsComponent extends DataLoadingComponent implements OnInit {
-  columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'alternateSource', 'alternateTrainingSource'];
+  columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'draftingSource', 'trainingSource'];
   rows: Row[] = [];
 
   length: number = 0;
