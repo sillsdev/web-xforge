@@ -22,7 +22,7 @@
           <th>Collection</th>
           <th>Docs</th>
           <th>Subscribers</th>
-          <th>Queries</th>
+          <th>Active Subs</th>
         </tr>
       </thead>
       <tbody>
@@ -31,7 +31,49 @@
             <td>{{ docType.key }}</td>
             <td>{{ docType.value.docs | l10nNumber }}</td>
             <td>{{ docType.value.subscribers | l10nNumber }}</td>
-            <td>{{ docType.value.queries | l10nNumber }}</td>
+            <td>{{ docType.value.activeDocSubscriptionsCount | l10nNumber }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <h3>Realtime doc subscribers</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Collection</th>
+          <th>Context</th>
+          <th>Subscribers</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (collection of subscriberCountsByContext | keyvalue; track collection.key) {
+          @for (doc of collection.value | keyvalue; track doc.key; let first = $first; let count = $count) {
+            <tr>
+              @if (first) {
+                <th [attr.rowspan]="count">{{ collection.key }}</th>
+              }
+              <td>{{ doc.key }}</td>
+              <td>{{ doc.value | l10nNumber }}</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+
+    <h3>Realtime queries</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Collection</th>
+          <th>Queries</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (docType of queriesByCollection | keyvalue; track docType.key) {
+          <tr>
+            <td>{{ docType.key }}</td>
+            <td>{{ docType.value | l10nNumber }}</td>
           </tr>
         }
       </tbody>

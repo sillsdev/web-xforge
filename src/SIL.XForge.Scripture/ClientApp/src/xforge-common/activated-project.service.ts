@@ -7,9 +7,8 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter, map, startWith, switchMap } from 'rxjs/operators';
 import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
-import { PermissionsService } from '../app/core/permissions.service';
 import { SFProjectService } from '../app/core/sf-project.service';
-import { CacheService } from '../app/shared/cache-service/cache.service';
+import { DocSubscription } from './models/realtime-doc';
 import { noopDestroyRef } from './realtime.service';
 
 interface IActiveProjectIdService {
@@ -58,7 +57,6 @@ export class ActivatedProjectService {
 
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly cacheService: CacheService,
     @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService,
     private destroyRef: QuietDestroyRef
   ) {
@@ -89,9 +87,6 @@ export class ActivatedProjectService {
   private set projectDoc(projectDoc: SFProjectProfileDoc | undefined) {
     if (this.projectDoc !== projectDoc) {
       this._projectDoc$.next(projectDoc);
-      if (this.projectDoc !== undefined) {
-        this.cacheService.cache(this.projectDoc);
-      }
     }
   }
 
@@ -114,7 +109,10 @@ export class ActivatedProjectService {
       return;
     }
     this.projectId = projectId;
-    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId);
+    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(
+      projectId,
+      new DocSubscription('ActivatedProjectService')
+    );
     // Make sure the project ID is still the same before updating the project document
     if (this.projectId === projectId) {
       this.projectDoc = projectDoc;
@@ -131,19 +129,13 @@ export class TestActiveProjectIdService implements IActiveProjectIdService {
 export class TestActivatedProjectService extends ActivatedProjectService {
   constructor(
     projectService: SFProjectService,
-    cacheService: CacheService,
     @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService
   ) {
-    super(projectService, cacheService, activeProjectIdService, noopDestroyRef as QuietDestroyRef);
+    super(projectService, activeProjectIdService, noopDestroyRef as QuietDestroyRef);
   }
 
   static withProjectId(projectId: string): TestActivatedProjectService {
     const projectService = TestBed.inject(SFProjectService);
-    const permissionsService = TestBed.inject(PermissionsService);
-    return new TestActivatedProjectService(
-      projectService,
-      new CacheService(projectService, permissionsService),
-      new TestActiveProjectIdService(projectId)
-    );
+    return new TestActivatedProjectService(projectService, new TestActiveProjectIdService(projectId));
   }
 }

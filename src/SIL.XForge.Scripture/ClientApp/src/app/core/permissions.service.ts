@@ -6,6 +6,7 @@ import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import {
   roleCanAccessCommunityChecking,
@@ -47,7 +48,7 @@ export class PermissionsService {
   }
 
   async isUserOnProject(projectId: string): Promise<boolean> {
-    const currentUserDoc = await this.userService.getCurrentUser();
+    const currentUserDoc = await this.userService.getCurrentUser(FETCH_WITHOUT_SUBSCRIBE);
     return currentUserDoc?.data?.sites[environment.siteId].projects.includes(projectId) ?? false;
   }
 
@@ -62,7 +63,9 @@ export class PermissionsService {
     let projectDoc: SFProjectProfileDoc | undefined;
     if (textDocId.projectId != null) {
       const isUserOnProject = await this.isUserOnProject(textDocId.projectId);
-      projectDoc = isUserOnProject ? await this.projectService.getProfile(textDocId.projectId) : undefined;
+      projectDoc = isUserOnProject
+        ? await this.projectService.getProfile(textDocId.projectId, FETCH_WITHOUT_SUBSCRIBE)
+        : undefined;
     }
 
     // Ensure the user has project level permission to view the text

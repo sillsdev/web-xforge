@@ -22,6 +22,7 @@ import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { QuietDestroyRef } from 'xforge-common/utils';
+import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE } from '../../xforge-common/models/realtime-doc';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { EventMetric } from '../event-metrics/event-metric';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
@@ -82,8 +83,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /** Returns the project profile with the project data that all project members can access. */
-  getProfile(id: string): Promise<SFProjectProfileDoc> {
-    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id);
+  getProfile(id: string, subscription?: DocSubscriberInfo): Promise<SFProjectProfileDoc> {
+    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription);
   }
 
   getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
@@ -91,7 +92,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async isProjectAdmin(projectId: string, userId: string): Promise<boolean> {
-    const projectDoc = await this.getProfile(projectId);
+    const projectDoc = await this.getProfile(projectId, FETCH_WITHOUT_SUBSCRIBE);
     return (
       projectDoc != null &&
       projectDoc.data != null &&
@@ -110,8 +111,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('addTranslateMetrics', { projectId: id, metrics });
   }
 
-  getText(textId: TextDocId | string): Promise<TextDoc> {
-    return this.realtimeService.subscribe(TextDoc.COLLECTION, textId instanceof TextDocId ? textId.toString() : textId);
+  getText(textId: TextDocId | string, subscription?: DocSubscriberInfo): Promise<TextDoc> {
+    return this.realtimeService.subscribe(
+      TextDoc.COLLECTION,
+      textId instanceof TextDocId ? textId.toString() : textId,
+      subscription
+    );
   }
 
   getNoteThread(threadDataId: string): Promise<NoteThreadDoc> {
