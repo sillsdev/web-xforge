@@ -171,6 +171,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       this.loadingFinished();
 
       // Check to see if a sync has started when the project document changes
+      // TODO Clean up the use of nested subscribe()
       this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
         if (!this.syncActive) {
           this.checkSyncStatus();

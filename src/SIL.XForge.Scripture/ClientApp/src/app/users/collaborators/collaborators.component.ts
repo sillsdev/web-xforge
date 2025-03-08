@@ -146,6 +146,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         this.loadingStarted();
         this.projectDoc = await this.projectService.get(projectId);
         this.loadUsers();
+        // TODO Clean up the use of nested subscribe()
         this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async () => {
           this.loadingStarted();
           try {
