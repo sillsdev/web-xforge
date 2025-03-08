@@ -40,7 +40,7 @@
   "attach_audio": {
     "tooltip_record": "Grabar audio",
     "tooltip_stop": "Parar de grabar",
-    "tooltip_upload": "Upload audio"
+    "tooltip_upload": "Cargar audio"
   },
   "canon": {
     "book_names": {
@@ -377,11 +377,13 @@
     "access_another_project": "Si no ve el proyecto que espera, es posible que necesite recibir una invitación al proyecto. O bien, si utiliza Paratext, puede desconectarse y volver a conectarse utilizando \"Conectarse con Paratext\", y conectarse a sus proyectos Paratext.",
     "connect_a_project_to_get_started": "Conecte un proyecto para empezar",
     "connected": "Conectado",
+    "contact_admin_update_role": "Póngase en contacto con el administrador del proyecto para sincronizarlo.",
     "dbl_resource": "Recurso de la Biblioteca Digital de la Biblia",
     "dbl_resources": "Recursos de la Biblioteca Digital de la Biblia",
     "drafting": "Redacción",
     "failed_to_connect_to_pt_server": "Ha habido un problema al conectar con Paratext para obtener sus proyectos. Por favor, inténtelo de nuevo más tarde. Si el problema persiste después de varias horas, informe del problema para obtener ayuda.",
     "failed_to_join_project": "Error al unirse al proyecto. Comprueba tu conexión a Internet e inténtalo más tarde.",
+    "failed_to_update_user_role": "Error al actualizar el rol en Paratext. Por favor, póngase en contacto con el administrador del proyecto.",
     "join": "Unirse",
     "loading_more_pt_projects": "Cargando proyectos Paratext adicionales ...",
     "looking_for_another_project": "¿Busca otro proyecto?",
@@ -390,9 +392,14 @@
     "not_admin_cannot_connect_project": "Para unirse a este proyecto en Scripture Forge, pida al administrador del proyecto Paratext que conecte el proyecto en Scripture Forge.",
     "not_connected": "No conectado",
     "offline": "Necesitará conectarse a Internet para empezar con un proyecto.",
+    "offline_update": "Deberá conectarse a Internet para actualizar su proyecto.",
     "offline-accessible": "Acceso sin conexión",
     "open": "Abierto",
-    "problem_getting_pt_list": "Se ha producido un problema al obtener la lista de proyectos Paratext disponibles a los que conectarse. Si esto sigue sucediendo, y cerrar la sesión y volver a entrar no soluciona el problema, por favor informe del problema para obtener ayuda."
+    "problem_getting_pt_list": "Se ha producido un problema al obtener la lista de proyectos Paratext disponibles a los que conectarse. Si esto sigue sucediendo, y cerrar la sesión y volver a entrar no soluciona el problema, por favor informe del problema para obtener ayuda.",
+    "update_role": "Actualizar rol",
+    "updated_roles": "Roles actualizados",
+    "update_paratext_role": "Su rol en este proyecto ha cambiado en Paratext.",
+    "user_role_updated": "Su rol en este proyecto se ha actualizado correctamente."
   },
   "roles": {
     "sf_community_checker": "Revisor de la comunidad"
@@ -472,7 +479,8 @@
     "book_does_not_exist": "Este libro no existe.",
     "book_is_empty": "Este libro está vacío. Añadir capítulos en Paratext.",
     "loading": "Cargando...",
-    "not_available_offline": "Este texto no está disponible fuera de línea. Conéctese a Internet para ver el texto."
+    "not_available_offline": "Este texto no está disponible fuera de línea. Conéctese a Internet para ver el texto.",
+    "permission_denied": "No tiene permiso para ver este texto. Póngase en contacto con el administrador del proyecto para obtener permiso."
   },
   "text_chooser_dialog": {
     "cancel": "Cancelar",

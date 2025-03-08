@@ -85,7 +85,7 @@ describe('DraftApplyDialogComponent', () => {
     env.fixture.detectChanges();
     verify(mockedDialogRef.close()).never();
     expect(env.confirmOverwriteErrorMessage).not.toBeNull();
-    const harness = await env.checkboxHarnessAsync();
+    const harness = await env.overwriteCheckboxHarness();
     harness.check();
     tick();
     env.fixture.detectChanges();
@@ -98,7 +98,7 @@ describe('DraftApplyDialogComponent', () => {
 
   it('can add draft to project when project selected', fakeAsync(async () => {
     env.selectParatextProject('paratextId1');
-    const harness = await env.checkboxHarnessAsync();
+    const harness = await env.overwriteCheckboxHarness();
     harness.check();
     tick();
     env.fixture.detectChanges();
@@ -111,7 +111,7 @@ describe('DraftApplyDialogComponent', () => {
 
   it('checks if the user has edit permissions', fakeAsync(async () => {
     env.selectParatextProject('paratextId1');
-    const harness = await env.checkboxHarnessAsync();
+    const harness = await env.overwriteCheckboxHarness();
     harness.check();
     tick();
     env.fixture.detectChanges();
@@ -137,7 +137,7 @@ describe('DraftApplyDialogComponent', () => {
     expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.InvalidProject);
   }));
 
-  it('notifies user if book has missing chapters', fakeAsync(() => {
+  it('user must confirm create chapters if book has missing chapters', fakeAsync(async () => {
     const projectDoc = {
       id: 'project03',
       data: createTestProjectProfile({
@@ -157,10 +157,27 @@ describe('DraftApplyDialogComponent', () => {
     expect(env.component['targetProjectId']).toBe('project03');
     tick();
     env.fixture.detectChanges();
-    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.MissingChapters);
+    expect(env.component.projectHasMissingChapters).toBe(true);
+    const overwriteHarness = await env.overwriteCheckboxHarness();
+    await overwriteHarness.check();
+    const createChapters = await env.createChaptersCheckboxHarnessAsync();
+    expect(createChapters).not.toBeNull();
+    env.component.addToProject();
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogRef.close(anything())).never();
+
+    // check the checkbox
+    await createChapters.check();
+    tick();
+    env.fixture.detectChanges();
+    env.component.addToProject();
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogRef.close(anything())).once();
   }));
 
-  it('notifies user if book is empty', fakeAsync(() => {
+  it('user must confirm create chapters if book is empty', fakeAsync(async () => {
     const projectDoc = {
       id: 'project03',
       data: createTestProjectProfile({
@@ -180,7 +197,26 @@ describe('DraftApplyDialogComponent', () => {
     expect(env.component['targetProjectId']).toBe('project03');
     tick();
     env.fixture.detectChanges();
-    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.MissingChapters);
+    expect(env.component.projectHasMissingChapters).toBe(true);
+    const overwriteHarness = await env.overwriteCheckboxHarness();
+    await overwriteHarness.check();
+    const createChapters = await env.createChaptersCheckboxHarnessAsync();
+    expect(createChapters).not.toBeNull();
+    env.component.addToProject();
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogRef.close(anything())).never();
+
+    // select a valid project
+    env.selectParatextProject('paratextId1');
+    expect(env.component['targetProjectId']).toBe('project01');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.projectHasMissingChapters).toBe(false);
+    env.component.addToProject();
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogRef.close(anything())).once();
   }));
 
   it('updates the target project info when updating the project in the selector', fakeAsync(() => {
@@ -194,7 +230,7 @@ describe('DraftApplyDialogComponent', () => {
   it('notifies user if offline', fakeAsync(async () => {
     env.selectParatextProject('paratextId1');
     expect(env.offlineWarning).toBeNull();
-    const harness = await env.checkboxHarnessAsync();
+    const harness = await env.overwriteCheckboxHarness();
     harness.check();
     tick();
     env.fixture.detectChanges();
@@ -255,8 +291,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  async checkboxHarnessAsync(): Promise<MatCheckboxHarness> {
+  async overwriteCheckboxHarness(): Promise<MatCheckboxHarness> {
     return await this.loader.getHarness(MatCheckboxHarness.with({ selector: '.overwrite-content' }));
+  }
+
+  async createChaptersCheckboxHarnessAsync(): Promise<MatCheckboxHarness> {
+    return await this.loader.getHarness(MatCheckboxHarness.with({ selector: '.create-chapters' }));
   }
 
   selectParatextProject(paratextId: string): void {

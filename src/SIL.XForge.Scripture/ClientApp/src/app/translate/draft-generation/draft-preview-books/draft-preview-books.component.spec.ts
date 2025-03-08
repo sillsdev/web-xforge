@@ -17,16 +17,20 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
+import { TextDocService } from '../../../core/text-doc.service';
 import { DraftApplyDialogComponent } from '../draft-apply-dialog/draft-apply-dialog.component';
 import { DraftApplyProgress } from '../draft-apply-progress-dialog/draft-apply-progress-dialog.component';
 import { DraftHandlingService } from '../draft-handling.service';
 import { BookWithDraft, DraftPreviewBooksComponent } from './draft-preview-books.component';
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
+const mockedProjectService = mock(SFProjectService);
 const mockedI18nService = mock(I18nService);
 const mockedUserService = mock(UserService);
 const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedDialogService = mock(DialogService);
+const mockedTextService = mock(TextDocService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedRouter = mock(Router);
 
@@ -37,10 +41,12 @@ describe('DraftPreviewBooks', () => {
     imports: [TestTranslocoModule, NoopAnimationsModule],
     providers: [
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
+      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: DialogService, useMock: mockedDialogService },
+      { provide: TextDocService, useMock: mockedTextService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: Router, useMock: mockedRouter }
     ]
@@ -149,20 +155,22 @@ describe('DraftPreviewBooks', () => {
     when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
       instance(mockedDialogRef)
     );
-    env.component.chooseProjectToAddDraft(env.booksWithDrafts[0], 'project01');
+    expect(env.component['projectParatextId']).toEqual(env.paratextId);
+    env.component.chooseProjectToAddDraft(env.booksWithDrafts[0], env.paratextId);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(
       env.booksWithDrafts[0].chaptersWithDrafts.length
     );
+    verify(mockedProjectService.onlineAddChapters('project01', anything(), anything())).never();
   }));
 
   it('can open dialog to apply draft to a different project', fakeAsync(() => {
     env = new TestEnvironment();
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
-    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'project01' }));
+    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'otherProject' }));
     when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
       instance(mockedDialogRef)
     );
@@ -173,9 +181,10 @@ describe('DraftPreviewBooks', () => {
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(
       env.booksWithDrafts[0].chaptersWithDrafts.length
     );
+    verify(mockedProjectService.onlineAddChapters('otherProject', anything(), anything())).never();
   }));
 
-  it('does not show add draft to different project option if user is not an admin', fakeAsync(async () => {
+  it('translators can add draft to different project', fakeAsync(async () => {
     env = new TestEnvironment();
     when(mockedUserService.currentUserId).thenReturn('user02');
     const moreButton: HTMLElement = env.getBookButtonAtIndex(0).querySelector('.book-more')!;
@@ -184,7 +193,7 @@ describe('DraftPreviewBooks', () => {
     env.fixture.detectChanges();
     const harness: MatMenuHarness = await env.moreMenuHarness();
     const items = await harness.getItems();
-    expect(items.length).toEqual(1);
+    expect(items.length).toEqual(2);
     harness.close();
     tick();
     env.fixture.detectChanges();
@@ -199,6 +208,38 @@ describe('DraftPreviewBooks', () => {
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
     expect().nothing();
+  }));
+
+  it('creates the chapters in the project if they do not exist', fakeAsync(() => {
+    env = new TestEnvironment();
+    expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
+    const projectEmptyBook = 'projectEmptyBook';
+    const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
+    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: projectEmptyBook }));
+    when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
+      instance(mockedDialogRef)
+    );
+
+    when(mockedProjectService.onlineAddChapters(projectEmptyBook, anything(), anything())).thenResolve();
+    const projectWithChaptersMissing = createTestProjectProfile({
+      texts: [
+        { bookNum: 1, chapters: [{ number: 1, lastVerse: 0 }], permissions: { user01: TextInfoPermission.Write } }
+      ]
+    });
+    when(mockedProjectService.getProfile(projectEmptyBook)).thenResolve({
+      id: projectEmptyBook,
+      data: projectWithChaptersMissing
+    } as SFProjectProfileDoc);
+    env.component.chooseProjectToAddDraft(env.booksWithDrafts[0], 'project01');
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
+    verify(mockedProjectService.onlineAddChapters(projectEmptyBook, anything(), anything())).once();
+    // needs to create 2 texts
+    verify(mockedTextService.createTextDoc(anything())).twice();
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(
+      env.booksWithDrafts[0].chaptersWithDrafts.length
+    );
   }));
 
   it('shows message to generate a new draft if legacy USFM draft', fakeAsync(() => {
@@ -254,15 +295,18 @@ class TestEnvironment {
   draftApplyProgress?: DraftApplyProgress;
   progressSubscription?: Subscription;
   loader: HarnessLoader;
+  readonly paratextId = 'pt01';
   mockProjectDoc: SFProjectProfileDoc = {
     data: createTestProjectProfile({
+      paratextId: this.paratextId,
       texts: [
         {
           bookNum: 1,
           hasSource: true,
           chapters: [
             { number: 1, hasDraft: true },
-            { number: 2, hasDraft: true }
+            { number: 2, hasDraft: true },
+            { number: 3, hasDraft: true }
           ],
           permissions: { user01: TextInfoPermission.Write }
         },
@@ -305,6 +349,7 @@ class TestEnvironment {
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenResolve();
     when(mockedActivatedProjectService.projectId).thenReturn('project01');
     when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedProjectService.getProfile(anything())).thenResolve(this.mockProjectDoc);
     this.fixture = TestBed.createComponent(DraftPreviewBooksComponent);
     this.component = this.fixture.componentInstance;
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);

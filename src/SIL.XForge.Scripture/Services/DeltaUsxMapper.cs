@@ -502,8 +502,8 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         var newUsxDoc = new XDocument(oldUsxDoc);
         int curChapter = 1;
         bool isFirstChapterFound = false;
-        ChapterDelta[] chapterDeltaArray = chapterDeltas.ToArray();
-        int i = 0;
+        ChapterDelta[] chapterDeltaArray = [.. chapterDeltas];
+        int curChapterDeltaIndex = 0;
         try
         {
             if (chapterDeltaArray.Length == 1 && chapterDeltaArray[0]?.Delta.Ops.Count == 0)
@@ -532,12 +532,12 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                 {
                     if (isFirstChapterFound)
                     {
-                        ChapterDelta chapterDelta = chapterDeltaArray[i];
+                        ChapterDelta chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
                         if (chapterDelta.Number == curChapter)
                         {
                             if (chapterDelta.IsValid)
                                 curNode.AddBeforeSelf(ProcessDelta(chapterDelta.Delta));
-                            i++;
+                            curChapterDeltaIndex++;
                         }
                         var numberStr = (string)((XElement)curNode).Attribute("number");
                         if (int.TryParse(numberStr, out int number))
@@ -549,14 +549,14 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                     }
                 }
 
-                if (i >= chapterDeltaArray.Length)
+                if (curChapterDeltaIndex >= chapterDeltaArray.Length)
                 {
                     return newUsxDoc;
                 }
 
                 if (
-                    chapterDeltaArray[i].Number == curChapter
-                    && chapterDeltaArray[i].IsValid
+                    chapterDeltaArray[curChapterDeltaIndex].Number == curChapter
+                    && chapterDeltaArray[curChapterDeltaIndex].IsValid
                     && !IsElement(curNode, "book")
                 )
                 {
@@ -564,8 +564,11 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                 }
             }
 
-            if (chapterDeltaArray[i].Number == curChapter && chapterDeltaArray[i].IsValid)
-                newUsxDoc.Root.Add(ProcessDelta(chapterDeltaArray[i].Delta));
+            for (int i = curChapterDeltaIndex; i < chapterDeltaArray.Length; i++)
+            {
+                if (chapterDeltaArray[i].IsValid)
+                    newUsxDoc.Root.Add(ProcessDelta(chapterDeltaArray[i].Delta));
+            }
             return newUsxDoc;
         }
         catch (Exception e)
@@ -578,7 +581,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                 + $"The first chapterDeltas Delta.Ops.Count is "
                 + $"{chapterDeltaArray.ElementAtOrDefault(0)?.Delta.Ops.Count}, "
                 + $"The input oldUsxDoc has this many chapter elements: {usxChapterCount}, "
-                + $"i is {i}, isFirstChapterFound is {isFirstChapterFound}.";
+                + $"curChapterDeltaIndex is {curChapterDeltaIndex}, isFirstChapterFound is {isFirstChapterFound}.";
             throw new Exception(errorExplanation, e);
         }
     }

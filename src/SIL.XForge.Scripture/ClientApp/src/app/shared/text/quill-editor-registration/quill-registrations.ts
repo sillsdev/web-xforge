@@ -34,8 +34,10 @@ import {
   ParaBlock,
   ParaInline,
   RefInline,
+  ScrollBlot,
   SegmentInline,
   TextAnchorInline,
+  UnknownBlot,
   UnmatchedEmbed,
   VerseEmbed
 } from './quill-formats/quill-blots';
@@ -58,6 +60,7 @@ export function registerScripture(): string[] {
     FigureEmbed,
     UnmatchedEmbed,
     ChapterEmbed,
+    UnknownBlot,
 
     // Inline Blots
     CharInline,
@@ -101,6 +104,7 @@ export function registerScripture(): string[] {
     return name;
   });
 
+  Quill.register('blots/scroll', ScrollBlot, true);
   Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
   Quill.register('modules/cursors', QuillCursors);

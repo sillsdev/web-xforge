@@ -48,7 +48,8 @@ export class DraftApplyDialogComponent implements OnInit {
   protected isLoading: boolean = true;
   addToProjectForm = new FormGroup({
     targetParatextId: new FormControl<string | undefined>(this.data.initialParatextId, Validators.required),
-    overwrite: new FormControl(false, Validators.requiredTrue)
+    overwrite: new FormControl(false, Validators.requiredTrue),
+    createChapters: new FormControl(false)
   });
   /** An observable that emits the number of chapters in the target project that have some text. */
   targetChapters$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
@@ -102,6 +103,14 @@ export class DraftApplyDialogComponent implements OnInit {
 
   get overwriteConfirmed(): boolean {
     return !!this.addToProjectForm.controls.overwrite.value;
+  }
+
+  get createChaptersControl(): FormControl {
+    return this.addToProjectForm.controls.createChapters;
+  }
+
+  get confirmCreateChapters(): boolean {
+    return !!this.createChaptersControl.value;
   }
 
   get projectSelectValid(): boolean {
@@ -175,8 +184,15 @@ export class DraftApplyDialogComponent implements OnInit {
     const targetBookChapters: number[] = targetBook?.chapters.map(c => c.number) ?? [];
     this.projectHasMissingChapters =
       bookIsEmpty || this.data.chapters.filter(c => !targetBookChapters.includes(c)).length > 0;
+    if (this.projectHasMissingChapters) {
+      this.createChaptersControl.addValidators(Validators.requiredTrue);
+      this.createChaptersControl.updateValueAndValidity();
+    } else {
+      this.createChaptersControl.clearValidators();
+      this.createChaptersControl.updateValueAndValidity();
+    }
     // emit the project profile document
-    if (this.canEditProject && !this.projectHasMissingChapters) {
+    if (this.canEditProject) {
       this.targetProject$.next(project);
     } else {
       this.targetProject$.next(undefined);
@@ -222,9 +238,6 @@ export class DraftApplyDialogComponent implements OnInit {
     }
     if (!this.canEditProject) {
       return CustomErrorState.NoWritePermissions;
-    }
-    if (this.projectHasMissingChapters) {
-      return CustomErrorState.MissingChapters;
     }
     return CustomErrorState.None;
   }

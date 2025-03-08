@@ -33,25 +33,27 @@
           }
         </td>
       </ng-container>
-      <ng-container matColumnDef="alternateSource">
-        <th mat-header-cell *matHeaderCellDef>Alternate Source</th>
+      <ng-container matColumnDef="draftingSource">
+        <th mat-header-cell *matHeaderCellDef>Drafting Source</th>
         <td mat-cell *matCellDef="let row">
-          @if (row.alternateSourceId != null) {
-            <a [appRouterLink]="['/serval-administration', row.alternateSourceId]">{{ row.alternateSource }}</a>
-          } @else {
-            <span>{{ row.alternateSource }}</span>
+          @for (source of row.draftingSources; track source.id) {
+            <p>
+              <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
+            </p>
+          } @empty {
+            <span>None</span>
           }
         </td>
       </ng-container>
-      <ng-container matColumnDef="alternateTrainingSource">
-        <th mat-header-cell *matHeaderCellDef>Alternate Training Source</th>
+      <ng-container matColumnDef="trainingSource">
+        <th mat-header-cell *matHeaderCellDef>Training Source</th>
         <td mat-cell *matCellDef="let row">
-          @if (row.alternateTrainingSourceId != null) {
-            <a [appRouterLink]="['/serval-administration', row.alternateTrainingSourceId]">{{
-              row.alternateTrainingSource
-            }}</a>
-          } @else {
-            <span>{{ row.alternateTrainingSource }}</span>
+          @for (source of row.trainingSources; track source.id) {
+            <p>
+              <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
+            </p>
+          } @empty {
+            <span>None</span>
           }
         </td>
       </ng-container>

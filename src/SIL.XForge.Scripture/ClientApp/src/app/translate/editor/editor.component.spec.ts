@@ -4616,9 +4616,7 @@ class TestEnvironment {
   }
 
   get sourceTextEditorPlaceholder(): HTMLElement {
-    return this.sourceTextEditor.querySelector(
-      '#source-text-area > app-tab-body > div > div > app-text > quill-editor > div > div.ql-editor.ql-blank'
-    )!;
+    return this.sourceTextEditor.querySelector('.ql-editor.ql-blank')!;
   }
 
   get invalidWarning(): DebugElement {

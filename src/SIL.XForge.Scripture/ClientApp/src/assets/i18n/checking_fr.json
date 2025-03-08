@@ -377,11 +377,13 @@
     "access_another_project": "Si vous ne voyez pas un projet que vous attendez, vous devrez peut-être recevoir une invitation au projet. Ou, si vous utilisez Paratext, vous pouvez vous déconnecter et vous reconnecter à l'aide de 'Connexion avec Paratext', et vous connecter à vos projets Paratext.",
     "connect_a_project_to_get_started": "Connecter un projet pour commencer",
     "connected": "Connecté",
+    "contact_admin_update_role": "Veuillez contacter votre administrateur de projet pour synchroniser ce projet",
     "dbl_resource": "Bibliothèque Biblique Numérique",
     "dbl_resources": "Ressources de la bibliothèque biblique numérique",
     "drafting": "Ébauche en cours",
     "failed_to_connect_to_pt_server": "Il y a eu un problème de connexion à Paratext pour obtenir vos projets. Veuillez réessayer plus tard. Si le problème persiste après plusieurs heures, veuillez signaler le problème pour obtenir de l'aide.",
     "failed_to_join_project": "Échec d'accès au projet. Veuillez vérifier votre connexion internet et réessayer plus tard.",
+    "failed_to_update_user_role": "Échec de la mise à jour du rôle paratexte. Veuillez contacter votre administrateur de projet",
     "join": "Rejoindre",
     "loading_more_pt_projects": "Chargement de projets Paratext supplémentaires ...",
     "looking_for_another_project": "Vous cherchez un autre projet ?",
@@ -390,9 +392,14 @@
     "not_admin_cannot_connect_project": "Pour rejoindre ce projet dans Scripture Forge, demandez à l'administrateur du projet Paratext de connecter le projet dans Scripture Forge.",
     "not_connected": "Non connecté",
     "offline": "Vous devez vous connecter à l'internet pour démarrer un projet.",
+    "offline_update": "Vous devrez vous connecter à Internet pour mettre à jour votre projet.",
     "offline-accessible": "Accès hors ligne",
     "open": "Ouvrir",
-    "problem_getting_pt_list": "Il y a eu un problème pour obtenir la liste des projets Paratext disponibles auxquels se connecter. Si ce problème persiste et que la déconnexion et la reconnexion ne règlent pas le problème, veuillez signaler le problème pour obtenir de l'aide."
+    "problem_getting_pt_list": "Il y a eu un problème pour obtenir la liste des projets Paratext disponibles auxquels se connecter. Si ce problème persiste et que la déconnexion et la reconnexion ne règlent pas le problème, veuillez signaler le problème pour obtenir de l'aide.",
+    "update_role": "Mettre à jour le rôle",
+    "updated_roles": "Rôles actualisés",
+    "update_paratext_role": "Votre rôle dans ce projet a changé dans Paratext.",
+    "user_role_updated": "Votre rôle dans ce projet a été mis à jour avec succès."
   },
   "roles": {
     "sf_community_checker": "Vérificateur de la communauté"
@@ -472,7 +479,8 @@
     "book_does_not_exist": "Ce livre n'existe pas.",
     "book_is_empty": "Ce livre est vide. Ajoutez des chapitres dans Paratext.",
     "loading": "Chargement...",
-    "not_available_offline": "Ce texte n'est pas disponible hors connexion. Connectez-vous à Internet pour voir le texte."
+    "not_available_offline": "Ce texte n'est pas disponible hors connexion. Connectez-vous à Internet pour voir le texte.",
+    "permission_denied": "Vous n'avez pas la permission d'écrire dans ce livre. Contactez l'administrateur du projet pour obtenir la permission."
   },
   "text_chooser_dialog": {
     "cancel": "Annuler",

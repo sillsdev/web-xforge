@@ -23,6 +23,7 @@ import { booksFromScriptureRange, projectLabel } from '../shared/utils';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
+import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import { ServalAdministrationService } from './serval-administration.service';
 
 interface Row {
@@ -110,6 +111,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           const project: SFProjectProfile = projectDoc.data;
           this.preTranslate = project.translateConfig.preTranslate;
           this.projectName = projectLabel(project);
+          const draftSources: DraftSourcesAsTranslateSourceArrays = projectToDraftSources(project);
+          const draftConfig: DraftConfig = project.translateConfig.draftConfig;
 
           // Setup the downloads table
           const rows: Row[] = [];
@@ -123,48 +126,27 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             fileName: project.shortName + '.zip'
           });
 
-          // Add the source
-          if (project.translateConfig.source != null) {
+          let i = 1;
+          // Add the drafting source
+          for (const draftingSource of draftSources.draftingSources) {
             rows.push({
-              id: project.translateConfig.source.projectRef,
-              type: projectType(project.translateConfig.source),
-              name: project.translateConfig.source.shortName + ' - ' + project.translateConfig.source.name,
-              category: 'Source Project',
-              fileName: project.translateConfig.source.shortName + '.zip'
+              id: draftingSource.projectRef,
+              type: projectType(draftingSource),
+              name: projectLabel(draftingSource),
+              category: 'Drafting Source ' + i++,
+              fileName: draftingSource.shortName + '.zip'
             });
           }
 
-          const draftConfig: DraftConfig = project.translateConfig.draftConfig;
-          // Add the alternate source
-          if (draftConfig.alternateSource != null) {
+          // Add the training sources
+          i = 1;
+          for (const trainingSource of draftSources.trainingSources) {
             rows.push({
-              id: draftConfig.alternateSource.projectRef,
-              type: projectType(draftConfig.alternateSource),
-              name: draftConfig.alternateSource.shortName + ' - ' + draftConfig.alternateSource.name,
-              category: 'Alternate Source',
-              fileName: draftConfig.alternateSource.shortName + '.zip'
-            });
-          }
-
-          // Add the alternate training source
-          if (draftConfig.alternateTrainingSource != null) {
-            rows.push({
-              id: draftConfig.alternateTrainingSource.projectRef,
-              type: projectType(draftConfig.alternateTrainingSource),
-              name: draftConfig.alternateTrainingSource.shortName + ' - ' + draftConfig.alternateTrainingSource.name,
-              category: 'Alternate Training Source',
-              fileName: draftConfig.alternateTrainingSource.shortName + '.zip'
-            });
-          }
-
-          // Add the additional training source
-          if (draftConfig.additionalTrainingSource != null) {
-            rows.push({
-              id: draftConfig.additionalTrainingSource.projectRef,
-              type: projectType(draftConfig.additionalTrainingSource),
-              name: draftConfig.additionalTrainingSource.shortName + ' - ' + draftConfig.additionalTrainingSource.name,
-              category: 'Additional Training Source',
-              fileName: draftConfig.additionalTrainingSource.shortName + '.zip'
+              id: trainingSource.projectRef,
+              type: projectType(trainingSource),
+              name: projectLabel(trainingSource),
+              category: 'Training Source  ' + i++,
+              fileName: trainingSource.shortName + '.zip'
             });
           }
 
