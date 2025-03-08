@@ -1,9 +1,12 @@
+import { DestroyRef, Injectable, Optional } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
 import locales from '../../../locales.json';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { hasStringProp } from '../type-utils';
+import { ErrorReportingService } from './error-reporting.service';
 import { Locale } from './models/i18n-locale';
 
 const BROWSER = Bowser.getParser(window.navigator.userAgent);
@@ -178,5 +181,39 @@ export function tryParseJSON(data: unknown): unknown {
     return JSON.parse(data);
   } catch {
     return null;
+  }
+}
+
+export interface IDestroyRef {
+  onDestroy(callback: () => void): () => void;
+}
+
+/**
+ * Like {@link DestroyRef}, but with two distinct advantages:
+ * - Catches and logs NG0911 rather than throwing it, preventing it from being annoying to the user
+ * - Logs the location where the `QuietDestroyRef` is used, rather than the location where the error is thrown
+ * - Reports the error to the error reporting service (if an injected instance of the reporting service is available)
+ *
+ * This could either be seen as a temporary workaround to ease the migration to using `DestroyRef`, or a more robust
+ * permanent solution to the problem of `DestroyRef` throwing errors if the component is destroyed before it is used.
+ */
+@Injectable({ providedIn: 'root' })
+export class QuietDestroyRef {
+  constructor(
+    private readonly destroyRef: DestroyRef,
+    @Optional() private readonly errorReportingService?: ErrorReportingService
+  ) {}
+
+  onDestroy(callback: () => void): () => void {
+    const originalStack = new Error().stack;
+    try {
+      return this.destroyRef.onDestroy(callback);
+    } catch (error) {
+      if (hasStringProp(error, 'message') && error.message.includes('NG0911')) {
+        console.warn('NG0911 error caught and ignored. Original stack: ', originalStack);
+        this.errorReportingService?.silentError('NG0911 error caught and ignored', { originalStack });
+      } else throw error;
+    }
+    return () => {};
   }
 }

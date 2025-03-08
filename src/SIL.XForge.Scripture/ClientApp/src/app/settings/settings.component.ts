@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,6 +24,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
@@ -113,7 +115,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     readonly authService: AuthService,
     readonly featureFlags: FeatureFlagService,
     readonly externalUrls: ExternalUrlService,
-    private readonly activatedProjectService: ActivatedProjectService
+    private readonly activatedProjectService: ActivatedProjectService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
     this.loading = true;
@@ -200,9 +203,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       tap(() => (this.loading = this.isAppOnline)),
       map(params => params['projectId'] as string)
     );
-    this.subscribe(
-      combineLatest([this.onlineStatusService.onlineStatus$, projectId$]),
-      async ([isOnline, projectId]) => {
+    combineLatest([this.onlineStatusService.onlineStatus$, projectId$])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async ([isOnline, projectId]) => {
         this.isAppOnline = isOnline;
         if (isOnline && this.projects == null) {
           this.loading = true;
@@ -219,7 +222,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             if (this.projectDoc != null) {
               this.updateSettingsInfo();
               this.updateNonSelectableProjects();
-              this.subscribe(this.projectDoc.remoteChanges$, () => {
+              this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
                 this.updateNonSelectableProjects();
                 this.setIndividualControlDisabledStates();
               });
@@ -265,8 +268,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
           this.updateFormEnabled();
         }
-      }
-    );
+      });
   }
 
   logInWithParatext(): void {

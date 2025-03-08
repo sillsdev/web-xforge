@@ -1,8 +1,9 @@
-import { DestroyRef, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from 'lodash-es';
 import { BehaviorSubject, distinctUntilChanged, filter, map, Observable, Subject, takeUntil } from 'rxjs';
 import { moveItemInReadonlyArray, transferItemAcrossReadonlyArrays } from 'xforge-common/util/array-util';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { TabLocation } from '../sf-tabs.types';
 import { TabGroup } from './tab-group';
 
@@ -55,7 +56,7 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
 
   tabsConsolidated$ = this.tabsConsolidatedSource$.asObservable();
 
-  constructor(private readonly destroyRef: DestroyRef) {}
+  constructor(private readonly destroyRef: QuietDestroyRef) {}
 
   setTabGroups(tabGroups: TabGroup<TGroupId, T>[]): void {
     this.groups.clear();

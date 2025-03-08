@@ -12,6 +12,7 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatListItem } from '@angular/material/list';
 import { sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -24,8 +25,8 @@ import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -59,7 +60,7 @@ export interface QuestionChangedEvent {
   styleUrls: ['./checking-questions.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CheckingQuestionsComponent extends SubscriptionDisposable implements OnInit, OnChanges {
+export class CheckingQuestionsComponent implements OnInit, OnChanges {
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionChangedEvent>();
   @Input() isFiltered: boolean = false;
@@ -74,10 +75,12 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
     if (projectProfileDoc == null) {
       return;
     }
-    this.projectProfileDocChangesSubscription = this.subscribe(projectProfileDoc.changes$, () => {
-      this.changeDetector.markForCheck();
-      this.setProjectAdmin();
-    });
+    this.projectProfileDocChangesSubscription = projectProfileDoc.changes$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.changeDetector.markForCheck();
+        this.setProjectAdmin();
+      });
     this.setProjectAdmin();
   }
 
@@ -86,9 +89,11 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
     this.projectUserConfigDocChangesSubscription?.unsubscribe();
     this._projectUserConfigDoc = projectUserConfigDoc;
     if (projectUserConfigDoc != null) {
-      this.projectUserConfigDocChangesSubscription = this.subscribe(projectUserConfigDoc.changes$, () => {
-        this.changeDetector.markForCheck();
-      });
+      this.projectUserConfigDocChangesSubscription = projectUserConfigDoc.changes$
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.changeDetector.markForCheck();
+        });
     }
   }
 
@@ -128,14 +133,13 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
     private readonly translationEngineService: TranslationEngineService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly projectService: SFProjectService,
-    private readonly i18n: I18nService
-  ) {
-    super();
-  }
+    private readonly i18n: I18nService,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   ngOnInit(): void {
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
-    this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
+    this.activeQuestionDoc$.pipe(debounceTime(2000), takeUntilDestroyed(this.destroyRef)).subscribe(questionDoc => {
       this.updateElementsRead(questionDoc);
     });
   }

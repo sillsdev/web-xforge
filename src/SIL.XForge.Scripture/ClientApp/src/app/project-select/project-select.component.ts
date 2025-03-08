@@ -1,11 +1,12 @@
 import { Component, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ValidatorFn } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { translate } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';
@@ -24,7 +25,7 @@ export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   styleUrls: ['project-select.component.scss'],
   providers: [PROJECT_SELECT_VALUE_ACCESSOR]
 })
-export class ProjectSelectComponent extends SubscriptionDisposable implements ControlValueAccessor {
+export class ProjectSelectComponent implements ControlValueAccessor {
   @Output() valueChange: EventEmitter<string> = new EventEmitter<string>(true);
   @Output() projectSelect = new EventEmitter<SelectableProject>();
 
@@ -59,38 +60,39 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
 
   projectLabel = projectLabel;
 
-  constructor() {
-    super();
-    this.subscribe(this.paratextIdControl.valueChanges.pipe(distinctUntilChanged()), (value: SelectableProject) => {
-      this.valueChange.next(value.paratextId);
+  constructor(private destroyRef: QuietDestroyRef) {
+    this.paratextIdControl.valueChanges
+      .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe((value: SelectableProject) => {
+        this.valueChange.next(value.paratextId);
 
-      if (value instanceof Object) {
-        this.projectSelect.emit(value);
-      }
-    });
+        if (value instanceof Object) {
+          this.projectSelect.emit(value);
+        }
+      });
 
-    this.subscribe(
-      this.projects$.pipe(
+    this.projects$
+      .pipe(
         filter(
           p =>
             p.length === 1 &&
             typeof this.paratextIdControl.value === 'string' &&
             p[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
-        )
-      ),
-      projects => this.paratextIdControl.setValue(projects[0])
-    );
-    this.subscribe(
-      this.resources$.pipe(
+        ),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(projects => this.paratextIdControl.setValue(projects[0]));
+    this.resources$
+      .pipe(
         filter(
           r =>
             r.length === 1 &&
             typeof this.paratextIdControl.value === 'string' &&
             r[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
-        )
-      ),
-      resources => this.paratextIdControl.setValue(resources[0])
-    );
+        ),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(resources => this.paratextIdControl.setValue(resources[0]));
   }
 
   @Input() set value(id: string | undefined) {
@@ -151,11 +153,11 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   }
 
   registerOnChange(fn: any): void {
-    this.subscribe(this.valueChange, fn);
+    this.valueChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fn);
   }
 
   registerOnTouched(fn: any): void {
-    this.subscribe(this.valueChange, fn);
+    this.valueChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fn);
   }
 
   autocompleteOpened(): void {

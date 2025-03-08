@@ -10,13 +10,12 @@ import { RealtimeQuery } from './models/realtime-query';
 import { QueryFilter, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { RetryingRequest, RetryingRequestService } from './retrying-request.service';
-import { SubscriptionDisposable } from './subscription-disposable';
 import { PROJECTS_URL } from './url-constants';
 
 export abstract class ProjectService<
   TProj extends Project = Project,
   TDoc extends ProjectDoc<TProj> = ProjectDoc<TProj>
-> extends SubscriptionDisposable {
+> {
   readonly roles: Map<string, ProjectRoleInfo>;
 
   constructor(
@@ -25,7 +24,6 @@ export abstract class ProjectService<
     protected readonly retryingRequestService: RetryingRequestService,
     roles: ProjectRoleInfo[]
   ) {
-    super();
     this.roles = new Map<string, ProjectRoleInfo>();
     this.roles.set(NONE_ROLE.role, NONE_ROLE);
     for (const role of roles) {

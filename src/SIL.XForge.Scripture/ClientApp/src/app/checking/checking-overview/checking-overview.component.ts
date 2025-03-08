@@ -1,4 +1,5 @@
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -17,6 +18,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -52,7 +54,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly dialogService: DialogService,
     readonly featureFlags: FeatureFlagService,
@@ -204,7 +206,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       }),
       map(params => params['projectId'] as string)
     );
-    this.subscribe(projectId$, async projectId => {
+    projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       this.loadingStarted();
       this.projectId = projectId;
       try {
@@ -243,7 +245,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     this.dataChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
   }

@@ -1,17 +1,14 @@
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 
-export abstract class ShareBaseComponent extends SubscriptionDisposable {
+export abstract class ShareBaseComponent {
   protected projectDoc?: SFProjectProfileDoc;
 
-  constructor(protected readonly userService: UserService) {
-    super();
-  }
+  constructor(protected readonly userService: UserService) {}
 
   get availableRoles(): SFProjectRole[] {
     return SF_PROJECT_ROLES.filter(info => info.canBeShared && this.userShareableRoles.includes(info.role)).map(

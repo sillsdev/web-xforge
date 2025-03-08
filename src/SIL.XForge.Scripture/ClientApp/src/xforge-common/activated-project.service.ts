@@ -1,14 +1,16 @@
 import { Inject, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TestBed } from '@angular/core/testing';
 import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter, map, startWith, switchMap } from 'rxjs/operators';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { PermissionsService } from '../app/core/permissions.service';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { CacheService } from '../app/shared/cache-service/cache.service';
-import { SubscriptionDisposable } from './subscription-disposable';
+import { noopDestroyRef } from './realtime.service';
 
 interface IActiveProjectIdService {
   /** SF project id */
@@ -50,17 +52,19 @@ export class ActiveProjectIdService implements IActiveProjectIdService {
  * a row.
  */
 @Injectable({ providedIn: 'root' })
-export class ActivatedProjectService extends SubscriptionDisposable {
+export class ActivatedProjectService {
   private _projectId$ = new BehaviorSubject<string | undefined>(undefined);
   private _projectDoc$ = new BehaviorSubject<SFProjectProfileDoc | undefined>(undefined);
 
   constructor(
     private readonly projectService: SFProjectService,
     private readonly cacheService: CacheService,
-    @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService
+    @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
-    this.subscribe(activeProjectIdService.projectId$, projectId => this.selectProject(projectId));
+    activeProjectIdService.projectId$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(projectId => this.selectProject(projectId));
   }
 
   /** SF project id */
@@ -130,7 +134,7 @@ export class TestActivatedProjectService extends ActivatedProjectService {
     cacheService: CacheService,
     @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService
   ) {
-    super(projectService, cacheService, activeProjectIdService);
+    super(projectService, cacheService, activeProjectIdService, noopDestroyRef as QuietDestroyRef);
   }
 
   static withProjectId(projectId: string): TestActivatedProjectService {
