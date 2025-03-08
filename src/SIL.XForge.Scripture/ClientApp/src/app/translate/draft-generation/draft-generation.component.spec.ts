@@ -144,9 +144,9 @@ describe('DraftGenerationComponent', () => {
       mockDraftSourcesService = jasmine.createSpyObj<DraftSourcesService>(['getDraftProjectSources']);
       mockDraftSourcesService.getDraftProjectSources.and.returnValue(
         of({
-          draftingSources: [undefined],
-          trainingSources: [undefined, undefined],
-          trainingTargets: [undefined]
+          draftingSources: [],
+          trainingSources: [],
+          trainingTargets: []
         } as DraftSourcesAsArrays)
       );
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
@@ -392,8 +392,8 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              trainingSources: [],
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -420,8 +420,8 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              trainingSources: [],
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
           mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
@@ -449,8 +449,8 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              trainingSources: [],
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -469,8 +469,8 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              trainingSources: [],
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -489,8 +489,8 @@ describe('DraftGenerationComponent', () => {
                   noAccess: false
                 } as DraftSource
               ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              trainingSources: [],
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -506,14 +506,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 {
                   noAccess: true
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -528,14 +528,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 {
                   noAccess: true
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
           mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
@@ -558,14 +558,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 {
                   noAccess: true
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -579,14 +579,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 {
                   noAccess: true
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -611,7 +611,7 @@ describe('DraftGenerationComponent', () => {
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -636,7 +636,7 @@ describe('DraftGenerationComponent', () => {
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -650,14 +650,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 {
                   noAccess: true
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -673,14 +673,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 undefined,
                 {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -694,14 +694,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 undefined,
                 {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
           mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
@@ -724,14 +724,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 undefined,
                 {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -745,14 +745,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 undefined,
                 {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -777,7 +777,7 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -791,7 +791,7 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 {
                   noAccess: true
@@ -800,7 +800,7 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
@@ -814,14 +814,14 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 undefined,
                 {
                   noAccess: false
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
