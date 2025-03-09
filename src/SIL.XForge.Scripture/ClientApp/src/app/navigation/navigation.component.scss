@@ -5,20 +5,9 @@ mat-nav-list .mdc-list-item {
   --mat-list-active-indicator-shape: 0;
 
   mat-icon {
-    color: var(--sf-navigation-icon);
-    fill: var(--sf-navigation-icon);
     transition: color 0.15s;
     padding: 4px;
     box-sizing: content-box;
-  }
-
-  &:hover,
-  &.activated-nav-item,
-  &.active {
-    mat-icon {
-      color: var(--sf-navigation-icon-active);
-      fill: var(--sf-navigation-icon-active);
-    }
   }
 
   ::ng-deep .mat-mdc-list-item-unscoped-content {
@@ -40,6 +29,7 @@ mat-nav-list .mdc-list-item {
   &.activated-nav-item,
   &.active {
     background-color: var(--sf-navigation-list-item-active-background-color);
+    --mdc-list-list-item-label-text-color: var(--sf-navigation-list-item-active);
   }
 }
 
