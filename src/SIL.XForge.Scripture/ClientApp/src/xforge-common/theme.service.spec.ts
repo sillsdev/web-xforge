@@ -7,7 +7,7 @@ import { Theme, ThemeService } from './theme.service';
 
 const mockedLocalSettingsService = mock(LocalSettingsService);
 
-class MockHTMLBodyElement {
+class MockHTMLElement {
   private classSet = new Set<string>();
 
   get className(): string {
@@ -31,33 +31,33 @@ describe('ThemeService', () => {
   configureTestingModule(() => ({
     providers: [
       { provide: LocalSettingsService, useMock: mockedLocalSettingsService },
-      { provide: DOCUMENT, useValue: { body: new MockHTMLBodyElement() } }
+      { provide: DOCUMENT, useValue: { documentElement: new MockHTMLElement() } }
     ]
   }));
 
   beforeEach(() => {
-    (TestBed.inject(DOCUMENT) as any).body.classList.reset();
+    (TestBed.inject(DOCUMENT) as any).documentElement.classList.reset();
   });
 
   it('default theme should be light', () => {
     const env = new TestEnvironment();
-    expect(env.theme).toEqual(Theme.Light);
-    expect(env.bodyClass).toEqual(Theme.Light);
+    expect(env.theme).toEqual(Theme.Default);
+    expect(env.bodyClass).toEqual(Theme.Default);
   });
 
   it('can change theme to dark', () => {
     const env = new TestEnvironment();
-    expect(env.theme).toEqual(Theme.Light);
+    expect(env.theme).toEqual(Theme.Default);
     env.service.setDarkMode(true);
-    expect(env.theme).toEqual(Theme.Dark);
-    expect(env.bodyClass).toEqual(Theme.Dark);
+    expect(env.theme).toEqual(Theme.DefaultDarkMode);
+    expect(env.bodyClass).toEqual(Theme.DefaultDarkMode);
   });
 
   it('sets correct theme based on local storage', () => {
-    when(mockedLocalSettingsService.get(anyString())).thenReturn(Theme.Dark);
+    when(mockedLocalSettingsService.get(anyString())).thenReturn(Theme.DefaultDarkMode);
     const env = new TestEnvironment();
-    expect(env.theme).toEqual(Theme.Dark);
-    expect(env.bodyClass).toEqual(Theme.Dark);
+    expect(env.theme).toEqual(Theme.DefaultDarkMode);
+    expect(env.bodyClass).toEqual(Theme.DefaultDarkMode);
   });
 });
 
@@ -72,6 +72,6 @@ class TestEnvironment {
   }
 
   get bodyClass(): string {
-    return (TestBed.inject(DOCUMENT) as any).body.className;
+    return (TestBed.inject(DOCUMENT) as any).documentElement.className;
   }
 }

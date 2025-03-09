@@ -52,29 +52,12 @@
     )
   );
   @if not $is-dark {
-    @include mat.icon-overrides(
-      (
-        color: mat.get-theme-color($theme, primary, 40)
-      )
-    );
-
     mat-toolbar {
       @include mat.icon-overrides(
         (
           color: mat.get-theme-color($theme, primary, 100)
         )
       );
-    }
-
-    .mdc-button {
-      &.mat-primary,
-      &.mat-secondary {
-        @include mat.icon-overrides(
-          (
-            color: mat.get-theme-color($theme, primary, 100)
-          )
-        );
-      }
     }
   }
 }

@@ -3,8 +3,8 @@ import { DOCUMENT } from 'xforge-common/browser-globals';
 import { LocalSettingsService } from './local-settings.service';
 
 export enum Theme {
-  Light = 'theme-light',
-  Dark = 'theme-dark',
+  Default = 'theme-default',
+  DefaultDarkMode = 'theme-default-dark',
   NotSet = ''
 }
 
@@ -21,7 +21,7 @@ export class ThemeService {
     @Inject(DOCUMENT) private readonly document: Document
   ) {
     this.renderer = rendererFactory.createRenderer(null, null);
-    this.theme = this.localSettings.get<Theme>('theme') ?? Theme.Light;
+    this.theme = this.localSettings.get<Theme>('theme') ?? Theme.Default;
   }
 
   get theme(): Theme {
@@ -42,6 +42,6 @@ export class ThemeService {
   }
 
   setDarkMode(enabled: boolean): void {
-    this.theme = enabled ? Theme.Dark : Theme.Light;
+    this.theme = enabled ? Theme.DefaultDarkMode : Theme.Default;
   }
 }
