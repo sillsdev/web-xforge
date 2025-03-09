@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'sync'">
   <div class="base-container">
-    <h1 class="h2">{{ t("synchronize_project", { projectName: projectName }) }}</h1>
+    <h1 id="title" class="h2">{{ t("synchronize_project", { projectName: projectName }) }}</h1>
     @if (!isAppOnline) {
       <span class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
     }
