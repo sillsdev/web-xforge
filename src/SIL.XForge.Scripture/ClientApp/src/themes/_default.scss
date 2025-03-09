@@ -130,20 +130,37 @@ $_rest: (
   neutral-variant: map.get($_palettes, neutral-variant),
   error: map.get($_palettes, error)
 );
-$primary: map.merge(map.get($_palettes, primary), $_rest);
-$tertiary: map.merge(map.get($_palettes, tertiary), $_rest);
+$_primary: map.merge(map.get($_palettes, primary), $_rest);
+$_tertiary: map.merge(map.get($_palettes, tertiary), $_rest);
 
 $default-theme: mat.define-theme(
   (
     color: (
       theme-type: light,
-      primary: $primary,
-      tertiary: $tertiary
+      primary: $_primary,
+      tertiary: $_tertiary
     )
   )
 );
 
-html.theme-light {
+html.theme-default {
   color-scheme: light;
   @include mat-styles.theme($default-theme);
+}
+
+// Dark theme is based off same palette as light theme
+$_dark-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: $_primary,
+      tertiary: $_tertiary
+    )
+  )
+);
+
+html.theme-default-dark {
+  color-scheme: dark;
+  @include mat.all-component-colors($_dark-theme);
+  @include mat-styles.theme($_dark-theme);
 }
