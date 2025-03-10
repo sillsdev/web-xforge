@@ -60,7 +60,7 @@ describe('EditorHistoryService', () => {
       const deltaA = new Delta().insert('Hello');
       const deltaB = new Delta().insert('Hello');
       const result = service.processDiff(deltaA, deltaB);
-      expect(result.ops!.length).toBe(0);
+      expect(result.ops.length).toBe(0);
     });
 
     it('should return the expected diff when comparing two different deltas', () => {

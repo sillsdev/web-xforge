@@ -70,12 +70,12 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
 
     if (this.data.dataId === dataId) {
       // The file belongs to the question
-      return obj<Question>().path(q => q.audioUrl!);
+      return obj<Question>().path(q => q.audioUrl);
     } else {
       // otherwise, it is probably belongs to an answer
       const answerIndex = this.data.answers.findIndex(a => a.dataId === dataId && !a.deleted);
       if (answerIndex !== -1) {
-        return obj<Question>().path(q => q.answers[answerIndex].audioUrl!);
+        return obj<Question>().path(q => q.answers[answerIndex].audioUrl);
       }
     }
     return undefined;

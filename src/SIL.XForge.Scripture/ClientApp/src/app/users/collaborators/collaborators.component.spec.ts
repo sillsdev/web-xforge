@@ -255,7 +255,7 @@ describe('CollaboratorsComponent', () => {
 
     // Uninvite Alice
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([]);
-    env.clickElement(env.cancelInviteItemOnRow(inviteeRow)!);
+    env.clickElement(env.cancelInviteItemOnRow(inviteeRow));
     verify(mockedProjectService.onlineUninviteUser(env.project01Id, 'alice@a.aa')).once();
 
     // Alice is not shown as in invitee

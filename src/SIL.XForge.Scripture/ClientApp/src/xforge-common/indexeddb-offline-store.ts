@@ -148,7 +148,7 @@ export class IndexeddbOfflineStore extends OfflineStore {
       transaction.oncomplete = () => resolve();
       // The transaction is aborted if the storage quota has been exceeded. We want to handle that if it happens.
       transaction.onabort = event => {
-        const target = event.target! as IDBTransaction;
+        const target = event.target as IDBTransaction;
         reject(target.error);
       };
     });

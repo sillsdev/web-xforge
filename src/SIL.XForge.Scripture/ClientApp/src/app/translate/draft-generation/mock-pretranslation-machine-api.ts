@@ -144,7 +144,7 @@ export class MockPreTranslationHttpClient {
     const stepOffset: number =
       isContinue && this.mostRecentJobState?.state === BuildStates.Active
         ? activeAfter / interval +
-          Math.floor(this.mostRecentJobState!.percentCompleted * ((duration - activeAfter) / interval))
+          Math.floor(this.mostRecentJobState.percentCompleted * ((duration - activeAfter) / interval))
         : 0;
 
     const generationTimer$: Observable<number> = timer(0, interval).pipe(
