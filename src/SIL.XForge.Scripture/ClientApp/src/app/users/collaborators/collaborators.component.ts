@@ -214,7 +214,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       data: {
         projectId: this.projectId,
         userId: row.id,
-        userProfile: { avatarUrl: row.user.avatarUrl!, displayName: row.user.displayName! }
+        userProfile: { avatarUrl: row.user.avatarUrl, displayName: row.user.displayName }
       },
       minWidth: '360px',
       maxWidth: '560px',

@@ -254,9 +254,9 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);
-      ops.set(p => p.sync.lastSyncSuccessful!, successful);
+      ops.set(p => p.sync.lastSyncSuccessful, successful);
       if (successful) {
-        ops.set(p => p.sync.dateLastSuccessfulSync!, new Date().toJSON());
+        ops.set(p => p.sync.dateLastSuccessfulSync, new Date().toJSON());
       }
     }, false);
     this.fixture.detectChanges();
