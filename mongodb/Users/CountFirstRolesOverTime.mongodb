@@ -1,0 +1,106 @@
+use('xforge')
+
+const usersByFirstRole = db.users.aggregate([
+  {
+    $match: {
+      'sites.sf.projects': { $exists: true, $ne: [] }
+    }
+  },
+  {
+    $project: {
+      project: { $arrayElemAt: ['$sites.sf.projects', 0] }
+    }
+  },
+  // lookup the user's role on that project
+  {
+    $lookup: {
+      from: 'sf_projects',
+      localField: 'project',
+      foreignField: '_id',
+      as: 'project'
+    }
+  },
+  { $unwind: '$project' },
+  {
+    $project: {
+      roles: '$project.userRoles'
+    }
+  },
+  // get the user's role from the roles object
+  {
+    $project: {
+      roles: {
+        $objectToArray: '$roles'
+      }
+    }
+  },
+  // filter out the roles that are not the user's
+  {
+    $project: {
+      roles: {
+        $filter: {
+          input: '$roles',
+          as: 'role',
+          cond: { $eq: ['$$role.k', '$_id'] }
+        }
+      }
+    }
+  },
+  { $unwind: '$roles' },
+  {
+    $project: {
+      _id: '$_id',
+      role: '$roles.v'
+    }
+  },
+  // get date from object id
+  {
+    $addFields: {
+      date: { $toDate: { $toObjectId: '$_id' } }
+    }
+  },
+  {
+    $sort: {
+      date: 1
+    }
+  }
+]).toArray()
+
+const firstDate = usersByFirstRole[0].date
+const lastDate = usersByFirstRole[usersByFirstRole.length - 1].date
+const duration = lastDate - firstDate
+const durationOfOneDay = 1000 * 60 * 60 * 24
+const durationInDays = Math.ceil(duration / durationOfOneDay)
+
+const roleCountsByDate = new Array(durationInDays);
+
+for (const user of usersByFirstRole) {
+  const date = user.date
+  const role = user.role
+  let dateIndex = Math.floor((date - firstDate) / durationOfOneDay)
+  for (; dateIndex < roleCountsByDate.length; dateIndex++) {
+    if (!roleCountsByDate[dateIndex]) {
+      roleCountsByDate[dateIndex] = {}
+    }
+    if (!roleCountsByDate[dateIndex][role]) {
+      roleCountsByDate[dateIndex][role] = 0
+    }
+    roleCountsByDate[dateIndex][role]++
+  }
+}
+
+const allRoles = new Set()
+for (const day of roleCountsByDate) {
+  for (const role of Object.keys(day)) allRoles.add(role)
+}
+
+
+print(['date', ...allRoles].join('\t'))
+
+for (const day of roleCountsByDate) {
+  const date = new Date(firstDate)
+  date.setDate(firstDate.getDate() + roleCountsByDate.indexOf(day))
+  const dateStr = date.toISOString().split('T')[0]
+  const roles = Array.from(allRoles).map(role => day[role] || 0)
+  print([dateStr, ...roles].join('\t'))
+}
