@@ -103,7 +103,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       .subscribe(async projectId => {
         this.projectDoc = await this.projectService.getProfile(
           projectId,
-          new DocSubscription('TranslateOverviewComponent')
+          new DocSubscription('TranslateOverviewComponent', this.destroyRef)
         );
 
         // Update the overview now if we are online, or when we are next online

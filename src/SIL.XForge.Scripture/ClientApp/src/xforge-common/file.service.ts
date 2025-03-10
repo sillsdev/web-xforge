@@ -283,7 +283,7 @@ export class FileService {
             const doc = await this.realtimeService.onlineFetch<ProjectDataDoc>(
               fileData.dataCollection,
               fileData.realtimeDocRef!,
-              new DocSubscription('FileService')
+              new DocSubscription('FileService', this.destroyRef)
             );
             if (doc.isLoaded) {
               const url = await doc.uploadFile(fileType, fileData.id, fileData.blob!, fileData.filename!);

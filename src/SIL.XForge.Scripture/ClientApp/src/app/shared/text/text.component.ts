@@ -285,7 +285,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       localStorage.setItem(this.cursorColorStorageKey, localCursorColor);
     }
     this.cursorColor = localCursorColor;
-    this.userService.getCurrentUser(new DocSubscription('TextComponent')).then((userDoc: UserDoc) => {
+    this.userService.getCurrentUser(new DocSubscription('TextComponent', this.destroyRef)).then((userDoc: UserDoc) => {
       this.currentUserDoc = userDoc;
       this.currentUserDoc.changes$
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -965,7 +965,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
     const profile: SFProjectProfileDoc = await this.projectService.getProfile(
       this.projectId,
-      new DocSubscription('TextComponent')
+      new DocSubscription('TextComponent', this.destroyRef)
     );
     if (profile.data == null) throw new Error('Failed to fetch project profile.');
     if (
@@ -1051,7 +1051,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     // the text in IndexedDB, we will unfortunately briefly show that a book is unavailable offline, before it loads.
     // But if getText does not return, then we are showing a good message.
     this.loadingState = 'offline-or-loading';
-    const textDoc = await this.projectService.getText(this._id, new DocSubscription('TextComponent'));
+    const textDoc = await this.projectService.getText(this._id, new DocSubscription('TextComponent', this.destroyRef));
     this.loadingState = 'loading';
     this.viewModel.bind(this._id, textDoc, this.subscribeToUpdates);
     if (this.viewModel.isEmpty) this.loadingState = 'empty-viewModel';
@@ -1754,7 +1754,9 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (!this.userProjects?.includes(this.projectId)) {
       return;
     }
-    const project = (await this.projectService.getProfile(this.projectId, new DocSubscription('TextComponent'))).data;
+    const project = (
+      await this.projectService.getProfile(this.projectId, new DocSubscription('TextComponent', this.destroyRef))
+    ).data;
     if (project == null) {
       return;
     }

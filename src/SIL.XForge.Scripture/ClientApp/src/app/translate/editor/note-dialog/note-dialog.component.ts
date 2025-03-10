@@ -22,6 +22,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { defaultNoteThreadIcon, NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
@@ -88,38 +89,45 @@ export class NoteDialogComponent implements OnInit {
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    private readonly destroyRef: QuietDestroyRef
   ) {}
 
   async ngOnInit(): Promise<void> {
     // This can be refactored so the asynchronous calls are done in parallel
     if (this.threadDataId == null) {
-      this.textDoc = await this.projectService.getText(this.textDocId, new DocSubscription('NoteDialogComponent'));
+      this.textDoc = await this.projectService.getText(
+        this.textDocId,
+        new DocSubscription('NoteDialogComponent', this.destroyRef)
+      );
     } else {
       this.threadDoc = await this.projectService.getNoteThread(
         this.projectId + ':' + this.threadDataId,
-        new DocSubscription('NoteDialogComponent')
+        new DocSubscription('NoteDialogComponent', this.destroyRef)
       );
-      this.textDoc = await this.projectService.getText(this.textDocId, new DocSubscription('NoteDialogComponent'));
+      this.textDoc = await this.projectService.getText(
+        this.textDocId,
+        new DocSubscription('NoteDialogComponent', this.destroyRef)
+      );
     }
 
     if (this.biblicalTermId != null) {
       this.biblicalTermDoc = await this.projectService.getBiblicalTerm(
         this.projectId + ':' + this.biblicalTermId,
-        new DocSubscription('NoteDialogComponent')
+        new DocSubscription('NoteDialogComponent', this.destroyRef)
       );
     }
 
     this.projectProfileDoc = await this.projectService.getProfile(
       this.projectId,
-      new DocSubscription('NoteDialogComponent')
+      new DocSubscription('NoteDialogComponent', this.destroyRef)
     );
     this.userRole = this.projectProfileDoc?.data?.userRoles[this.userService.currentUserId];
     if (this.userRole != null) {
       const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(
         this.projectId,
         this.userRole,
-        new DocSubscription('NoteDialogComponent')
+        new DocSubscription('NoteDialogComponent', this.destroyRef)
       );
       if (this.threadDoc != null && projectDoc != null && projectDoc.data?.paratextUsers != null) {
         this.paratextProjectUsers = projectDoc.data.paratextUsers;
@@ -458,7 +466,7 @@ export class NoteDialogComponent implements OnInit {
     // Get the owner. This is often the project admin if the sync user is not in SF
     const ownerDoc: UserProfileDoc = await this.userService.getProfile(
       note.ownerRef,
-      new DocSubscription('NoteDialogComponent')
+      new DocSubscription('NoteDialogComponent', this.destroyRef)
     );
 
     // Get the sync user, if we have a syncUserRef for the note
@@ -484,7 +492,10 @@ export class NoteDialogComponent implements OnInit {
     const syncUserProfile: UserProfileDoc | undefined =
       syncUser.sfUserId == null
         ? undefined
-        : await this.userService.getProfile(syncUser.sfUserId, new DocSubscription('NoteDialogComponent'));
+        : await this.userService.getProfile(
+            syncUser.sfUserId,
+            new DocSubscription('NoteDialogComponent', this.destroyRef)
+          );
     return this.userService.currentUserId === syncUserProfile?.id
       ? translate('checking.me') // "Me", i.e. the current user
       : (syncUserProfile?.data?.displayName ?? syncUser.username); // Another user, or fallback to the sync user

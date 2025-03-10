@@ -212,7 +212,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   private getTargetOps(): Observable<DeltaOperation[]> {
-    return from(this.projectService.getText(this.textDocId!, new DocSubscription('EditorDraftComponent'))).pipe(
+    return from(
+      this.projectService.getText(this.textDocId!, new DocSubscription('EditorDraftComponent', this.destroyRef))
+    ).pipe(
       switchMap(textDoc =>
         textDoc.changes$.pipe(
           startWith(undefined),

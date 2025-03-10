@@ -164,7 +164,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       this.populateProjectList();
       return;
     }
-    this.projectDoc = await this.projectService.get(projectId, new DocSubscription('ConnectProjectComponent'));
+    this.projectDoc = await this.projectService.get(
+      projectId,
+      new DocSubscription('ConnectProjectComponent', this.destroyRef)
+    );
   }
 
   updateStatus(inProgress: boolean): void {

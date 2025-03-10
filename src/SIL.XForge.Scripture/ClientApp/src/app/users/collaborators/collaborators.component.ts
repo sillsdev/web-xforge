@@ -145,7 +145,10 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       )
       .subscribe(async projectId => {
         this.loadingStarted();
-        this.projectDoc = await this.projectService.get(projectId, new DocSubscription('CollaboratorsComponent'));
+        this.projectDoc = await this.projectService.get(
+          projectId,
+          new DocSubscription('CollaboratorsComponent', this.destroyRef)
+        );
         this.loadUsers();
         // TODO Clean up the use of nested subscribe()
         this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async () => {
@@ -239,7 +242,9 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
     const userIds = Object.keys(project.userRoles);
     const userProfiles = await Promise.all(
-      userIds.map(userId => this.userService.getProfile(userId, new DocSubscription('CollaboratorsComponent')))
+      userIds.map(userId =>
+        this.userService.getProfile(userId, new DocSubscription('CollaboratorsComponent', this.destroyRef))
+      )
     );
     const userRows: Row[] = [];
     for (const [index, userId] of userIds.entries()) {

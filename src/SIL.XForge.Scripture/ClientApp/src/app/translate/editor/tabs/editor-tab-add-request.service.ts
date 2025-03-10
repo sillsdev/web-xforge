@@ -4,6 +4,7 @@ import { map, Observable, of, switchMap, take } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { QuietDestroyRef } from '../../../../xforge-common/utils';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TabStateService } from '../../../shared/sf-tab-group';
@@ -21,7 +22,8 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
   constructor(
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
-    private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>
+    private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
+    private readonly destroyRef: QuietDestroyRef
   ) {}
 
   handleTabAddRequest(tabType: EditorTabType): Observable<Partial<EditorTabInfo> | never> {
@@ -47,7 +49,10 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
         Promise.all(
           tabs.map(tab =>
             tab.projectId != null
-              ? this.projectService.get(tab.projectId, new DocSubscription('EditorTabAddRequestService'))
+              ? this.projectService.get(
+                  tab.projectId,
+                  new DocSubscription('EditorTabAddRequestService', this.destroyRef)
+                )
               : undefined
           )
         )

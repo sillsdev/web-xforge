@@ -7,6 +7,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SFProjectService } from '../../core/sf-project.service';
 
@@ -32,13 +33,14 @@ export interface DraftSourcesAsArrays {
 })
 export class DraftSourcesService {
   private readonly currentUser$: Observable<UserDoc> = defer(() =>
-    from(this.userService.getCurrentUser(new DocSubscription('DraftSourcesService')))
+    from(this.userService.getCurrentUser(new DocSubscription('DraftSourcesService', this.destroyRef)))
   );
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly destroyRef: QuietDestroyRef
   ) {}
 
   /**
@@ -111,24 +113,30 @@ export class DraftSourcesService {
           Promise.all([
             sourceProjectId
               ? (sourceProject ??
-                this.projectService.getProfile(sourceProjectId, new DocSubscription('DraftSourcesService')))
+                this.projectService.getProfile(
+                  sourceProjectId,
+                  new DocSubscription('DraftSourcesService', this.destroyRef)
+                ))
               : Promise.resolve(undefined),
             alternateSourceProjectId
               ? (alternateSourceProject ??
-                this.projectService.getProfile(alternateSourceProjectId, new DocSubscription('DraftSourcesService')))
+                this.projectService.getProfile(
+                  alternateSourceProjectId,
+                  new DocSubscription('DraftSourcesService', this.destroyRef)
+                ))
               : Promise.resolve(undefined),
             alternateTrainingSourceProjectId
               ? (alternateTrainingSourceProject ??
                 this.projectService.getProfile(
                   alternateTrainingSourceProjectId,
-                  new DocSubscription('DraftSourcesService')
+                  new DocSubscription('DraftSourcesService', this.destroyRef)
                 ))
               : Promise.resolve(undefined),
             additionalTrainingSourceProjectId
               ? (additionalTrainingSourceProject ??
                 this.projectService.getProfile(
                   additionalTrainingSourceProjectId,
-                  new DocSubscription('DraftSourcesService')
+                  new DocSubscription('DraftSourcesService', this.destroyRef)
                 ))
               : Promise.resolve(undefined)
           ])

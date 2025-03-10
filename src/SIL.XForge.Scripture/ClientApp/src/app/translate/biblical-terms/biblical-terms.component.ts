@@ -317,12 +317,12 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       .subscribe(async projectId => {
         this.projectDoc = await this.projectService.getProfile(
           projectId,
-          new DocSubscription('BiblicalTermsComponent')
+          new DocSubscription('BiblicalTermsComponent', this.destroyRef)
         );
         this.projectUserConfigDoc = await this.projectService.getUserConfig(
           projectId,
           this.userService.currentUserId,
-          new DocSubscription('BiblicalTermsComponent')
+          new DocSubscription('BiblicalTermsComponent', this.destroyRef)
         );
 
         // Subscribe to any project, book, chapter, verse, locale, biblical term, or note changes
@@ -393,7 +393,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   async editRendering(id: string): Promise<void> {
     const biblicalTermDoc = await this.projectService.getBiblicalTerm(
       getBiblicalTermDocId(this._projectId!, id),
-      new DocSubscription('BiblicalTermsComponent')
+      new DocSubscription('BiblicalTermsComponent', this.destroyRef)
     );
     this.dialogService.openMatDialog<BiblicalTermDialogComponent, BiblicalTermDialogData>(BiblicalTermDialogComponent, {
       data: { biblicalTermDoc, projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc },
@@ -548,7 +548,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     const biblicalTermDoc = await this.projectService.getBiblicalTerm(
       getBiblicalTermDocId(this._projectId!, params.biblicalTermId),
-      new DocSubscription('BiblicalTermsComponent')
+      new DocSubscription('BiblicalTermsComponent', this.destroyRef)
     );
     if (biblicalTermDoc?.data == null) {
       return;
@@ -612,13 +612,13 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       await this.projectService.createNoteThread(
         this._projectId,
         noteThread,
-        new DocSubscription('BiblicalTermsComponent')
+        new DocSubscription('BiblicalTermsComponent', this.destroyRef)
       );
     } else {
       // updated the existing note
       const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(
         getNoteThreadDocId(this._projectId, params.threadDataId),
-        new DocSubscription('BiblicalTermsComponent')
+        new DocSubscription('BiblicalTermsComponent', this.destroyRef)
       );
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {

@@ -54,7 +54,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
     // Can only navigate to the project if the user is on the project
     // Race condition can occur with the user doc sites so listen to remote changes
-    const userDoc = await this.userService.getCurrentUser(new DocSubscription('ProjectComponent'));
+    const userDoc = await this.userService.getCurrentUser(new DocSubscription('ProjectComponent', this.destroyRef));
     const navigateToProject$: Observable<string> = new Observable(subscriber => {
       let projectId: string | undefined;
       projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => {
@@ -84,9 +84,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         this.projectService.getUserConfig(
           projectId,
           this.userService.currentUserId,
-          new DocSubscription('ProjectComponent')
+          new DocSubscription('ProjectComponent', this.destroyRef)
         ),
-        this.projectService.getProfile(projectId, new DocSubscription('ProjectComponent'))
+        this.projectService.getProfile(projectId, new DocSubscription('ProjectComponent', this.destroyRef))
       ]);
 
       const projectUserConfig = projectUserConfigDoc.data;

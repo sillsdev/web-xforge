@@ -197,7 +197,7 @@ export class NavigationComponent {
       this.projectUserConfigDoc = await this.projectService.getUserConfig(
         projectId,
         this.userService.currentUserId,
-        new DocSubscription('NavigationComponent')
+        new DocSubscription('NavigationComponent', this.destroyRef)
       );
       this.projectUserConfigDoc$.next(this.projectUserConfigDoc);
     }

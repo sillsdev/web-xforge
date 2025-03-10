@@ -167,7 +167,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     );
 
     projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
-      this.projectDoc = await this.projectService.get(projectId, new DocSubscription('SyncComponent'));
+      this.projectDoc = await this.projectService.get(projectId, new DocSubscription('SyncComponent', this.destroyRef));
       this.checkSyncStatus();
       this.loadingFinished();
 

@@ -38,7 +38,9 @@ export class SFUserProjectsService {
       if (!state.loggedIn) {
         return;
       }
-      const userDoc = await this.userService.getCurrentUser(new DocSubscription('SFUserProjectsService'));
+      const userDoc = await this.userService.getCurrentUser(
+        new DocSubscription('SFUserProjectsService', this.destroyRef)
+      );
       this.updateProjectList(userDoc);
       userDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.updateProjectList(userDoc));
     });
@@ -61,7 +63,9 @@ export class SFUserProjectsService {
     const docFetchPromises: Promise<SFProjectProfileDoc>[] = [];
     for (const id of currentProjectIds) {
       if (!this.projectDocs.has(id)) {
-        docFetchPromises.push(this.projectService.getProfile(id, new DocSubscription('SFUserProjectsService')));
+        docFetchPromises.push(
+          this.projectService.getProfile(id, new DocSubscription('SFUserProjectsService', this.destroyRef))
+        );
       }
     }
 

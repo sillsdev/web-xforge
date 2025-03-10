@@ -8,7 +8,7 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { type } from 'rich-text';
 import { Observable, Subject } from 'rxjs';
-import { DocSubscriberInfo, DocSubscription } from 'xforge-common/models/realtime-doc';
+import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { TextDoc, TextDocId, TextDocSource } from './models/text-doc';
@@ -33,7 +33,7 @@ export class TextDocService {
    * @param {TextDocSource} source The source of the op. This is sent to the server.
    */
   async overwrite(textDocId: TextDocId, newDelta: Delta, source: TextDocSource): Promise<void> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId, new DocSubscription('TextDocService'));
+    const textDoc: TextDoc = await this.projectService.getText(textDocId, FETCH_WITHOUT_SUBSCRIBE);
 
     if (textDoc.data?.ops == null) {
       throw new Error(`No TextDoc data for ${textDocId}`);
@@ -68,7 +68,7 @@ export class TextDocService {
   }
 
   async createTextDoc(textDocId: TextDocId, subscriber: DocSubscriberInfo, data?: TextData): Promise<TextDoc> {
-    let textDoc: TextDoc = await this.projectService.getText(textDocId, new DocSubscription('TextDocService'));
+    let textDoc: TextDoc = await this.projectService.getText(textDocId, subscriber);
 
     if (textDoc?.data != null) {
       throw new Error(`Text Doc already exists for ${textDocId}`);

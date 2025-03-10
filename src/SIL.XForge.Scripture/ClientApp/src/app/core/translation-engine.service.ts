@@ -142,7 +142,7 @@ export class TranslationEngineService {
   ): Promise<void> {
     const targetDoc = await this.projectService.getText(
       getTextDocId(projectRef, bookNum, chapterNum, 'target'),
-      new DocSubscription('TranslationEngineService')
+      new DocSubscription('TranslationEngineService', this.destroyRef)
     );
     const targetText = targetDoc.getSegmentText(segment);
     if (targetText === '') {
@@ -157,7 +157,7 @@ export class TranslationEngineService {
 
     const sourceDoc = await this.projectService.getText(
       getTextDocId(sourceProjectRef, bookNum, chapterNum, 'source'),
-      new DocSubscription('TranslationEngineService')
+      new DocSubscription('TranslationEngineService', this.destroyRef)
     );
     const sourceText = sourceDoc.getSegmentText(segment);
     if (sourceText === '') {

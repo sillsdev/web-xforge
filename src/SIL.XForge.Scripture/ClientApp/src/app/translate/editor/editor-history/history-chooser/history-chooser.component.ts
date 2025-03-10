@@ -23,6 +23,7 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
 import { ParatextService, Revision } from '../../../../core/paratext.service';
@@ -71,7 +72,8 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
-    private readonly errorReportingService: ErrorReportingService
+    private readonly errorReportingService: ErrorReportingService,
+    private readonly destroyRef: QuietDestroyRef
   ) {}
 
   get canRestoreSnapshot(): boolean {
@@ -111,7 +113,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
         try {
           this.projectDoc = await this.projectService.getProfile(
             this.projectId,
-            new DocSubscription('HistoryChooserComponent')
+            new DocSubscription('HistoryChooserComponent', this.destroyRef)
           );
           if (this.historyRevisions.length === 0) {
             this.historyRevisions =

@@ -90,7 +90,7 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
         if (showDiff && this.diffText?.id != null) {
           const textDoc: TextDoc = await this.projectService.getText(
             this.diffText.id,
-            new DocSubscription('EditorHistoryComponent')
+            new DocSubscription('EditorHistoryComponent', this.destroyRef)
           );
           const targetContents: Delta = new Delta(textDoc.data?.ops);
           const diff = this.editorHistoryService.processDiff(snapshotContents, targetContents);

@@ -51,7 +51,10 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
             return EMPTY;
           }
 
-          return this.projectService.getProfile(this.projectId, new DocSubscription('EditorResourceComponent'));
+          return this.projectService.getProfile(
+            this.projectId,
+            new DocSubscription('EditorResourceComponent', this.destroyRef)
+          );
         })
       )
       .subscribe((projectDoc: SFProjectProfileDoc) => {

@@ -61,7 +61,7 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
         try {
           this.projectDoc = await this.projectService.getProfile(
             projectId,
-            new DocSubscription('TrainingProgressComponent')
+            new DocSubscription('TrainingProgressComponent', this.destroyRef)
           );
           this.setupTranslationEngine();
         } finally {

@@ -12,10 +12,11 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { DocSubscription } from 'xforge-common/models/realtime-doc';
+import { DocSubscription, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -85,7 +86,8 @@ export class DraftPreviewBooksComponent {
     private readonly dialogService: DialogService,
     private readonly textDocService: TextDocService,
     private readonly errorReportingService: ErrorReportingService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly destroyRef: QuietDestroyRef
   ) {}
 
   get numChaptersApplied(): number {
@@ -127,7 +129,7 @@ export class DraftPreviewBooksComponent {
 
     const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(
       result.projectId,
-      new DocSubscription('DraftPreviewBooksComponent')
+      new DocSubscription('DraftPreviewBooksComponent', this.destroyRef)
     );
     const projectTextInfo: TextInfo = projectDoc.data?.texts.find(
       t => t.bookNum === bookWithDraft.bookNumber && t.chapters
@@ -139,7 +141,7 @@ export class DraftPreviewBooksComponent {
       await this.projectService.onlineAddChapters(result.projectId, bookWithDraft.bookNumber, missingChapters);
       for (const chapter of missingChapters) {
         const textDocId = new TextDocId(result.projectId, bookWithDraft.bookNumber, chapter);
-        await this.textDocService.createTextDoc(textDocId, new DocSubscription('DraftPreviewBooksComponent'));
+        await this.textDocService.createTextDoc(textDocId, FETCH_WITHOUT_SUBSCRIBE);
       }
     }
     await this.applyBookDraftAsync(bookWithDraft, result.projectId);

@@ -481,7 +481,9 @@ export class CheckingAnswersComponent implements OnInit {
 
   async submit(response: CheckingInput): Promise<void> {
     this.submittingAnswer = true;
-    const userDoc = await this.userService.getCurrentUser(new DocSubscription('CheckingAnswersComponent'));
+    const userDoc = await this.userService.getCurrentUser(
+      new DocSubscription('CheckingAnswersComponent', this.destroyRef)
+    );
     if (this.onlineStatusService.isOnline && userDoc.data?.isDisplayNameConfirmed !== true) {
       await this.userService.editDisplayName(true);
     }

@@ -14,6 +14,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -82,7 +83,8 @@ export class DraftApplyDialogComponent implements OnInit {
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
     private readonly userService: UserService,
-    private readonly onlineStatusService: OnlineStatusService
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly destroyRef: QuietDestroyRef
   ) {
     this.targetProject$.pipe(filterNullish()).subscribe(async project => {
       const chapters: number = await this.chaptersWithTextAsync(project);
@@ -228,7 +230,7 @@ export class DraftApplyDialogComponent implements OnInit {
   private async isNotEmpty(textDocId: TextDocId): Promise<boolean> {
     const textDoc: TextDoc = await this.projectService.getText(
       textDocId,
-      new DocSubscription('DraftApplyDialogComponent')
+      new DocSubscription('DraftApplyDialogComponent', this.destroyRef)
     );
     return textDoc.getNonEmptyVerses().length > 0;
   }

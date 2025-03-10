@@ -63,7 +63,7 @@ export class ShareControlComponent extends ShareBaseComponent {
         }
         if (this.projectDoc == null || projectId !== this._projectId) {
           [this.projectDoc, this.isProjectAdmin] = await Promise.all([
-            this.projectService.getProfile(projectId, new DocSubscription('ShareControlComponent')),
+            this.projectService.getProfile(projectId, new DocSubscription('ShareControlComponent', this.destroyRef)),
             this.projectService.isProjectAdmin(projectId, this.userService.currentUserId)
           ]);
           this.roleControl.setValue(this.defaultShareRole);

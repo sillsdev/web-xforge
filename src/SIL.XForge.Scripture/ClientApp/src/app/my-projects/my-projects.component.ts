@@ -151,7 +151,7 @@ export class MyProjectsComponent implements OnInit {
   }
 
   private async loadUser(): Promise<void> {
-    this.user = await this.userService.getCurrentUser(new DocSubscription('MyProjectsComponent'));
+    this.user = await this.userService.getCurrentUser(new DocSubscription('MyProjectsComponent', this.destroyRef));
     this.userIsPTUser = this.user.data != null ? isPTUser(this.user.data) : false;
   }
 

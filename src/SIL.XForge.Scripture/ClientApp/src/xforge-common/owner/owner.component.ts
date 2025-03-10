@@ -3,6 +3,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { AvatarComponent } from '../avatar/avatar.component';
 import { I18nService } from '../i18n.service';
 import { UserProfileDoc } from '../models/user-profile-doc';
@@ -25,7 +26,8 @@ export class OwnerComponent implements OnInit {
   constructor(
     private readonly userService: UserService,
     readonly i18n: I18nService,
-    private readonly translocoService: TranslocoService
+    private readonly translocoService: TranslocoService,
+    private readonly destroyRef: QuietDestroyRef
   ) {}
 
   get date(): Date {
@@ -47,7 +49,10 @@ export class OwnerComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     if (this.ownerRef != null) {
-      this.ownerDoc = await this.userService.getProfile(this.ownerRef, new DocSubscription('OwnerComponent'));
+      this.ownerDoc = await this.userService.getProfile(
+        this.ownerRef,
+        new DocSubscription('OwnerComponent', this.destroyRef)
+      );
     }
   }
 }

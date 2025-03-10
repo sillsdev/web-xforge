@@ -8,6 +8,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { QuietDestroyRef } from '../../../../xforge-common/utils';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 
@@ -28,7 +29,8 @@ export class EditorTabPersistenceService {
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     private readonly userService: UserService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly destroyRef: QuietDestroyRef
   ) {}
 
   /**
@@ -61,7 +63,7 @@ export class EditorTabPersistenceService {
         this.projectService.getUserConfig(
           projectId,
           this.userService.currentUserId,
-          new DocSubscription('EditorTabPersistenceService')
+          new DocSubscription('EditorTabPersistenceService', this.destroyRef)
         )
       ),
       tap(pucDoc => {

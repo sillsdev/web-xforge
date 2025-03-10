@@ -113,7 +113,7 @@ export class SyncProgressComponent {
           if (isParatextRole(role)) {
             this.sourceProjectDoc = await this.projectService.get(
               sourceProjectId,
-              new DocSubscription('SyncProgressComponent')
+              new DocSubscription('SyncProgressComponent', this.destroyRef)
             );
 
             // Subscribe to SignalR notifications for the source project

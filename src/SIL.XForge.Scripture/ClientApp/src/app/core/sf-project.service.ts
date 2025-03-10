@@ -16,13 +16,13 @@ import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-au
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
+import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { QuietDestroyRef } from 'xforge-common/utils';
-import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE } from '../../xforge-common/models/realtime-doc';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { EventMetric } from '../event-metrics/event-metric';
 import { ShareLinkType } from '../shared/share/share-dialog.component';

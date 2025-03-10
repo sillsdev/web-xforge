@@ -4,10 +4,9 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { DocSubscription } from 'xforge-common/models/realtime-doc';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
-import { FETCH_WITHOUT_SUBSCRIBE } from '../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import {
   roleCanAccessCommunityChecking,
@@ -54,8 +53,8 @@ export class PermissionsService {
   }
 
   async userHasParatextRoleOnProject(projectId: string): Promise<boolean> {
-    const currentUserDoc = await this.userService.getCurrentUser(new DocSubscription('PermissionsService'));
-    const currentProject = await this.projectService.get(projectId, new DocSubscription('PermissionsService'));
+    const currentUserDoc = await this.userService.getCurrentUser(FETCH_WITHOUT_SUBSCRIBE);
+    const currentProject = await this.projectService.get(projectId, FETCH_WITHOUT_SUBSCRIBE);
     return isParatextRole(currentProject?.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
   }
 

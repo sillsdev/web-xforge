@@ -510,7 +510,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           if (routeProjectId !== prevProjectId) {
             this.projectDoc = await this.projectService.getProfile(
               routeProjectId,
-              new DocSubscription('CheckingComponent')
+              new DocSubscription('CheckingComponent', this.destroyRef)
             );
 
             if (!this.projectDoc?.isLoaded) {
@@ -531,7 +531,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             this.projectUserConfigDoc = await this.projectService.getUserConfig(
               routeProjectId,
               this.userService.currentUserId,
-              new DocSubscription('CheckingComponent')
+              new DocSubscription('CheckingComponent', this.destroyRef)
             );
 
             // Subscribe to the projectDoc now that it is defined

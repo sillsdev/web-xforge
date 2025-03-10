@@ -236,7 +236,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   async ngOnInit(): Promise<void> {
     await this.authService.loggedIn;
     this.loadingStarted();
-    this.currentUserDoc = await this.userService.getCurrentUser(new DocSubscription('AppComponent'));
+    this.currentUserDoc = await this.userService.getCurrentUser(new DocSubscription('AppComponent', this.destroyRef));
     const userData: User | undefined = cloneDeep(this.currentUserDoc.data);
     if (userData != null) {
       const userDataWithId = { ...userData, id: this.currentUserDoc.id };
@@ -276,7 +276,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.projectUserConfigDoc = await this.projectService.getUserConfig(
           this._selectedProjectDoc.id,
           this.currentUserDoc!.id,
-          new DocSubscription('AppComponent')
+          new DocSubscription('AppComponent', this.destroyRef)
         );
         if (this.selectedProjectDeleteSub != null) {
           this.selectedProjectDeleteSub.unsubscribe();

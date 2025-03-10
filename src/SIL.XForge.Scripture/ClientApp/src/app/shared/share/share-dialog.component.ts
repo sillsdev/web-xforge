@@ -68,7 +68,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
     super(userService);
     this.projectId = this.data.projectId;
     Promise.all([
-      this.projectService.getProfile(this.projectId, new DocSubscription('ShareDialogComponent')),
+      this.projectService.getProfile(this.projectId, new DocSubscription('ShareDialogComponent', this.destroyRef)),
       this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId)
     ]).then(value => {
       this.projectDoc = value[0];
@@ -181,7 +181,9 @@ export class ShareDialogComponent extends ShareBaseComponent {
       this._error = 'no_language';
       return;
     }
-    const currentUser: UserDoc = await this.userService.getCurrentUser(new DocSubscription('ShareDialogComponent'));
+    const currentUser: UserDoc = await this.userService.getCurrentUser(
+      new DocSubscription('ShareDialogComponent', this.destroyRef)
+    );
     if (!this.supportsShareAPI || this.projectDoc?.data == null || currentUser.data == null) {
       return;
     }

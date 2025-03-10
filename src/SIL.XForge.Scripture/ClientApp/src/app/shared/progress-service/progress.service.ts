@@ -87,7 +87,10 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
 
   private async initialize(projectId: string): Promise<void> {
     this._canTrainSuggestions = false;
-    this._projectDoc = await this.projectService.getProfile(projectId, new DocSubscription('ProgressService'));
+    this._projectDoc = await this.projectService.getProfile(
+      projectId,
+      new DocSubscription('ProgressService', this.destroyRef)
+    );
 
     // If we are offline, just update the progress with what we have
     if (!this.onlineStatusService.isOnline) {
@@ -98,7 +101,9 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     for (const book of this._projectDoc.data!.texts) {
       for (const chapter of book.chapters) {
         const textDocId = new TextDocId(this._projectDoc.id, book.bookNum, chapter.number, 'target');
-        chapterDocPromises.push(this.projectService.getText(textDocId, new DocSubscription('ProgressService')));
+        chapterDocPromises.push(
+          this.projectService.getText(textDocId, new DocSubscription('ProgressService', this.destroyRef))
+        );
       }
     }
 

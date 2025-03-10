@@ -10,6 +10,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 
@@ -42,7 +43,8 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
     public readonly urls: ExternalUrlService,
     public readonly i18n: I18nService,
     private readonly onlineService: OnlineStatusService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly destroyRef: QuietDestroyRef
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -52,7 +54,7 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
 
     this.projectDoc = await this.projectService.get(
       this.data.projectId,
-      new DocSubscription('RolesAndPermissionsDialogComponent')
+      new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
     );
     const project: Readonly<SFProject | undefined> = this.projectDoc.data;
 
@@ -92,7 +94,7 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
     await this.projectService.onlineUpdateUserRole(this.data.projectId, this.data.userId, selectedRole);
     this.projectDoc = await this.projectService.get(
       this.data.projectId,
-      new DocSubscription('RolesAndPermissionsDialogComponent')
+      new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
     );
 
     const permissions = new Set((this.projectDoc?.data?.userPermissions ?? {})[this.data.userId] ?? []);

@@ -111,7 +111,7 @@ export class ActivatedProjectService {
     this.projectId = projectId;
     const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(
       projectId,
-      new DocSubscription('ActivatedProjectService')
+      new DocSubscription('ActivatedProjectService', this.destroyRef)
     );
     // Make sure the project ID is still the same before updating the project document
     if (this.projectId === projectId) {

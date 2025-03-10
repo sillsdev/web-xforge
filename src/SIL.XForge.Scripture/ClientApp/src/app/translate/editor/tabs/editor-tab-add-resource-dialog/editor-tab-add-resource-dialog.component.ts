@@ -92,7 +92,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
             project?.projectId != null
               ? await this.projectService.get(
                   project.projectId,
-                  new DocSubscription('EditorTabAddResourceDialogComponent')
+                  new DocSubscription('EditorTabAddResourceDialogComponent', this.destroyRef)
                 )
               : undefined;
         } else {
@@ -102,7 +102,10 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
             : undefined;
           this.selectedProjectDoc =
             projectId != null && this.appOnline
-              ? await this.projectService.get(projectId, new DocSubscription('EditorTabAddResourceDialogComponent'))
+              ? await this.projectService.get(
+                  projectId,
+                  new DocSubscription('EditorTabAddResourceDialogComponent', this.destroyRef)
+                )
               : undefined;
         }
 

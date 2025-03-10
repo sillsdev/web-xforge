@@ -205,7 +205,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         this.loadingStarted();
         projectDocPromise = this.projectService.getProfile(
           params['projectId'],
-          new DocSubscription('CheckingOverviewComponent')
+          new DocSubscription('CheckingOverviewComponent', this.destroyRef)
         );
       }),
       map(params => params['projectId'] as string)
@@ -218,7 +218,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         this.projectUserConfigDoc = await this.projectService.getUserConfig(
           projectId,
           this.userService.currentUserId,
-          new DocSubscription('CheckingOverviewComponent')
+          new DocSubscription('CheckingOverviewComponent', this.destroyRef)
         );
         this.projectUserConfigDoc.submitJson0Op(op => op.set<string>(puc => puc.selectedTask!, 'checking'));
         this.questionsQuery?.dispose();
