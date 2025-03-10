@@ -19,7 +19,7 @@ import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
-import { DraftSource, DraftSourcesService } from '../draft-sources.service';
+import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
 
@@ -76,7 +76,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   describe('training and drafting sources different', async () => {
     const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
-    const config = {
+    const config: DraftSourcesAsArrays = {
       trainingSources: [
         {
           projectRef: 'source1',
@@ -94,24 +94,27 @@ describe('DraftGenerationStepsComponent', () => {
           writingSystem: { tag: 'grc' },
           texts: availableBooks
         }
-      ] as [DraftSource, DraftSource],
+      ],
       trainingTargets: [
         {
-          projectRef: mockActivatedProjectService.projectId,
+          projectRef: mockActivatedProjectService.projectId!,
+          paratextId: 'PT_TT',
+          name: 'Target Project',
           shortName: 'tT',
           writingSystem: { tag: 'xyz' },
           texts: availableBooks
         }
-      ] as [DraftSource],
+      ],
       draftingSources: [
         {
           projectRef: 'source2',
           paratextId: 'PT_SP2',
+          name: 'Source Project 2',
           shortName: 'sP2',
           writingSystem: { tag: 'es' },
           texts: availableBooks
         }
-      ] as [DraftSource]
+      ]
     };
 
     beforeEach(fakeAsync(() => {
@@ -147,7 +150,7 @@ describe('DraftGenerationStepsComponent', () => {
   describe('one training source', async () => {
     const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
     const allBooks = [...availableBooks, { bookNum: 6 }, { bookNum: 7 }];
-    const config = {
+    const config: DraftSourcesAsArrays = {
       trainingSources: [
         {
           projectRef: 'sourceProject',
@@ -156,25 +159,28 @@ describe('DraftGenerationStepsComponent', () => {
           shortName: 'sP',
           writingSystem: { tag: 'eng' },
           texts: allBooks.filter(b => b.bookNum !== 6)
-        },
-        undefined
-      ] as [DraftSource, DraftSource?],
+        }
+      ],
       trainingTargets: [
         {
-          projectRef: mockActivatedProjectService.projectId,
+          projectRef: mockActivatedProjectService.projectId!,
+          paratextId: 'PT_TT',
+          name: 'Target Project',
           shortName: 'tT',
           writingSystem: { tag: 'xyz' },
           texts: allBooks.filter(b => b.bookNum !== 7)
         }
-      ] as [DraftSource],
+      ],
       draftingSources: [
         {
           projectRef: 'sourceProject',
+          paratextId: 'PT_SP',
+          name: 'Source Project',
           shortName: 'sP',
           writingSystem: { tag: 'eng' },
           texts: allBooks.filter(b => b.bookNum !== 6)
         }
-      ] as [DraftSource]
+      ]
     };
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
@@ -642,7 +648,7 @@ describe('DraftGenerationStepsComponent', () => {
   describe('allow fast training feature flag is enabled', () => {
     const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 9 }, { bookNum: 10 }];
     const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 8 }];
-    const config = {
+    const config: DraftSourcesAsArrays = {
       trainingSources: [
         {
           projectRef: 'source1',
@@ -651,25 +657,28 @@ describe('DraftGenerationStepsComponent', () => {
           shortName: 'sP1',
           writingSystem: { tag: 'eng' },
           texts: availableBooks.concat({ bookNum: 1 })
-        },
-        undefined
-      ] as [DraftSource, DraftSource?],
+        }
+      ],
       trainingTargets: [
         {
-          projectRef: mockActivatedProjectService.projectId,
+          projectRef: mockActivatedProjectService.projectId!,
+          paratextId: 'PT_TT',
+          name: 'Target Project',
           shortName: 'tT',
           writingSystem: { tag: 'nllb' },
           texts: allBooks.filter(b => b.bookNum !== 1 && b.bookNum !== 7)
         }
-      ] as [DraftSource],
+      ],
       draftingSources: [
         {
           projectRef: 'draftingSource',
+          paratextId: 'PT_DS',
+          name: 'Drafting Source',
           shortName: 'dS',
           writingSystem: { tag: 'eng' },
           texts: availableBooks.concat({ bookNum: 7 })
         }
-      ] as [DraftSource]
+      ]
     };
 
     beforeEach(fakeAsync(() => {
@@ -812,7 +821,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   describe('can add additional training data', () => {
     const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }];
-    const config = {
+    const config: DraftSourcesAsArrays = {
       trainingSources: [
         {
           projectRef: 'source1',
@@ -821,25 +830,28 @@ describe('DraftGenerationStepsComponent', () => {
           shortName: 'sP1',
           writingSystem: { tag: 'eng' },
           texts: availableBooks
-        },
-        undefined
-      ] as [DraftSource, DraftSource?],
+        }
+      ],
       trainingTargets: [
         {
-          projectRef: mockActivatedProjectService.projectId,
+          projectRef: mockActivatedProjectService.projectId!,
+          paratextId: 'PT_TP',
+          name: 'Target Project',
           shortName: 'tT',
           writingSystem: { tag: 'nllb' },
           texts: availableBooks
         }
-      ] as [DraftSource],
+      ],
       draftingSources: [
         {
           projectRef: 'draftingSource',
+          paratextId: 'PT_DS',
+          name: 'Drafting Source',
           shortName: 'dS',
           writingSystem: { tag: 'eng' },
           texts: availableBooks
         }
-      ] as [DraftSource]
+      ]
     };
 
     const mockTargetProjectDoc: SFProjectProfileDoc = {

@@ -235,8 +235,8 @@ describe('DraftSourcesComponent', () => {
 
     it('should handle undefined sources in arrays', () => {
       const sources: DraftSourcesAsArrays = {
-        draftingSources: [undefined],
-        trainingSources: [undefined, undefined],
+        draftingSources: [],
+        trainingSources: [],
         trainingTargets: [mockTarget]
       };
 

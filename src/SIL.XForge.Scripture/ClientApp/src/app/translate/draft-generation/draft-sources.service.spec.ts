@@ -42,9 +42,9 @@ describe('DraftSourcesService', () => {
       // SUT
       service.getDraftProjectSources().subscribe(result => {
         expect(result).toEqual({
-          trainingSources: [undefined, undefined],
-          trainingTargets: [undefined],
-          draftingSources: [undefined]
+          trainingSources: [],
+          trainingTargets: [],
+          draftingSources: []
         } as DraftSourcesAsArrays);
         done();
       });
@@ -408,9 +408,9 @@ describe('DraftSourcesService', () => {
 
   function expectTargetOnly(targetProject: DraftSource, result: DraftSourcesAsArrays): void {
     expect(result).toEqual({
-      trainingSources: [undefined, undefined],
+      trainingSources: [],
       trainingTargets: [targetProject],
-      draftingSources: [undefined]
+      draftingSources: []
     } as DraftSourcesAsArrays);
   }
 });
