@@ -56,7 +56,7 @@ export class DraftSourcesService {
    * @returns An object with three arrays: trainingSources, trainingTargets, and draftingSources
    */
   getDraftProjectSources(): Observable<DraftSourcesAsArrays> {
-    return combineLatest([this.activatedProject.projectDoc$, this.currentUser$]).pipe(
+    return combineLatest([this.activatedProject.changes$, this.currentUser$]).pipe(
       switchMap(([targetDoc, currentUser]) => {
         const translateConfig: TranslateConfig | undefined = targetDoc?.data?.translateConfig;
 

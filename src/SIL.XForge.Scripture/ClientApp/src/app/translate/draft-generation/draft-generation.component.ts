@@ -69,26 +69,17 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
   draftJob?: BuildDto;
 
-  projectSettingsUrl?: string;
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
   draftHelp = this.i18n.interpolate('draft_generation.instructions_help');
 
   additionalTrainingSourceLanguage?: string;
-  additionalTrainingSourceLanguageDisplayName?: string;
-
   alternateTrainingSourceLanguage?: string;
-  alternateTrainingSourceLanguageDisplayName?: string;
-
   sourceLanguage?: string;
-  sourceLanguageDisplayName?: string;
-
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
-
   isTargetLanguageSupported = true;
   isBackTranslation = true;
-  isSourceProjectSet = true;
 
   source?: DraftSource;
   trainingSource?: DraftSource;
@@ -177,8 +168,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return (
       (!this.isBackTranslationMode || this.isBackTranslation) &&
       this.isTargetLanguageSupported &&
-      this.isSourceProjectSet &&
-      this.canAccessDraftSourceIfAvailable(this.source) &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
   }
@@ -215,6 +204,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return false;
   }
 
+  /** Have drafting sources been adequately configured that a draft can be generated? */
+  get isSourcesConfigurationComplete(): boolean {
+    return this.source != null && (this.trainingSource != null || this.additionalTrainingSource != null);
+  }
+
   ngOnInit(): void {
     this.loadingStarted();
 
@@ -238,28 +232,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
             const translateConfig = projectDoc.data?.translateConfig;
 
             this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
-            this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
-
-            // If an alternate source is specified, that will be used for drafting (not training)
-            if (
-              (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
-              translateConfig?.draftConfig.alternateSource != null
-            ) {
-              this.sourceLanguage = translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
-            } else {
-              this.sourceLanguage = translateConfig?.source?.writingSystem.tag;
-            }
-
-            this.alternateTrainingSourceLanguage =
-              translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
-            this.additionalTrainingSourceLanguage =
-              translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag;
-
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
-
-            this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
-
             this.hasDraftBooksAvailable = projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
           })
         ),
@@ -283,7 +257,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     );
 
     this.subscribe(
-      this.activatedProject.projectDoc$.pipe(
+      this.activatedProject.changes$.pipe(
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
@@ -311,13 +285,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     this.subscribe(this.i18n.locale$, () => {
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
-      this.sourceLanguageDisplayName = this.i18n.getLanguageDisplayName(this.sourceLanguage);
-      this.alternateTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
-        this.alternateTrainingSourceLanguage
-      );
-      this.additionalTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
-        this.additionalTrainingSourceLanguage
-      );
     });
   }
 
@@ -383,8 +350,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
+    const sfProjectId: string | undefined = this.activatedProject.projectId;
+    if (sfProjectId == null) {
+      throw new Error('SF Project ID is not set');
+    }
     this.startBuild({
-      projectId: this.activatedProject.projectId!,
+      projectId: sfProjectId,
       trainingDataFiles: result.trainingDataFiles,
       trainingScriptureRange: result.trainingScriptureRange,
       trainingScriptureRanges: result.trainingScriptureRanges,
@@ -492,7 +463,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   private pollBuild(): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
-      this.activatedProject.projectDoc$.pipe(
+      this.activatedProject.changes$.pipe(
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
@@ -522,7 +493,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   private cancelBuild(): void {
-    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe(() => {
+    const sfProjectId: string | undefined = this.activatedProject.projectId;
+    if (sfProjectId == null) {
+      throw new Error('SF Project ID is not set');
+    }
+    this.draftGenerationService.cancelBuild(sfProjectId).subscribe(() => {
       // If build is canceled, update job immediately instead of waiting for next poll cycle
       this.pollBuild();
     });
