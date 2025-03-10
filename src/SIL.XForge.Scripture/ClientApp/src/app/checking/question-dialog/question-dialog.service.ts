@@ -74,7 +74,7 @@ export class QuestionDialogService {
       await questionDoc.submitJson0Op(op =>
         op
           .set(q => q.verseRef, verseRefData)
-          .set(q => q.text!, text)
+          .set(q => q.text, text)
           .set(q => q.audioUrl, audioUrl)
           .set(q => q.dateModified, currentDate)
       );

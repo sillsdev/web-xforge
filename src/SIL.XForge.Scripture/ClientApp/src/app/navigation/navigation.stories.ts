@@ -91,7 +91,7 @@ function textFromMenuElement(element: Element): string | undefined {
 function activeMenuItemText(element: HTMLElement): string | undefined {
   const menuItems = element.querySelectorAll('.mdc-list-item.active, .mdc-list-item.activated-nav-item');
   expect(menuItems.length).toBe(1);
-  return textFromMenuElement(menuItems[0]!);
+  return textFromMenuElement(menuItems[0]);
 }
 
 function menuItems(element: HTMLElement): string[] {

@@ -127,7 +127,7 @@ describe('Quill history', () => {
     testCases.forEach(({ name, input, expectedAttrs }) => {
       it(`should handle ${name}`, () => {
         const result = removeObsoleteSegmentAttrs(input);
-        expect(result.ops![0].attributes).toEqual(expectedAttrs);
+        expect(result.ops[0].attributes).toEqual(expectedAttrs);
       });
     });
   });

@@ -101,7 +101,7 @@ describe('CheckingQuestionComponent', () => {
         audioUrl: 'test-audio-player-b.webm',
         projectRef: 'project01',
         text: 'another question',
-        verseRef: env.component.questionDoc.data!.verseRef!
+        verseRef: env.component.questionDoc.data!.verseRef
       }
     } as QuestionDoc;
 

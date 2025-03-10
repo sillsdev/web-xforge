@@ -55,8 +55,8 @@ describe('LanguageCodesConfirmationComponent', () => {
   it('shows standard message when language codes are equivalent language', () => {
     const draftSources = getStandardDraftSources();
     // Both map to the Chinese language
-    draftSources.draftingSources[0]!.languageTag = 'zh-CN';
-    draftSources.trainingSources[0]!.languageTag = 'cmn-Hans';
+    draftSources.draftingSources[0].languageTag = 'zh-CN';
+    draftSources.trainingSources[0].languageTag = 'cmn-Hans';
     component.draftSources = draftSources;
     fixture.detectChanges();
     expect(component.sourceSideLanguageCodes.length).toEqual(1);
@@ -64,7 +64,7 @@ describe('LanguageCodesConfirmationComponent', () => {
 
   it('should show target and source language codes identical message', () => {
     const draftSources = getStandardDraftSources();
-    draftSources.trainingTargets[0]!.languageTag = draftSources.trainingSources[0]!.languageTag;
+    draftSources.trainingTargets[0].languageTag = draftSources.trainingSources[0].languageTag;
     component.draftSources = draftSources;
     fixture.detectChanges();
     expect(component.sourceSideLanguageCodes.length).toEqual(1);
