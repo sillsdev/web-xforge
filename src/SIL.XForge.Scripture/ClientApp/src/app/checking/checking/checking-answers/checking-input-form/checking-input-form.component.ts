@@ -95,8 +95,8 @@ export class CheckingInputFormComponent {
     const verseRef = this._questionDoc.data.verseRef;
 
     const dialogData: TextChooserDialogData = {
-      bookNum: (this.verseRef && this.verseRef.bookNum) || verseRef!.bookNum,
-      chapterNum: (this.verseRef && this.verseRef.chapterNum) || verseRef!.chapterNum,
+      bookNum: (this.verseRef && this.verseRef.bookNum) || verseRef.bookNum,
+      chapterNum: (this.verseRef && this.verseRef.chapterNum) || verseRef.chapterNum,
       textsByBookId: this.textsByBookId,
       projectId: this._questionDoc.data.projectRef,
       isRightToLeft: this.project?.isRightToLeft,
