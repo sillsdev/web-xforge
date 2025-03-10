@@ -39,6 +39,7 @@ import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
+import { CacheService } from './shared/cache-service/cache.service';
 import { checkAppAccess } from './shared/utils';
 
 declare function gtag(...args: any): void;
@@ -86,6 +87,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
+    _cacheService: CacheService, //don't remove, as this needs to be used to be constructed
     onlineStatusService: OnlineStatusService
   ) {
     super(noticeService);
