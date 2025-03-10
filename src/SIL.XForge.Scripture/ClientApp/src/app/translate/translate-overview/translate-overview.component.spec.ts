@@ -353,9 +353,9 @@ class TestEnvironment {
     const items: NodeListOf<Element> = this.progressTextList.querySelectorAll('mat-list-item');
     const item: Element = items.item(index);
     const primaryElem: Element = item.querySelectorAll('.mat-mdc-list-item-title')[0];
-    expect(primaryElem!.textContent).toBe(primary);
+    expect(primaryElem.textContent).toBe(primary);
     const secondaryElem: Element = item.querySelectorAll('.mat-mdc-list-item-line')[0];
-    expect(secondaryElem!.textContent).toBe(secondary);
+    expect(secondaryElem.textContent).toBe(secondary);
   }
 
   setupProjectData(projectConfig: TestProjectConfiguration = {}): void {

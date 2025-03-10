@@ -486,14 +486,14 @@ describe('DraftGenerationStepsComponent', () => {
       const unusableTranslateBooks = fixture.nativeElement.querySelector('.unusable-translate-books');
       expect(unusableTranslateBooks).not.toBeNull();
       expect(unusableTranslateBooks.querySelector('.explanation')).toBeNull();
-      unusableTranslateBooks.querySelector('.books-hidden-message')!.click();
+      unusableTranslateBooks.querySelector('.books-hidden-message').click();
       tick();
       fixture.detectChanges();
       expect(unusableTranslateBooks.querySelector('.explanation')).not.toBeNull();
       const unusableTrainingBooks = fixture.nativeElement.querySelector('.unusable-training-books');
       expect(unusableTrainingBooks).not.toBeNull();
       expect(unusableTrainingBooks.querySelector('.explanation')).toBeNull();
-      unusableTrainingBooks.querySelector('.books-hidden-message')!.click();
+      unusableTrainingBooks.querySelector('.books-hidden-message').click();
       tick();
       fixture.detectChanges();
       expect(unusableTrainingBooks.querySelector('.explanation')).not.toBeNull();
