@@ -38,6 +38,12 @@ export interface JsonRpcError {
   data?: any;
 }
 
+export function isNetworkError(error: any): boolean {
+  return (
+    error instanceof CommandError && hasStringProp(error, 'message') && error.message.includes('504 Gateway Timeout')
+  );
+}
+
 export class CommandError extends Error {
   constructor(
     public readonly code: CommandErrorCode,
