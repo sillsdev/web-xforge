@@ -1,7 +1,9 @@
 import { HttpClient } from '@angular/common/http';
+import { DestroyRef } from '@angular/core';
 import { fakeAsync, flush } from '@angular/core/testing';
 import { instance, mock, when } from 'ts-mockito';
 import { OnlineStatusService } from './online-status.service';
+import { QuietDestroyRef } from './utils';
 
 const mockedHttpClient = mock(HttpClient);
 const mockedNavigator = mock(Navigator);
@@ -86,10 +88,22 @@ describe('OnlineStatusService', () => {
 class TestEnvironment {
   readonly onlineStatusService: OnlineStatusService;
   private navigatorOnline: boolean = true;
+  private onDestroyCallback;
+  private destroyRef: DestroyRef = {
+    onDestroy: _callback => {
+      this.onDestroyCallback = _callback;
+      return () => {};
+    }
+  };
+  private quietDestroyRef: QuietDestroyRef = new QuietDestroyRef(this.destroyRef);
 
   constructor() {
     when(mockedNavigator.onLine).thenCall(() => this.navigatorOnline);
-    this.onlineStatusService = new OnlineStatusService(instance(mockedHttpClient), instance(mockedNavigator));
+    this.onlineStatusService = new OnlineStatusService(
+      instance(mockedHttpClient),
+      instance(mockedNavigator),
+      this.quietDestroyRef
+    );
   }
 
   set onlineStatus(status: boolean) {
@@ -98,6 +112,6 @@ class TestEnvironment {
   }
 
   dispose(): void {
-    this.onlineStatusService.dispose();
+    this.onDestroyCallback();
   }
 }

@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -17,6 +18,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -53,7 +55,8 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
     public readonly progressService: ProgressService,
-    readonly i18n: I18nService
+    readonly i18n: I18nService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
     this.engineQualityStars = [];
@@ -91,51 +94,55 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   ngOnInit(): void {
-    this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
-      this.projectDoc = await this.projectService.getProfile(projectId);
+    this.activatedRoute.params
+      .pipe(
+        map(params => params['projectId']),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(async projectId => {
+        this.projectDoc = await this.projectService.getProfile(projectId);
 
-      // Update the overview now if we are online, or when we are next online
-      this.onlineStatusService.online.then(async () => {
-        this.loadingStarted();
-        try {
-          if (this.translationEngine == null) {
-            this.setupTranslationEngine();
-          }
-          await this.updateEngineStats();
-          await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
-        } finally {
-          this.loadingFinished();
-        }
-      });
-
-      if (this.projectDataChangesSub != null) {
-        this.projectDataChangesSub.unsubscribe();
-      }
-      this.projectDataChangesSub = this.projectDoc.remoteChanges$
-        .pipe(
-          tap(() => {
-            if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
-              this.setupTranslationEngine();
-            }
-          }),
-          filter(ops => ops.some(op => TEXT_PATH_TEMPLATE.matches(op.p))),
-          // TODO Find a better solution than merely throttling remote changes
-          throttleTime(1000, asyncScheduler, { leading: true, trailing: true })
-        )
-        .subscribe(async () => {
+        // Update the overview now if we are online, or when we are next online
+        this.onlineStatusService.online.then(async () => {
           this.loadingStarted();
           try {
+            if (this.translationEngine == null) {
+              this.setupTranslationEngine();
+            }
             await this.updateEngineStats();
             await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
           } finally {
             this.loadingFinished();
           }
         });
-    });
+
+        if (this.projectDataChangesSub != null) {
+          this.projectDataChangesSub.unsubscribe();
+        }
+        this.projectDataChangesSub = this.projectDoc.remoteChanges$
+          .pipe(
+            tap(() => {
+              if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
+                this.setupTranslationEngine();
+              }
+            }),
+            filter(ops => ops.some(op => TEXT_PATH_TEMPLATE.matches(op.p))),
+            // TODO Find a better solution than merely throttling remote changes
+            throttleTime(1000, asyncScheduler, { leading: true, trailing: true })
+          )
+          .subscribe(async () => {
+            this.loadingStarted();
+            try {
+              await this.updateEngineStats();
+              await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
+            } finally {
+              this.loadingFinished();
+            }
+          });
+      });
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     if (this.trainingSub != null) {
       this.trainingSub.unsubscribe();
     }

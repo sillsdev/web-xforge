@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Canon } from '@sillsdev/scripture';
 import { cloneDeep, reject } from 'lodash-es';
@@ -14,8 +15,7 @@ import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { objectId } from 'xforge-common/utils';
+import { objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -45,7 +45,7 @@ export interface ChapterAudioDialogResult {
   templateUrl: './chapter-audio-dialog.component.html',
   styleUrls: ['./chapter-audio-dialog.component.scss']
 })
-export class ChapterAudioDialogComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
+export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;
   @ViewChild('fileDropzone') fileDropzone?: ElementRef<HTMLInputElement>;
   @ViewChild('chapterAudio') chapterAudio?: SingleButtonAudioPlayerComponent;
@@ -65,7 +65,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private _loadingAudio: boolean = false;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: ChapterAudioDialogData,
     private readonly csvService: CsvService,
@@ -76,7 +76,6 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     private readonly projectService: SFProjectService,
     protected readonly externalUrlService: ExternalUrlService
   ) {
-    super();
     this.getStartingLocation();
   }
 
@@ -230,7 +229,6 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     if (this.textAudioQuery != null) {
       this.textAudioQuery.dispose();
     }
@@ -471,31 +469,36 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       this.checkForPreexistingAudio();
       return;
     }
-    this.subscribe(this.textAudioQuery.ready$.pipe(filter(ready => ready)), () => {
-      const textAudioId: string = getTextAudioId(this.data.projectId, this.book, this.chapter);
-      const doc = this.textAudioQuery?.docs.find(t => t.id === textAudioId)?.data;
-      this.checkForPreexistingAudio();
-      if (doc == null) {
-        return;
-      }
-      this._editState = true;
-      this.timing = this.timing_processed = doc.timings;
-      this.fileService
-        .findOrUpdateCache(FileType.Audio, TextAudioDoc.COLLECTION, textAudioId, doc.audioUrl)
-        .then(data => {
-          if (data == null) {
-            return;
-          }
-          // Use book and chapter for the filename as the original filename is now unknown
-          const audioAttachment: AudioAttachment = {
-            url: data.onlineUrl,
-            blob: data.blob,
-            fileName: this.i18n.localizeBook(this.data.currentBook!) + ' ' + this.data.currentChapter,
-            status: 'uploaded'
-          };
-          this.audioUpdate(audioAttachment);
-        });
-    });
+    this.textAudioQuery.ready$
+      .pipe(
+        filter(ready => ready),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        const textAudioId: string = getTextAudioId(this.data.projectId, this.book, this.chapter);
+        const doc = this.textAudioQuery?.docs.find(t => t.id === textAudioId)?.data;
+        this.checkForPreexistingAudio();
+        if (doc == null) {
+          return;
+        }
+        this._editState = true;
+        this.timing = this.timing_processed = doc.timings;
+        this.fileService
+          .findOrUpdateCache(FileType.Audio, TextAudioDoc.COLLECTION, textAudioId, doc.audioUrl)
+          .then(data => {
+            if (data == null) {
+              return;
+            }
+            // Use book and chapter for the filename as the original filename is now unknown
+            const audioAttachment: AudioAttachment = {
+              url: data.onlineUrl,
+              blob: data.blob,
+              fileName: this.i18n.localizeBook(this.data.currentBook!) + ' ' + this.data.currentChapter,
+              status: 'uploaded'
+            };
+            this.audioUpdate(audioAttachment);
+          });
+      });
   }
 
   /**

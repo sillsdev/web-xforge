@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -10,8 +11,8 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
@@ -24,7 +25,7 @@ import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } f
   templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.scss']
 })
-export class NavigationComponent extends SubscriptionDisposable {
+export class NavigationComponent {
   canSeeSettings$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
     switchMap(projectId => (projectId == null ? of(false) : this.settingsAuthGuard.allowTransition(projectId)))
   );
@@ -84,10 +85,10 @@ export class NavigationComponent extends SubscriptionDisposable {
     private readonly resumeCheckingService: ResumeCheckingService,
     private readonly router: Router,
     private readonly activatedProjectService: ActivatedProjectService,
-    readonly featureFlags: FeatureFlagService
+    readonly featureFlags: FeatureFlagService,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
-    this.subscribe(this.activatedProjectService.projectId$, projectId => {
+    this.activatedProjectService.projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectId => {
       this.updateProjectUserConfig(projectId);
     });
   }

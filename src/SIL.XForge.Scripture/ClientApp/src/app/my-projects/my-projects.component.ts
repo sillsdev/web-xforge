@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
@@ -9,9 +10,9 @@ import { en } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -27,7 +28,7 @@ import { SFProjectService } from '../core/sf-project.service';
   templateUrl: './my-projects.component.html',
   styleUrls: ['./my-projects.component.scss']
 })
-export class MyProjectsComponent extends SubscriptionDisposable implements OnInit {
+export class MyProjectsComponent implements OnInit {
   /** PT projects that the user can access. */
   private userParatextProjects: ParatextProject[] = [];
 
@@ -53,10 +54,9 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     private readonly userService: UserService,
     private readonly permissions: PermissionsService,
     private readonly noticeService: NoticeService,
-    private readonly router: Router
-  ) {
-    super();
-  }
+    private readonly router: Router,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   /** If we are aware of any SF or PT projects that the user can access. */
   get userHasProjects(): boolean {
@@ -82,14 +82,16 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
 
   async ngOnInit(): Promise<void> {
     await this.loadUser();
-    this.subscribe(this.userProjectsService.projectDocs$, (projects?: SFProjectProfileDoc[]) => {
-      if (projects == null) return;
-      this.userConnectedProjects = projects.filter(
-        project => project.data != null && !isResource(project.data) && !this.joiningProjects.includes(project.id)
-      );
-      this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
-      this.initialLoadingSFProjects = false;
-    });
+    this.userProjectsService.projectDocs$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((projects?: SFProjectProfileDoc[]) => {
+        if (projects == null) return;
+        this.userConnectedProjects = projects.filter(
+          project => project.data != null && !isResource(project.data) && !this.joiningProjects.includes(project.id)
+        );
+        this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
+        this.initialLoadingSFProjects = false;
+      });
 
     await this.onlineStatusService.online;
     if (this.userIsPTUser) await this.loadParatextProjects();

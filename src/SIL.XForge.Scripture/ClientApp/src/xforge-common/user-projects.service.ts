@@ -1,28 +1,29 @@
 import { Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { compareProjectsForSorting } from '../app/shared/utils';
 import { environment } from '../environments/environment';
 import { AuthService, LoginResult } from './auth.service';
 import { UserDoc } from './models/user-doc';
-import { SubscriptionDisposable } from './subscription-disposable';
 import { UserService } from './user.service';
 
 /** Service that maintains an up-to-date set of SF project docs that the current user has access to. */
 @Injectable({
   providedIn: 'root'
 })
-export class SFUserProjectsService extends SubscriptionDisposable {
+export class SFUserProjectsService {
   private projectDocs: Map<string, SFProjectProfileDoc> = new Map();
   private _projectDocs$ = new BehaviorSubject<SFProjectProfileDoc[] | undefined>(undefined);
 
   constructor(
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
     this.setup();
   }
 
@@ -32,13 +33,13 @@ export class SFUserProjectsService extends SubscriptionDisposable {
   }
 
   private async setup(): Promise<void> {
-    this.subscribe(this.authService.loggedInState$, async (state: LoginResult) => {
+    this.authService.loggedInState$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async (state: LoginResult) => {
       if (!state.loggedIn) {
         return;
       }
       const userDoc = await this.userService.getCurrentUser();
       this.updateProjectList(userDoc);
-      this.subscribe(userDoc.remoteChanges$, () => this.updateProjectList(userDoc));
+      userDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.updateProjectList(userDoc));
     });
   }
 

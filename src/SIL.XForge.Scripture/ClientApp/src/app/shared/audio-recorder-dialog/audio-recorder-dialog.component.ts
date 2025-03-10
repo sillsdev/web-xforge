@@ -1,15 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  DestroyRef,
-  EventEmitter,
-  Inject,
-  Input,
-  OnDestroy,
-  OnInit,
-  Output,
-  ViewChild
-} from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -24,7 +14,7 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { audioRecordingMimeType, objectId } from 'xforge-common/utils';
+import { QuietDestroyRef, audioRecordingMimeType, objectId } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { SharedModule } from '../shared.module';
 
@@ -87,7 +77,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly dialogService: DialogService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: QuietDestroyRef
   ) {
     this.showCountdown = data?.countdown ?? false;
     if (data?.audio != null) {

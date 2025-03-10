@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { VerseRef } from '@sillsdev/scripture';
 import { IOutputAreaSizes } from 'angular-split';
 import { clone } from 'lodash-es';
 import { fromEvent, Observable, Subscription } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -15,7 +16,7 @@ import { verseRefFromMouseEvent } from '../../../shared/utils';
   templateUrl: './checking-text.component.html',
   styleUrls: ['./checking-text.component.scss']
 })
-export class CheckingTextComponent extends SubscriptionDisposable implements AfterViewInit {
+export class CheckingTextComponent implements AfterViewInit {
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
   @Input() resizableContainer?: { transitionEnd: Observable<IOutputAreaSizes> };
@@ -29,13 +30,14 @@ export class CheckingTextComponent extends SubscriptionDisposable implements Aft
   private _questionVerses?: VerseRef[];
   private _placeholder?: string;
 
-  constructor(readonly fontService: FontService) {
-    super();
-  }
+  constructor(
+    readonly fontService: FontService,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   ngAfterViewInit(): void {
     if (this.resizableContainer != null) {
-      this.subscribe(this.resizableContainer.transitionEnd, () => {
+      this.resizableContainer.transitionEnd.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
         this.scrollToVerse(this.activeVerse);
       });
     }
@@ -140,15 +142,17 @@ export class CheckingTextComponent extends SubscriptionDisposable implements Aft
         continue;
       }
       this.clickSubs.push(
-        this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
-          if (this._id == null) {
-            return;
-          }
-          const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this._id.bookNum);
-          if (verseRef != null) {
-            this.questionVerseSelected.emit(verseRef);
-          }
-        })
+        fromEvent<MouseEvent>(element, 'click')
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(event => {
+            if (this._id == null) {
+              return;
+            }
+            const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this._id.bookNum);
+            if (verseRef != null) {
+              this.questionVerseSelected.emit(verseRef);
+            }
+          })
       );
     }
   }

@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, Inject } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Observable } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { QuietDestroyRef } from 'xforge-common/utils';
 
 export interface DraftApplyProgress {
   bookNum: number;
@@ -28,7 +29,7 @@ export class DraftApplyProgressDialogComponent {
     @Inject(MatDialogRef) private readonly dialogRef: MatDialogRef<DraftApplyProgressDialogComponent>,
     @Inject(MAT_DIALOG_DATA) data: { draftApplyProgress$: Observable<DraftApplyProgress | undefined> },
     private readonly i18n: I18nService,
-    destroyRef: DestroyRef
+    destroyRef: QuietDestroyRef
   ) {
     data.draftApplyProgress$
       .pipe(takeUntilDestroyed(destroyRef))

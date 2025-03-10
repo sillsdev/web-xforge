@@ -1,4 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Subscription, asyncScheduler, merge, startWith, tap, throttleTime } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -6,6 +7,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
@@ -49,23 +51,24 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     private readonly activatedProject: ActivatedProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private readonly permissionsService: PermissionsService
+    private readonly permissionsService: PermissionsService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
 
-    this.subscribe(
-      this.activatedProject.changes$.pipe(
+    this.activatedProject.changes$
+      .pipe(
         startWith(this.activatedProject.projectDoc),
         filterNullish(),
         tap(async project => {
           this.initialize(project.id);
         }),
-        throttleTime(1000, asyncScheduler, { leading: false, trailing: true })
-      ),
-      project => {
+        throttleTime(1000, asyncScheduler, { leading: false, trailing: true }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(project => {
         this.initialize(project.id);
-      }
-    );
+      });
   }
 
   get texts(): TextProgress[] {
@@ -78,7 +81,6 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     this._allChaptersChangeSub?.unsubscribe();
   }
 

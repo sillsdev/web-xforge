@@ -1,5 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
@@ -32,7 +33,7 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
-import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
+import { issuesEmailTemplate, QuietDestroyRef, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -86,22 +87,23 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
-    onlineStatusService: OnlineStatusService
+    onlineStatusService: OnlineStatusService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
-    this.subscribe(
-      this.breakpointObserver.observe(this.breakpointService.width('>', Breakpoint.LG)),
-      (value: BreakpointState) => (this.isDrawerPermanent = value.matches)
-    );
+    this.breakpointObserver
+      .observe(this.breakpointService.width('>', Breakpoint.LG))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value: BreakpointState) => (this.isDrawerPermanent = value.matches));
 
-    this.subscribe(
-      this.breakpointObserver.observe(this.breakpointService.width('<', Breakpoint.SM)),
-      (state: BreakpointState) => (this.isScreenTiny = state.matches)
-    );
+    this.breakpointObserver
+      .observe(this.breakpointService.width('<', Breakpoint.SM))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((state: BreakpointState) => (this.isScreenTiny = state.matches));
 
     // Check full online status changes
     this.isAppOnline = onlineStatusService.isOnline;
-    this.subscribe(onlineStatusService.onlineStatus$, status => {
+    onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status !== this.isAppOnline) {
         this.isAppOnline = status;
         this.checkDeviceStorage();
@@ -109,7 +111,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     });
 
     // Check browser online status to allow checks with Auth0
-    this.subscribe(onlineStatusService.onlineBrowserStatus$, status => {
+    onlineStatusService.onlineBrowserStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       // Check authentication when coming back online
       // This is also run on first load when the websocket connects for the first time
       if (status && !this.isAppLoading) {
@@ -117,7 +119,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
     });
 
-    this.subscribe(pwaService.hasUpdate$, () => (this.hasUpdate = true));
+    pwaService.hasUpdate$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => (this.hasUpdate = true));
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
     if (environment.releaseStage === 'live') {
@@ -125,7 +127,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         filter(e => e instanceof NavigationEnd),
         map(e => e as NavigationEnd)
       );
-      this.subscribe(navEndEvent$, e => {
+      navEndEvent$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(e => {
         if (this.isAppOnline) {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
@@ -262,59 +264,61 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
 
     // Monitor current project
-    this.subscribe(this.activatedProjectService.projectDoc$, async (selectedProjectDoc?: SFProjectProfileDoc) => {
-      this._selectedProjectDoc = selectedProjectDoc;
-      if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
-        return;
-      }
-      this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(
-        this._selectedProjectDoc.id,
-        this.currentUserDoc!.id
-      );
-      if (this.selectedProjectDeleteSub != null) {
-        this.selectedProjectDeleteSub.unsubscribe();
-      }
-      this.selectedProjectDeleteSub = this._selectedProjectDoc?.delete$.subscribe(() => {
-        // handle remotely deleted project
-        const userDoc = this.currentUserDoc;
-        if (userDoc != null && this.userService.currentProjectId(userDoc) != null) {
-          this.showProjectDeletedDialog();
+    this.activatedProjectService.projectDoc$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (selectedProjectDoc?: SFProjectProfileDoc) => {
+        this._selectedProjectDoc = selectedProjectDoc;
+        if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
+          return;
         }
-      });
-
-      this.permissionsChangedSub?.unsubscribe();
-      this.permissionsChangedSub = this._selectedProjectDoc?.remoteChanges$.subscribe(() => {
-        if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
-          // If the user is in the Serval administration page, do not check access,
-          // as they will be modifying the project's properties
-          if (
-            this.locationService.pathname.includes('serval-administration') &&
-            this.currentUser?.roles.includes(SystemRole.ServalAdmin)
-          ) {
-            return;
-          }
-          // See if the user was removed from the project
-          if (!(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)) {
-            // The user has been removed from the project
+        this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
+        this.projectUserConfigDoc = await this.projectService.getUserConfig(
+          this._selectedProjectDoc.id,
+          this.currentUserDoc!.id
+        );
+        if (this.selectedProjectDeleteSub != null) {
+          this.selectedProjectDeleteSub.unsubscribe();
+        }
+        this.selectedProjectDeleteSub = this._selectedProjectDoc?.delete$.subscribe(() => {
+          // handle remotely deleted project
+          const userDoc = this.currentUserDoc;
+          if (userDoc != null && this.userService.currentProjectId(userDoc) != null) {
             this.showProjectDeletedDialog();
-            this.projectService.localDelete(this._selectedProjectDoc.id);
           }
+        });
 
-          if (this.projectUserConfigDoc != null) {
-            checkAppAccess(
-              this._selectedProjectDoc,
-              this.currentUserDoc.id,
-              this.projectUserConfigDoc,
-              this.locationService.pathname,
-              this.router
-            );
+        this.permissionsChangedSub?.unsubscribe();
+        this.permissionsChangedSub = this._selectedProjectDoc?.remoteChanges$.subscribe(() => {
+          if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
+            // If the user is in the Serval administration page, do not check access,
+            // as they will be modifying the project's properties
+            if (
+              this.locationService.pathname.includes('serval-administration') &&
+              this.currentUser?.roles.includes(SystemRole.ServalAdmin)
+            ) {
+              return;
+            }
+            // See if the user was removed from the project
+            if (!(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)) {
+              // The user has been removed from the project
+              this.showProjectDeletedDialog();
+              this.projectService.localDelete(this._selectedProjectDoc.id);
+            }
+
+            if (this.projectUserConfigDoc != null) {
+              checkAppAccess(
+                this._selectedProjectDoc,
+                this.currentUserDoc.id,
+                this.projectUserConfigDoc,
+                this.locationService.pathname,
+                this.router
+              );
+            }
           }
-        }
+        });
+
+        this.checkDeviceStorage();
       });
-
-      this.checkDeviceStorage();
-    });
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -328,7 +332,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     this.selectedProjectDeleteSub?.unsubscribe();
     this.permissionsChangedSub?.unsubscribe();
   }

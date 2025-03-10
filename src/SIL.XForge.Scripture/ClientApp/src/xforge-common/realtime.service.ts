@@ -1,6 +1,7 @@
 import { DestroyRef, Injectable, Optional } from '@angular/core';
 import { filter, race, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
+import { IDestroyRef } from 'xforge-common/utils';
 import { FileService } from './file.service';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
@@ -148,7 +149,7 @@ export class RealtimeService {
   async subscribeQuery<T extends RealtimeDoc>(
     collection: string,
     parameters: QueryParameters,
-    destroyRef: DestroyRef
+    destroyRef: IDestroyRef
   ): Promise<RealtimeQuery<T>> {
     const query = this.createQuery<T>(collection, parameters);
     return this.manageQuery(
@@ -214,7 +215,7 @@ export class RealtimeService {
    */
   private manageQuery<T extends RealtimeDoc>(
     queryPromise: Promise<RealtimeQuery<T>>,
-    destroyRef: DestroyRef
+    destroyRef: IDestroyRef
   ): Promise<RealtimeQuery<T>> {
     try {
       destroyRef.onDestroy(() =>

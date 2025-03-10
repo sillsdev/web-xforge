@@ -1,6 +1,8 @@
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { lastValueFrom, Observable, Subject } from 'rxjs';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -16,7 +18,6 @@ import { ProjectDataDoc } from './models/project-data-doc';
 import { OfflineStore } from './offline-store';
 import { OnlineStatusService } from './online-status.service';
 import { RealtimeService } from './realtime.service';
-import { SubscriptionDisposable } from './subscription-disposable';
 import { TypeRegistry } from './type-registry';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 
@@ -43,7 +44,7 @@ export function isLocalBlobUrl(url: string): boolean {
 @Injectable({
   providedIn: 'root'
 })
-export class FileService extends SubscriptionDisposable {
+export class FileService {
   private _fileSyncComplete$: Subject<void> = new Subject();
   private limitedStorageDialogPromise?: Promise<void>;
   private realtimeService?: RealtimeService;
@@ -55,10 +56,9 @@ export class FileService extends SubscriptionDisposable {
     private readonly http: HttpClient,
     private readonly authService: AuthService,
     private readonly commandService: CommandService,
-    private readonly dialogService: DialogService
-  ) {
-    super();
-  }
+    private readonly dialogService: DialogService,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   get fileSyncComplete$(): Observable<void> {
     return this._fileSyncComplete$;
@@ -66,7 +66,7 @@ export class FileService extends SubscriptionDisposable {
 
   init(realtimeService: RealtimeService): void {
     this.realtimeService = realtimeService;
-    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       if (isOnline) {
         this.syncFiles();
       }

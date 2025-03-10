@@ -1,7 +1,8 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, EventEmitter, HostBinding, Inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Inject, Input, OnInit, Output } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, distinctUntilChanged, fromEvent, merge } from 'rxjs';
+import { QuietDestroyRef } from 'xforge-common/utils';
 
 @Component({
   selector: 'app-tab-scroll-button',
@@ -21,7 +22,7 @@ export class TabScrollButtonComponent implements OnInit {
   scroll$ = new BehaviorSubject(false);
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     @Inject(DOCUMENT) private readonly document: Document
   ) {}
 

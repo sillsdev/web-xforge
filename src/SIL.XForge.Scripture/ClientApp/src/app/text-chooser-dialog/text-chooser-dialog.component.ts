@@ -1,4 +1,5 @@
 import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { VerseRef } from '@sillsdev/scripture';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
@@ -7,7 +8,7 @@ import { auditTime } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { TextDocId } from '../core/models/text-doc';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import {
@@ -38,7 +39,7 @@ export interface TextSelection {
   templateUrl: './text-chooser-dialog.component.html',
   styleUrls: ['./text-chooser-dialog.component.scss']
 })
-export class TextChooserDialogComponent extends SubscriptionDisposable {
+export class TextChooserDialogComponent {
   @ViewChild(TextComponent, { read: ElementRef }) scriptureText?: ElementRef;
   selectedText?: string;
   showError = false;
@@ -58,14 +59,16 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     @Inject(DOCUMENT) private readonly document: Document,
-    @Optional() @Inject(MAT_DIALOG_DATA) private readonly data: TextChooserDialogData
+    @Optional() @Inject(MAT_DIALOG_DATA) private readonly data: TextChooserDialogData,
+    private destroyRef: QuietDestroyRef
   ) {
-    super();
     // caniuse doesn't have complete data for the selection events api, but testing on BrowserStack shows the event is
     // fired at least as far back as iOS v7 on Safari 7.
     // Edge 42 with EdgeHTML 17 also fires the events.
     // Firefox and Chrome also support it. We can degrade gracefully by getting the selection when the dialog closes.
-    this.subscribe(fromEvent(this.document, 'selectionchange').pipe(auditTime(100)), () => this.updateSelection());
+    fromEvent(this.document, 'selectionchange')
+      .pipe(auditTime(100), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateSelection());
 
     this.bookNum = this.data.bookNum;
     this.chapterNum = this.data.chapterNum;
