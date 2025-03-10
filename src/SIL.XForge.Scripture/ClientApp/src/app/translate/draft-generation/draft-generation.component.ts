@@ -449,6 +449,18 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   startBuild(buildConfig: BuildConfig): void {
+    this.draftGenerationService
+      .getBuildProgress(buildConfig.projectId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(job => {
+        if (this.isDraftInProgress(job)) {
+          this.draftJob = job;
+          this.currentPage = 'initial';
+          this.noticeService.show(this.i18n.translateStatic('draft_generation.draft_already_running'));
+          return;
+        }
+      });
+
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.draftGenerationService
       .startBuildOrGetActiveBuild(buildConfig)
