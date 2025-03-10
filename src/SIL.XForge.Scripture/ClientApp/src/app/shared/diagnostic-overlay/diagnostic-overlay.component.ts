@@ -49,7 +49,7 @@ export class DiagnosticOverlayComponent {
     return this.realtimeService.queriesByCollection;
   }
 
-  get subscriberCountsByContext(): { [key: string]: { [key: string]: number } } {
+  get subscriberCountsByContext(): { [key: string]: { [key: string]: { all: number; active: number } } } {
     return this.realtimeService.subscriberCountsByContext;
   }
 

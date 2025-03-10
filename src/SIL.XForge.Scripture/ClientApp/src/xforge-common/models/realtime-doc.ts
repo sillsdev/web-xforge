@@ -3,6 +3,7 @@ import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { PresenceData } from '../../app/shared/text/text.component';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
+import { IDestroyRef } from '../utils';
 import { RealtimeOfflineData } from './realtime-offline-data';
 import { Snapshot } from './snapshot';
 
@@ -39,7 +40,14 @@ export class DocSubscription {
    * Creates a new DocSubscription.
    * @param callerContext A description of the context in which the subscription was created (e.g. component name).
    */
-  constructor(readonly callerContext: string) {}
+  constructor(
+    readonly callerContext: string,
+    destroyRef?: IDestroyRef
+  ) {
+    if (destroyRef != null) {
+      destroyRef.onDestroy(() => (this.isUnsubscribed = true));
+    }
+  }
 
   /**
    * Creates a new DocSubscription that represents an unknown subscriber (a temporary solution to track subscribers

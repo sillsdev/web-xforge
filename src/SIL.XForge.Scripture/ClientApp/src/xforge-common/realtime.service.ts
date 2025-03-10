@@ -82,8 +82,8 @@ export class RealtimeService {
     return countsByCollection;
   }
 
-  get subscriberCountsByContext(): { [key: string]: { [key: string]: number } } {
-    const countsByContext: { [key: string]: { [key: string]: number } } = {};
+  get subscriberCountsByContext(): { [key: string]: { [key: string]: { all: number; active: number } } } {
+    const countsByContext: { [key: string]: { [key: string]: { all: number; active: number } } } = {};
     for (const [id, doc] of this.docs.entries()) {
       const collection = id.split(':')[0];
       if (countsByContext[collection] == null) {
@@ -91,9 +91,12 @@ export class RealtimeService {
       }
       for (const subscriber of doc.docSubscriptions) {
         if (countsByContext[collection][subscriber.callerContext] == null) {
-          countsByContext[collection][subscriber.callerContext] = 0;
+          countsByContext[collection][subscriber.callerContext] = { all: 0, active: 0 };
         }
-        countsByContext[collection][subscriber.callerContext]++;
+        countsByContext[collection][subscriber.callerContext].all++;
+        if (!subscriber.isUnsubscribed) {
+          countsByContext[collection][subscriber.callerContext].active++;
+        }
       }
     }
     return countsByContext;

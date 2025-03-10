@@ -43,7 +43,8 @@
         <tr>
           <th>Collection</th>
           <th>Context</th>
-          <th>Subscribers</th>
+          <th>Subs</th>
+          <th>Active</th>
         </tr>
       </thead>
       <tbody>
@@ -54,7 +55,8 @@
                 <th [attr.rowspan]="count">{{ collection.key }}</th>
               }
               <td>{{ doc.key }}</td>
-              <td>{{ doc.value | l10nNumber }}</td>
+              <td>{{ doc.value.all | l10nNumber }}</td>
+              <td>{{ doc.value.active | l10nNumber }}</td>
             </tr>
           }
         }
