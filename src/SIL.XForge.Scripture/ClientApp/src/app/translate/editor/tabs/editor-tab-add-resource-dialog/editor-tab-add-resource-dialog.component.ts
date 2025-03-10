@@ -1,9 +1,10 @@
-import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { map, repeat, take, timer } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { SelectableProject } from '../../../../core/paratext.service';
@@ -47,7 +48,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   });
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     readonly onlineStatus: OnlineStatusService,
     private readonly editorTabAddResourceDialogService: EditorTabAddResourceDialogService,
     private readonly projectService: SFProjectService,

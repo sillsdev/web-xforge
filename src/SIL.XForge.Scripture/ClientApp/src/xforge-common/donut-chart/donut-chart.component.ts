@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, Input, NgZone, QueryList, ViewChildren } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from 'lodash-es';
-import { SubscriptionDisposable } from '../subscription-disposable';
+import { QuietDestroyRef } from 'xforge-common/utils';
 
 const DEFAULT_SIZE = 100;
 
@@ -21,7 +22,7 @@ function getPercentages(data: number[]): number[] {
   templateUrl: './donut-chart.component.html',
   styleUrls: ['./donut-chart.component.scss']
 })
-export class DonutChartComponent extends SubscriptionDisposable implements AfterViewInit {
+export class DonutChartComponent implements AfterViewInit {
   @Input() animationDuration: number = 1000;
   readonly viewBox: string = `0 0 ${DEFAULT_SIZE} ${DEFAULT_SIZE}`;
   readonly cx: number = DEFAULT_SIZE / 2;
@@ -36,14 +37,15 @@ export class DonutChartComponent extends SubscriptionDisposable implements After
   private _colors: string[] = [];
   private lastAnimationId: number = -1;
 
-  constructor(private readonly ngZone: NgZone) {
-    super();
-  }
+  constructor(
+    private readonly ngZone: NgZone,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   ngAfterViewInit(): void {
     this.animateChange();
     if (this.segmentCircles != null) {
-      this.subscribe(this.segmentCircles.changes, () => this.animateChange());
+      this.segmentCircles.changes.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.animateChange());
     }
   }
 

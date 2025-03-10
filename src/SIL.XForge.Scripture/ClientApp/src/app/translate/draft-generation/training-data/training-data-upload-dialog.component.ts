@@ -11,7 +11,6 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
@@ -49,7 +48,7 @@ export interface TrainingDataFileUpload {
   ],
   styleUrls: ['./training-data-upload-dialog.component.scss']
 })
-export class TrainingDataUploadDialogComponent extends SubscriptionDisposable implements AfterViewInit {
+export class TrainingDataUploadDialogComponent implements AfterViewInit {
   @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;
   @ViewChild('fileDropzone') fileDropzone?: ElementRef<HTMLInputElement>;
   @ViewChild('skipFirstRow') skipFirstRow?: MatCheckbox;
@@ -68,9 +67,7 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
     private readonly fileService: FileService,
     private readonly trainingDataService: TrainingDataService,
     private readonly userService: UserService
-  ) {
-    super();
-  }
+  ) {}
 
   get hasBeenUploaded(): boolean {
     return this.trainingDataFile?.blob != null && this.trainingDataFile?.fileName != null;

@@ -2,9 +2,8 @@ import { Component, Inject } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { I18nService } from 'xforge-common/i18n.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -19,7 +18,7 @@ export interface BiblicalTermDialogData {
   templateUrl: './biblical-term-dialog.component.html',
   styleUrls: ['./biblical-term-dialog.component.scss']
 })
-export class BiblicalTermDialogComponent extends SubscriptionDisposable {
+export class BiblicalTermDialogComponent {
   definition: string = '';
 
   renderings = new UntypedFormControl();
@@ -38,7 +37,6 @@ export class BiblicalTermDialogComponent extends SubscriptionDisposable {
     private readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) data: BiblicalTermDialogData
   ) {
-    super();
     this.biblicalTermDoc = data.biblicalTermDoc;
     this.projectDoc = data.projectDoc;
     this.projectUserConfigDoc = data.projectUserConfigDoc;

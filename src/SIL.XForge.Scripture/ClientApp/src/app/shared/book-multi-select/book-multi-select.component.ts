@@ -4,7 +4,6 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { Book } from '../../translate/draft-generation/draft-generation-steps/draft-generation-steps.component';
 import { ProgressService } from '../progress-service/progress.service';
@@ -25,7 +24,7 @@ type Scope = 'OT' | 'NT' | 'DC';
   imports: [UICommonModule, MatChipsModule, TranslocoModule, L10nPercentPipe],
   styleUrls: ['./book-multi-select.component.scss']
 })
-export class BookMultiSelectComponent extends SubscriptionDisposable implements OnChanges {
+export class BookMultiSelectComponent implements OnChanges {
   @Input() availableBooks: Book[] = [];
   @Input() selectedBooks: Book[] = [];
   @Input() readonly: boolean = false;
@@ -51,9 +50,7 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
   selectedAllNT: boolean = false;
   selectedAllDC: boolean = false;
 
-  constructor(private readonly progressService: ProgressService) {
-    super();
-  }
+  constructor(private readonly progressService: ProgressService) {}
 
   async ngOnChanges(): Promise<void> {
     await this.initBookOptions();

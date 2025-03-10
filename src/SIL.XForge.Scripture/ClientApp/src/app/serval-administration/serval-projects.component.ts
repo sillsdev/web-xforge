@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -9,6 +10,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { projectLabel } from '../shared/utils';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
@@ -83,7 +85,8 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly servalAdministrationService: ServalAdministrationService
+    private readonly servalAdministrationService: ServalAdministrationService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');
@@ -96,18 +99,18 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
 
   ngOnInit(): void {
     this.loadingStarted();
-    this.subscribe(
-      this.servalAdministrationService.onlineQuery(this.searchTerm$, this.queryParameters$, [
+    this.servalAdministrationService
+      .onlineQuery(this.searchTerm$, this.queryParameters$, [
         obj<Project>().pathStr(p => p.name),
         obj<SFProjectProfile>().pathStr(p => p.shortName)
-      ]),
-      searchResults => {
+      ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(searchResults => {
         this.projectDocs = searchResults.docs;
         this.length = searchResults.unpagedCount;
         this.generateRows();
         this.loadingFinished();
-      }
-    );
+      });
   }
 
   updateSearchTerm(target: EventTarget | null): void {

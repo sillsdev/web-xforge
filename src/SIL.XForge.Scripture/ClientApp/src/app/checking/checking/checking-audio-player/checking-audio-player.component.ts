@@ -1,6 +1,7 @@
-import { AfterViewInit, Component, Input, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { I18nService } from 'xforge-common/i18n.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 
 export interface AudioAttachment {
@@ -15,17 +16,18 @@ export interface AudioAttachment {
   templateUrl: './checking-audio-player.component.html',
   styleUrls: ['./checking-audio-player.component.scss']
 })
-export class CheckingAudioPlayerComponent extends SubscriptionDisposable implements OnDestroy, AfterViewInit {
+export class CheckingAudioPlayerComponent implements AfterViewInit {
   private _isAudioAvailable = false;
   @ViewChild(AudioPlayerComponent) audioPlayer?: AudioPlayerComponent;
   @Input() source?: string = '';
 
-  constructor(readonly i18n: I18nService) {
-    super();
-  }
+  constructor(
+    readonly i18n: I18nService,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   ngAfterViewInit(): void {
-    this.subscribe(this.audioPlayer!.isAudioAvailable$, newValue => {
+    this.audioPlayer!.isAudioAvailable$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(newValue => {
       setTimeout(() => (this._isAudioAvailable = newValue));
     });
     this._isAudioAvailable = this.audioPlayer!.isAudioAvailable$.value;

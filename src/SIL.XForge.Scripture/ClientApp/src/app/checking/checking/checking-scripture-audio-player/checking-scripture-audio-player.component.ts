@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
@@ -15,7 +16,7 @@ import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.uti
   templateUrl: './checking-scripture-audio-player.component.html',
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
-export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable implements AfterViewInit {
+export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
   @Input() canClose: boolean = true;
   @Output() currentVerseChanged = new EventEmitter<string>();
   @Output() closed: EventEmitter<void> = new EventEmitter<void>();
@@ -49,9 +50,10 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   private verseChangeSubscription?: Subscription;
   private audioSubscription?: Subscription;
 
-  constructor(readonly i18n: I18nService) {
-    super();
-  }
+  constructor(
+    readonly i18n: I18nService,
+    private destroyRef: QuietDestroyRef
+  ) {}
 
   ngAfterViewInit(): void {
     this.doAudioSubscriptions();
@@ -181,12 +183,13 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     // wait until the next microtask cycle to get the audio player with the updated source
     Promise.resolve(this.audioPlayer).then(audioPlayer => {
       this.audioSubscription?.unsubscribe();
-      this.audioSubscription = this.subscribe(
-        audioPlayer.isAudioAvailable$.pipe(
+      this.audioSubscription = audioPlayer.isAudioAvailable$
+        .pipe(
           filter(a => a),
-          first()
-        ),
-        () => {
+          first(),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(() => {
           if (audioPlayer.audio == null) {
             console.log(`warning: audio player unexpectedly null.`);
             return;
@@ -195,19 +198,19 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
           this._audioIsAvailable = true;
           this.subscribeToAudioFinished(audio);
           this.subscribeToVerseChange(audio);
-        }
-      );
+        });
     });
   }
 
   private subscribeToVerseChange(audio: AudioPlayer): void {
     this.verseChangeSubscription?.unsubscribe();
-    this.verseChangeSubscription = this.subscribe(
-      audio.timeUpdated$.pipe(
+    this.verseChangeSubscription = audio.timeUpdated$
+      .pipe(
         map(() => this.getCurrentIndexInTimings(audio.currentTime)),
-        distinctUntilChanged()
-      ),
-      () => {
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
         if (this._textDocId == null) return;
         this.verseLabel = this.currentVerseLabel;
         const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRefByTime(
@@ -230,15 +233,16 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
         }
         const segmentRef: string = `verse_${this._textDocId.chapterNum}_${audioTextRef.verseStr}`;
         this.currentVerseChanged.emit(segmentRef);
-      }
-    );
+      });
   }
 
   private subscribeToAudioFinished(audio: AudioPlayer): void {
     this.finishedSubscription?.unsubscribe();
-    this.finishedSubscription = this.subscribe(audio.finishedPlaying$.pipe(first()), () => {
-      if (this.canClose) this.close();
-    });
+    this.finishedSubscription = audio.finishedPlaying$
+      .pipe(first(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.canClose) this.close();
+      });
   }
 
   private getCurrentVerseStr(currentTime: number): string {

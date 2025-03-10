@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ErrorHandler } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
@@ -14,6 +15,7 @@ import { en, I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { ObjectPaths } from '../../type-utils';
 import { SFProjectService } from '../core/sf-project.service';
@@ -57,7 +59,8 @@ export class JoinComponent extends DataLoadingComponent {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly errorHandler: ErrorHandler,
-    noticeService: NoticeService
+    noticeService: NoticeService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
     const joining$ = this.route.params.pipe(
@@ -72,14 +75,16 @@ export class JoinComponent extends DataLoadingComponent {
       map(([joining, _]) => joining),
       distinctUntilChanged()
     );
-    this.subscribe(checkLinkSharing$, joining => {
+    checkLinkSharing$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(joining => {
       // Set locale only if not logged in
       if (this.authService.currentUserId == null) {
         this.i18nService.setLocale(joining.locale);
       }
       this.initialize(joining.shareKey);
     });
-    this.subscribe(this.onlineStatusService.onlineStatus$, () => this.updateOfflineJoiningStatus());
+    this.onlineStatusService.onlineStatus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateOfflineJoiningStatus());
   }
 
   get isFormEnabled(): boolean {

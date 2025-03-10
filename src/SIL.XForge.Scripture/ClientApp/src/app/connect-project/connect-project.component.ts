@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ErrorHandler, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
@@ -8,6 +9,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { hasStringProp } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
@@ -56,7 +58,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly errorHandler: ErrorHandler,
-    private readonly translocoService: TranslocoService
+    private readonly translocoService: TranslocoService,
+    private destroyRef: QuietDestroyRef
   ) {
     super(noticeService);
     this.connectProjectForm.disable();
@@ -111,7 +114,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       this.router.navigate(['/projects']);
     }
 
-    this.subscribe(this.onlineStatusService.onlineStatus$, async isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline) {
         if (this.projectsFromParatext == null) {

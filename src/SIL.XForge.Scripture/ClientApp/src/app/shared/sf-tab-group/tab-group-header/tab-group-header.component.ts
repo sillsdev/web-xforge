@@ -2,7 +2,6 @@ import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import {
   AfterViewInit,
   Component,
-  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -25,6 +24,7 @@ import {
   Subscription
 } from 'rxjs';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
+import { QuietDestroyRef } from 'xforge-common/utils';
 import { TabMenuItem, TabMenuService } from '../../sf-tab-group';
 import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
@@ -67,7 +67,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit
   private tabsWrapper!: HTMLElement;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
+    private readonly destroyRef: QuietDestroyRef,
     private readonly elementRef: ElementRef<HTMLElement>,
     private readonly tabMenuService: TabMenuService<string>
   ) {}
