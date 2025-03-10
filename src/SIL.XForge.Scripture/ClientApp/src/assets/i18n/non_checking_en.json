@@ -171,7 +171,7 @@
     "back_translation_requirement": "Back translation drafts can only be generated into the roughly 200 [link:supportedLanguagesUrl]supported languages[/link].",
     "cancel_generation_button": "Cancel",
     "criteria_project_language_not_in_nllb_with_language": "Your project language of [em]\"{{ targetLanguageDisplayName }}\"[/em] is not a supported language.",
-    "dialog_confirm_draft_cancellation_message": "Canceling will reset progress for this draft request. Any previously generated draft will still be accessible.",
+    "dialog_confirm_draft_cancellation_message": "Canceling will reset progress for this draft request. The previous completed draft will still be accessible.",
     "dialog_confirm_draft_cancellation_no": "No",
     "dialog_confirm_draft_cancellation_title": "Cancel generating draft?",
     "dialog_confirm_draft_cancellation_yes": "Yes, cancel",
