@@ -129,7 +129,6 @@ section {
 
 .mat-mdc-card-actions {
   display: flex;
-  justify-content: space-between;
   margin-top: 4px;
 }
 
@@ -178,4 +177,9 @@ section {
 
 .drafting-instructions b {
   font-weight: 500;
+}
+
+.button-strip {
+  display: flex;
+  gap: 0.5em;
 }

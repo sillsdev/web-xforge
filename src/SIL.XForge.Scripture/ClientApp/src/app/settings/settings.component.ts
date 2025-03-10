@@ -40,12 +40,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new FormControl(false);
   sourceParatextId = new FormControl<string | undefined>(undefined);
   biblicalTermsEnabled = new FormControl(false);
-  alternateSourceEnabled = new FormControl(false);
-  alternateSourceParatextId = new FormControl<string | undefined>(undefined);
-  alternateTrainingSourceEnabled = new FormControl(false);
-  alternateTrainingSourceParatextId = new FormControl<string | undefined>(undefined);
-  additionalTrainingSourceEnabled = new FormControl(false);
-  additionalTrainingSourceParatextId = new FormControl<string | undefined>(undefined);
   additionalTrainingData = new FormControl(false);
   servalConfig = new FormControl<string | undefined>(undefined);
   checkingEnabled = new FormControl(false);
@@ -65,12 +59,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
     biblicalTermsEnabled: this.biblicalTermsEnabled,
-    alternateSourceEnabled: this.alternateSourceEnabled,
-    alternateSourceParatextId: this.alternateSourceParatextId,
-    alternateTrainingSourceEnabled: this.alternateTrainingSourceEnabled,
-    alternateTrainingSourceParatextId: this.alternateTrainingSourceParatextId,
-    additionalTrainingSourceEnabled: this.additionalTrainingSourceEnabled,
-    additionalTrainingSourceParatextId: this.additionalTrainingSourceParatextId,
     additionalTrainingData: this.additionalTrainingData,
     servalConfig: this.servalConfig,
     checkingEnabled: this.checkingEnabled,
@@ -91,6 +79,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   projectLoadingFailed = false;
   resourceLoadingFailed = false;
   mainSettingsLoaded = false;
+
+  draftSettingsRelocatedMessage = this.i18n.interpolate('settings.draft_settings_on_generate_page');
+  /** Temporary messages. The logic and messages for 'draft generation settings moved' can be removed once they
+   * expire. */
+  showHighlightedDraftGenerationSettingsMovedMessage: boolean = new Date() < new Date('2025-07-01 00:00:00 UTC');
+  showDraftGenerationSettingsMovedMessage: boolean = new Date() < new Date('2025-10-01 00:00:00 UTC');
 
   private static readonly projectSettingValueUnset = 'unset';
   private paratextUsername: string | undefined;
@@ -137,18 +131,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get isCheckingEnabled(): boolean {
     return this.checkingEnabled.value ?? false;
-  }
-
-  get isAlternateSourceEnabled(): boolean {
-    return this.alternateSourceEnabled.value ?? false;
-  }
-
-  get isAlternateTrainingSourceEnabled(): boolean {
-    return this.alternateTrainingSourceEnabled.value ?? false;
-  }
-
-  get isAdditionalTrainingSourceEnabled(): boolean {
-    return this.additionalTrainingSourceEnabled.value ?? false;
   }
 
   get showPreTranslationSettings(): boolean {
@@ -373,55 +355,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
-    if (this.settingChanged(newValue, 'alternateSourceEnabled')) {
-      this.updateSetting(newValue, 'alternateSourceEnabled');
-    }
-
-    // Check if the pre-translation alternate source project needs to be updated
-    if (this.settingChanged(newValue, 'alternateSourceParatextId')) {
-      const settings: SFProjectSettings = {
-        alternateSourceParatextId: newValue.alternateSourceParatextId ?? SettingsComponent.projectSettingValueUnset
-      };
-      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
-      this.checkUpdateStatus('alternateSourceParatextId', updateTaskPromise);
-      this.previousFormValues = newValue;
-      return;
-    }
-
-    if (this.settingChanged(newValue, 'alternateTrainingSourceEnabled')) {
-      this.updateSetting(newValue, 'alternateTrainingSourceEnabled');
-    }
-
     if (this.settingChanged(newValue, 'additionalTrainingData')) {
       this.updateSetting(newValue, 'additionalTrainingData');
-    }
-
-    // Check if the pre-translation alternate training source project needs to be updated
-    if (this.settingChanged(newValue, 'alternateTrainingSourceParatextId')) {
-      const settings: SFProjectSettings = {
-        alternateTrainingSourceParatextId:
-          newValue.alternateTrainingSourceParatextId ?? SettingsComponent.projectSettingValueUnset
-      };
-      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
-      this.checkUpdateStatus('alternateTrainingSourceParatextId', updateTaskPromise);
-      this.previousFormValues = newValue;
-      return;
-    }
-
-    if (this.settingChanged(newValue, 'additionalTrainingSourceEnabled', false)) {
-      this.updateSetting(newValue, 'additionalTrainingSourceEnabled');
-    }
-
-    // Check if the pre-translation additional training sources project needs to be updated
-    if (this.settingChanged(newValue, 'additionalTrainingSourceParatextId')) {
-      const settings: SFProjectSettings = {
-        additionalTrainingSourceParatextId:
-          newValue.additionalTrainingSourceParatextId ?? SettingsComponent.projectSettingValueUnset
-      };
-      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
-      this.checkUpdateStatus('additionalTrainingSourceParatextId', updateTaskPromise);
-      this.previousFormValues = newValue;
-      return;
     }
 
     this.updateCheckingConfig(newValue);
@@ -508,14 +443,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
       biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
-      alternateSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled,
-      alternateSourceParatextId: this.projectDoc.data.translateConfig.draftConfig?.alternateSource?.paratextId,
-      alternateTrainingSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled,
-      alternateTrainingSourceParatextId:
-        this.projectDoc.data.translateConfig.draftConfig?.alternateTrainingSource?.paratextId,
-      additionalTrainingSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled,
-      additionalTrainingSourceParatextId:
-        this.projectDoc.data.translateConfig.draftConfig?.additionalTrainingSource?.paratextId,
       additionalTrainingData: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingData,
       servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
@@ -562,12 +489,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
-    this.controlStates.set('alternateSourceEnabled', ElementState.InSync);
-    this.controlStates.set('alternateSourceParatextId', ElementState.InSync);
-    this.controlStates.set('alternateTrainingSourceEnabled', ElementState.InSync);
-    this.controlStates.set('alternateTrainingSourceParatextId', ElementState.InSync);
-    this.controlStates.set('additionalTrainingSourceEnabled', ElementState.InSync);
-    this.controlStates.set('additionalTrainingSourceParatextId', ElementState.InSync);
     this.controlStates.set('additionalTrainingData', ElementState.InSync);
     this.controlStates.set('servalConfig', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
