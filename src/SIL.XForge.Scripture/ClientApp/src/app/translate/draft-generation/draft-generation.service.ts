@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { Usj } from '@biblionexus-foundation/scripture-utilities';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
@@ -221,6 +222,33 @@ export class DraftGenerationService {
         map(res => res.data),
         catchError(() => {
           // If no USFM could be retrieved, return undefined
+          return of(undefined);
+        })
+      );
+  }
+
+  /**
+   * Gets the pre-translation USJ for the specified book/chapter using the last completed build.
+   * @param projectId The SF project id for the target translation.
+   * @param book The book number.
+   * @param chapter The chapter number. Specify 0 to return all chapters in the book.
+   * @returns An observable string of USJ data, or undefined if no pre-translations exist.
+   */
+  getGeneratedDraftUsj(projectId: string, book: number, chapter: number): Observable<Usj | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
+    return this.httpClient
+      .get<Usj>(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usj`)
+      .pipe(
+        map(res => res.data),
+        catchError(err => {
+          // If no pre-translations exist, return empty string
+          if (err.status === 403 || err.status === 404 || err.status === 409) {
+            return of(undefined);
+          }
+
+          this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
           return of(undefined);
         })
       );
