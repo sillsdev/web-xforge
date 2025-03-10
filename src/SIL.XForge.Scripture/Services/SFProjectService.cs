@@ -1272,7 +1272,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!(await TryGetProjectRoleAsync(projectDoc.Data, curUserId)).TryResult(out string ptRole))
             throw new ForbiddenException();
 
-        bool performSync =
+        bool userRoleChangeRequiresSync =
             projectDoc.Data.UserRoles[curUserId] is not (SFProjectRole.Administrator or SFProjectRole.Translator)
             && ptRole is SFProjectRole.Administrator or SFProjectRole.Translator;
         if (projectDoc.Data.UserRoles[curUserId] != ptRole)
@@ -1280,7 +1280,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[curUserId], ptRole));
         }
 
-        if (performSync)
+        // If the user can now write text, we should sync to see if there are new permissions for them.
+        if (userRoleChangeRequiresSync)
         {
             await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
         }
