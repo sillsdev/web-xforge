@@ -85,7 +85,7 @@ button {
   &.selected {
     background: $expandedBookBGColor;
 
-    &:hover {
+    &.cursor {
       background: color.scale($expandedBookBGColor, $lightness: -4%);
     }
 
@@ -163,7 +163,7 @@ button {
 ::ng-deep {
   .book-chapter-combined-chooser-menu {
     max-width: none !important;
-    max-height: 50vh;
+    max-height: 80vh;
     padding: 0 0.2em;
     position: relative;
     top: $menuFocusOutlineWidth; // Push down to show input focus outline

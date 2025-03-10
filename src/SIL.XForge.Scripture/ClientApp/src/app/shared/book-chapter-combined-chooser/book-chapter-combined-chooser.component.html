@@ -26,30 +26,27 @@
     </span>
   </button>
 
-  <mat-menu
-    #menu="matMenu"
-    overlayPanelClass="book-chapter-combined-chooser-menu-overlay"
-    class="book-chapter-combined-chooser-menu"
-  >
+  <mat-menu #menu="matMenu" [class]="overlayPanelClass">
     <div class="menu-content" (keydown)="handleMenuKeydown($event)">
       @if (expandedBook$ | async; as expandedBook) {
         @for (bookItem of filteredBooks$ | async; track bookItem; let bookIndex = $index) {
           <div
             class="book-wrapper"
-            (mouseenter)="bookCursor$.next(bookIndex)"
+            (mouseenter)="handleBookMouseEnter(bookIndex)"
             [class.selected]="expandedBook === bookItem"
+            [class.cursor]="(bookCursor$ | async) === bookIndex"
           >
             <button #bookButton class="book" (click)="selectBook($event, bookItem)">
               {{ bookNames.get(bookItem) }}
             </button>
 
             @if (expandedBook === bookItem) {
-              <div class="chapter-display">
-                @for (chapterItem of chapters[expandedBook] ?? []; track chapterItem; let chapterIndex = $index) {
+              <div class="chapter-display" (click)="$event.stopPropagation()">
+                @for (chapterItem of expandedBookChapters; track chapterItem; let chapterIndex = $index) {
                   <button
                     #chapterButton
                     (click)="selectChapter(chapterItem)"
-                    (mouseenter)="chapterCursor$.next(chapterIndex)"
+                    (mouseenter)="handleChapterMouseEnter(bookIndex, chapterIndex)"
                     class="chapter"
                     [class.selected]="book === bookItem && chapter === chapterItem"
                     [class.cursor]="

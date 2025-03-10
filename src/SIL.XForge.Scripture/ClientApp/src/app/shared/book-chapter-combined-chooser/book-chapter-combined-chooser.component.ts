@@ -24,6 +24,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MAT_MENU_DEFAULT_OPTIONS, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import {
+  animationFrames,
   asapScheduler,
   BehaviorSubject,
   combineLatest,
@@ -34,6 +35,7 @@ import {
   pairwise,
   withLatestFrom
 } from 'rxjs';
+import { map, sample } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { I18nService } from 'xforge-common/i18n.service';
 
@@ -49,6 +51,11 @@ enum KeyCode {
   Space = ' '
 }
 
+enum InputEventSource {
+  Mouse,
+  Keyboard
+}
+
 export interface BookChapterChangeEvent {
   book: number;
   chapter: number;
@@ -61,7 +68,9 @@ export interface BookChapterCombinedChooserConfig {
 export const BOOK_CHAPTER_COMBINED_CHOOSER_CONFIG = new InjectionToken<BookChapterCombinedChooserConfig>(
   'BOOK_CHAPTER_COMBINED_CHOOSER_CONFIG',
   {
-    factory: () => ({ chapterColumnCount: 6 })
+    factory: () => ({
+      chapterColumnCount: 6
+    })
   }
 );
 
@@ -91,27 +100,33 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
 
   @ViewChild('trigger', { read: ElementRef }) menuTriggerEl?: ElementRef<HTMLButtonElement>;
   @ViewChild('trigger') menuTrigger?: MatMenuTrigger;
-  @ViewChild('menu', { read: ElementRef }) menuEl?: ElementRef<HTMLElement>;
   @ViewChild('textInput') textInput?: ElementRef<HTMLInputElement>;
   @ViewChildren('bookButton') bookButtons?: QueryList<ElementRef<HTMLButtonElement>>;
   @ViewChildren('chapterButton') chapterButtons?: QueryList<ElementRef<HTMLButtonElement>>;
 
-  expandedBook$ = new BehaviorSubject<number>(0);
-  expandedBookIndex: number = 0;
   inputValue$ = new BehaviorSubject<string>('');
   bookCursor$ = new BehaviorSubject<number>(this.book ?? 0);
   chapterCursor$ = new BehaviorSubject<number>(0);
 
-  filteredBooks$ = new BehaviorSubject<number[]>([]);
   books$ = new BehaviorSubject<number[]>([]);
+  chapters$ = new BehaviorSubject<{ [book: number]: number[] }>({});
+
+  filteredBooks$ = new BehaviorSubject<number[]>([]);
   bookNames = new Map<number, string>();
 
+  expandedBook$ = new BehaviorSubject<number>(0);
+  expandedBookIndex: number = 0;
+  expandedBookChapters: number[] = [];
+
+  lastInputEventSource: InputEventSource = InputEventSource.Keyboard;
+
   readonly chapterColumnWidth = this.config.chapterColumnCount;
+  readonly overlayPanelClass = 'book-chapter-combined-chooser-menu';
 
   constructor(
     private readonly destroyRef: DestroyRef,
     @Inject(DOCUMENT) private readonly document: Document,
-    @Inject(BOOK_CHAPTER_COMBINED_CHOOSER_CONFIG) private readonly config: BookChapterCombinedChooserConfig,
+    @Inject(BOOK_CHAPTER_COMBINED_CHOOSER_CONFIG) readonly config: BookChapterCombinedChooserConfig,
     private readonly transloco: TranslocoService,
     private readonly i18n: I18nService
   ) {}
@@ -124,6 +139,10 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
 
       this.books$.next(this.books);
       this.filterBooks(this.inputValue$.value);
+    }
+
+    if (changes.chapters) {
+      this.chapters$.next(this.chapters);
     }
   }
 
@@ -145,6 +164,16 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
     }
 
     this.expandedBook$.next(this.book);
+
+    combineLatest([this.expandedBook$, this.chapters$])
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        distinctUntilChanged(),
+        map(([expandedBook, chapters]) => chapters[expandedBook] ?? [])
+      )
+      .subscribe(expandedBookChapters => {
+        this.expandedBookChapters = expandedBookChapters;
+      });
 
     // Update expanded book index when expanded book or filtered books changes
     combineLatest([this.expandedBook$, this.filteredBooks$])
@@ -176,14 +205,7 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
         }
       });
 
-    // Close the menu when clicking outside the trigger or menu
-    fromEvent(this.document, 'click')
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((e: Event) => {
-        if (!this.isClickInsideTriggerOrMenu(e)) {
-          this.menuTrigger?.closeMenu();
-        }
-      });
+    this.setupDocumentEventHandlers();
 
     // Update filtered books when input value changes
     this.inputValue$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(inputValue => {
@@ -221,7 +243,7 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
         // Update chapter cursor to index of selected chapter if book cursor is on the selected book.  0 otherwise.
         this.chapterCursor$.next(
           bookCursor === this.filteredBooks$.value.indexOf(this.book!)
-            ? this.chapters[this.expandedBook$.value].indexOf(this.chapter!)
+            ? (this.expandedBookChapters.indexOf(this.chapter!) ?? 0)
             : 0
         );
       });
@@ -260,7 +282,6 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
       return;
     }
 
-    // append the key to the input value if it is readable character
     if (this.isFocusableInput(event.key)) {
       this.focusTextInput(() => {
         // Forward the event to the input element after focusing it
@@ -275,11 +296,13 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
     setTimeout(() => {
       // Set book/chapter cursors to the selected book/chapter
       this.bookCursor$.next(this.expandedBookIndex);
-      this.chapterCursor$.next(this.chapters[this.expandedBook$.value].indexOf(this.chapter!));
+      this.chapterCursor$.next(this.expandedBookChapters.indexOf(this.chapter!));
 
-      // TODO: not working due to book getting focused after
-      // // Focus the input element so the user will see the blinking cursor
-      // this.focusTextInput();
+      // Wait until book focus resolves before focusing the input element
+      setTimeout(() => {
+        // Focus the input element so the user will see the blinking cursor
+        this.focusTextInput();
+      });
     });
   }
 
@@ -291,14 +314,32 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
     e.stopImmediatePropagation();
   }
 
-  handleChapterMouseEnter(chapter: number): void {
-    this.chapterCursor$.next(chapter);
+  handleBookMouseEnter(bookIndex: number): void {
+    if (this.lastInputEventSource === InputEventSource.Mouse) {
+      this.bookCursor$.next(bookIndex);
+    }
+  }
+
+  handleChapterMouseEnter(bookIndex: number, chapterIndex: number): void {
+    // Ignore 'mouseenter' events unless initiated by a mouse movement (not a scroll due to keyboard nav)
+    if (this.lastInputEventSource === InputEventSource.Mouse) {
+      this.bookCursor$.next(bookIndex);
+      setTimeout(() => {
+        this.chapterCursor$.next(chapterIndex);
+      });
+    }
   }
 
   selectBook(e: MouseEvent, book: number): void {
-    this.expandedBook$.next(book);
+    if (this.expandedBook$.value === book) {
+      this.expandedBook$.next(-1);
+    } else {
+      this.expandedBook$.next(book);
+    }
+
     this.bookCursor$.next(this.filteredBooks$.value.indexOf(book));
 
+    this.focusChapterButton(this.chapterCursor$.value);
     this.scrollToExpandedBook({ behavior: 'instant', block: 'nearest' });
 
     e.stopPropagation(); // Prevent the menu from closing
@@ -311,7 +352,48 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
 
     setTimeout(() => {
       this.menuTrigger?.closeMenu();
+
+      setTimeout(() => {
+        this.menuTriggerEl?.nativeElement.focus();
+      });
     });
+  }
+
+  private setupDocumentEventHandlers(): void {
+    // Close the menu when clicking outside the trigger or menu
+    fromEvent(this.document, 'click')
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter(() => this.menuTrigger?.menuOpen === true)
+      )
+      .subscribe((e: Event) => {
+        if (!this.isClickInsideTriggerOrMenu(e)) {
+          this.menuTrigger?.closeMenu();
+        }
+      });
+
+    fromEvent(this.document, 'mousemove')
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter(() => this.menuTrigger?.menuOpen === true),
+        sample(animationFrames())
+      )
+      .subscribe(() => {
+        this.lastInputEventSource = InputEventSource.Mouse;
+      });
+
+    fromEvent(this.document, 'keydown')
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter(() => this.menuTrigger?.menuOpen === true)
+      )
+      .subscribe(() => {
+        this.lastInputEventSource = InputEventSource.Keyboard;
+      });
+  }
+
+  private getMenuPanel(): HTMLElement | null {
+    return this.document.querySelector(`.${this.overlayPanelClass}`);
   }
 
   /**
@@ -320,7 +402,25 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
   private scrollToExpandedBook(scrollOptions: ScrollIntoViewOptions): void {
     setTimeout(() => {
       const bookWrapper = this.bookButtons?.get(this.expandedBookIndex)?.nativeElement.parentElement;
-      bookWrapper?.scrollIntoView(scrollOptions);
+      if (bookWrapper == null) {
+        return;
+      }
+
+      const menuContainer = this.getMenuPanel();
+      if (menuContainer == null) {
+        return;
+      }
+
+      // Scroll with provided options ('nearest' may cut off top of expanded book)
+      bookWrapper.scrollIntoView(scrollOptions);
+
+      const bookWrapperRect = bookWrapper.getBoundingClientRect();
+      const menuContainerRect = menuContainer.getBoundingClientRect();
+
+      // Ensure the top of the book wrapper is not cut off
+      if (bookWrapperRect.top < menuContainerRect.top) {
+        bookWrapper.scrollIntoView({ ...scrollOptions, block: 'start' });
+      }
     });
   }
 
@@ -332,11 +432,10 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
   private keyNavBookChapterCursor(key: string): void {
     let bookCursor: number = this.bookCursor$.value;
     let chapterCursor: number = this.chapterCursor$.value;
-    const expandedBookChapters: number[] = this.chapters[this.expandedBook$.value];
 
     switch (key) {
       case KeyCode.ArrowRight:
-        chapterCursor = Math.min(chapterCursor + 1, expandedBookChapters.length - 1);
+        chapterCursor = Math.min(chapterCursor + 1, this.expandedBookChapters.length - 1);
         break;
       case KeyCode.ArrowLeft:
         chapterCursor = Math.max(chapterCursor - 1, 0);
@@ -344,7 +443,7 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
       case KeyCode.ArrowDown:
         if (
           bookCursor === this.expandedBookIndex &&
-          chapterCursor + this.chapterColumnWidth < expandedBookChapters.length
+          chapterCursor + this.chapterColumnWidth < this.expandedBookChapters.length
         ) {
           chapterCursor += this.chapterColumnWidth;
         } else {
@@ -366,15 +465,26 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
 
   private focusBookButton(index: number): void {
     setTimeout(() => {
+      if (!this.menuTrigger?.menuOpen) {
+        return;
+      }
+
       const bookButton = this.bookButtons?.get(index)?.nativeElement;
-      bookButton?.focus();
+      bookButton?.focus(); // Focus with scroll
     });
   }
 
   private focusChapterButton(index: number): void {
     setTimeout(() => {
+      if (!this.menuTrigger?.menuOpen) {
+        return;
+      }
+
       const chapterButton = this.chapterButtons?.get(index)?.nativeElement;
-      chapterButton?.focus();
+      chapterButton?.focus({
+        // Scroll on focus when navigating by keyboard (mouse entering an expanded book is jerky)
+        preventScroll: this.lastInputEventSource === InputEventSource.Mouse
+      });
     });
   }
 
@@ -399,7 +509,7 @@ export class BookChapterCombinedChooserComponent implements OnChanges, OnInit {
   private isClickInsideTriggerOrMenu(e: Event): boolean {
     return (
       this.menuTriggerEl?.nativeElement.contains(e.target as HTMLElement) ||
-      this.menuEl?.nativeElement.contains(e.target as HTMLElement) ||
+      this.getMenuPanel()?.contains(e.target as HTMLElement) ||
       false
     );
   }

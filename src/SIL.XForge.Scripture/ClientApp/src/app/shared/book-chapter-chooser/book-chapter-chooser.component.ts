@@ -29,16 +29,11 @@ export class BookChapterChooserComponent {
     this._books = Object.values(value).sort((a, b) => a - b);
   }
 
-  ngOnInit(): void {
-    console.log('BookChapterChooserComponent ngOnInit');
-  }
-
   get books(): number[] {
     return this._books;
   }
 
   bookName(book: number): string {
-    console.log('book', this.i18n.localizeBook(book));
     return this.i18n.localizeBook(book);
   }
 
