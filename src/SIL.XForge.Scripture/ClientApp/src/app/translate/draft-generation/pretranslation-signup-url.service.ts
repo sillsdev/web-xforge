@@ -2,6 +2,7 @@ import { Inject, Injectable, InjectionToken } from '@angular/core';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 
 export interface PreTranslationSignupUrlConfig {
@@ -37,7 +38,9 @@ export class PreTranslationSignupUrlService {
   ) {}
 
   async generateSignupUrl(): Promise<string> {
-    const user: Readonly<User | undefined> = (await this.userService.getCurrentUser()).data;
+    const user: Readonly<User | undefined> = (
+      await this.userService.getCurrentUser(new DocSubscription('PreTranslationSignupUrlService'))
+    ).data;
     const project: Readonly<SFProjectProfile | undefined> = this.activatedProject.projectDoc?.data;
     const languageCode: string | undefined = project?.writingSystem.tag;
 

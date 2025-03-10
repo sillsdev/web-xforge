@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { map, repeat, take, timer } from 'rxjs';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QuietDestroyRef } from 'xforge-common/utils';
 import { ParatextProject } from '../../../../core/models/paratext-project';
@@ -88,14 +89,21 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
             await this.projectService.onlineAddCurrentUser(project.projectId);
           }
           this.selectedProjectDoc =
-            project?.projectId != null ? await this.projectService.get(project.projectId) : undefined;
+            project?.projectId != null
+              ? await this.projectService.get(
+                  project.projectId,
+                  new DocSubscription('EditorTabAddResourceDialogComponent')
+                )
+              : undefined;
         } else {
           // Load the project or resource, creating it if it is not present
           const projectId: string | undefined = this.appOnline
             ? await this.projectService.onlineCreateResourceProject(paratextId)
             : undefined;
           this.selectedProjectDoc =
-            projectId != null && this.appOnline ? await this.projectService.get(projectId) : undefined;
+            projectId != null && this.appOnline
+              ? await this.projectService.get(projectId, new DocSubscription('EditorTabAddResourceDialogComponent'))
+              : undefined;
         }
 
         if (this.selectedProjectDoc != null) {

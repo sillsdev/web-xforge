@@ -4,6 +4,7 @@ import { TranslateConfig, TranslateSource } from 'realtime-server/lib/esm/script
 import { combineLatest, defer, from, Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../../environments/environment';
@@ -30,7 +31,9 @@ export interface DraftSourcesAsArrays {
   providedIn: 'root'
 })
 export class DraftSourcesService {
-  private readonly currentUser$: Observable<UserDoc> = defer(() => from(this.userService.getCurrentUser()));
+  private readonly currentUser$: Observable<UserDoc> = defer(() =>
+    from(this.userService.getCurrentUser(new DocSubscription('DraftSourcesService')))
+  );
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
@@ -107,16 +110,26 @@ export class DraftSourcesService {
         return from(
           Promise.all([
             sourceProjectId
-              ? (sourceProject ?? this.projectService.getProfile(sourceProjectId))
+              ? (sourceProject ??
+                this.projectService.getProfile(sourceProjectId, new DocSubscription('DraftSourcesService')))
               : Promise.resolve(undefined),
             alternateSourceProjectId
-              ? (alternateSourceProject ?? this.projectService.getProfile(alternateSourceProjectId))
+              ? (alternateSourceProject ??
+                this.projectService.getProfile(alternateSourceProjectId, new DocSubscription('DraftSourcesService')))
               : Promise.resolve(undefined),
             alternateTrainingSourceProjectId
-              ? (alternateTrainingSourceProject ?? this.projectService.getProfile(alternateTrainingSourceProjectId))
+              ? (alternateTrainingSourceProject ??
+                this.projectService.getProfile(
+                  alternateTrainingSourceProjectId,
+                  new DocSubscription('DraftSourcesService')
+                ))
               : Promise.resolve(undefined),
             additionalTrainingSourceProjectId
-              ? (additionalTrainingSourceProject ?? this.projectService.getProfile(additionalTrainingSourceProjectId))
+              ? (additionalTrainingSourceProject ??
+                this.projectService.getProfile(
+                  additionalTrainingSourceProjectId,
+                  new DocSubscription('DraftSourcesService')
+                ))
               : Promise.resolve(undefined)
           ])
         ).pipe(

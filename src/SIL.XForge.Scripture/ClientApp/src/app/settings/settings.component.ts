@@ -20,6 +20,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -217,7 +218,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             firstValueFrom(this.paratextService.getParatextUsername()).then((username: string | undefined) => {
               if (username != null) this.paratextUsername = username;
             }),
-            this.projectService.get(projectId).then(projectDoc => (this.projectDoc = projectDoc))
+            this.projectService
+              .get(projectId, new DocSubscription('SettingsComponent'))
+              .then(projectDoc => (this.projectDoc = projectDoc))
           ]).then(() => {
             if (this.projectDoc != null) {
               this.updateSettingsInfo();
@@ -289,7 +292,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     const dialogRef = this.dialogService.openMatDialog(DeleteProjectDialogComponent, config);
     dialogRef.afterClosed().subscribe(async result => {
       if (result === 'accept') {
-        const user: UserDoc = await this.userService.getCurrentUser();
+        const user: UserDoc = await this.userService.getCurrentUser(new DocSubscription('SettingsComponent'));
         await this.userService.setCurrentProjectId(user, undefined);
         if (this.projectDoc != null) {
           await this.projectService.onlineDelete(this.projectDoc.id);

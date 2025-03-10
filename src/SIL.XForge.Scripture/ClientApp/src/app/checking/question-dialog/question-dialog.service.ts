@@ -8,6 +8,7 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { lastValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -105,7 +106,8 @@ export class QuestionDialogService {
 
   private async canCreateAndEditQuestions(projectId: string): Promise<boolean> {
     const userId = this.userService.currentUserId;
-    const project = (await this.projectService.getProfile(projectId)).data;
+    const project = (await this.projectService.getProfile(projectId, new DocSubscription('QuestionDialogService')))
+      .data;
     return (
       project != null &&
       SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create) &&

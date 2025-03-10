@@ -19,6 +19,7 @@ import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
@@ -93,22 +94,32 @@ export class NoteDialogComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     // This can be refactored so the asynchronous calls are done in parallel
     if (this.threadDataId == null) {
-      this.textDoc = await this.projectService.getText(this.textDocId);
+      this.textDoc = await this.projectService.getText(this.textDocId, new DocSubscription('NoteDialogComponent'));
     } else {
-      this.threadDoc = await this.projectService.getNoteThread(this.projectId + ':' + this.threadDataId);
-      this.textDoc = await this.projectService.getText(this.textDocId);
+      this.threadDoc = await this.projectService.getNoteThread(
+        this.projectId + ':' + this.threadDataId,
+        new DocSubscription('NoteDialogComponent')
+      );
+      this.textDoc = await this.projectService.getText(this.textDocId, new DocSubscription('NoteDialogComponent'));
     }
 
     if (this.biblicalTermId != null) {
-      this.biblicalTermDoc = await this.projectService.getBiblicalTerm(this.projectId + ':' + this.biblicalTermId);
+      this.biblicalTermDoc = await this.projectService.getBiblicalTerm(
+        this.projectId + ':' + this.biblicalTermId,
+        new DocSubscription('NoteDialogComponent')
+      );
     }
 
-    this.projectProfileDoc = await this.projectService.getProfile(this.projectId);
+    this.projectProfileDoc = await this.projectService.getProfile(
+      this.projectId,
+      new DocSubscription('NoteDialogComponent')
+    );
     this.userRole = this.projectProfileDoc?.data?.userRoles[this.userService.currentUserId];
     if (this.userRole != null) {
       const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(
         this.projectId,
-        this.userRole
+        this.userRole,
+        new DocSubscription('NoteDialogComponent')
       );
       if (this.threadDoc != null && projectDoc != null && projectDoc.data?.paratextUsers != null) {
         this.paratextProjectUsers = projectDoc.data.paratextUsers;
@@ -445,7 +456,10 @@ export class NoteDialogComponent implements OnInit {
    */
   private async getNoteUserNameAsync(note: Note): Promise<string> {
     // Get the owner. This is often the project admin if the sync user is not in SF
-    const ownerDoc: UserProfileDoc = await this.userService.getProfile(note.ownerRef);
+    const ownerDoc: UserProfileDoc = await this.userService.getProfile(
+      note.ownerRef,
+      new DocSubscription('NoteDialogComponent')
+    );
 
     // Get the sync user, if we have a syncUserRef for the note
     const syncUser: ParatextUserProfile | undefined =
@@ -468,7 +482,9 @@ export class NoteDialogComponent implements OnInit {
 
     // The note was created in Paratext, so see if we have a profile for the sync user
     const syncUserProfile: UserProfileDoc | undefined =
-      syncUser.sfUserId == null ? undefined : await this.userService.getProfile(syncUser.sfUserId);
+      syncUser.sfUserId == null
+        ? undefined
+        : await this.userService.getProfile(syncUser.sfUserId, new DocSubscription('NoteDialogComponent'));
     return this.userService.currentUserId === syncUserProfile?.id
       ? translate('checking.me') // "Me", i.e. the current user
       : (syncUserProfile?.data?.displayName ?? syncUser.username); // Another user, or fallback to the sync user

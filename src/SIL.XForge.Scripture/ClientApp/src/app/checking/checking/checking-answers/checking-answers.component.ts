@@ -14,6 +14,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -480,7 +481,7 @@ export class CheckingAnswersComponent implements OnInit {
 
   async submit(response: CheckingInput): Promise<void> {
     this.submittingAnswer = true;
-    const userDoc = await this.userService.getCurrentUser();
+    const userDoc = await this.userService.getCurrentUser(new DocSubscription('CheckingAnswersComponent'));
     if (this.onlineStatusService.isOnline && userDoc.data?.isDisplayNameConfirmed !== true) {
       await this.userService.editDisplayName(true);
     }

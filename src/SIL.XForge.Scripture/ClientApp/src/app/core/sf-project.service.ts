@@ -75,23 +75,23 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
    * Returns the SF project if the user has a role that allows access (i.e. a paratext role),
    * otherwise returns undefined.
    */
-  async tryGetForRole(id: string, role: string): Promise<SFProjectDoc | undefined> {
+  async tryGetForRole(id: string, role: string, subscriber: DocSubscriberInfo): Promise<SFProjectDoc | undefined> {
     if (SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Project, Operation.View)) {
-      return await this.get(id);
+      return await this.get(id, subscriber);
     }
     return undefined;
   }
 
   /** Returns the project profile with the project data that all project members can access. */
-  getProfile(id: string, subscription: DocSubscriberInfo): Promise<SFProjectProfileDoc> {
-    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription);
+  getProfile(id: string, subscriber: DocSubscriberInfo): Promise<SFProjectProfileDoc> {
+    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscriber);
   }
 
-  getUserConfig(id: string, userId: string, subscription: DocSubscriberInfo): Promise<SFProjectUserConfigDoc> {
+  getUserConfig(id: string, userId: string, subscriber: DocSubscriberInfo): Promise<SFProjectUserConfigDoc> {
     return this.realtimeService.subscribe(
       SFProjectUserConfigDoc.COLLECTION,
       getSFProjectUserConfigDocId(id, userId),
-      subscription
+      subscriber
     );
   }
 
@@ -115,25 +115,25 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('addTranslateMetrics', { projectId: id, metrics });
   }
 
-  getText(textId: TextDocId | string, subscription: DocSubscriberInfo): Promise<TextDoc> {
+  getText(textId: TextDocId | string, subscriber: DocSubscriberInfo): Promise<TextDoc> {
     return this.realtimeService.subscribe(
       TextDoc.COLLECTION,
       textId instanceof TextDocId ? textId.toString() : textId,
-      subscription
+      subscriber
     );
   }
 
-  getNoteThread(threadDataId: string, subscription: DocSubscriberInfo): Promise<NoteThreadDoc> {
-    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadDataId, subscription);
+  getNoteThread(threadDataId: string, subscriber: DocSubscriberInfo): Promise<NoteThreadDoc> {
+    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadDataId, subscriber);
   }
 
-  getBiblicalTerm(biblicalTermId: string, subscription: DocSubscriberInfo): Promise<BiblicalTermDoc> {
-    return this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, biblicalTermId, subscription);
+  getBiblicalTerm(biblicalTermId: string, subscriber: DocSubscriberInfo): Promise<BiblicalTermDoc> {
+    return this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, biblicalTermId, subscriber);
   }
 
-  async createNoteThread(projectId: string, noteThread: NoteThread): Promise<void> {
+  async createNoteThread(projectId: string, noteThread: NoteThread, subscriber: DocSubscriberInfo): Promise<void> {
     const docId: string = getNoteThreadDocId(projectId, noteThread.dataId);
-    await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread);
+    await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread, subscriber);
   }
 
   generateSharingUrl(shareKey: string, localeCode?: string): string {

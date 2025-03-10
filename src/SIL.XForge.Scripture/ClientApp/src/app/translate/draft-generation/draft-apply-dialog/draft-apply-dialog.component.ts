@@ -8,6 +8,7 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { BehaviorSubject, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -225,7 +226,10 @@ export class DraftApplyDialogComponent implements OnInit {
   }
 
   private async isNotEmpty(textDocId: TextDocId): Promise<boolean> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId);
+    const textDoc: TextDoc = await this.projectService.getText(
+      textDocId,
+      new DocSubscription('DraftApplyDialogComponent')
+    );
     return textDoc.getNonEmptyVerses().length > 0;
   }
 

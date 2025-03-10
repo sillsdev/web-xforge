@@ -99,7 +99,7 @@ export class RealtimeService {
     return countsByContext;
   }
 
-  get<T extends RealtimeDoc>(collection: string, id: string, docSubscription: DocSubscriberInfo): T {
+  get<T extends RealtimeDoc>(collection: string, id: string, subscriber: DocSubscriberInfo): T {
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
     if (doc == null) {
@@ -116,8 +116,8 @@ export class RealtimeService {
       }
       this.docs.set(key, doc);
     }
-    if (docSubscription !== FETCH_WITHOUT_SUBSCRIBE) {
-      doc.addSubscriber(docSubscription);
+    if (subscriber !== FETCH_WITHOUT_SUBSCRIBE) {
+      doc.addSubscriber(subscriber);
     }
 
     return doc as T;
@@ -138,18 +138,14 @@ export class RealtimeService {
    * @param {string} id The id.
    * @returns {Promise<T>} The real-time doc.
    */
-  async subscribe<T extends RealtimeDoc>(collection: string, id: string, subscription: DocSubscriberInfo): Promise<T> {
-    const doc = this.get<T>(collection, id, subscription);
+  async subscribe<T extends RealtimeDoc>(collection: string, id: string, subscriber: DocSubscriberInfo): Promise<T> {
+    const doc = this.get<T>(collection, id, subscriber);
     await doc.subscribe();
     return doc;
   }
 
-  async onlineFetch<T extends RealtimeDoc>(
-    collection: string,
-    id: string,
-    subscription: DocSubscriberInfo
-  ): Promise<T> {
-    const doc = this.get<T>(collection, id, subscription);
+  async onlineFetch<T extends RealtimeDoc>(collection: string, id: string, subscriber: DocSubscriberInfo): Promise<T> {
+    const doc = this.get<T>(collection, id, subscriber);
     await doc.onlineFetch();
     return doc;
   }
@@ -162,8 +158,14 @@ export class RealtimeService {
    * @param {*} data The initial data.
    * @returns {Promise<T>} The newly created real-time doc.
    */
-  async create<T extends RealtimeDoc>(collection: string, id: string, data: any, type?: string): Promise<T> {
-    const doc = this.get<T>(collection, id);
+  async create<T extends RealtimeDoc>(
+    collection: string,
+    id: string,
+    data: any,
+    subscriber: DocSubscriberInfo,
+    type?: string
+  ): Promise<T> {
+    const doc = this.get<T>(collection, id, subscriber);
     await doc.create(data, type);
     return doc;
   }

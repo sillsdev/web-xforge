@@ -8,6 +8,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -67,7 +68,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
     super(userService);
     this.projectId = this.data.projectId;
     Promise.all([
-      this.projectService.getProfile(this.projectId),
+      this.projectService.getProfile(this.projectId, new DocSubscription('ShareDialogComponent')),
       this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId)
     ]).then(value => {
       this.projectDoc = value[0];
@@ -180,7 +181,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
       this._error = 'no_language';
       return;
     }
-    const currentUser: UserDoc = await this.userService.getCurrentUser();
+    const currentUser: UserDoc = await this.userService.getCurrentUser(new DocSubscription('ShareDialogComponent'));
     if (!this.supportsShareAPI || this.projectDoc?.data == null || currentUser.data == null) {
       return;
     }

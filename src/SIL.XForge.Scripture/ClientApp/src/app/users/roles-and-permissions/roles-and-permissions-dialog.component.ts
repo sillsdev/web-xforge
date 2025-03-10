@@ -8,6 +8,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -49,7 +50,10 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
       isOnline ? this.form.enable() : this.form.disable();
     });
 
-    this.projectDoc = await this.projectService.get(this.data.projectId);
+    this.projectDoc = await this.projectService.get(
+      this.data.projectId,
+      new DocSubscription('RolesAndPermissionsDialogComponent')
+    );
     const project: Readonly<SFProject | undefined> = this.projectDoc.data;
 
     if (project === undefined) {
@@ -86,7 +90,10 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
 
     const selectedRole = this.roles.value;
     await this.projectService.onlineUpdateUserRole(this.data.projectId, this.data.userId, selectedRole);
-    this.projectDoc = await this.projectService.get(this.data.projectId);
+    this.projectDoc = await this.projectService.get(
+      this.data.projectId,
+      new DocSubscription('RolesAndPermissionsDialogComponent')
+    );
 
     const permissions = new Set((this.projectDoc?.data?.userPermissions ?? {})[this.data.userId] ?? []);
 

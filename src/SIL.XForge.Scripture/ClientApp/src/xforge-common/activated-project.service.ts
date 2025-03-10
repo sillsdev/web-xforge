@@ -5,10 +5,10 @@ import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter, map, startWith, switchMap } from 'rxjs/operators';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
-import { DocSubscription } from './models/realtime-doc';
 import { noopDestroyRef } from './realtime.service';
 
 interface IActiveProjectIdService {

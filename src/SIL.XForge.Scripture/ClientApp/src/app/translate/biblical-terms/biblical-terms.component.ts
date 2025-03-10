@@ -22,6 +22,7 @@ import { filter } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -314,8 +315,15 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(async projectId => {
-        this.projectDoc = await this.projectService.getProfile(projectId);
-        this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+        this.projectDoc = await this.projectService.getProfile(
+          projectId,
+          new DocSubscription('BiblicalTermsComponent')
+        );
+        this.projectUserConfigDoc = await this.projectService.getUserConfig(
+          projectId,
+          this.userService.currentUserId,
+          new DocSubscription('BiblicalTermsComponent')
+        );
 
         // Subscribe to any project, book, chapter, verse, locale, biblical term, or note changes
         this.loadingStarted();
@@ -383,7 +391,10 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   }
 
   async editRendering(id: string): Promise<void> {
-    const biblicalTermDoc = await this.projectService.getBiblicalTerm(getBiblicalTermDocId(this._projectId!, id));
+    const biblicalTermDoc = await this.projectService.getBiblicalTerm(
+      getBiblicalTermDocId(this._projectId!, id),
+      new DocSubscription('BiblicalTermsComponent')
+    );
     this.dialogService.openMatDialog<BiblicalTermDialogComponent, BiblicalTermDialogData>(BiblicalTermDialogComponent, {
       data: { biblicalTermDoc, projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc },
       width: '560px'
@@ -536,7 +547,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       return;
     }
     const biblicalTermDoc = await this.projectService.getBiblicalTerm(
-      getBiblicalTermDocId(this._projectId!, params.biblicalTermId)
+      getBiblicalTermDocId(this._projectId!, params.biblicalTermId),
+      new DocSubscription('BiblicalTermsComponent')
     );
     if (biblicalTermDoc?.data == null) {
       return;
@@ -597,11 +609,16 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           transliteration: biblicalTermDoc.data.transliteration
         }
       };
-      await this.projectService.createNoteThread(this._projectId, noteThread);
+      await this.projectService.createNoteThread(
+        this._projectId,
+        noteThread,
+        new DocSubscription('BiblicalTermsComponent')
+      );
     } else {
       // updated the existing note
       const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(
-        getNoteThreadDocId(this._projectId, params.threadDataId)
+        getNoteThreadDocId(this._projectId, params.threadDataId),
+        new DocSubscription('BiblicalTermsComponent')
       );
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {

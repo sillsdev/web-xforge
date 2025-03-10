@@ -9,6 +9,7 @@ import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserService } from 'xforge-common/user.service';
+import { DocSubscription } from '../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
@@ -28,7 +29,9 @@ export abstract class RouterGuard {
     return this.authGuard.allowTransition().pipe(
       switchMap(isLoggedIn => {
         if (isLoggedIn) {
-          return from(this.projectService.getProfile(projectId)).pipe(map(projectDoc => this.check(projectDoc)));
+          return from(this.projectService.getProfile(projectId, new DocSubscription('ProjectRouterGuard'))).pipe(
+            map(projectDoc => this.check(projectDoc))
+          );
         }
         return of(false);
       })

@@ -7,6 +7,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QuietDestroyRef } from 'xforge-common/utils';
@@ -163,7 +164,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       this.populateProjectList();
       return;
     }
-    this.projectDoc = await this.projectService.get(projectId);
+    this.projectDoc = await this.projectService.get(projectId, new DocSubscription('ConnectProjectComponent'));
   }
 
   updateStatus(inProgress: boolean): void {

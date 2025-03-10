@@ -9,6 +9,7 @@ import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/mode
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Observable } from 'rxjs';
 import { filter, share } from 'rxjs/operators';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -139,7 +140,10 @@ export class TranslationEngineService {
     segment: string,
     checksum?: number
   ): Promise<void> {
-    const targetDoc = await this.projectService.getText(getTextDocId(projectRef, bookNum, chapterNum, 'target'));
+    const targetDoc = await this.projectService.getText(
+      getTextDocId(projectRef, bookNum, chapterNum, 'target'),
+      new DocSubscription('TranslationEngineService')
+    );
     const targetText = targetDoc.getSegmentText(segment);
     if (targetText === '') {
       return;
@@ -151,7 +155,10 @@ export class TranslationEngineService {
       }
     }
 
-    const sourceDoc = await this.projectService.getText(getTextDocId(sourceProjectRef, bookNum, chapterNum, 'source'));
+    const sourceDoc = await this.projectService.getText(
+      getTextDocId(sourceProjectRef, bookNum, chapterNum, 'source'),
+      new DocSubscription('TranslationEngineService')
+    );
     const sourceText = sourceDoc.getSegmentText(segment);
     if (sourceText === '') {
       return;

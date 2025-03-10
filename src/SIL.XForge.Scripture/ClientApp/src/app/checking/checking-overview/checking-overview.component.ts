@@ -14,6 +14,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -202,7 +203,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const projectId$ = this.activatedRoute.params.pipe(
       tap(params => {
         this.loadingStarted();
-        projectDocPromise = this.projectService.getProfile(params['projectId']);
+        projectDocPromise = this.projectService.getProfile(
+          params['projectId'],
+          new DocSubscription('CheckingOverviewComponent')
+        );
       }),
       map(params => params['projectId'] as string)
     );
@@ -211,7 +215,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       this.projectId = projectId;
       try {
         this.projectDoc = await projectDocPromise;
-        this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+        this.projectUserConfigDoc = await this.projectService.getUserConfig(
+          projectId,
+          this.userService.currentUserId,
+          new DocSubscription('CheckingOverviewComponent')
+        );
         this.projectUserConfigDoc.submitJson0Op(op => op.set<string>(puc => puc.selectedTask!, 'checking'));
         this.questionsQuery?.dispose();
         this.questionsQuery = await this.checkingQuestionsService.queryQuestions(

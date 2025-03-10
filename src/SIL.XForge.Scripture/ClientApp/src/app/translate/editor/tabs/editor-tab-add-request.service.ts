@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { EditorTabGroupType, EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { map, Observable, of, switchMap, take } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -43,7 +44,13 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
     return this.tabState.tabs$.pipe(
       take(1),
       switchMap(tabs =>
-        Promise.all(tabs.map(tab => (tab.projectId != null ? this.projectService.get(tab.projectId) : undefined)))
+        Promise.all(
+          tabs.map(tab =>
+            tab.projectId != null
+              ? this.projectService.get(tab.projectId, new DocSubscription('EditorTabAddRequestService'))
+              : undefined
+          )
+        )
       ),
       map(projectDocs => projectDocs.map(doc => doc?.data?.paratextId).filter(id => id) as string[])
     );

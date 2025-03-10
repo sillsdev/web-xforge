@@ -4,6 +4,7 @@ import { Delta } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -87,7 +88,10 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
 
         // Show the diff, if requested
         if (showDiff && this.diffText?.id != null) {
-          const textDoc: TextDoc = await this.projectService.getText(this.diffText.id);
+          const textDoc: TextDoc = await this.projectService.getText(
+            this.diffText.id,
+            new DocSubscription('EditorHistoryComponent')
+          );
           const targetContents: Delta = new Delta(textDoc.data?.ops);
           const diff = this.editorHistoryService.processDiff(snapshotContents, targetContents);
 

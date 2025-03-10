@@ -15,6 +15,7 @@ import {
   FileType
 } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
+import { DocSubscription } from './models/realtime-doc';
 import { OfflineStore } from './offline-store';
 import { OnlineStatusService } from './online-status.service';
 import { RealtimeService } from './realtime.service';
@@ -281,7 +282,8 @@ export class FileService {
             // The file has not been uploaded to the server
             const doc = await this.realtimeService.onlineFetch<ProjectDataDoc>(
               fileData.dataCollection,
-              fileData.realtimeDocRef!
+              fileData.realtimeDocRef!,
+              new DocSubscription('FileService')
             );
             if (doc.isLoaded) {
               const url = await doc.uploadFile(fileType, fileData.id, fileData.blob!, fileData.filename!);

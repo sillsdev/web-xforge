@@ -2,10 +2,11 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { BehaviorSubject, Subscription, timer } from 'rxjs';
 import { filter, repeat, retry, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuietDestroyRef } from 'xforge-common/utils';
@@ -58,7 +59,10 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
       if (this.projectDoc == null || projectId !== this._projectId) {
         this.loadingStarted();
         try {
-          this.projectDoc = await this.projectService.getProfile(projectId);
+          this.projectDoc = await this.projectService.getProfile(
+            projectId,
+            new DocSubscription('TrainingProgressComponent')
+          );
           this.setupTranslationEngine();
         } finally {
           this.loadingFinished();

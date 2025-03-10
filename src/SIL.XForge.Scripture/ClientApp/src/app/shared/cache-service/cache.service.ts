@@ -1,7 +1,7 @@
 import { DestroyRef, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
-import { DocSubscription } from '../../../xforge-common/models/realtime-doc';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
@@ -22,7 +22,7 @@ export class CacheService {
       if (projectId == null) return;
 
       this.uncache();
-      const project = await this.projectService.getProfile(projectId);
+      const project = await this.projectService.getProfile(projectId, new DocSubscription('CacheService'));
       await this.cache(project);
     });
   }

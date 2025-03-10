@@ -10,6 +10,7 @@ import { delay, map, startWith, switchMap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuietDestroyRef } from 'xforge-common/utils';
@@ -193,7 +194,11 @@ export class NavigationComponent {
   private async updateProjectUserConfig(projectId: string | undefined): Promise<void> {
     this.projectUserConfigDoc = undefined;
     if (projectId != null) {
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(
+        projectId,
+        this.userService.currentUserId,
+        new DocSubscription('NavigationComponent')
+      );
       this.projectUserConfigDoc$.next(this.projectUserConfigDoc);
     }
   }
