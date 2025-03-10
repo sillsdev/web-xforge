@@ -312,6 +312,13 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  readonly usePlatformBibleEditor: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'UsePlatformBibleEditor',
+    'Use the Platform.Bible editor',
+    15,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }
