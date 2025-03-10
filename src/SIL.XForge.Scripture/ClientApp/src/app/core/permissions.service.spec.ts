@@ -141,6 +141,7 @@ describe('PermissionsService', () => {
     expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(true);
     env.setCurrentUser('other');
     expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(false);
+    verify(mockedProjectService.getProfile('project01')).twice();
   }));
 
   describe('canSync', () => {
