@@ -7,8 +7,11 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -28,6 +31,8 @@ const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDraftHandlingService = mock(DraftHandlingService);
 const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
+const mockNoticeService = mock(NoticeService);
+const mockErrorReportingService = mock(ErrorReportingService);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -50,7 +55,9 @@ describe('EditorDraftComponent', () => {
       { provide: DraftHandlingService, useMock: mockDraftHandlingService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: DialogService, useMock: mockDialogService }
+      { provide: DialogService, useMock: mockDialogService },
+      { provide: NoticeService, useMock: mockNoticeService },
+      { provide: ErrorReportingService, useMock: mockErrorReportingService }
     ]
   }));
 
@@ -201,6 +208,42 @@ describe('EditorDraftComponent', () => {
       expect(draftDelta.ops).toEqual(component['draftDelta']!.ops);
       verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, component['draftDelta']!)).once();
       expect(component.isDraftApplied).toBe(true);
+    }));
+
+    it('should show snackbar if applying a draft fails', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile()
+      } as SFProjectProfileDoc;
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+      when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
+      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
+      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      // Does not report network related issues to bugsnag
+      when(mockDraftHandlingService.applyChapterDraftAsync(anything(), anything())).thenReject(
+        new CommandError(CommandErrorCode.Other, '504 Gateway Timeout')
+      );
+      component.applyDraft();
+      tick();
+      verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, anything())).once();
+      verify(mockNoticeService.showError(anything())).once();
+      verify(mockErrorReportingService.silentError(anything())).never();
+      expect(component.isDraftApplied).toBe(false);
+
+      // Reports to bugsnag if error is not network related
+      when(mockDraftHandlingService.applyChapterDraftAsync(anything(), anything())).thenReject(
+        new CommandError(CommandErrorCode.Other, 'Unknown error')
+      );
+      component.applyDraft();
+      tick();
+      verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, anything())).twice();
+      verify(mockNoticeService.showError(anything())).twice();
+      verify(mockErrorReportingService.silentError(anything(), anything())).once();
+      expect(component.isDraftApplied).toBe(false);
     }));
   });
 
