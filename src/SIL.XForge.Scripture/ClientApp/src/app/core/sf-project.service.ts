@@ -83,12 +83,16 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /** Returns the project profile with the project data that all project members can access. */
-  getProfile(id: string, subscription?: DocSubscriberInfo): Promise<SFProjectProfileDoc> {
+  getProfile(id: string, subscription: DocSubscriberInfo): Promise<SFProjectProfileDoc> {
     return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription);
   }
 
-  getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
-    return this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId));
+  getUserConfig(id: string, userId: string, subscription: DocSubscriberInfo): Promise<SFProjectUserConfigDoc> {
+    return this.realtimeService.subscribe(
+      SFProjectUserConfigDoc.COLLECTION,
+      getSFProjectUserConfigDocId(id, userId),
+      subscription
+    );
   }
 
   async isProjectAdmin(projectId: string, userId: string): Promise<boolean> {
@@ -111,7 +115,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('addTranslateMetrics', { projectId: id, metrics });
   }
 
-  getText(textId: TextDocId | string, subscription?: DocSubscriberInfo): Promise<TextDoc> {
+  getText(textId: TextDocId | string, subscription: DocSubscriberInfo): Promise<TextDoc> {
     return this.realtimeService.subscribe(
       TextDoc.COLLECTION,
       textId instanceof TextDocId ? textId.toString() : textId,
@@ -119,12 +123,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     );
   }
 
-  getNoteThread(threadDataId: string): Promise<NoteThreadDoc> {
-    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadDataId);
+  getNoteThread(threadDataId: string, subscription: DocSubscriberInfo): Promise<NoteThreadDoc> {
+    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadDataId, subscription);
   }
 
-  getBiblicalTerm(biblicalTermId: string): Promise<BiblicalTermDoc> {
-    return this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, biblicalTermId);
+  getBiblicalTerm(biblicalTermId: string, subscription: DocSubscriberInfo): Promise<BiblicalTermDoc> {
+    return this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, biblicalTermId, subscription);
   }
 
   async createNoteThread(projectId: string, noteThread: NoteThread): Promise<void> {

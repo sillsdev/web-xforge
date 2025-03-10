@@ -65,16 +65,16 @@ export class UserService {
   }
 
   /** Get currently-logged in user. */
-  getCurrentUser(subscription?: DocSubscriberInfo): Promise<UserDoc> {
+  getCurrentUser(subscription: DocSubscriberInfo): Promise<UserDoc> {
     return this.get(this.currentUserId, subscription);
   }
 
-  get(id: string, subscription?: DocSubscriberInfo): Promise<UserDoc> {
+  get(id: string, subscription: DocSubscriberInfo): Promise<UserDoc> {
     return this.realtimeService.subscribe(UserDoc.COLLECTION, id, subscription);
   }
 
-  getProfile(id: string): Promise<UserProfileDoc> {
-    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id);
+  getProfile(id: string, subscription: DocSubscriberInfo): Promise<UserProfileDoc> {
+    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, subscription);
   }
 
   async onlineDelete(id: string): Promise<void> {

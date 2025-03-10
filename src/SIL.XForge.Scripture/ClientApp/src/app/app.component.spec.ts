@@ -37,6 +37,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../xforge-common/models/realtime-doc';
 import { AppComponent } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
@@ -660,11 +661,11 @@ class TestEnvironment {
     this.addProjectUserConfig('project01', 'user03');
     this.addProjectUserConfig('project01', 'user04');
 
-    when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    when(mockedSFProjectService.getProfile(anything(), anything())).thenCall((projectId, subscriber) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscriber)
     );
-    when(mockedSFProjectService.getUserConfig(anything(), anything())).thenCall((projectId, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`)
+    when(mockedSFProjectService.getUserConfig(anything(), anything())).thenCall((projectId, userId, subscriber) =>
+      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`, subscriber)
     );
     when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
 
@@ -780,7 +781,9 @@ class TestEnvironment {
 
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, userId, FETCH_WITHOUT_SUBSCRIBE)
+    );
   }
 
   triggerLogin(): void {

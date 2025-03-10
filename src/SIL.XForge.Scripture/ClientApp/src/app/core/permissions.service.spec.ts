@@ -231,7 +231,7 @@ class TestEnvironment {
   constructor(readonly checkingEnabled = true) {
     this.service = TestBed.inject(PermissionsService);
 
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
 

@@ -3,7 +3,7 @@ import { filter, race, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
 import { IDestroyRef } from 'xforge-common/utils';
 import { FileService } from './file.service';
-import { DocSubscriberInfo, DocSubscription, FETCH_WITHOUT_SUBSCRIBE, RealtimeDoc } from './models/realtime-doc';
+import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE, RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { OfflineStore } from './offline-store';
 import { QueryParameters } from './query-parameters';
@@ -99,7 +99,7 @@ export class RealtimeService {
     return countsByContext;
   }
 
-  get<T extends RealtimeDoc>(collection: string, id: string, docSubscription?: DocSubscriberInfo): T {
+  get<T extends RealtimeDoc>(collection: string, id: string, docSubscription: DocSubscriberInfo): T {
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
     if (doc == null) {
@@ -117,7 +117,7 @@ export class RealtimeService {
       this.docs.set(key, doc);
     }
     if (docSubscription !== FETCH_WITHOUT_SUBSCRIBE) {
-      doc.addSubscriber(docSubscription ?? DocSubscription.UnknownSubscriber);
+      doc.addSubscriber(docSubscription);
     }
 
     return doc as T;
@@ -138,14 +138,18 @@ export class RealtimeService {
    * @param {string} id The id.
    * @returns {Promise<T>} The real-time doc.
    */
-  async subscribe<T extends RealtimeDoc>(collection: string, id: string, subscription?: DocSubscriberInfo): Promise<T> {
+  async subscribe<T extends RealtimeDoc>(collection: string, id: string, subscription: DocSubscriberInfo): Promise<T> {
     const doc = this.get<T>(collection, id, subscription);
     await doc.subscribe();
     return doc;
   }
 
-  async onlineFetch<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
-    const doc = this.get<T>(collection, id);
+  async onlineFetch<T extends RealtimeDoc>(
+    collection: string,
+    id: string,
+    subscription: DocSubscriberInfo
+  ): Promise<T> {
+    const doc = this.get<T>(collection, id, subscription);
     await doc.onlineFetch();
     return doc;
   }
