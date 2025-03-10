@@ -1,6 +1,7 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { Usj } from '@biblionexus-foundation/scripture-utilities';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
@@ -736,6 +737,59 @@ describe('DraftGenerationService', () => {
 
       // SUT
       service.getGeneratedDraftUsfm(projectId, book, chapter, undefined).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+    }));
+  });
+
+  describe('getGeneratedDraftUsj', () => {
+    it('should get the pre-translation USJ for the specified book/chapter and return an observable', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      const usj = {} as Usj;
+
+      // SUT
+      service.getGeneratedDraftUsj(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual(usj);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usj`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(usj);
+      tick();
+    }));
+
+    it('should return undefined for a 404 error', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+
+      // SUT
+      service.getGeneratedDraftUsj(projectId, book, chapter).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usj`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getGeneratedDraftUsj(projectId, book, chapter).subscribe(result => {
         expect(result).toBeUndefined();
       });
       tick();

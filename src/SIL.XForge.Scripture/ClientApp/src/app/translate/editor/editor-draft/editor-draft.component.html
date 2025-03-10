@@ -71,12 +71,20 @@
     {{ "editor_draft_tab.offline_notice" | transloco }}
   </app-notice>
 }
-
-<app-text
-  [isReadOnly]="true"
-  [subscribeToUpdates]="false"
-  [isRightToLeft]="isRightToLeft"
-  [fontSize]="fontSize"
-  [ngClass]="draftCheckState"
-  [style.--project-font]="fontService.getFontFamilyFromProject(targetProject)"
-></app-text>
+@if (featureFlags.usePlatformBibleEditor.enabled) {
+  <app-platform-editor
+    [isReadOnly]="true"
+    [isRightToLeft]="isRightToLeft"
+    [style.--project-font]="fontService.getFontFamilyFromProject(targetProject)"
+    [style.--project-font-size]="fontSize"
+  ></app-platform-editor>
+} @else {
+  <app-text
+    [isReadOnly]="true"
+    [subscribeToUpdates]="false"
+    [isRightToLeft]="isRightToLeft"
+    [fontSize]="fontSize"
+    [ngClass]="draftCheckState"
+    [style.--project-font]="fontService.getFontFamilyFromProject(targetProject)"
+  ></app-text>
+}

@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -12,6 +12,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -33,6 +34,7 @@ import { EditorDraftComponent } from './editor-draft.component';
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDraftHandlingService = mock(DraftHandlingService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
 const mockNoticeService = mock(NoticeService);
@@ -59,6 +61,7 @@ describe('EditorDraftComponent', () => {
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: DraftHandlingService, useMock: mockDraftHandlingService },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockDialogService },
@@ -72,6 +75,8 @@ describe('EditorDraftComponent', () => {
     component = fixture.componentInstance;
 
     testOnlineStatus = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+
+    when(mockedFeatureFlagService.usePlatformBibleEditor).thenReturn(createTestFeatureFlag(false));
 
     component.projectId = 'targetProjectId';
     component.bookNum = 1;
@@ -110,7 +115,7 @@ describe('EditorDraftComponent', () => {
     testOnlineStatus.setIsOnline(true);
     tick(EDITOR_READY_TIMEOUT);
     expect(component.draftCheckState).toEqual('draft-legacy');
-    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    expect(component.draftText!.editor!.getContents().ops).toEqual(draftDelta.ops);
 
     testOnlineStatus.setIsOnline(false);
     fixture.detectChanges();
@@ -120,7 +125,7 @@ describe('EditorDraftComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
     fixture.detectChanges();
     expect(component.draftCheckState).toEqual('draft-legacy');
-    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    expect(component.draftText!.editor!.getContents().ops).toEqual(draftDelta.ops);
 
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
@@ -146,7 +151,8 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
     expect(component.draftCheckState).toEqual('draft-present');
-    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    expect(component.draftText!.editor!.getContents().ops).toEqual(draftDelta.ops);
+    flush();
   }));
 
   it('should support a timestamp earlier than the oldest draft', fakeAsync(() => {
@@ -276,13 +282,14 @@ describe('EditorDraftComponent', () => {
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
 
-      component.draftText.editor?.setContents(draftDelta);
+      component.draftText!.editor!.setContents(draftDelta);
 
       component.applyDraft();
       tick(EDITOR_READY_TIMEOUT);
 
       verify(mockDialogService.confirm(anything(), anything())).once();
       expect(component.isDraftApplied).toBe(true);
+      flush();
     }));
 
     it('should not show a prompt when applying if the target has no content', fakeAsync(() => {
@@ -301,13 +308,14 @@ describe('EditorDraftComponent', () => {
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
 
-      component.draftText.editor?.setContents(draftDelta);
+      component.draftText!.editor!.setContents(draftDelta);
 
       component.applyDraft();
       tick(EDITOR_READY_TIMEOUT);
 
       verify(mockDialogService.confirm(anything(), anything())).never();
       expect(component.isDraftApplied).toBe(true);
+      flush();
     }));
 
     it('should throw error if there is no draft', fakeAsync(() => {
@@ -333,7 +341,7 @@ describe('EditorDraftComponent', () => {
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
 
-      component.draftText.editor?.setContents(draftDelta);
+      component.draftText!.editor!.setContents(draftDelta);
 
       component.applyDraft();
       tick();
@@ -341,6 +349,7 @@ describe('EditorDraftComponent', () => {
       expect(draftDelta.ops).toEqual(component['draftDelta']!.ops);
       verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, component['draftDelta']!)).once();
       expect(component.isDraftApplied).toBe(true);
+      flush();
     }));
 
     it('should show snackbar if applying a draft fails', fakeAsync(() => {

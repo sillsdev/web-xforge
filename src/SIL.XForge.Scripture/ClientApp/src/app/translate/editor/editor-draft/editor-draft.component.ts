@@ -15,6 +15,7 @@ import {
   merge,
   Observable,
   observeOn,
+  of,
   startWith,
   Subject,
   switchMap,
@@ -38,6 +39,8 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
+import { PlatformEditorComponent } from '../platform-editor/platform-editor.component';
+
 @Component({
   selector: 'app-editor-draft',
   templateUrl: './editor-draft.component.html',
@@ -51,7 +54,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @Input() fontSize?: string;
   @Input() timestamp?: Date;
 
-  @ViewChild(TextComponent) draftText!: TextComponent;
+  @ViewChild(TextComponent) draftText?: TextComponent;
+  @ViewChild(PlatformEditorComponent) draftEditor?: PlatformEditorComponent;
 
   inputChanged$ = new Subject<void>();
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
@@ -117,7 +121,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   populateDraftTextInit(): void {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
-      this.draftText.editorCreated as EventEmitter<any>,
+      (this.draftText?.editorCreated as EventEmitter<any>) ?? of(undefined),
+      this.featureFlags.usePlatformBibleEditor.enabled$,
       this.inputChanged$.pipe(startWith(undefined))
     ])
       .pipe(
@@ -180,28 +185,83 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           combineLatest([
             this.getTargetOps(),
             this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false, timestamp })
+            // Get the USJ, if we are displaying it
+            this.featureFlags.usePlatformBibleEditor.enabled
+              ? this.draftGenerationService.getGeneratedDraftUsj(
+                  this.textDocId!.projectId,
+                  this.textDocId!.bookNum,
+                  this.textDocId!.chapterNum
+                )
+              : of(undefined)
           ])
         ),
-        tap(([_, draft]) => {
+        tap(([_, draft, _usj]) => {
           if (this.draftHandlingService.isDraftSegmentMap(draft)) {
             this.draftCheckState = 'draft-legacy';
           }
         }),
-        map(([targetOps, draft]) => {
+        map(([targetOps, draft, usj]) => {
           return {
             targetOps,
             // Convert legacy draft to draft ops if necessary
-            draftOps: this.draftHandlingService.draftDataToOps(draft, targetOps)
+            draftOps: this.draftHandlingService.draftDataToOps(draft, targetOps),
+            usj
           };
         })
       )
-      .subscribe(({ targetOps, draftOps }) => {
+      .subscribe(({ targetOps, draftOps, usj }) => {
         this.draftDelta = new Delta(draftOps);
         this.targetDelta = new Delta(targetOps);
 
         // Set the draft editor with the pre-translation segments
-        this.draftText.setContents(this.draftDelta, 'api');
-        this.draftText.applyEditorStyles();
+        this.draftText?.setContents(this.draftDelta, 'api');
+        this.draftText?.applyEditorStyles();
+        this.draftEditor?.setUsj(usj);
+
+        this.isDraftApplied =
+          this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
+            ?.draftApplied ?? false;
+
+        if (this.draftCheckState !== 'draft-legacy') {
+          this.draftCheckState = 'draft-present';
+        }
+
+        this.isDraftReady = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
+      });
+  }
+
+  populateUsjDraftTextInit(): void {
+    combineLatest([this.onlineStatusService.onlineStatus$, this.inputChanged$.pipe(startWith(undefined))])
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter(([isOnline]) => isOnline),
+        tap(() => this.setInitialState()),
+        switchMap(() => this.draftExists()),
+        switchMap((draftExists: boolean) => {
+          if (!draftExists) {
+            this.draftCheckState = 'draft-empty';
+            return EMPTY;
+          }
+
+          // Respond to project changes
+          return this.activatedProjectService.changes$.pipe(
+            filterNullish(),
+            tap(projectDoc => {
+              this.targetProject = projectDoc.data;
+            }),
+            distinctUntilChanged()
+          );
+        }),
+        switchMap(() =>
+          this.draftGenerationService.getGeneratedDraftUsj(
+            this.textDocId!.projectId,
+            this.textDocId!.bookNum,
+            this.textDocId!.chapterNum
+          )
+        )
+      )
+      .subscribe(usj => {
+        this.draftEditor?.setUsj(usj);
 
         this.isDraftApplied =
           this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)

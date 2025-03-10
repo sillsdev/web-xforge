@@ -22,6 +22,7 @@ import { EditorComponent } from './editor/editor.component';
 import { LynxInsightsModule } from './editor/lynx/insights/lynx-insights.module';
 import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.component';
 import { NoteDialogComponent } from './editor/note-dialog/note-dialog.component';
+import { PlatformEditorComponent } from './editor/platform-editor/platform-editor.component';
 import { SuggestionsSettingsDialogComponent } from './editor/suggestions-settings-dialog.component';
 import { SuggestionsComponent } from './editor/suggestions.component';
 import { EditorTabAddResourceDialogComponent } from './editor/tabs/editor-tab-add-resource-dialog/editor-tab-add-resource-dialog.component';
@@ -63,7 +64,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
     DraftPreviewBooksComponent,
     DraftApplyProgressDialogComponent,
     FontUnsupportedMessageComponent,
-    LynxInsightsModule
+    LynxInsightsModule,
+    PlatformEditorComponent
   ]
 })
 export class TranslateModule {}

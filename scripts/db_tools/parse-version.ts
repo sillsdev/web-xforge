@@ -41,7 +41,8 @@ class ParseVersion {
     'Dark Mode',
     'Enable Lynx insights',
     'Preview new draft history interface',
-    'USFM Format'
+    'USFM Format',
+    'Use the Platform.Bible editor'
   ];
 
   constructor() {
