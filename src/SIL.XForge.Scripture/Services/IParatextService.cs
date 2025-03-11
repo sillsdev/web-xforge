@@ -111,13 +111,13 @@ public interface IParatextService
     /// <param name="userSecret">The user secret.</param>
     /// <param name="paratextId">The project's paratext identifier.</param>
     /// <param name="bookNum">The book number.</param>
-    /// <param name="usfm">The book USFM.</param>
+    /// <param name="usfm">The book USFM. If this is not set, the USFM is loaded from disk.</param>
     /// <returns>The chapters enumerated in order from chapter 1 until the last chapter.</returns>
     /// <remarks>
     /// If chapters are missing, they will be present in the collection at the correct position,
     /// but will have an empty Content array.
     /// </remarks>
-    IEnumerable<Usj> GetChaptersAsUsj(UserSecret userSecret, string paratextId, int bookNum, string usfm);
+    IEnumerable<Usj> GetChaptersAsUsj(UserSecret userSecret, string paratextId, int bookNum, string? usfm = null);
 
     Task<ParatextProject> SendReceiveAsync(
         UserSecret userSecret,

@@ -1046,12 +1046,13 @@ public class ParatextService : DisposableBase, IParatextService
     /// <returns>A collection of Usj objects.</returns>
     /// <exception cref="ForbiddenException">The user secret is invalid.</exception>
     /// <exception cref="DataNotFoundException">The Paratext project could not be found.</exception>
-    public IEnumerable<Usj> GetChaptersAsUsj(UserSecret userSecret, string paratextId, int bookNum, string usfm)
+    public IEnumerable<Usj> GetChaptersAsUsj(UserSecret userSecret, string paratextId, int bookNum, string? usfm = null)
     {
         string username = GetParatextUsername(userSecret) ?? throw new ForbiddenException();
         using ScrText scrText =
             ScrTextCollection.FindById(username, paratextId)
             ?? throw new DataNotFoundException("Can't get access to cloned project.");
+        usfm ??= scrText.GetText(bookNum);
 
         foreach (string chapterUsfm in ScrText.SplitIntoChapters(scrText.Name, bookNum, usfm))
         {
