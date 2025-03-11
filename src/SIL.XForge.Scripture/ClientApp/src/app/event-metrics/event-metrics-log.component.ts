@@ -14,7 +14,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from './event-metric';
 import { EventMetricDialogComponent } from './event-metric-dialog.component';
@@ -65,6 +65,8 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
 
   private eventMetrics?: EventMetric[];
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     noticeService: NoticeService,
     private readonly activatedProjectService: ActivatedProjectService,
@@ -72,8 +74,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
     private readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly projectService: SFProjectService,
-    private destroyRef: QuietDestroyRef
+    private readonly projectService: SFProjectService
   ) {
     super(noticeService);
   }

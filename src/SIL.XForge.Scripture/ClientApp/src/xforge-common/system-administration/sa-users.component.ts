@@ -7,7 +7,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { DataLoadingComponent } from '../data-loading-component';
 import { DialogService } from '../dialog.service';
@@ -46,13 +46,13 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   private readonly searchTerm$ = new BehaviorSubject<string>('');
   private readonly queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
   private readonly reload$ = new BehaviorSubject<void>(undefined);
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private dialogService: DialogService,
     noticeService: NoticeService,
     private readonly userService: UserService,
-    private readonly projectService: ProjectService,
-    private destroyRef: QuietDestroyRef
+    private readonly projectService: ProjectService
   ) {
     super(noticeService);
   }

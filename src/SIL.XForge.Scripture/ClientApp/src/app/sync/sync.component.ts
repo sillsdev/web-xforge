@@ -12,7 +12,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
@@ -42,6 +42,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   private isSyncCancelled = false;
   private paratextUsername?: string;
   private previousLastSyncDate?: Date;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -51,8 +52,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogService: DialogService,
-    private readonly authService: AuthService,
-    private destroyRef: QuietDestroyRef
+    private readonly authService: AuthService
   ) {
     super(noticeService);
   }

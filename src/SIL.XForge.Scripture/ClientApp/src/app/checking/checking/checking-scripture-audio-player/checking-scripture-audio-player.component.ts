@@ -5,7 +5,7 @@ import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
@@ -49,11 +49,9 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
   private finishedSubscription?: Subscription;
   private verseChangeSubscription?: Subscription;
   private audioSubscription?: Subscription;
+  private destroyRef = getQuietDestroyRef();
 
-  constructor(
-    readonly i18n: I18nService,
-    private destroyRef: QuietDestroyRef
-  ) {}
+  constructor(readonly i18n: I18nService) {}
 
   ngAfterViewInit(): void {
     this.doAudioSubscriptions();

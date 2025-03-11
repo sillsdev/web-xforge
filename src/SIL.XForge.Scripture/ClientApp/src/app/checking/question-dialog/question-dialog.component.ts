@@ -9,7 +9,7 @@ import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -59,13 +59,13 @@ export class QuestionDialogComponent implements OnInit {
   _selection?: VerseRef;
 
   private _question: Readonly<Question | undefined>;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly dialogRef: MatDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>,
     @Inject(MAT_DIALOG_DATA) private data: QuestionDialogData,
     readonly i18n: I18nService,
-    readonly dialogService: DialogService,
-    private readonly destroyRef: QuietDestroyRef
+    readonly dialogService: DialogService
   ) {}
 
   get scriptureStart(): AbstractControl {

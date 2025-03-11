@@ -26,7 +26,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -127,14 +127,14 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
   private projectProfileDocChangesSubscription?: Subscription;
   private projectUserConfigDocChangesSubscription?: Subscription;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly userService: UserService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly projectService: SFProjectService,
-    private readonly i18n: I18nService,
-    private destroyRef: QuietDestroyRef
+    private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {

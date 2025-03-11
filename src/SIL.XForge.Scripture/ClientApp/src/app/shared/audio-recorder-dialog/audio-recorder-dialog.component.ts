@@ -3,8 +3,8 @@ import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, View
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { TranslocoModule, translate } from '@ngneat/transloco';
-import { Observable, Subscription, interval, timer } from 'rxjs';
+import { translate, TranslocoModule } from '@ngneat/transloco';
+import { interval, Observable, Subscription, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -14,7 +14,7 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { QuietDestroyRef, audioRecordingMimeType, objectId } from 'xforge-common/utils';
+import { audioRecordingMimeType, getQuietDestroyRef, objectId } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { SharedModule } from '../shared.module';
 
@@ -70,14 +70,14 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
   private visualizerHeight = 150;
   private visualizerWidth = 300;
   private audioWaveformBase = 128;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     public readonly dialogRef: MatDialogRef<AudioRecorderDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: AudioRecorderDialogData,
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
-    private readonly dialogService: DialogService,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly dialogService: DialogService
   ) {
     this.showCountdown = data?.countdown ?? false;
     if (data?.audio != null) {

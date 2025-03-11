@@ -5,7 +5,7 @@ import { IOutputAreaSizes } from 'angular-split';
 import { clone } from 'lodash-es';
 import { fromEvent, Observable, Subscription } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -29,11 +29,9 @@ export class CheckingTextComponent implements AfterViewInit {
   private _id?: TextDocId;
   private _questionVerses?: VerseRef[];
   private _placeholder?: string;
+  private destroyRef = getQuietDestroyRef();
 
-  constructor(
-    readonly fontService: FontService,
-    private destroyRef: QuietDestroyRef
-  ) {}
+  constructor(readonly fontService: FontService) {}
 
   ngAfterViewInit(): void {
     if (this.resizableContainer != null) {

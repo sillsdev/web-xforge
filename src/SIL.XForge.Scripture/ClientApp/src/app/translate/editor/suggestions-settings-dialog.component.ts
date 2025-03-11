@@ -5,7 +5,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 
@@ -27,10 +27,11 @@ export class SuggestionsSettingsDialogComponent {
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     @Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData,
-    readonly onlineStatusService: OnlineStatusService,
-    private destroyRef: QuietDestroyRef
+    readonly onlineStatusService: OnlineStatusService
   ) {
     this.projectDoc = data.projectDoc;
     this.projectUserConfigDoc = data.projectUserConfigDoc;

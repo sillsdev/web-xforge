@@ -1,13 +1,13 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Subscription, asyncScheduler, merge, startWith, tap, throttleTime } from 'rxjs';
+import { asyncScheduler, merge, startWith, Subscription, tap, throttleTime } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
@@ -45,14 +45,14 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
   private _projectDoc?: SFProjectProfileDoc;
   private _allChaptersChangeSub?: Subscription;
   private _canTrainSuggestions: boolean = false;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     readonly noticeService: NoticeService,
     private readonly activatedProject: ActivatedProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private readonly permissionsService: PermissionsService,
-    private destroyRef: QuietDestroyRef
+    private readonly permissionsService: PermissionsService
   ) {
     super(noticeService);
 

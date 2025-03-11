@@ -10,7 +10,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -43,6 +43,7 @@ export class ShareControlComponent extends ShareBaseComponent {
 
   private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     readonly i18n: I18nService,
@@ -50,8 +51,7 @@ export class ShareControlComponent extends ShareBaseComponent {
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly changeDetector: ChangeDetectorRef,
-    userService: UserService,
-    private destroyRef: QuietDestroyRef
+    userService: UserService
   ) {
     super(userService);
     combineLatest([this.projectId$, this.onlineStatusService.onlineStatus$])

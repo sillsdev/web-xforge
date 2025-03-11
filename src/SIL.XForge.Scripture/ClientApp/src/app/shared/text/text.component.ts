@@ -28,7 +28,7 @@ import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { getBrowserEngine, objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { getBrowserEngine, getQuietDestroyRef, objectId } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -265,6 +265,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private presenceActiveEditor$: Subject<boolean> = new Subject<boolean>();
   private onPresenceDocReceive = (_presenceId: string, _range: Range | null): void => {};
   private onPresenceChannelReceive = (_presenceId: string, _presenceData: PresenceData | null): void => {};
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly changeDetector: ChangeDetectorRef,
@@ -274,8 +275,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     private readonly transloco: TranslocoService,
     private readonly userService: UserService,
     private readonly viewModel: TextViewModel,
-    private readonly textDocService: TextDocService,
-    private destroyRef: QuietDestroyRef
+    private readonly textDocService: TextDocService
   ) {
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
     if (localCursorColor == null) {

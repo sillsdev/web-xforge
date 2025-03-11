@@ -24,7 +24,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
@@ -101,6 +101,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   private controlStates = new Map<keyof SFProjectSettings, ElementState>();
   private previousFormValues: SFProjectSettings = {};
   private _isAppOnline: boolean = false;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -115,8 +116,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     readonly authService: AuthService,
     readonly featureFlags: FeatureFlagService,
     readonly externalUrls: ExternalUrlService,
-    private readonly activatedProjectService: ActivatedProjectService,
-    private destroyRef: QuietDestroyRef
+    private readonly activatedProjectService: ActivatedProjectService
   ) {
     super(noticeService);
     this.loading = true;

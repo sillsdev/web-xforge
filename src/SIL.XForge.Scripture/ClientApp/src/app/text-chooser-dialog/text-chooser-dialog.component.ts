@@ -8,7 +8,7 @@ import { auditTime } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { TextDocId } from '../core/models/text-doc';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import {
@@ -53,14 +53,14 @@ export class TextChooserDialogComponent {
   private selectedVerses?: VerseRefData;
   private selectionChanged = false;
   private readonly verseSegmentSelector = 'usx-segment[data-segment^=verse_]';
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly dialogRef: MatDialogRef<TextChooserDialogComponent>,
     readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     @Inject(DOCUMENT) private readonly document: Document,
-    @Optional() @Inject(MAT_DIALOG_DATA) private readonly data: TextChooserDialogData,
-    private destroyRef: QuietDestroyRef
+    @Optional() @Inject(MAT_DIALOG_DATA) private readonly data: TextChooserDialogData
   ) {
     // caniuse doesn't have complete data for the selection events api, but testing on BrowserStack shows the event is
     // fired at least as far back as iOS v7 on Safari 7.

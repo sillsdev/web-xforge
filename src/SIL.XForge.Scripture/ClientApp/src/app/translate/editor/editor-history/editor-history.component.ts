@@ -5,7 +5,7 @@ import { combineLatest, startWith, tap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
@@ -35,8 +35,9 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
   isViewInitialized = false;
   projectDoc: SFProjectProfileDoc | undefined;
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
     private readonly editorHistoryService: EditorHistoryService,
     readonly fontService: FontService,
     private readonly i18nService: I18nService,

@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, firstValueFrom, fromEvent, merge, Observable, of } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { NAVIGATOR } from './browser-globals';
 
 @Injectable({
@@ -16,10 +16,11 @@ export class OnlineStatusService {
   protected windowOnLineStatus$: BehaviorSubject<boolean>;
   private webSocketStatus$: BehaviorSubject<boolean | null> = new BehaviorSubject<boolean | null>(null);
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     protected readonly http: HttpClient,
-    @Inject(NAVIGATOR) protected readonly navigator: Navigator,
-    private destroyRef: QuietDestroyRef
+    @Inject(NAVIGATOR) protected readonly navigator: Navigator
   ) {
     this.appOnlineStatus$ = new BehaviorSubject<boolean>(this.navigator.onLine);
     this.windowOnLineStatus$ = new BehaviorSubject<boolean>(this.navigator.onLine);

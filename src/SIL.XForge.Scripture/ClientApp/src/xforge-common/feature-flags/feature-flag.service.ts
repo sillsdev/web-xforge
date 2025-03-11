@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 
 export interface FeatureFlag {
   readonly key: string;
@@ -33,10 +33,11 @@ export class FeatureFlagStore implements IFeatureFlagStore {
   private remoteFlags: { [key: string]: boolean } = {};
   private remoteFlagCacheExpiry: Date = new Date();
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     private readonly anonymousService: AnonymousService,
-    private readonly onlineStatusService: OnlineStatusService,
-    private destroyRef: QuietDestroyRef
+    private readonly onlineStatusService: OnlineStatusService
   ) {
     // Cause the flags to be reloaded when coming online
     onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {

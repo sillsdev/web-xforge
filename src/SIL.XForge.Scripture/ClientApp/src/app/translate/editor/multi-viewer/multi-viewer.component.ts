@@ -6,7 +6,7 @@ import { slice } from 'lodash-es';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { combineLatest } from 'rxjs';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 
 export interface MultiCursorViewer extends UserProfile {
   cursorColor: string;
@@ -24,10 +24,11 @@ export class MultiViewerComponent implements OnInit {
   maxAvatars: number = 3;
   isMenuOpen: boolean = false;
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     private readonly breakpointObserver: BreakpointObserver,
-    private readonly breakpointService: MediaBreakpointService,
-    private destroyRef: QuietDestroyRef
+    private readonly breakpointService: MediaBreakpointService
   ) {}
 
   get avatarViewers(): MultiCursorViewer[] {

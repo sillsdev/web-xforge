@@ -5,7 +5,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { BehaviorSubject } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectDoc } from '../../app/core/models/sf-project-doc';
 import { SFProjectService } from '../../app/core/sf-project.service';
 import { DataLoadingComponent } from '../data-loading-component';
@@ -76,12 +76,13 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
   private readonly searchTerm$: BehaviorSubject<string>;
   private readonly queryParameters$: BehaviorSubject<QueryParameters>;
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService,
-    private destroyRef: QuietDestroyRef
+    private readonly userService: UserService
   ) {
     super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');

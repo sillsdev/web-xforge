@@ -10,7 +10,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { PermissionsService } from '../core/permissions.service';
@@ -24,6 +24,8 @@ type TaskType = 'translate' | 'checking';
   styleUrls: ['./project.component.scss']
 })
 export class ProjectComponent extends DataLoadingComponent implements OnInit {
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly projectService: SFProjectService,
@@ -32,8 +34,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly permissions: PermissionsService,
     private readonly resumeCheckingService: ResumeCheckingService,
     private readonly dialogService: DialogService,
-    noticeService: NoticeService,
-    private destroyRef: QuietDestroyRef
+    noticeService: NoticeService
   ) {
     super(noticeService);
   }

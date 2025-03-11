@@ -33,7 +33,7 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
-import { issuesEmailTemplate, QuietDestroyRef, supportedBrowser } from 'xforge-common/utils';
+import { getQuietDestroyRef, issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -67,6 +67,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private selectedProjectDeleteSub?: Subscription;
   private permissionsChangedSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly router: Router,
@@ -87,8 +88,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
-    onlineStatusService: OnlineStatusService,
-    private destroyRef: QuietDestroyRef
+    onlineStatusService: OnlineStatusService
   ) {
     super(noticeService);
     this.breakpointObserver

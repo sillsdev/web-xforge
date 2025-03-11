@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, Input, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 
 export interface AudioAttachment {
@@ -20,11 +20,9 @@ export class CheckingAudioPlayerComponent implements AfterViewInit {
   private _isAudioAvailable = false;
   @ViewChild(AudioPlayerComponent) audioPlayer?: AudioPlayerComponent;
   @Input() source?: string = '';
+  private destroyRef = getQuietDestroyRef();
 
-  constructor(
-    readonly i18n: I18nService,
-    private destroyRef: QuietDestroyRef
-  ) {}
+  constructor(readonly i18n: I18nService) {}
 
   ngAfterViewInit(): void {
     this.audioPlayer!.isAudioAvailable$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(newValue => {

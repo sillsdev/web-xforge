@@ -7,7 +7,7 @@ import { BehaviorSubject, map, merge, Observable } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -63,14 +63,14 @@ export class SyncProgressComponent {
 
   private sourceProjectDoc?: SFProjectDoc;
   private _projectDoc?: SFProjectDoc;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly projectService: SFProjectService,
     private readonly projectNotificationService: ProjectNotificationService,
     private readonly featureFlags: FeatureFlagService,
     private readonly errorReportingService: ErrorReportingService,
-    private readonly onlineStatus: OnlineStatusService,
-    private destroyRef: QuietDestroyRef
+    private readonly onlineStatus: OnlineStatusService
   ) {
     this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) => {
       this.updateProgressState(projectId, progressState);

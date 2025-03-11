@@ -6,7 +6,7 @@ import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { translate } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';
@@ -59,8 +59,9 @@ export class ProjectSelectComponent implements ControlValueAccessor {
   ]).pipe(map(value => this.filterGroup(value[0], this.resources || [], value[1])));
 
   projectLabel = projectLabel;
+  private destroyRef = getQuietDestroyRef();
 
-  constructor(private destroyRef: QuietDestroyRef) {
+  constructor() {
     this.paratextIdControl.valueChanges
       .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe((value: SelectableProject) => {

@@ -12,7 +12,7 @@ import { filter, share } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { HttpClient } from '../machine-api/http-client';
 import { RemoteTranslationEngine } from '../machine-api/remote-translation-engine';
 import { EDITED_SEGMENTS, EditedSegmentData } from './models/edited-segment-data';
@@ -32,6 +32,7 @@ export class TranslationEngineService {
     string,
     InteractiveTranslatorFactory
   >();
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly offlineStore: OfflineStore,
@@ -39,8 +40,7 @@ export class TranslationEngineService {
     private readonly projectService: SFProjectService,
     private readonly machineHttp: HttpClient,
     private readonly noticeService: NoticeService,
-    private readonly router: Router,
-    private destroyRef: QuietDestroyRef
+    private readonly router: Router
   ) {
     this.onlineStatus$ = this.onlineStatusService.onlineStatus$.pipe(
       filter(online => online),

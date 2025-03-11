@@ -102,7 +102,7 @@ export class EditorTabAddResourceDialogService {
   constructor(
     private readonly paratextService: ParatextService,
     private readonly userProjectsService: SFUserProjectsService,
-    private readonly destroyRef: QuietDestroyRef
+    private destroyRef = getQuietDestroyRef();
   ) {
     this.userProjectsService.projectDocs$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projects => {
       if (projects == null) return;

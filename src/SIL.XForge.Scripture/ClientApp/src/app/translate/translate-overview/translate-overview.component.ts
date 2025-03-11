@@ -7,10 +7,10 @@ import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Subscription, asyncScheduler, firstValueFrom, timer } from 'rxjs';
+import { asyncScheduler, firstValueFrom, Subscription, timer } from 'rxjs';
 import { filter, map, repeat, retry, tap, throttleTime } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -18,7 +18,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -45,6 +45,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   private translationEngine?: RemoteTranslationEngine;
   private projectDoc?: SFProjectProfileDoc;
   private projectDataChangesSub?: Subscription;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -55,8 +56,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
     public readonly progressService: ProgressService,
-    readonly i18n: I18nService,
-    private destroyRef: QuietDestroyRef
+    readonly i18n: I18nService
   ) {
     super(noticeService);
     this.engineQualityStars = [];

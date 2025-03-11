@@ -24,7 +24,7 @@ import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { isString } from '../../../../type-utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -59,9 +59,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   private draftDelta?: Delta;
   private targetDelta?: Delta;
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly destroyRef: QuietDestroyRef,
     private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftHandlingService: DraftHandlingService,

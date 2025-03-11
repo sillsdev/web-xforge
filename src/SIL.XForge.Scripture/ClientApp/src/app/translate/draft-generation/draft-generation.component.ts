@@ -24,7 +24,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { issuesEmailTemplate, QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef, issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -140,6 +140,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return environment.issueEmail;
   }
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -154,8 +156,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
     protected readonly noticeService: NoticeService,
-    protected readonly urlService: ExternalUrlService,
-    private destroyRef: QuietDestroyRef
+    protected readonly urlService: ExternalUrlService
   ) {
     super(noticeService);
   }

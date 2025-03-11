@@ -12,7 +12,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
@@ -77,6 +77,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   draftJob$: Observable<BuildDto | undefined> = new Observable<BuildDto | undefined>();
   lastCompletedBuild: BuildDto | undefined;
   zipSubscription: Subscription | undefined;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -84,8 +85,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private readonly servalAdministrationService: ServalAdministrationService,
-    private destroyRef: QuietDestroyRef
+    private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService);
   }

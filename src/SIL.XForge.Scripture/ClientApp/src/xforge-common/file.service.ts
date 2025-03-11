@@ -2,7 +2,7 @@ import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { lastValueFrom, Observable, Subject } from 'rxjs';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -49,6 +49,8 @@ export class FileService {
   private limitedStorageDialogPromise?: Promise<void>;
   private realtimeService?: RealtimeService;
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     private readonly typeRegistry: TypeRegistry,
     private readonly offlineStore: OfflineStore,
@@ -56,8 +58,7 @@ export class FileService {
     private readonly http: HttpClient,
     private readonly authService: AuthService,
     private readonly commandService: CommandService,
-    private readonly dialogService: DialogService,
-    private destroyRef: QuietDestroyRef
+    private readonly dialogService: DialogService
   ) {}
 
   get fileSyncComplete$(): Observable<void> {

@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, Optional } from '@angular/core';
+import { DestroyRef, inject, Injectable, Optional } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
@@ -216,4 +216,21 @@ export class QuietDestroyRef {
     }
     return () => {};
   }
+}
+
+/**
+ * Gets a `QuietDestroyRef` instance by injecting the `DestroyRef` and `ErrorReportingService` services, then
+ * constructing a `QuietDestroyRef` with them.
+ *
+ * The `QuietDestroyRef` cannot be directly injected into a component, because that would result in the `DestroyRef`
+ * being injected in a different injection context from the component, and not being connected to the destruction of the
+ * component.
+ *
+ * This function should be called in either the constructor or an initializer of a field of the component or service
+ * that needs to use it.
+ * See https://angular.dev/guide/di/dependency-injection-context
+ * @returns a `QuietDestroyRef`.
+ */
+export function getQuietDestroyRef(): QuietDestroyRef {
+  return new QuietDestroyRef(inject(DestroyRef), inject(ErrorReportingService, { optional: true }) ?? undefined);
 }
