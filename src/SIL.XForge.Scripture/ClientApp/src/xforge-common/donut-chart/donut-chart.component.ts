@@ -1,7 +1,15 @@
-import { AfterViewInit, Component, ElementRef, Input, NgZone, QueryList, ViewChildren } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  ElementRef,
+  Input,
+  NgZone,
+  QueryList,
+  ViewChildren
+} from '@angular/core';
 import { isEqual } from 'lodash-es';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 
 const DEFAULT_SIZE = 100;
 
@@ -39,13 +47,13 @@ export class DonutChartComponent implements AfterViewInit {
 
   constructor(
     private readonly ngZone: NgZone,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {}
 
   ngAfterViewInit(): void {
     this.animateChange();
     if (this.segmentCircles != null) {
-      this.segmentCircles.changes.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.animateChange());
+      this.segmentCircles.changes.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => this.animateChange());
     }
   }
 

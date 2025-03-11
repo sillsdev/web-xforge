@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AfterViewInit, Component, DestroyRef, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Canon } from '@sillsdev/scripture';
 import { cloneDeep, reject } from 'lodash-es';
@@ -15,7 +14,7 @@ import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { objectId, quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -65,7 +64,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   private _loadingAudio: boolean = false;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: ChapterAudioDialogData,
     private readonly csvService: CsvService,
@@ -472,7 +471,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     this.textAudioQuery.ready$
       .pipe(
         filter(ready => ready),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => {
         const textAudioId: string = getTextAudioId(this.data.projectId, this.book, this.chapter);

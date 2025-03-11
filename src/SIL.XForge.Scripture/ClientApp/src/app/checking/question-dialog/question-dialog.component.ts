@@ -1,5 +1,4 @@
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
@@ -9,7 +8,7 @@ import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -65,7 +64,7 @@ export class QuestionDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) private data: QuestionDialogData,
     readonly i18n: I18nService,
     readonly dialogService: DialogService,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly destroyRef: DestroyRef
   ) {}
 
   get scriptureStart(): AbstractControl {
@@ -138,7 +137,7 @@ export class QuestionDialogComponent implements OnInit {
     // set initial enabled/disabled state for scriptureEnd
     this.updateScriptureEndEnabled();
 
-    this.scriptureStart.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.scriptureStart.valueChanges.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.scriptureStart.valid) {
         this.updateSelection();
       } else {
@@ -147,7 +146,7 @@ export class QuestionDialogComponent implements OnInit {
       // update enabled/disabled state for scriptureEnd
       this.updateScriptureEndEnabled();
     });
-    this.scriptureEnd.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.scriptureEnd.valueChanges.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.scriptureEnd.valid) {
         this.updateSelection();
       } else {

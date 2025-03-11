@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Sort } from '@angular/material/sort';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -27,7 +26,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { objectId, quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -202,7 +201,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   @ViewChild('biblicalTerms', { read: ElementRef }) biblicalTerms?: ElementRef;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly dialogService: DialogService,
@@ -311,7 +310,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.projectId$
       .pipe(
         filter(projectId => projectId !== ''),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(async projectId => {
         this.projectDoc = await this.projectService.getProfile(projectId);
@@ -333,7 +332,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         ])
           .pipe(
             filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null),
-            takeUntilDestroyed(this.destroyRef)
+            quietTakeUntilDestroyed(this.destroyRef)
           )
           .subscribe(([bookNum, chapter, verse]) => {
             this.filterBiblicalTerms(bookNum, chapter, verse);

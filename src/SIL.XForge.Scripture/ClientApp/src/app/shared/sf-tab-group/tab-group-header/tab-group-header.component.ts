@@ -2,6 +2,7 @@ import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import {
   AfterViewInit,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -13,7 +14,6 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   BehaviorSubject,
   debounceTime,
@@ -24,7 +24,7 @@ import {
   Subscription
 } from 'rxjs';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { TabMenuItem, TabMenuService } from '../../sf-tab-group';
 import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
@@ -58,7 +58,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit
   direction: LocaleDirection = 'ltr';
 
   // Used to time scroll movements while scrolling via left/right scroll buttons
-  private scrollTimer$ = interval(20).pipe(takeUntilDestroyed(this.destroyRef));
+  private scrollTimer$ = interval(20).pipe(quietTakeUntilDestroyed(this.destroyRef));
 
   private scrollButtonSubscription?: Subscription;
   private intersectionObserver?: IntersectionObserver;
@@ -67,7 +67,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit
   private tabsWrapper!: HTMLElement;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly elementRef: ElementRef<HTMLElement>,
     private readonly tabMenuService: TabMenuService<string>
   ) {}
@@ -96,12 +96,12 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit
 
     // Check if scroll is at the start or end to enable/disable scroll buttons
     fromEvent(this.tabsWrapper, 'scroll')
-      .pipe(takeUntilDestroyed(this.destroyRef), debounceTime(50))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), debounceTime(50))
       .subscribe(() => this.detectScrollLimit());
 
     // Check if scroll is at the start or end to enable/disable scroll buttons
     fromEvent(this.tabsWrapper, 'wheel')
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((e: Event) => this.scrollOnWheel(e as WheelEvent));
   }
 
@@ -213,18 +213,20 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit
 
   private initOverflowHandler(): void {
     // Handle tab overflow
-    this.overflowing$.pipe(takeUntilDestroyed(this.destroyRef), distinctUntilChanged()).subscribe(isOverflowing => {
-      const host = this.elementRef.nativeElement;
+    this.overflowing$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), distinctUntilChanged())
+      .subscribe(isOverflowing => {
+        const host = this.elementRef.nativeElement;
 
-      if (isOverflowing) {
-        host.classList.add('overflowing');
-      } else {
-        host.classList.remove('overflowing');
-      }
+        if (isOverflowing) {
+          host.classList.add('overflowing');
+        } else {
+          host.classList.remove('overflowing');
+        }
 
-      // Enable or disable scroll buttons
-      this.detectScrollLimit();
-    });
+        // Enable or disable scroll buttons
+        this.detectScrollLimit();
+      });
   }
 
   private detectOverflow(): void {
@@ -258,7 +260,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit
 
   private startButtonScrolling(which: 'start' | 'end'): void {
     this.scrollButtonSubscription?.unsubscribe();
-    this.scrollButtonSubscription = this.scrollTimer$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.scrollButtonSubscription = this.scrollTimer$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.scroll(which);
     });
   }

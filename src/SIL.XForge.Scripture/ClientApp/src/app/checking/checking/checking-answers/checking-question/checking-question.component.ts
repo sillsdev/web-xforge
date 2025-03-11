@@ -1,4 +1,14 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -12,7 +22,6 @@ import { BehaviorSubject, Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -54,7 +63,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   private isDestroyed = false;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly projectService: SFProjectService,
     private readonly i18n: I18nService
   ) {

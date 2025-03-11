@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogConfig } from '@angular/material/dialog';
@@ -14,7 +13,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { SharedModule } from '../../../shared/shared.module';
 import {
   TrainingDataUploadDialogComponent,
@@ -48,11 +47,11 @@ export class TrainingDataMultiSelectComponent implements OnChanges, OnInit {
     private readonly i18n: I18nService,
     private readonly trainingDataService: TrainingDataService,
     private readonly userService: UserService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
-    this.i18n.locale$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.sourceLanguage = this.getLanguageDisplayName('source');
       this.targetLanguage = this.getLanguageDisplayName('target');
     });

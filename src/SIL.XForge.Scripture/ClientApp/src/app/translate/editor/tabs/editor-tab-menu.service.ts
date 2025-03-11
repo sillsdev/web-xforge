@@ -1,5 +1,4 @@
-import { Injectable } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef, Injectable } from '@angular/core';
 import {
   EditorTabGroupType,
   EditorTabType,
@@ -13,7 +12,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
@@ -26,7 +25,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   private readonly menuItems$: Observable<TabMenuItem[]> = this.initMenuItems();
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly userService: UserService,
     private readonly activatedProject: ActivatedProjectService,
     private readonly onlineStatus: OnlineStatusService,
@@ -45,7 +44,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
       this.activatedProject.projectDoc$.pipe(filterNullish()),
       this.onlineStatus.onlineStatus$
     ]).pipe(
-      takeUntilDestroyed(this.destroyRef),
+      quietTakeUntilDestroyed(this.destroyRef),
       switchMap(([projectDoc, isOnline]) => {
         return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$]);
       }),

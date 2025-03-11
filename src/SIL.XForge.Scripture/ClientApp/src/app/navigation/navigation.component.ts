@@ -1,5 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -12,7 +11,7 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
@@ -86,9 +85,9 @@ export class NavigationComponent {
     private readonly router: Router,
     private readonly activatedProjectService: ActivatedProjectService,
     readonly featureFlags: FeatureFlagService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
-    this.activatedProjectService.projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectId => {
+    this.activatedProjectService.projectId$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectId => {
       this.updateProjectUserConfig(projectId);
     });
   }
