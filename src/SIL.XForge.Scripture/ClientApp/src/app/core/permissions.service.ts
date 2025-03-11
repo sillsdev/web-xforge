@@ -54,8 +54,8 @@ export class PermissionsService {
 
   async userHasParatextRoleOnProject(projectId: string): Promise<boolean> {
     const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
-    const currentProject: SFProjectProfileDoc = await this.projectService.getProfile(projectId);
-    return isParatextRole(currentProject?.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
+    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId);
+    return isParatextRole(projectDoc.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
   }
 
   async canAccessText(textDocId: TextDocId): Promise<boolean> {
