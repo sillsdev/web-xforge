@@ -9,7 +9,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextsByBookId } from '../../../../core/models/texts-by-book-id';
 import {
@@ -57,14 +57,14 @@ export class CheckingInputFormComponent {
   private selectionEndClipped?: boolean = false;
   private _questionDoc?: QuestionDoc;
   private textAndAudioInput?: { text?: string; audioUrl?: string };
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     readonly noticeService: NoticeService,
     private readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     private readonly breakpointObserver: BreakpointObserver,
-    private readonly mediaBreakpointService: MediaBreakpointService,
-    private destroyRef: QuietDestroyRef
+    private readonly mediaBreakpointService: MediaBreakpointService
   ) {
     this.breakpointObserver
       .observe(this.mediaBreakpointService.width('<', Breakpoint.MD))

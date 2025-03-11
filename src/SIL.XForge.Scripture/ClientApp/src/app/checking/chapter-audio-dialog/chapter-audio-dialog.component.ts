@@ -15,7 +15,7 @@ import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef, objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -63,9 +63,9 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   private _timingErrorKey?: I18nKeyForComponent<'chapter_audio_dialog'>;
   private _timingParseErrorKey?: I18nKeyForComponent<'chapter_audio_dialog'>;
   private _loadingAudio: boolean = false;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: ChapterAudioDialogData,
     private readonly csvService: CsvService,

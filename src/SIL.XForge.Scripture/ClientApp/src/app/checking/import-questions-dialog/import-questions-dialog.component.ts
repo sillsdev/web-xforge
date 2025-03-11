@@ -14,7 +14,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
-import { objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef, objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -102,9 +102,9 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   promiseForQuestionDocQuery: Promise<RealtimeQuery<QuestionDoc>>;
   helpInstructions = this.i18n.interpolate('import_questions_dialog.help_options');
   transceleratorInfo = this.i18n.interpolate('import_questions_dialog.transcelerator_paratext');
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
     @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,
     projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,

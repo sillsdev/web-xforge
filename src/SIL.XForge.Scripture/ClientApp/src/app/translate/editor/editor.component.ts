@@ -88,6 +88,7 @@ import { stripHtml } from 'xforge-common/util/string-util';
 import {
   browserLinks,
   getLinkHTML,
+  getQuietDestroyRef,
   isBlink,
   issuesEmailTemplate,
   objectId,
@@ -277,6 +278,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     private readonly userService: UserService,
@@ -300,7 +303,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly editorTabPersistenceService: EditorTabPersistenceService,
     private readonly textDocService: TextDocService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly destroyRef: QuietDestroyRef,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
     private readonly permissionsService: PermissionsService

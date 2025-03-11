@@ -27,7 +27,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef, objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -200,9 +200,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   private verse$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   @ViewChild('biblicalTerms', { read: ElementRef }) biblicalTerms?: ElementRef;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly dialogService: DialogService,

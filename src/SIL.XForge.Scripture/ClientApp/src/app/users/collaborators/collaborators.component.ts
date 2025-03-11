@@ -14,7 +14,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -58,6 +58,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   private projectDoc?: SFProjectDoc;
   private term: string = '';
   private _userRows?: Row[];
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -68,8 +69,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     private readonly onlineStatusService: OnlineStatusService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly dialogService: DialogService,
-    readonly urls: ExternalUrlService,
-    private destroyRef: QuietDestroyRef
+    readonly urls: ExternalUrlService
   ) {
     super(noticeService);
   }

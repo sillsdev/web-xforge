@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Input, OnChanges, ViewChild } from '@angular/
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, combineLatest, startWith, switchMap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -27,8 +27,9 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
 
   inputChanged$ = new Subject<void>();
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
     private readonly projectService: SFProjectService,
     private readonly fontService: FontService
   ) {}

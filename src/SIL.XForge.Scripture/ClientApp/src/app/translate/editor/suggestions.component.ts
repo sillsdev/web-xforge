@@ -5,7 +5,7 @@ import { isEqual } from 'lodash-es';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
 import { filter, first } from 'rxjs/operators';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { TextComponent } from '../../shared/text/text.component';
 
 export interface SuggestionSelectedEvent {
@@ -37,10 +37,9 @@ export class SuggestionsComponent {
   private resizeObserver?: ResizeObserver;
   private top: number = 0;
 
-  constructor(
-    private readonly elemRef: ElementRef,
-    private destroyRef: QuietDestroyRef
-  ) {
+  private destroyRef = getQuietDestroyRef();
+
+  constructor(private readonly elemRef: ElementRef) {
     this.show = false;
     this.root.style.left = '0px';
     this.root.style.top = '0px';

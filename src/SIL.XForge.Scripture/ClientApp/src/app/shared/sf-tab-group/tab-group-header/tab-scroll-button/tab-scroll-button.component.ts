@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Component, EventEmitter, HostBinding, Inject, Input, OnInit, Output } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, distinctUntilChanged, fromEvent, merge } from 'rxjs';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 
 @Component({
   selector: 'app-tab-scroll-button',
@@ -20,11 +20,9 @@ export class TabScrollButtonComponent implements OnInit {
 
   isMouseDown = false;
   scroll$ = new BehaviorSubject(false);
+  private destroyRef = getQuietDestroyRef();
 
-  constructor(
-    private readonly destroyRef: QuietDestroyRef,
-    @Inject(DOCUMENT) private readonly document: Document
-  ) {}
+  constructor(@Inject(DOCUMENT) private readonly document: Document) {}
 
   ngOnInit(): void {
     // Stop button scrolling on mouseup or when mouse leaves the document

@@ -15,7 +15,7 @@ import { en, I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { ObjectPaths } from '../../type-utils';
 import { SFProjectService } from '../core/sf-project.service';
@@ -46,6 +46,7 @@ export class JoinComponent extends DataLoadingComponent {
   name: FormControl<string | null> = new FormControl<string | null>('');
   status: 'input' | 'joining' | 'unavailable' = 'unavailable';
   private joiningResponse?: AnonymousShareKeyResponse;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly anonymousService: AnonymousService,
@@ -59,8 +60,7 @@ export class JoinComponent extends DataLoadingComponent {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly errorHandler: ErrorHandler,
-    noticeService: NoticeService,
-    private destroyRef: QuietDestroyRef
+    noticeService: NoticeService
   ) {
     super(noticeService);
     const joining$ = this.route.params.pipe(

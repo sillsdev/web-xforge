@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { compareProjectsForSorting } from '../app/shared/utils';
@@ -17,12 +17,12 @@ import { UserService } from './user.service';
 export class SFUserProjectsService {
   private projectDocs: Map<string, SFProjectProfileDoc> = new Map();
   private _projectDocs$ = new BehaviorSubject<SFProjectProfileDoc[] | undefined>(undefined);
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    private readonly authService: AuthService,
-    private destroyRef: QuietDestroyRef
+    private readonly authService: AuthService
   ) {
     this.setup();
   }

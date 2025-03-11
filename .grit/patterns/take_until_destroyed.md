@@ -49,7 +49,7 @@ pattern removeExtends() {
 }
 
 pattern addProperty() {
-  maybe `constructor( $args ){  $body }` => `constructor( $args, private destroyRef: QuietDestroyRef ){$body}` where {
+  maybe `constructor( $args ){  $body }` => `constructor( $args, private destroyRef = getQuietDestroyRef(); ){$body}` where {
     $body <: within classSubscriptionDisposable(),
     $args <: not contains `QuietDestroyRef`
   }
@@ -203,7 +203,7 @@ export class SFUserProjectsService {
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly authService: AuthService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef = getQuietDestroyRef();
   ) {
     this.setup();
   }

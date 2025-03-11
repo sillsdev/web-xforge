@@ -14,7 +14,7 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { QuietDestroyRef, audioRecordingMimeType, objectId } from 'xforge-common/utils';
+import { QuietDestroyRef, audioRecordingMimeType, objectId, getQuietDestroyRef } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { SharedModule } from '../shared.module';
 
@@ -70,14 +70,14 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
   private visualizerHeight = 150;
   private visualizerWidth = 300;
   private audioWaveformBase = 128;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     public readonly dialogRef: MatDialogRef<AudioRecorderDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: AudioRecorderDialogData,
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
-    private readonly dialogService: DialogService,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly dialogService: DialogService
   ) {
     this.showCountdown = data?.countdown ?? false;
     if (data?.audio != null) {

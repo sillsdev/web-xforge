@@ -14,7 +14,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SharedModule } from '../../../shared/shared.module';
 import {
   TrainingDataUploadDialogComponent,
@@ -42,13 +42,15 @@ export class TrainingDataMultiSelectComponent implements OnChanges, OnInit {
   sourceLanguage?: string;
   targetLanguage?: string;
   trainingDataOptions: TrainingDataOption[] = [];
+
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     private readonly trainingDataService: TrainingDataService,
-    private readonly userService: UserService,
-    private destroyRef: QuietDestroyRef
+    private readonly userService: UserService
   ) {}
 
   ngOnInit(): void {

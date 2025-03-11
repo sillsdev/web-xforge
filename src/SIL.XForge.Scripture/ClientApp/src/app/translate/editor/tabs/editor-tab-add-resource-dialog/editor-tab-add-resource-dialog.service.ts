@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
 
@@ -13,10 +13,11 @@ export class EditorTabAddResourceDialogService {
   private projects?: ParatextProject[];
   private resources?: SelectableProject[];
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     private readonly paratextService: ParatextService,
-    private readonly userProjectsService: SFUserProjectsService,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly userProjectsService: SFUserProjectsService
   ) {
     this.userProjectsService.projectDocs$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projects => {
       if (projects == null) return;

@@ -8,7 +8,7 @@ import { filter, repeat, retry, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -32,12 +32,13 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
   private trainingSub?: Subscription;
   private translationEngine?: RemoteTranslationEngine;
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly translationEngineService: TranslationEngineService,
-    private readonly userService: UserService,
-    private destroyRef: QuietDestroyRef
+    private readonly userService: UserService
   ) {
     super(noticeService);
   }

@@ -18,7 +18,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -52,9 +52,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   private dataChangesSub?: Subscription;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly dialogService: DialogService,
     readonly featureFlags: FeatureFlagService,

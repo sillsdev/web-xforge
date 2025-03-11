@@ -10,7 +10,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { projectLabel } from '../shared/utils';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
@@ -81,12 +81,12 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
 
   private readonly searchTerm$: BehaviorSubject<string>;
   private readonly queryParameters$: BehaviorSubject<QueryParameters>;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly servalAdministrationService: ServalAdministrationService,
-    private destroyRef: QuietDestroyRef
+    private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');

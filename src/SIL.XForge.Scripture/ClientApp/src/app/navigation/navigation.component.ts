@@ -12,7 +12,7 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
@@ -73,6 +73,8 @@ export class NavigationComponent {
     delay(0)
   );
 
+  private destroyRef = getQuietDestroyRef();
+
   constructor(
     readonly i18n: I18nService,
     private readonly nmtDraftAuthGuard: NmtDraftAuthGuard,
@@ -85,8 +87,7 @@ export class NavigationComponent {
     private readonly resumeCheckingService: ResumeCheckingService,
     private readonly router: Router,
     private readonly activatedProjectService: ActivatedProjectService,
-    readonly featureFlags: FeatureFlagService,
-    private destroyRef: QuietDestroyRef
+    readonly featureFlags: FeatureFlagService
   ) {
     this.activatedProjectService.projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectId => {
       this.updateProjectUserConfig(projectId);

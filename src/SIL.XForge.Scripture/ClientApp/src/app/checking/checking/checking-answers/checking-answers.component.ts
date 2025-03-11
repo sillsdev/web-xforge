@@ -17,7 +17,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -113,6 +113,7 @@ export class CheckingAnswersComponent implements OnInit {
   private isProjectAdmin: boolean = false;
   private projectProfileDocChangesSubscription?: Subscription;
   isScreenSmall: boolean = false;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly userService: UserService,
@@ -122,8 +123,7 @@ export class CheckingAnswersComponent implements OnInit {
     private readonly i18n: I18nService,
     private readonly fileService: FileService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly projectService: SFProjectService,
-    private destroyRef: QuietDestroyRef
+    private readonly projectService: SFProjectService
   ) {}
 
   get project(): SFProjectProfile | undefined {

@@ -18,7 +18,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -45,6 +45,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   private translationEngine?: RemoteTranslationEngine;
   private projectDoc?: SFProjectProfileDoc;
   private projectDataChangesSub?: Subscription;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -55,8 +56,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
     public readonly progressService: ProgressService,
-    readonly i18n: I18nService,
-    private destroyRef: QuietDestroyRef
+    readonly i18n: I18nService
   ) {
     super(noticeService);
     this.engineQualityStars = [];

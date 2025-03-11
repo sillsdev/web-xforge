@@ -12,10 +12,9 @@ import { QuietDestroyRef } from './utils';
 export class TestOnlineStatusService extends OnlineStatusService {
   constructor(
     public readonly httpClient: HttpClient,
-    public readonly mockedNavigator: Navigator,
-    destroyRef: QuietDestroyRef
+    public readonly mockedNavigator: Navigator
   ) {
-    super(httpClient, instance(mockedNavigator), destroyRef);
+    super(httpClient, instance(mockedNavigator));
     this.setIsOnline(true);
     this.setRealtimeServerSocketIsOnline(true);
   }

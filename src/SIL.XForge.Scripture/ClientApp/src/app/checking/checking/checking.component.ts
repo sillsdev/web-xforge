@@ -26,7 +26,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef, objectId, QuietDestroyRef } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -158,9 +158,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private isProjectAdmin: boolean = false;
   private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
   private _showScriptureAudioPlayer: boolean = false;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,

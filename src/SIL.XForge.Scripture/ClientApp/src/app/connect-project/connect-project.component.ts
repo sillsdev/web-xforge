@@ -9,7 +9,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { hasStringProp } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
@@ -48,6 +48,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   private _isAppOnline: boolean = false;
   private projectsFromParatext?: ParatextProject[];
   private projectMetadata?: SelectableProject;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly authService: AuthService,
@@ -58,8 +59,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly errorHandler: ErrorHandler,
-    private readonly translocoService: TranslocoService,
-    private destroyRef: QuietDestroyRef
+    private readonly translocoService: TranslocoService
   ) {
     super(noticeService);
     this.connectProjectForm.disable();

@@ -12,7 +12,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -52,6 +52,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
   private linkSharingKey: string | undefined;
   private linkSharingReady: boolean = false;
   private _error: string | undefined;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     readonly dialogRef: MatDialogRef<ShareDialogComponent>,
@@ -61,8 +62,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
-    userService: UserService,
-    private destroyRef: QuietDestroyRef
+    userService: UserService
   ) {
     super(userService);
     this.projectId = this.data.projectId;

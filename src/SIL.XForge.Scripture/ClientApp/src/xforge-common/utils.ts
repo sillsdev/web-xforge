@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, Optional } from '@angular/core';
+import { DestroyRef, inject, Injectable, Optional } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
@@ -216,4 +216,8 @@ export class QuietDestroyRef {
     }
     return () => {};
   }
+}
+
+export function getQuietDestroyRef(): QuietDestroyRef {
+  return new QuietDestroyRef(inject(DestroyRef), inject(ErrorReportingService, { optional: true }) ?? undefined);
 }

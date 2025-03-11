@@ -6,7 +6,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Observable } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 
 export interface DraftApplyProgress {
   bookNum: number;
@@ -24,15 +24,15 @@ export interface DraftApplyProgress {
 })
 export class DraftApplyProgressDialogComponent {
   draftApplyProgress?: DraftApplyProgress;
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     @Inject(MatDialogRef) private readonly dialogRef: MatDialogRef<DraftApplyProgressDialogComponent>,
     @Inject(MAT_DIALOG_DATA) data: { draftApplyProgress$: Observable<DraftApplyProgress | undefined> },
-    private readonly i18n: I18nService,
-    destroyRef: QuietDestroyRef
+    private readonly i18n: I18nService
   ) {
     data.draftApplyProgress$
-      .pipe(takeUntilDestroyed(destroyRef))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(progress => (this.draftApplyProgress = progress));
   }
 

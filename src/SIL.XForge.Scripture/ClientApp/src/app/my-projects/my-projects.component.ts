@@ -12,7 +12,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { getQuietDestroyRef } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -45,6 +45,7 @@ export class MyProjectsComponent implements OnInit {
   initialLoadingSFProjects: boolean = true;
   userIsPTUser: boolean = false;
   joiningProjects: string[] = [];
+  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -54,8 +55,7 @@ export class MyProjectsComponent implements OnInit {
     private readonly userService: UserService,
     private readonly permissions: PermissionsService,
     private readonly noticeService: NoticeService,
-    private readonly router: Router,
-    private destroyRef: QuietDestroyRef
+    private readonly router: Router
   ) {}
 
   /** If we are aware of any SF or PT projects that the user can access. */
