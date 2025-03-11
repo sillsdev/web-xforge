@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -12,7 +13,6 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatListItem } from '@angular/material/list';
 import { sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -26,7 +26,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -76,7 +76,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       return;
     }
     this.projectProfileDocChangesSubscription = projectProfileDoc.changes$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.changeDetector.markForCheck();
         this.setProjectAdmin();
@@ -90,7 +90,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     this._projectUserConfigDoc = projectUserConfigDoc;
     if (projectUserConfigDoc != null) {
       this.projectUserConfigDocChangesSubscription = projectUserConfigDoc.changes$
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(() => {
           this.changeDetector.markForCheck();
         });
@@ -134,14 +134,16 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     private readonly changeDetector: ChangeDetectorRef,
     private readonly projectService: SFProjectService,
     private readonly i18n: I18nService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
-    this.activeQuestionDoc$.pipe(debounceTime(2000), takeUntilDestroyed(this.destroyRef)).subscribe(questionDoc => {
-      this.updateElementsRead(questionDoc);
-    });
+    this.activeQuestionDoc$
+      .pipe(debounceTime(2000), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(questionDoc => {
+        this.updateElementsRead(questionDoc);
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {

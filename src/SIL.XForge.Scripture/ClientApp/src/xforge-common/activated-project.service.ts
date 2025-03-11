@@ -1,11 +1,10 @@
-import { Inject, Injectable } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef, Inject, Injectable } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter, map, startWith, switchMap } from 'rxjs/operators';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { PermissionsService } from '../app/core/permissions.service';
 import { SFProjectService } from '../app/core/sf-project.service';
@@ -60,10 +59,10 @@ export class ActivatedProjectService {
     private readonly projectService: SFProjectService,
     private readonly cacheService: CacheService,
     @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     activeProjectIdService.projectId$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(projectId => this.selectProject(projectId));
   }
 
@@ -134,7 +133,7 @@ export class TestActivatedProjectService extends ActivatedProjectService {
     cacheService: CacheService,
     @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService
   ) {
-    super(projectService, cacheService, activeProjectIdService, noopDestroyRef as QuietDestroyRef);
+    super(projectService, cacheService, activeProjectIdService, noopDestroyRef);
   }
 
   static withProjectId(projectId: string): TestActivatedProjectService {

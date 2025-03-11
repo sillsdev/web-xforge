@@ -1,11 +1,10 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { IOutputAreaSizes } from 'angular-split';
 import { clone } from 'lodash-es';
 import { fromEvent, Observable, Subscription } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -32,12 +31,12 @@ export class CheckingTextComponent implements AfterViewInit {
 
   constructor(
     readonly fontService: FontService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {}
 
   ngAfterViewInit(): void {
     if (this.resizableContainer != null) {
-      this.resizableContainer.transitionEnd.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.resizableContainer.transitionEnd.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
         this.scrollToVerse(this.activeVerse);
       });
     }
@@ -143,7 +142,7 @@ export class CheckingTextComponent implements AfterViewInit {
       }
       this.clickSubs.push(
         fromEvent<MouseEvent>(element, 'click')
-          .pipe(takeUntilDestroyed(this.destroyRef))
+          .pipe(quietTakeUntilDestroyed(this.destroyRef))
           .subscribe(event => {
             if (this._id == null) {
               return;

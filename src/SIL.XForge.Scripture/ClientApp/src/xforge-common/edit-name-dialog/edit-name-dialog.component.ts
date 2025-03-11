@@ -1,10 +1,9 @@
-import { Component, Inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Inject } from '@angular/core';
 import { UntypedFormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 
 export interface EditNameDialogResult {
@@ -27,12 +26,12 @@ export class EditNameDialogComponent {
     public i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     @Inject(MAT_DIALOG_DATA) public data: { name: string; isConfirmation: boolean },
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     this.name.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     this.name.setValue(data.name);
     this.onlineStatusService.onlineStatus$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(isOnline => (this.isOnline = isOnline));
   }
 

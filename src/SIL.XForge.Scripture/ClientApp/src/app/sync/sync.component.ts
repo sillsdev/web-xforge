@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -12,7 +11,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
@@ -52,7 +51,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogService: DialogService,
     private readonly authService: AuthService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
   }
@@ -144,7 +143,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async isOnline => {
       this.isAppOnline = isOnline;
       if (this.isAppOnline && this.paratextUsername == null) {
         const username = await firstValueFrom(this.paratextService.getParatextUsername());
@@ -165,14 +164,14 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       map(params => params['projectId'] as string)
     );
 
-    projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
+    projectId$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       this.projectDoc = await this.projectService.get(projectId);
       this.checkSyncStatus();
       this.loadingFinished();
 
       // Check to see if a sync has started when the project document changes
       // TODO Clean up the use of nested subscribe()
-      this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
         if (!this.syncActive) {
           this.checkSyncStatus();
         }

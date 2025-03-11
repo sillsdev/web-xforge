@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { anything, instance, spy, when } from 'ts-mockito';
 import { OnlineStatusService } from './online-status.service';
-import { QuietDestroyRef } from './utils';
 
 /** This class is a helper for tests. */
 @Injectable({
@@ -13,7 +12,7 @@ export class TestOnlineStatusService extends OnlineStatusService {
   constructor(
     public readonly httpClient: HttpClient,
     public readonly mockedNavigator: Navigator,
-    destroyRef: QuietDestroyRef
+    destroyRef: DestroyRef
   ) {
     super(httpClient, instance(mockedNavigator), destroyRef);
     this.setIsOnline(true);

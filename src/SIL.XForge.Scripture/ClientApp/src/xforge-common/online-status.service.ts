@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef, Inject, Injectable } from '@angular/core';
 import { BehaviorSubject, firstValueFrom, fromEvent, merge, Observable, of } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { NAVIGATOR } from './browser-globals';
 
 @Injectable({
@@ -19,7 +18,7 @@ export class OnlineStatusService {
   constructor(
     protected readonly http: HttpClient,
     @Inject(NAVIGATOR) protected readonly navigator: Navigator,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     this.appOnlineStatus$ = new BehaviorSubject<boolean>(this.navigator.onLine);
     this.windowOnLineStatus$ = new BehaviorSubject<boolean>(this.navigator.onLine);
@@ -31,7 +30,7 @@ export class OnlineStatusService {
       fromEvent(window, 'online').pipe(map(() => true)),
       fromEvent(window, 'offline').pipe(map(() => false))
     )
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(status => {
         // Note that this isn't 100% as accurate as it sounds. "Online" simply means a valid network connection
         // and not a valid Internet connection. The websocket is another fallback which is constantly polled
@@ -40,7 +39,7 @@ export class OnlineStatusService {
 
     // Check for changes to the online status or from the web socket status
     merge(this.windowOnLineStatus$.asObservable(), this.webSocketStatus$.asObservable())
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         // The app is "online" if the browser/network thinks it's online AND
         // we have a valid web socket connection OR

@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -14,7 +13,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from './event-metric';
 import { EventMetricDialogComponent } from './event-metric-dialog.component';
@@ -73,7 +72,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
     private readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
   }
@@ -114,7 +113,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
           }
           this.loadingFinished();
         }),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe();
   }

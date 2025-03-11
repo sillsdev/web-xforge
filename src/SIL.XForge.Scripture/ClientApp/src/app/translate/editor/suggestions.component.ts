@@ -1,11 +1,10 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { MatListOption, MatSelectionList } from '@angular/material/list';
 import { isEqual } from 'lodash-es';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
 import { filter, first } from 'rxjs/operators';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/utils';
 import { TextComponent } from '../../shared/text/text.component';
 
 export interface SuggestionSelectedEvent {
@@ -39,7 +38,7 @@ export class SuggestionsComponent {
 
   constructor(
     private readonly elemRef: ElementRef,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     this.show = false;
     this.root.style.left = '0px';
@@ -134,7 +133,7 @@ export class SuggestionsComponent {
       return;
     }
 
-    this.text.updated.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.setPosition());
+    this.text.updated.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => this.setPosition());
 
     this.initEditor();
     if (this.editor == null) {
@@ -149,12 +148,12 @@ export class SuggestionsComponent {
 
     this.observeResize(this.editor);
     fromEvent(this.editor.root, 'scroll')
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.setPosition());
     fromEvent<KeyboardEvent>(this.editor.root, 'keydown')
       .pipe(
         filter(event => this.isSuggestionEvent(event)),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(event => {
         if (this.list == null) {
