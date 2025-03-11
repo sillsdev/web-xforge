@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using SIL.Converters.Usj;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.XForge.DataAccess;
@@ -217,6 +218,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             var noteThreadDocsByBook = new Dictionary<int, IEnumerable<IDocument<NoteThread>>>();
             var biblicalTermDocs = new List<IDocument<BiblicalTerm>>();
             var biblicalTermNoteThreadDocs = new List<IDocument<NoteThread>>();
+            var usjTextDocuments = new List<IDocument<TextDocument>>();
 
             // Update target Paratext books, notes and biblical terms, if this is not a resource
             if (!_paratextService.IsResource(targetParatextId))
@@ -227,7 +229,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     targetTextDocsByBook,
                     questionDocsByBook,
                     noteThreadDocsByBook,
-                    biblicalTermNoteThreadDocs
+                    biblicalTermNoteThreadDocs,
+                    usjTextDocuments
                 );
                 biblicalTermDocs = await GetAndUpdateParatextBiblicalTerms(
                     SyncPhase.Phase3,
@@ -340,11 +343,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     // NOTE: The following additions/removals not included in the transaction
 
                     // Add new PT users who are in the target project, but not the source project
-                    List<string> usersToAdd = _projectDoc
-                        .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
-                        .Select(u => u.Key)
-                        .Except(sourceProject.Data.UserRoles.Keys)
-                        .ToList();
+                    List<string> usersToAdd =
+                    [
+                        .. _projectDoc
+                            .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
+                            .Select(u => u.Key)
+                            .Except(sourceProject.Data.UserRoles.Keys),
+                    ];
                     foreach (string uid in usersToAdd)
                     {
                         // As resource projects do not have administrators, we connect as the user we are to add
@@ -361,11 +366,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     }
 
                     // Remove PT users who are in the target project, and no longer have access to the resource
-                    List<string> usersToCheck = _projectDoc
-                        .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
-                        .Select(u => u.Key)
-                        .Except(usersToAdd)
-                        .ToList();
+                    List<string> usersToCheck =
+                    [
+                        .. _projectDoc
+                            .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
+                            .Select(u => u.Key)
+                            .Except(usersToAdd),
+                    ];
                     foreach (string uid in usersToCheck)
                     {
                         string permission = await _paratextService.GetResourcePermissionAsync(
@@ -386,7 +393,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             bool resourceNeedsUpdating =
                 paratextProject is ParatextResource paratextResource
-                && _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
+                && (
+                    _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource)
+                    || !_realtimeService
+                        .QuerySnapshots<TextDocument>()
+                        .Any(td => td.Id.StartsWith($"{_projectDoc.Id}:") && td.Id.EndsWith(":target"))
+                );
             if (paratextProject is ParatextResource)
                 LogMetric($"Resource needs updating: {resourceNeedsUpdating}");
 
@@ -399,7 +411,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     targetTextDocsByBook,
                     questionDocsByBook,
                     noteThreadDocsByBook,
-                    biblicalTermNoteThreadDocs
+                    biblicalTermNoteThreadDocs,
+                    usjTextDocuments
                 );
             }
 
@@ -411,6 +424,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     targetTextDocsByBook,
                     questionDocsByBook,
                     noteThreadDocsByBook,
+                    usjTextDocuments,
                     targetBooks,
                     sourceBooks
                 );
@@ -494,6 +508,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// <param name="questionDocsByBook">The question documents with the book number as key.</param>
     /// <param name="noteThreadDocsByBook">The note thread documents with the book number as key.</param>
     /// <param name="biblicalTermNoteThreadDocs">The note thread documents for the Biblical Terms</param>
+    /// <param name="usjTextDocuments">The USJ text documents.</param>
     /// <returns>The task.</returns>
     /// <exception cref="ArgumentException">The Paratext project repository does not exist.</exception>
     private async Task GetAndUpdateParatextBooksAndNotes(
@@ -502,16 +517,26 @@ public class ParatextSyncRunner : IParatextSyncRunner
         IDictionary<int, SortedList<int, IDocument<TextData>>> textDocsByBook,
         IDictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
         IDictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook,
-        List<IDocument<NoteThread>> biblicalTermNoteThreadDocs
+        List<IDocument<NoteThread>> biblicalTermNoteThreadDocs,
+        List<IDocument<TextDocument>> usjTextDocuments
     )
     {
         // Get the Text Data
-        List<string> textIds = _projectDoc
-            .Data.Texts.SelectMany(t =>
+        List<string> textIds =
+        [
+            .. _projectDoc.Data.Texts.SelectMany(t =>
                 t.Chapters.Select(c => TextData.GetTextDocId(_projectDoc.Id, t.BookNum, c.Number))
-            )
-            .ToList();
+            ),
+        ];
         IReadOnlyCollection<IDocument<TextData>> textDocs = await _conn.GetAndFetchDocsAsync<TextData>(textIds);
+
+        // Get the USJ text documents
+        List<string> textDocumentIds = await _realtimeService
+            .QuerySnapshots<TextDocument>()
+            .Where(td => td.Id.StartsWith($"{_projectDoc.Id}:") && td.Id.EndsWith(":target"))
+            .Select(td => td.Id)
+            .ToListAsync();
+        usjTextDocuments.AddRange(await _conn.GetAndFetchDocsAsync<TextDocument>(textDocumentIds));
 
         // Get the Note Threads
         List<string> noteIds = await _realtimeService
@@ -563,9 +588,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
                 }
 
-                List<IDocument<NoteThread>> noteThreadDocs = noteDocs
-                    .Where(n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null)
-                    .ToList();
+                List<IDocument<NoteThread>> noteThreadDocs =
+                [
+                    .. noteDocs.Where(n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null),
+                ];
                 noteThreadDocsByBook[text.BookNum] = noteThreadDocs;
             }
         }
@@ -579,9 +605,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 await UpdateTranslateNoteTag(paratextId);
 
             // Only update Paratext if there are editable notes
-            List<IDocument<NoteThread>> editableNotes = noteDocs
-                .Where(nt => nt.Data.Notes.Any(n => n.Editable == true) && nt.Data?.BiblicalTermId == null)
-                .ToList();
+            List<IDocument<NoteThread>> editableNotes =
+            [
+                .. noteDocs.Where(nt => nt.Data.Notes.Any(n => n.Editable == true) && nt.Data?.BiblicalTermId == null),
+            ];
             if (editableNotes.Count > 0)
             {
                 int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
@@ -887,6 +914,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         Dictionary<int, SortedList<int, IDocument<TextData>>> targetTextDocsByBook,
         Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
         Dictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook,
+        IList<IDocument<TextDocument>> usjTextDocuments,
         HashSet<int> targetBooks,
         HashSet<int> sourceBooks
     )
@@ -926,6 +954,31 @@ public class ParatextSyncRunner : IParatextSyncRunner
             LogMetric("Updating text docs");
             List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetTextDocs, chapterDeltas);
 
+            // Update the text documents
+            int chapterNum = 0;
+            foreach (Usj usj in _paratextService.GetChaptersAsUsj(_userSecret, targetParatextId, text.BookNum))
+            {
+                chapterNum++;
+                string id = TextDocument.GetDocId(_projectDoc.Id, text.BookNum, chapterNum, TextDocument.Target);
+                IDocument<TextDocument> textDocument = usjTextDocuments.SingleOrDefault(t => t.Id == id);
+
+                // Create the USJ text document for the chapter
+                TextDocument chapterTextDocument = new TextDocument(id, usj);
+                if (textDocument is null)
+                {
+                    // Create
+                    textDocument = GetTextDocument(text, chapterNum);
+                    await textDocument.CreateAsync(chapterTextDocument);
+                }
+                else
+                {
+                    // Update
+                    await textDocument.ReplaceAsync(chapterTextDocument, OpSource.Paratext);
+                }
+
+                usjTextDocuments.Remove(textDocument);
+            }
+
             // update question docs
             if (questionDocsByBook.TryGetValue(text.BookNum, out IReadOnlyList<IDocument<Question>> questionDocs))
             {
@@ -963,6 +1016,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
                 }
             });
+        }
+
+        // Delete missing text documents
+        foreach (IDocument<TextDocument> textDocument in usjTextDocuments)
+        {
+            await textDocument.DeleteAsync();
         }
     }
 
@@ -1414,9 +1473,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// </summary>
     private async Task DeleteAllTextDocsForBookAsync(TextInfo text)
     {
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
         foreach (Chapter chapter in text.Chapters)
+        {
             tasks.Add(DeleteTextDocAsync(text, chapter.Number));
+            tasks.Add(DeleteTextDocumentAsync(text, chapter.Number));
+        }
+
         await Task.WhenAll(tasks);
         _syncMetrics.TextDocs.Deleted += text.Chapters.Count;
     }
@@ -1533,10 +1596,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 _syncMetrics.Notes.Added++;
             }
 
-            List<int> removedIndices = change
-                .NoteIdsRemoved.Select(id => threadDoc.Data.Notes.FindIndex(n => n.DataId == id))
-                .Where(index => index >= 0)
-                .ToList();
+            List<int> removedIndices =
+            [
+                .. change
+                    .NoteIdsRemoved.Select(id => threadDoc.Data.Notes.FindIndex(n => n.DataId == id))
+                    .Where(index => index >= 0),
+            ];
             // Go through the indices in reverse order so subsequent removal indices are not affected
             removedIndices.Sort((a, b) => b.CompareTo(a));
             foreach (int index in removedIndices)
@@ -1630,7 +1695,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             .Select(n => n.Id);
         // Make a record of the note thread doc ids to return since they are removed
         // from noteThreadDocIds after the docs are deleted.
-        List<string> deletedNoteThreadDocIds = new List<string>(noteThreadDocIds);
+        List<string> deletedNoteThreadDocIds = [.. noteThreadDocIds];
 
         var tasks = new List<Task>();
         foreach (string noteThreadDocId in deletedNoteThreadDocIds)
@@ -2090,9 +2155,26 @@ public class ParatextSyncRunner : IParatextSyncRunner
     internal IDocument<TextData> GetTextDoc(TextInfo text, int chapter) =>
         _conn.Get<TextData>(TextData.GetTextDocId(_projectDoc.Id, text.BookNum, chapter));
 
+    /// <summary>
+    /// Gets a USJ text document from the database.
+    /// </summary>
+    /// <param name="text">The text info.</param>
+    /// <param name="chapter">The chapter number</param>
+    /// <returns>The TextData IDocument</returns>
+    private IDocument<TextDocument> GetTextDocument(TextInfo text, int chapter) =>
+        _conn.Get<TextDocument>(TextDocument.GetDocId(_projectDoc.Id, text.BookNum, chapter, TextDocument.Target));
+
     private async Task DeleteTextDocAsync(TextInfo text, int chapter)
     {
         IDocument<TextData> textDoc = GetTextDoc(text, chapter);
+        await textDoc.FetchAsync();
+        if (textDoc.IsLoaded)
+            await textDoc.DeleteAsync();
+    }
+
+    private async Task DeleteTextDocumentAsync(TextInfo text, int chapter)
+    {
+        IDocument<TextDocument> textDoc = GetTextDocument(text, chapter);
         await textDoc.FetchAsync();
         if (textDoc.IsLoaded)
             await textDoc.DeleteAsync();
