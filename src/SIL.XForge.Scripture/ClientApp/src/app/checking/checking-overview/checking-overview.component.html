@@ -38,7 +38,7 @@
 
   @if (canEditQuestion) {
     <div id="text-with-questions-list">
-      @if (!isOnline && (canCreateScriptureAudio || canDeleteScriptureAudio)) {
+      @if (!isOnline) {
         <app-notice id="warning-some-actions-unavailable-offline" icon="cloud_off" type="warning">{{
           t("some_actions_unavailable_offline")
         }}</app-notice>
@@ -97,58 +97,18 @@
                             {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
                           </span>
                           <span class="flex-icon">
-                            <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
-                            <button
-                              class="chapter-menu-button"
-                              mat-icon-button
-                              [matMenuTriggerFor]="menu"
-                              (click)="$event.stopPropagation()"
-                            >
-                              <mat-icon>more_vert</mat-icon>
-                            </button>
-                            <mat-menu #menu="matMenu" class="checking-overview-chapter-menu">
-                              @if (questionCount(text.bookNum, chapter.number) > 0) {
-                                <button
-                                  mat-menu-item
-                                  (click)="setArchiveStatusForQuestionsInChapter(text, chapter, true)"
-                                  class="archive-btn"
-                                >
-                                  <mat-icon>archive</mat-icon>
-                                  <span>{{
-                                    t("archive_multiple", { location: getBookName(text) }) + " " + chapter.number
-                                  }}</span>
-                                </button>
-                              }
-                              @if (!chapter.hasAudio && canCreateScriptureAudio) {
-                                <button mat-menu-item (click)="chapterAudioDialog(text, chapter)" class="add-audio-btn">
-                                  <mat-icon>audio_file</mat-icon>
-                                  <span>{{ t("add_chapter_audio") }}</span>
-                                </button>
-                              }
-                              @if (chapter.hasAudio) {
-                                @if (canCreateScriptureAudio) {
-                                  <button
-                                    mat-menu-item
-                                    (click)="chapterAudioDialog(text, chapter)"
-                                    class="edit-audio-btn"
-                                  >
-                                    <mat-icon>edit</mat-icon>
-                                    <span>{{ t("edit_chapter_audio") }}</span>
-                                  </button>
-                                }
-                                @if (canDeleteScriptureAudio) {
-                                  <button
-                                    mat-menu-item
-                                    (click)="deleteChapterAudio(text, chapter)"
-                                    class="delete-audio-btn"
-                                    [disabled]="!isOnline"
-                                  >
-                                    <mat-icon>delete</mat-icon>
-                                    <span>{{ t("delete_chapter_audio") }}</span>
-                                  </button>
-                                }
-                              }
-                            </mat-menu>
+                            @if (questionCount(text.bookNum, chapter.number) > 0) {
+                              <button
+                                mat-icon-button
+                                (click)="
+                                  $event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, true)
+                                "
+                                [title]="t('archive_multiple', { location: getBookName(text) + ' ' + chapter.number })"
+                                class="archive-btn"
+                              >
+                                <mat-icon>archive</mat-icon>
+                              </button>
+                            }
                           </span>
                         </mat-panel-title>
                       </mat-expansion-panel-header>
