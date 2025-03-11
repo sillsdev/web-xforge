@@ -3,7 +3,7 @@
     "mic_access_denied": "Mikrofonunuza giriş rədd edildi. Zəhmət olmasa, brauzerinizdən mikrofonu işə salın.",
     "mic_not_found": "Mikrofon tapılmadı. Mikrofonu cihazınıza qoşun.",
     "record": "Səs yazmaq",
-    "re_record": "Re-record",
+    "re_record": "Yənidən yazın",
     "save": "Cavabınızı saxlamaq",
     "stop_recording": "Səs yazmanı dayandırmaq"
   },
@@ -16,7 +16,7 @@
     "community_checking": "Dil daşıyıcıları tərəfindən yoxlanma",
     "community_support": "İcmai dəstəyi",
     "help": "Kömək",
-    "install_on_device": "Install on device",
+    "install_on_device": "Cihazında quraşdırın",
     "language": "Dil",
     "log_out": "Çıxış",
     "logged_in_as": "Bu adla daxil oldu.",
@@ -38,9 +38,9 @@
     "update_is_available": "Yeniləmə mümkündür Xahiş edirəm səhifəni yeniləyin."
   },
   "attach_audio": {
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
-    "tooltip_upload": "Upload audio"
+    "tooltip_record": "Səs yazın",
+    "tooltip_stop": "Səsyazmanı dayandır",
+    "tooltip_upload": "Səs yüklə"
   },
   "canon": {
     "book_names": {
@@ -175,11 +175,11 @@
   },
   "checking": {
     "filter_questions": "Sualları süzgəcdən keçirmək",
-    "input_required_before_saving": "Provide text or audio before saving",
-    "manage_audio": "Manage audio",
+    "input_required_before_saving": "Yadda saxlamaqdan əvvəl mətn və ya səs təqdim edin",
+    "manage_audio": "Səsi idarə et",
     "me": "Mən",
     "next": "Növbəti",
-    "play_chapter": "Play chapter",
+    "play_chapter": "Fəsil üzrə oyna",
     "previous": "Əvvəlki",
     "questions": "Suallar",
     "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
@@ -213,8 +213,8 @@
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "Hələ Kəlam seçilməyib. ",
     "record_question": "Record question",
-    "resolve": "Resolve",
-    "resolved": "Resolved",
+    "resolve": "Həll et",
+    "resolved": "Həll edildi",
     "save_answer": "Cavabınızı saxlamaq",
     "select_verses": "Ayələri seçmək",
     "show_more_unread": "Oxunmamış başqa cavabları {{ count }} göstərmək",
@@ -291,11 +291,11 @@
     "tooltip_edit": "Düzəliş etmək"
   },
   "checking_questions": {
-    "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
+    "listen_to_question": "{{ referenceForDisplay }} üçün suala qulaq asın",
     "loading": "Yüklənir...",
     "no_questions_found_filtered": "No questions found to match your filter",
     "no_questions_found_unfiltered": "No questions found",
-    "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
+    "scripture_audio_label": "Aşağıdakı suala cavab vermək üçün {{ referenceForDisplay }}-a qulaq asın.",
     "view_answers": "View answers"
   },
   "edit_name_dialog": {
