@@ -1,5 +1,4 @@
-import { Component, Inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -12,12 +11,11 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../../../environments/environment';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareBaseComponent } from './share-base.component';
-
 export interface ShareDialogData {
   projectId: string;
   defaultRole: SFProjectRole;
@@ -62,7 +60,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     userService: UserService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(userService);
     this.projectId = this.data.projectId;
@@ -72,7 +70,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
     ]).then(value => {
       this.projectDoc = value[0];
       this.isProjectAdmin = value[1];
-      this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
         if (this.shareLinkUsageOptions.length === 0) {
           this.dialogRef.close();
         } else if (!this.shareLinkUsageOptions.includes(this.shareLinkType)) {
@@ -86,7 +84,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
         this.shareLinkType = this.shareLinkUsageOptions[0];
       }
       this.onlineStatusService.onlineStatus$
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(() => this.updateSharingKey());
     });
   }

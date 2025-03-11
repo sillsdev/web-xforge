@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
@@ -18,7 +17,7 @@ import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectSettings } from '../../../core/models/sf-project-settings';
@@ -32,7 +31,6 @@ import {
   translateSourceToSelectableProjectWithLanguageTag
 } from '../draft-utils';
 import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
-
 /** Status for a project, which may or may not be at SF. */
 export interface ProjectStatus {
   shortName: string;
@@ -92,7 +90,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly paratextService: ParatextService,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
@@ -104,7 +102,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   ) {
     super(noticeService);
 
-    this.activatedProjectService.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
+    this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc?.data != null) {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
         if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
@@ -127,7 +125,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     });
 
     this.userProjectsService.projectDocs$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((projects?: SFProjectProfileDoc[]) => {
         if (projects == null) return;
         this.userConnectedProjectsAndResources = projects.filter(project => project.data != null);
@@ -373,7 +371,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
           };
 
           updateSyncStatusForProject(projectDoc);
-          projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+          projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
             updateSyncStatusForProject(projectDoc);
           });
         }

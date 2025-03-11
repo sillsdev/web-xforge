@@ -1,5 +1,4 @@
-import { Component, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -14,7 +13,8 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
-import { objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { objectId } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -104,7 +104,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   transceleratorInfo = this.i18n.interpolate('import_questions_dialog.transcelerator_paratext');
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,
     projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,
@@ -116,7 +116,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     readonly i18n: I18nService,
     readonly urls: ExternalUrlService
   ) {
-    this.filterForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.filterForm.valueChanges.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       const searchTerm: string = (this.filterControl.value || '').toLowerCase();
       const fromRef = VerseRef.tryParse(this.fromControl.value || '');
       const toRef = VerseRef.tryParse(this.toControl.value || '');

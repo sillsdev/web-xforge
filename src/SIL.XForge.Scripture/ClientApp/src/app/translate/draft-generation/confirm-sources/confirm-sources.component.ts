@@ -1,11 +1,10 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, Output } from '@angular/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import {
   DraftSourcesAsSelectableProjectArrays,
@@ -13,7 +12,6 @@ import {
   projectToDraftSources
 } from '../draft-utils';
 import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
-
 @Component({
   selector: 'app-confirm-sources',
   standalone: true,
@@ -31,11 +29,11 @@ export class ConfirmSourcesComponent {
   };
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly i18nService: I18nService,
     private readonly activatedProject: ActivatedProjectService
   ) {
-    this.activatedProject.projectDoc$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
+    this.activatedProject.projectDoc$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc?.data != null) {
         this.draftSources = draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays(
           projectToDraftSources(projectDoc?.data)

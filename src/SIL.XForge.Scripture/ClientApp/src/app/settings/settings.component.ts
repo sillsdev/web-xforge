@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -24,14 +23,13 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
-
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
 @Component({
   selector: 'app-settings',
@@ -116,7 +114,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     readonly featureFlags: FeatureFlagService,
     readonly externalUrls: ExternalUrlService,
     private readonly activatedProjectService: ActivatedProjectService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
     this.loading = true;
@@ -204,7 +202,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       map(params => params['projectId'] as string)
     );
     combineLatest([this.onlineStatusService.onlineStatus$, projectId$])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([isOnline, projectId]) => {
         this.isAppOnline = isOnline;
         if (isOnline && this.projects == null) {
@@ -222,7 +220,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             if (this.projectDoc != null) {
               this.updateSettingsInfo();
               this.updateNonSelectableProjects();
-              this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+              this.projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
                 this.updateNonSelectableProjects();
                 this.setIndividualControlDisabledStates();
               });

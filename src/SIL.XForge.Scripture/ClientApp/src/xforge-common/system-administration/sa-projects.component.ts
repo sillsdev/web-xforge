@@ -1,11 +1,10 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, HostBinding, OnInit } from '@angular/core';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { BehaviorSubject } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../app/core/models/sf-project-doc';
 import { SFProjectService } from '../../app/core/sf-project.service';
 import { DataLoadingComponent } from '../data-loading-component';
@@ -13,7 +12,6 @@ import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
-
 class Row {
   isUpdatingRole: boolean = false;
 
@@ -81,7 +79,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');
@@ -103,7 +101,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
         obj<Project>().pathStr(p => p.name),
         obj<SFProject>().pathStr(p => p.shortName)
       ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(searchResults => {
         this.loadingStarted();
         this.projectDocs = searchResults.docs;

@@ -1,12 +1,10 @@
-import { Injectable } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef, Injectable } from '@angular/core';
 import { isEqual } from 'lodash-es';
 import { BehaviorSubject, distinctUntilChanged, filter, map, Observable, Subject, takeUntil } from 'rxjs';
 import { moveItemInReadonlyArray, transferItemAcrossReadonlyArrays } from 'xforge-common/util/array-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TabLocation } from '../sf-tabs.types';
 import { TabGroup } from './tab-group';
-
 export type FlatTabInfo<TGroupId extends string, T extends TabInfo<string>> = T & {
   groupId: TGroupId;
   isSelected: boolean;
@@ -56,7 +54,7 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
 
   tabsConsolidated$ = this.tabsConsolidatedSource$.asObservable();
 
-  constructor(private readonly destroyRef: QuietDestroyRef) {}
+  constructor(private readonly destroyRef: DestroyRef) {}
 
   setTabGroups(tabGroups: TabGroup<TGroupId, T>[]): void {
     this.groups.clear();
@@ -229,7 +227,7 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
         group.tabsAdded$
           .pipe(
             takeUntil(this.tabsConsolidated$.pipe(filter(consolidated => !consolidated))),
-            takeUntilDestroyed(this.destroyRef)
+            quietTakeUntilDestroyed(this.destroyRef)
           )
           .subscribe(({ tabs, selectedAddTab }) => {
             const deconsolidationGroupTabs: readonly T[] = this.tabsToDeconsolidate!.get(group.groupId)!;
@@ -268,7 +266,7 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
     intoGroup.tabRemoved$
       .pipe(
         takeUntil(this.tabsConsolidated$.pipe(filter(consolidated => !consolidated))),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(({ tab }) => {
         if (this.tabsToDeconsolidate == null) {
