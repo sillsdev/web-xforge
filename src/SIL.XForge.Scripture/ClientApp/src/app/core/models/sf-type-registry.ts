@@ -11,6 +11,7 @@ import { SFProjectProfileDoc } from './sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from './sf-project-user-config-doc';
 import { TextAudioDoc } from './text-audio-doc';
 import { TextDoc } from './text-doc';
+import { TextDocumentDoc } from './text-document-doc';
 import { TrainingDataDoc } from './training-data-doc';
 
 export const SF_TYPE_REGISTRY = new TypeRegistry(
@@ -25,6 +26,7 @@ export const SF_TYPE_REGISTRY = new TypeRegistry(
     TextDoc,
     NoteThreadDoc,
     TextAudioDoc,
+    TextDocumentDoc,
     TrainingDataDoc
   ],
   [FileType.Audio, FileType.TrainingData],

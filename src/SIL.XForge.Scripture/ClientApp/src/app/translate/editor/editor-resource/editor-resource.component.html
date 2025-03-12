@@ -4,16 +4,26 @@
       <app-copyright-banner [notice]="copyrightNotice" [banner]="copyrightBanner"></app-copyright-banner>
     }
     <div class="text-container">
-      <app-text
-        [id]="projectId | textDocId: bookNum : chapter"
-        [isReadOnly]="true"
-        [subscribeToUpdates]="false"
-        [highlightSegment]="highlightSegment ?? false"
-        [segmentRef]="segmentRef ?? ''"
-        [isRightToLeft]="isRightToLeft"
-        [fontSize]="fontSize"
-        [style.--project-font]="font"
-      ></app-text>
+      @if (featureFlags.usePlatformBibleEditor.enabled) {
+        <app-platform-editor
+          [id]="projectId | textDocId: bookNum : chapter"
+          [isReadOnly]="true"
+          [isRightToLeft]="isRightToLeft"
+          [style.--project-font]="font"
+          [style.--project-font-size]="fontSize"
+        ></app-platform-editor>
+      } @else {
+        <app-text
+          [id]="projectId | textDocId: bookNum : chapter"
+          [isReadOnly]="true"
+          [subscribeToUpdates]="false"
+          [highlightSegment]="highlightSegment ?? false"
+          [segmentRef]="segmentRef ?? ''"
+          [isRightToLeft]="isRightToLeft"
+          [fontSize]="fontSize"
+          [style.--project-font]="font"
+        ></app-text>
+      }
     </div>
   </div>
 }

@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
-import { combineLatest, EMPTY, startWith, Subject, switchMap } from 'rxjs';
+import { combineLatest, EMPTY, of, startWith, Subject, switchMap } from 'rxjs';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -18,7 +19,7 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
   @Input() segmentRef?: string;
   @Input() highlightSegment?: boolean;
 
-  @ViewChild(TextComponent) resourceText!: TextComponent;
+  @ViewChild(TextComponent) resourceText?: TextComponent;
 
   isRightToLeft = false;
   fontSize?: string;
@@ -32,6 +33,7 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly projectService: SFProjectService,
+    protected readonly featureFlags: FeatureFlagService,
     private readonly fontService: FontService
   ) {}
 
@@ -44,7 +46,11 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
   }
 
   private initProjectDetails(): void {
-    combineLatest([this.resourceText.editorCreated, this.inputChanged$.pipe(startWith(undefined))])
+    combineLatest([
+      this.resourceText?.editorCreated ?? of(undefined),
+      this.inputChanged$.pipe(startWith(undefined)),
+      this.featureFlags.usePlatformBibleEditor.enabled$
+    ])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
         switchMap(() => {

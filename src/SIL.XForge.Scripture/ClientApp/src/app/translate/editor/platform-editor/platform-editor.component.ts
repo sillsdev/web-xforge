@@ -1,8 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, DestroyRef, Input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Editorial, EditorOptions, EditorRef } from '@biblionexus-foundation/platform-editor';
 import { Usj } from '@biblionexus-foundation/scripture-utilities';
 import { createRef, RefObject, type ComponentProps } from 'react';
+import { Subscription } from 'rxjs';
+import { RealtimeService } from 'xforge-common/realtime.service';
+import { TextDocId } from '../../../core/models/text-doc';
+import { TextDocumentDoc } from '../../../core/models/text-document-doc';
 import { RenderReactDirective } from './render-react-directive.component';
 
 @Component({
@@ -10,12 +15,36 @@ import { RenderReactDirective } from './render-react-directive.component';
   standalone: true,
   imports: [CommonModule, RenderReactDirective],
   styleUrls: ['./platform-editor.component.scss'],
-  template: `<div [appRenderReact]="editorial" [props]="editorProps"></div>`
+  template: `<div [appRenderReact]="editorial" [props]="editorProps" (rendered)="onReactRendered()"></div>`
 })
 export class PlatformEditorComponent {
+  constructor(
+    private readonly realtimeService: RealtimeService,
+    private destroyRef: DestroyRef
+  ) {
+    this.editorRef = createRef<EditorRef>();
+    this.editorProps = this.createEditorProps();
+  }
+
   private readonly _emptyUsj: Usj = { type: 'USJ', version: '3.1', content: [] };
+  private _id: TextDocId | undefined;
   private _isReadOnly: boolean = false;
   private _isRightToLeft: boolean = false;
+  private _textDocument: TextDocumentDoc | undefined;
+  private _textDocumentChanges: Subscription | undefined;
+
+  editorial = Editorial;
+  editorRef: RefObject<EditorRef>;
+  editorProps: ComponentProps<typeof Editorial>;
+
+  @Input() set id(value: TextDocId | undefined) {
+    this._id = value;
+    this.subscribeToTextDocument(value);
+  }
+
+  get id(): TextDocId | undefined {
+    return this._id;
+  }
 
   @Input() set isReadOnly(value: boolean) {
     this._isReadOnly = value;
@@ -35,11 +64,16 @@ export class PlatformEditorComponent {
     return this._isRightToLeft;
   }
 
-  editorial = Editorial;
-  editorRef: RefObject<EditorRef> = createRef<EditorRef>();
-  editorProps: ComponentProps<typeof Editorial> = this.createEditorProps();
-  setUsj(value?: Usj): void {
+  @Input() set usj(value: Usj | undefined) {
     this.editorRef.current?.setUsj(value ?? this._emptyUsj);
+  }
+
+  get usj(): Usj | undefined {
+    return this.editorRef.current?.getUsj();
+  }
+
+  onReactRendered(): void {
+    this.subscribeToTextDocument(this._id);
   }
 
   private createEditorProps(): ComponentProps<typeof Editorial> {
@@ -51,6 +85,23 @@ export class PlatformEditorComponent {
       } as EditorOptions,
       ref: this.editorRef
     };
+  }
+
+  private async subscribeToTextDocument(id: TextDocId | undefined): Promise<void> {
+    if (id != null) {
+      console.log(id.toString());
+      this._textDocumentChanges?.unsubscribe();
+      this._textDocument = await this.realtimeService.subscribe<TextDocumentDoc>(
+        TextDocumentDoc.COLLECTION,
+        id.toString()
+      );
+      this.usj = this._textDocument.data;
+      this._textDocumentChanges = this._textDocument.remoteChanges$
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.usj = this._textDocument?.data;
+        });
+    }
   }
 
   private updateEditorProps(): void {

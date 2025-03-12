@@ -184,7 +184,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         switchMap((timestamp: Date | undefined) =>
           combineLatest([
             this.getTargetOps(),
-            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false, timestamp })
+            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false, timestamp }),
             // Get the USJ, if we are displaying it
             this.featureFlags.usePlatformBibleEditor.enabled
               ? this.draftGenerationService.getGeneratedDraftUsj(
@@ -216,52 +216,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         // Set the draft editor with the pre-translation segments
         this.draftText?.setContents(this.draftDelta, 'api');
         this.draftText?.applyEditorStyles();
-        this.draftEditor?.setUsj(usj);
-
-        this.isDraftApplied =
-          this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
-            ?.draftApplied ?? false;
-
-        if (this.draftCheckState !== 'draft-legacy') {
-          this.draftCheckState = 'draft-present';
+        if (this.draftEditor != null) {
+          this.draftEditor.usj = usj;
         }
-
-        this.isDraftReady = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
-      });
-  }
-
-  populateUsjDraftTextInit(): void {
-    combineLatest([this.onlineStatusService.onlineStatus$, this.inputChanged$.pipe(startWith(undefined))])
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        filter(([isOnline]) => isOnline),
-        tap(() => this.setInitialState()),
-        switchMap(() => this.draftExists()),
-        switchMap((draftExists: boolean) => {
-          if (!draftExists) {
-            this.draftCheckState = 'draft-empty';
-            return EMPTY;
-          }
-
-          // Respond to project changes
-          return this.activatedProjectService.changes$.pipe(
-            filterNullish(),
-            tap(projectDoc => {
-              this.targetProject = projectDoc.data;
-            }),
-            distinctUntilChanged()
-          );
-        }),
-        switchMap(() =>
-          this.draftGenerationService.getGeneratedDraftUsj(
-            this.textDocId!.projectId,
-            this.textDocId!.bookNum,
-            this.textDocId!.chapterNum
-          )
-        )
-      )
-      .subscribe(usj => {
-        this.draftEditor?.setUsj(usj);
 
         this.isDraftApplied =
           this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)

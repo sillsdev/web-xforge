@@ -16,5 +16,5 @@ export const environment = {
   realtimeUrl: '/',
   authDomain: 'sil-appbuilder.auth0.com',
   authClientId: 'aoAGb9Yx1H5WIsvCW6JJCteJhSa37ftH',
-  offlineDBVersion: 8
+  offlineDBVersion: 9
 };
