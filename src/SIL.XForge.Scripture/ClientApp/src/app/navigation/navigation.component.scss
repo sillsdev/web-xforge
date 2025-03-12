@@ -30,6 +30,8 @@ mat-nav-list .mdc-list-item {
   &.active {
     background-color: var(--sf-navigation-list-item-active-background-color);
     --mdc-list-list-item-label-text-color: var(--sf-navigation-list-item-active);
+    --mdc-list-list-item-hover-label-text-color: var(--sf-navigation-list-item-active);
+    --mdc-list-list-item-focus-label-text-color: var(--sf-navigation-list-item-active);
   }
 }
 
