@@ -316,9 +316,9 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
     const currentProjectParatextId: string = this.activatedProjectService.projectDoc.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
-      this.trainingSources as [SelectableProject, SelectableProject?],
-      this.draftingSources as [SelectableProject?],
-      this.trainingTargets as [SFProjectProfile],
+      this.trainingSources as SelectableProject[],
+      this.draftingSources as SelectableProject[],
+      this.trainingTargets as SelectableProject[],
       currentProjectParatextId
     );
     const projectSettingsChange: SFProjectSettings = sourcesSettingsChange;
@@ -397,11 +397,11 @@ export interface DraftSourcesSettingsChange {
 
 /** Convert some arrays of drafting sources to a settings object that can be applied to a SF project. */
 export function sourceArraysToSettingsChange(
-  trainingSources: [SelectableProject?, SelectableProject?],
+  trainingSources: SelectableProject[],
   /** It may not make sense for drafting to have no drafting source. But for specifying project settings, allow an
    * empty setting for drafting source. */
-  draftingSources: [SelectableProject?],
-  trainingTargets: [SelectableProject?],
+  draftingSources: SelectableProject[],
+  trainingTargets: SelectableProject[],
   currentProjectParatextId: string
 ): DraftSourcesSettingsChange {
   // Extra precaution on array lengths for now in case the type system is being bypassed.
