@@ -1,5 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, Input, Output } from '@angular/core';
 import { ProgressBarMode } from '@angular/material/progress-bar';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -7,11 +6,10 @@ import { BehaviorSubject, map, merge, Observable } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
-
 export class ProgressState {
   constructor(
     public progressValue: number,
@@ -70,7 +68,7 @@ export class SyncProgressComponent {
     private readonly featureFlags: FeatureFlagService,
     private readonly errorReportingService: ErrorReportingService,
     private readonly onlineStatus: OnlineStatusService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) => {
       this.updateProgressState(projectId, progressState);
@@ -131,7 +129,7 @@ export class SyncProgressComponent {
       this.sourceProjectDoc == null
         ? this._projectDoc.remoteChanges$
         : merge(this._projectDoc.remoteChanges$, this.sourceProjectDoc.remoteChanges$);
-    checkSyncStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.checkSyncStatus());
+    checkSyncStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => this.checkSyncStatus());
 
     // Subscribe to SignalR notifications for the target project
     await this.projectNotificationService.subscribeToProject(this._projectDoc.id);

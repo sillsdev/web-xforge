@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -23,8 +22,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { issuesEmailTemplate, QuietDestroyRef } from 'xforge-common/utils';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -155,7 +154,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
   }
@@ -222,7 +221,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.route.fragment
       .pipe(
         filter(fragment => fragment === this.supportedLanguagesUrl.fragment),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => {
         const dialogRef = this.dialogService.openMatDialog(SupportedBackTranslationLanguagesDialogComponent);
@@ -273,7 +272,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         })
       )
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async () => {
         this.isTargetLanguageSupported =
           !this.isBackTranslationMode || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
@@ -293,24 +292,26 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           }
           return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
         }),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe((build: BuildDto | undefined) => {
         this.lastCompletedBuild = build;
       });
 
-    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isOnline: boolean) => {
-      this.isOnline = isOnline;
+    this.onlineStatusService.onlineStatus$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe((isOnline: boolean) => {
+        this.isOnline = isOnline;
 
-      // Start polling when app goes online
-      if (isOnline) {
-        this.pollBuild();
-      } else {
-        this.loadingFinished();
-      }
-    });
+        // Start polling when app goes online
+        if (isOnline) {
+          this.pollBuild();
+        } else {
+          this.loadingFinished();
+        }
+      });
 
-    this.i18n.locale$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
       this.sourceLanguageDisplayName = this.i18n.getLanguageDisplayName(this.sourceLanguage);
       this.alternateTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
@@ -451,7 +452,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   startBuild(buildConfig: BuildConfig): void {
     this.draftGenerationService
       .getBuildProgress(buildConfig.projectId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(job => {
         if (this.isDraftInProgress(job)) {
           this.draftJob = job;
@@ -486,7 +487,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
           return of(undefined);
         }),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe((job?: BuildDto) => (this.draftJob = job));
   }
@@ -509,7 +510,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
               )
             );
         }),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe((job?: BuildDto) => {
         this.draftJob = job;

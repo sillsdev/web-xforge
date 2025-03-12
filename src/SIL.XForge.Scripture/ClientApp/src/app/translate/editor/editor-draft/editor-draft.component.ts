@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -27,15 +26,13 @@ import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { isString } from '../../../../type-utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
-
 @Component({
   selector: 'app-editor-draft',
   templateUrl: './editor-draft.component.html',
@@ -65,7 +62,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftHandlingService: DraftHandlingService,
@@ -98,7 +95,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       this.inputChanged$.pipe(startWith(undefined))
     ])
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
+        quietTakeUntilDestroyed(this.destroyRef),
         filter(([isOnline]) => isOnline),
         tap(() => this.setInitialState()),
         switchMap(() => this.draftExists()),

@@ -1,19 +1,17 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { BehaviorSubject, Subscription, timer } from 'rxjs';
 import { filter, repeat, retry, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
-
 @Component({
   selector: 'app-training-progress',
   templateUrl: './training-progress.component.html',
@@ -37,7 +35,7 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
     private readonly projectService: SFProjectService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
   }
@@ -51,7 +49,7 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
   }
 
   ngOnInit(): void {
-    this.projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
+    this.projectId$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       if (projectId === '') {
         return;
       }

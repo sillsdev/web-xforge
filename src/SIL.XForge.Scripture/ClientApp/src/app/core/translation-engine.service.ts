@@ -1,5 +1,4 @@
-import { Injectable } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { InteractiveTranslator, InteractiveTranslatorFactory, LatinWordTokenizer } from '@sillsdev/machine';
 import { Canon } from '@sillsdev/scripture';
@@ -12,12 +11,11 @@ import { filter, share } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { HttpClient } from '../machine-api/http-client';
 import { RemoteTranslationEngine } from '../machine-api/remote-translation-engine';
 import { EDITED_SEGMENTS, EditedSegmentData } from './models/edited-segment-data';
 import { SFProjectService } from './sf-project.service';
-
 /**
  * A service to access features for translation suggestions and training the translation engine
  */
@@ -40,7 +38,7 @@ export class TranslationEngineService {
     private readonly machineHttp: HttpClient,
     private readonly noticeService: NoticeService,
     private readonly router: Router,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     this.onlineStatus$ = this.onlineStatusService.onlineStatus$.pipe(
       filter(online => online),
@@ -183,7 +181,7 @@ export class TranslationEngineService {
   }
 
   private onlineCallback(callback: () => any): void {
-    this.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(callback);
+    this.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(callback);
   }
 
   private translationSuggestionId(projectRef: string, bookNum: number, segment: string): string {

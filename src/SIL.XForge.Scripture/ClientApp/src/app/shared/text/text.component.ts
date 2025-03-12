@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -9,7 +10,6 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { isEqual, merge } from 'lodash-es';
@@ -28,7 +28,8 @@ import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { getBrowserEngine, objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { getBrowserEngine, objectId } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -275,7 +276,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     private readonly userService: UserService,
     private readonly viewModel: TextViewModel,
     private readonly textDocService: TextDocService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
     if (localCursorColor == null) {
@@ -287,7 +288,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.userService.getCurrentUser().then((userDoc: UserDoc) => {
       this.currentUserDoc = userDoc;
       this.currentUserDoc.changes$
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
         .subscribe(() => this.submitLocalPresenceChannel(true));
     });
   }
@@ -511,7 +512,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       this.changeDetector.detectChanges();
       if (!isOnline && this._editor != null) {
         const cursors: QuillCursors = this._editor.getModule('cursors') as QuillCursors;
@@ -536,10 +537,10 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       this.highlightMarker.style.visibility = 'hidden';
     }
     fromEvent(this._editor.root, 'scroll')
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateHighlightMarkerVisibility());
     fromEvent(window, 'resize')
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.setHighlightMarkerPosition());
     this.viewModel.editor = editor;
     this.bindQuill(); // not awaited
@@ -1086,7 +1087,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         'notes',
         Array.from(elements).map((element: Element) =>
           fromEvent<MouseEvent>(element, 'click')
-            .pipe(takeUntilDestroyed(this.destroyRef))
+            .pipe(quietTakeUntilDestroyed(this.destroyRef))
             .subscribe(event => {
               const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
               const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');

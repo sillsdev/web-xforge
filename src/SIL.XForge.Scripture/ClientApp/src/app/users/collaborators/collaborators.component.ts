@@ -1,5 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
@@ -14,12 +13,11 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { RolesAndPermissionsDialogComponent } from '../roles-and-permissions/roles-and-permissions-dialog.component';
-
 interface UserInfo {
   displayName?: string;
   avatarUrl?: string;
@@ -69,7 +67,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     private readonly changeDetector: ChangeDetectorRef,
     private readonly dialogService: DialogService,
     readonly urls: ExternalUrlService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
   }
@@ -140,14 +138,14 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         map(params => params['projectId'] as string),
         distinctUntilChanged(),
         filter(projectId => projectId != null),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(async projectId => {
         this.loadingStarted();
         this.projectDoc = await this.projectService.get(projectId);
         this.loadUsers();
         // TODO Clean up the use of nested subscribe()
-        this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async () => {
+        this.projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async () => {
           this.loadingStarted();
           try {
             await this.loadUsers();
@@ -157,7 +155,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         });
         this.loadingFinished();
       });
-    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline && this._userRows == null) {
         this.loadingStarted();
@@ -168,7 +166,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   ngAfterViewInit(): void {
-    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       if (isOnline) {
         this.filterForm.enable();
       } else {

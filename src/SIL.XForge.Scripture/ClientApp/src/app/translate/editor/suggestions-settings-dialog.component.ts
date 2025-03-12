@@ -1,14 +1,12 @@
-import { Component, Inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Inject } from '@angular/core';
 import { UntypedFormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-
 export const CONFIDENCE_THRESHOLD_TIMEOUT = 500;
 
 export interface SuggestionsSettingsDialogData {
@@ -30,7 +28,7 @@ export class SuggestionsSettingsDialogComponent {
   constructor(
     @Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData,
     readonly onlineStatusService: OnlineStatusService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     this.projectDoc = data.projectDoc;
     this.projectUserConfigDoc = data.projectUserConfigDoc;
@@ -57,7 +55,7 @@ export class SuggestionsSettingsDialogComponent {
         skip(1),
         debounceTime(CONFIDENCE_THRESHOLD_TIMEOUT),
         map(value => value / 100),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(threshold =>
         this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))

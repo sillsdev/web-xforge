@@ -1,5 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -15,8 +14,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
@@ -27,7 +25,6 @@ import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.comp
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataService } from '../training-data/training-data.service';
-
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
   trainingScriptureRange?: string;
@@ -112,7 +109,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   private isTrainingDataInitialized: boolean = false;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     protected readonly activatedProject: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
     protected readonly featureFlags: FeatureFlagService,
@@ -127,7 +124,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   ngOnInit(): void {
     combineLatest([this.draftSourcesService.getDraftProjectSources(), this.activatedProject.projectId$])
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
+        quietTakeUntilDestroyed(this.destroyRef),
         filter(([{ trainingTargets, draftingSources }], projectId) => {
           this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
           return trainingTargets[0] != null && draftingSources[0] != null && projectId != null;
@@ -225,7 +222,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
     // Get the training data files for the project
     this.activatedProject.projectDoc$
-      .pipe(takeUntilDestroyed(this.destroyRef), filterNullish())
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), filterNullish())
       .subscribe(async projectDoc => {
         this.isTrainingDataInitialized = false;
         // Query for all training data files in the project
@@ -240,11 +237,11 @@ export class DraftGenerationStepsComponent implements OnInit {
           this.trainingDataQuery.remoteChanges$,
           this.trainingDataQuery.remoteDocChanges$
         )
-          .pipe(takeUntilDestroyed(this.destroyRef))
+          .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
           .subscribe(() => this.trainingDataQueryUpdate$.next());
       });
 
-    this.trainingDataQueryUpdate$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.trainingDataQueryUpdate$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.availableTrainingFiles = [];
       if (this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.additionalTrainingData) {
         this.availableTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];

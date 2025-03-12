@@ -1,7 +1,7 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
-import { DebugElement, NgZone } from '@angular/core';
+import { DebugElement, DestroyRef, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialogRef } from '@angular/material/dialog';
@@ -54,7 +54,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { IDestroyRef, objectId } from 'xforge-common/utils';
+import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -2512,7 +2512,7 @@ class TestEnvironment {
       spyOn(checkingQuestionsService, 'queryQuestions').and.callFake((...args: any[]) =>
         // Call real function
         realQueryQuestions
-          .apply(checkingQuestionsService, args as [projectId: string, options: any, destroyRef: IDestroyRef])
+          .apply(checkingQuestionsService, args as [projectId: string, options: any, destroyRef: DestroyRef])
           .then(
             // Then alter `query.ready$` to emit false and complete
             (query: RealtimeQuery<QuestionDoc>) => {

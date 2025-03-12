@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -10,12 +9,11 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { projectLabel } from '../shared/utils';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import { ServalAdministrationService } from './serval-administration.service';
-
 interface SourceData {
   id: string;
   label: string;
@@ -86,7 +84,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly servalAdministrationService: ServalAdministrationService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');
@@ -104,7 +102,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
         obj<Project>().pathStr(p => p.name),
         obj<SFProjectProfile>().pathStr(p => p.shortName)
       ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(searchResults => {
         this.projectDocs = searchResults.docs;
         this.length = searchResults.unpagedCount;

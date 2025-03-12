@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Inject,
   OnDestroy,
@@ -13,7 +14,6 @@ import {
   ViewChild,
   ViewChildren
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UntypedFormControl, Validators } from '@angular/forms';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -83,16 +83,9 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { stripHtml } from 'xforge-common/util/string-util';
-import {
-  browserLinks,
-  getLinkHTML,
-  isBlink,
-  issuesEmailTemplate,
-  objectId,
-  QuietDestroyRef
-} from 'xforge-common/utils';
+import { browserLinks, getLinkHTML, isBlink, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
@@ -300,7 +293,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly editorTabPersistenceService: EditorTabPersistenceService,
     private readonly textDocService: TextDocService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
     private readonly permissionsService: PermissionsService
@@ -312,7 +305,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     this.segmentUpdated$ = new Subject<void>();
     this.segmentUpdated$
-      .pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT), takeUntilDestroyed(this.destroyRef))
+      .pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT), quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateSuggestions());
     this.mobileNoteControl.setValidators([Validators.required, XFValidators.someNonWhitespace]);
   }
@@ -673,7 +666,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   ngOnInit(): void {
     this.activatedProject.projectDoc$
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
+        quietTakeUntilDestroyed(this.destroyRef),
         filterNullish(),
         switchMap(doc => this.initEditorTabs(doc))
       )
@@ -682,7 +675,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngAfterViewInit(): void {
     fromEvent(window, 'resize')
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.positionInsertNoteFab();
       });
@@ -691,7 +684,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
       this.targetTextComponent!.changes
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([params, components]) => {
         this.target = components.first;
         this.showSuggestions = false;
@@ -819,7 +812,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     // Throttle bursts of sync scroll requests
     this.syncScrollRequested$
-      .pipe(takeUntilDestroyed(this.destroyRef), throttleTime(100, asyncScheduler, { leading: true, trailing: true }))
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        throttleTime(100, asyncScheduler, { leading: true, trailing: true })
+      )
       .subscribe(() => {
         this.syncScroll();
       });
@@ -830,7 +826,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.tabStateInitialized$.pipe(filter(initialized => initialized)),
       this.targetEditorLoaded$.pipe(take(1))
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(([breakpointState]) => {
         if (breakpointState.matches && this.showSource) {
           this.tabState.consolidateTabGroups('target');
@@ -1920,7 +1916,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         segment,
         Array.from(elements).map((element: Element) =>
           fromEvent<MouseEvent>(element, 'click')
-            .pipe(takeUntilDestroyed(this.destroyRef))
+            .pipe(quietTakeUntilDestroyed(this.destroyRef))
             .subscribe(event => {
               if (this.bookNum == null) {
                 return;
@@ -1952,7 +1948,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
       this.selectionClickSubs.push(
         fromEvent<MouseEvent>(segmentElement, 'click')
-          .pipe(takeUntilDestroyed(this.destroyRef))
+          .pipe(quietTakeUntilDestroyed(this.destroyRef))
           .subscribe(event => {
             if (this.bookNum == null || this.target == null) return;
             const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this.bookNum);
@@ -1985,7 +1981,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.noteThreadQuery.remoteChanges$,
       this.noteThreadQuery.remoteDocChanges$
     )
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.toggleNoteThreadVerses(false);
         this.toggleNoteThreadVerses(true);
@@ -2543,7 +2539,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private subscribeScroll(scrollContainer: Element): void {
     this.scrollSubscription?.unsubscribe();
     this.scrollSubscription = fromEvent(scrollContainer, 'scroll')
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.keepInsertNoteFabInView(scrollContainer);
       });

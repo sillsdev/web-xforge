@@ -1,5 +1,13 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  ElementRef,
+  EventEmitter,
+  Input,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { FormGroupDirective, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -10,12 +18,11 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareBaseComponent } from './share-base.component';
-
 /** UI to share project access with new users, such as by sending an invitation email. */
 @Component({
   selector: 'app-share-control',
@@ -51,11 +58,11 @@ export class ShareControlComponent extends ShareBaseComponent {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly changeDetector: ChangeDetectorRef,
     userService: UserService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(userService);
     combineLatest([this.projectId$, this.onlineStatusService.onlineStatus$])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([projectId]) => {
         if (projectId === '') {
           return;
@@ -68,11 +75,11 @@ export class ShareControlComponent extends ShareBaseComponent {
           this.roleControl.setValue(this.defaultShareRole);
         }
         this.projectDoc.remoteChanges$
-          .pipe(takeUntilDestroyed(this.destroyRef))
+          .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
           .subscribe(() => this.updateFormEnabledStateAndLinkSharingKey());
       });
     combineLatest([this.onlineStatusService.onlineStatus$, this.roleControl.valueChanges])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateFormEnabledStateAndLinkSharingKey());
   }
 

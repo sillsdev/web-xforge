@@ -1,5 +1,14 @@
-import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
@@ -17,7 +26,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -123,7 +132,7 @@ export class CheckingAnswersComponent implements OnInit {
     private readonly fileService: FileService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {}
 
   get project(): SFProjectProfile | undefined {
@@ -140,7 +149,7 @@ export class CheckingAnswersComponent implements OnInit {
       return;
     }
     this.projectProfileDocChangesSubscription = projectProfileDoc.changes$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.setProjectAdmin();
       });
@@ -165,7 +174,7 @@ export class CheckingAnswersComponent implements OnInit {
       this.questionChangeSubscription!.unsubscribe();
     }
     this.questionChangeSubscription = questionDoc.remoteChanges$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(ops => {
         this.updateQuestionDocAudioUrls();
         // If the user hasn't added an answer yet and is able to, then
@@ -291,7 +300,7 @@ export class CheckingAnswersComponent implements OnInit {
 
   ngOnInit(): void {
     this.fileService.fileSyncComplete$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateQuestionDocAudioUrls());
   }
 

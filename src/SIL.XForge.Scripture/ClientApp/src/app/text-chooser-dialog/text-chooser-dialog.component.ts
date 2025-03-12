@@ -1,5 +1,4 @@
-import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { VerseRef } from '@sillsdev/scripture';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
@@ -8,7 +7,7 @@ import { auditTime } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../core/models/text-doc';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import {
@@ -16,7 +15,6 @@ import {
   ScriptureChooserDialogData
 } from '../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { TextComponent } from '../shared/text/text.component';
-
 export interface TextChooserDialogData {
   bookNum: number;
   chapterNum: number;
@@ -60,14 +58,14 @@ export class TextChooserDialogComponent {
     private readonly i18n: I18nService,
     @Inject(DOCUMENT) private readonly document: Document,
     @Optional() @Inject(MAT_DIALOG_DATA) private readonly data: TextChooserDialogData,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     // caniuse doesn't have complete data for the selection events api, but testing on BrowserStack shows the event is
     // fired at least as far back as iOS v7 on Safari 7.
     // Edge 42 with EdgeHTML 17 also fires the events.
     // Firefox and Chrome also support it. We can degrade gracefully by getting the selection when the dialog closes.
     fromEvent(this.document, 'selectionchange')
-      .pipe(auditTime(100), takeUntilDestroyed(this.destroyRef))
+      .pipe(auditTime(100), quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateSelection());
 
     this.bookNum = this.data.bookNum;
