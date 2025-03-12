@@ -2,6 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -12,6 +13,7 @@ describe('EditorResourceComponent', () => {
   let component: EditorResourceComponent;
   let fixture: ComponentFixture<EditorResourceComponent>;
   const mockSFProjectService = mock(SFProjectService);
+  const mockFeatureFlagService = mock(FeatureFlagService);
   const mockFontService = mock(FontService);
   const projectDoc = {
     id: 'projectId',
@@ -21,6 +23,7 @@ describe('EditorResourceComponent', () => {
   configureTestingModule(() => ({
     providers: [
       { provide: SFProjectService, useMock: mockSFProjectService },
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: FontService, useMock: mockFontService }
     ]
   }));
@@ -29,6 +32,8 @@ describe('EditorResourceComponent', () => {
     fixture = TestBed.createComponent(EditorResourceComponent);
     component = fixture.componentInstance;
     component.resourceText = { editorCreated: new Subject<void>() } as any;
+
+    when(mockFeatureFlagService.usePlatformBibleEditor).thenReturn(createTestFeatureFlag(false));
   });
 
   afterEach(() => {
@@ -41,7 +46,7 @@ describe('EditorResourceComponent', () => {
     component.chapter = 1;
     component['initProjectDetails']();
 
-    component.resourceText.editorCreated.next();
+    component.resourceText!.editorCreated.next();
     verify(mockSFProjectService.getProfile(anything())).never();
 
     component.projectId = 'test';
@@ -62,7 +67,7 @@ describe('EditorResourceComponent', () => {
     component.chapter = 1;
     when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(projectDoc));
     component['initProjectDetails']();
-    component.resourceText.editorCreated.next();
+    component.resourceText!.editorCreated.next();
     tick();
     verify(mockSFProjectService.getProfile(projectId)).once();
     verify(mockFontService.getFontFamilyFromProject(projectDoc)).once();
@@ -79,7 +84,7 @@ describe('EditorResourceComponent', () => {
     } as SFProjectProfileDoc;
     when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(rtlProjectDoc));
     component['initProjectDetails']();
-    component.resourceText.editorCreated.next();
+    component.resourceText!.editorCreated.next();
     tick();
     expect(component.isRightToLeft).toBe(true);
   }));
