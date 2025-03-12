@@ -335,7 +335,7 @@
     "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "error_applying_draft": "Failed to add the draft to the project. Try again later.",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
-    "offline_notice": "Auto draft is not available offline.",
+    "offline_notice": "Generated drafts are not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
     "reapply_to_project": "Re-add to project",
     "yes": "Overwrite chapter"
@@ -346,7 +346,7 @@
   "editor_tabs_menu": {
     "biblical_terms_menu_item": "Biblical Terms",
     "history_menu_item": "History",
-    "draft_menu_item": "Auto Draft",
+    "draft_menu_item": "Generated draft",
     "project_resource_menu_item": "Resource..."
   },
   "editor_tab_factory": {
@@ -354,7 +354,7 @@
     "default_history_tab_header": "History",
     "default_project_tab_header": "Project",
     "default_resource_tab_header": "Resource",
-    "draft_tab_header": "Auto Draft"
+    "draft_tab_header": "Generated draft"
   },
   "event_metric_dialog": {
     "close": "Close",
