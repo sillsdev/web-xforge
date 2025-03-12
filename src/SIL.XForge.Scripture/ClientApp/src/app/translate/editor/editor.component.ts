@@ -74,6 +74,7 @@ import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -281,6 +282,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly onlineStatusService: OnlineStatusService,
     private readonly translationEngineService: TranslationEngineService,
     readonly i18n: I18nService,
+    readonly featureFlags: FeatureFlagService,
     readonly fontService: FontService,
     private readonly reportingService: ErrorReportingService,
     private readonly activatedProject: ActivatedProjectService,
