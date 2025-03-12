@@ -291,7 +291,7 @@
     <div id="text-with-archived-questions">
       @for (text of texts; track text.bookNum) {
         @if (bookQuestionCount(text, true) > 0) {
-          <mat-expansion-panel [togglePosition]="'before'" class="book-expander mat-elevation-z0">
+          <mat-expansion-panel [togglePosition]="'before'" class="book-expander">
             <mat-expansion-panel-header>
               <mat-panel-title>
                 <div class="flex">
