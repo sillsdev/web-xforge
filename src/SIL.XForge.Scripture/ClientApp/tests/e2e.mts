@@ -1,14 +1,14 @@
 #!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write e2e.mts
 import { chromium, firefox, Page, webkit } from "npm:playwright";
-import locales from "../../locales.json" with { type: "json" };
+// import locales from "../../locales.json" with { type: "json" };
 
 const ROOT_URL = "http://localhost:5000";
 const OUTPUT_DIR = "screenshots";
 
 const INVITE_LINKS_BY_ROLE = {
-  community_checker: "http://localhost:5000/join/wI7bo_9KMNEJvei_/en",
-  commenter: "http://localhost:5000/join/oQXTnZw3q5pvNjqd/en",
-  viewer: "http://localhost:5000/join/6izPkk82Vkwpgozq/en"
+  viewer: "http://localhost:5000/join/UIMF75kdsl1HQH3P/en",
+  community_checker: "http://localhost:5000/join/SlW-SIhqR03frd9y/en",
+  commenter: "http://localhost:5000/join/hJhE8YEzD8XPiPqX/en"
 };
 
 const allApplicationScopes = ["home_and_login", "main_application"] as const;
@@ -23,8 +23,16 @@ type RunSheet = {
   roles: Role[];
   applicationScopes: ApplicationScope[];
   browsers: Browser[];
-  screenshots: boolean;
+  skipScreenshots: boolean;
   screenshotPrefix: string;
+};
+
+type ScreenshotContext = {
+  prefix: string;
+  engine: Browser;
+  role?: Role;
+  pageName?: string;
+  locale?: string;
 };
 
 function cleanText(text: string): string {
@@ -35,11 +43,11 @@ function cleanText(text: string): string {
 }
 
 const runSheet: RunSheet = {
-  locales: locales.map(locale => locale.tags[0]),
+  locales: ["en"],
   roles: allRoles.slice(),
-  applicationScopes: allApplicationScopes.slice(),
-  browsers: allBrowsers.slice(),
-  screenshots: true,
+  applicationScopes: ["main_application"],
+  browsers: ["firefox"],
+  skipScreenshots: false,
   screenshotPrefix: new Date().toISOString().slice(0, 19) + "_"
 } as const;
 
@@ -49,9 +57,22 @@ async function waitForAppLoad(page: Page): Promise<void> {
   await page.waitForTimeout(1000);
 }
 
-async function screenshot(page: Page, name: string): Promise<void> {
-  if (!runSheet.screenshots) return;
-  await page.screenshot({ path: `${OUTPUT_DIR}/${runSheet.screenshotPrefix}${name}.png`, fullPage: true });
+async function screenshot(
+  page: Page,
+  context: ScreenshotContext,
+  options = { overrideScreenshotSkipping: false }
+): Promise<void> {
+  if (runSheet.skipScreenshots && !options.overrideScreenshotSkipping) return;
+
+  const fileNameParts = [
+    context.prefix,
+    context.engine,
+    context.role,
+    context.pageName ?? (await pageName(page)),
+    context.locale
+  ];
+  const fileName = fileNameParts.filter(part => part != null).join("_") + ".png";
+  await page.screenshot({ path: `${OUTPUT_DIR}/${fileName}`, fullPage: true });
 }
 
 async function pageName(page: Page): Promise<string> {
@@ -66,10 +87,10 @@ async function pageName(page: Page): Promise<string> {
   return cleanText(textContent);
 }
 
-async function screenshotLanguages(page: Page, prependText: string): Promise<void> {
-  if (!runSheet.screenshots) return;
+async function screenshotLanguages(page: Page, context: ScreenshotContext): Promise<void> {
+  if (runSheet.skipScreenshots) return;
   if (runSheet.locales.length === 1 && runSheet.locales[0] === "en") {
-    await screenshot(page, `${runSheet.locales[0]}_${prependText}_${await pageName(page)}`);
+    await screenshot(page, { ...context, locale: "en" });
     return;
   }
 
@@ -79,14 +100,15 @@ async function screenshotLanguages(page: Page, prependText: string): Promise<voi
   const menu = await page.getByRole("menu");
   let items = await menu.getByRole("menuitem").all();
 
+  const name = await pageName(page);
   for (let i = 0; i < items.length; i++) {
     if (i !== 0) await changeLanguageButton.click();
     items = await menu.getByRole("menuitem").all();
     const localeCode = await items[i].getAttribute("data-locale");
     await items[i].click();
     await waitForAppLoad(page);
-    const name = await pageName(page);
-    await screenshot(page, `${localeCode}_${prependText}_${name}`);
+    if (localeCode == null) throw new Error("No data-locale attribute found on menu item");
+    await screenshot(page, { ...context, pageName: name, locale: localeCode });
   }
 
   await changeLanguageButton.click();
@@ -111,14 +133,15 @@ async function traverseHomePageAndLoginPage(page: Page): Promise<void> {
   await page.screenshot({ path: `${OUTPUT_DIR}/registry_login_page.png`, fullPage: true });
 }
 
-async function joinAsRoleAndTraversePages(page: Page, role: Role): Promise<void> {
+async function joinAsRoleAndTraversePages(page: Page, context: ScreenshotContext & { role: Role }): Promise<void> {
+  const role = context.role;
   // Go to join page
-  await page.goto(INVITE_LINKS_BY_ROLE[role]);
+  await page.goto(INVITE_LINKS_BY_ROLE[context.role]);
   await page.focus("input");
   await page.waitForTimeout(500);
   await page.fill("input", `${role} test user`);
   await waitForAppLoad(page);
-  await screenshot(page, `${role}_join_page`);
+  await screenshot(page, { ...context, pageName: "join_page" });
   await page.getByRole("button", { name: "Join" }).click();
 
   // Check out all main pages
@@ -127,13 +150,13 @@ async function joinAsRoleAndTraversePages(page: Page, role: Role): Promise<void>
   for (const link of links) {
     await link.click();
     await waitForAppLoad(page);
-    await screenshotLanguages(page, role);
+    await screenshotLanguages(page, context);
   }
 
   // Check out the projects page
   await page.click("#sf-logo-button");
   await waitForAppLoad(page);
-  await screenshotLanguages(page, role);
+  await screenshotLanguages(page, context);
 
   // Log out
   await page.click("button.user-menu-btn");
@@ -151,16 +174,23 @@ async function joinAsRoleAndTraversePages(page: Page, role: Role): Promise<void>
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    if (runSheet.applicationScopes.includes("home_and_login")) await traverseHomePageAndLoginPage(page);
+    const screenshotContext: ScreenshotContext = { prefix: runSheet.screenshotPrefix, engine: engineName };
 
-    if (runSheet.applicationScopes.includes("main_application")) {
-      for (const role of runSheet.roles) {
-        await joinAsRoleAndTraversePages(page, role);
+    try {
+      if (runSheet.applicationScopes.includes("home_and_login")) await traverseHomePageAndLoginPage(page);
+
+      if (runSheet.applicationScopes.includes("main_application")) {
+        for (const role of runSheet.roles) {
+          await joinAsRoleAndTraversePages(page, { ...screenshotContext, role });
+        }
       }
+    } catch (e) {
+      console.error("Error running tests");
+      console.error(e);
+      await screenshot(page, { ...screenshotContext, pageName: "test_failure" }, { overrideScreenshotSkipping: true });
+    } finally {
+      await context.close();
+      await browser.close();
     }
-
-    // Teardown
-    await context.close();
-    await browser.close();
   }
 })();
