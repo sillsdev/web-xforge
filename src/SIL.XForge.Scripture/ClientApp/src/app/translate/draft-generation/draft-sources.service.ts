@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, defer, from, Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { asyncScheduler, combineLatest, defer, from, Observable } from 'rxjs';
+import { map, switchMap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
@@ -31,6 +31,8 @@ export interface DraftSourcesAsArrays {
 })
 export class DraftSourcesService {
   private readonly currentUser$: Observable<UserDoc> = defer(() => from(this.userService.getCurrentUser()));
+  /** Duration to throttle large amounts of incoming project changes. 100 is a guess for what may be useful. */
+  private readonly projectChangeThrottlingMs = 100;
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
@@ -51,7 +53,8 @@ export class DraftSourcesService {
    * @returns An observable for a {@link DraftSourcesAsArrays} object.
    */
   getDraftProjectSources(): Observable<DraftSourcesAsArrays> {
-    return combineLatest([this.activatedProject.projectDoc$, this.currentUser$]).pipe(
+    return combineLatest([this.activatedProject.changes$, this.currentUser$]).pipe(
+      throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
       switchMap(([targetDoc, _currentUser]) => this.getDraftSourcesAsArrays(targetDoc))
     );
   }
