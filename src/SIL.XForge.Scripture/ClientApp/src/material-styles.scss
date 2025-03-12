@@ -47,7 +47,7 @@
 
   @include mat.toolbar-overrides(
     (
-      container-background-color: mat.get-theme-color($theme, primary, 20),
+      container-background-color: mat.get-theme-color($theme, primary, 10),
       container-text-color: mat.get-theme-color($theme, primary, 100)
     )
   );
