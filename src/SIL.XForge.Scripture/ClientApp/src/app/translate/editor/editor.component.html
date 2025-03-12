@@ -98,17 +98,27 @@
                     ></app-copyright-banner>
                   }
                   <div class="text-container">
-                    <app-text
-                      #source
-                      [id]="visibleSourceProjectId | textDocId: bookNum : chapter"
-                      [isReadOnly]="true"
-                      [highlightSegment]="targetFocused"
-                      (loaded)="onTextLoaded('source')"
-                      (updated)="onSourceUpdated($event.delta != null)"
-                      [isRightToLeft]="isSourceRightToLeft"
-                      [fontSize]="sourceFontSize"
-                      [style.--project-font]="fontService.getFontFamilyFromProject(sourceProjectDoc)"
-                    ></app-text>
+                    @if (featureFlags.usePlatformBibleEditor.enabled) {
+                      <app-platform-editor
+                        [id]="visibleSourceProjectId | textDocId: bookNum : chapter"
+                        [isReadOnly]="!canEdit"
+                        [isRightToLeft]="isSourceRightToLeft"
+                        [style.--project-font]="fontService.getFontFamilyFromProject(sourceProjectDoc)"
+                        [style.--project-font-size]="sourceFontSize"
+                      ></app-platform-editor>
+                    } @else {
+                      <app-text
+                        #source
+                        [id]="visibleSourceProjectId | textDocId: bookNum : chapter"
+                        [isReadOnly]="true"
+                        [highlightSegment]="targetFocused"
+                        (loaded)="onTextLoaded('source')"
+                        (updated)="onSourceUpdated($event.delta != null)"
+                        [isRightToLeft]="isSourceRightToLeft"
+                        [fontSize]="sourceFontSize"
+                        [style.--project-font]="fontService.getFontFamilyFromProject(sourceProjectDoc)"
+                      ></app-text>
+                    }
                   </div>
                 </div>
               }

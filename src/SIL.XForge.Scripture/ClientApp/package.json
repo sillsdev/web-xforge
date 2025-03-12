@@ -68,6 +68,7 @@
     "comlink": "^4.4.2",
     "crc-32": "^1.2.2",
     "file-saver": "^2.0.5",
+    "json0-ot-diff": "^1.1.2",
     "jszip": "^3.10.1",
     "jwt-decode": "^3.1.2",
     "lodash-es": "^4.17.21",

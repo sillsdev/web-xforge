@@ -3,6 +3,7 @@ import { Component, DestroyRef, Input } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Editorial, EditorOptions, EditorRef } from '@biblionexus-foundation/platform-editor';
 import { Usj } from '@biblionexus-foundation/scripture-utilities';
+import json0OtDiff from 'json0-ot-diff';
 import { createRef, RefObject, type ComponentProps } from 'react';
 import { Subscription } from 'rxjs';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -83,13 +84,24 @@ export class PlatformEditorComponent {
         isReadonly: this._isReadOnly,
         textDirection: this._isRightToLeft ? 'rtl' : 'ltr'
       } as EditorOptions,
-      ref: this.editorRef
+      ref: this.editorRef,
+      onUsjChange: this.onUsjChange.bind(this)
     };
+  }
+
+  private async onUsjChange(usj: Usj): Promise<void> {
+    if (this._textDocument != null) {
+      // Build the ops from a diff
+      // NOTE: We do not use diff-patch-match, as that may result in
+      // op conflicts when ops are submitted from multiple sources.
+      // diff-patch-match mutates the string, but we want to replace it.
+      const ops = json0OtDiff(this._textDocument.data, usj);
+      await this._textDocument.submit(ops, 'Editor');
+    }
   }
 
   private async subscribeToTextDocument(id: TextDocId | undefined): Promise<void> {
     if (id != null) {
-      console.log(id.toString());
       this._textDocumentChanges?.unsubscribe();
       this._textDocument = await this.realtimeService.subscribe<TextDocumentDoc>(
         TextDocumentDoc.COLLECTION,
@@ -99,6 +111,7 @@ export class PlatformEditorComponent {
       this._textDocumentChanges = this._textDocument.remoteChanges$
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(() => {
+          // TODO: Merge in the changes
           this.usj = this._textDocument?.data;
         });
     }

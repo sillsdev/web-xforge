@@ -4648,6 +4648,7 @@ class TestEnvironment {
     when(mockedDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
+    when(mockedFeatureFlagService.usePlatformBibleEditor).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockedLynxWorkspaceService.rawInsightSource$).thenReturn(of([]));
