@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { translate } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -19,9 +20,12 @@ import {
   throttleTime
 } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { QuietDestroyRef } from 'xforge-common/utils';
@@ -68,7 +72,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    readonly onlineStatusService: OnlineStatusService
+    readonly onlineStatusService: OnlineStatusService,
+    private readonly noticeService: NoticeService,
+    private errorReportingService: ErrorReportingService
   ) {}
 
   ngOnChanges(): void {
@@ -170,9 +176,19 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       }
     }
 
-    await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
-    this.isDraftApplied = true;
-    this.userAppliedDraft = true;
+    try {
+      await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
+      this.isDraftApplied = true;
+      this.userAppliedDraft = true;
+    } catch (err) {
+      this.noticeService.showError(translate('editor_draft_tab.error_applying_draft'));
+      if (!isNetworkError(err)) {
+        this.errorReportingService.silentError(
+          'Error applying a draft to a chapter',
+          ErrorReportingService.normalizeError(err)
+        );
+      }
+    }
   }
 
   private setInitialState(): void {
