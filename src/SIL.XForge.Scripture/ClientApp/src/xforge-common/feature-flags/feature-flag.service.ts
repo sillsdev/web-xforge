@@ -302,7 +302,7 @@ export class FeatureFlagService {
     'AllowAdditionalTrainingSource',
     'Allow mixing in an additional training source',
     13,
-    this.featureFlagStore
+    new StaticFeatureFlagStore(true, { readonly: true })
   );
 
   private readonly updatedLearningRateForServal: FeatureFlag = new ServerOnlyFeatureFlag(
