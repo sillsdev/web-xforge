@@ -91,15 +91,11 @@
               }
               @case ("project-source") {
                 <div class="project-tab-container">
-                  @if (hasSourceCopyrightBanner) {
-                    <app-notice mode="fill-dark" icon="copyright" type="warning" class="copyright-banner">
-                      <div>
-                        {{ sourceCopyrightBanner }}
-                        <span class="copyright-more-info" (click)="showCopyrightNotice('source')">{{
-                          t("more_info")
-                        }}</span>
-                      </div>
-                    </app-notice>
+                  @if (hasSourceCopyrightBanner || true) {
+                    <app-copyright-banner
+                      notice="{{ sourceCopyrightNotice }}"
+                      banner="{{ sourceCopyrightBanner }}"
+                    ></app-copyright-banner>
                   }
                   <div class="text-container">
                     <app-text
@@ -124,14 +120,10 @@
                     </app-notice>
                   }
                   @if (hasTargetCopyrightBanner) {
-                    <app-notice mode="fill-dark" icon="copyright" type="warning" class="copyright-banner">
-                      <div>
-                        {{ targetCopyrightBanner }}
-                        <span class="copyright-more-info" (click)="showCopyrightNotice('target')">{{
-                          t("more_info")
-                        }}</span>
-                      </div>
-                    </app-notice>
+                    <app-copyright-banner
+                      notice="{{ targetCopyrightNotice }}"
+                      banner="{{ targetCopyrightBanner }}"
+                    ></app-copyright-banner>
                   }
                   @if (!isUsfmValid && hasEditRight && invalidTags().length === 0) {
                     <app-notice mode="fill-dark" type="warning" icon="warning" class="formatting-invalid-warning">

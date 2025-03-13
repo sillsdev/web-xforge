@@ -63,7 +63,6 @@ import {
   lastValueFrom,
   merge,
   Observable,
-  of,
   Subject,
   Subscription,
   timer
@@ -198,6 +197,7 @@ const UNSUPPORTED_LANGUAGE_CODES = [
   selector: 'app-editor',
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.scss'],
+
   providers: [
     TabStateService<EditorTabGroupType, EditorTabInfo>,
     { provide: TabFactoryService, useClass: EditorTabFactoryService },
@@ -613,12 +613,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.sourceProjectDoc?.data?.copyrightBanner ?? '';
   }
 
+  get sourceCopyrightNotice(): string {
+    return this.sourceProjectDoc?.data?.copyrightNotice ?? this.sourceCopyrightBanner;
+  }
+
   get hasTargetCopyrightBanner(): boolean {
     return this.projectDoc?.data?.copyrightBanner != null;
   }
 
   get targetCopyrightBanner(): string {
     return this.projectDoc?.data?.copyrightBanner ?? '';
+  }
+
+  get targetCopyrightNotice(): string {
+    return this.projectDoc?.data?.copyrightNotice ?? this.targetCopyrightBanner;
   }
 
   get sourceLabel(): string | undefined {
@@ -1199,34 +1207,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   onViewerClicked(viewer: MultiCursorViewer): void {
     this.target!.scrollToViewer(viewer);
-  }
-
-  showCopyrightNotice(textType: TextType): void {
-    let copyrightNotice: string =
-      textType === 'source'
-        ? (this.sourceProjectDoc?.data?.copyrightNotice ?? '')
-        : (this.projectDoc?.data?.copyrightNotice ?? '');
-
-    // If we do not have a copyright notice, just use the copyright banner
-    if (copyrightNotice === '') {
-      copyrightNotice = textType === 'source' ? this.sourceCopyrightBanner : this.targetCopyrightBanner;
-    }
-
-    copyrightNotice = copyrightNotice.trim();
-    if (copyrightNotice[0] !== '<') {
-      // If copyright is plain text, remove the first line and add paragraph markers.
-      const lines: string[] = copyrightNotice.split('\n');
-      copyrightNotice = '<p>' + lines.slice(1).join('</p><p>') + '</p>';
-    } else {
-      // Just remove the first paragraph that contains the notification.
-      copyrightNotice = copyrightNotice.replace(/^<p>.*?<\/p>/, '');
-    }
-
-    // Show the copyright notice
-    this.dialogService.openGenericDialog({
-      message: of(stripHtml(copyrightNotice)),
-      options: [{ value: undefined, label: this.i18n.translate('dialog.close'), highlight: true }]
-    });
   }
 
   async onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): Promise<void> {
