@@ -179,12 +179,14 @@
                     <mat-icon>auto_awesome</mat-icon>
                     {{ t("generate_draft_button") }}
                   </button>
-                  <button mat-flat-button [routerLink]="['sources']">
-                    <mat-icon>settings</mat-icon>
-                    {{ t("configure_sources") }}
-                  </button>
-                } @else {
-                  <button mat-flat-button color="primary" [routerLink]="['sources']">
+                  @if (isProjectAdmin) {
+                    <button mat-flat-button data-test-id="configure-button" [routerLink]="['sources']">
+                      <mat-icon>settings</mat-icon>
+                      {{ t("configure_sources") }}
+                    </button>
+                  }
+                } @else if (isProjectAdmin) {
+                  <button mat-flat-button data-test-id="configure-button" color="primary" [routerLink]="['sources']">
                     <mat-icon>settings</mat-icon>
                     {{ t("configure_sources") }}
                   </button>
@@ -314,20 +316,21 @@
           <mat-icon>add</mat-icon>
           {{ t("generate_new_draft") }}
         </button>
-
-        <button mat-flat-button [routerLink]="['sources']">
-          <mat-icon>settings</mat-icon>
-          {{ t("configure_sources") }}
-        </button>
-      } @else {
+        @if (isProjectAdmin) {
+          <button mat-flat-button data-test-id="configure-button" [routerLink]="['sources']">
+            <mat-icon>settings</mat-icon>
+            {{ t("configure_sources") }}
+          </button>
+        }
+      } @else if (isProjectAdmin) {
         <!-- Show Configure sources button when we don't have permission to the current sources and when there is not a
         prior draft job. But don't show it if it's already been shown above or if the user is not signed up for
         drafting.
 
         This first check regards what leads up to the first configure button. -->
-        @if (!(isOnline && isGenerationSupported && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild)) {
-          @if (draftEnabled) {
-            <button mat-flat-button color="primary" [routerLink]="['sources']">
+        @if (!isGenerationSupported || isDraftInProgress(draftJob) || hasAnyCompletedBuild) {
+          @if (draftEnabled && isOnline) {
+            <button mat-flat-button data-test-id="configure-button" color="primary" [routerLink]="['sources']">
               <mat-icon>settings</mat-icon>
               {{ t("configure_sources") }}
             </button>

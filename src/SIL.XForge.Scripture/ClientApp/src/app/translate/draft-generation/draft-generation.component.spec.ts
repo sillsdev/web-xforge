@@ -214,6 +214,10 @@ describe('DraftGenerationComponent', () => {
       });
     }
 
+    get configureDraftButton(): HTMLElement | null {
+      return this.getElementByTestId('configure-button');
+    }
+
     get downloadButton(): HTMLElement | null {
       return this.getElementByTestId('download-button');
     }
@@ -249,6 +253,12 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(true);
       expect(env.component.targetLanguage).toBe('en');
+      expect(env.configureDraftButton).not.toBeNull();
+    });
+
+    it('should not show configure drafting source button for translators', () => {
+      const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
+      expect(env.configureDraftButton).toBeNull();
     });
 
     it('does not subscribe to build when project does not have drafting enabled', () => {
@@ -265,7 +275,8 @@ describe('DraftGenerationComponent', () => {
           },
           translateConfig: {
             projectType: ProjectType.Standard
-          }
+          },
+          userRoles: { user01: SFProjectRole.ParatextAdministrator }
         })
       } as SFProjectProfileDoc;
       const env = new TestEnvironment(() => {
@@ -282,6 +293,7 @@ describe('DraftGenerationComponent', () => {
 
       expect(env.component.isBackTranslation).toBe(false);
       expect(env.component.isTargetLanguageSupported).toBe(false);
+      expect(env.configureDraftButton).not.toBeNull();
     }));
   });
 
@@ -291,6 +303,7 @@ describe('DraftGenerationComponent', () => {
       env.testOnlineStatusService.setIsOnline(false);
       env.fixture.detectChanges();
       expect(env.offlineTextElement).not.toBeNull();
+      expect(env.configureDraftButton).toBeNull();
 
       env.component.currentPage = 'steps';
       env.fixture.detectChanges();

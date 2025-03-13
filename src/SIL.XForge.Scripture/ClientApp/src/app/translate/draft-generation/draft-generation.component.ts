@@ -167,9 +167,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   get isPreviewSupported(): boolean {
     return (
-      (!this.isBackTranslationMode || this.isBackTranslation) &&
-      this.isTargetLanguageSupported &&
-      (this.isBackTranslationMode || this.isPreTranslationApproved)
+      (!this.isBackTranslationMode || this.isBackTranslation) && this.isTargetLanguageSupported && this.draftEnabled
     );
   }
 
@@ -254,7 +252,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         this.isTargetLanguageSupported =
           !this.isBackTranslationMode || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
 
-        if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
+        if (!this.draftEnabled) {
           this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
         }
       });
