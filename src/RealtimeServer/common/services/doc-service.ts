@@ -34,6 +34,22 @@ export abstract class DocService<T = any> {
           },
           mtime: {
             bsonType: 'number'
+          },
+          _create: {
+            bsonType: 'object',
+            required: ['src', 'seq', 'v'],
+            properties: {
+              src: {
+                bsonType: 'string'
+              },
+              seq: {
+                bsonType: 'number'
+              },
+              v: {
+                bsonType: 'number'
+              }
+            },
+            additionalProperties: false
           }
         },
         additionalProperties: false
