@@ -12,7 +12,7 @@
           @if (isProjectAdmin) {
             <transloco
               key="language_codes_confirmation.change_source_projects_on_settings_page"
-              [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+              [params]="{ configSourcesUrl: { route: configSourcesUrl } }"
             ></transloco>
           } @else {
             {{ t("contact_project_administrator_to_change_settings") }}
