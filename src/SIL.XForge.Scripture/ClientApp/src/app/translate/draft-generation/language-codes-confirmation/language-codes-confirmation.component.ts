@@ -33,14 +33,14 @@ export class LanguageCodesConfirmationComponent {
   trainingSources: SelectableProjectWithLanguageCode[] = [];
   languageCodesConfirmed: boolean = false;
   targetLanguageTag?: string;
-  projectSettingsUrl: string = '';
+  configSourcesUrl: string = '';
 
   constructor(
     readonly i18n: I18nService,
     private readonly activatedProject: ActivatedProjectService,
     private readonly authService: AuthService
   ) {
-    this.projectSettingsUrl = `/projects/${this.activatedProject.projectId}/settings`;
+    this.configSourcesUrl = `/projects/${this.activatedProject.projectId}/draft-generation/sources`;
   }
 
   get sourceSideLanguageCodes(): string[] {
