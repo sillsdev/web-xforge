@@ -443,7 +443,7 @@
   },
   "language_codes_confirmation": {
     "all_sources_should_be_same_language": "All source and reference projects should be in the same language",
-    "change_source_projects_on_settings_page": "Source projects can be changed on the [link:projectSettingsUrl]settings page[/link]",
+    "change_source_projects_on_draft_sources_configuration_page": "Source projects can be changed on the [link:configSourcesUrl]draft sources configure page[/link]",
     "confirm_lang_codes_correct": "All the language codes are correct",
     "contact_project_administrator_to_change_settings": "Contact your project administrator if language settings need to be updated",
     "how_to_change_language_codes": "Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.",

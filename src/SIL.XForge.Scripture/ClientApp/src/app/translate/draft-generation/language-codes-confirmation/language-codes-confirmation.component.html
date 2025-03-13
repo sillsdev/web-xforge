@@ -11,8 +11,8 @@
         <p>
           @if (isProjectAdmin) {
             <transloco
-              key="language_codes_confirmation.change_source_projects_on_settings_page"
-              [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+              key="language_codes_confirmation.change_source_projects_on_draft_sources_configuration_page"
+              [params]="{ configSourcesUrl: { route: configSourcesUrl } }"
             ></transloco>
           } @else {
             {{ t("contact_project_administrator_to_change_settings") }}
@@ -40,8 +40,8 @@
         <p>
           @if (isProjectAdmin) {
             <transloco
-              key="language_codes_confirmation.change_source_projects_on_settings_page"
-              [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+              key="language_codes_confirmation.change_source_projects_on_draft_sources_configuration_page"
+              [params]="{ configSourcesUrl: { route: configSourcesUrl } }"
             ></transloco>
           } @else {
             {{ t("contact_project_administrator_to_change_settings") }}
