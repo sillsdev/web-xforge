@@ -1,0 +1,10 @@
+<app-notice mode="fill-dark" icon="copyright" type="warning" class="copyright-banner">
+  <div>
+    {{ banner }}
+    @if (showMoreInfo) {
+      <span class="copyright-more-info" (click)="openCopyrightNoticeDialog()">
+        {{ moreInfo }}
+      </span>
+    }
+  </div>
+</app-notice>
