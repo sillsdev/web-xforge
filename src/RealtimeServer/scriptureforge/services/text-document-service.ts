@@ -14,30 +14,7 @@ export class TextDocumentService extends DocService<TextDocument> {
   readonly collection = TEXT_DOCUMENTS_COLLECTION;
 
   protected readonly indexPaths = TEXT_DOCUMENT_INDEX_PATHS;
-  readonly validationSchema: ValidationSchema = {
-    bsonType: DocService.validationSchema.bsonType,
-    required: DocService.validationSchema.required,
-    properties: {
-      ...DocService.validationSchema.properties,
-      _id: {
-        bsonType: 'string',
-        pattern: '^[0-9a-f]+:[0-9A-Z]+:[0-9]+:(target|draft)$'
-      },
-      type: {
-        bsonType: 'string'
-      },
-      version: {
-        bsonType: 'string'
-      },
-      content: {
-        bsonType: ['array', 'null'],
-        items: {
-          bsonType: ['object', 'string']
-        }
-      }
-    },
-    additionalProperties: true
-  };
+  readonly validationSchema: ValidationSchema | undefined;
 
   constructor() {
     super(TEXT_DOCUMENT_MIGRATIONS);
