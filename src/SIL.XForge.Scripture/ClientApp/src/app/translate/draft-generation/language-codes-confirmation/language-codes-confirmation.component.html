@@ -19,7 +19,7 @@
           }
         </p>
       }
-      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
+      <mat-checkbox [checked]="languageCodesVerified" (change)="confirmationChanged($event)">
         {{ t("i_understand_and_accept") }}
       </mat-checkbox>
     </app-notice>
@@ -48,7 +48,7 @@
           }
         </p>
       }
-      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
+      <mat-checkbox [checked]="languageCodesVerified" (change)="confirmationChanged($event)">
         {{ t("i_understand_and_accept") }}
       </mat-checkbox>
     </app-notice>
@@ -59,7 +59,7 @@
       <h3>{{ t("incorrect_language_codes_reduce_quality") }}</h3>
       <p>{{ t("please_make_sure_codes_correct") }}</p>
       <p>{{ t("how_to_change_language_codes") }}</p>
-      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">{{
+      <mat-checkbox [checked]="languageCodesVerified" (change)="confirmationChanged($event)">{{
         t("confirm_lang_codes_correct")
       }}</mat-checkbox>
     </app-notice>

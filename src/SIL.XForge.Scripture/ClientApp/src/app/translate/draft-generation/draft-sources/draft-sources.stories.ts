@@ -361,3 +361,16 @@ export const CannotSelectSameProjectTwiceInOneStep: Story = {
     canvas.getByRole('button', { name: /Add another reference project/ });
   }
 };
+
+export const LanguageCodesConfirmationAutomaticallyCleared: Story = {
+  ...Default,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await selectSource(canvasElement, 'P_EN');
+    await userEvent.click(await canvas.findByRole('checkbox'));
+    expect(await canvas.findByRole('checkbox')).toBeChecked();
+    await clearSource(canvasElement);
+    expect(await canvas.findByRole('checkbox')).not.toBeChecked();
+  }
+};

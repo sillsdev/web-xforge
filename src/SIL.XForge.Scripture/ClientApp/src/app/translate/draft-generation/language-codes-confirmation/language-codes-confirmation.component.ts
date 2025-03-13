@@ -19,7 +19,9 @@ import { DraftSourcesAsSelectableProjectArrays, englishNameFromCode } from '../d
   styleUrl: './language-codes-confirmation.component.scss'
 })
 export class LanguageCodesConfirmationComponent {
-  @Output() languageCodesVerified = new EventEmitter<boolean>(false);
+  @Input() languageCodesConfirmed = false;
+  @Output() languageCodesConfirmedChange = new EventEmitter<boolean>();
+
   /** It makes sense to inform the user, except when the user is on the page for changing sources */
   @Input() informUserWhereToChangeDraftSources: boolean = true;
   @Input() set draftSources(value: DraftSourcesAsSelectableProjectArrays) {
@@ -31,7 +33,6 @@ export class LanguageCodesConfirmationComponent {
 
   draftingSources: SelectableProjectWithLanguageCode[] = [];
   trainingSources: SelectableProjectWithLanguageCode[] = [];
-  languageCodesConfirmed: boolean = false;
   targetLanguageTag?: string;
   projectSettingsUrl: string = '';
 
@@ -67,6 +68,6 @@ export class LanguageCodesConfirmationComponent {
 
   confirmationChanged(event: MatCheckboxChange): void {
     this.languageCodesConfirmed = event.checked;
-    this.languageCodesVerified.emit(event.checked);
+    this.languageCodesConfirmedChange.emit(this.languageCodesConfirmed);
   }
 }
