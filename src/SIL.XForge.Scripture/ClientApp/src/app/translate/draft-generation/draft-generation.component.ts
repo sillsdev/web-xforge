@@ -195,17 +195,21 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return this.activatedProject.projectDoc?.data?.sync.lastSyncSuccessful ?? false;
   }
 
-  get isProjectAdmin(): boolean {
+  /** Have drafting sources been adequately configured that a draft can be generated? */
+  get isSourcesConfigurationComplete(): boolean {
+    return this.source != null && (this.trainingSource != null || this.additionalTrainingSource != null);
+  }
+
+  get hasConfigureSourcePermission(): boolean {
+    return this.isProjectAdmin;
+  }
+
+  private get isProjectAdmin(): boolean {
     const userId = this.authService.currentUserId;
     if (userId != null) {
       return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
     }
     return false;
-  }
-
-  /** Have drafting sources been adequately configured that a draft can be generated? */
-  get isSourcesConfigurationComplete(): boolean {
-    return this.source != null && (this.trainingSource != null || this.additionalTrainingSource != null);
   }
 
   ngOnInit(): void {
