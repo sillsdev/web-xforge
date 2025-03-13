@@ -88,7 +88,7 @@ describe('LanguageCodesConfirmationComponent', () => {
   it('can emit languages confirmed when checkbox is checked', () => {
     component.draftSources = getStandardDraftSources();
     fixture.detectChanges();
-    const emitSpy = spyOn(component.languageCodesVerified, 'emit');
+    const emitSpy = spyOn(component.languageCodesConfirmedChange, 'emit');
     component.confirmationChanged({ checked: true } as any);
     expect(emitSpy).toHaveBeenCalledWith(true);
   });
