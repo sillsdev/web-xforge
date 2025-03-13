@@ -7,14 +7,16 @@
 @section scripts {
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 <script type="text/javascript">
-    var webAuth = new Auth0Client({
-        client_id: '@(Settings.GetAuthOptions().FrontendClientId)',
+    var webAuth = new auth0.Auth0Client({
+        clientId: '@(Settings.GetAuthOptions().FrontendClientId)',
         domain: '@(Settings.GetAuthOptions().Domain)',
-        redirect_uri: window.location.origin + '/callback/auth0',
-        scope: 'openid profile email @(Settings.GetAuthOptions().Scope)',
-        audience: atob('@Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Settings.GetAuthOptions().Audience))'),
         cacheLocation: 'localstorage',
-        useRefreshTokens: true
+        useRefreshTokens: true,
+        authorizationParams: {
+            redirect_uri: window.location.origin + '/callback/auth0',
+            scope: 'openid profile email @(Settings.GetAuthOptions().Scope)',
+            audience: atob('@Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Settings.GetAuthOptions().Audience))'),
+        }
     });
     webAuth.getTokenSilently().then(() => {
         window.location.href = "/projects";
