@@ -2,8 +2,9 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FontService } from 'xforge-common/font.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { EditorResourceComponent } from './editor-resource.component';
@@ -13,6 +14,7 @@ describe('EditorResourceComponent', () => {
   let fixture: ComponentFixture<EditorResourceComponent>;
   const mockSFProjectService = mock(SFProjectService);
   const mockFontService = mock(FontService);
+  const mockDialogService = mock(DialogService);
   const projectDoc = {
     id: 'projectId',
     data: createTestProjectProfile()
@@ -21,8 +23,10 @@ describe('EditorResourceComponent', () => {
   configureTestingModule(() => ({
     providers: [
       { provide: SFProjectService, useMock: mockSFProjectService },
-      { provide: FontService, useMock: mockFontService }
-    ]
+      { provide: FontService, useMock: mockFontService },
+      { provide: DialogService, useMock: mockDialogService }
+    ],
+    imports: [TestTranslocoModule]
   }));
 
   beforeEach(async () => {
@@ -82,5 +86,37 @@ describe('EditorResourceComponent', () => {
     component.resourceText.editorCreated.next();
     tick();
     expect(component.isRightToLeft).toBe(true);
+  }));
+
+  it('project copyright banner and copyright notice should init when they exist', fakeAsync(() => {
+    const projectId = 'proj-notice';
+    component.projectId = projectId;
+    component.bookNum = 1;
+    component.chapter = 1;
+    const projectNoticeDoc: SFProjectProfileDoc = {
+      id: projectId,
+      data: createTestProjectProfile({ copyrightBanner: 'Test copyright', copyrightNotice: 'Test notice' })
+    } as SFProjectProfileDoc;
+    when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(projectNoticeDoc));
+    component['initProjectDetails']();
+    component.resourceText.editorCreated.next();
+    tick();
+    expect(component.hasCopyrightBanner).toBe(true);
+    expect(component.copyrightBanner).toBe('Test copyright');
+    expect(component.copyrightNotice).toBe('Test notice');
+  }));
+
+  it('project copyright banner and copyright notice should not init when they do not exist', fakeAsync(() => {
+    const projectId = projectDoc.id;
+    component.projectId = projectId;
+    component.bookNum = 1;
+    component.chapter = 1;
+    when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(projectDoc));
+    component['initProjectDetails']();
+    component.resourceText.editorCreated.next();
+    tick();
+    expect(component.hasCopyrightBanner).toBe(false);
+    expect(component.copyrightBanner).toBe('');
+    expect(component.copyrightNotice).toBeFalsy();
   }));
 });

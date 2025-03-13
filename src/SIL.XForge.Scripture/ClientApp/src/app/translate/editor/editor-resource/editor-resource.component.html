@@ -1,12 +1,26 @@
 @if (projectId) {
-  <app-text
-    [id]="projectId | textDocId: bookNum : chapter"
-    [isReadOnly]="true"
-    [subscribeToUpdates]="false"
-    [highlightSegment]="highlightSegment ?? false"
-    [segmentRef]="segmentRef ?? ''"
-    [isRightToLeft]="isRightToLeft"
-    [fontSize]="fontSize"
-    [style.--project-font]="font"
-  ></app-text>
+  <div class="project-tab-container">
+    @if (hasCopyrightBanner) {
+      <app-notice mode="fill-dark" icon="copyright" type="warning" class="copyright-banner">
+        <div>
+          {{ copyrightBanner }}
+          <span class="copyright-more-info" (click)="showCopyrightNotice()">
+            {{ moreInfo() }}
+          </span>
+        </div>
+      </app-notice>
+    }
+    <div class="text-container">
+      <app-text
+        [id]="projectId | textDocId: bookNum : chapter"
+        [isReadOnly]="true"
+        [subscribeToUpdates]="false"
+        [highlightSegment]="highlightSegment ?? false"
+        [segmentRef]="segmentRef ?? ''"
+        [isRightToLeft]="isRightToLeft"
+        [fontSize]="fontSize"
+        [style.--project-font]="font"
+      ></app-text>
+    </div>
+  </div>
 }

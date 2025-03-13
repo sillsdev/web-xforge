@@ -2,7 +2,7 @@ import { OverlayRef } from '@angular/cdk/overlay';
 import { ComponentType } from '@angular/cdk/portal';
 import { Injectable } from '@angular/core';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { lastValueFrom, Observable } from 'rxjs';
+import { lastValueFrom, Observable, of } from 'rxjs';
 import { hasObjectProp } from '../type-utils';
 import {
   GenericDialogComponent,
@@ -10,6 +10,7 @@ import {
   GenericDialogRef
 } from './generic-dialog/generic-dialog.component';
 import { I18nKey, I18nService } from './i18n.service';
+import { stripHtml } from './util/string-util';
 
 @Injectable({
   providedIn: 'root'
@@ -28,6 +29,24 @@ export class DialogService {
       ? component.defaultMatDialogConfig
       : {};
     return this.matDialog.open(component, { ...defaults, ...dialogDefaults, ...(config ?? {}) });
+  }
+
+  openCopyrightNoticeDialog(copyrightNotice: string): void {
+    copyrightNotice = copyrightNotice.trim();
+    if (copyrightNotice[0] !== '<') {
+      // If copyright is plain text, remove the first line and add paragraph markers.
+      const lines: string[] = copyrightNotice.split('\n');
+      copyrightNotice = '<p>' + lines.slice(1).join('</p><p>') + '</p>';
+    } else {
+      // Just remove the first paragraph that contains the notification.
+      copyrightNotice = copyrightNotice.replace(/^<p>.*?<\/p>/, '');
+    }
+
+    // Show the copyright notice
+    this.openGenericDialog({
+      message: of(stripHtml(copyrightNotice)),
+      options: [{ value: undefined, label: this.i18n.translate('dialog.close'), highlight: true }]
+    });
   }
 
   openGenericDialog<T>(options: GenericDialogOptions<T>): GenericDialogRef<T> {

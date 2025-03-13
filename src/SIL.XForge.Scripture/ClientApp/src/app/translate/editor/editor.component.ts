@@ -63,7 +63,6 @@ import {
   lastValueFrom,
   merge,
   Observable,
-  of,
   Subject,
   Subscription,
   timer
@@ -1211,22 +1210,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (copyrightNotice === '') {
       copyrightNotice = textType === 'source' ? this.sourceCopyrightBanner : this.targetCopyrightBanner;
     }
-
-    copyrightNotice = copyrightNotice.trim();
-    if (copyrightNotice[0] !== '<') {
-      // If copyright is plain text, remove the first line and add paragraph markers.
-      const lines: string[] = copyrightNotice.split('\n');
-      copyrightNotice = '<p>' + lines.slice(1).join('</p><p>') + '</p>';
-    } else {
-      // Just remove the first paragraph that contains the notification.
-      copyrightNotice = copyrightNotice.replace(/^<p>.*?<\/p>/, '');
-    }
-
-    // Show the copyright notice
-    this.dialogService.openGenericDialog({
-      message: of(stripHtml(copyrightNotice)),
-      options: [{ value: undefined, label: this.i18n.translate('dialog.close'), highlight: true }]
-    });
+    this.dialogService.openCopyrightNoticeDialog(copyrightNotice);
   }
 
   async onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): Promise<void> {
