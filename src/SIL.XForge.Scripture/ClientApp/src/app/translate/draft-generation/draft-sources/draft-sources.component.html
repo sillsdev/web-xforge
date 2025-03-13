@@ -172,7 +172,7 @@
     class="confirm-language-codes"
     [draftSources]="draftSourcesAsArray"
     [informUserWhereToChangeDraftSources]="false"
-    (languageCodesVerified)="languageCodesConfirmed = $event"
+    [(languageCodesConfirmed)]="languageCodesConfirmed"
   ></app-language-codes-confirmation>
 
   <div class="component-footer">
