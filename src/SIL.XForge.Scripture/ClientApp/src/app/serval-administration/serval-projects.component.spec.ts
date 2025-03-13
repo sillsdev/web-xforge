@@ -10,6 +10,7 @@ import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, when } from 'ts-mockito';
@@ -20,10 +21,12 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
+import { SFProjectService } from '../core/sf-project.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectsComponent } from './serval-projects.component';
 
 const mockedServalAdministrationService = mock(ServalAdministrationService);
+const mockedProjectService = mock(SFProjectService);
 
 describe('ServalProjectsComponent', () => {
   configureTestingModule(() => ({
@@ -35,6 +38,7 @@ describe('ServalProjectsComponent', () => {
     ],
     providers: [
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
+      { provide: SFProjectService, useMock: mockedProjectService },
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting()
     ]
@@ -117,6 +121,16 @@ class TestProjectDoc extends ProjectDoc {
 class TestEnvironment {
   readonly component: ServalProjectsComponent;
   readonly fixture: ComponentFixture<ServalProjectsComponent>;
+  readonly PROJECT01ID = 'project01';
+  readonly PROJECT02ID = 'project02';
+  readonly PROJECT03ID = 'project03';
+
+  readonly source2: TranslateSource = this.getTranslateSource('2', false);
+  readonly source3: TranslateSource = this.getTranslateSource('3', false);
+  readonly source4: TranslateSource = this.getTranslateSource('4', false);
+  readonly resource1: TranslateSource = this.getTranslateSource('1', true);
+  readonly resource2: TranslateSource = this.getTranslateSource('2', true);
+  readonly resource3: TranslateSource = this.getTranslateSource('3', true);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -137,6 +151,21 @@ class TestEnvironment {
           })
         )
     );
+    when(mockedProjectService.onlineGetDraftSources(this.PROJECT01ID)).thenResolve({
+      draftingSources: [this.source3],
+      trainingSources: [this.source4],
+      trainingTargets: []
+    });
+    when(mockedProjectService.onlineGetDraftSources(this.PROJECT02ID)).thenResolve({
+      draftingSources: [],
+      trainingSources: [],
+      trainingTargets: []
+    });
+    when(mockedProjectService.onlineGetDraftSources(this.PROJECT03ID)).thenResolve({
+      draftingSources: [this.resource2],
+      trainingSources: [this.resource3],
+      trainingTargets: []
+    });
 
     this.fixture = TestBed.createComponent(ServalProjectsComponent);
     this.component = this.fixture.componentInstance;
@@ -185,40 +214,25 @@ class TestEnvironment {
   setupProjectData(): void {
     this.realtimeService.addSnapshots<SFProject>(TestProjectDoc.COLLECTION, [
       {
-        id: 'project01',
+        id: this.PROJECT01ID,
         data: createTestProject({
           name: 'Project 01',
           translateConfig: {
             draftConfig: {
               alternateSourceEnabled: true,
-              alternateSource: {
-                paratextId: 'ptproject03',
-                projectRef: 'project03',
-                name: 'Project 03',
-                shortName: 'P3'
-              },
+              alternateSource: this.source3,
               alternateTrainingSourceEnabled: true,
-              alternateTrainingSource: {
-                paratextId: 'ptproject04',
-                projectRef: 'project04',
-                name: 'Project 04',
-                shortName: 'P4'
-              }
+              alternateTrainingSource: this.source4
             },
             preTranslate: true,
-            source: {
-              paratextId: 'ptproject02',
-              projectRef: 'project02',
-              name: 'Project 02',
-              shortName: 'P2'
-            }
+            source: this.source2
           },
           userRoles: { user01: 'pt_administrator' },
           userPermissions: {}
         })
       },
       {
-        id: 'project02',
+        id: this.PROJECT02ID,
         data: createTestProject({
           name: 'Project 02',
           shortName: 'P2',
@@ -228,39 +242,43 @@ class TestEnvironment {
         })
       },
       {
-        id: 'project03',
+        id: this.PROJECT03ID,
         data: createTestProject({
           name: 'Project 03',
           shortName: 'P3',
           translateConfig: {
             draftConfig: {
               alternateSourceEnabled: true,
-              alternateSource: {
-                paratextId: 'resource16char02',
-                projectRef: 'resource02',
-                name: 'Resource 02',
-                shortName: 'R2'
-              },
+              alternateSource: this.resource2,
               alternateTrainingSourceEnabled: true,
-              alternateTrainingSource: {
-                paratextId: 'resource16char03',
-                projectRef: 'resource03',
-                name: 'Resource 03',
-                shortName: 'R3'
-              }
+              alternateTrainingSource: this.resource3
             },
             preTranslate: false,
-            source: {
-              paratextId: 'resource16char01',
-              projectRef: 'resource01',
-              name: 'Resource 01',
-              shortName: 'R1'
-            }
+            source: this.resource1
           },
           userRoles: { user01: 'pt_translator' },
           userPermissions: {}
         })
       }
     ]);
+  }
+
+  private getTranslateSource(id: string, isResource: boolean): TranslateSource {
+    if (isResource) {
+      return {
+        paratextId: 'resource16char0' + id,
+        projectRef: 'resource0' + id,
+        name: 'Resource 0' + id,
+        shortName: 'R' + id,
+        writingSystem: { tag: 're' }
+      };
+    }
+    return {
+      paratextId: 'ptproject0' + id,
+      projectRef: 'project0' + id,
+      name: 'Project 0' + id,
+      shortName: 'P' + id,
+      writingSystem: { tag: 'pr' }
+    };
   }
 }

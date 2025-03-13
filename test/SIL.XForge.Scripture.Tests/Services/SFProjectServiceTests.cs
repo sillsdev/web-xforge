@@ -3780,6 +3780,26 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void GetDraftSourcesAsync_UserNotOnProject_NotFound()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetDraftSourcesAsync(User01, "does_not_exist"));
+    }
+
+    [Test]
+    public async Task GetDraftSourcesAsync_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Service.GetDraftSourcesAsync(User01, Project01);
+        Assert.That(result.TrainingSources.Single().ProjectRef, Is.EqualTo(Resource01));
+        Assert.That(result.DraftingSources.Single().ProjectRef, Is.EqualTo(Resource01));
+    }
+
+    [Test]
     public void AddChaptersAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();

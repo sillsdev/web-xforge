@@ -24,6 +24,7 @@ import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { EventMetric } from '../event-metrics/event-metric';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
+import { DraftSourcesAsTranslateSourceArrays } from '../translate/draft-generation/draft-utils';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
 import { NoteThreadDoc } from './models/note-thread-doc';
@@ -293,6 +294,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       book,
       chapter
     });
+  }
+
+  async onlineGetDraftSources(projectId: string): Promise<DraftSourcesAsTranslateSourceArrays | undefined> {
+    return await this.onlineInvoke<DraftSourcesAsTranslateSourceArrays>('getDraftSources', { projectId });
   }
 
   async onlineSetServalConfig(projectId: string, servalConfig: string | null | undefined): Promise<void> {

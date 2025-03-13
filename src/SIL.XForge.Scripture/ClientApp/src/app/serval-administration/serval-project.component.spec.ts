@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { DraftConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -58,7 +58,7 @@ describe('ServalProjectComponent', () => {
       expect(env.preTranslateCheckbox.checked).toBe(false);
       env.clickElement(env.preTranslateCheckbox);
       expect(env.preTranslateCheckbox.checked).toBe(true);
-      verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, true)).once();
+      verify(mockSFProjectService.onlineSetPreTranslate(env.PROJECT01ID, true)).once();
     }));
 
     it('should allow disabling pre-translation drafting', fakeAsync(() => {
@@ -66,7 +66,7 @@ describe('ServalProjectComponent', () => {
       expect(env.preTranslateCheckbox.checked).toBe(true);
       env.clickElement(env.preTranslateCheckbox);
       expect(env.preTranslateCheckbox.checked).toBe(false);
-      verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, false)).once();
+      verify(mockSFProjectService.onlineSetPreTranslate(env.PROJECT01ID, false)).once();
     }));
 
     it('should disable the pre-translation drafting checkbox when offline', fakeAsync(() => {
@@ -87,7 +87,7 @@ describe('ServalProjectComponent', () => {
       const env = new TestEnvironment({ preTranslate: false });
       expect(env.runWebhookButton.disabled).toBe(false);
       env.clickElement(env.runWebhookButton);
-      verify(mockServalAdministrationService.onlineRetrievePreTranslationStatus(env.mockProjectId)).once();
+      verify(mockServalAdministrationService.onlineRetrievePreTranslationStatus(env.PROJECT01ID)).once();
       verify(mockNoticeService.show(anything())).once();
     }));
   });
@@ -237,18 +237,22 @@ describe('ServalProjectComponent', () => {
   });
 
   class TestEnvironment {
+    readonly PROJECT01ID = 'project01';
+    readonly source2: TranslateSource = this.getTranslateSource('2');
+    readonly source3: TranslateSource = this.getTranslateSource('3');
+    readonly source4: TranslateSource = this.getTranslateSource('4');
+    readonly source5: TranslateSource = this.getTranslateSource('5');
+
     readonly component: ServalProjectComponent;
     readonly fixture: ComponentFixture<ServalProjectComponent>;
     readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
       OnlineStatusService
     ) as TestOnlineStatusService;
 
-    mockProjectId = 'project01';
-
     constructor(args: TestEnvironmentArgs = { preTranslate: true }) {
-      const mockProjectId$ = new BehaviorSubject<string>(this.mockProjectId);
+      const mockProjectId$ = new BehaviorSubject<string>(this.PROJECT01ID);
       const mockProjectDoc = {
-        id: this.mockProjectId,
+        id: this.PROJECT01ID,
         data: createTestProjectProfile({
           name: 'Project 01',
           shortName: 'P1',
@@ -261,26 +265,11 @@ describe('ServalProjectComponent', () => {
           translateConfig: {
             draftConfig: {
               alternateSourceEnabled: true,
-              alternateSource: {
-                paratextId: 'ptproject03',
-                projectRef: 'project03',
-                name: 'Project 03',
-                shortName: 'P3'
-              },
+              alternateSource: this.source3,
               alternateTrainingSourceEnabled: true,
-              alternateTrainingSource: {
-                paratextId: 'ptproject04',
-                projectRef: 'project04',
-                name: 'Project 04',
-                shortName: 'P4'
-              },
+              alternateTrainingSource: this.source4,
               additionalTrainingSourceEnabled: true,
-              additionalTrainingSource: {
-                paratextId: 'ptproject05',
-                projectRef: 'project05',
-                name: 'Project 05',
-                shortName: 'P5'
-              },
+              additionalTrainingSource: this.source5,
               lastSelectedTrainingBooks: args.preTranslate ? [1, 2] : [],
               lastSelectedTranslationBooks: args.preTranslate ? [3, 4] : [],
               lastSelectedTrainingScriptureRange: args.preTranslate
@@ -292,26 +281,23 @@ describe('ServalProjectComponent', () => {
               lastSelectedTranslationScriptureRange: args.preTranslate ? 'LEV;NUM' : undefined
             },
             preTranslate: args.preTranslate,
-            source: {
-              paratextId: 'ptproject02',
-              projectRef: 'project02',
-              name: 'Project 02',
-              shortName: 'P2'
-            }
+            source: this.source2
           }
         })
       } as SFProjectProfileDoc;
       const mockProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockProjectDoc);
 
-      when(mockActivatedProjectService.projectId).thenReturn(this.mockProjectId);
+      when(mockActivatedProjectService.projectId).thenReturn(this.PROJECT01ID);
       when(mockActivatedProjectService.projectId$).thenReturn(mockProjectId$);
       when(mockActivatedProjectService.projectDoc).thenReturn(mockProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(mockProjectDoc$);
-
-      when(mockDraftGenerationService.getLastCompletedBuild(this.mockProjectId)).thenReturn(
-        of(args.lastCompletedBuild)
-      );
-      when(mockDraftGenerationService.getBuildProgress(this.mockProjectId)).thenReturn(of(args.lastCompletedBuild));
+      when(mockSFProjectService.onlineGetDraftSources(this.PROJECT01ID)).thenResolve({
+        draftingSources: [this.source3],
+        trainingSources: [this.source4, this.source5],
+        trainingTargets: []
+      });
+      when(mockDraftGenerationService.getLastCompletedBuild(this.PROJECT01ID)).thenReturn(of(args.lastCompletedBuild));
+      when(mockDraftGenerationService.getBuildProgress(this.PROJECT01ID)).thenReturn(of(args.lastCompletedBuild));
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(of(new Blob()));
       when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
@@ -319,6 +305,9 @@ describe('ServalProjectComponent', () => {
 
       this.fixture = TestBed.createComponent(ServalProjectComponent);
       this.component = this.fixture.componentInstance;
+      tick();
+      this.fixture.detectChanges();
+      tick();
       this.fixture.detectChanges();
     }
 
@@ -369,6 +358,16 @@ describe('ServalProjectComponent', () => {
 
     getTrainingSourceBookNames(node: HTMLElement): string {
       return node.querySelector('.training-source-range')?.textContent ?? '';
+    }
+
+    private getTranslateSource(id: string): TranslateSource {
+      return {
+        paratextId: 'ptproject0' + id,
+        projectRef: 'project0' + id,
+        name: 'Project 0' + id,
+        shortName: 'P' + id,
+        writingSystem: { tag: 'pr' }
+      };
     }
   }
 });

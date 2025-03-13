@@ -1,6 +1,7 @@
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { SelectableProjectWithLanguageCode } from '../../core/paratext.service';
+import { SFProjectService } from '../../core/sf-project.service';
 
 export function englishNameFromCode(code: string): string {
   const locale = new Intl.Locale(code);
@@ -88,31 +89,17 @@ export function draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectablePro
  * @param project The project to get the sources for
  * @returns An object with three arrays: trainingSources, trainingTargets, and draftingSources
  */
-export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAsTranslateSourceArrays {
-  const trainingSources: TranslateSource[] & ({ length: 0 } | { length: 1 } | { length: 2 }) = [];
-  const draftingSources: TranslateSource[] & ({ length: 0 } | { length: 1 }) = [];
-  const trainingTargets: [SFProjectProfile] = [project];
-  const draftConfig = project.translateConfig.draftConfig;
-  let trainingSource: TranslateSource | undefined;
-  if (draftConfig.alternateTrainingSourceEnabled && draftConfig.alternateTrainingSource != null) {
-    trainingSource = draftConfig.alternateTrainingSource;
-  } else {
-    trainingSource = project.translateConfig.source;
+export async function projectToDraftSources(
+  projectId: string,
+  projectService: SFProjectService
+): Promise<DraftSourcesAsTranslateSourceArrays> {
+  const draftSources = await projectService.onlineGetDraftSources(projectId);
+  if (draftSources != null) {
+    return draftSources;
   }
-  if (trainingSource != null) {
-    trainingSources.push(trainingSource);
-  }
-  if (draftConfig.additionalTrainingSourceEnabled && draftConfig.additionalTrainingSource != null) {
-    trainingSources.push(draftConfig.additionalTrainingSource);
-  }
-  let draftingSource: TranslateSource | undefined;
-  if (draftConfig.alternateSourceEnabled && draftConfig.alternateSource != null) {
-    draftingSource = draftConfig.alternateSource;
-  } else {
-    draftingSource = project.translateConfig.source;
-  }
-  if (draftingSource != null) {
-    draftingSources.push(draftingSource);
-  }
-  return { trainingSources, trainingTargets, draftingSources };
+  return {
+    trainingSources: [],
+    trainingTargets: [],
+    draftingSources: []
+  };
 }

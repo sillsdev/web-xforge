@@ -31,7 +31,7 @@ const mockedSFUserProjectsService = mock(SFUserProjectsService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedAuthService = mock(AuthService);
 
-describe('DraftSourcesComponent', () => {
+fdescribe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
     imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule, TestTranslocoModule],
     declarations: [],

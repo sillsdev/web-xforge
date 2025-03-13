@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Defaults;
 using Hangfire;
@@ -493,6 +494,66 @@ public class SFProjectsRpcControllerTests
         // SUT
         Assert.Throws<ArgumentNullException>(() => env.Controller.RetrievePreTranslationStatus(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task GetDraftSources_ReturnsDraftConfig()
+    {
+        var env = new TestEnvironment();
+
+        var source = new TranslateSource
+        {
+            Name = "Project 01",
+            ParatextId = "PT01",
+            IsRightToLeft = false,
+            ProjectRef = "Project01",
+            ShortName = "P01",
+            WritingSystem = { Tag = "pt" },
+        };
+        var draftSources = new DraftSourcesArrays
+        {
+            DraftingSources = [source],
+            TrainingSources = [source],
+            TrainingTargets = [],
+        };
+        env.SFProjectService.GetDraftSourcesAsync(User01, Project01).Returns(draftSources);
+
+        // SUT
+        var result = await env.Controller.GetDraftSources(Project01);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        DraftSourcesArrays returnObject = (result as RpcMethodSuccessResult)!.ReturnObject as DraftSourcesArrays;
+        Assert.IsNotNull(returnObject);
+        Assert.AreEqual(source, returnObject.TrainingSources.Single());
+        Assert.AreEqual(source, returnObject.DraftingSources.Single());
+        Assert.IsEmpty(returnObject.TrainingTargets);
+        await env.SFProjectService.Received().GetDraftSourcesAsync(User01, Project01);
+    }
+
+    [Test]
+    public async Task GetDraftSources_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.GetDraftSourcesAsync(User01, Project01).Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.GetDraftSources(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        await env.SFProjectService.Received().GetDraftSourcesAsync(User01, Project01);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task GetDraftSources_NotFound()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.GetDraftSourcesAsync(User01, Project01).Throws(new DataNotFoundException("Not Found"));
+
+        // SUT
+        var result = await env.Controller.GetDraftSources(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        await env.SFProjectService.Received().GetDraftSourcesAsync(User01, Project01);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]

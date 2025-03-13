@@ -1417,6 +1417,24 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         });
     }
 
+    /// <summary>
+    /// Get the draft sources for a project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <returns>The draft sources.</returns>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    public async Task<DraftSourcesArrays> GetDraftSourcesAsync(string curUserId, string projectId)
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+        return DraftSourcesArrays.ToDraftSourcesArrays(projectDoc.Data);
+    }
+
     public async Task AddChaptersAsync(string userId, string projectId, int book, int[] chapters)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync();

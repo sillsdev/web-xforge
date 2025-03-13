@@ -651,6 +651,29 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> GetDraftSources(string projectId)
+    {
+        try
+        {
+            return Ok(await projectService.GetDraftSourcesAsync(UserId, projectId));
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "GetDraftConfig" }, { "projectId", projectId } }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> EventMetrics(string projectId, int pageIndex, int pageSize)
     {
         try
