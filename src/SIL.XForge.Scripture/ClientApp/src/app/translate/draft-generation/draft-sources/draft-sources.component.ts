@@ -335,6 +335,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     } catch (error) {
       console.error('Error updating project settings', error);
       this.controlStates.set(setting, ElementState.Error);
+      throw error;
     }
   }
 
