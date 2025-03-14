@@ -294,9 +294,9 @@ export const NavigateAllSteps: Story = {
     expect(currentStep(canvasElement)).toBe(2);
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
     expect(currentStep(canvasElement)).toBe(3);
-    await userEvent.click(within(canvasElement).getByRole('button', { name: /Back/ }));
+    await userEvent.click(within(canvasElement).getByRole('button', { name: /Previous/ }));
     expect(currentStep(canvasElement)).toBe(2);
-    await userEvent.click(within(canvasElement).getByRole('button', { name: /Back/ }));
+    await userEvent.click(within(canvasElement).getByRole('button', { name: /Previous/ }));
     expect(currentStep(canvasElement)).toBe(1);
     // Go to each step by clicking on the stepper
     for (let step = 1; step <= 3; step++) {
@@ -356,7 +356,7 @@ export const CannotSelectSameProjectTwiceInOneStep: Story = {
 
     // Verify empty project select is removed when leaving and coming back to step
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
-    await userEvent.click(canvas.getByRole('button', { name: /Back/ }));
+    await userEvent.click(canvas.getByRole('button', { name: /Previous/ }));
     expect(canvas.getAllByRole('combobox').length).toBe(1);
     canvas.getByRole('button', { name: /Add another reference project/ });
   }

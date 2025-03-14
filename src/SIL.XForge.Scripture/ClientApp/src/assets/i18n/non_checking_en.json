@@ -269,7 +269,6 @@
   "draft_sources": {
     "add_another_reference_project": "Add another reference project",
     "all_changes_saved": "All changes saved",
-    "back": "Back",
     "cancel": "Cancel",
     "close": "Close",
     "configure_draft_sources": "Configure draft sources",
@@ -283,6 +282,7 @@
     "overview_reference": "Reference",
     "overview_source": "Source",
     "overview_translated_project": "Translated project",
+    "previous": "Previous",
     "project_always_used": "Your project ({{ currentProjectShortName }}) will always be used to train the language model.",
     "reference_projects": "Reference projects",
     "same_language_as_given_language": "All these should be in the same language as the draft source ({{sourceLanguageDisplayName}}).",
