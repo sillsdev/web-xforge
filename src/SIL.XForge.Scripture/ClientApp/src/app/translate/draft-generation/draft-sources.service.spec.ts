@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { projectToTranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-source-test-data';
@@ -34,7 +34,7 @@ describe('DraftSourcesService', () => {
   });
 
   describe('getDraftProjectSources', () => {
-    it('should load the projects if the user has permission', done => {
+    it('should load the projects if the user has permission', fakeAsync(() => done => {
       const targetProject = createTestProjectProfile({
         translateConfig: {
           source: {
@@ -154,6 +154,7 @@ describe('DraftSourcesService', () => {
         } as DraftSourcesAsArrays);
         done();
       });
-    });
+      flush();
+    }));
   });
 });
