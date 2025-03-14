@@ -6,8 +6,11 @@
 
     <div class="step" [class.active]="step === 1">
       <div class="step-header" matRipple (click)="goToStep(1)">
-        <span class="step-title">{{ t("draft_source") }}</span>
-        <span class="step-subtitle">{{ sourceSubtitle }}</span>
+        <div class="step-header-description">
+          <span class="step-title">{{ t("draft_source") }}</span>
+          <span class="step-subtitle">{{ sourceSubtitle }}</span>
+        </div>
+        <mat-icon>{{ step === 1 ? "expand_less" : "expand_more" }}</mat-icon>
       </div>
       <div class="step-body">
         <p>{{ t("select_project_to_translate") }}</p>
@@ -29,8 +32,11 @@
 
     <div class="step" [class.active]="step === 2">
       <div class="step-header" matRipple (click)="goToStep(2)">
-        <span class="step-title">{{ t("reference_projects") }}</span>
-        <span class="step-subtitle">{{ referencesSubtitle }}</span>
+        <div class="step-header-description">
+          <span class="step-title">{{ t("reference_projects") }}</span>
+          <span class="step-subtitle">{{ referencesSubtitle }}</span>
+        </div>
+        <mat-icon>{{ step === 2 ? "expand_less" : "expand_more" }}</mat-icon>
       </div>
       <div class="step-body">
         <p>
@@ -78,8 +84,11 @@
 
     <div class="step" [class.active]="step === 3">
       <div class="step-header" matRipple (click)="goToStep(3)">
-        <span class="step-title">{{ t("target_language_data") }}</span>
-        <span class="step-subtitle">{{ targetSubtitle }}</span>
+        <div class="step-header-description">
+          <span class="step-title">{{ t("target_language_data") }}</span>
+          <span class="step-subtitle">{{ targetSubtitle }}</span>
+        </div>
+        <mat-icon>{{ step === 3 ? "expand_less" : "expand_more" }}</mat-icon>
       </div>
       <div class="step-body">
         <p>
@@ -237,15 +246,11 @@
   <ng-template #navigationButtons>
     <div class="step-button-wrapper">
       @if (step !== 1) {
-        <button mat-stroked-button (click)="goToStep(step - 1)">
-          <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> {{ t("back") }}
-        </button>
+        <button mat-stroked-button (click)="goToStep(step - 1)">{{ t("previous") }}</button>
       }
       <span class="spacer"></span>
       @if (step !== 3) {
-        <button mat-flat-button color="primary" (click)="goToStep(step + 1)">
-          {{ t("next") }} <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
-        </button>
+        <button mat-flat-button color="primary" (click)="goToStep(step + 1)">{{ t("next") }}</button>
       }
     </div>
   </ng-template>

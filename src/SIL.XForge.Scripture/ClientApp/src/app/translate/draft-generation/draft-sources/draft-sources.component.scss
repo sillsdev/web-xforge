@@ -42,6 +42,12 @@ strong {
 
 .step-header {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.step-header-description {
+  display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
