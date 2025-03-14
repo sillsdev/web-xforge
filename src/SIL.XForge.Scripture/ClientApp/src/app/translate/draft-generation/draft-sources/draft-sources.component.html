@@ -172,7 +172,7 @@
     class="confirm-language-codes"
     [draftSources]="draftSourcesAsArray"
     [informUserWhereToChangeDraftSources]="false"
-    (languageCodesVerified)="languageCodesConfirmed = $event"
+    [(languageCodesConfirmed)]="languageCodesConfirmed"
   ></app-language-codes-confirmation>
 
   <div class="component-footer">
@@ -190,15 +190,15 @@
         <mat-card-title>{{ t("saving_draft_sources") }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        @if (getControlState("projectSettings") === ElementState.Submitting) {
-          <div class="saving-indicator">
+        <div class="saving-indicator">
+          @if (getControlState("projectSettings") === ElementState.Submitting) {
             <mat-spinner [diameter]="24" color="primary"></mat-spinner> {{ t("saving") }}
-          </div>
-        } @else {
-          <div class="saving-indicator">
+          } @else if (getControlState("projectSettings") === ElementState.Submitted) {
             <mat-icon class="success">checkmark</mat-icon> {{ t("all_changes_saved") }}
-          </div>
-        }
+          } @else {
+            <mat-icon class="failure">error</mat-icon> Failed to save changes
+          }
+        </div>
         @for (entry of syncStatus | keyvalue; track entry.key) {
           <div>
             @if (entry.value.knownToBeOnSF) {
@@ -209,7 +209,8 @@
                   <mat-icon class="success">check</mat-icon> {{ entry.value.shortName }} -
                   {{ t("state_sync_successful") }}
                 } @else {
-                  <mat-icon class="failure">error</mat-icon> {{ entry.value.shortName }} - {{ t("state_sync_failed") }}
+                  <mat-icon class="failure">error</mat-icon> {{ entry.value.shortName }} -
+                  {{ t("state_sync_failed") }}
                 }
               }
             } @else {
@@ -218,7 +219,7 @@
           </div>
         }
       </mat-card-content>
-      @if (allProjectsSavedAndSynced) {
+      @if (allProjectsSavedAndSynced || getControlState("projectSettings") === ElementState.Error) {
         <mat-card-actions align="end">
           <button mat-button (click)="navigateToDrafting()"><mat-icon>close</mat-icon> {{ t("close") }}</button>
         </mat-card-actions>

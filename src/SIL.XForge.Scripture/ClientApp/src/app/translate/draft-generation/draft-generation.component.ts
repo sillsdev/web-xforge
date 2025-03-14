@@ -10,8 +10,8 @@ import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, of, Subscription } from 'rxjs';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
+import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -68,26 +68,17 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
   draftJob?: BuildDto;
 
-  projectSettingsUrl?: string;
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
   draftHelp = this.i18n.interpolate('draft_generation.instructions_help');
 
   additionalTrainingSourceLanguage?: string;
-  additionalTrainingSourceLanguageDisplayName?: string;
-
   alternateTrainingSourceLanguage?: string;
-  alternateTrainingSourceLanguageDisplayName?: string;
-
   sourceLanguage?: string;
-  sourceLanguageDisplayName?: string;
-
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
-
   isTargetLanguageSupported = true;
   isBackTranslation = true;
-  isSourceProjectSet = true;
 
   source?: DraftSource;
   trainingSource?: DraftSource;
@@ -130,6 +121,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   cancelDialogRef?: MatDialogRef<any>;
 
   readonly draftDurationHours = 2.5;
+  /** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
+  private readonly projectChangeThrottlingMs = 500;
 
   get draftEnabled(): boolean {
     return this.isBackTranslationMode || this.isPreTranslationApproved;
@@ -174,11 +167,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   get isPreviewSupported(): boolean {
     return (
-      (!this.isBackTranslationMode || this.isBackTranslation) &&
-      this.isTargetLanguageSupported &&
-      this.isSourceProjectSet &&
-      this.canAccessDraftSourceIfAvailable(this.source) &&
-      (this.isBackTranslationMode || this.isPreTranslationApproved)
+      (!this.isBackTranslationMode || this.isBackTranslation) && this.isTargetLanguageSupported && this.draftEnabled
     );
   }
 
@@ -206,7 +195,16 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return this.activatedProject.projectDoc?.data?.sync.lastSyncSuccessful ?? false;
   }
 
-  get isProjectAdmin(): boolean {
+  /** Have drafting sources been adequately configured that a draft can be generated? */
+  get isSourcesConfigurationComplete(): boolean {
+    return this.source != null && (this.trainingSource != null || this.additionalTrainingSource != null);
+  }
+
+  get hasConfigureSourcePermission(): boolean {
+    return this.isProjectAdmin;
+  }
+
+  private get isProjectAdmin(): boolean {
     const userId = this.authService.currentUserId;
     if (userId != null) {
       return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
@@ -233,33 +231,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     combineLatest([
       this.activatedProject.changes$.pipe(
+        throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
         filterNullish(),
         tap(projectDoc => {
           const translateConfig = projectDoc.data?.translateConfig;
 
           this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
-          this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
           this.targetLanguage = projectDoc.data?.writingSystem.tag;
-
-          // If an alternate source is specified, that will be used for drafting (not training)
-          if (
-            (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
-            translateConfig?.draftConfig.alternateSource != null
-          ) {
-            this.sourceLanguage = translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
-          } else {
-            this.sourceLanguage = translateConfig?.source?.writingSystem.tag;
-          }
-
-          this.alternateTrainingSourceLanguage =
-            translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
-          this.additionalTrainingSourceLanguage =
-            translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag;
-
           this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
-
-          this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
-
           this.hasDraftBooksAvailable = projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
         })
       ),
@@ -277,13 +256,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         this.isTargetLanguageSupported =
           !this.isBackTranslationMode || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
 
-        if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
+        if (!this.draftEnabled) {
           this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
         }
       });
 
-    this.activatedProject.projectDoc$
+    this.activatedProject.changes$
       .pipe(
+        throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
@@ -313,13 +293,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
-      this.sourceLanguageDisplayName = this.i18n.getLanguageDisplayName(this.sourceLanguage);
-      this.alternateTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
-        this.alternateTrainingSourceLanguage
-      );
-      this.additionalTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
-        this.additionalTrainingSourceLanguage
-      );
     });
   }
 
@@ -385,8 +358,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
+    const sfProjectId: string | undefined = this.activatedProject.projectId;
+    if (sfProjectId == null) {
+      throw new Error('SF Project ID is not set');
+    }
     this.startBuild({
-      projectId: this.activatedProject.projectId!,
+      projectId: sfProjectId,
       trainingDataFiles: result.trainingDataFiles,
       trainingScriptureRange: result.trainingScriptureRange,
       trainingScriptureRanges: result.trainingScriptureRanges,
@@ -494,8 +471,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   private pollBuild(): void {
     this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.activatedProject.projectDoc$
+    this.jobSubscription = this.activatedProject.changes$
       .pipe(
+        throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
@@ -525,7 +503,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   private cancelBuild(): void {
-    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe(() => {
+    const sfProjectId: string | undefined = this.activatedProject.projectId;
+    if (sfProjectId == null) {
+      throw new Error('SF Project ID is not set');
+    }
+    this.draftGenerationService.cancelBuild(sfProjectId).subscribe(() => {
       // If build is canceled, update job immediately instead of waiting for next poll cycle
       this.pollBuild();
     });
