@@ -6,6 +6,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import {
   DraftSourcesAsSelectableProjectArrays,
   draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays,
@@ -31,12 +32,15 @@ export class ConfirmSourcesComponent {
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly i18nService: I18nService,
-    private readonly activatedProject: ActivatedProjectService
+    private readonly activatedProject: ActivatedProjectService,
+    private readonly projectService: SFProjectService
   ) {
     this.activatedProject.projectDoc$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc?.data != null) {
-        this.draftSources = draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays(
-          projectToDraftSources(projectDoc?.data)
+        projectToDraftSources(projectDoc.id, this.projectService).then(
+          draftSources =>
+            (this.draftSources =
+              draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays(draftSources))
         );
       }
     });

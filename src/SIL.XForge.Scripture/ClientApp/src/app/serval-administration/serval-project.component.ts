@@ -4,7 +4,7 @@ import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
+import { catchError, firstValueFrom, lastValueFrom, Observable, of, Subscription, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -101,94 +101,96 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
   ngOnInit(): void {
     this.activatedProjectService.projectDoc$
-      .pipe(
-        filterNullish(),
-        switchMap(projectDoc => {
-          if (projectDoc.data == null) return of(undefined);
-          const project: SFProjectProfile = projectDoc.data;
-          this.preTranslate = project.translateConfig.preTranslate;
-          this.projectName = projectLabel(project);
-          const draftSources: DraftSourcesAsTranslateSourceArrays = projectToDraftSources(project);
-          const draftConfig: DraftConfig = project.translateConfig.draftConfig;
+      .pipe(filterNullish(), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(async projectDoc => {
+        if (projectDoc.data == null) {
+          this.lastCompletedBuild = undefined;
+          return;
+        }
+        const project: SFProjectProfile = projectDoc.data;
+        this.preTranslate = project.translateConfig.preTranslate;
+        this.projectName = projectLabel(project);
+        const draftSources: DraftSourcesAsTranslateSourceArrays = await projectToDraftSources(
+          projectDoc.id,
+          this.projectService
+        );
+        const draftConfig: DraftConfig = project.translateConfig.draftConfig;
 
-          // Setup the downloads table
-          const rows: Row[] = [];
+        // Setup the downloads table
+        const rows: Row[] = [];
 
-          // Add the target
+        // Add the target
+        rows.push({
+          id: projectDoc.id,
+          type: projectType(projectDoc.data),
+          name: this.projectName,
+          category: 'Target Project',
+          fileName: project.shortName + '.zip'
+        });
+
+        let i = 1;
+        // Add the drafting source
+        for (const draftingSource of draftSources.draftingSources) {
           rows.push({
-            id: projectDoc.id,
-            type: projectType(projectDoc.data),
-            name: this.projectName,
-            category: 'Target Project',
-            fileName: project.shortName + '.zip'
+            id: draftingSource.projectRef,
+            type: projectType(draftingSource),
+            name: projectLabel(draftingSource),
+            category: 'Drafting Source ' + i++,
+            fileName: draftingSource.shortName + '.zip'
           });
+        }
 
-          let i = 1;
-          // Add the drafting source
-          for (const draftingSource of draftSources.draftingSources) {
-            rows.push({
-              id: draftingSource.projectRef,
-              type: projectType(draftingSource),
-              name: projectLabel(draftingSource),
-              category: 'Drafting Source ' + i++,
-              fileName: draftingSource.shortName + '.zip'
-            });
-          }
+        // Add the training sources
+        i = 1;
+        for (const trainingSource of draftSources.trainingSources) {
+          rows.push({
+            id: trainingSource.projectRef,
+            type: projectType(trainingSource),
+            name: projectLabel(trainingSource),
+            category: 'Training Source  ' + i++,
+            fileName: trainingSource.shortName + '.zip'
+          });
+        }
 
-          // Add the training sources
-          i = 1;
-          for (const trainingSource of draftSources.trainingSources) {
-            rows.push({
-              id: trainingSource.projectRef,
-              type: projectType(trainingSource),
-              name: projectLabel(trainingSource),
-              category: 'Training Source  ' + i++,
-              fileName: trainingSource.shortName + '.zip'
-            });
-          }
+        // We have to set the rows this way to trigger the update
+        this.rows = rows;
 
-          // We have to set the rows this way to trigger the update
-          this.rows = rows;
-
-          // Setup the books
-          this.trainingBooksByProject = [];
-          if (draftConfig.lastSelectedTrainingScriptureRange != null) {
+        // Setup the books
+        this.trainingBooksByProject = [];
+        if (draftConfig.lastSelectedTrainingScriptureRange != null) {
+          this.trainingBooksByProject.push({
+            source: 'Source 1',
+            scriptureRange: booksFromScriptureRange(draftConfig.lastSelectedTrainingScriptureRange ?? '')
+              .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
+              .join(', ')
+          });
+        } else if (draftConfig.lastSelectedTrainingScriptureRanges != null) {
+          let sourceCount = 1;
+          for (const range of draftConfig.lastSelectedTrainingScriptureRanges) {
             this.trainingBooksByProject.push({
-              source: 'Source 1',
-              scriptureRange: booksFromScriptureRange(draftConfig.lastSelectedTrainingScriptureRange ?? '')
+              source: `Source ${sourceCount++}`,
+              scriptureRange: booksFromScriptureRange(range.scriptureRange)
                 .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
                 .join(', ')
             });
-          } else if (draftConfig.lastSelectedTrainingScriptureRanges != null) {
-            let sourceCount = 1;
-            for (const range of draftConfig.lastSelectedTrainingScriptureRanges) {
-              this.trainingBooksByProject.push({
-                source: `Source ${sourceCount++}`,
-                scriptureRange: booksFromScriptureRange(range.scriptureRange)
-                  .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
-                  .join(', ')
-              });
-            }
           }
-          this.trainingFiles = draftConfig.lastSelectedTrainingDataFiles;
-          this.translationBooks = booksFromScriptureRange(draftConfig.lastSelectedTranslationScriptureRange ?? '').map(
-            bookNum => Canon.bookNumberToEnglishName(bookNum)
+        }
+        this.trainingFiles = draftConfig.lastSelectedTrainingDataFiles;
+        this.translationBooks = booksFromScriptureRange(draftConfig.lastSelectedTranslationScriptureRange ?? '').map(
+          bookNum => Canon.bookNumberToEnglishName(bookNum)
+        );
+
+        this.draftConfig = draftConfig;
+        this.draftJob$ = SFProjectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
+
+        // Get the last completed build
+        if (this.isOnline && SFProjectService.hasDraft(project)) {
+          this.lastCompletedBuild = await firstValueFrom(
+            this.draftGenerationService.getLastCompletedBuild(projectDoc.id)
           );
-
-          this.draftConfig = draftConfig;
-          this.draftJob$ = SFProjectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
-
-          // Get the last completed build
-          if (this.isOnline && SFProjectService.hasDraft(project)) {
-            return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
-          } else {
-            return of(undefined);
-          }
-        }),
-        quietTakeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((build: BuildDto | undefined) => {
-        this.lastCompletedBuild = build;
+        } else {
+          this.lastCompletedBuild = undefined;
+        }
       });
   }
 
