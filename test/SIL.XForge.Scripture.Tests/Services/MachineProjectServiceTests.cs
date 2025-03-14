@@ -216,7 +216,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectForBackgroundJobAsync_RecordsDataNotFoundExceptionAsWarning()
+    public async Task BuildProjectForBackgroundJobAsync_RecordsDataNotFoundException()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -226,6 +226,12 @@ public class MachineProjectServiceTests
             .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
             .ThrowsAsync(ex);
 
+        // A pre-translation job has been queued
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
+
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
             User01,
@@ -234,8 +240,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Warning);
-        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Error);
+        env.ExceptionHandler.Received(1).ReportException(ex);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationQueuedAt);
+        Assert.AreEqual(ex.Message, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationErrorMessage);
     }
 
     [Test]
