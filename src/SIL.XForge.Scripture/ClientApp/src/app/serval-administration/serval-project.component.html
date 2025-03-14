@@ -49,13 +49,10 @@
 </div>
 
 <h2>Downloads</h2>
-<app-notice icon="info">
-  <p>The Zip archives contain the Paratext files for the project at the time of last sync.</p>
-  <p>
-    Source projects may be listed here even if they are not currently being used for drafting. For example, if a user
-    selects an alternate source, but then unselects "Use a different source for drafting," the source will still be
-    listed here even though it is not currently set to be used for drafting.
-  </p>
+<app-notice icon="info" mode="fill-dark">
+  The Zip archives contain the Paratext files for the project at the time of last sync. Any edits in Paratext that have
+  not been synced to Scripture Forge will not be included, and
+  <em>any edits made in Scripture Forge</em> since the last sync will not be included
 </app-notice>
 <div class="table-container">
   <table mat-table [dataSource]="rows">
