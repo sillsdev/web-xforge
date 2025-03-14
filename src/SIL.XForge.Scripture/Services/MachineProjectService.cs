@@ -153,14 +153,6 @@ public class MachineProjectService(
                 }
             );
         }
-        catch (DataNotFoundException e)
-        {
-            // This will occur if the project is deleted while the job is running
-            string message =
-                $"Build DataNotFoundException occurred for project {buildConfig.ProjectId.Sanitize()}"
-                + " running in background job.";
-            logger.LogWarning(e, message);
-        }
         catch (Exception e)
         {
             // Log the error and report to bugsnag
