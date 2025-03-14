@@ -38,10 +38,11 @@
           <span>{{ t("filter_menu_filter_" + insightType) }}</span>
         </button>
       }
-      <button mat-menu-item [class.selected]="filter?.includeDismissed" (click)="toggleFilterDismissed()">
+      <!-- TODO: Removed for MVP -->
+      <!-- <button mat-menu-item [class.selected]="filter?.includeDismissed" (click)="toggleFilterDismissed()">
         <mat-icon>check</mat-icon>
         <span>{{ t("filter_menu_filter_dismissed") }}</span>
-      </button>
+      </button> -->
       <mat-divider />
       <h2>{{ t("filter_menu_sort_header") }}</h2>
       @for (insightOrder of insightOrders; track insightOrder) {
