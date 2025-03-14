@@ -1318,7 +1318,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     } else {
       questionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
-    questionDoc.updateAnswerFileCache();
+
     this.questionsList.updateElementsRead(questionDoc);
     this.refreshSummary();
   }

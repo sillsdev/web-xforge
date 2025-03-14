@@ -342,7 +342,7 @@ describe('CheckingComponent', () => {
         questionScope: 'chapter'
       });
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anything())).times(
-        29
+        15
       );
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
@@ -462,14 +462,14 @@ describe('CheckingComponent', () => {
       const questionId = 'q15Id';
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
-      ).times(3);
+      ).times(2);
       env.clickButton(env.editQuestionButton);
       verify(mockedDialogService.confirm(anything(), anything())).never();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       tick(env.questionReadTimer);
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
-      ).times(4);
+      ).times(3);
       expect().nothing();
     }));
 
@@ -490,12 +490,12 @@ describe('CheckingComponent', () => {
       expect(env.audioPlayerOnQuestion).not.toBeNull();
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
-      ).times(3);
+      ).times(2);
       env.clickButton(env.editQuestionButton);
       env.waitForSliderUpdate();
       expect(env.audioPlayerOnQuestion).toBeNull();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, undefined)).times(
-        5
+        3
       );
       flush();
     }));
@@ -691,18 +691,18 @@ describe('CheckingComponent', () => {
       env.simulateRemoteEditQuestionAudio('filename.mp3');
       expect(env.audioPlayerOnQuestion).not.toBeNull();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', 'filename.mp3')).times(
-        8
+        5
       );
       resetCalls(mockedFileService);
       env.simulateRemoteEditQuestionAudio(undefined);
       expect(env.audioPlayerOnQuestion).toBeNull();
-      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', undefined)).times(8);
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', undefined)).times(5);
       env.selectQuestion(2);
       env.simulateRemoteEditQuestionAudio('filename2.mp3');
       env.waitForSliderUpdate();
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q2Id', 'filename2.mp3')
-      ).times(8);
+      ).times(5);
       flush();
     }));
 
@@ -1231,8 +1231,7 @@ describe('CheckingComponent', () => {
       const newAnswer = env.component.answersPanel!.answers[0];
       expect(newAnswer.audioUrl).toEqual('blob://audio');
       expect(env.component.answersPanel?.getFileSource(newAnswer.audioUrl)).toBeDefined();
-      // TODO SF-3218 This may be incorrect: once() seems more appropriate than twice()
-      verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio')).twice();
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio')).once();
       flush();
       discardPeriodicTasks();
     }));
@@ -1909,7 +1908,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      verify(questionDoc!.updateAnswerFileCache()).times(2);
+      verify(questionDoc!.updateAnswerFileCache()).once();
       expect().nothing();
       tick();
       flush();
