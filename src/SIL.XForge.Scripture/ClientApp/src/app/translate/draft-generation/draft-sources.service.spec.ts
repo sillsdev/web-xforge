@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { projectToTranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-source-test-data';
 import { BehaviorSubject } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -10,7 +11,7 @@ import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
+import { DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
 
 describe('DraftSourcesService', () => {
   let service: DraftSourcesService;
@@ -33,125 +34,6 @@ describe('DraftSourcesService', () => {
   });
 
   describe('getDraftProjectSources', () => {
-    it('should pass undefined properties if no projects loaded', done => {
-      when(mockActivatedProjectService.projectId).thenReturn(undefined);
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({ data: undefined } as SFProjectProfileDoc)
-      );
-
-      // SUT
-      service.getDraftProjectSources().subscribe(result => {
-        expect(result).toEqual({
-          trainingSources: [],
-          trainingTargets: [],
-          draftingSources: []
-        } as DraftSourcesAsArrays);
-        done();
-      });
-    });
-
-    it('should pass the values from the target project if no access', done => {
-      const targetProject = createTestProjectProfile({
-        texts: [
-          { bookNum: 1, hasSource: false },
-          { bookNum: 2, hasSource: true }
-        ],
-        translateConfig: {
-          source: {
-            projectRef: 'source_project',
-            paratextId: 'PT_SP',
-            name: 'Source Project',
-            shortName: 'SP',
-            writingSystem: {
-              tag: 'en_US'
-            }
-          },
-          draftConfig: {
-            alternateSource: {
-              projectRef: 'alternate_source_project',
-              paratextId: 'PT_ASP',
-              name: 'Alternate Source Project',
-              shortName: 'ASP',
-              writingSystem: {
-                tag: 'en_NZ'
-              }
-            },
-            alternateTrainingSource: {
-              projectRef: 'alternate_training_source_project',
-              paratextId: 'PT_ATSP',
-              name: 'Alternate Training Source Project',
-              shortName: 'ATSP',
-              writingSystem: {
-                tag: 'en_AU'
-              }
-            },
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: true,
-            additionalTrainingSource: {
-              projectRef: 'additional_training_source_project',
-              paratextId: 'PT_ADSP',
-              name: 'Additional Training Source Project',
-              shortName: 'ADSP',
-              writingSystem: {
-                tag: 'en_UK'
-              }
-            },
-            additionalTrainingSourceEnabled: true
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expect(result).toEqual({
-          trainingTargets: [{ ...targetProject, projectRef: 'project01' }],
-          draftingSources: [
-            {
-              name: 'Alternate Source Project',
-              projectRef: 'alternate_source_project',
-              shortName: 'ASP',
-              paratextId: 'PT_ASP',
-              texts: [],
-              writingSystem: {
-                tag: 'en_NZ'
-              },
-              noAccess: true
-            } as DraftSource
-          ],
-          trainingSources: [
-            {
-              name: 'Alternate Training Source Project',
-              projectRef: 'alternate_training_source_project',
-              shortName: 'ATSP',
-              paratextId: 'PT_ATSP',
-              texts: [],
-              writingSystem: {
-                tag: 'en_AU'
-              },
-              noAccess: true
-            } as DraftSource,
-            {
-              name: 'Additional Training Source Project',
-              projectRef: 'additional_training_source_project',
-              shortName: 'ADSP',
-              paratextId: 'PT_ADSP',
-              texts: [],
-              writingSystem: {
-                tag: 'en_UK'
-              },
-              noAccess: true
-            } as DraftSource
-          ]
-        } as DraftSourcesAsArrays);
-        done();
-      });
-    });
-
     it('should load the projects if the user has permission', done => {
       const targetProject = createTestProjectProfile({
         translateConfig: {
@@ -185,28 +67,42 @@ describe('DraftSourcesService', () => {
       const alternateSourceProject = createTestProjectProfile({
         name: 'Alternate Source Project',
         shortName: 'ASP',
+        paratextId: 'PT_Source',
         texts: [{ bookNum: 1 }],
         writingSystem: {
           tag: 'en_NZ'
-        }
+        },
+        isRightToLeft: false
       });
+      const alternateSource = projectToTranslateSource('alternate_source_project', alternateSourceProject);
       const alternateTrainingSourceProject = createTestProjectProfile({
         name: 'Alternate Training Source Project',
         shortName: 'ATSP',
+        paratextId: 'PT_Alt_Training_Source',
         texts: [{ bookNum: 1 }],
         writingSystem: {
           tag: 'en_AU'
-        }
+        },
+        isRightToLeft: false
       });
+      const alternateTrainingSource = projectToTranslateSource(
+        'alternate_training_source_project',
+        alternateTrainingSourceProject
+      );
       const additionalTrainingSourceProject = createTestProjectProfile({
         name: 'Additional Training Source Project',
         shortName: 'ADSP',
+        paratextId: 'PT_Additional_Training_Source',
         texts: [{ bookNum: 1 }],
         writingSystem: {
           tag: 'en_UK'
         }
       });
-      when(mockActivatedProjectService.changes$).thenReturn(
+      const additionalTrainingSource = projectToTranslateSource(
+        'additional_training_source_project',
+        additionalTrainingSourceProject
+      );
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           id: 'project01',
           data: targetProject
@@ -242,6 +138,11 @@ describe('DraftSourcesService', () => {
         )
       } as UserDoc);
 
+      when(mockProjectService.onlineGetDraftSources(anything())).thenResolve({
+        trainingSources: [alternateTrainingSource, additionalTrainingSource],
+        trainingTargets: [targetProject],
+        draftingSources: [alternateSource]
+      });
       service.getDraftProjectSources().subscribe(result => {
         expect(result).toEqual({
           trainingTargets: [{ ...targetProject, projectRef: 'project01' }],
@@ -254,163 +155,5 @@ describe('DraftSourcesService', () => {
         done();
       });
     });
-
-    it('should not pass the alternate source project if disabled', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            alternateSource: {
-              projectRef: 'alternate_source_project',
-              name: 'Alternate Source Project',
-              shortName: 'ASP',
-              writingSystem: {
-                tag: 'en_NZ'
-              }
-            },
-            alternateSourceEnabled: false
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the alternate source project if enabled but missing', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            alternateSourceEnabled: true
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the alternate training source project if disabled', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            alternateTrainingSource: {
-              projectRef: 'alternate_training_source_project',
-              name: 'Alternate Training Source Project',
-              shortName: 'ATSP',
-              writingSystem: {
-                tag: 'en_AU'
-              }
-            },
-            alternateTrainingSourceEnabled: false
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the alternate training source project if enabled but missing', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            alternateTrainingSourceEnabled: true
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the additional training source project if disabled', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            additionalTrainingSource: {
-              projectRef: 'additional_training_source_project',
-              name: 'Additional Training Source Project',
-              shortName: 'ADSP',
-              writingSystem: {
-                tag: 'en_UK'
-              }
-            },
-            additionalTrainingSourceEnabled: false
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
-
-    it('should not pass the additional training source project if enabled but missing', done => {
-      const targetProject = createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            additionalTrainingSourceEnabled: true
-          }
-        }
-      });
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({
-          id: 'project01',
-          data: targetProject
-        } as SFProjectProfileDoc)
-      );
-
-      service.getDraftProjectSources().subscribe(result => {
-        expectTargetOnly({ ...targetProject, projectRef: 'project01' }, result);
-        done();
-      });
-    });
   });
-
-  function expectTargetOnly(targetProject: DraftSource, result: DraftSourcesAsArrays): void {
-    expect(result).toEqual({
-      trainingSources: [],
-      trainingTargets: [targetProject],
-      draftingSources: []
-    } as DraftSourcesAsArrays);
-  }
 });

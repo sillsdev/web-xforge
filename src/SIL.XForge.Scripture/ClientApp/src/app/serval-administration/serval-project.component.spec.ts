@@ -6,6 +6,7 @@ import { saveAs } from 'file-saver';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { getTranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-source-test-data';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -238,10 +239,10 @@ describe('ServalProjectComponent', () => {
 
   class TestEnvironment {
     readonly PROJECT01ID = 'project01';
-    readonly source2: TranslateSource = this.getTranslateSource('2');
-    readonly source3: TranslateSource = this.getTranslateSource('3');
-    readonly source4: TranslateSource = this.getTranslateSource('4');
-    readonly source5: TranslateSource = this.getTranslateSource('5');
+    readonly source2: TranslateSource = getTranslateSource('2', false);
+    readonly source3: TranslateSource = getTranslateSource('3', false);
+    readonly source4: TranslateSource = getTranslateSource('4', false);
+    readonly source5: TranslateSource = getTranslateSource('5', false);
 
     readonly component: ServalProjectComponent;
     readonly fixture: ComponentFixture<ServalProjectComponent>;
@@ -358,16 +359,6 @@ describe('ServalProjectComponent', () => {
 
     getTrainingSourceBookNames(node: HTMLElement): string {
       return node.querySelector('.training-source-range')?.textContent ?? '';
-    }
-
-    private getTranslateSource(id: string): TranslateSource {
-      return {
-        paratextId: 'ptproject0' + id,
-        projectRef: 'project0' + id,
-        name: 'Project 0' + id,
-        shortName: 'P' + id,
-        writingSystem: { tag: 'pr' }
-      };
     }
   }
 });

@@ -104,7 +104,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
     this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc?.data != null) {
-        projectToDraftSources(projectDoc.id, projectService).then(
+        projectToDraftSources(projectDoc.id, this.projectService).then(
           ({ trainingSources, trainingTargets, draftingSources }) => {
             if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
             if (draftingSources.length > 1) throw new Error('More than 1 drafting source is not supported');
@@ -156,6 +156,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   get targetLanguageDisplayName(): string | undefined {
+    if (this.trainingTargets.length === 0) return undefined;
     if (this.trainingTargets.length !== 1) throw new Error('Multiple training targets not supported');
 
     return this.i18n.getLanguageDisplayName(this.trainingTargets[0]!.writingSystem.tag);

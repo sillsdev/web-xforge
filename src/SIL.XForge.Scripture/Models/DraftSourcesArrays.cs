@@ -8,7 +8,7 @@ public class DraftSourcesArrays
     public TranslateSource[] TrainingSources { get; set; }
     public SFProject[] TrainingTargets { get; set; }
 
-    internal static DraftSourcesArrays ToDraftSourcesArrays(SFProject project)
+    internal static DraftSourcesArrays ProjectToDraftSources(SFProject project)
     {
         List<TranslateSource> trainingSources = [];
         List<TranslateSource> draftingSources = [];

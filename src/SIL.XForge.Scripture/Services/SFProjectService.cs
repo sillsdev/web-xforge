@@ -1432,7 +1432,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             throw new DataNotFoundException("The project does not exist.");
         }
-        return DraftSourcesArrays.ToDraftSourcesArrays(projectDoc.Data);
+        return DraftSourcesArrays.ProjectToDraftSources(projectDoc.Data);
     }
 
     public async Task AddChaptersAsync(string userId, string projectId, int book, int[] chapters)

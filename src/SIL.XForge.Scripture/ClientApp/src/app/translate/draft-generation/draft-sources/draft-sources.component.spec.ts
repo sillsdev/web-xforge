@@ -2,6 +2,8 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { getTranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-source-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -31,7 +33,7 @@ const mockedSFUserProjectsService = mock(SFUserProjectsService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedAuthService = mock(AuthService);
 
-fdescribe('DraftSourcesComponent', () => {
+describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
     imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule, TestTranslocoModule],
     declarations: [],
@@ -259,19 +261,24 @@ fdescribe('DraftSourcesComponent', () => {
 });
 
 class TestEnvironment {
+  readonly source2: TranslateSource = getTranslateSource('2', false);
+  readonly source3: TranslateSource = getTranslateSource('3', false);
+  readonly resource1: TranslateSource = getTranslateSource('1', true);
+  readonly resource2: TranslateSource = getTranslateSource('2', true);
+
   readonly component: DraftSourcesComponent;
   readonly fixture: ComponentFixture<DraftSourcesComponent>;
   readonly realtimeService: TestRealtimeService;
 
   private readonly mockProjects: SelectableProject[] = [
-    { paratextId: 'paratextId1', name: 'Test project 1', shortName: 'P1' },
-    { paratextId: 'paratextId2', name: 'Test project 2', shortName: 'P2' },
-    { paratextId: 'paratextId3', name: 'Test project 3', shortName: 'P3' }
+    { paratextId: 'ptproject01', name: 'Project 01', shortName: 'P1' },
+    { paratextId: 'ptproject02', name: 'Project 02', shortName: 'P2' },
+    { paratextId: 'ptproject03', name: 'Project 03', shortName: 'P3' }
   ];
 
   private readonly mockResources: SelectableProjectWithLanguageCode[] = [
-    { paratextId: 'resource01', name: 'Resource 1', shortName: 'RSC1', languageTag: 'en' },
-    { paratextId: 'resource02', name: 'Resource 2', shortName: 'RSC2', languageTag: 'en' }
+    { paratextId: 'resource16char01', name: 'Resource 01', shortName: 'R1', languageTag: 're' },
+    { paratextId: 'resource16char02', name: 'Resource 02', shortName: 'R2', languageTag: 're' }
   ];
 
   constructor() {
@@ -287,41 +294,11 @@ class TestEnvironment {
         translateConfig: {
           draftConfig: {
             alternateSourceEnabled: true,
-            alternateSource: {
-              paratextId: 'paratextId2',
-              projectRef: 'sfp2',
-              name: 'Test project 2',
-              shortName: 'P2',
-              writingSystem: { tag: 'en' },
-              isRightToLeft: false
-            },
+            alternateSource: this.source2,
             alternateTrainingSourceEnabled: true,
-            alternateTrainingSource: {
-              paratextId: 'resource02',
-              projectRef: 'sfr2',
-              name: 'Resource 2',
-              shortName: 'RSC2',
-              writingSystem: { tag: 'en' },
-              isRightToLeft: false
-            },
-            additionalTrainingSourceEnabled: true,
-            additionalTrainingSource: {
-              paratextId: 'paratextId3',
-              projectRef: 'sfp3',
-              name: 'Test project 3',
-              shortName: 'P3',
-              writingSystem: { tag: 'en' },
-              isRightToLeft: false
-            }
+            alternateTrainingSource: this.resource2
           },
-          source: {
-            paratextId: 'resource01',
-            projectRef: 'sfr1',
-            name: 'Resource 1',
-            shortName: 'RSC1',
-            writingSystem: { tag: 'en' },
-            isRightToLeft: false
-          }
+          source: this.resource1
         }
       })
     } as SFProjectProfileDoc;
@@ -331,6 +308,11 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectDoc).thenReturn(sfProjectProfileDoc);
     when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of([sfProjectProfileDoc]));
+    when(mockedSFProjectService.onlineGetDraftSources(anything())).thenResolve({
+      draftingSources: [this.source2],
+      trainingSources: [this.resource2],
+      trainingTargets: [sfProjectProfileDoc.data!]
+    });
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;

@@ -11,6 +11,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { getTranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-source-test-data';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, when } from 'ts-mockito';
@@ -125,12 +126,12 @@ class TestEnvironment {
   readonly PROJECT02ID = 'project02';
   readonly PROJECT03ID = 'project03';
 
-  readonly source2: TranslateSource = this.getTranslateSource('2', false);
-  readonly source3: TranslateSource = this.getTranslateSource('3', false);
-  readonly source4: TranslateSource = this.getTranslateSource('4', false);
-  readonly resource1: TranslateSource = this.getTranslateSource('1', true);
-  readonly resource2: TranslateSource = this.getTranslateSource('2', true);
-  readonly resource3: TranslateSource = this.getTranslateSource('3', true);
+  readonly source2: TranslateSource = getTranslateSource('2', false);
+  readonly source3: TranslateSource = getTranslateSource('3', false);
+  readonly source4: TranslateSource = getTranslateSource('4', false);
+  readonly resource1: TranslateSource = getTranslateSource('1', true);
+  readonly resource2: TranslateSource = getTranslateSource('2', true);
+  readonly resource3: TranslateSource = getTranslateSource('3', true);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -261,24 +262,5 @@ class TestEnvironment {
         })
       }
     ]);
-  }
-
-  private getTranslateSource(id: string, isResource: boolean): TranslateSource {
-    if (isResource) {
-      return {
-        paratextId: 'resource16char0' + id,
-        projectRef: 'resource0' + id,
-        name: 'Resource 0' + id,
-        shortName: 'R' + id,
-        writingSystem: { tag: 're' }
-      };
-    }
-    return {
-      paratextId: 'ptproject0' + id,
-      projectRef: 'project0' + id,
-      name: 'Project 0' + id,
-      shortName: 'P' + id,
-      writingSystem: { tag: 'pr' }
-    };
   }
 }
