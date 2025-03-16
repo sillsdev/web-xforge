@@ -17,6 +17,7 @@ using SIL.Converters.Usj;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
@@ -32,6 +33,7 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
     IDeltaUsxMapper deltaUsxMapper,
+    IEventMetricService eventMetricService,
     IExceptionHandler exceptionHandler,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
@@ -192,6 +194,24 @@ public class MachineApiService(
             );
             return;
         }
+
+        // Record that the webhook was run successfully
+        var arguments = new Dictionary<string, object>
+        {
+            { "buildId", delivery.Payload.Build.Id },
+            { "buildStart", delivery.Payload.BuildState },
+            { "event", delivery.Event },
+            { "translationEngineId", delivery.Payload.Engine.Id },
+        };
+        await eventMetricService.SaveEventMetricAsync(
+            projectId,
+            userId: null,
+            nameof(ExecuteWebhookAsync),
+            EventScope.Drafting,
+            arguments,
+            result: delivery.Payload.Build.Id,
+            exception: null
+        );
 
         // Run the background job
         backgroundJobClient.Enqueue<MachineApiService>(r =>

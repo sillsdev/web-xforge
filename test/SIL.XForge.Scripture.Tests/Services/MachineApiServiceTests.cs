@@ -3098,6 +3098,7 @@ public class MachineApiServiceTests
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
+            EventMetricService = Substitute.For<IEventMetricService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
 
             var machineProjectService = Substitute.For<IMachineProjectService>();
@@ -3203,6 +3204,7 @@ public class MachineApiServiceTests
             Service = Substitute.ForPartsOf<MachineApiService>(
                 BackgroundJobClient,
                 DeltaUsxMapper,
+                EventMetricService,
                 ExceptionHandler,
                 MockLogger,
                 machineProjectService,
@@ -3221,6 +3223,7 @@ public class MachineApiServiceTests
 
         public IBackgroundJobClient BackgroundJobClient { get; }
         public IDeltaUsxMapper DeltaUsxMapper { get; }
+        public IEventMetricService EventMetricService { get; }
         public IExceptionHandler ExceptionHandler { get; }
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
