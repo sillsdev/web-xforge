@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac.Extras.DynamicProxy;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,6 +17,7 @@ using Serval.Client;
 using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
@@ -31,6 +33,7 @@ namespace SIL.XForge.Scripture.Services;
 /// <summary>
 /// Provides functionality to add, remove, and build Machine projects.
 /// </summary>
+[Intercept(typeof(EventMetricLogger))]
 public class MachineProjectService(
     ICorporaClient corporaClient,
     IDataFilesClient dataFilesClient,
@@ -512,11 +515,17 @@ public class MachineProjectService(
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>An asynchronous task.</returns>
+    /// <returns>The build identifier. This is returned so it can be logged</returns>
     /// <exception cref="DataNotFoundException">The project or project secret could not be found.</exception>
     /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
-    protected internal virtual async Task BuildProjectAsync(
+    [LogEventMetric(
+        EventScope.Drafting,
+        nameof(curUserId),
+        projectId: "buildConfig.ProjectId",
+        captureReturnValue: true
+    )]
+    protected internal virtual async Task<string> BuildProjectAsync(
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,
@@ -603,7 +612,11 @@ public class MachineProjectService(
         }
 
         // Start the build
-        await translationEnginesClient.StartBuildAsync(translationEngineId, translationBuildConfig, cancellationToken);
+        TranslationBuild translationBuild = await translationEnginesClient.StartBuildAsync(
+            translationEngineId,
+            translationBuildConfig,
+            cancellationToken
+        );
 
         // Clear the queued status and job id
         await projectSecrets.UpdateAsync(
@@ -622,6 +635,8 @@ public class MachineProjectService(
                 }
             }
         );
+
+        return translationBuild.Id;
     }
 
     /// <summary>
