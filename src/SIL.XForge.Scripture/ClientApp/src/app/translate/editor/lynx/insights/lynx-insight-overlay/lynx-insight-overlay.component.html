@@ -18,13 +18,11 @@
       </div>
     }
     <div class="secondary-actions">
-      <mat-icon
-        matTooltip="Actions"
-        [matMenuTriggerFor]="actionMenu"
-        class="action-menu-trigger"
-        [style.visibility]="menuActions.length === 0 ? 'hidden' : 'visible'"
-        >more_horiz</mat-icon
-      >
+      @if (menuActions.length > 0) {
+        <mat-icon matTooltip="Actions" [matMenuTriggerFor]="actionMenu" class="action-menu-trigger">
+          more_horiz
+        </mat-icon>
+      }
       <!-- TODO: Removed for MVP -->
       <!-- <mat-icon matTooltip="Dismiss" (click)="dismissInsight(focusedInsight)" class="dismiss-icon">
         visibility_off
