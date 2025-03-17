@@ -385,7 +385,7 @@ public class MachineProjectServiceTests
             )
             .Returns(Task.FromResult(TranslationEngine01));
         env.Service.Configure()
-            .RecreateTranslationEngineIfRequiredAsync(
+            .RecreateOrUpdateTranslationEngineIfRequiredAsync(
                 TranslationEngine01,
                 Arg.Any<SFProject>(),
                 preTranslate: true,
@@ -440,7 +440,7 @@ public class MachineProjectServiceTests
             )
             .Returns(Task.FromResult(TranslationEngine01));
         env.Service.Configure()
-            .RecreateTranslationEngineIfRequiredAsync(
+            .RecreateOrUpdateTranslationEngineIfRequiredAsync(
                 TranslationEngine01,
                 Arg.Any<SFProject>(),
                 preTranslate: false,
@@ -536,7 +536,7 @@ public class MachineProjectServiceTests
             )
             .Returns(Task.FromResult(TranslationEngine01));
         env.Service.Configure()
-            .RecreateTranslationEngineIfRequiredAsync(
+            .RecreateOrUpdateTranslationEngineIfRequiredAsync(
                 TranslationEngine01,
                 Arg.Any<SFProject>(),
                 preTranslate: true,
@@ -1900,7 +1900,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_DoNotRecreateIfNoLanguageChanges()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_DoNotRecreateIfNoLanguageChanges()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1930,7 +1930,7 @@ public class MachineProjectServiceTests
             );
 
         // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
             TranslationEngine01,
             project,
             preTranslate: true,
@@ -1945,7 +1945,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_RecreateIfTheSourceLanguageChanges()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_UpdateIfTheSourceLanguageChanges()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1957,12 +1957,6 @@ public class MachineProjectServiceTests
         env.Service.Configure()
             .GetTargetLanguageAsync(project, preTranslate: true)
             .Returns(Task.FromResult(targetLanguage));
-        env.Service.Configure()
-            .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
-            .Returns(Task.FromResult(string.Empty));
-        env.Service.Configure()
-            .RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None)
-            .Returns(Task.CompletedTask);
         env.TranslationEnginesClient.GetAsync(TranslationEngine01)
             .Returns(
                 Task.FromResult(
@@ -1976,18 +1970,19 @@ public class MachineProjectServiceTests
             );
 
         // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
             TranslationEngine01,
             project,
             preTranslate: true,
             CancellationToken.None
         );
-        await env.Service.Received(1).RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None);
-        await env.Service.Received(1).CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None);
+        await env
+            .TranslationEnginesClient.Received(1)
+            .UpdateAsync(TranslationEngine01, Arg.Any<TranslationEngineUpdateConfig>(), CancellationToken.None);
     }
 
     [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_RecreateIfTheTargetLanguageChanges()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_UpdateIfTheTargetLanguageChanges()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1999,12 +1994,6 @@ public class MachineProjectServiceTests
         env.Service.Configure()
             .GetTargetLanguageAsync(project, preTranslate: true)
             .Returns(Task.FromResult(newTargetLanguage));
-        env.Service.Configure()
-            .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
-            .Returns(Task.FromResult(string.Empty));
-        env.Service.Configure()
-            .RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None)
-            .Returns(Task.CompletedTask);
         env.TranslationEnginesClient.GetAsync(TranslationEngine01)
             .Returns(
                 Task.FromResult(
@@ -2018,18 +2007,19 @@ public class MachineProjectServiceTests
             );
 
         // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
             TranslationEngine01,
             project,
             preTranslate: true,
             CancellationToken.None
         );
-        await env.Service.Received(1).RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None);
-        await env.Service.Received(1).CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None);
+        await env
+            .TranslationEnginesClient.Received(1)
+            .UpdateAsync(TranslationEngine01, Arg.Any<TranslationEngineUpdateConfig>(), CancellationToken.None);
     }
 
     [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_RecreatePreTranslationEngineIfNotFound()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_RecreatePreTranslationEngineIfNotFound()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2042,7 +2032,7 @@ public class MachineProjectServiceTests
         env.TranslationEnginesClient.GetAsync(TranslationEngine01).ThrowsAsync(ex);
 
         // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
             TranslationEngine01,
             project,
             preTranslate: true,
@@ -2054,7 +2044,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_RecreateSmtTranslationEngineIfNotFound()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_RecreateSmtTranslationEngineIfNotFound()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2067,7 +2057,7 @@ public class MachineProjectServiceTests
         env.TranslationEnginesClient.GetAsync(TranslationEngine01).ThrowsAsync(ex);
 
         // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
             TranslationEngine01,
             project,
             preTranslate: false,
