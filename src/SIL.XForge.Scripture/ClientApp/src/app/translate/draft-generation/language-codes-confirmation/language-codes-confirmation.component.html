@@ -1,27 +1,25 @@
 <ng-container *transloco="let t; read: 'language_codes_confirmation'">
-  @if (sourceSideLanguageCodes.length > 1) {
-    <app-notice mode="fill-dark" type="warning">
-      <h3>{{ t("all_sources_should_be_same_language") }}</h3>
+  @if (showSourceLanguagesDifferError) {
+    <app-notice mode="fill-dark" type="error">
+      <h3>{{ t("all_sources_must_be_same_language") }}</h3>
+      {{ t("sources_in_following_languages") }}
+      <ul>
+        @for (code of uniqueSourceSideLanguageCodes; track code) {
+          <li>
+            <strong>{{ code }}</strong> - {{ i18n.getLanguageDisplayName(code) }}
+          </li>
+        }
+      </ul>
       <p>
-        {{
-          t("source_and_reference_languages_different", { languageCodes: i18n.enumerateList(sourceSideLanguageCodes) })
-        }}
-      </p>
-      @if (informUserWhereToChangeDraftSources) {
-        <p>
-          @if (isProjectAdmin) {
-            <transloco
-              key="language_codes_confirmation.change_source_projects_on_draft_sources_configuration_page"
-              [params]="{ configSourcesUrl: { route: configSourcesUrl } }"
-            ></transloco>
-          } @else {
-            {{ t("contact_project_administrator_to_change_settings") }}
+        {{ t("select_different_sources") }}
+        @for (part of i18n.interpolateVariables("language_codes_confirmation.if_unsure_contact_us"); track $index) {
+          @if (part.id == null) {
+            {{ part.text }}
+          } @else if (part.id === "email") {
+            <a [href]="issueMailTo" target="_blank" rel="noreferrer">{{ issueEmail }}</a>
           }
-        </p>
-      }
-      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
-        {{ t("i_understand_and_accept") }}
-      </mat-checkbox>
+        }
+      </p>
     </app-notice>
   }
 
@@ -36,30 +34,18 @@
           [params]="{ languageCode: targetLanguageTag }"
         ></transloco>
       </p>
-      @if (informUserWhereToChangeDraftSources) {
-        <p>
-          @if (isProjectAdmin) {
-            <transloco
-              key="language_codes_confirmation.change_source_projects_on_draft_sources_configuration_page"
-              [params]="{ configSourcesUrl: { route: configSourcesUrl } }"
-            ></transloco>
-          } @else {
-            {{ t("contact_project_administrator_to_change_settings") }}
-          }
-        </p>
-      }
-      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
+      <mat-checkbox [checked]="languageCodesConfirmed" (change)="checkboxChanged($event)">
         {{ t("i_understand_and_accept") }}
       </mat-checkbox>
     </app-notice>
   }
 
-  @if (sourceSideLanguageCodes.length === 1 && !showSourceAndTargetLanguagesIdenticalWarning) {
+  @if (showStandardNotice) {
     <app-notice mode="fill-dark">
       <h3>{{ t("incorrect_language_codes_reduce_quality") }}</h3>
       <p>{{ t("please_make_sure_codes_correct") }}</p>
       <p>{{ t("how_to_change_language_codes") }}</p>
-      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">{{
+      <mat-checkbox [checked]="languageCodesConfirmed" (change)="checkboxChanged($event)">{{
         t("confirm_lang_codes_correct")
       }}</mat-checkbox>
     </app-notice>

@@ -94,7 +94,6 @@ export class DraftGenerationStepsComponent implements OnInit {
   expandUnusableTrainingBooks = false;
   isStepsCompleted = false;
 
-  protected languagesVerified = false;
   protected nextClickedOnLanguageVerification = false;
   protected hasLoaded = false;
 

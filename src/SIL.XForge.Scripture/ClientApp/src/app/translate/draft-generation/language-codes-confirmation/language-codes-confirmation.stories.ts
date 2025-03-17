@@ -1,21 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { expect, within } from '@storybook/test';
 import { defaultTranslocoMarkupTranspilers, TranslocoMarkupComponent } from 'ngx-transloco-markup';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { instance, mock, when } from 'ts-mockito';
+import { instance, mock } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { DraftSourcesAsSelectableProjectArrays } from '../draft-utils';
 import { LanguageCodesConfirmationComponent } from './language-codes-confirmation.component';
 
 const mockAuthService = mock(AuthService);
 const mockActivatedProject = mock(ActivatedProjectService);
 
-const draftSources: DraftSourcesAsSelectableProjectArrays = {
+const defaultDraftSources: DraftSourcesAsSelectableProjectArrays = {
   draftingSources: [
     {
       shortName: 'ADS',
@@ -48,15 +45,6 @@ const draftSources: DraftSourcesAsSelectableProjectArrays = {
   ]
 };
 
-const defaultArgs = { draftSources };
-
-when(mockActivatedProject.projectId).thenReturn('test-proj');
-when(mockActivatedProject.projectDoc).thenReturn({
-  id: 'test-proj',
-  data: createTestProjectProfile({ userRoles: { user1: SFProjectRole.ParatextAdministrator } })
-} as SFProjectProfileDoc);
-when(mockAuthService.currentUserId).thenReturn('user1');
-
 const meta: Meta = {
   title: 'Translate/LanguageCodesConfirmation',
   component: LanguageCodesConfirmationComponent,
@@ -69,7 +57,13 @@ const meta: Meta = {
         defaultTranslocoMarkupTranspilers()
       ]
     })
-  ]
+  ],
+  render: args => {
+    return {
+      props: args,
+      template: '<app-language-codes-confirmation [sources]="draftSources"></app-language-codes-confirmation>'
+    };
+  }
 };
 
 export default meta;
@@ -79,26 +73,51 @@ interface StoryState {}
 type Story = StoryObj<StoryState>;
 
 export const Default: Story = {
-  args: defaultArgs
+  args: { defaultDraftSources },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    canvas.getByRole('heading', { name: 'Incorrect language codes will dramatically reduce draft quality.' });
+    expect(canvas.queryByRole('checkbox')).toBeTruthy();
+  }
 };
 
 export const SameSourceAndTargetCodes: Story = {
   args: {
-    ...defaultArgs,
-    targetLanguageTag: 'es'
+    draftSources: {
+      draftingSources: defaultDraftSources.draftingSources,
+      trainingSources: defaultDraftSources.trainingSources,
+      trainingTargets: [
+        {
+          ...defaultDraftSources.trainingTargets[0],
+          languageTag: 'es'
+        }
+      ]
+    } satisfies DraftSourcesAsSelectableProjectArrays
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    canvas.getByRole('heading', { name: 'Source and target languages are both Spanish' });
+    expect(canvas.queryByRole('checkbox')).toBeTruthy();
   }
 };
 
 export const DifferentSourceCodes: Story = {
   args: {
-    ...defaultArgs,
-    draftingSources: [
-      {
-        shortName: 'ADS',
-        name: 'Alternate Drafting Source',
-        paratextId: 'alternate-drafting-source',
-        languageTag: 'cat'
-      } satisfies SelectableProjectWithLanguageCode
-    ]
+    draftSources: {
+      draftingSources: defaultDraftSources.draftingSources,
+      trainingSources: [
+        defaultDraftSources.trainingSources[0],
+        {
+          ...defaultDraftSources.trainingSources[1],
+          languageTag: 'fr'
+        }
+      ],
+      trainingTargets: defaultDraftSources.trainingTargets
+    } satisfies DraftSourcesAsSelectableProjectArrays
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    canvas.getByRole('heading', { name: 'All source and reference projects must be in the same language' });
+    expect(canvas.queryByRole('checkbox')).toBeNull();
   }
 };

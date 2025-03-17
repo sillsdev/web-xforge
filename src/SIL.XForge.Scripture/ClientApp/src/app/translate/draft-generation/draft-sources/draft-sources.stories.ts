@@ -204,10 +204,10 @@ export const SelectAllAndSave: Story = {
 
     // Step 2: Reference projects
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
-    // Select a English reference project and expect to see a warning that sources are in different languages
+    // Select a English reference project and expect to see an error that sources are in different languages
     await selectSource(canvasElement, 'R_EN');
-    expect(await warning(canvasElement)).toContain('All source and reference projects should be in the same language');
-    // Switch to a Chinese reference project and expect the warning to disappear
+    expect(await warning(canvasElement)).toContain('All source and reference projects must be in the same language');
+    // Switch to a Chinese reference project and expect the error to disappear
     await clearSource(canvasElement);
     await selectSource(canvasElement, 'R_ZH');
     expect(await warning(canvasElement)).toContain('Incorrect language codes will dramatically reduce draft quality.');
@@ -368,6 +368,7 @@ export const LanguageCodesConfirmationAutomaticallyCleared: Story = {
     const canvas = within(canvasElement);
 
     await selectSource(canvasElement, 'P_EN');
+
     await userEvent.click(await canvas.findByRole('checkbox'));
     expect(await canvas.findByRole('checkbox')).toBeChecked();
 
@@ -378,5 +379,30 @@ export const LanguageCodesConfirmationAutomaticallyCleared: Story = {
     // Selecting a source does clear the checkbox
     await selectSource(canvasElement, 'P_EN');
     expect(await canvas.findByRole('checkbox')).not.toBeChecked();
+  }
+};
+
+export const CannotSaveWithMultipleSourceLanguages: Story = {
+  ...Default,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Select Portuguese along with Spanish on the source side
+    await selectSource(canvasElement, 'P_PT');
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+    await selectSource(canvasElement, 'R_PT');
+    const additionalReferenceButton = canvas.getByRole('button', { name: /Add another reference project/ });
+    await userEvent.click(additionalReferenceButton);
+    await selectSource(canvasElement, 'P_ES', 1);
+
+    // Expect an error with no checkbox to confirm language codes
+    expect(await warning(canvasElement)).toContain('All source and reference projects must be in the same language');
+    expect(canvas.queryByRole('checkbox')).toBeNull();
+
+    // Attempting to save should show an error dialog
+    await userEvent.click(canvas.getByRole('button', { name: /Save & sync/ }));
+    canvas.getByRole('heading', {
+      name: 'All source and reference projects must be in the same language. Please select different source or reference projects.'
+    });
   }
 };
