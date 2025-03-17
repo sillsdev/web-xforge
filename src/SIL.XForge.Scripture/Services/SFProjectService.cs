@@ -535,11 +535,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     }
 
                     await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                    await _machineProjectService.AddProjectAsync(
-                        projectId,
-                        preTranslate: false,
-                        CancellationToken.None
-                    );
+                    await _machineProjectService.AddSmtProjectAsync(projectId, CancellationToken.None);
                     trainEngine = true;
                 }
                 else if (hasExistingMachineProject)

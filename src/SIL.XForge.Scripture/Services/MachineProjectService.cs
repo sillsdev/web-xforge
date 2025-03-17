@@ -54,18 +54,13 @@ public class MachineProjectService(
     internal const string SmtTransfer = "smt-transfer";
 
     /// <summary>
-    /// Adds the project to Serval, if the required data is present.
+    /// Adds the SMT project to Serval, if the required data is present.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The translation engine identifier.</returns>
     /// <exception cref="DataNotFoundException">The project does not exist.</exception>
-    public async Task<string> AddProjectAsync(
-        string sfProjectId,
-        bool preTranslate,
-        CancellationToken cancellationToken
-    )
+    public async Task<string> AddSmtProjectAsync(string sfProjectId, CancellationToken cancellationToken)
     {
         // Load the project from the realtime service
         Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
@@ -82,7 +77,7 @@ public class MachineProjectService(
             && !string.IsNullOrWhiteSpace(project.WritingSystem.Tag)
         )
         {
-            return await CreateServalProjectAsync(project, preTranslate, cancellationToken);
+            return await CreateServalProjectAsync(project, preTranslate: false, cancellationToken);
         }
 
         logger.LogInformation("The source or target language is missing from the project");
