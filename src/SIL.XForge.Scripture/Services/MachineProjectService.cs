@@ -877,6 +877,7 @@ public class MachineProjectService(
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The translation engine identifier.</returns>
     /// <exception cref="DataNotFoundException">The project, user, or translation engine does not exist.</exception>
+    /// <exception cref="InvalidDataException">The source project does not exist and is required.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual async Task<string> EnsureTranslationEngineExistsAsync(
         string curUserId,
@@ -897,7 +898,10 @@ public class MachineProjectService(
             // We do not need to do this for the alternate source as this would have been populated correctly
             if (
                 string.IsNullOrWhiteSpace(projectDoc.Data?.WritingSystem.Tag)
-                || string.IsNullOrWhiteSpace(projectDoc.Data?.TranslateConfig.Source?.WritingSystem.Tag)
+                || (
+                    projectDoc.Data?.TranslateConfig.Source is not null
+                    && string.IsNullOrWhiteSpace(projectDoc.Data?.TranslateConfig.Source?.WritingSystem.Tag)
+                )
             )
             {
                 // Get the user secret
@@ -938,13 +942,16 @@ public class MachineProjectService(
                 }
 
                 // This error can occur if the project source is cleared while the build is running
-                if (projectDoc.Data.TranslateConfig.Source is null)
+                if (!preTranslate && projectDoc.Data.TranslateConfig.Source is null)
                 {
                     throw new InvalidDataException("The project source is not specified.");
                 }
 
                 // Update the source writing system tag
-                if (string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag))
+                if (
+                    projectDoc.Data.TranslateConfig.Source is not null
+                    && string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag)
+                )
                 {
                     WritingSystem writingSystem = paratextService.GetWritingSystem(
                         userSecret,
@@ -976,7 +983,7 @@ public class MachineProjectService(
             );
 
             // Create the Serval project, and get the translation engine id
-            translationEngineId = await CreateServalProjectAsync(projectDoc.Data, preTranslate, cancellationToken);
+            translationEngineId = await CreateServalProjectAsync(projectDoc.Data!, preTranslate, cancellationToken);
         }
 
         // Ensure a translation engine id is present
@@ -993,12 +1000,10 @@ public class MachineProjectService(
     /// </summary>
     /// <param name="project">The project.</param>
     /// <returns>The source language.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// The writing system tag was not specified for the source project.
-    /// </exception>
     /// <exception cref="DataNotFoundException">
-    /// The source was not specified for the project, or the project does not exist.
+    /// The project does not exist.
     /// </exception>
+    /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual string GetSourceLanguage(SFProject? project)
     {
@@ -1006,12 +1011,6 @@ public class MachineProjectService(
         if (project is null)
         {
             throw new DataNotFoundException("The project does not exist.");
-        }
-
-        // This error can occur if the project source is cleared while the build is running
-        if (project.TranslateConfig.Source is null)
-        {
-            throw new InvalidDataException("The project source is not specified.");
         }
 
         string alternateSourceLanguage = project.TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag;
@@ -1029,12 +1028,10 @@ public class MachineProjectService(
     /// </summary>
     /// <param name="project">The project.</param>
     /// <returns>The target language.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// The writing system tag was not specified for the source project.
-    /// </exception>
     /// <exception cref="DataNotFoundException">
     /// The source was not specified for the project, or the project does not exist.
     /// </exception>
+    /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>
     /// If Echo is enabled, the source language will be returned.
     /// This can be mocked in unit tests.
@@ -1525,12 +1522,6 @@ public class MachineProjectService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // Ensure we have a source
-        if (project.TranslateConfig.Source is null)
-        {
-            throw new DataNotFoundException("The project source is not specified.");
-        }
-
         // Load the project secrets, so we can get the corpus files
         if (!(await projectSecrets.TryGetAsync(project.Id)).TryResult(out SFProjectSecret projectSecret))
         {
@@ -1571,18 +1562,30 @@ public class MachineProjectService(
             && project.TranslateConfig.DraftConfig.AdditionalTrainingSource is not null
             && project.TranslateConfig.PreTranslate;
 
+        // Ensure we have a source if we are running an SMT build or do not have an alternate source when NMT
+        if ((!preTranslate || (preTranslate && !hasAlternateSource)) && project.TranslateConfig.Source is null)
+        {
+            throw new DataNotFoundException("The project source is not specified.");
+        }
+
         // Build the list of corpora and files to upload
         List<(string projectId, string paratextId, string writingSystemTag)> projects =
         [
             // Target Project
             (project.Id, project.ParatextId, project.WritingSystem.Tag),
-            // Source Project
-            (
-                project.TranslateConfig.Source.ProjectRef,
-                project.TranslateConfig.Source.ParatextId,
-                project.TranslateConfig.Source.WritingSystem.Tag
-            ),
         ];
+
+        if (project.TranslateConfig.Source is not null)
+        {
+            projects.Add(
+                (
+                    project.TranslateConfig.Source.ProjectRef,
+                    project.TranslateConfig.Source.ParatextId,
+                    project.TranslateConfig.Source.WritingSystem.Tag
+                )
+            );
+        }
+
         if (hasAlternateSource)
         {
             projects.Add(
@@ -1705,9 +1708,10 @@ public class MachineProjectService(
         if (preTranslate)
         {
             // Build the source corpus ids for training
+            // First try the alternate training source, then the source, then the source specified for translation above
             sourceProjectId = hasAlternateTrainingSource
                 ? project.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef
-                : project.TranslateConfig.Source.ProjectRef;
+                : (project.TranslateConfig.Source?.ProjectRef ?? sourceProjectId);
 
             sourceCorpora = [servalCorpusFiles.Single(f => f.ProjectId == sourceProjectId)];
 
