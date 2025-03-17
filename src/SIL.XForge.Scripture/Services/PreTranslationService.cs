@@ -192,6 +192,9 @@ public class PreTranslationService(
             GetTextId(bookNum),
             PretranslationUsfmTextOrigin.OnlyPretranslated,
             PretranslationUsfmTemplate.Source,
+            PretranslationUsfmMarkerBehavior.Preserve,
+            PretranslationUsfmMarkerBehavior.Preserve,
+            PretranslationUsfmMarkerBehavior.Strip,
             cancellationToken
         );
 
