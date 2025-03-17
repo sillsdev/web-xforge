@@ -45,7 +45,7 @@ export interface NllbLanguageDict {
   [iso639_2t: string]: NllbLanguage;
 }
 
-const nllb: NllbLanguageDict = {
+export const nllb: NllbLanguageDict = {
   ace: {
     name: 'Achinese',
     iso639_1: null,

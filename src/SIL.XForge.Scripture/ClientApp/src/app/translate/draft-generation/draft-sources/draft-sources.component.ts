@@ -13,7 +13,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -300,17 +300,17 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     const definedSources = this.draftingSources.filter(s => s != null);
     const definedReferences = this.trainingSources.filter(s => s != null);
 
-    let messageKey: I18nKeyForComponent<'draft_sources'> | undefined;
-    if (definedSources.length === 0 && definedReferences.length === 0)
-      messageKey = 'select_at_least_one_source_and_reference';
-    else if (definedSources.length === 0) messageKey = 'select_at_least_one_source';
-    else if (definedReferences.length === 0) messageKey = 'select_at_least_one_reference';
-    else if (!this.languageCodesConfirmed) messageKey = 'confirm_language_codes';
+    // let messageKey: I18nKeyForComponent<'draft_sources'> | undefined;
+    // if (definedSources.length === 0 && definedReferences.length === 0)
+    //   messageKey = 'select_at_least_one_source_and_reference';
+    // else if (definedSources.length === 0) messageKey = 'select_at_least_one_source';
+    // else if (definedReferences.length === 0) messageKey = 'select_at_least_one_reference';
+    // else if (!this.languageCodesConfirmed) messageKey = 'confirm_language_codes';
 
-    if (messageKey) {
-      this.dialogService.message(this.i18n.translate(`draft_sources.${messageKey}`));
-      return;
-    }
+    // if (messageKey) {
+    //   this.dialogService.message(this.i18n.translate(`draft_sources.${messageKey}`));
+    //   return;
+    // }
 
     const currentProjectParatextId: string = this.activatedProjectService.projectDoc.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(

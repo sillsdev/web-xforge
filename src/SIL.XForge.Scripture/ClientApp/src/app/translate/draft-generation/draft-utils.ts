@@ -1,5 +1,6 @@
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import LANGUAGE_CODE_MAPPINGS from '../../../../../language_code_mapping.json';
 import { SelectableProjectWithLanguageCode } from '../../core/paratext.service';
 
 export function englishNameFromCode(code: string): string {
@@ -115,4 +116,33 @@ export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAs
     draftingSources.push(draftingSource);
   }
   return { trainingSources, trainingTargets, draftingSources };
+}
+
+// A mapping list provided by Serval specifically for mapping to the language codes used by NLLB
+const macroLanguageMap = {
+  ar: 'arb',
+  ms: 'zsm',
+  lv: 'lvs',
+  ne: 'npi',
+  sw: 'swh'
+};
+
+const bibliographicToTerminologyMap = LANGUAGE_CODE_MAPPINGS.bibliographicToTerminology;
+const iso639_1_to_iso639_3 = LANGUAGE_CODE_MAPPINGS.iso639_1_to_iso639_3;
+
+/**
+ * Normalize a language code to a standard 3-letter form.
+ * ISO-639-1 is converted to an equivalent ISO-639-3 code.
+ * Bibliographic codes are converted to their equivalent terminology codes.
+ * Codes for macro languages where NLLB uses a specific code are converted to the code NLLB uses.
+ *
+ * See https://github.com/sillsdev/serval/wiki/FLORES%E2%80%90200-Language-Code-Resolution-for-NMT-Engine
+ */
+export function normalizeLanguageCode(code: string): string {
+  // Intl.Locale doesn't just parse out the language portion; it also normalizes it such that e.g. arb becomes ar
+  const languageSubTag = new Intl.Locale(code).language;
+  // if (languageSubTag in macroLanguageMap) return macroLanguageMap[languageSubTag];
+  if (languageSubTag in iso639_1_to_iso639_3) return iso639_1_to_iso639_3[languageSubTag];
+  if (languageSubTag in bibliographicToTerminologyMap) return bibliographicToTerminologyMap[languageSubTag];
+  return languageSubTag;
 }

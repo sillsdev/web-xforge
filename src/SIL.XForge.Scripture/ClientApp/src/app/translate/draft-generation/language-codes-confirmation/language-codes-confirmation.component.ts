@@ -9,7 +9,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSourcesAsSelectableProjectArrays, englishNameFromCode } from '../draft-utils';
+import { DraftSourcesAsSelectableProjectArrays, normalizeLanguageCode } from '../draft-utils';
 
 @Component({
   selector: 'app-language-codes-confirmation',
@@ -45,19 +45,15 @@ export class LanguageCodesConfirmationComponent {
   }
 
   get sourceSideLanguageCodes(): string[] {
-    const sourceLanguagesCodes: string[] = [...this.draftingSources, ...this.trainingSources]
-      .filter(s => s != null)
-      .map(s => s.languageTag);
-    const languageNames: string[] = Array.from(new Set(sourceLanguagesCodes.map(s => englishNameFromCode(s))));
-    if (languageNames.length < 2) {
-      return [sourceLanguagesCodes[0]];
-    }
-    return Array.from(new Set(sourceLanguagesCodes));
+    return [...this.draftingSources, ...this.trainingSources].filter(s => s != null).map(s => s.languageTag);
   }
 
-  get showSourceAndTargetLanguagesIdenticalWarning(): boolean {
-    const sourceCodes: string[] = this.sourceSideLanguageCodes;
-    return sourceCodes.length === 1 && sourceCodes[0] === this.targetLanguageTag;
+  get normalizedSourceSideLanguageCodes(): string[] {
+    return this.sourceSideLanguageCodes.map(normalizeLanguageCode);
+  }
+
+  get uniqueNormalizedSourceSideLanguageCodes(): string[] {
+    return Array.from(new Set(this.normalizedSourceSideLanguageCodes));
   }
 
   get isProjectAdmin(): boolean {
@@ -69,5 +65,25 @@ export class LanguageCodesConfirmationComponent {
   confirmationChanged(event: MatCheckboxChange): void {
     this.languageCodesConfirmed = event.checked;
     this.languageCodesConfirmedChange.emit(this.languageCodesConfirmed);
+  }
+
+  // SECTION: Logic for each notice
+
+  get showStandardNotice(): boolean {
+    return (
+      this.uniqueNormalizedSourceSideLanguageCodes.length === 1 && !this.showSourceAndTargetLanguagesIdenticalWarning
+    );
+  }
+
+  get showSourceAndTargetLanguagesIdenticalWarning(): boolean {
+    return (
+      this.targetLanguageTag != null &&
+      this.uniqueNormalizedSourceSideLanguageCodes.length === 1 &&
+      this.uniqueNormalizedSourceSideLanguageCodes[0] === normalizeLanguageCode(this.targetLanguageTag)
+    );
+  }
+
+  get showSourceLanguagesDifferError(): boolean {
+    return this.uniqueNormalizedSourceSideLanguageCodes.length > 1;
   }
 }

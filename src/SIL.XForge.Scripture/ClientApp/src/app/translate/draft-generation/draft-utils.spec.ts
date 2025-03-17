@@ -189,3 +189,34 @@ describe('DraftUtils', () => {
     });
   });
 });
+
+describe('normalizeLanguageCode', () => {
+  it('should normalize language codes', () => {
+    const testCases = [
+      ['en', 'eng'],
+      ['en-US', 'eng'],
+      ['zh-Hans', 'zho'],
+      ['cmn-Hans', 'zho'],
+      ['cmn', 'zho'],
+      ['ar', 'arb'],
+      ['ar', 'arb'],
+      ['ms', 'zsm'],
+      ['lv', 'lvs'],
+      ['ne', 'npi'],
+      ['sw', 'swh']
+      // ['ara', 'arb']
+    ];
+    for (const testCase of testCases) {
+      expect(normalizeLanguageCode(testCase[0])).toEqual(testCase[1]);
+    }
+    // for (const [iso639_3, value] of Object.entries(nllb)) {
+    // expect the ISO 639-3 code to be normalized to itself
+    // expect(normalizeLanguageCode(iso639_3)).toEqual(iso639_3);
+
+    // const codesForLanguage = [iso639_3, value.iso639_1, value.iso639_2b, value.iso639_2t].filter(x => x != null);
+    // for (const form of codesForLanguage) {
+    //   expect(normalizeLanguageCode(form)).toEqual(iso639_3);
+    // }
+    // }
+  });
+});

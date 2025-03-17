@@ -1,11 +1,24 @@
 <ng-container *transloco="let t; read: 'language_codes_confirmation'">
-  @if (sourceSideLanguageCodes.length > 1) {
-    <app-notice mode="fill-dark" type="warning">
-      <h3>{{ t("all_sources_should_be_same_language") }}</h3>
+  @if (showSourceLanguagesDifferError) {
+    <app-notice mode="fill-dark" type="error">
+      <h3>{{ t("all_sources_must_be_same_language") }}</h3>
       <p>
-        {{
-          t("source_and_reference_languages_different", { languageCodes: i18n.enumerateList(sourceSideLanguageCodes) })
-        }}
+        @for (
+          entry of i18n.interpolateVariables("language_codes_confirmation.source_and_reference_languages_different");
+          track $index
+        ) {
+          @if (entry.id === "languageCodes") {
+            @for (part of i18n.enumerateListToParts(sourceSideLanguageCodes); track $index) {
+              <!-- prettier-ignore -->
+              @if (part.type === "literal") {{{ part.value }}}
+              @else {
+                <strong>{{ part.value }}</strong>
+              }
+            }
+          }
+          <!-- prettier-ignore -->
+          @else {{{ entry.text }}}
+        }
       </p>
       @if (informUserWhereToChangeDraftSources) {
         <p>
@@ -19,9 +32,6 @@
           }
         </p>
       }
-      <mat-checkbox [checked]="languageCodesConfirmed" (change)="confirmationChanged($event)">
-        {{ t("i_understand_and_accept") }}
-      </mat-checkbox>
     </app-notice>
   }
 
@@ -54,7 +64,7 @@
     </app-notice>
   }
 
-  @if (sourceSideLanguageCodes.length === 1 && !showSourceAndTargetLanguagesIdenticalWarning) {
+  @if (showStandardNotice) {
     <app-notice mode="fill-dark">
       <h3>{{ t("incorrect_language_codes_reduce_quality") }}</h3>
       <p>{{ t("please_make_sure_codes_correct") }}</p>
