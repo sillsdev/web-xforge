@@ -61,39 +61,39 @@ public class MachineProjectServiceTests
     private const string LanguageTag = "he";
 
     [Test]
-    public async Task AddProjectAsync_DoesNotCreateIfLanguageMissing()
+    public async Task AddSmtProjectAsync_DoesNotCreateIfLanguageMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
-        string actual = await env.Service.AddProjectAsync(Project03, preTranslate: false, CancellationToken.None);
+        string actual = await env.Service.AddSmtProjectAsync(Project03, CancellationToken.None);
         Assert.IsEmpty(actual);
     }
 
     [Test]
-    public void AddProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
+    public void AddSmtProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.AddProjectAsync("invalid_project_id", preTranslate: false, CancellationToken.None)
+            () => env.Service.AddSmtProjectAsync("invalid_project_id", CancellationToken.None)
         );
     }
 
     [Test]
-    public async Task AddProjectAsync_Success()
+    public async Task AddSmtProjectAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
         env.Service.Configure()
-            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: true, CancellationToken.None)
+            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: false, CancellationToken.None)
             .Returns(Task.FromResult(TranslationEngine01));
 
         // SUT
-        string actual = await env.Service.AddProjectAsync(Project01, preTranslate: true, CancellationToken.None);
+        string actual = await env.Service.AddSmtProjectAsync(Project01, CancellationToken.None);
         Assert.AreEqual(TranslationEngine01, actual);
     }
 
