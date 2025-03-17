@@ -498,7 +498,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectAsync_ThrowsExceptionWhenSourceProjectMissing()
+    public void BuildProjectAsync_ThrowsExceptionWhenSourceProjectMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
