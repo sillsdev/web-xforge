@@ -238,6 +238,37 @@ public class MachineProjectServiceTests
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
     }
 
+    public static async Task BuildProjectForBackgroundJobAsync_InvalidDataException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var ex = new InvalidDataException("Source project language not specified");
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // A pre-translation job has been queued
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Error);
+        env.ExceptionHandler.Received(1).ReportException(ex);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationQueuedAt);
+        Assert.AreEqual(ex.Message, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationErrorMessage);
+    }
+
     [Test]
     public async Task BuildProjectForBackgroundJobAsync_RecordsErrors()
     {
@@ -460,6 +491,24 @@ public class MachineProjectServiceTests
                 env.Service.BuildProjectAsync(
                     User01,
                     new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public void BuildProjectAsync_ThrowsExceptionWhenSourceProjectMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<InvalidDataException>(
+            () =>
+                env.Service.BuildProjectAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project04 },
                     preTranslate: false,
                     CancellationToken.None
                 )
@@ -935,7 +984,7 @@ public class MachineProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
+        Assert.ThrowsAsync<InvalidDataException>(
             () =>
                 env.Service.EnsureTranslationEngineExistsAsync(
                     User01,
@@ -1249,7 +1298,7 @@ public class MachineProjectServiceTests
         var project = new SFProject { TranslateConfig = { Source = null } };
 
         // SUT
-        Assert.Throws<DataNotFoundException>(() => env.Service.GetSourceLanguage(project));
+        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project));
     }
 
     [Test]
@@ -1301,7 +1350,7 @@ public class MachineProjectServiceTests
         };
 
         // SUT
-        Assert.Throws<ArgumentNullException>(() => env.Service.GetSourceLanguage(project));
+        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project));
     }
 
     [Test]
@@ -3788,6 +3837,7 @@ public class MachineProjectServiceTests
                         },
                     },
                     new SFProjectSecret { Id = Project03 },
+                    new SFProjectSecret { Id = Project04 },
                 ]
             );
 
@@ -3889,6 +3939,16 @@ public class MachineProjectServiceTests
                             TranslationSuggestionsEnabled = true,
                             Source = new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 },
                         },
+                    },
+                    new SFProject
+                    {
+                        Id = Project04,
+                        Name = "project04",
+                        ShortName = "P04",
+                        ParatextId = Paratext04,
+                        CheckingConfig = new CheckingConfig(),
+                        UserRoles = [],
+                        TranslateConfig = new TranslateConfig { PreTranslate = true, DraftConfig = { } },
                     },
                 ]
             );

@@ -519,6 +519,7 @@ public class MachineProjectService(
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An asynchronous task.</returns>
     /// <exception cref="DataNotFoundException">The project or project secret could not be found.</exception>
+    /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual async Task BuildProjectAsync(
         string curUserId,
@@ -944,7 +945,7 @@ public class MachineProjectService(
                 // This error can occur if the project source is cleared while the build is running
                 if (projectDoc.Data.TranslateConfig.Source is null)
                 {
-                    throw new DataNotFoundException("The project source is not specified.");
+                    throw new InvalidDataException("The project source is not specified.");
                 }
 
                 // Update the source writing system tag
@@ -1015,7 +1016,7 @@ public class MachineProjectService(
         // This error can occur if the project source is cleared while the build is running
         if (project.TranslateConfig.Source is null)
         {
-            throw new DataNotFoundException("The project source is not specified.");
+            throw new InvalidDataException("The project source is not specified.");
         }
 
         string alternateSourceLanguage = project.TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag;
@@ -1024,7 +1025,8 @@ public class MachineProjectService(
             && !string.IsNullOrWhiteSpace(alternateSourceLanguage);
         return useAlternateSourceLanguage
             ? alternateSourceLanguage
-            : project.TranslateConfig.Source?.WritingSystem.Tag ?? throw new ArgumentNullException(nameof(project));
+            : project.TranslateConfig.Source?.WritingSystem.Tag
+                ?? throw new InvalidDataException("The source project's language is not specified.");
     }
 
     /// <summary>
