@@ -973,7 +973,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
         await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
         env.Service.Configure()
-            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: true, CancellationToken.None)
+            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: false, CancellationToken.None)
             .Returns(Task.FromResult(false));
 
         // Retrieve required objects
@@ -990,7 +990,7 @@ public class MachineProjectServiceTests
                     User01,
                     projectDoc,
                     projectSecret,
-                    preTranslate: true,
+                    preTranslate: false,
                     CancellationToken.None
                 )
         );
@@ -1032,6 +1032,42 @@ public class MachineProjectServiceTests
         Assert.AreEqual(TranslationEngine02, actual);
         Assert.IsNull(env.ProjectSecrets.Get(Project03).ServalData?.PreTranslationEngineId);
         Assert.AreEqual(sourceLanguage, env.Projects.Get(Project03).TranslateConfig.Source?.WritingSystem.Tag);
+        Assert.AreEqual(targetLanguage, env.Projects.Get(Project03).WritingSystem.Tag);
+    }
+
+    [Test]
+    public async Task EnsureTranslationEngineExistsAsync_SetsUpTheProjectAndTranslationEngineForPreTranslationWithNoSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string targetLanguage = "fr";
+        await env.SetupProjectSecretAsync(Project03, new ServalData { PreTranslationEngineId = TranslationEngine01 });
+        env.Service.Configure()
+            .TranslationEngineExistsAsync(Project03, TranslationEngine01, preTranslate: true, CancellationToken.None)
+            .Returns(Task.FromResult(false));
+        env.Service.Configure()
+            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: true, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine02));
+        env.ParatextService.GetWritingSystem(Arg.Any<UserSecret>(), Paratext03)
+            .Returns(new WritingSystem { Tag = targetLanguage });
+
+        // Retrieve required objects, and remove the source
+        await using IConnection connection = await env.RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = connection.Get<SFProject>(Project03);
+        await projectDoc.FetchAsync();
+        await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.TranslateConfig.Source));
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
+
+        // SUT
+        string actual = await env.Service.EnsureTranslationEngineExistsAsync(
+            User01,
+            projectDoc,
+            projectSecret,
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.AreEqual(TranslationEngine02, actual);
+        Assert.IsNull(env.ProjectSecrets.Get(Project03).ServalData?.PreTranslationEngineId);
         Assert.AreEqual(targetLanguage, env.Projects.Get(Project03).WritingSystem.Tag);
     }
 
@@ -2821,7 +2857,11 @@ public class MachineProjectServiceTests
             op =>
             {
                 op.Set(p => p.WritingSystem.Tag, "fr");
-                op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, "fr_be");
+                if (options.Source)
+                {
+                    op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, "fr_be");
+                }
+
                 if (options.AlternateSource)
                 {
                     op.Set(p => p.TranslateConfig.DraftConfig.AlternateSource.WritingSystem.Tag, "fr_ca");
@@ -2926,19 +2966,40 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenSourceMissing()
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenSourceMissingForSmt()
     {
         // Set up test environment
         var env = new TestEnvironment();
         await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
+        await env.SetupProjectSecretAsync(Project01, new ServalData { TranslationEngineId = TranslationEngine01 });
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
+        Assert.ThrowsAsync<InvalidDataException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
                     User01,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenNoSourceOrAlternateSourceForNmt()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
+        await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
+
+        // SUT
+        Assert.ThrowsAsync<InvalidDataException>(
+            () =>
+                env.Service.SyncProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: true,
                     CancellationToken.None
                 )
         );
@@ -3664,19 +3725,27 @@ public class MachineProjectServiceTests
             bool[] boolValues = [false, true];
             foreach (bool preTranslate in boolValues)
             {
-                foreach (bool alternateSource in boolValues)
+                foreach (bool source in boolValues)
                 {
-                    foreach (bool alternateTrainingSource in boolValues)
+                    foreach (bool alternateSource in boolValues)
                     {
-                        foreach (bool additionalTrainingSource in boolValues)
+                        foreach (bool alternateTrainingSource in boolValues)
                         {
-                            yield return new TestEnvironmentOptions
+                            foreach (bool additionalTrainingSource in boolValues)
                             {
-                                AlternateSource = alternateSource,
-                                AlternateTrainingSource = alternateTrainingSource,
-                                AdditionalTrainingSource = additionalTrainingSource,
-                                PreTranslate = preTranslate,
-                            };
+                                var options = new TestEnvironmentOptions
+                                {
+                                    AlternateSource = alternateSource,
+                                    AlternateTrainingSource = alternateTrainingSource,
+                                    AdditionalTrainingSource = additionalTrainingSource,
+                                    PreTranslate = preTranslate,
+                                    Source = source,
+                                };
+                                if (options.WillSucceed)
+                                {
+                                    yield return options;
+                                }
+                            }
                         }
                     }
                 }
@@ -3687,6 +3756,7 @@ public class MachineProjectServiceTests
                     AlternateTrainingSource = true,
                     AlternateTrainingSourceAndSourceAreTheSame = true,
                     PreTranslate = preTranslate,
+                    Source = true,
                 };
             }
         }
@@ -3702,7 +3772,17 @@ public class MachineProjectServiceTests
         public bool HasTranslationEngineForSmt { get; init; }
         public bool LegacyCorpora { get; init; }
         public bool PreTranslate { get; init; }
+        public bool Source { get; init; }
         public bool UseEchoForPreTranslation { get; init; }
+
+        /// <summary>
+        /// Determines if the test has the minimum required configuration to succeed.
+        /// </summary>
+        public bool WillSucceed => AlternateSourceOrSourceAndNmt || SourceAndSmt;
+
+        private bool AlternateSourceOrSourceAndNmt => (AlternateSource || Source) && PreTranslate;
+
+        private bool SourceAndSmt => Source && !PreTranslate;
     }
 
     private class TestEnvironment
@@ -3879,12 +3959,14 @@ public class MachineProjectServiceTests
                         TranslateConfig = new TranslateConfig
                         {
                             TranslationSuggestionsEnabled = true,
-                            Source = new TranslateSource
-                            {
-                                ProjectRef = Project01,
-                                ParatextId = Paratext01,
-                                WritingSystem = new WritingSystem { Tag = "en" },
-                            },
+                            Source = options.Source
+                                ? new TranslateSource
+                                {
+                                    ProjectRef = Project01,
+                                    ParatextId = Paratext01,
+                                    WritingSystem = new WritingSystem { Tag = "en" },
+                                }
+                                : null,
                             DraftConfig = new DraftConfig
                             {
                                 AlternateSourceEnabled = options.AlternateSource,
@@ -3948,7 +4030,7 @@ public class MachineProjectServiceTests
                         ParatextId = Paratext04,
                         CheckingConfig = new CheckingConfig(),
                         UserRoles = [],
-                        TranslateConfig = new TranslateConfig { PreTranslate = true, DraftConfig = { } },
+                        TranslateConfig = new TranslateConfig { PreTranslate = true },
                     },
                 ]
             );
@@ -4006,7 +4088,7 @@ public class MachineProjectServiceTests
             bool createsServalCorpora
         )
         {
-            int numberOfServalCorpusFiles = 2;
+            int numberOfServalCorpusFiles = 1;
 
             // Target
             await CorporaClient
@@ -4015,33 +4097,44 @@ public class MachineProjectServiceTests
             Assert.AreEqual(options.PreTranslate ? 2 : 1, actual.Count(s => s.ProjectId == Project02));
 
             // Source
-            await CorporaClient
-                .Received(createsServalCorpora ? 1 : 0)
-                .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project01}"));
-
-            // See how many times the source corpus was used in the parallel corpora
-            int expected = options switch
+            if (options.Source)
             {
-                { PreTranslate: false } => 1,
+                await CorporaClient
+                    .Received(createsServalCorpora ? 1 : 0)
+                    .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project01}"));
+                numberOfServalCorpusFiles++;
+
+                // See how many times the source corpus was used in the parallel corpora
+                int expected = options switch
                 {
-                    PreTranslate: true,
-                    AlternateTrainingSource: true,
-                    AlternateTrainingSourceAndSourceAreTheSame: true
-                } => 2,
-                { PreTranslate: true, AlternateTrainingSource: true, AlternateSource: true } => 0,
-                { PreTranslate: true, AlternateTrainingSource: true } => 1,
-                { PreTranslate: true, AlternateSource: true } => 1,
-                { PreTranslate: true } => 2,
-            };
-            Assert.AreEqual(expected, actual.Count(s => s.ProjectId == Project01));
+                    { PreTranslate: false } => 1,
+                    {
+                        PreTranslate: true,
+                        AlternateTrainingSource: true,
+                        AlternateTrainingSourceAndSourceAreTheSame: true,
+                    } => 2,
+                    { PreTranslate: true, AlternateTrainingSource: true, AlternateSource: true } => 0,
+                    { PreTranslate: true, AlternateTrainingSource: true } => 1,
+                    { PreTranslate: true, AlternateSource: true } => 1,
+                    { PreTranslate: true } => 2,
+                };
+                Assert.AreEqual(expected, actual.Count(s => s.ProjectId == Project01));
+            }
 
             // Alternate Source
             if (options.AlternateSource)
             {
+                int expected = options switch
+                {
+                    { PreTranslate: false } => 0,
+                    { PreTranslate: true, AlternateTrainingSource: true } => 1,
+                    { PreTranslate: true, Source: true } => 1,
+                    { PreTranslate: true } => 2,
+                };
                 await CorporaClient
                     .Received(createsServalCorpora ? 1 : 0)
                     .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project03}"));
-                Assert.AreEqual(options.PreTranslate ? 1 : 0, actual.Count(s => s.ProjectId == Project03));
+                Assert.AreEqual(expected, actual.Count(s => s.ProjectId == Project03));
                 numberOfServalCorpusFiles++;
             }
 
