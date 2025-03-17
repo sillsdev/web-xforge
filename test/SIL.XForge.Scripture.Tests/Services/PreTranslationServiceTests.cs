@@ -655,6 +655,9 @@ public class PreTranslationServiceTests
                     "MAT",
                     PretranslationUsfmTextOrigin.OnlyPretranslated,
                     PretranslationUsfmTemplate.Source,
+                    PretranslationUsfmMarkerBehavior.Preserve,
+                    PretranslationUsfmMarkerBehavior.Preserve,
+                    PretranslationUsfmMarkerBehavior.Strip,
                     CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);
