@@ -1,6 +1,5 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -345,7 +344,6 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('clears selected translated and reference books in training when translate book selected', () => {
-      clickConfirmLanguages(fixture);
       component.tryAdvanceStep();
       fixture.detectChanges();
       component.onTranslateBookSelect([3]);
@@ -370,7 +368,6 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('shows unselected translate book on training page', () => {
-      clickConfirmLanguages(fixture);
       component.tryAdvanceStep();
       fixture.detectChanges();
       // select Exodus and Leviticus
@@ -525,7 +522,6 @@ describe('DraftGenerationStepsComponent', () => {
 
       spyOn(component.done, 'emit');
       fixture.detectChanges();
-      clickConfirmLanguages(fixture);
       expect(component.isStepsCompleted).toBe(false);
       // Advance to the next step when at last step should emit books result
       fixture.detectChanges();
@@ -569,7 +565,6 @@ describe('DraftGenerationStepsComponent', () => {
 
       spyOn(component.done, 'emit');
       fixture.detectChanges();
-      clickConfirmLanguages(fixture);
       // Advance to the next step when at last step should emit books result
       fixture.detectChanges();
       component.tryAdvanceStep();
@@ -601,7 +596,6 @@ describe('DraftGenerationStepsComponent', () => {
 
       spyOn(component.done, 'emit');
       fixture.detectChanges();
-      clickConfirmLanguages(fixture);
       // Advance to the next step when at last step should emit books result
       fixture.detectChanges();
       component.tryAdvanceStep();
@@ -705,7 +699,6 @@ describe('DraftGenerationStepsComponent', () => {
       spyOn(component.done, 'emit');
 
       fixture.detectChanges();
-      clickConfirmLanguages(fixture);
       const step = fixture.debugElement.queryAll(By.css('mat-step-header'));
       step[3].nativeElement.click(); //click the next step
       fixture.detectChanges();
@@ -891,7 +884,6 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('updates available training data file after uploaded or deleted', () => {
       fixture.detectChanges();
-      clickConfirmLanguages(fixture);
       component.tryAdvanceStep();
       fixture.detectChanges();
       component.onTranslateBookSelect([3]);
@@ -917,7 +909,6 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('generates draft with training data file', () => {
       fixture.detectChanges();
-      clickConfirmLanguages(fixture);
       component.tryAdvanceStep();
       fixture.detectChanges();
       component.onTranslateBookSelect([3]);
@@ -1039,12 +1030,4 @@ describe('DraftGenerationStepsComponent', () => {
       expect(trainingGroups[1].ranges[1]).toEqual('1 Samuel');
     });
   });
-
-  function clickConfirmLanguages(fixture: ComponentFixture<DraftGenerationStepsComponent>): void {
-    const notice: DebugElement = fixture.debugElement.query(By.css('app-notice'));
-    const checkboxDebug = notice.query(By.css('input[type="checkbox"]'));
-    const checkbox = checkboxDebug.nativeElement as HTMLInputElement;
-    checkbox.click();
-    fixture.detectChanges();
-  }
 });

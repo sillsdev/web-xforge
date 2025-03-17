@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, Output } from '@angular/core';
+import { Component, DestroyRef } from '@angular/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -11,17 +11,15 @@ import {
   draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays,
   projectToDraftSources
 } from '../draft-utils';
-import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
+
 @Component({
   selector: 'app-confirm-sources',
   standalone: true,
-  imports: [TranslocoModule, MatCheckboxModule, MatIconModule, LanguageCodesConfirmationComponent],
+  imports: [TranslocoModule, MatCheckboxModule, MatIconModule],
   templateUrl: './confirm-sources.component.html',
   styleUrl: './confirm-sources.component.scss'
 })
 export class ConfirmSourcesComponent {
-  @Output() languageCodesVerified = new EventEmitter<boolean>(false);
-
   draftSources: DraftSourcesAsSelectableProjectArrays = {
     trainingSources: [],
     trainingTargets: [],
@@ -68,10 +66,6 @@ export class ConfirmSourcesComponent {
 
   get draftingSourceShortNames(): string {
     return this.i18nService.enumerateList(this.draftingSources.filter(p => p != null).map(p => p.shortName));
-  }
-
-  confirmationChanged(checked: boolean): void {
-    this.languageCodesVerified.emit(checked);
   }
 
   displayNameForProjectsLanguages(projects: { languageTag: string }[]): string {
