@@ -72,8 +72,13 @@
         </app-notice>
       }
 
+      @if (draftEnabled && !hasConfigureSourcePermission && !isSourcesConfigurationComplete) {
+        <app-notice type="warning" icon="warning" data-test-id="warning-admin-must-configure-sources">
+          <span>{{ t("info_alert_please_have_admin_configure_sources") }}</span>
+        </app-notice>
+      }
       <!-- Only show warnings if target language is supported and sources have been configured -->
-      @if (draftEnabled && isTargetLanguageSupported && isSourcesConfigurationComplete) {
+      @else if (draftEnabled && isTargetLanguageSupported && isSourcesConfigurationComplete) {
         @if (!canAccessDraftSourceIfAvailable(source)) {
           <app-notice type="warning" icon="warning" data-test-id="warning-source-no-access">
             <transloco
