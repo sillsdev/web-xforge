@@ -4245,6 +4245,7 @@ public class SFProjectServiceTests
                     User01,
                     systemRoles: [SystemRole.User],
                     Project01,
+                    scope: null,
                     pageIndex: -1,
                     pageSize: 0
                 )
@@ -4263,6 +4264,7 @@ public class SFProjectServiceTests
                     User01,
                     systemRoles: [SystemRole.User],
                     Project01,
+                    scope: null,
                     pageIndex: 0,
                     pageSize: 0
                 )
@@ -4281,6 +4283,7 @@ public class SFProjectServiceTests
                     User01,
                     systemRoles: [SystemRole.User],
                     projectId: "invalid_project",
+                    scope: null,
                     pageIndex: 0,
                     pageSize: 10
                 )
@@ -4292,18 +4295,22 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
-        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
+        env.EventMetricService.GetEventMetricsAsync(Project01, scope: EventScope.Checking, pageIndex: 0, pageSize: 10)
+            .Returns(expected);
 
         // SUT
         QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             User01,
             systemRoles: [SystemRole.User],
             Project01,
+            scope: EventScope.Checking,
             pageIndex: 0,
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
-        await env.EventMetricService.Received().GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10);
+        await env
+            .EventMetricService.Received()
+            .GetEventMetricsAsync(Project01, scope: EventScope.Checking, pageIndex: 0, pageSize: 10);
     }
 
     [Test]
@@ -4311,18 +4318,22 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
-        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
+        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10, scope: null)
+            .Returns(expected);
 
         // SUT
         QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             User06,
             systemRoles: [SystemRole.ServalAdmin],
             Project01,
+            scope: null,
             pageIndex: 0,
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
-        await env.EventMetricService.Received().GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10);
+        await env
+            .EventMetricService.Received()
+            .GetEventMetricsAsync(Project01, scope: null, pageIndex: 0, pageSize: 10);
     }
 
     [Test]
@@ -4330,18 +4341,22 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
-        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
+        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10, scope: null)
+            .Returns(expected);
 
         // SUT
         QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             User06,
             systemRoles: [SystemRole.SystemAdmin],
             Project01,
+            scope: null,
             pageIndex: 0,
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
-        await env.EventMetricService.Received().GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10);
+        await env
+            .EventMetricService.Received()
+            .GetEventMetricsAsync(Project01, scope: null, pageIndex: 0, pageSize: 10);
     }
 
     [Test]
@@ -4356,6 +4371,7 @@ public class SFProjectServiceTests
                     User05,
                     systemRoles: [SystemRole.User],
                     Project01,
+                    scope: null,
                     pageIndex: 0,
                     pageSize: 10
                 )
