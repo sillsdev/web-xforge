@@ -78,10 +78,15 @@ public static class DataAccessServiceCollectionExtensions
     /// <remarks>
     /// This function is internal for unit testing purposes.
     /// </remarks>
-    internal static void CreateEventMetricsIndexes(IMongoIndexManager<EventMetric> indexManager) =>
+    internal static void CreateEventMetricsIndexes(IMongoIndexManager<EventMetric> indexManager)
+    {
         indexManager.CreateOne(
             new CreateIndexModel<EventMetric>(Builders<EventMetric>.IndexKeys.Ascending(em => em.ProjectId))
         );
+        indexManager.CreateOne(
+            new CreateIndexModel<EventMetric>(Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope))
+        );
+    }
 
     private static MongoRepository<T> CreateMongoRepository<T>(
         IServiceProvider sp,

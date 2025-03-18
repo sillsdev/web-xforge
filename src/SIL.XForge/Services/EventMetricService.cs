@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -13,7 +14,12 @@ namespace SIL.XForge.Services;
 
 public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventMetricService
 {
-    public async Task<QueryResults<EventMetric>> GetEventMetricsAsync(string? projectId, int pageIndex, int pageSize)
+    public async Task<QueryResults<EventMetric>> GetEventMetricsAsync(
+        string? projectId,
+        EventScope? scope,
+        int pageIndex,
+        int pageSize
+    )
     {
         // Do not allow querying of event metrics without a project identifier
         if (projectId is null)
@@ -21,15 +27,20 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             return new QueryResults<EventMetric> { Results = [], UnpagedCount = 0 };
         }
 
+        // Build the filter expression for the query
+        Expression<Func<EventMetric, bool>> filter = scope is not null
+            ? m => m.ProjectId == projectId && m.Scope == scope
+            : m => m.ProjectId == projectId;
+
         return new QueryResults<EventMetric>
         {
             Results = eventMetrics
                 .Query()
-                .Where(m => m.ProjectId == projectId)
+                .Where(filter)
                 .OrderByDescending(m => m.TimeStamp)
                 .Skip(pageIndex * pageSize)
                 .Take(pageSize),
-            UnpagedCount = await eventMetrics.CountDocumentsAsync(m => m.ProjectId == projectId),
+            UnpagedCount = await eventMetrics.CountDocumentsAsync(filter),
         };
     }
 
@@ -37,7 +48,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         string? projectId,
         string? userId,
         string eventType,
-        EventScope eventScope,
+        EventScope scope,
         Dictionary<string, object> argumentsWithNames,
         object? result,
         Exception? exception
@@ -58,7 +69,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             EventType = eventType,
             Payload = payload,
             ProjectId = projectId,
-            Scope = eventScope,
+            Scope = scope,
             UserId = userId,
         };
 
