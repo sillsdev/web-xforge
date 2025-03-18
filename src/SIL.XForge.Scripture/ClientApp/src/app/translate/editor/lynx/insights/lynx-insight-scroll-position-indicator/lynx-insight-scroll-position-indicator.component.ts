@@ -1,7 +1,7 @@
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { combineLatest, debounceTime, filter, fromEvent, map, startWith, switchMap } from 'rxjs';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { LynxableEditor, LynxEditor } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
@@ -45,7 +45,7 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
       .pipe(
         switchMap(() => this.editorInsightState.filteredChapterInsights$),
         map(insights => insights.map(insight => this.getScrollPosition(insight, this.lynxEditor!))),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(scrollPositions => {
         this.scrollPositions = scrollPositions;
