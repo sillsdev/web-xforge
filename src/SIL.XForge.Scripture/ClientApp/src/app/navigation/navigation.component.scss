@@ -32,6 +32,10 @@ mat-nav-list .mdc-list-item {
     --mdc-list-list-item-label-text-color: var(--sf-navigation-list-item-active);
     --mdc-list-list-item-hover-label-text-color: var(--sf-navigation-list-item-active);
     --mdc-list-list-item-focus-label-text-color: var(--sf-navigation-list-item-active);
+    .nav-label {
+      background-color: var(--sf-navigation-list-item-active);
+      color: var(--sf-navigation-list-item-active-background-color);
+    }
   }
 }
 
@@ -91,11 +95,12 @@ mat-nav-list .mdc-list-item {
 }
 
 .nav-label {
-  color: white;
   padding: 2px 6px;
   line-height: 1rem;
   border-radius: 100px;
   font-size: 0.95em;
   margin-inline-start: auto;
   margin-inline-end: 12px;
+  background-color: var(--sf-navigation-list-item-active-background-color);
+  color: var(--sf-navigation-list-item-active);
 }
