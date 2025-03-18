@@ -679,8 +679,8 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
         await env.SetupProjectSecretAsync(Project01, new ServalData());
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns("en");
+        env.Service.Configure().GetTargetLanguageAsync(project, preTranslate: true).Returns(Task.FromResult("de"));
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
@@ -697,8 +697,8 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
         await env.SetupProjectSecretAsync(Project01, new ServalData());
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: false).Returns("en");
+        env.Service.Configure().GetTargetLanguageAsync(project, preTranslate: false).Returns(Task.FromResult("de"));
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
@@ -736,8 +736,8 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns("en");
+        env.Service.Configure().GetTargetLanguageAsync(project, preTranslate: true).Returns(Task.FromResult("de"));
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
@@ -753,8 +753,8 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: false).Returns("en");
+        env.Service.Configure().GetTargetLanguageAsync(project, preTranslate: false).Returns(Task.FromResult("de"));
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
@@ -774,8 +774,8 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns("en");
+        env.Service.Configure().GetTargetLanguageAsync(project, preTranslate: true).Returns(Task.FromResult("de"));
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine()));
 
@@ -1302,7 +1302,7 @@ public class MachineProjectServiceTests
         };
 
         // SUT
-        string actual = env.Service.GetSourceLanguage(project);
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
         Assert.AreEqual(sourceWritingSystemTag, actual);
     }
 
@@ -1322,7 +1322,35 @@ public class MachineProjectServiceTests
         };
 
         // SUT
-        string actual = env.Service.GetSourceLanguage(project);
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
+        Assert.AreEqual(sourceWritingSystemTag, actual);
+    }
+
+    [Test]
+    public void GetSourceLanguage_UsesTheAlternateSourceIfPreTranslateIsFalse()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string alternateSourceWritingSystemTag = "alternate_source_writing_system_tag";
+        const string sourceWritingSystemTag = "source_writing_system_tag";
+        var project = new SFProject
+        {
+            TranslateConfig =
+            {
+                DraftConfig = new DraftConfig
+                {
+                    AlternateSourceEnabled = true,
+                    AlternateSource = new TranslateSource
+                    {
+                        WritingSystem = new WritingSystem { Tag = alternateSourceWritingSystemTag },
+                    },
+                },
+                Source = new TranslateSource { WritingSystem = new WritingSystem { Tag = sourceWritingSystemTag } },
+            },
+        };
+
+        // SUT
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: false);
         Assert.AreEqual(sourceWritingSystemTag, actual);
     }
 
@@ -1334,7 +1362,7 @@ public class MachineProjectServiceTests
         var project = new SFProject { TranslateConfig = { Source = null } };
 
         // SUT
-        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project));
+        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project, preTranslate: true));
     }
 
     [Test]
@@ -1344,7 +1372,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.Throws<DataNotFoundException>(() => env.Service.GetSourceLanguage(null));
+        Assert.Throws<DataNotFoundException>(() => env.Service.GetSourceLanguage(null, preTranslate: true));
     }
 
     [Test]
@@ -1371,7 +1399,7 @@ public class MachineProjectServiceTests
         };
 
         // SUT
-        string actual = env.Service.GetSourceLanguage(project);
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
         Assert.AreEqual(alternateSourceWritingSystemTag, actual);
     }
 
@@ -1386,7 +1414,7 @@ public class MachineProjectServiceTests
         };
 
         // SUT
-        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project));
+        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project, preTranslate: false));
     }
 
     [Test]
@@ -1409,10 +1437,10 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment(new TestEnvironmentOptions { UseEchoForPreTranslation = true });
         const string sourceWritingSystemTag = "source_writing_system_tag";
         var project = new SFProject();
-        env.Service.Configure().GetSourceLanguage(project).Returns(sourceWritingSystemTag);
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(sourceWritingSystemTag);
 
         // SUT
-        string actual = await env.Service.GetTargetLanguageAsync(project);
+        string actual = await env.Service.GetTargetLanguageAsync(project, preTranslate: true);
         Assert.AreEqual(sourceWritingSystemTag, actual);
     }
 
@@ -1425,7 +1453,7 @@ public class MachineProjectServiceTests
         var project = new SFProject { WritingSystem = new WritingSystem { Tag = targetWritingSystemTag } };
 
         // SUT
-        string actual = await env.Service.GetTargetLanguageAsync(project);
+        string actual = await env.Service.GetTargetLanguageAsync(project, preTranslate: true);
         Assert.AreEqual(targetWritingSystemTag, actual);
     }
 
@@ -1878,8 +1906,10 @@ public class MachineProjectServiceTests
         var project = new SFProject { Id = Project01 };
         const string targetLanguage = "en";
         const string sourceLanguage = "de";
-        env.Service.Configure().GetSourceLanguage(project).Returns(sourceLanguage);
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult(targetLanguage));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(sourceLanguage);
+        env.Service.Configure()
+            .GetTargetLanguageAsync(project, preTranslate: true)
+            .Returns(Task.FromResult(targetLanguage));
         env.Service.Configure()
             .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
             .Returns(Task.FromResult(string.Empty));
@@ -1922,8 +1952,10 @@ public class MachineProjectServiceTests
         const string targetLanguage = "en";
         const string oldSourceLanguage = "de";
         const string newSourceLanguage = "fr";
-        env.Service.Configure().GetSourceLanguage(project).Returns(oldSourceLanguage);
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult(targetLanguage));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(oldSourceLanguage);
+        env.Service.Configure()
+            .GetTargetLanguageAsync(project, preTranslate: true)
+            .Returns(Task.FromResult(targetLanguage));
         env.Service.Configure()
             .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
             .Returns(Task.FromResult(string.Empty));
@@ -1962,8 +1994,10 @@ public class MachineProjectServiceTests
         const string oldTargetLanguage = "en";
         const string newTargetLanguage = "fr";
         const string sourceLanguage = "de";
-        env.Service.Configure().GetSourceLanguage(project).Returns(sourceLanguage);
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult(newTargetLanguage));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(sourceLanguage);
+        env.Service.Configure()
+            .GetTargetLanguageAsync(project, preTranslate: true)
+            .Returns(Task.FromResult(newTargetLanguage));
         env.Service.Configure()
             .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
             .Returns(Task.FromResult(string.Empty));
@@ -2653,8 +2687,8 @@ public class MachineProjectServiceTests
             SourceCorpusId = Corpus01,
             TargetCorpusId = Corpus02,
         };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns("en");
+        env.Service.Configure().GetTargetLanguageAsync(project, preTranslate: true).Returns(Task.FromResult("de"));
         env.Service.Configure()
             .CreateOrUpdateParallelCorpusAsync(
                 TranslationEngine01,
@@ -2709,8 +2743,8 @@ public class MachineProjectServiceTests
         var project = new SFProject { Id = Project01 };
         var buildConfig = new BuildConfig { TrainingDataFiles = [Data01] };
         var additionalTrainingData = new ServalAdditionalTrainingData();
-        env.Service.Configure().GetSourceLanguage(project).Returns(sourceLanguage);
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(sourceLanguage);
+        env.Service.Configure().GetTargetLanguageAsync(project, preTranslate: true).Returns(Task.FromResult("de"));
         env.Service.Configure()
             .CreateOrUpdateParallelCorpusAsync(
                 TranslationEngine01,
