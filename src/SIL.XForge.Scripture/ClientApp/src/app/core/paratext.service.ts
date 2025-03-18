@@ -74,6 +74,7 @@ export class ParatextService {
       .pipe(map(r => r ?? undefined));
   }
 
+  /** Get list of projects a user has access to, whether or not the project is already at SF. */
   getProjects(): Promise<ParatextProject[] | undefined> {
     return firstValueFrom(
       this.http.get<ParatextProject[] | undefined>(`${PARATEXT_API_NAMESPACE}/projects`, { headers: this.headers })

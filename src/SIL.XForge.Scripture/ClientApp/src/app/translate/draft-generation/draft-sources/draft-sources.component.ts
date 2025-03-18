@@ -294,8 +294,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     const currentSFProjectId = this.activatedProjectService.projectDoc.id;
     if (currentSFProjectId == null) throw new Error('Project ID is null');
 
-    const definedSources = this.draftingSources.filter(s => s != null);
-    const definedReferences = this.trainingSources.filter(s => s != null);
+    const definedSources: SelectableProjectWithLanguageCode[] = this.draftingSources.filter(s => s != null);
+    const definedReferences: SelectableProjectWithLanguageCode[] = this.trainingSources.filter(s => s != null);
 
     let messageKey: I18nKeyForComponent<'draft_sources'> | undefined;
     if (definedSources.length === 0 && definedReferences.length === 0) {
@@ -313,6 +313,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
     const currentProjectParatextId: string = this.activatedProjectService.projectDoc.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
+      // definedReferences,
+      // definedSources,
       this.trainingSources as SelectableProject[],
       this.draftingSources as SelectableProject[],
       this.trainingTargets as SelectableProject[],
