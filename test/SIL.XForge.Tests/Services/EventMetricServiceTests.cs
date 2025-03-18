@@ -21,6 +21,7 @@ namespace SIL.XForge.Services;
 public class EventMetricServiceTests
 {
     private const EventScope EventScope01 = EventScope.Settings;
+    private const EventScope EventScope02 = EventScope.Drafting;
     private const string EventType01 = "myFunctionName";
     private const string Project01 = "project01";
     private const string User01 = "user01";
@@ -44,6 +45,7 @@ public class EventMetricServiceTests
         // SUT
         QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             projectId: null,
+            scope: null,
             pageIndex: 0,
             pageSize: 10
         );
@@ -51,6 +53,25 @@ public class EventMetricServiceTests
         // Do not retrieve any projects, even the metric with no project identifier
         Assert.IsEmpty(actual.Results);
         Assert.Zero(actual.UnpagedCount);
+    }
+
+    [Test]
+    public async Task GetEventMetricsAsync_FilterByScope()
+    {
+        var env = new TestEnvironment();
+        Assert.AreEqual(4, env.EventMetrics.Query().Count());
+
+        // SUT
+        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
+            Project01,
+            scope: EventScope01,
+            pageIndex: 0,
+            pageSize: 10
+        );
+
+        // Skip the one event metric without a project identifier
+        Assert.AreEqual(2, actual.Results.Count());
+        Assert.AreEqual(2, actual.UnpagedCount);
     }
 
     [Test]
@@ -62,6 +83,7 @@ public class EventMetricServiceTests
         // SUT
         QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             Project01,
+            scope: null,
             pageIndex: 0,
             pageSize: 10
         );
@@ -78,7 +100,12 @@ public class EventMetricServiceTests
         Assert.AreEqual(4, env.EventMetrics.Query().Count());
 
         // SUT
-        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(Project01, pageIndex: 1, pageSize: 2);
+        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
+            Project01,
+            scope: null,
+            pageIndex: 1,
+            pageSize: 2
+        );
 
         // The first page has 2 event metrics, the second page just 1 event metric
         Assert.AreEqual(1, actual.Results.Count());
@@ -377,7 +404,7 @@ public class EventMetricServiceTests
                         EventType = "fourthEvent",
                         Payload = [],
                         ProjectId = Project01,
-                        Scope = EventScope01,
+                        Scope = EventScope02,
                         TimeStamp = DateTime.UtcNow.AddHours(-1),
                     },
                 ]

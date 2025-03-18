@@ -80,7 +80,7 @@ public class EventMetricLoggerTests
                 projectId: null,
                 userId: null,
                 eventType: nameof(TestClass.NoArguments),
-                eventScope: EventScope.None,
+                scope: EventScope.None,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a => a.Count == 0),
                 result: Arg.Any<object>(),
                 exception: Arg.Any<Exception>()
@@ -105,7 +105,7 @@ public class EventMetricLoggerTests
                 projectId: null,
                 userId: null,
                 eventType: nameof(TestClass.NoArguments),
-                eventScope: EventScope.None,
+                scope: EventScope.None,
                 argumentsWithNames: Arg.Any<Dictionary<string, object>>(),
                 result: Arg.Any<object>(),
                 exception: Arg.Any<Exception>()
@@ -135,7 +135,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ProjectIdAndUserId),
-                eventScope: EventScope.Settings,
+                scope: EventScope.Settings,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -167,7 +167,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ProjectIdAndNonStandardUserId),
-                eventScope: EventScope.Sync,
+                scope: EventScope.Sync,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -199,7 +199,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.NonStandardProjectIdAndUserId),
-                eventScope: EventScope.Drafting,
+                scope: EventScope.Drafting,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -231,7 +231,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.NonStandardProjectIdAndNonStandardUserId),
-                eventScope: EventScope.Checking,
+                scope: EventScope.Checking,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -274,7 +274,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ObjectAsArgument),
-                eventScope: EventScope.None,
+                scope: EventScope.None,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -335,7 +335,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ComplexArguments),
-                eventScope: EventScope.None,
+                scope: EventScope.None,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -367,7 +367,7 @@ public class EventMetricLoggerTests
                 projectId: null,
                 userId: null,
                 eventType: nameof(TestClass.MisconfiguredProperty),
-                eventScope: EventScope.None,
+                scope: EventScope.None,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -400,7 +400,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ReturnString),
-                eventScope: EventScope.Settings,
+                scope: EventScope.Settings,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -431,7 +431,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ReturnTaskAsync),
-                eventScope: EventScope.Settings,
+                scope: EventScope.Settings,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -464,7 +464,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ReturnTaskGenericAsync),
-                eventScope: EventScope.Settings,
+                scope: EventScope.Settings,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -504,7 +504,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ThrowNonAsyncException),
-                eventScope: EventScope.Settings,
+                scope: EventScope.Settings,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -544,7 +544,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ThrowExceptionAsync),
-                eventScope: EventScope.Settings,
+                scope: EventScope.Settings,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),
@@ -584,7 +584,7 @@ public class EventMetricLoggerTests
                 Project01,
                 User01,
                 eventType: nameof(TestClass.ThrowExceptionWithReturnValueAsync),
-                eventScope: EventScope.Settings,
+                scope: EventScope.Settings,
                 argumentsWithNames: Arg.Is<Dictionary<string, object>>(a =>
                     env.PayloadEqualityComparer.Equals(a, argumentsWithNames)
                 ),

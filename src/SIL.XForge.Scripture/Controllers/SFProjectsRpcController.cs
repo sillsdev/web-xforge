@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using Hangfire;
 using SIL.XForge.Controllers;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -651,11 +652,18 @@ public class SFProjectsRpcController(
         }
     }
 
-    public async Task<IRpcMethodResult> EventMetrics(string projectId, int pageIndex, int pageSize)
+    public async Task<IRpcMethodResult> EventMetrics(
+        string projectId,
+        int pageIndex,
+        int pageSize,
+        EventScope? scope = null
+    )
     {
         try
         {
-            return Ok(await projectService.GetEventMetricsAsync(UserId, SystemRoles, projectId, pageIndex, pageSize));
+            return Ok(
+                await projectService.GetEventMetricsAsync(UserId, SystemRoles, projectId, scope, pageIndex, pageSize)
+            );
         }
         catch (ForbiddenException)
         {
@@ -678,6 +686,7 @@ public class SFProjectsRpcController(
                     { "projectId", projectId },
                     { "pageIndex", pageIndex.ToString() },
                     { "pageSize", pageSize.ToString() },
+                    { "scope", scope?.ToString() },
                 }
             );
             throw;
