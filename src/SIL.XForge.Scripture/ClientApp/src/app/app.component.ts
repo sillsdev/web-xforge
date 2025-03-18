@@ -35,6 +35,7 @@ import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { ThemeService } from 'xforge-common/theme.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -236,7 +237,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   async ngOnInit(): Promise<void> {
     await this.authService.loggedIn;
-    this.subscribe(this.featureFlags.darkMode.enabled$, enabled => {
+    this.featureFlags.darkMode.enabled$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(enabled => {
       this.themeService.setDarkMode(enabled);
     });
     this.loadingStarted();
