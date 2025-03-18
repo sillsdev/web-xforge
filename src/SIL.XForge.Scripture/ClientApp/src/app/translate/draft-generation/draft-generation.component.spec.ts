@@ -420,6 +420,22 @@ describe('DraftGenerationComponent', () => {
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
       });
 
+      it('should show warning when source project is not set and user is a translator', () => {
+        const env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              draftingSources: [],
+              trainingSources: [{} as DraftSource],
+              trainingTargets: [{} as DraftSource]
+            } as DraftSourcesAsArrays)
+          );
+          TestEnvironment.initProject('user02');
+        });
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-admin-must-configure-sources')).not.toBeNull();
+      });
+
       it('should not show warning when access to source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
