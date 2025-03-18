@@ -5,12 +5,12 @@
 
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
-  $background: #{mat.get-theme-color($theme, tertiary, if($is-dark, 30, 100))};
-  $background-inactive: #{mat.get-theme-color($theme, tertiary, if($is-dark, 40, 99))};
-  $background-hover-inactive: #{mat.get-theme-color($theme, tertiary, if($is-dark, 50, 90))};
-  $background-button-hover-inactive: #{mat.get-theme-color($theme, tertiary, if($is-dark, 60, 90))};
+  $background: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 100))};
+  $background-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 10, 98))};
+  $background-hover-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 20, 95))};
+  $background-button-hover-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 90))};
 
-  --sf-tab-header-active-tab-accent-color: #{mat.get-theme-color($theme, tertiary, 90)};
+  --sf-tab-header-active-tab-accent-color: #{mat.get-theme-color($theme, primary, 20)};
   --sf-tab-group-border-color: #{if($is-dark, rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.12))};
   --sf-tab-group-background-color: #{$background};
   --sf-tab-header-inactive-background-color: #{$background-inactive};
