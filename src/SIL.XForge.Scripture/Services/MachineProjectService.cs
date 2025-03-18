@@ -728,8 +728,8 @@ public class MachineProjectService(
             TranslationEngineConfig engineConfig = new TranslationEngineConfig
             {
                 Name = sfProject.Id,
-                SourceLanguage = GetSourceLanguage(sfProject),
-                TargetLanguage = await GetTargetLanguageAsync(sfProject),
+                SourceLanguage = GetSourceLanguage(sfProject, preTranslate),
+                TargetLanguage = await GetTargetLanguageAsync(sfProject, preTranslate),
                 Type = await GetTranslationEngineTypeAsync(preTranslate),
             };
 
@@ -999,13 +999,14 @@ public class MachineProjectService(
     /// Gets the drafting source language for the project.
     /// </summary>
     /// <param name="project">The project.</param>
+    /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <returns>The source language.</returns>
     /// <exception cref="DataNotFoundException">
     /// The project does not exist.
     /// </exception>
     /// <exception cref="InvalidDataException">The language of the source project was not specified.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
-    protected internal virtual string GetSourceLanguage(SFProject? project)
+    protected internal virtual string GetSourceLanguage(SFProject? project, bool preTranslate)
     {
         // This error can occur if the project is deleted while the build is running
         if (project is null)
@@ -1016,7 +1017,8 @@ public class MachineProjectService(
         string alternateSourceLanguage = project.TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag;
         bool useAlternateSourceLanguage =
             project.TranslateConfig.DraftConfig.AlternateSourceEnabled
-            && !string.IsNullOrWhiteSpace(alternateSourceLanguage);
+            && !string.IsNullOrWhiteSpace(alternateSourceLanguage)
+            && preTranslate;
         return useAlternateSourceLanguage
             ? alternateSourceLanguage
             : project.TranslateConfig.Source?.WritingSystem.Tag
@@ -1027,6 +1029,7 @@ public class MachineProjectService(
     /// Gets the target language for the project
     /// </summary>
     /// <param name="project">The project.</param>
+    /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
     /// <returns>The target language.</returns>
     /// <exception cref="DataNotFoundException">
     /// The source was not specified for the project, or the project does not exist.
@@ -1036,11 +1039,11 @@ public class MachineProjectService(
     /// If Echo is enabled, the source language will be returned.
     /// This can be mocked in unit tests.
     /// </remarks>
-    protected internal virtual async Task<string> GetTargetLanguageAsync(SFProject project)
+    protected internal virtual async Task<string> GetTargetLanguageAsync(SFProject project, bool preTranslate)
     {
         // Echo requires the target and source language to be the same, as it outputs your source texts
         bool useEcho = await featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-        return useEcho ? GetSourceLanguage(project) : project.WritingSystem.Tag!;
+        return useEcho ? GetSourceLanguage(project, preTranslate) : project.WritingSystem.Tag!;
     }
 
     /// <summary>
@@ -1240,7 +1243,7 @@ public class MachineProjectService(
             bool recreateTranslationEngine = false;
 
             // See if the target language has changed
-            string projectTargetLanguage = await GetTargetLanguageAsync(project);
+            string projectTargetLanguage = await GetTargetLanguageAsync(project, preTranslate);
             if (translationEngine.TargetLanguage != projectTargetLanguage)
             {
                 string message =
@@ -1250,7 +1253,7 @@ public class MachineProjectService(
             }
 
             // See if the source language has changed
-            string projectSourceLanguage = GetSourceLanguage(project);
+            string projectSourceLanguage = GetSourceLanguage(project, preTranslate);
             if (translationEngine.SourceLanguage != projectSourceLanguage)
             {
                 string message =
@@ -1418,7 +1421,7 @@ public class MachineProjectService(
             additionalTrainingData.TargetCorpusId = await UploadAdditionalTrainingDataAsync(
                 project.Id,
                 additionalTrainingData.TargetCorpusId,
-                languageCode: await GetTargetLanguageAsync(project),
+                languageCode: await GetTargetLanguageAsync(project, preTranslate: true),
                 targetCorpusFiles,
                 targetTexts,
                 cancellationToken
@@ -1429,7 +1432,7 @@ public class MachineProjectService(
             additionalTrainingData.SourceCorpusId = await UploadAdditionalTrainingDataAsync(
                 project.Id,
                 additionalTrainingData.SourceCorpusId,
-                GetSourceLanguage(project),
+                GetSourceLanguage(project, preTranslate: true),
                 sourceCorpusFiles,
                 sourceTexts,
                 cancellationToken
