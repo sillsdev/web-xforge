@@ -1,5 +1,4 @@
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatMenuTrigger } from '@angular/material/menu';
 import {
   LynxInsightFilter,
@@ -11,6 +10,7 @@ import {
   LynxInsightTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { I18nService } from 'xforge-common/i18n.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { LynxInsightStateService } from '../../lynx-insight-state.service';
 
 @Component({
@@ -37,17 +37,17 @@ export class LynxInsightsPanelHeaderComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.state.filter$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(filter => {
+    this.state.filter$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(filter => {
       this.filter = filter;
       this.selectedScopeIndex = this.scopes.indexOf(filter.scope);
     });
 
-    this.state.orderBy$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(orderBy => {
+    this.state.orderBy$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(orderBy => {
       this.orderBy = orderBy;
     });
 
     this.state.filteredInsightCountsByScope$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(counts => (this.scopeCounts = counts));
   }
 
