@@ -1,9 +1,9 @@
 import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from 'lodash-es';
 import { Delta } from 'quill';
 import { combineLatest, filter, fromEvent, merge, switchMap, tap } from 'rxjs';
 import { map, pairwise } from 'rxjs/operators';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxableEditor } from '../lynx-editor';
@@ -50,11 +50,11 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
       fromEvent(this.editor, 'selection-change').pipe(map(([range]) => range)),
       this.insightState.filteredChapterInsights$
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(([range, insights]) => this.handleSelectionChange(range, insights));
 
     combineLatest([fromEvent(this.editor.root, 'mouseover'), this.insightState.filteredChapterInsights$])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(([event]) => this.handleMouseOver(event.target as HTMLElement));
 
     this.editorReadyService
@@ -103,7 +103,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
             )
           )
         ),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe();
   }

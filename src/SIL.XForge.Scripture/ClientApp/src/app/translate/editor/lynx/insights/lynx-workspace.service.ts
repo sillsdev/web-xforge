@@ -1,5 +1,4 @@
 import { DestroyRef, Injectable } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   Diagnostic,
   DiagnosticsChanged,
@@ -23,6 +22,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -68,10 +68,10 @@ export class LynxWorkspaceService {
     });
 
     this.activatedProjectService.projectDoc$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(projectDoc => this.onProjectActivated(projectDoc));
     this.activatedBookChapterService.activatedBookChapter$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(bookChapter => this.onBookChapterActivated(bookChapter));
 
     this.rawInsightSource$ = this.workspace.diagnosticsChanged$.pipe(concatMap(e => this.onDiagnosticsChanged(e)));
@@ -84,7 +84,7 @@ export class LynxWorkspaceService {
   async init(): Promise<void> {
     await this.workspace.init();
     await this.workspace.changeLanguage(this.i18n.localeCode);
-    this.i18n.locale$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async locale => {
+    this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async locale => {
       await this.workspace.changeLanguage(locale.canonicalTag);
     });
   }
@@ -231,7 +231,7 @@ export class LynxWorkspaceService {
     await this.documentManager.reset();
     if (projectDoc != null) {
       this.projectDocChangeSubscription = projectDoc.changes$
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(async ops => {
           if (ops.some(op => TEXTS_PATH_TEMPLATE.matches(op.p))) {
             const oldTextDocIds = this.documentReader.textDocIds;
@@ -281,7 +281,7 @@ export class LynxWorkspaceService {
       });
       const uri = this.textDocId.toString();
       this.textDocChangeSubscription = textDoc.changes$
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(async changes => {
           await this.documentManager.fireChanged(uri, {
             contentChanges: changes.ops ?? [],

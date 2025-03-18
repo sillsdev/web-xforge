@@ -1,8 +1,8 @@
 import { Directionality } from '@angular/cdk/bidi';
 import { Component, DestroyRef, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Bounds } from 'quill';
 import { combineLatest, debounceTime, EMPTY, filter, fromEvent, iif, map, startWith, switchMap, tap } from 'rxjs';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { LynxableEditor, LynxEditor } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
@@ -66,7 +66,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
         EMPTY
       )
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         const offsetBounds: Bounds | undefined = this.getPromptOffset();
 
