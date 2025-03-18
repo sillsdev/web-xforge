@@ -1,6 +1,5 @@
 import { FlatTreeControl } from '@angular/cdk/tree';
 import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -15,6 +14,7 @@ import { combineLatest, map, switchMap, tap } from 'rxjs';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDoc } from '../../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../../core/sf-project.service';
 import { getText, rangeComparer } from '../../../../../shared/text/quill-util';
@@ -100,7 +100,7 @@ export class LynxInsightsPanelComponent implements OnInit {
       this.editorInsightState.dismissedInsightIds$
     ])
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
+        quietTakeUntilDestroyed(this.destroyRef),
         map(([insights, orderBy, dismissedIds]) => this.flattenGrouping(insights, orderBy, dismissedIds))
       )
       .subscribe(flattenedInsightNodes => {
@@ -109,7 +109,7 @@ export class LynxInsightsPanelComponent implements OnInit {
       });
 
     this.activatedBookChapterService.activatedBookChapter$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(bookChapter => {
         this.activeBookChapter = bookChapter;
       });
