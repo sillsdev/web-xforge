@@ -8,7 +8,6 @@ import {
   OnDestroy,
   Output
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { isEqual, merge } from 'lodash-es';
@@ -522,7 +521,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     // Listening to document 'selectionchange' event allows local cursor to change position on mousedown,
     // as opposed to quill 'onSelectionChange' event that doesn't fire until mouseup.
     fromEvent<MouseEvent>(document, 'selectionchange')
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updateLocalCursor();
       });
