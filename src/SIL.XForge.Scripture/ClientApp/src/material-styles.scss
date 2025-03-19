@@ -1,7 +1,9 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
-@use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
+@use 'src/app/app-theme' as sf-app;
+@use 'src/app/my-projects/my-projects-theme' as sf-my-projects;
 @use 'src/app/navigation/navigation-theme' as sf-navigation;
+@use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
 
 @mixin theme($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
@@ -10,13 +12,28 @@
   @include mat.system-level-colors($theme);
 
   // Custom components
-  @include sf-tab-group.theme($theme);
+  @include sf-app.theme($theme);
+  @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
+  @include sf-tab-group.theme($theme);
 
   // Custom variables
   --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
   --sf-error-foreground: #{mat.get-theme-color($theme, error, if($is-dark, 80, 40))};
   --sf-language-font-family: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
+
+  a:not(.mdc-button):not(.mat-mdc-menu-item) {
+    color: mat.get-theme-color($theme, primary, 40);
+    &:hover {
+      color: mat.get-theme-color($theme, primary, 60);
+    }
+    &:visited {
+      color: mat.get-theme-color($theme, primary, 60);
+    }
+    &:visited:hover {
+      color: mat.get-theme-color($theme, primary, 70);
+    }
+  }
 
   // Overwrite component styles
   @include mat.card-overrides(
