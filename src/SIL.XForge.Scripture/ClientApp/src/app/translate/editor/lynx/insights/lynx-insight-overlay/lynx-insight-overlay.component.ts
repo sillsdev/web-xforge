@@ -1,12 +1,11 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
-import { take } from 'rxjs';
 import { LynxEditor } from '../lynx-editor';
-import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig } from '../lynx-insight';
-import { LynxInsightAction, LynxInsightActionService } from '../lynx-insight-action.service';
+import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightAction, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
+import { LynxWorkspaceService } from '../lynx-workspace.service';
 
 @Component({
   selector: 'app-lynx-insight-overlay',
@@ -54,8 +53,8 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly insightState: LynxInsightStateService,
-    private readonly actionService: LynxInsightActionService,
     private readonly overlayService: LynxInsightOverlayService,
+    private readonly lynxWorkspaceService: LynxWorkspaceService,
     @Inject(DOCUMENT) private readonly document: Document,
     @Inject(EDITOR_INSIGHT_DEFAULTS) private readonly config: LynxInsightConfig
   ) {}
@@ -101,7 +100,8 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.actionService.performAction(action, this.editor);
+    console.log('Performing action', action);
+    this.editor.updateContents(action.ops);
 
     if (this.focusedInsight == null) {
       throw new Error('No focused insight');
@@ -121,22 +121,19 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.actionService
-      .getActions(insight)
-      .pipe(take(1))
-      .subscribe(actions => {
-        const menuActions: LynxInsightAction[] = [];
+    this.lynxWorkspaceService.getActions(insight).then(actions => {
+      const menuActions: LynxInsightAction[] = [];
 
-        for (const action of actions) {
-          if (action.isPrimary) {
-            this.primaryAction = action;
-          } else {
-            menuActions.push(action);
-          }
+      for (const action of actions) {
+        if (action.isPrimary) {
+          this.primaryAction = action;
+        } else {
+          menuActions.push(action);
         }
+      }
 
-        this.menuActions = menuActions;
-      });
+      this.menuActions = menuActions;
+    });
   }
 
   /**

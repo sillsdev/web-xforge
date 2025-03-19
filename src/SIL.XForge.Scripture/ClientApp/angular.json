@@ -81,7 +81,7 @@
               ],
               "optimization": true,
               "outputHashing": "all",
-              "namedChunks": false,
+              "namedChunks": true,
               "aot": true,
               "vendorChunk": false,
               "buildOptimizer": true,
@@ -102,7 +102,7 @@
               ],
               "optimization": true,
               "outputHashing": "all",
-              "namedChunks": false,
+              "namedChunks": true,
               "aot": true,
               "vendorChunk": false,
               "buildOptimizer": true,
@@ -116,7 +116,7 @@
                 }
               ],
               "outputHashing": "all",
-              "namedChunks": false,
+              "namedChunks": true,
               "vendorChunk": false,
               "serviceWorker": true
             },
