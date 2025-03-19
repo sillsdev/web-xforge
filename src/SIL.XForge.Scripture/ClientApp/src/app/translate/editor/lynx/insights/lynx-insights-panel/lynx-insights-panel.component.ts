@@ -216,7 +216,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     }
 
     for (const node of this.treeControl.dataNodes) {
-      if (node.level === 0 && this.expandCollapseState.has(node.name)) {
+      if (node.level === 0 && this.expandCollapseState.get(node.name)) {
         this.treeControl.expand(node);
       } else {
         this.treeControl.collapse(node);

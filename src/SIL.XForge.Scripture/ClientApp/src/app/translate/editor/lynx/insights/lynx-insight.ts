@@ -1,4 +1,5 @@
 import { InjectionToken } from '@angular/core';
+import { Op } from 'quill';
 import {
   LynxInsightFilter,
   LynxInsightSortOrder,
@@ -44,6 +45,15 @@ export interface LynxInsightConfig {
   queryParamName: string;
   panelLinkTextMaxLength: number;
   actionOverlayApplyPrimaryActionChord: Partial<KeyboardEvent>;
+}
+
+export interface LynxInsightAction {
+  id: string;
+  insight: LynxInsight;
+  label: string;
+  description?: string;
+  isPrimary?: boolean;
+  ops: Op[];
 }
 
 export const EDITOR_INSIGHT_DEFAULTS = new InjectionToken<LynxInsightConfig>('EDITOR_INSIGHT_DEFAULTS', {

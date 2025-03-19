@@ -83,8 +83,8 @@ export class LynxInsightsModule {
   }
 }
 
-function moduleInit(lynxService: LynxWorkspaceService): () => Promise<void> {
+function moduleInit(lynxWorkspaceService: LynxWorkspaceService): () => Promise<void> {
   return () => {
-    return lynxService.init();
+    return lynxWorkspaceService.init();
   };
 }
