@@ -2,34 +2,30 @@ import { DestroyRef, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   Diagnostic,
-  DiagnosticFix,
-  DiagnosticProvider,
-  DiagnosticsChanged,
   DiagnosticSeverity,
-  DocumentAccessor,
   DocumentData,
   DocumentManager,
   DocumentReader,
   Localizer,
-  ScriptureDocument,
-  ScriptureNodeType,
-  ScriptureText,
-  ScriptureVerse,
   Workspace
 } from '@sillsdev/lynx';
 import { ScriptureDeltaDocument, ScriptureDeltaDocumentFactory, ScriptureDeltaEditFactory } from '@sillsdev/lynx-delta';
+import { StandardRuleSets } from '@sillsdev/lynx-punctuation-checker';
 import { Canon } from '@sillsdev/scripture';
 import Delta, { Op } from 'quill-delta';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { map, merge, Observable, Subscription, switchMap } from 'rxjs';
+import { Observable, Subscription, switchMap } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
+import { LynxInsight, LynxInsightAction } from './lynx-insight';
 
 const TEXTS_PATH_TEMPLATE = obj<SFProjectProfile>().pathTemplate(p => p.texts);
 
@@ -38,11 +34,14 @@ const TEXTS_PATH_TEMPLATE = obj<SFProjectProfile>().pathTemplate(p => p.texts);
 })
 export class LynxWorkspaceService {
   private readonly documentReader: TextDocReader;
-  public readonly documentManager: DocumentManager<ScriptureDeltaDocument, Op, Delta>;
-  public readonly workspace: Workspace<Op>;
+  private readonly documentManager: DocumentManager<ScriptureDeltaDocument, Op, Delta>;
+  private readonly workspace: Workspace<Op>;
+  private projectId?: string;
   private textDocId?: TextDocId;
   private textDocChangeSubscription?: Subscription;
   private projectDocChangeSubscription?: Subscription;
+  private readonly curInsights = new Map<string, LynxInsight[]>();
+  public readonly rawInsightSource$: Observable<LynxInsight[]>;
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -59,7 +58,12 @@ export class LynxWorkspaceService {
     const localizer = new Localizer();
     this.workspace = new Workspace<Op>({
       localizer,
-      diagnosticProviders: [new TestDiagnosticProvider(localizer, this.documentManager, editFactory)]
+      diagnosticProviders: [
+        ...StandardRuleSets.English.createDiagnosticProviders(localizer, this.documentManager, editFactory, true)
+      ],
+      onTypeFormattingProviders: [
+        ...StandardRuleSets.English.createOnTypeFormattingProviders(this.documentManager, editFactory)
+      ]
     });
 
     this.activatedProjectService.projectDoc$
@@ -68,6 +72,59 @@ export class LynxWorkspaceService {
     this.activatedBookChapterService.activatedBookChapter$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(bookChapter => this.onBookChapterActivated(bookChapter));
+
+    this.rawInsightSource$ = this.workspace.diagnosticsChanged$.pipe(
+      switchMap(async e => {
+        if (e.diagnostics.length === 0) {
+          this.curInsights.delete(e.uri);
+        } else {
+          const doc = await this.documentManager.get(e.uri);
+          const insights: LynxInsight[] = [];
+          if (doc != null) {
+            const textDocIdParts = e.uri.split(':', 3);
+            const textDocId = new TextDocId(
+              textDocIdParts[0],
+              Canon.bookIdToNumber(textDocIdParts[1]),
+              parseInt(textDocIdParts[2])
+            );
+            for (const diagnostic of e.diagnostics) {
+              let type: LynxInsightType = 'info';
+              switch (diagnostic.severity) {
+                case DiagnosticSeverity.Information:
+                case DiagnosticSeverity.Hint:
+                  type = 'info';
+                  break;
+                case DiagnosticSeverity.Warning:
+                  type = 'warning';
+                  break;
+                case DiagnosticSeverity.Error:
+                  type = 'error';
+                  break;
+              }
+              const start = doc.offsetAt(diagnostic.range.start);
+              const end = doc.offsetAt(diagnostic.range.end);
+              insights.push({
+                id: uuidv4(),
+                type,
+                textDocId,
+                range: { index: start, length: end - start },
+                code: diagnostic.code.toString(),
+                source: diagnostic.source,
+                description: diagnostic.message,
+                moreInfo: diagnostic.moreInfo,
+                data: diagnostic.data
+              });
+            }
+          }
+          this.curInsights.set(e.uri, insights);
+        }
+        return Array.from(this.curInsights.values()).flat();
+      })
+    );
+  }
+
+  get currentInsights(): ReadonlyMap<string, LynxInsight[]> {
+    return this.curInsights;
   }
 
   async init(): Promise<void> {
@@ -78,12 +135,97 @@ export class LynxWorkspaceService {
     });
   }
 
+  async getActions(insight: LynxInsight): Promise<LynxInsightAction[]> {
+    const doc = await this.documentManager.get(insight.textDocId.toString());
+    if (doc == null) {
+      return [];
+    }
+    let severity = DiagnosticSeverity.Information;
+    switch (insight.type) {
+      case 'info':
+        severity = DiagnosticSeverity.Information;
+        break;
+      case 'warning':
+        severity = DiagnosticSeverity.Warning;
+        break;
+      case 'error':
+        severity = DiagnosticSeverity.Error;
+        break;
+    }
+    const diagnostic: Diagnostic = {
+      code: insight.code,
+      source: insight.source,
+      range: {
+        start: doc.positionAt(insight.range.index),
+        end: doc.positionAt(insight.range.index + insight.range.length)
+      },
+      message: insight.description,
+      severity,
+      data: insight.data
+    };
+    const fixes = await this.workspace.getDiagnosticFixes(insight.textDocId.toString(), diagnostic);
+    return fixes.map(fix => ({
+      id: uuidv4(),
+      insight,
+      label: fix.title,
+      isPrimary: fix.isPreferred,
+      ops: fix.edits
+    }));
+  }
+
+  async getOnTypeEdits(delta: Delta): Promise<Delta[]> {
+    const curDocUri = this.textDocId?.toString();
+    if (curDocUri == null) {
+      return [];
+    }
+    const ops = delta.ops;
+    let offset: number;
+    let text: string;
+    if (ops.length === 1 && typeof ops[0].insert === 'string') {
+      offset = 0;
+      text = ops[0].insert;
+    } else if (ops.length === 2 && typeof ops[0].retain === 'number' && typeof ops[1].insert === 'string') {
+      offset = ops[0].retain;
+      text = ops[1].insert;
+    } else {
+      return [];
+    }
+
+    const doc = await this.documentManager.get(curDocUri);
+    if (doc == null) {
+      return [];
+    }
+    const edits: Delta[] = [];
+    for (const ch of this.workspace.getOnTypeTriggerCharacters()) {
+      let startIndex = 0;
+      while (startIndex < text.length) {
+        const chIndex = text.indexOf(ch, startIndex);
+        if (chIndex >= 0) {
+          const chEdits = await this.workspace.getOnTypeEdits(curDocUri, doc.positionAt(offset + chIndex), ch);
+
+          if (chEdits != null && chEdits.length > 0) {
+            edits.push(new Delta(chEdits));
+          }
+          startIndex = chIndex + ch.length;
+        } else {
+          break;
+        }
+      }
+    }
+    return edits;
+  }
+
   private async onProjectActivated(projectDoc: SFProjectProfileDoc | undefined): Promise<void> {
+    if (projectDoc?.id === this.projectId) {
+      return;
+    }
+
     if (this.projectDocChangeSubscription != null) {
       this.projectDocChangeSubscription.unsubscribe();
       this.projectDocChangeSubscription = undefined;
     }
 
+    this.projectId = projectDoc?.id;
     this.documentReader.textDocIds = getTextDocIds(projectDoc);
     await this.documentManager.reset();
     if (projectDoc != null) {
@@ -154,8 +296,8 @@ class TextDocReader implements DocumentReader<Delta> {
 
   constructor(private readonly projectService: SFProjectService) {}
 
-  keys(): string[] {
-    return Array.from(this.textDocIds);
+  keys(): Promise<string[]> {
+    return Promise.resolve(Array.from(this.textDocIds));
   }
 
   async read(uri: string): Promise<DocumentData<Delta>> {
@@ -184,89 +326,5 @@ function* setDifference(x: Set<string>, y: Set<string>): Iterable<string> {
     if (!y.has(value)) {
       yield value;
     }
-  }
-}
-
-export class TestDiagnosticProvider implements DiagnosticProvider<Op> {
-  public readonly id = 'test';
-  public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
-
-  constructor(
-    private readonly localizer: Localizer,
-    private readonly documents: DocumentAccessor<ScriptureDeltaDocument>,
-    private readonly editFactory: ScriptureDeltaEditFactory
-  ) {
-    this.diagnosticsChanged$ = merge(
-      documents.opened$.pipe(
-        map(e => ({
-          uri: e.document.uri,
-          version: e.document.version,
-          diagnostics: this.validateDocument(e.document)
-        }))
-      ),
-      documents.changed$.pipe(
-        map(e => ({
-          uri: e.document.uri,
-          version: e.document.version,
-          diagnostics: this.validateDocument(e.document)
-        }))
-      ),
-      documents.closed$.pipe(
-        switchMap(async e => {
-          const doc = await this.documents.get(e.uri);
-          return { uri: e.uri, version: doc?.version, diagnostics: [] };
-        })
-      )
-    );
-  }
-
-  init(): Promise<void> {
-    return Promise.resolve();
-  }
-
-  async getDiagnostics(uri: string): Promise<Diagnostic[]> {
-    const doc = await this.documents.get(uri);
-    if (doc == null) {
-      return [];
-    }
-    return this.validateDocument(doc);
-  }
-
-  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<Op>[]> {
-    const doc = await this.documents.get(uri);
-    if (doc == null) {
-      return [];
-    }
-    const fixes: DiagnosticFix<Op>[] = [];
-    if (diagnostic.code === 'tst0001') {
-      fixes.push({
-        title: 'Fix the problem',
-        isPreferred: true,
-        diagnostic,
-        edits: this.editFactory.createScriptureEdit(
-          doc,
-          { start: diagnostic.range.start, end: diagnostic.range.start },
-          new ScriptureText('Problem fixed! ')
-        )
-      });
-    }
-    return fixes;
-  }
-
-  private validateDocument(doc: ScriptureDocument): Diagnostic[] {
-    const firstVerses = doc.findNodes(n => n.type === ScriptureNodeType.Verse && (n as ScriptureVerse).number === '1');
-    const diagnostics: Diagnostic[] = [];
-    for (const verseNode of firstVerses) {
-      if (verseNode.next?.type === ScriptureNodeType.Text && !verseNode.next.getText().includes('Problem fixed!')) {
-        diagnostics.push({
-          code: 'tst0001',
-          source: this.id,
-          severity: DiagnosticSeverity.Error,
-          message: 'Test error',
-          range: verseNode.next.range
-        });
-      }
-    }
-    return diagnostics;
   }
 }

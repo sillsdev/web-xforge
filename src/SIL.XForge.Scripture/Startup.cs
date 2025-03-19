@@ -80,6 +80,7 @@ public class Startup
     private static readonly HashSet<string> DevelopmentSpaPostRoutes = ["sockjs-node"];
     private static readonly HashSet<string> ProductionSpaPostRoutes = [];
     private static readonly HashSet<string> SpaPostRoutes = [];
+    private const string SpaGetRoutesLynxPrefix = "node_modules_sillsdev_lynx";
 
     public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
     {
@@ -339,6 +340,8 @@ public class Startup
             int periodIndex = path.IndexOf(".");
             prefix = prefix[..(periodIndex - 1)];
         }
+        if (context.Request.Method == HttpMethods.Get && prefix.StartsWith(SpaGetRoutesLynxPrefix))
+            return true;
         return (context.Request.Method == HttpMethods.Get && SpaGetRoutes.Contains(prefix))
             || (context.Request.Method == HttpMethods.Post && SpaPostRoutes.Contains(prefix));
     }
