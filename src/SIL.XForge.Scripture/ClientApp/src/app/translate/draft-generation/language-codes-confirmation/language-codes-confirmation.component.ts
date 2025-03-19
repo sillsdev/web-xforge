@@ -10,12 +10,7 @@ import { issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../../environments/environment';
 import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSourcesAsSelectableProjectArrays } from '../draft-utils';
-
-// TODO implement better normalization logic
-function normalizeLanguageCode(code: string): string {
-  return code.split('-')[0];
-}
+import { DraftSourcesAsSelectableProjectArrays, normalizeLanguageCodeToISO639_3 } from '../draft-utils';
 
 @Component({
   selector: 'app-language-codes-confirmation',
@@ -70,15 +65,11 @@ export class LanguageCodesConfirmationComponent {
   }
 
   get uniqueSourceSideLanguageCodes(): string[] {
-    return Array.from(new Set(this.sourceSideLanguageCodes));
-  }
-
-  get normalizedSourceSideLanguageCodes(): string[] {
-    return this.sourceSideLanguageCodes.map(normalizeLanguageCode);
+    return [...new Set(this.sourceSideLanguageCodes)];
   }
 
   get uniqueNormalizedSourceSideLanguageCodes(): string[] {
-    return Array.from(new Set(this.normalizedSourceSideLanguageCodes));
+    return [...new Set(this.sourceSideLanguageCodes.map(normalizeLanguageCodeToISO639_3))];
   }
 
   checkboxChanged(event: MatCheckboxChange): void {
@@ -101,11 +92,9 @@ export class LanguageCodesConfirmationComponent {
   }
 
   get showSourceAndTargetLanguagesIdenticalWarning(): boolean {
-    return (
-      this.targetLanguageTag != null &&
-      this.uniqueNormalizedSourceSideLanguageCodes.length === 1 &&
-      this.uniqueNormalizedSourceSideLanguageCodes[0] === normalizeLanguageCode(this.targetLanguageTag)
-    );
+    if (this.targetLanguageTag == null) return false;
+    const unique = this.uniqueNormalizedSourceSideLanguageCodes;
+    return unique.length === 1 && unique[0] === normalizeLanguageCodeToISO639_3(this.targetLanguageTag);
   }
 
   get showSourceLanguagesDifferError(): boolean {

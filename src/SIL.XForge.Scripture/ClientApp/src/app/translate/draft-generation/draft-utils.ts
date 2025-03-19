@@ -1,5 +1,6 @@
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import language_code_mapping from '../../../../../language_code_mapping.json';
 import { SelectableProjectWithLanguageCode } from '../../core/paratext.service';
 
 export function englishNameFromCode(code: string): string {
@@ -115,4 +116,17 @@ export function projectToDraftSources(project: SFProjectProfile): DraftSourcesAs
     draftingSources.push(draftingSource);
   }
   return { trainingSources, trainingTargets, draftingSources };
+}
+
+/**
+ * Maps ISO 639-1 two letter codes, and ISO 639-2 bibliographic codes to the corresponding ISO 639-3 language code,
+ * All region and script information is stripped and ignored.
+ */
+export function normalizeLanguageCodeToISO639_3(code: string): string {
+  code = code.split('-')[0];
+  if (code in language_code_mapping.iso639_1_to_iso639_3) code = language_code_mapping.iso639_1_to_iso639_3[code];
+  if (code in language_code_mapping.bibliographicToTerminology) {
+    code = language_code_mapping.bibliographicToTerminology[code];
+  }
+  return code;
 }
