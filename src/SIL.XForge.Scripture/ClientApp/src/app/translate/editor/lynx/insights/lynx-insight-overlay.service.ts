@@ -32,6 +32,10 @@ export class LynxInsightOverlayService {
     private ngZone: NgZone
   ) {}
 
+  get isOpen(): boolean {
+    return this.openRef != null;
+  }
+
   open(origin: HTMLElement, insights: LynxInsight[], editor: LynxEditor): LynxInsightOverlayRef | undefined {
     if (insights.length === 0) {
       return undefined;
@@ -44,6 +48,7 @@ export class LynxInsightOverlayService {
 
     const overlayRef: LynxInsightOverlayRef = this.createOverlayRef(origin);
     const componentRef = overlayRef.ref.attach(new ComponentPortal(LynxInsightOverlayComponent));
+    overlayRef.ref.backdropClick().subscribe(() => this.close());
 
     componentRef.instance.insights = insights;
     componentRef.instance.editor = editor;
@@ -88,7 +93,8 @@ export class LynxInsightOverlayService {
   private getConfig(origin: HTMLElement): OverlayConfig {
     return {
       positionStrategy: this.getPositionStrategy(origin),
-      hasBackdrop: false,
+      hasBackdrop: true,
+      backdropClass: 'cdk-overlay-transparent-backdrop',
       panelClass: 'lynx-insight-overlay-panel',
       scrollStrategy: this.overlay.scrollStrategies.reposition()
     };

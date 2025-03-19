@@ -1,6 +1,7 @@
 import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from 'lodash-es';
+import { Delta } from 'quill';
 import { combineLatest, filter, fromEvent, merge, switchMap, tap } from 'rxjs';
 import { map, pairwise } from 'rxjs/operators';
 import { EditorReadyService } from '../base-services/editor-ready.service';
@@ -9,6 +10,7 @@ import { LynxableEditor } from '../lynx-editor';
 import { LynxInsight, LynxInsightDisplayState, LynxInsightRange } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
+import { LynxWorkspaceService } from '../lynx-workspace.service';
 import { LynxInsightBlot } from '../quill-services/blots/lynx-insight-blot';
 
 @Component({
@@ -28,13 +30,21 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
     private readonly insightState: LynxInsightStateService,
     private readonly insightRenderService: InsightRenderService,
     private readonly editorReadyService: EditorReadyService,
-    private readonly overlayService: LynxInsightOverlayService
+    private readonly overlayService: LynxInsightOverlayService,
+    private readonly lynxWorkspaceService: LynxWorkspaceService
   ) {}
 
   ngOnInit(): void {
     if (this.editor == null) {
       return;
     }
+
+    fromEvent(this.editor, 'text-change')
+      .pipe(
+        filter(([_delta, _oldContents, source]) => source === 'user'),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(([delta]) => this.handleTextChange(delta));
 
     combineLatest([
       fromEvent(this.editor, 'selection-change').pipe(map(([range]) => range)),
@@ -105,12 +115,14 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   }
 
   private handleSelectionChange(selection: LynxInsightRange | undefined, insights: LynxInsight[]): void {
-    console.log('SelectionChange', selection, insights);
+    if (this.overlayService.isOpen) {
+      return;
+    }
     const ids = insights
       .filter(insight => selection != null && overlaps(insight.range, selection))
       .map(insight => insight.id);
 
-    let displayStateChanges: Partial<LynxInsightDisplayState> = {
+    const displayStateChanges: Partial<LynxInsightDisplayState> = {
       activeInsightIds: ids,
       promptActive: ids.length > 0,
       actionOverlayActive: false
@@ -126,7 +138,6 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('MouseOver', target);
     const ids: string[] = this.getInsightIds(target);
 
     // Set 'hover-insight' class on the affected insight elements (clear others)
@@ -154,6 +165,16 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
     }
 
     return ids;
+  }
+
+  private async handleTextChange(delta: Delta): Promise<void> {
+    if (this.editor == null) {
+      return;
+    }
+    const edits = await this.lynxWorkspaceService.getOnTypeEdits(delta);
+    for (const edit of edits) {
+      this.editor.updateContents(edit, 'user');
+    }
   }
 }
 

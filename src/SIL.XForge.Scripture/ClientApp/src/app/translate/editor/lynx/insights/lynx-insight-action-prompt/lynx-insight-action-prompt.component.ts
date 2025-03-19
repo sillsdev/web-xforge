@@ -15,8 +15,8 @@ import { getMostNestedInsight } from '../lynx-insight-util';
   styleUrl: './lynx-insight-action-prompt.component.scss'
 })
 export class LynxInsightActionPromptComponent implements OnInit {
-  @Input() set editor(value: LynxableEditor) {
-    this.lynxEditor = new LynxEditor(value);
+  @Input() set editor(value: LynxableEditor | undefined) {
+    this.lynxEditor = value == null ? undefined : new LynxEditor(value);
   }
 
   activeInsights: LynxInsight[] = [];
