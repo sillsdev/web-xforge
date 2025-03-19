@@ -1,9 +1,11 @@
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { User } from '@bugsnag/js';
 import { cloneDeep } from 'lodash-es';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -220,6 +222,26 @@ describe('PermissionsService', () => {
         const env = new TestEnvironment();
         env.setCurrentUser(SFProjectRole.Commenter);
         expect(env.service.canAccessBiblicalTerms(env.projectDoc)).toBe(false);
+      });
+    });
+
+    describe('userHasPermission', () => {
+      it('returns true if user has permissions', () => {
+        const env = new TestEnvironment();
+        env.setCurrentUser(SFProjectRole.ParatextAdministrator);
+
+        expect(env.service.userHasPermission(env.projectDoc.data!, SFProjectDomain.Questions, Operation.Delete)).toBe(
+          true
+        );
+      });
+
+      it('returns false if user does not has permissions', () => {
+        const env = new TestEnvironment();
+        env.setCurrentUser(SFProjectRole.Viewer);
+
+        expect(env.service.userHasPermission(env.projectDoc.data!, SFProjectDomain.Questions, Operation.Delete)).toBe(
+          false
+        );
       });
     });
   });

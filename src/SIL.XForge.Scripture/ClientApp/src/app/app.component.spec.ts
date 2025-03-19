@@ -146,6 +146,7 @@ describe('AppComponent', () => {
     // Expect: Community Checking | Manage Questions | Overview | Sync | Settings | Users
     expect(env.menuLength).toEqual(6);
     verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
+    discardPeriodicTasks();
   }));
 
   it('close menu when navigating to a non-project route', fakeAsync(() => {
@@ -211,6 +212,9 @@ describe('AppComponent', () => {
     expect(env.component['isExpanded']).toBe(false);
     expect(env.menuDrawer).not.toBeNull();
     expect(env.hamburgerMenuButton).not.toBeNull();
+
+    discardPeriodicTasks();
+    flush();
   }));
 
   it('does not set user locale when stored locale matches the browsing session', fakeAsync(() => {
@@ -334,6 +338,7 @@ describe('AppComponent', () => {
     env.changeUserRole('project01', 'user04', SFProjectRole.CommunityChecker);
     expect(env.location.path()).toEqual('/projects/project01');
     env.wait();
+    discardPeriodicTasks();
   }));
 
   it('response to Community Checker project role changed', fakeAsync(() => {

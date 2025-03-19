@@ -20,6 +20,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
+import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { PermissionsService } from '../core/permissions.service';
@@ -35,7 +36,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedRouter = mock(Router);
 const mockedResumeCheckingService = mock(ResumeCheckingService);
-const mockedPermissionsService = mock(PermissionsService);
+const mockedResumeTranslateService = mock(ResumeTranslateService);
 let testActivatedProjectService: ActivatedProjectService;
 
 function setUpMocks(args: StoryState): void {
@@ -61,18 +62,13 @@ function setUpMocks(args: StoryState): void {
   when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
   when(mockedRouter.url).thenReturn(`/projects/${projectId}/${args.path}`);
   when(mockedRouter.createUrlTree(anything(), anything())).thenCall((portions: any[]) => portions.join('/'));
-  when(mockedResumeCheckingService.checkingLink$).thenReturn(of(['']));
+  when(mockedResumeCheckingService.resumeLink$).thenReturn(of(['']));
+  when(mockedResumeTranslateService.resumeLink$).thenReturn(of(['']));
 
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     imports: [I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [
-      { provide: UserService, useValue: instance(mockedUserService) },
-      {
-        provide: PermissionsService,
-        useValue: instance(mockedPermissionsService)
-      }
-    ]
+    providers: [{ provide: UserService, useValue: instance(mockedUserService) }]
   });
 
   const realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -134,6 +130,14 @@ const meta: Meta = {
           {
             provide: ResumeCheckingService,
             useValue: instance(mockedResumeCheckingService)
+          },
+          {
+            provide: ResumeTranslateService,
+            useValue: instance(mockedResumeTranslateService)
+          },
+          {
+            provide: PermissionsService,
+            useClass: PermissionsService
           },
           {
             provide: ActivatedProjectService,
