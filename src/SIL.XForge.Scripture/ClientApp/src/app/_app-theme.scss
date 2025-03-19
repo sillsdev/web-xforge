@@ -1,0 +1,15 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+  .install-badge {
+    color: #{mat.get-theme-color($theme, primary, 20)};
+    background: #{mat.get-theme-color($theme, primary, 100)};
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
