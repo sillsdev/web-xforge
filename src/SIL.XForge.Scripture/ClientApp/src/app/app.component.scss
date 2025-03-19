@@ -98,7 +98,6 @@ header {
   .pseudo-menu-item {
     padding: 0 16px;
     line-height: 36px;
-    color: rgba(0, 0, 0, 0.87);
   }
 
   &.help-menu {
@@ -186,8 +185,6 @@ header {
       }
 
       &.install-badge {
-        //color: theme.get-palette-color(tertiary, 70);
-        background: #fff;
         border-radius: 50%;
         inset-inline-start: 3px;
       }
