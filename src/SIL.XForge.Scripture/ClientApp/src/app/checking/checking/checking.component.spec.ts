@@ -981,7 +981,7 @@ describe('CheckingComponent', () => {
       flush();
     }));
 
-    it('saves the location of the last visited question', fakeAsync(() => {
+    it('saves the last visited question', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
@@ -991,9 +991,7 @@ describe('CheckingComponent', () => {
       });
       env.waitForSliderUpdate();
       env.selectQuestion(4);
-      expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
-      expect(projectUserConfigDoc.selectedBookNum).toBe(43);
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
     }));
 
@@ -1008,10 +1006,7 @@ describe('CheckingComponent', () => {
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
       env.selectQuestion(4);
-      expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q3Id');
-      expect(projectUserConfigDoc.selectedBookNum).toBe(43);
-      expect(projectUserConfigDoc.selectedChapterNum).toBe(1);
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).twice();
     }));
 
@@ -2407,6 +2402,7 @@ class TestEnvironment {
   private readonly checkerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
     ownerRef: CHECKER_USER.id,
+    selectedTask: 'checking',
     isTargetTextRight: true,
     selectedQuestionRef: 'project01:q5Id',
     answerRefsRead: ['a0Id', 'a1Id']

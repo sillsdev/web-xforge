@@ -896,9 +896,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             await this.trainSegment(prevSegment, this.sourceProjectId);
           }
           await this.projectUserConfigDoc.submitJson0Op(op => {
-            op.set<string>(puc => puc.selectedTask!, 'translate');
-            op.set(puc => puc.selectedBookNum!, this.text!.bookNum);
-            op.set(puc => puc.selectedChapterNum!, this._chapter);
             op.set(puc => puc.selectedSegment, this.target!.segmentRef);
             op.set(puc => puc.selectedSegmentChecksum!, this.target!.segmentChecksum);
           });
