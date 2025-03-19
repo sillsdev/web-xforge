@@ -2298,7 +2298,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2337,7 +2337,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
 
@@ -2371,7 +2371,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2409,7 +2409,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
 
@@ -2441,7 +2441,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2483,7 +2483,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
 
@@ -2513,7 +2513,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2536,7 +2536,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2559,7 +2559,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2654,9 +2654,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.Received()
             .RemoveProjectAsync(Project01, preTranslate: false, CancellationToken.None);
-        await env
-            .MachineProjectService.Received()
-            .AddProjectAsync(Project01, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received().AddSmtProjectAsync(Project01, CancellationToken.None);
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2680,7 +2678,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2701,9 +2699,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.Received()
-            .AddProjectAsync(Project03, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received().AddSmtProjectAsync(Project03, CancellationToken.None);
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2730,7 +2726,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Project01, preTranslate: false, CancellationToken.None);
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2749,7 +2745,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
