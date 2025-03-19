@@ -46,28 +46,18 @@ describe('LanguageCodesConfirmationComponent', () => {
   });
 
   it('should show standard message', () => {
-    component.draftSources = getStandardDraftSources();
+    component.sources = getStandardDraftSources();
     fixture.detectChanges();
-    expect(component.sourceSideLanguageCodes.length).toEqual(1);
+    expect(component.uniqueNormalizedSourceSideLanguageCodes.length).toEqual(1);
     expect(component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
-  });
-
-  it('shows standard message when language codes are equivalent language', () => {
-    const draftSources = getStandardDraftSources();
-    // Both map to the Chinese language
-    draftSources.draftingSources[0].languageTag = 'zh-CN';
-    draftSources.trainingSources[0].languageTag = 'cmn-Hans';
-    component.draftSources = draftSources;
-    fixture.detectChanges();
-    expect(component.sourceSideLanguageCodes.length).toEqual(1);
   });
 
   it('should show target and source language codes identical message', () => {
     const draftSources = getStandardDraftSources();
     draftSources.trainingTargets[0].languageTag = draftSources.trainingSources[0].languageTag;
-    component.draftSources = draftSources;
+    component.sources = draftSources;
     fixture.detectChanges();
-    expect(component.sourceSideLanguageCodes.length).toEqual(1);
+    expect(component.uniqueNormalizedSourceSideLanguageCodes.length).toEqual(1);
     expect(component.showSourceAndTargetLanguagesIdenticalWarning).toBe(true);
   });
 
@@ -79,18 +69,18 @@ describe('LanguageCodesConfirmationComponent', () => {
       paratextId: 'pt-sp2',
       languageTag: 'zh'
     });
-    component.draftSources = draftSources;
+    component.sources = draftSources;
     fixture.detectChanges();
-    expect(component.sourceSideLanguageCodes.length).toEqual(2);
+    expect(component.uniqueNormalizedSourceSideLanguageCodes.length).toEqual(2);
     expect(component.showSourceAndTargetLanguagesIdenticalWarning).toBe(false);
   });
 
-  it('can emit languages confirmed when checkbox is checked', () => {
-    component.draftSources = getStandardDraftSources();
+  it('emits blank error message when codes confirmed', () => {
+    component.sources = getStandardDraftSources();
     fixture.detectChanges();
-    const emitSpy = spyOn(component.languageCodesConfirmedChange, 'emit');
-    component.confirmationChanged({ checked: true } as any);
-    expect(emitSpy).toHaveBeenCalledWith(true);
+    const emitSpy = spyOn(component.messageIfUserTriesToContinue, 'emit');
+    component.checkboxChanged({ checked: true } as any);
+    expect(emitSpy).toHaveBeenCalledWith(null);
   });
 });
 

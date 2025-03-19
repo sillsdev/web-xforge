@@ -1,73 +1,114 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, DestroyRef, EventEmitter, Input, Output } from '@angular/core';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { AuthService } from 'xforge-common/auth.service';
-import { I18nService } from 'xforge-common/i18n.service';
+import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { issuesEmailTemplate } from 'xforge-common/utils';
+import { environment } from '../../../../environments/environment';
 import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
-import { DraftSourcesAsSelectableProjectArrays, englishNameFromCode } from '../draft-utils';
+import { DraftSourcesAsSelectableProjectArrays } from '../draft-utils';
+
+// TODO implement better normalization logic
+function normalizeLanguageCode(code: string): string {
+  return code.split('-')[0];
+}
 
 @Component({
   selector: 'app-language-codes-confirmation',
   standalone: true,
-  imports: [TranslocoModule, TranslocoMarkupComponent, UICommonModule, NoticeComponent],
+  imports: [CommonModule, TranslocoModule, TranslocoMarkupComponent, UICommonModule, NoticeComponent],
   templateUrl: './language-codes-confirmation.component.html',
   styleUrl: './language-codes-confirmation.component.scss'
 })
 export class LanguageCodesConfirmationComponent {
-  @Input() languageCodesConfirmed = false;
-  @Output() languageCodesConfirmedChange = new EventEmitter<boolean>();
-
-  /** It makes sense to inform the user, except when the user is on the page for changing sources */
-  @Input() informUserWhereToChangeDraftSources: boolean = true;
-  @Input() set draftSources(value: DraftSourcesAsSelectableProjectArrays) {
+  @Input() set sources(value: DraftSourcesAsSelectableProjectArrays) {
     if (value == null) return;
+
     this.draftingSources = value.draftingSources;
     this.trainingSources = value.trainingSources;
     this.targetLanguageTag = value.trainingTargets[0]?.languageTag;
+    this.updateMessageForContinuing();
   }
+  @Input() set clearCheckbox(eventEmitter: EventEmitter<void>) {
+    eventEmitter.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.languageCodesConfirmed = false;
+      this.updateMessageForContinuing();
+    });
+  }
+
+  /**
+   * A localization key for what message should be shown if the user attempts to continue. This will be null if the user
+   * has confirmed the language codes.
+   */
+  @Output() messageIfUserTriesToContinue = new EventEmitter<I18nKeyForComponent<'draft_sources'> | null>();
+
+  languageCodesConfirmed = false;
 
   draftingSources: SelectableProjectWithLanguageCode[] = [];
   trainingSources: SelectableProjectWithLanguageCode[] = [];
   targetLanguageTag?: string;
-  configSourcesUrl: string = '';
 
   constructor(
     readonly i18n: I18nService,
-    private readonly activatedProject: ActivatedProjectService,
-    private readonly authService: AuthService
-  ) {
-    this.configSourcesUrl = `/projects/${this.activatedProject.projectId}/draft-generation/sources`;
+    private readonly destroyRef: DestroyRef
+  ) {}
+
+  get issueMailTo(): string {
+    return issuesEmailTemplate();
+  }
+
+  get issueEmail(): string {
+    return environment.issueEmail;
   }
 
   get sourceSideLanguageCodes(): string[] {
-    const sourceLanguagesCodes: string[] = [...this.draftingSources, ...this.trainingSources]
-      .filter(s => s != null)
-      .map(s => s.languageTag);
-    const languageNames: string[] = Array.from(new Set(sourceLanguagesCodes.map(s => englishNameFromCode(s))));
-    if (languageNames.length < 2) {
-      return [sourceLanguagesCodes[0]];
-    }
-    return Array.from(new Set(sourceLanguagesCodes));
+    return [...this.draftingSources, ...this.trainingSources].filter(s => s != null).map(s => s.languageTag);
+  }
+
+  get uniqueSourceSideLanguageCodes(): string[] {
+    return Array.from(new Set(this.sourceSideLanguageCodes));
+  }
+
+  get normalizedSourceSideLanguageCodes(): string[] {
+    return this.sourceSideLanguageCodes.map(normalizeLanguageCode);
+  }
+
+  get uniqueNormalizedSourceSideLanguageCodes(): string[] {
+    return Array.from(new Set(this.normalizedSourceSideLanguageCodes));
+  }
+
+  checkboxChanged(event: MatCheckboxChange): void {
+    this.languageCodesConfirmed = event.checked;
+    this.updateMessageForContinuing();
+  }
+
+  updateMessageForContinuing(): void {
+    if (this.showSourceLanguagesDifferError) {
+      this.messageIfUserTriesToContinue.emit('source_side_language_codes_differ');
+    } else if (!this.languageCodesConfirmed) {
+      this.messageIfUserTriesToContinue.emit('confirm_language_codes');
+    } else this.messageIfUserTriesToContinue.emit(null);
+  }
+
+  // SECTION: Logic for each notice
+
+  get showStandardNotice(): boolean {
+    return !this.showSourceLanguagesDifferError && !this.showSourceAndTargetLanguagesIdenticalWarning;
   }
 
   get showSourceAndTargetLanguagesIdenticalWarning(): boolean {
-    const sourceCodes: string[] = this.sourceSideLanguageCodes;
-    return sourceCodes.length === 1 && sourceCodes[0] === this.targetLanguageTag;
+    return (
+      this.targetLanguageTag != null &&
+      this.uniqueNormalizedSourceSideLanguageCodes.length === 1 &&
+      this.uniqueNormalizedSourceSideLanguageCodes[0] === normalizeLanguageCode(this.targetLanguageTag)
+    );
   }
 
-  get isProjectAdmin(): boolean {
-    const userId = this.authService.currentUserId;
-    if (userId == null) return false;
-    return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
-  }
-
-  confirmationChanged(event: MatCheckboxChange): void {
-    this.languageCodesConfirmed = event.checked;
-    this.languageCodesConfirmedChange.emit(this.languageCodesConfirmed);
+  get showSourceLanguagesDifferError(): boolean {
+    return this.uniqueNormalizedSourceSideLanguageCodes.length > 1;
   }
 }

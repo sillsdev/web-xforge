@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef } from '@angular/core';
+import { Component, DestroyRef, EventEmitter } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -77,7 +77,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   // Projects that can be an already selected value, but not necessarily given as an option in the menu
   nonSelectableProjects: SelectableProject[] = [];
 
-  languageCodesConfirmed = false;
+  languageCodeConfirmationMessageIfUserTriesToContinue: I18nKeyForComponent<'draft_sources'> | null = null;
+  clearLanguageCodeConfirmationCheckbox = new EventEmitter<void>();
   changesMade = false;
 
   /** Whether some projects are syncing currently. */
@@ -232,7 +233,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
     if (selectedProject != null) {
       array[index] = selectedProject;
-      this.languageCodesConfirmed = false;
+      this.clearLanguageCodeConfirmationCheckbox.emit();
     } else {
       array[index] = undefined;
       // When the user clears a project select, if there are now multiple blank project selects, remove the first one
@@ -253,10 +254,6 @@ export class DraftSourcesComponent extends DataLoadingComponent {
         array.splice(nullIndex, 1);
       }
     }
-  }
-
-  confirmationChanged(event: MatCheckboxChange): void {
-    this.languageCodesConfirmed = event.checked;
   }
 
   get allowAddingATrainingSource(): boolean {
@@ -301,11 +298,13 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     const definedReferences = this.trainingSources.filter(s => s != null);
 
     let messageKey: I18nKeyForComponent<'draft_sources'> | undefined;
-    if (definedSources.length === 0 && definedReferences.length === 0)
+    if (definedSources.length === 0 && definedReferences.length === 0) {
       messageKey = 'select_at_least_one_source_and_reference';
-    else if (definedSources.length === 0) messageKey = 'select_at_least_one_source';
+    } else if (definedSources.length === 0) messageKey = 'select_at_least_one_source';
     else if (definedReferences.length === 0) messageKey = 'select_at_least_one_reference';
-    else if (!this.languageCodesConfirmed) messageKey = 'confirm_language_codes';
+    else if (this.languageCodeConfirmationMessageIfUserTriesToContinue) {
+      messageKey = this.languageCodeConfirmationMessageIfUserTriesToContinue;
+    }
 
     if (messageKey) {
       this.dialogService.message(this.i18n.translate(`draft_sources.${messageKey}`));
