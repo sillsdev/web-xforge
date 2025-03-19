@@ -201,6 +201,7 @@
     "info_alert_no_training_source_access": "You do not have access to the training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_download_error": "There was a problem downloading your draft. Please check your Internet connection and try again in several minutes.",
     "info_alert_no_additional_training_source_access": "You do not have access to the additional training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
+    "info_alert_please_have_admin_configure_sources": "Please have a project administrator configure the draft sources. Then you will be able to generate drafts.",
     "instructions_draft_process": "Generating a draft usually takes at least {{ count }} hours.",
     "instructions_draft_process_subtext": "It can take much longer when the system is busy.",
     "instructions_help": "For more information, { 1 } see the help site{ 2 }.",
