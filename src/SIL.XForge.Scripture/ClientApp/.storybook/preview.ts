@@ -49,7 +49,7 @@ export const decorators = [
     ]
   }),
   storyFn => {
-    document.body.classList.add('theme-light');
+    document.documentElement.classList.add('theme-light');
     return storyFn();
   }
 ];
