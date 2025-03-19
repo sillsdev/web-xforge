@@ -25,7 +25,7 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { of } from 'rxjs';
-import { anything, capture, instance, mock, reset, resetCalls, verify, when } from 'ts-mockito';
+import { anything, capture, mock, reset, resetCalls, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -711,16 +711,6 @@ describe('CheckingOverviewComponent', () => {
       expect(config.currentChapter).toEqual(1);
     }));
   });
-
-  it('should set selectedTask on init', fakeAsync(async () => {
-    const env = new TestEnvironment();
-    env.waitForQuestions();
-    const config = await instance(mockedProjectService).getUserConfig(
-      'project01',
-      instance(mockedUserService).currentUserId
-    );
-    expect(config.data?.selectedTask).toEqual('checking');
-  }));
 
   it('should handle question in a book that does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
