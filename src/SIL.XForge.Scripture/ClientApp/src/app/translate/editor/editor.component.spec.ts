@@ -3447,7 +3447,7 @@ describe('EditorComponent', () => {
 
       // Set window size to be narrow to test scrolling
       const contentContainer: HTMLElement = document.getElementsByClassName('content')[0] as HTMLElement;
-      Object.assign(contentContainer.style, { width: '360px', height: '300px' });
+      Object.assign(contentContainer.style, { width: '680px', height: '300px' });
 
       // Verse near bottom of scroll container
       const segmentRef = 'verse_1_6';

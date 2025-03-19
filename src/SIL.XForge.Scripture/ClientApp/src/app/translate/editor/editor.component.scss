@@ -162,16 +162,13 @@ app-text {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-
-  app-notice {
-    margin: 1em;
-  }
 }
 
 .text-container {
   display: flex;
   position: relative;
   height: 100%;
+  overflow: hidden;
 }
 
 .text-area {
