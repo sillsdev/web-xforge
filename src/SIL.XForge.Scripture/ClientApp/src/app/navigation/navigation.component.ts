@@ -1,22 +1,20 @@
-import { Component, DestroyRef, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { Router } from '@angular/router';
-import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
-import { delay, map, startWith, switchMap } from 'rxjs/operators';
+import { combineLatest, Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
+import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
-import { SFProjectService } from '../core/sf-project.service';
+import { PermissionsService } from '../core/permissions.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 @Component({
   selector: 'app-navigation',
@@ -41,35 +39,10 @@ export class NavigationComponent {
     switchMap(projectId => (projectId == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectId)))
   );
 
-  projectUserConfigDoc?: SFProjectUserConfigDoc;
-  answerQuestionsLink$: Observable<string[] | undefined> = this.resumeCheckingService.checkingLink$;
+  @Output() readonly menuItemClicked = new EventEmitter<void>();
 
-  @Output() menuItemClicked = new EventEmitter<void>();
-
-  projectUserConfigDoc$ = new BehaviorSubject<SFProjectUserConfigDoc | undefined>(undefined);
-
-  translateLink$ = combineLatest([
-    this.activatedProjectService.changes$,
-    this.projectUserConfigDoc$.pipe(
-      switchMap(doc => doc?.changes$.pipe(startWith(undefined)) ?? of(undefined)),
-      map(() => this.projectUserConfigDoc$.getValue())
-    )
-  ]).pipe(
-    map(([projectDoc, projectUserConfigDoc]) => {
-      const project = projectDoc?.data;
-      const config = projectUserConfigDoc?.data;
-
-      const bookNum = config?.selectedBookNum ?? project?.texts[0]?.bookNum ?? Canon.firstBook;
-      const chapterNum = config?.selectedChapterNum ?? project?.texts[bookNum]?.chapters[0].number ?? 1;
-      const bookId = Canon.bookNumberToId(bookNum);
-
-      return this.getProjectLink('translate', [bookId, String(chapterNum)]);
-    }),
-    // The selected book and chapter is updated by CheckingQuestionsComponent in the middle of a change detection cycle.
-    // This causes the link to the translate page to cause ExpressionChangedAfterItHasBeenCheckedError. To avoid this,
-    // delay the link update until the next change detection cycle.
-    delay(0)
-  );
+  readonly answerQuestionsLink$ = this.resumeCheckingService.resumeLink$;
+  readonly translateLink$ = this.resumeTranslateService.resumeLink$;
 
   constructor(
     readonly i18n: I18nService,
@@ -78,18 +51,14 @@ export class NavigationComponent {
     private readonly syncAuthGuard: SyncAuthGuard,
     private readonly usersAuthGuard: UsersAuthGuard,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly resumeCheckingService: ResumeCheckingService,
+    private readonly resumeTranslateService: ResumeTranslateService,
     private readonly router: Router,
     private readonly activatedProjectService: ActivatedProjectService,
-    readonly featureFlags: FeatureFlagService,
-    private destroyRef: DestroyRef
-  ) {
-    this.activatedProjectService.projectId$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectId => {
-      this.updateProjectUserConfig(projectId);
-    });
-  }
+    private readonly permissionsService: PermissionsService,
+    readonly featureFlags: FeatureFlagService
+  ) {}
 
   get selectedProjectDoc(): SFProjectProfileDoc | undefined {
     return this.activatedProjectService.projectDoc;
@@ -136,7 +105,12 @@ export class NavigationComponent {
   }
 
   get canManageQuestions(): boolean {
-    return this.userHasPermission(SFProjectDomain.Questions, Operation.Edit);
+    if (this.activatedProjectService.projectDoc?.data === undefined) return false;
+    return this.permissionsService.userHasPermission(
+      this.activatedProjectService.projectDoc.data,
+      SFProjectDomain.Questions,
+      Operation.Edit
+    );
   }
 
   clickWithinNavList($event: MouseEvent): void {
@@ -186,19 +160,5 @@ export class NavigationComponent {
   private urlStartsWithAndHasAnotherPortion(link: string): boolean {
     // add 1 to link length to account for the slash
     return this.router.url.startsWith(link) && this.router.url.length > link.length + 1;
-  }
-
-  private async updateProjectUserConfig(projectId: string | undefined): Promise<void> {
-    this.projectUserConfigDoc = undefined;
-    if (projectId != null) {
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
-      this.projectUserConfigDoc$.next(this.projectUserConfigDoc);
-    }
-  }
-
-  private userHasPermission(projectDomain: string, operation: Operation): boolean {
-    const project = this.selectedProjectDoc?.data;
-    const userId = this.userService.currentUserId;
-    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, projectDomain, operation);
   }
 }
