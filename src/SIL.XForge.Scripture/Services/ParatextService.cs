@@ -288,6 +288,7 @@ public class ParatextService : DisposableBase, IParatextService
                 SharedProject sharedProj = CreateSharedProject(
                     paratextId,
                     ptProject.ShortName,
+                    username,
                     scrText,
                     sendReceiveRepository
                 );
@@ -2651,11 +2652,23 @@ public class ParatextService : DisposableBase, IParatextService
     private static SharedProject CreateSharedProject(
         string paratextId,
         string proj,
+        string username,
         ScrText scrText,
-        SharedRepository sharedRepository
+        SharedRepository? sharedRepository
     )
     {
-        // Previously we used the CreateSharedProject method of SharingLogic but it would
+        // Default to the local permissions
+        PermissionManager permissions = scrText.Permissions;
+
+        // Unless we have permissions from the registry
+        if (sharedRepository?.SourceUsers is not null)
+        {
+            // The shared repository permissions will use the user configured in Paratext,
+            // so we need to override it with the user that is running the sync.
+            permissions = new ParatextRegistryPermissionManager(username, sharedRepository.SourceUsers);
+        }
+
+        // Previously we used the CreateSharedProject method of SharingLogic, but it would
         // result in null if the user did not have a license to the repo which happens
         // if the project is derived from another. This ensures the SharedProject is available.
         // We must set the ScrText property of the SharedProject to indicate that the project is available locally
@@ -2665,7 +2678,7 @@ public class ParatextService : DisposableBase, IParatextService
             Repository = sharedRepository,
             SendReceiveId = HexId.FromStr(paratextId),
             ScrText = scrText,
-            Permissions = scrText.Permissions,
+            Permissions = permissions,
         };
     }
 
