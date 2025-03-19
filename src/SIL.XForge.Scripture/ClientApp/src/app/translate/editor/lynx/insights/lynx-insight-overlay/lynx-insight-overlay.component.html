@@ -8,15 +8,23 @@
         <mat-icon matTooltip="More info" class="more-info-icon" (click)="toggleMoreInfo()">help_outline</mat-icon>
       }
     </h1>
-    <div class="primary-action">
-      <a (click)="selectAction(primaryAction!)">
-        <mat-icon class="apply-icon">content_paste_go</mat-icon>
-        {{ primaryAction?.label }}
-      </a>
-      <span class="shortcut">Alt + Shift + Enter</span>
-    </div>
+    @if (primaryAction != null) {
+      <div class="primary-action">
+        <a (click)="selectAction(primaryAction!)">
+          <mat-icon class="apply-icon">content_paste_go</mat-icon>
+          {{ primaryAction.label }}
+        </a>
+        <span class="shortcut">Alt + Shift + Enter</span>
+      </div>
+    }
     <div class="secondary-actions">
-      <mat-icon matTooltip="Actions" [matMenuTriggerFor]="actionMenu" class="action-menu-trigger">more_horiz</mat-icon>
+      <mat-icon
+        matTooltip="Actions"
+        [matMenuTriggerFor]="actionMenu"
+        class="action-menu-trigger"
+        [style.visibility]="menuActions.length === 0 ? 'hidden' : 'visible'"
+        >more_horiz</mat-icon
+      >
       <mat-icon matTooltip="Dismiss" (click)="dismissInsight(focusedInsight)" class="dismiss-icon">
         visibility_off
       </mat-icon>

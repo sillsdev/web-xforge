@@ -1,6 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { DiagnosticSeverity } from '@sillsdev/lynx';
-import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
 import {
   LynxInsightFilter,
@@ -17,16 +15,13 @@ import {
   map,
   Observable,
   shareReplay,
-  switchMap,
   take,
   tap,
   withLatestFrom
 } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { TextDocId } from '../../../../core/models/text-doc';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightDisplayState } from './lynx-insight';
 import { LynxInsightFilterService } from './lynx-insight-filter.service';
 import { LynxWorkspaceService } from './lynx-workspace.service';
@@ -37,56 +32,7 @@ type BooleanProp<T> = { [K in keyof T]: T[K] extends boolean | undefined ? K : n
   providedIn: 'root'
 })
 export class LynxInsightStateService {
-  private readonly curInsights = new Map<string, LynxInsight[]>();
-  private rawInsightSource$: Observable<LynxInsight[]> = this.lynxWorkspaceService.workspace.diagnosticsChanged$.pipe(
-    switchMap(async e => {
-      if (e.diagnostics.length === 0) {
-        this.curInsights.delete(e.uri);
-      } else {
-        const doc = await this.lynxWorkspaceService.documentManager.get(e.uri);
-        const insights: LynxInsight[] = [];
-        if (doc != null) {
-          const textDocIdParts = e.uri.split(':', 3);
-          const textDocId = new TextDocId(
-            textDocIdParts[0],
-            Canon.bookIdToNumber(textDocIdParts[1]),
-            parseInt(textDocIdParts[2])
-          );
-          for (const diagnostic of e.diagnostics) {
-            let type: LynxInsightType = 'info';
-            switch (diagnostic.severity) {
-              case DiagnosticSeverity.Information:
-              case DiagnosticSeverity.Hint:
-                type = 'info';
-                break;
-              case DiagnosticSeverity.Warning:
-                type = 'warning';
-                break;
-              case DiagnosticSeverity.Error:
-                type = 'error';
-                break;
-            }
-            const start = doc.offsetAt(diagnostic.range.start);
-            const end = doc.offsetAt(diagnostic.range.end);
-            insights.push({
-              id: uuidv4(),
-              type,
-              textDocId,
-              range: { index: start, length: end - start },
-              code: diagnostic.code.toString(),
-              source: diagnostic.source,
-              description: diagnostic.message,
-              data: diagnostic.data
-            });
-          }
-        }
-        this.curInsights.set(e.uri, insights);
-      }
-      return Array.from(this.curInsights.values()).flat();
-    })
-  );
-
-  private rawInsights$: Observable<LynxInsight[]> = this.rawInsightSource$.pipe(
+  private rawInsights$: Observable<LynxInsight[]> = this.lynxWorkspaceService.rawInsightSource$.pipe(
     distinctUntilChanged(isEqual),
     tap(insights => console.log('rawInsights$ changed (LynxInsightStateService)', insights)),
     shareReplay(1)
@@ -223,7 +169,7 @@ export class LynxInsightStateService {
   }
 
   getInsight(id: string): LynxInsight | undefined {
-    for (const insights of this.curInsights.values()) {
+    for (const insights of this.lynxWorkspaceService.currentInsights.values()) {
       const insight = insights.find(i => i.id === id);
       if (insight != null) {
         return insight;
