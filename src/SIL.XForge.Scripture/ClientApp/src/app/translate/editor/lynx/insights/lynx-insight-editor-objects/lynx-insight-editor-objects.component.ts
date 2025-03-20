@@ -42,7 +42,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
     fromEvent(this.editor, 'text-change')
       .pipe(
         filter(([_delta, _oldContents, source]) => source === 'user'),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(([delta]) => this.handleTextChange(delta));
 
