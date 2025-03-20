@@ -1,0 +1,134 @@
+use('xforge')
+
+// Taken from https://github.com/sillsdev/scripture/blob/main/src/canon.ts
+const bookIds = [
+  'GEN',
+  'EXO',
+  'LEV',
+  'NUM',
+  'DEU',
+  'JOS',
+  'JDG',
+  'RUT',
+  '1SA',
+  '2SA', // 10
+
+  '1KI',
+  '2KI',
+  '1CH',
+  '2CH',
+  'EZR',
+  'NEH',
+  'EST',
+  'JOB',
+  'PSA',
+  'PRO', // 20
+
+  'ECC',
+  'SNG',
+  'ISA',
+  'JER',
+  'LAM',
+  'EZK',
+  'DAN',
+  'HOS',
+  'JOL',
+  'AMO', // 30
+
+  'OBA',
+  'JON',
+  'MIC',
+  'NAM',
+  'HAB',
+  'ZEP',
+  'HAG',
+  'ZEC',
+  'MAL',
+  'MAT', // 40
+
+  'MRK',
+  'LUK',
+  'JHN',
+  'ACT',
+  'ROM',
+  '1CO',
+  '2CO',
+  'GAL',
+  'EPH',
+  'PHP', // 50
+
+  'COL',
+  '1TH',
+  '2TH',
+  '1TI',
+  '2TI',
+  'TIT',
+  'PHM',
+  'HEB',
+  'JAS',
+  '1PE', // 60
+
+  '2PE',
+  '1JN',
+  '2JN',
+  '3JN',
+  'JUD',
+  'REV'
+];
+
+const booksByProjectsDraftingIt = db.event_metrics.aggregate([
+  {
+    $match: {
+      eventType: 'StartPreTranslationBuildAsync'
+    }
+  },
+  {
+    $project: {
+      projectId: '$projectId',
+      books: { $split: ['$payload.buildConfig.TranslationScriptureRange', ';'] }
+    }
+  },
+  {
+    $group: {
+      _id: '$projectId',
+      books: { $addToSet: '$books' }
+    }
+  },
+  {
+    $project: {
+      books: {
+        $reduce: {
+          input: '$books',
+          initialValue: [],
+          in: {
+            $setUnion: ['$$value', '$$this']
+          }
+        }
+      },
+    }
+  },
+  // We now have a list of books by each project
+  // Unwinding this will allow us to count books by how many projects drafted each
+  { $unwind: '$books' },
+  {
+    $group: {
+      _id: '$books',
+      count: { $sum: 1 }
+    }
+  },
+  {
+    $sort: {
+      count: -1
+    }
+  }
+]).toArray();
+
+booksByProjectsDraftingIt.sort((a, b) => {
+  const aIndex = bookIds.indexOf(a._id);
+  const bIndex = bookIds.indexOf(b._id);
+  return aIndex - bIndex;
+});
+
+for (const record of booksByProjectsDraftingIt) {
+  print(record._id + '\t' + record.count);
+}
