@@ -1,5 +1,13 @@
 @use 'src/breakpoints';
 
+p.mat-hint {
+  display: flex !important;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-block-start: 0;
+}
+
 .invite-forms {
   display: flex;
   flex-direction: column;

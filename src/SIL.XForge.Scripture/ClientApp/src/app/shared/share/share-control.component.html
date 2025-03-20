@@ -66,8 +66,7 @@
     @if (isLinkSharingEnabled) {
       <div class="invite-by-link">
         <h3>{{ t("share_a_link") }}</h3>
-        <p class="mat-hint">{{ t("link_sharing") }}</p>
-        <app-share-button [iconOnlyButton]="false"></app-share-button>
+        <p class="mat-hint">{{ t("link_sharing") }} <app-share-button [iconOnlyButton]="false"></app-share-button></p>
       </div>
     }
   </div>
