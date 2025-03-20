@@ -288,6 +288,7 @@ public class ParatextService : DisposableBase, IParatextService
                 SharedProject sharedProj = CreateSharedProject(
                     paratextId,
                     ptProject.ShortName,
+                    username,
                     scrText,
                     sendReceiveRepository
                 );
@@ -846,7 +847,7 @@ public class ParatextService : DisposableBase, IParatextService
         else
         {
             // Get the scripture text so we can retrieve the permissions from the XML
-            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), sfProject.ParatextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, sfProject.ParatextId);
 
             // Calculate the project and resource permissions
             foreach (string uid in sfProject.UserRoles.Keys)
@@ -855,7 +856,7 @@ public class ParatextService : DisposableBase, IParatextService
                 if (
                     !ptUsernameMapping.TryGetValue(uid, out string userName)
                     || string.IsNullOrWhiteSpace(userName)
-                    || scrText.Permissions.GetRole(userName) == UserRoles.None
+                    || scrText!.Permissions.GetRole(userName) == UserRoles.None
                 )
                 {
                     permissions.Add(uid, TextInfoPermission.None);
@@ -863,39 +864,46 @@ public class ParatextService : DisposableBase, IParatextService
                 else
                 {
                     string textInfoPermission = TextInfoPermission.Read;
-                    if (book == 0)
+
+                    // Observers and Consultants can have EditAllBooks set to true,
+                    // so we must check whether the role is read-only.
+                    // NOTE: We check for UserRoles.None in the block above.
+                    if (scrText.Permissions.GetRole(userName) is not (UserRoles.Observer or UserRoles.Consultant))
                     {
-                        // Project level
-                        if (scrText.Permissions.CanEditAllBooks(userName))
+                        if (book == 0)
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Project level
+                            if (scrText.Permissions.CanEditAllBooks(userName))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
-                    }
-                    else if (chapter == 0)
-                    {
-                        // Book level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
-                            PermissionSet.Merged,
-                            userName
-                        );
-                        // Check if they can edit all books or the specified book
-                        if (scrText.Permissions.CanEditAllBooks(userName) || editable.Contains(book))
+                        else if (chapter == 0)
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Book level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
+                                PermissionSet.Merged,
+                                userName
+                            );
+                            // Check if they can edit all books or the specified book
+                            if (scrText.Permissions.CanEditAllBooks(userName) || editable.Contains(book))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
-                    }
-                    else
-                    {
-                        // Chapter level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(
-                            book,
-                            scrText.Settings.Versification,
-                            userName,
-                            PermissionSet.Merged
-                        );
-                        if (editable?.Contains(chapter) ?? false)
+                        else
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Chapter level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(
+                                book,
+                                scrText.Settings.Versification,
+                                userName,
+                                PermissionSet.Merged
+                            );
+                            if (editable?.Contains(chapter) ?? false)
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
                     }
 
@@ -2644,11 +2652,23 @@ public class ParatextService : DisposableBase, IParatextService
     private static SharedProject CreateSharedProject(
         string paratextId,
         string proj,
+        string username,
         ScrText scrText,
-        SharedRepository sharedRepository
+        SharedRepository? sharedRepository
     )
     {
-        // Previously we used the CreateSharedProject method of SharingLogic but it would
+        // Default to the local permissions
+        PermissionManager permissions = scrText.Permissions;
+
+        // Unless we have permissions from the registry
+        if (sharedRepository?.SourceUsers is not null)
+        {
+            // The shared repository permissions will use the user configured in Paratext,
+            // so we need to override it with the user that is running the sync.
+            permissions = new ParatextRegistryPermissionManager(username, sharedRepository.SourceUsers);
+        }
+
+        // Previously we used the CreateSharedProject method of SharingLogic, but it would
         // result in null if the user did not have a license to the repo which happens
         // if the project is derived from another. This ensures the SharedProject is available.
         // We must set the ScrText property of the SharedProject to indicate that the project is available locally
@@ -2658,7 +2678,7 @@ public class ParatextService : DisposableBase, IParatextService
             Repository = sharedRepository,
             SendReceiveId = HexId.FromStr(paratextId),
             ScrText = scrText,
-            Permissions = scrText.Permissions,
+            Permissions = permissions,
         };
     }
 
@@ -2791,6 +2811,7 @@ public class ParatextService : DisposableBase, IParatextService
         catch (Exception e)
         {
             _logger.LogError(e, "Exception while updating notes: {0}", e.Message);
+            throw;
         }
 
         return syncMetricInfo;

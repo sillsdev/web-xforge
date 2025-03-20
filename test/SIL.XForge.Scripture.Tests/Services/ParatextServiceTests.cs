@@ -398,7 +398,7 @@ public class ParatextServiceTests
     {
         var env = new TestEnvironment();
         const int lengthOfDblResourceId = 16;
-        string id = "1234567890abcdef";
+        const string id = "1234567890abcdef";
         Assert.That(id.Length, Is.EqualTo(lengthOfDblResourceId), "setup. Use an ID of DBL-Resource-ID-length.");
         // SUT
         Assert.That(env.Service.IsResource(id), Is.True);
@@ -430,7 +430,7 @@ public class ParatextServiceTests
             { env.User01, SFProjectRole.Administrator },
             { env.User02, SFProjectRole.CommunityChecker },
         };
-        var ptUsernameMapping = new Dictionary<string, string>()
+        var ptUsernameMapping = new Dictionary<string, string>
         {
             { env.User01, env.Username01 },
             { env.User02, env.Username02 },
@@ -452,7 +452,7 @@ public class ParatextServiceTests
         var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
         SFProject project = projects.First();
 
-        var ptUsernameMapping = new Dictionary<string, string>() { { env.User01, env.Username01 } };
+        var ptUsernameMapping = new Dictionary<string, string> { { env.User01, env.Username01 } };
         ScrText scrText = env.GetScrText(new SFParatextUser(env.Username01), project.ParatextId);
         scrText.Permissions.SetPermission(env.Username01, 0, PermissionSet.Manual, true);
         // Give User01 automatic permission to Mark but not Matthew
@@ -474,6 +474,38 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetPermissionsAsync_AllBooksAndAutomaticBooks_IsConsultant()
+    {
+        // Set up environment
+        var env = new TestEnvironment();
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up mock project
+        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+        SFProject project = projects.First();
+
+        var ptUsernameMapping = new Dictionary<string, string> { { env.User01, env.Username01 } };
+        ScrText scrText = env.GetScrText(new SFParatextUser(env.Username01), project.ParatextId);
+        // Give User01 automatic permission to all books
+        scrText.Permissions.SetPermission(env.Username01, 0, PermissionSet.Automatic, true);
+        // Make User01 a consultant
+        scrText.Permissions.ChangeUserRole(env.Username01, UserRoles.Consultant);
+        env.MockScrTextCollection.FindById(env.Username01, project.ParatextId).Returns(scrText);
+
+        // SUT
+        Dictionary<string, string> permissions = await env.Service.GetPermissionsAsync(
+            user01Secret,
+            project,
+            ptUsernameMapping,
+            40
+        );
+
+        // Ensure the user has read only access to Matthew and Mark
+        string[] expected = [TextInfoPermission.Read, TextInfoPermission.None, TextInfoPermission.None];
+        Assert.That(permissions.Values, Is.EquivalentTo(expected));
+    }
+
+    [Test]
     public async Task GetPermissionsAsync_AutomaticBooks_HasBookLevelPermission()
     {
         // Set up environment
@@ -484,7 +516,7 @@ public class ParatextServiceTests
         var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
         SFProject project = projects.First();
 
-        var ptUsernameMapping = new Dictionary<string, string>() { { env.User01, env.Username01 } };
+        var ptUsernameMapping = new Dictionary<string, string> { { env.User01, env.Username01 } };
         ScrText scrText = env.GetScrText(new SFParatextUser(env.Username01), project.ParatextId);
         scrText.Permissions.SetPermission(env.Username01, 0, PermissionSet.Manual, false);
         // Give automatic permission to User01 to Mark but not Matthew
@@ -857,6 +889,31 @@ public class ParatextServiceTests
 
         // PT username is not written to server logs
         env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
+    }
+
+    [Test]
+    public void PutNotes_RethrowsErrors()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        DateTime date = DateTime.Now; // This must be consistent as it is a part of the comment id
+
+        // Configure the Paratext data helper to throw an error
+        var exception = new UnauthorizedAccessException();
+        env.MockParatextDataHelper.When(pd => pd.CommitVersionedText(Arg.Any<ScrText>(), Arg.Any<string>()))
+            .Throws(exception);
+
+        // Add new comment
+        const string threadId = "Answer_0123";
+        const string content = "Content for comment to update.";
+        const string verseRef = "RUT 1:1";
+        XElement updateNotesXml = TestEnvironment.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef);
+        Assert.Throws<UnauthorizedAccessException>(() => env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml));
+
+        // Ensure that the error has logged too
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == exception);
     }
 
     [Test]
