@@ -1,5 +1,5 @@
 ---
-level: warn
+level: error
 ---
 
 Imports can safely be made directly from `lodash-es` instead of `lodash-es/...`.

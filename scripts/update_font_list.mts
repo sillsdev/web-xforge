@@ -36,9 +36,7 @@ for (const entry of Object.values(fonts)) {
 
   const defaultFileUrl = entry.files[defaultFileName]?.flourl;
 
-  if (filesByFamily[entry.family] == null) {
-    filesByFamily[entry.family] = [];
-  }
+  filesByFamily[entry.family] ??= [];
   filesByFamily[entry.family].push({
     fileName: defaultFileName,
     fileUrl: defaultFileUrl

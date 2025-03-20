@@ -767,19 +767,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       case 'save':
         let answer = answerAction.answer;
         const dateNow: string = new Date().toJSON();
-        if (answer == null) {
-          answer = {
-            dataId: objectId(),
-            ownerRef: this.userService.currentUserId,
-            text: '',
-            likes: [],
-            dateCreated: dateNow,
-            dateModified: dateNow,
-            deleted: false,
-            comments: [],
-            status: AnswerStatus.None
-          };
-        }
+        answer ??= {
+          dataId: objectId(),
+          ownerRef: this.userService.currentUserId,
+          text: '',
+          likes: [],
+          dateCreated: dateNow,
+          dateModified: dateNow,
+          deleted: false,
+          comments: [],
+          status: AnswerStatus.None
+        };
         answer.text = answerAction.text;
         answer.scriptureText = answerAction.scriptureText;
         answer.verseRef = answerAction.verseRef;
@@ -848,16 +846,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         if (commentAction.answer != null) {
           let comment = commentAction.comment;
           const dateNow: string = new Date().toJSON();
-          if (comment == null) {
-            comment = {
-              dataId: objectId(),
-              ownerRef: this.userService.currentUserId,
-              text: '',
-              dateCreated: dateNow,
-              dateModified: dateNow,
-              deleted: false
-            };
-          }
+          comment ??= {
+            dataId: objectId(),
+            ownerRef: this.userService.currentUserId,
+            text: '',
+            dateCreated: dateNow,
+            dateModified: dateNow,
+            deleted: false
+          };
           comment.text = commentAction.text;
           comment.dateModified = dateNow;
           if (commentAction.audio != null) {

@@ -1,6 +1,6 @@
 ---
 tags: [precommit]
-level: warn
+level: error
 ---
 
 # Import from xforge-common, not from ../xforge-common

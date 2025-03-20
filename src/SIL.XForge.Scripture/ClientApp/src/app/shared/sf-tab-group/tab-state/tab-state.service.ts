@@ -210,9 +210,7 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
 
     this.lastConsolidationGroupId = into;
 
-    if (this.tabsToDeconsolidate == null) {
-      this.tabsToDeconsolidate = new Map();
-    }
+    this.tabsToDeconsolidate ??= new Map();
 
     this.groups.forEach(group => {
       if (group.groupId === into) {

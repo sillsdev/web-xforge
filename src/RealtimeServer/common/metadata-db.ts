@@ -15,9 +15,7 @@ export function MetadataDB<T extends DBConstructor>(Base: T): T {
       options: any,
       callback: (...args: any[]) => any
     ): void {
-      if (options == null) {
-        options = {};
-      }
+      options ??= {};
       options.metadata = true;
       super.getOpsToSnapshot(collection, id, from, snapshot, options, callback);
     }
