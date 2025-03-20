@@ -539,7 +539,10 @@ export class AuthService {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
       } catch (err) {
-        console.error(err);
+        // Display error dialog to pause login loop.
+        // Error details will be sent to Bugsnag and logged to the console.
+        await this.handleLoginError('handleOnlineAuth', err);
+
         return false;
       }
     }
