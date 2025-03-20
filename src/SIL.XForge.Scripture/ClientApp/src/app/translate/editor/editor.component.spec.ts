@@ -5242,15 +5242,9 @@ class TestEnvironment {
   }
 
   private addProjectUserConfig(userConfig: SFProjectUserConfig): void {
-    if (userConfig.translationSuggestionsEnabled == null) {
-      userConfig.translationSuggestionsEnabled = true;
-    }
-    if (userConfig.numSuggestions == null) {
-      userConfig.numSuggestions = 1;
-    }
-    if (userConfig.confidenceThreshold == null) {
-      userConfig.confidenceThreshold = 0.2;
-    }
+    userConfig.translationSuggestionsEnabled ??= true;
+    userConfig.numSuggestions ??= 1;
+    userConfig.confidenceThreshold ??= 0.2;
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: getSFProjectUserConfigDocId('project01', userConfig.ownerRef),
       data: userConfig

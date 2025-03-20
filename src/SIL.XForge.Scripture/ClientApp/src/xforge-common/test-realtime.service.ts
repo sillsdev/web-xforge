@@ -9,18 +9,10 @@ import { RealtimeService } from './realtime.service';
 import { objectId } from './utils';
 
 function addSnapshotDefaults(snapshot: Partial<Snapshot>): Snapshot {
-  if (snapshot.id == null) {
-    snapshot.id = objectId();
-  }
-  if (snapshot.data == null) {
-    snapshot.data = {};
-  }
-  if (snapshot.v == null) {
-    snapshot.v = 0;
-  }
-  if (snapshot.type == null) {
-    snapshot.type = OTJson0.type.name;
-  }
+  snapshot.id ??= objectId();
+  snapshot.data ??= {};
+  snapshot.v ??= 0;
+  snapshot.type ??= OTJson0.type.name;
   return snapshot as Snapshot;
 }
 

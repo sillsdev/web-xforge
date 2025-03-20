@@ -31,7 +31,7 @@ export function supportedBrowser(): boolean {
     chrome: '>=87',
     chromium: '>=87',
     edge: '>=87',
-    firefox: '>=78',
+    firefox: '>=79',
     safari: '>=14.1',
 
     mobile: {

@@ -54,9 +54,7 @@ function canParaContainVerseText(style: string): boolean {
 
 function getParagraphRef(nextIds: Map<string, number>, key: string, prefix: string): string {
   let nextId = nextIds.get(key);
-  if (nextId == null) {
-    nextId = 1;
-  }
+  nextId ??= 1;
   const id = nextId++;
   nextIds.set(key, nextId);
   return prefix + '_' + id;
@@ -597,9 +595,7 @@ export class TextViewModel implements OnDestroy {
           }
         } else {
           // title/header
-          if (curSegment == null) {
-            curSegment = new SegmentInfo('', curIndex);
-          }
+          curSegment ??= new SegmentInfo('', curIndex);
           curSegment.ref = getParagraphRef(nextIds, style, style);
           [fixDelta, fixOffset] = this.fixSegment(editor, curSegment, fixDelta, fixOffset, isOnline);
           this._segments.set(curSegment.ref, { index: curSegment.index, length: curSegment.length });
@@ -627,9 +623,7 @@ export class TextViewModel implements OnDestroy {
       } else {
         // segment
         setAttribute(op, attrs, 'para-contents', true);
-        if (curSegment == null) {
-          curSegment = new SegmentInfo('', curIndex);
-        }
+        curSegment ??= new SegmentInfo('', curIndex);
         const opSegRef: string = op.attributes?.['segment'] != null ? (op.attributes['segment'] as string) : '';
         if (curSegment.origRef == null) {
           curSegment.origRef = opSegRef;
