@@ -13,5 +13,4 @@ public interface IAuthService
     Task LinkAccounts(string primaryAuthId, string secondaryAuthId);
     Task UpdateAvatar(string authId, string url);
     Task UpdateInterfaceLanguage(string authId, string language);
-    Task<string> UpdateUserToAnonymous(string authId);
 }

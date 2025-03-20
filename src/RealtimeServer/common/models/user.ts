@@ -11,8 +11,7 @@ export enum AuthType {
   Paratext,
   Google,
   Facebook,
-  Account,
-  SMS
+  Account
 }
 
 export function getAuthType(authId: string): AuthType {
@@ -32,9 +31,6 @@ export function getAuthType(authId: string): AuthType {
   }
   if (authIdType.includes('auth0')) {
     return AuthType.Account;
-  }
-  if (authIdType.includes('sms')) {
-    return AuthType.SMS;
   }
   return AuthType.Unknown;
 }

@@ -60,16 +60,9 @@ public class UserService : IUserService
         bool displayNameSetAtSignup = identities
             .OfType<JObject>()
             .Any(i => (string)i["connection"] == "Transparent-Authentication");
-        bool hasSMSConnection = identities.OfType<JObject>().Any(i => (string)i["connection"] == "sms");
         Regex emailRegex = new Regex(EMAIL_PATTERN);
         await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
         {
-            // New SMS connection users have their name and nickname to the phone number which we need to change
-            // to anonymous. Users will be asked to set their display name once they start adding content.
-            if (hasSMSConnection && (string)userProfile["name"] == (string)userProfile["phone_number"])
-            {
-                userProfile = JObject.Parse(await _authService.UpdateUserToAnonymous((string)userProfile["user_id"]));
-            }
             string name = (string)userProfile["name"];
             IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(
                 curUserId,
