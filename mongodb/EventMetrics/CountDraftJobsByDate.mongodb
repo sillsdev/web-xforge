@@ -1,0 +1,48 @@
+use('xforge')
+
+const eventByDates = db.event_metrics.aggregate([
+  {
+    $match: {
+      eventType: 'StartPreTranslationBuildAsync'
+    }
+  },
+  {
+    $project: {
+      date: { $dateToString: { format: "%Y-%m-%d", date: "$timeStamp" } },
+    }
+  },
+  {
+    $group: {
+      _id: "$date",
+      count: { $sum: 1 }
+    }
+  },
+  {
+    $sort: {
+      _id: 1
+    }
+  }
+])
+
+print(['Date', 'Draft jobs'].join('\t'));
+const previouslyPrintedDate = null;
+while (eventByDates.hasNext()) {
+  const recordForDay = eventByDates.next();
+  const recordDateString = recordForDay._id;
+
+  // if there's a gap between dates, print the missing dates
+  if (previouslyPrintedDate) {
+    let currentDate = new Date(previouslyPrintedDate);
+    currentDate.setTime(currentDate.getTime() + 24 * 60 * 60 * 1000);
+    const endDate = new Date(recordDateString);
+    while (currentDate < endDate) {
+      print(currentDate.toISOString().split('T')[0] + '\t0');
+      currentDate.setTime(currentDate.getTime() + 24 * 60 * 60 * 1000);
+    }
+  }
+  previouslyPrintedDate = recordDateString
+
+  const count = recordForDay.count;
+  const row = [recordDateString, count];
+  print(row.join('\t'));
+}
