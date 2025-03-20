@@ -27,11 +27,12 @@ export function supportedBrowser(): boolean {
   // https://caniuse.com/mdn-css_properties_column-gap_flex_context
   // https://caniuse.com/mdn-css_properties_inset-inline-start
   // https://developer.mozilla.org/en-US/docs/Web/CSS/margin-inline-start#browser_compatibility
+
   const isSupportedBrowser = BROWSER.satisfies({
     chrome: '>=87',
     chromium: '>=87',
     edge: '>=87',
-    firefox: '>=78',
+    firefox: '>=79',
     safari: '>=14.1',
 
     mobile: {

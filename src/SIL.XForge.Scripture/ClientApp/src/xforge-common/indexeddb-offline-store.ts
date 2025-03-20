@@ -126,9 +126,7 @@ export class IndexeddbOfflineStore extends OfflineStore {
         }
       }
     }
-    if (snapshots == null) {
-      snapshots = await this.getAll(collection);
-    }
+    snapshots ??= await this.getAll(collection);
     return performQuery(parameters, snapshots);
   }
 

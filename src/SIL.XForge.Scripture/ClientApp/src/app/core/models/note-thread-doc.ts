@@ -20,9 +20,7 @@ import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
 
 /** Returns the given tag icon formatted for retrieval in the html template, or the default icon. */
 export function defaultNoteThreadIcon(tagIcon: string | undefined): NoteThreadIcon {
-  if (tagIcon == null) {
-    tagIcon = DEFAULT_TAG_ICON;
-  }
+  tagIcon ??= DEFAULT_TAG_ICON;
   const iconUrl = `/assets/icons/TagIcons/${tagIcon}.png`;
   return { cssVar: `--icon-file: url(${iconUrl});`, url: iconUrl };
 }
