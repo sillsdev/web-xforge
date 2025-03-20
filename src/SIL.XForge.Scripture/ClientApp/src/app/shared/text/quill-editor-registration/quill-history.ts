@@ -68,9 +68,7 @@ export function removeObsoleteSegmentAttrs(delta: Delta): Delta {
       const modelOp: DeltaOperation = cloneDeep(op);
       const attrs = modelOp.attributes;
       if (attrs != null && attrs['segment'] != null) {
-        if (attrs['highlight-segment'] == null) {
-          attrs['highlight-segment'] = false;
-        }
+        attrs['highlight-segment'] ??= false;
         if (attrs['commenter-selection'] != null) {
           // if this delta is applied to a verse that is not the current selection, this attribute
           // should be null so when the selection changes, the verse will be correctly selected

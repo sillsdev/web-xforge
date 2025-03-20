@@ -272,12 +272,10 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
     // No stored question, so use first question within route book/chapter if available.
     // Otherwise use first question.
-    if (questionToActivate == null) {
-      questionToActivate =
-        this.questionDocs.find(
-          qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
-        ) ?? this.questionDocs[0];
-    }
+    questionToActivate ??=
+      this.questionDocs.find(
+        qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
+      ) ?? this.questionDocs[0];
 
     if (questionToActivate != null) {
       this.activateQuestion(questionToActivate, actionSource);

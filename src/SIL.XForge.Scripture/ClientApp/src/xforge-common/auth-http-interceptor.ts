@@ -22,9 +22,7 @@ export class AuthHttpInterceptor implements HttpInterceptor {
   constructor(private readonly injector: Injector) {}
 
   async handle(req: HttpRequest<any>, next: HttpHandler): Promise<HttpEvent<any>> {
-    if (this.authService == null) {
-      this.authService = this.injector.get<AuthService>(AuthService);
-    }
+    this.authService ??= this.injector.get<AuthService>(AuthService);
     // Make sure the user is authenticated with a valid access token
     if (!(await this.authService.isAuthenticated())) {
       // When authentication fails auth0 is already in the process of redirecting to the login screen

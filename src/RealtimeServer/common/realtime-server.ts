@@ -455,9 +455,7 @@ export class RealtimeServer extends ShareDB {
     }
     for (const docService of this.docServices.values()) {
       let curVersion = versionMap.get(docService.collection);
-      if (curVersion == null) {
-        curVersion = 0;
-      }
+      curVersion ??= 0;
       const version = docService.schemaVersion;
       if (curVersion === version) {
         continue;
