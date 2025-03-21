@@ -381,24 +381,7 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should login with passwordless enabled', fakeAsync(() => {
-    const env = new TestEnvironment();
-    const returnUrl = 'test-returnUrl';
-
-    env.service.logIn({ returnUrl });
-
-    verify(mockedWebAuth.loginWithRedirect(anything())).once();
-    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
-      mockedWebAuth.loginWithRedirect
-    ).last()[0];
-    expect(authOptions).toBeDefined();
-    if (authOptions != null) {
-      expect(authOptions.authorizationParams!.enablePasswordless).toEqual(true);
-      expect(authOptions.authorizationParams!.promptPasswordlessLogin).toBeUndefined();
-    }
-  }));
-
-  it('should login with passwordless enabled and prompt for passwordless login', fakeAsync(() => {
+  it('should prompt for basic login', fakeAsync(() => {
     const env = new TestEnvironment();
     const returnUrl = 'test-returnUrl';
     when(mockedLocationService.pathname).thenReturn('/join/sharekey');
@@ -411,8 +394,7 @@ describe('AuthService', () => {
     ).last()[0];
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
-      expect(authOptions.authorizationParams!.enablePasswordless).toEqual(true);
-      expect(authOptions.authorizationParams!.promptPasswordlessLogin).toEqual(true);
+      expect(authOptions.authorizationParams!.promptBasicLogin).toEqual(true);
     }
   }));
 
