@@ -1059,7 +1059,7 @@ class TestEnvironment {
   }
 
   get dangerZoneTitle(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#danger-zone div');
+    return this.fixture.nativeElement.querySelector('#danger-zone h2');
   }
 
   get projectSyncingMessage(): HTMLElement {
