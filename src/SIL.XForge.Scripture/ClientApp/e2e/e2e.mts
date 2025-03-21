@@ -2,7 +2,7 @@
 import { chromium, firefox, Page, webkit } from "npm:playwright";
 // import locales from "../../locales.json" with { type: "json" };
 
-const ROOT_URL = "http://localhost:5000";
+export const E2E_ROOT_URL = "http://localhost:5000";
 const OUTPUT_DIR = "screenshots";
 
 const INVITE_LINKS_BY_ROLE = {
@@ -77,7 +77,7 @@ async function screenshot(
 
 async function pageName(page: Page): Promise<string> {
   // if url is /projects, name is my_projects
-  if (page.url() === `${ROOT_URL}/projects`) {
+  if (page.url() === `${E2E_ROOT_URL}/projects`) {
     return "my_projects";
   }
 
@@ -117,7 +117,7 @@ async function screenshotLanguages(page: Page, context: ScreenshotContext): Prom
 
 async function traverseHomePageAndLoginPage(page: Page): Promise<void> {
   // Home page
-  await page.goto(ROOT_URL);
+  await page.goto(E2E_ROOT_URL);
   await page.screenshot({ path: `${OUTPUT_DIR}/home_page.png`, fullPage: true });
 
   // Log in
@@ -162,7 +162,7 @@ async function joinAsRoleAndTraversePages(page: Page, context: ScreenshotContext
   await page.click("button.user-menu-btn");
   await page.getByRole("menuitem", { name: "Log out" }).click();
   await page.click("text=Yes, log out");
-  await page.waitForURL(ROOT_URL);
+  await page.waitForURL(E2E_ROOT_URL);
 }
 
 (async () => {
