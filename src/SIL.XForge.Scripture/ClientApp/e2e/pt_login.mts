@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write pt_login.mts
-import { Page } from "npm:playwright";
+import { Page } from "@playwright/test";
 
 export const E2E_ROOT_URL = "http://localhost:5000";
 
