@@ -59,16 +59,12 @@ export class RealtimeService {
     const countsByCollection: { [key: string]: { docs: number; subscribers: number; queries: number } } = {};
     for (const [id, doc] of this.docs.entries()) {
       const collection = id.split(':')[0];
-      if (countsByCollection[collection] == null) {
-        countsByCollection[collection] = { docs: 0, subscribers: 0, queries: 0 };
-      }
+      countsByCollection[collection] ??= { docs: 0, subscribers: 0, queries: 0 };
       countsByCollection[collection].docs++;
       countsByCollection[collection].subscribers += doc.subscriberCount;
     }
     for (const [collection, queries] of this.subscribeQueries.entries()) {
-      if (countsByCollection[collection] == null) {
-        countsByCollection[collection] = { docs: 0, subscribers: 0, queries: 0 };
-      }
+      countsByCollection[collection] ??= { docs: 0, subscribers: 0, queries: 0 };
       countsByCollection[collection].queries += queries.size;
     }
     return countsByCollection;

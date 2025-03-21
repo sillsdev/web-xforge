@@ -998,15 +998,13 @@ class TestEnvironment {
   }
 
   setLoginResponse(auth0Response?: AuthDetails | undefined): void {
-    if (auth0Response == null) {
-      auth0Response = {
-        token: this.validToken,
-        idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
-        loginResult: {
-          appState: this._authLoginState
-        }
-      };
-    }
+    auth0Response ??= {
+      token: this.validToken,
+      idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
+      loginResult: {
+        appState: this._authLoginState
+      }
+    };
     this.auth0Response = auth0Response;
     when(mockedWebAuth.getTokenSilently()).thenResolve(this.auth0Response!.token.access_token);
     when(mockedWebAuth.getTokenSilently(anything())).thenResolve(this.auth0Response!.token);

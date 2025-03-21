@@ -24,9 +24,7 @@ export class Segment {
   }
 
   get checksum(): number {
-    if (this._checksum == null) {
-      this._checksum = crc.str(this._text);
-    }
+    this._checksum ??= crc.str(this._text);
     return this._checksum;
   }
 
@@ -50,8 +48,6 @@ export class Segment {
     if (this.initialTextLen === -1) {
       this.initialTextLen = text.length;
     }
-    if (this.initialChecksum == null) {
-      this.initialChecksum = this.checksum;
-    }
+    this.initialChecksum ??= this.checksum;
   }
 }
