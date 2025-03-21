@@ -57,6 +57,10 @@ export async function createShareLinksAsAdmin(page: Page, user: { email: string;
   await page.getByTitle("Change invitation role").click();
   await page.getByRole("option", { name: "Commenter View translation •" }).click();
   await page.getByRole("button", { name: "Copy link" }).click();
+
+  const clipboardText = await page.evaluate("navigator.clipboard.readText()");
+  console.log("Copied link to clipboard:", clipboardText);
+
   await page.getByTitle("Change invitation role").click();
   await page.getByRole("option", { name: "Community Checker Answer" }).click();
   await page.getByRole("button", { name: "Copy link" }).click();
