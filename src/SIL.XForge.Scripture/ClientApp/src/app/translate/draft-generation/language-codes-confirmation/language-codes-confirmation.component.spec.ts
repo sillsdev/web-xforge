@@ -107,7 +107,7 @@ function getStandardDraftSources(): DraftSourcesAsSelectableProjectArrays {
         shortName: 'SP',
         name: 'Source Project',
         paratextId: 'pt-sp',
-        languageTag: 'es'
+        languageTag: 'spa'
       }
     ]
   };

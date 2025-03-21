@@ -26,7 +26,7 @@ const defaultDraftSources: DraftSourcesAsSelectableProjectArrays = {
       shortName: 'ALT-TS',
       name: 'Alternate Training Source',
       paratextId: 'alternate-training-source',
-      languageTag: 'es'
+      languageTag: 'spa'
     },
     {
       shortName: 'ADD-TS',
