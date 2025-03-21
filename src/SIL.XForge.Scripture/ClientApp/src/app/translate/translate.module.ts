@@ -6,6 +6,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { CopyrightBannerComponent } from '../shared/copyright-banner/copyright-banner.component';
 import { SFTabsModule } from '../shared/sf-tab-group';
 import { SharedModule } from '../shared/shared.module';
 import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dialog.component';
@@ -57,6 +58,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
     AvatarComponent,
     SFTabsModule,
     BiblicalTermsComponent,
+    CopyrightBannerComponent,
     DraftPreviewBooksComponent,
     DraftApplyProgressDialogComponent,
     FontUnsupportedMessageComponent

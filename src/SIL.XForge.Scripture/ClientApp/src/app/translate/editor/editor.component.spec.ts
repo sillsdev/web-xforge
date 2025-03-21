@@ -94,6 +94,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
 import { SFTabsModule, TabFactoryService, TabGroup, TabMenuService } from '../../shared/sf-tab-group';
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
@@ -151,6 +152,7 @@ describe('EditorComponent', () => {
     declarations: [EditorComponent, SuggestionsComponent, TrainingProgressComponent, EditorDraftComponent],
     imports: [
       BiblicalTermsComponent,
+      CopyrightBannerComponent,
       NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
       SharedModule,
@@ -3704,26 +3706,6 @@ describe('EditorComponent', () => {
       expect(env.copyrightBanner).not.toBeNull();
       env.dispose();
     }));
-
-    it('shows the copyright notice dialog', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig, copyrightBanner: 'banner text' });
-      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
-      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
-      env.wait();
-
-      // SUT
-      const dialogMessage = spyOn((env.component as any).dialogService, 'openGenericDialog').and.callThrough();
-      env.setupDialogRef();
-
-      expect(env.copyrightBanner).not.toBeNull();
-      env.copyrightMoreInfo.nativeElement.click();
-      tick();
-      env.fixture.detectChanges();
-      expect(dialogMessage).toHaveBeenCalledTimes(1);
-
-      env.dispose();
-    }));
   });
 
   it('sets book and chapter according to route', fakeAsync(() => {
@@ -4636,15 +4618,11 @@ class TestEnvironment {
   }
 
   get copyrightBanner(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.copyright-banner'));
+    return this.fixture.debugElement.query(By.css('app-copyright-banner'));
   }
 
   get showWritingSystemWarningBanner(): DebugElement {
     return this.fixture.debugElement.query(By.css('.writing-system-warning-banner'));
-  }
-
-  get copyrightMoreInfo(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.copyright-banner .copyright-more-info'));
   }
 
   get isSourceAreaHidden(): boolean {

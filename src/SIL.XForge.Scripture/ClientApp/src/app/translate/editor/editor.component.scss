@@ -136,18 +136,6 @@ app-text {
   }
 }
 
-.copyright-banner {
-  margin-bottom: 10px;
-}
-
-.copyright-more-info {
-  cursor: pointer;
-  font-weight: bold;
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
 .reverse-columns {
   #source-text-area {
     grid-column-start: 2;
