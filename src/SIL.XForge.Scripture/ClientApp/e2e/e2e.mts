@@ -1,13 +1,19 @@
 #!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write e2e.mts
 import { chromium, firefox, webkit } from "npm:playwright";
 import { runSheet, ScreenshotContext } from "./e2e-globals.mts";
-import { joinAsRoleAndTraversePages, logOut, traverseHomePageAndLoginPage } from "./smoke-tests.mts";
+import { traverseHomePageAndLoginPage } from "./smoke-tests.mts";
 // import locales from "../../locales.json" with { type: "json" };
-import { ensureJoinedProject, screenshot } from "./e2e-utils.mts";
-import { logInAsPTUser } from "./pt_login.mts";
+import { createShareLinksAsAdmin, screenshot } from "./e2e-utils.mts";
 import secrets from "./secrets.json" with { type: "json" };
 
 const availableEngines = { chromium, firefox, webkit };
+
+const ptUsersByRole = {
+  [runSheet.roles[0]]: secrets.users[0],
+  [runSheet.roles[1]]: secrets.users[1],
+  [runSheet.roles[2]]: secrets.users[2],
+  [runSheet.roles[3]]: secrets.users[3]
+} as const;
 
 for (const engineName of runSheet.browsers) {
   console.log(`Running tests in ${engineName}`);
@@ -22,23 +28,15 @@ for (const engineName of runSheet.browsers) {
     if (runSheet.applicationScopes.includes("home_and_login")) await traverseHomePageAndLoginPage(page);
 
     if (runSheet.applicationScopes.includes("main_application")) {
-      for (const user of secrets.users) {
-        console.log(`Logging in as ${user.email}`);
-        const pageName = "my_projects_" + user.email.split("@")[0].split("+")[1];
-        await logInAsPTUser(page, { email: user.email, password: atob(user.password) });
-
-        await page.waitForURL(/\/projects/);
-        await ensureJoinedProject(page, "Stp22");
-
-        // wait for "Loading additional Paratext projects" to disappear
-        await page.waitForSelector("text=Loading additional Paratext projects", { state: "hidden" });
-
-        await screenshot(page, { ...screenshotContext, role: "pt_administrator", pageName });
-        await logOut(page);
-      }
+      // for (const role of Object.keys(ptUsersByRole)) {
+      //   const user = ptUsersByRole[role];
+      //   await joinAsUserAndTraversePages(page, user, { ...screenshotContext, role: role as UserRole });
+      // }
+      const shareLinks = await createShareLinksAsAdmin(page, secrets.users[0]);
+      console.log(shareLinks);
       for (const role of runSheet.roles) {
-        console.log(`Joining as ${role}`);
-        await joinAsRoleAndTraversePages(page, { ...screenshotContext, role });
+        // console.log(`Joining as ${role}`);
+        // await joinAsRoleAndTraversePages(page, { ...screenshotContext, role });
       }
     }
   } catch (e) {

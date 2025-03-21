@@ -47,3 +47,5 @@ export const runSheet: RunSheet = {
   skipScreenshots: false,
   screenshotPrefix: new Date().toISOString().slice(0, 19)
 } as const;
+
+export const DEFAULT_PROJECT_SHORTNAME = "Stp22";

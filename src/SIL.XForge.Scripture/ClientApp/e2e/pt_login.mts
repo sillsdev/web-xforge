@@ -38,7 +38,11 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
   }
 
   // On localhost only, Auth0 requires accepting access to the account
-  if ((await page.title()) === "Authorize Application") {
+  // Wait until back in the app, or on the authorization page
+  const auth0AuthorizeUrl = "https://sil-appbuilder.auth0.com/decision";
+  await page.waitForURL(url => [auth0AuthorizeUrl, E2E_ROOT_URL].some(startingUrl => url.href.startsWith(startingUrl)));
+
+  if ((await page.url()).startsWith(auth0AuthorizeUrl)) {
     await page.locator("#allow").click();
   }
 }

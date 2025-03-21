@@ -1,6 +1,7 @@
 import { Page } from "npm:playwright";
-import { E2E_ROOT_URL, INVITE_LINKS_BY_ROLE, OUTPUT_DIR, Role, runSheet, ScreenshotContext } from "./e2e-globals.mts";
-import { pageName, screenshot } from "./e2e-utils.mts";
+import { DEFAULT_PROJECT_SHORTNAME, E2E_ROOT_URL, OUTPUT_DIR, runSheet, ScreenshotContext } from "./e2e-globals.mts";
+import { ensureJoinedProject, pageName, screenshot } from "./e2e-utils.mts";
+import { logInAsPTUser } from "./pt_login.mts";
 // import locales from "../../locales.json" with { type: "json" };
 
 async function waitForAppLoad(page: Page): Promise<void> {
@@ -55,21 +56,32 @@ export async function traverseHomePageAndLoginPage(page: Page): Promise<void> {
   await page.screenshot({ path: `${OUTPUT_DIR}/registry_login_page.png`, fullPage: true });
 }
 
-export async function joinAsRoleAndTraversePages(
+export async function joinAsUserAndTraversePages(
   page: Page,
-  context: ScreenshotContext & { role: Role }
+  user: { email: string; password: string },
+  context: ScreenshotContext
 ): Promise<void> {
-  const role = context.role;
-  // Go to join page
-  await page.goto(INVITE_LINKS_BY_ROLE[context.role]);
-  await page.focus("input");
-  await page.waitForTimeout(500);
-  await page.fill("input", `${role} test user`);
-  await waitForAppLoad(page);
-  await screenshot(page, { ...context, pageName: "join_page" });
-  await page.getByRole("button", { name: "Join" }).click();
+  console.log(`Logging in as ${user.email} for ${context.role}`);
+  const pageName = "my_projects_" + user.email.split("@")[0].split("+")[1];
+  await logInAsPTUser(page, { email: user.email, password: user.password });
 
-  // Check out all main pages
+  await page.waitForURL(/\/projects/);
+  await ensureJoinedProject(page, DEFAULT_PROJECT_SHORTNAME);
+
+  // If we aren't redirected when joining the project, click the project button
+  // It seems like maybe we only sometimes redirect on joining
+  if (await page.getByRole("button", { name: DEFAULT_PROJECT_SHORTNAME }).isVisible()) {
+    await page.getByRole("button", { name: DEFAULT_PROJECT_SHORTNAME }).click();
+  }
+
+  await page.waitForURL(/\/projects\/[a-z0-9]+/);
+  await screenshot(page, { ...context, pageName });
+
+  await traversePagesInMainNav(page, context);
+  await logOut(page);
+}
+
+async function traversePagesInMainNav(page: Page, context: ScreenshotContext) {
   await page.waitForSelector("app-navigation");
   const links = await page.locator("app-navigation a").all();
   for (const link of links) {
@@ -77,21 +89,45 @@ export async function joinAsRoleAndTraversePages(
     await waitForAppLoad(page);
     await screenshotLanguages(page, context);
   }
-
-  // Check out the projects page
-  await page.click("#sf-logo-button");
-  await waitForAppLoad(page);
-  await screenshotLanguages(page, context);
-
-  await logOut(page);
 }
 
-export async function logOut_old(page: Page) {
-  await page.click("button.user-menu-btn");
-  await page.getByRole("menuitem", { name: "Log out" }).click();
-  // TODO for transparent auth, we need to click "yes, log out"
-  await page.waitForURL(E2E_ROOT_URL);
-}
+// export async function joinAsRoleAndTraversePages(
+//   page: Page,
+//   context: ScreenshotContext & { role: Role }
+// ): Promise<void> {
+//   const role = context.role;
+//   // Go to join page
+//   await page.goto(INVITE_LINKS_BY_ROLE[context.role]);
+//   await page.focus("input");
+//   await page.waitForTimeout(500);
+//   await page.fill("input", `${role} test user`);
+//   await waitForAppLoad(page);
+//   await screenshot(page, { ...context, pageName: "join_page" });
+//   await page.getByRole("button", { name: "Join" }).click();
+
+//   // Check out all main pages
+//   await page.waitForSelector("app-navigation");
+//   const links = await page.locator("app-navigation a").all();
+//   for (const link of links) {
+//     await link.click();
+//     await waitForAppLoad(page);
+//     await screenshotLanguages(page, context);
+//   }
+
+//   // Check out the projects page
+//   await page.click("#sf-logo-button");
+//   await waitForAppLoad(page);
+//   await screenshotLanguages(page, context);
+
+//   await logOut(page);
+// }
+
+// export async function logOut_old(page: Page) {
+//   await page.click("button.user-menu-btn");
+//   await page.getByRole("menuitem", { name: "Log out" }).click();
+//   // TODO for transparent auth, we need to click "yes, log out"
+//   await page.waitForURL(E2E_ROOT_URL);
+// }
 
 export async function logOut(page: Page) {
   await page.getByRole("button", { name: "User" }).click();
