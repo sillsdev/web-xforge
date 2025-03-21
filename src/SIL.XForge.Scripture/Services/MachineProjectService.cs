@@ -549,8 +549,8 @@ public class MachineProjectService(
             cancellationToken
         );
 
-        // Recreate the translation engine if it is missing, or the language has changed
-        await RecreateTranslationEngineIfRequiredAsync(
+        // Recreate the translation engine if it is missing, or update if the language has changed
+        await RecreateOrUpdateTranslationEngineIfRequiredAsync(
             translationEngineId,
             projectDoc.Data,
             preTranslate,
@@ -1226,7 +1226,7 @@ public class MachineProjectService(
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An asynchronous task.</returns>
     /// <remarks>This can be mocked in unit tests.</remarks>
-    protected internal virtual async Task RecreateTranslationEngineIfRequiredAsync(
+    protected internal virtual async Task RecreateOrUpdateTranslationEngineIfRequiredAsync(
         string translationEngineId,
         SFProject project,
         bool preTranslate,
@@ -1240,7 +1240,7 @@ public class MachineProjectService(
                 translationEngineId,
                 cancellationToken
             );
-            bool recreateTranslationEngine = false;
+            bool updateTranslationEngineLanguages = false;
 
             // See if the target language has changed
             string projectTargetLanguage = await GetTargetLanguageAsync(project, preTranslate);
@@ -1249,7 +1249,7 @@ public class MachineProjectService(
                 string message =
                     $"Target language has changed from {translationEngine.TargetLanguage} to {projectTargetLanguage}.";
                 logger.LogInformation(message);
-                recreateTranslationEngine = true;
+                updateTranslationEngineLanguages = true;
             }
 
             // See if the source language has changed
@@ -1259,15 +1259,21 @@ public class MachineProjectService(
                 string message =
                     $"Source language has changed from {translationEngine.SourceLanguage} to {projectSourceLanguage}.";
                 logger.LogInformation(message);
-                recreateTranslationEngine = true;
+                updateTranslationEngineLanguages = true;
             }
 
-            // Delete then recreate the translation engine if they have changed
-            if (recreateTranslationEngine)
+            // Update the translation engine to match the new languages
+            if (updateTranslationEngineLanguages)
             {
-                // Removal can be a slow process
-                await RemoveProjectAsync(project.Id, preTranslate, cancellationToken);
-                await CreateServalProjectAsync(project, preTranslate, cancellationToken);
+                await translationEnginesClient.UpdateAsync(
+                    translationEngineId,
+                    new TranslationEngineUpdateConfig
+                    {
+                        SourceLanguage = projectSourceLanguage,
+                        TargetLanguage = projectTargetLanguage,
+                    },
+                    cancellationToken
+                );
             }
         }
         catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)

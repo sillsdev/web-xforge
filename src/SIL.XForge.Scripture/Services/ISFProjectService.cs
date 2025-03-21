@@ -17,6 +17,8 @@ public interface ISFProjectService : IProjectService
     Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings);
     Task<string> CreateResourceProjectAsync(string curUserId, string paratextId, bool addUser);
     Task DeleteProjectAsync(string curUserId, string projectId);
+
+    [LogEventMetric(EventScope.Settings, nameof(curUserId))]
     Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings);
     Task AddTranslateMetricsAsync(string curUserId, string projectId, TranslateMetrics metrics);
     Task<string> SyncAsync(string curUserId, string projectId);

@@ -92,7 +92,7 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(Build01));
 
         // SUT
         ActionResult actual = await env.Controller.CancelPreTranslationBuildAsync(Project01, CancellationToken.None);
