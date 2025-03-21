@@ -1,5 +1,16 @@
 @use 'src/breakpoints';
 
+p.mat-hint {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-block-start: 0;
+  @include breakpoints.media-breakpoint-down(sm) {
+    flex-direction: column;
+  }
+}
+
 .invite-forms {
   display: flex;
   flex-direction: column;
