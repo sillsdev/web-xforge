@@ -1,48 +1,12 @@
 import { Page } from "npm:playwright";
 import { E2E_ROOT_URL, INVITE_LINKS_BY_ROLE, OUTPUT_DIR, Role, runSheet, ScreenshotContext } from "./e2e-globals.mts";
+import { pageName, screenshot } from "./e2e-utils.mts";
 // import locales from "../../locales.json" with { type: "json" };
-
-function cleanText(text: string): string {
-  return text
-    .trim()
-    .replace(/[^ \w]/gi, "")
-    .replace(/\s+/g, "_");
-}
 
 async function waitForAppLoad(page: Page): Promise<void> {
   await page.waitForTimeout(500);
   await page.waitForSelector(".mat-progress-bar--closed");
   await page.waitForTimeout(1000);
-}
-
-export async function screenshot(
-  page: Page,
-  context: ScreenshotContext,
-  options = { overrideScreenshotSkipping: false }
-): Promise<void> {
-  if (runSheet.skipScreenshots && !options.overrideScreenshotSkipping) return;
-
-  const fileNameParts = [
-    context.prefix,
-    context.engine,
-    context.role,
-    context.pageName ?? (await pageName(page)),
-    context.locale
-  ];
-  const fileName = fileNameParts.filter(part => part != null).join("_") + ".png";
-  await page.screenshot({ path: `${OUTPUT_DIR}/${fileName}`, fullPage: true });
-}
-
-async function pageName(page: Page): Promise<string> {
-  // if url is /projects, name is my_projects
-  if (page.url() === `${E2E_ROOT_URL}/projects`) {
-    return "my_projects";
-  }
-
-  const activeNavItem = await page.locator("app-navigation .activated-nav-item, app-navigation .active").first();
-  const textContent = await activeNavItem.textContent();
-  if (!textContent) throw new Error("No active nav item found");
-  return cleanText(textContent);
 }
 
 async function screenshotLanguages(page: Page, context: ScreenshotContext): Promise<void> {
@@ -118,11 +82,21 @@ export async function joinAsRoleAndTraversePages(
   await page.click("#sf-logo-button");
   await waitForAppLoad(page);
   await screenshotLanguages(page, context);
+
+  await logOut(page);
+}
+
+export async function logOut_old(page: Page) {
+  await page.click("button.user-menu-btn");
+  await page.getByRole("menuitem", { name: "Log out" }).click();
+  // TODO for transparent auth, we need to click "yes, log out"
+  await page.waitForURL(E2E_ROOT_URL);
 }
 
 export async function logOut(page: Page) {
-  await page.click("button.user-menu-btn");
+  await page.getByRole("button", { name: "User" }).click();
   await page.getByRole("menuitem", { name: "Log out" }).click();
-  await page.click("text=Yes, log out");
-  await page.waitForURL(E2E_ROOT_URL);
+  if (await page.getByRole("button", { name: "Yes, log out" }).isVisible()) {
+    await page.getByRole("button", { name: "Yes, log out" }).click();
+  }
 }

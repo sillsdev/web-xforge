@@ -11,7 +11,15 @@ const allApplicationScopes = ["home_and_login", "main_application"] as const;
 type ApplicationScope = (typeof allApplicationScopes)[number];
 const allBrowsers = ["chromium", "firefox", "webkit"] as const;
 type Browser = (typeof allBrowsers)[number];
-const allRoles = ["community_checker", "commenter", "viewer"] as const;
+const allRoles = [
+  "pt_administrator",
+  "pt_translator",
+  "pt_consultant",
+  "pt_observer",
+  "community_checker",
+  "commenter",
+  "viewer"
+] as const;
 export type Role = (typeof allRoles)[number];
 
 type RunSheet = {
@@ -35,7 +43,7 @@ export const runSheet: RunSheet = {
   locales: ["en"],
   roles: allRoles.slice(),
   applicationScopes: ["main_application"],
-  browsers: ["firefox"],
+  browsers: ["chromium"],
   skipScreenshots: false,
-  screenshotPrefix: new Date().toISOString().slice(0, 19) + "_"
+  screenshotPrefix: new Date().toISOString().slice(0, 19)
 } as const;

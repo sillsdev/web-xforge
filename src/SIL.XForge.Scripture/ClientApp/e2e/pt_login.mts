@@ -38,8 +38,6 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
   }
 
   // On localhost only, Auth0 requires accepting access to the account
-  // wait for url to not be the same as the current url
-  await page.waitForURL(/^https:\/\/sil-appbuilder.auth0.com\//);
   if ((await page.title()) === "Authorize Application") {
     await page.locator("#allow").click();
   }
