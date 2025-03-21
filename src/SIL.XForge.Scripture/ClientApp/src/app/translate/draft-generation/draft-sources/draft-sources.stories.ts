@@ -5,6 +5,7 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
 import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -17,6 +18,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { ParatextService, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSourcesComponent } from '../../../translate/draft-generation/draft-sources/draft-sources.component';
+import { DraftSourcesAsTranslateSourceArrays } from '../draft-utils';
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedDestroyRef = mock(DestroyRef);
@@ -29,6 +31,27 @@ const mockedAuthService = mock(AuthService);
 
 const blankProjectDoc = { id: 'project1', data: createTestProjectProfile() } as SFProjectProfileDoc;
 
+const alternateTrainingSource: TranslateSource = {
+  paratextId: 'pt1',
+  projectRef: 'sf1',
+  name: 'Alternate Training Source',
+  shortName: 'ALT-TS',
+  writingSystem: { script: 'Latn', tag: 'es' }
+};
+const additionalTrainingSource: TranslateSource = {
+  paratextId: 'pt2',
+  projectRef: 'sf2',
+  name: 'Additional Training Source',
+  shortName: 'ADD-TS',
+  writingSystem: { script: 'Latn', tag: 'es' }
+};
+const alternateSource: TranslateSource = {
+  paratextId: 'pt3',
+  projectRef: 'sf3',
+  name: 'Alternate Source',
+  shortName: 'AS',
+  writingSystem: { script: 'Latn', tag: 'es' }
+};
 const projectDocWithExistingSources = {
   id: 'project1',
   data: createTestProjectProfile({
@@ -39,27 +62,9 @@ const projectDocWithExistingSources = {
         additionalTrainingSourceEnabled: true,
         alternateSourceEnabled: true,
         alternateTrainingSourceEnabled: true,
-        alternateTrainingSource: {
-          paratextId: 'pt1',
-          projectRef: 'sf1',
-          name: 'Alternate Training Source',
-          shortName: 'ALT-TS',
-          writingSystem: { script: 'Latn', tag: 'es' }
-        },
-        additionalTrainingSource: {
-          paratextId: 'pt2',
-          projectRef: 'sf2',
-          name: 'Additional Training Source',
-          shortName: 'ADD-TS',
-          writingSystem: { script: 'Latn', tag: 'es' }
-        },
-        alternateSource: {
-          paratextId: 'pt3',
-          projectRef: 'sf3',
-          name: 'Alternate Source',
-          shortName: 'AS',
-          writingSystem: { script: 'Latn', tag: 'es' }
-        }
+        alternateTrainingSource,
+        additionalTrainingSource,
+        alternateSource
       },
       source: {
         paratextId: 'pt0',
@@ -75,6 +80,7 @@ const projectDocWithExistingSources = {
 function setUpMocks(args: DraftSourcesComponentStoryState): void {
   when(mockedActivatedProjectService.changes$).thenReturn(of(args.project));
   when(mockedActivatedProjectService.projectDoc).thenReturn(args.project);
+  when(mockedProjectService.onlineGetDraftSources('project1')).thenResolve(args.draftSources);
   when(mockedFeatureFlags.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(args.mixedSource));
   when(mockedAuthService.currentUserId).thenReturn('user1');
 
@@ -108,11 +114,13 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
 
 interface DraftSourcesComponentStoryState {
   project: SFProjectProfileDoc;
+  draftSources: DraftSourcesAsTranslateSourceArrays;
   mixedSource: boolean;
 }
 
 const defaultArgs: DraftSourcesComponentStoryState = {
   project: blankProjectDoc,
+  draftSources: { draftingSources: [], trainingSources: [], trainingTargets: [blankProjectDoc.data!] },
   mixedSource: true
 };
 
@@ -185,7 +193,12 @@ export const Default: Story = {
 export const PreExistingSettings: Story = {
   ...Template,
   args: {
-    project: projectDocWithExistingSources
+    project: projectDocWithExistingSources,
+    draftSources: {
+      draftingSources: [alternateSource],
+      trainingSources: [alternateTrainingSource, additionalTrainingSource],
+      trainingTargets: [projectDocWithExistingSources.data!]
+    }
   }
 };
 

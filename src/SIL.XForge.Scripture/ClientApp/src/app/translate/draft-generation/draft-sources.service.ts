@@ -64,7 +64,7 @@ export class DraftSourcesService {
       return { trainingSources: [], trainingTargets: [], draftingSources: [] };
     }
 
-    const sources = projectToDraftSources(targetDoc.data);
+    const sources = await projectToDraftSources(targetDoc.id, this.projectService);
 
     const [trainingSources, trainingTargets, draftingSources] = await Promise.all([
       this.mapDraftSourceArrayToFullSourceArray(sources.trainingSources, targetDoc),

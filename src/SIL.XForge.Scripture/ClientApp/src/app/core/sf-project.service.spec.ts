@@ -53,6 +53,15 @@ describe('SFProjectService', () => {
     }));
   });
 
+  describe('onlineGetDraftSources', () => {
+    it('should invoke the command service', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      await env.service.onlineGetDraftSources('project01');
+      verify(mockedCommandService.onlineInvoke(anything(), 'getDraftSources', anything())).once();
+      expect().nothing();
+    }));
+  });
+
   describe('onlineSetDraftApplied', () => {
     it('should invoke the command service', fakeAsync(async () => {
       const env = new TestEnvironment();

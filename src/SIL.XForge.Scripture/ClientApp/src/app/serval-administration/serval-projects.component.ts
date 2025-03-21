@@ -11,6 +11,7 @@ import { QueryParameters } from 'xforge-common/query-parameters';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { SFProjectService } from '../core/sf-project.service';
 import { projectLabel } from '../shared/utils';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import { ServalAdministrationService } from './serval-administration.service';
@@ -20,11 +21,10 @@ interface SourceData {
 }
 
 class Row {
-  private draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
-
-  constructor(public readonly projectDoc: SFProjectProfileDoc) {
-    this.draftSources = projectDoc.data == null ? undefined : projectToDraftSources(projectDoc.data);
-  }
+  constructor(
+    public readonly projectDoc: SFProjectProfileDoc,
+    readonly draftSources: DraftSourcesAsTranslateSourceArrays
+  ) {}
 
   get draftingSources(): SourceData[] {
     return this.draftSources == null ? [] : this.draftSources.draftingSources.map(s => Row.sourceAsSourceData(s));
@@ -84,6 +84,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly servalAdministrationService: ServalAdministrationService,
+    private readonly projectService: SFProjectService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
@@ -106,8 +107,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
       .subscribe(searchResults => {
         this.projectDocs = searchResults.docs;
         this.length = searchResults.unpagedCount;
-        this.generateRows();
-        this.loadingFinished();
+        this.generateRows().then(() => this.loadingFinished());
       });
   }
 
@@ -124,14 +124,16 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
     this.queryParameters$.next(this.getQueryParameters());
   }
 
-  private generateRows(): void {
+  private async generateRows(): Promise<void> {
     if (this.projectDocs == null) {
       return;
     }
 
     const rows: Row[] = [];
     for (const projectDoc of this.projectDocs) {
-      rows.push(new Row(projectDoc));
+      // FIXME: Do this in parallel
+      const draftSources = await projectToDraftSources(projectDoc.id, this.projectService);
+      rows.push(new Row(projectDoc, draftSources));
     }
     this.rows = rows;
   }
