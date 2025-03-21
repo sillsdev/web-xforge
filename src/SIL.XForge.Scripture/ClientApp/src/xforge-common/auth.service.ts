@@ -78,8 +78,7 @@ interface xForgeAuth0Parameters extends AuthorizationParams {
   logo?: string;
   login_hint?: string;
   language?: string;
-  enablePasswordless?: boolean;
-  promptPasswordlessLogin?: boolean;
+  promptBasicLogin?: boolean;
 }
 
 @Injectable({
@@ -246,7 +245,6 @@ export class AuthService {
     const ui_locales: string = language;
     const auth0Parameters: xForgeAuth0Parameters = {
       ui_locales: language,
-      enablePasswordless: true,
       language,
       login_hint: ui_locales,
       logo: 'https://auth0.languagetechnology.org/assets/sf.svg'
@@ -256,7 +254,7 @@ export class AuthService {
       if (signUp) auth0Parameters.mode = 'signUp';
       auth0Parameters.login_hint = locale ?? ui_locales;
       if (this.isJoining) {
-        auth0Parameters.promptPasswordlessLogin = true;
+        auth0Parameters.promptBasicLogin = true;
       }
     }
     const authOptions: RedirectLoginOptions = {
