@@ -1,11 +1,7 @@
+import { E2ETestRunLogger } from "./e2e-test-run-logger.mts";
+
 export const E2E_ROOT_URL = "http://localhost:5000";
 export const OUTPUT_DIR = "screenshots";
-
-export const INVITE_LINKS_BY_ROLE = {
-  viewer: "http://localhost:5000/join/UIMF75kdsl1HQH3P/en",
-  community_checker: "http://localhost:5000/join/SlW-SIhqR03frd9y/en",
-  commenter: "http://localhost:5000/join/hJhE8YEzD8XPiPqX/en"
-};
 
 const allApplicationScopes = ["home_and_login", "main_application"] as const;
 type ApplicationScope = (typeof allApplicationScopes)[number];
@@ -20,11 +16,11 @@ const allRoles = [
   "commenter",
   "viewer"
 ] as const;
-export type Role = (typeof allRoles)[number];
+export type UserRole = (typeof allRoles)[number];
 
 type RunSheet = {
   locales: string[];
-  roles: Role[];
+  roles: UserRole[];
   applicationScopes: ApplicationScope[];
   browsers: Browser[];
   skipScreenshots: boolean;
@@ -34,7 +30,7 @@ type RunSheet = {
 export type ScreenshotContext = {
   prefix: string;
   engine: Browser;
-  role?: Role;
+  role?: UserRole;
   pageName?: string;
   locale?: string;
 };
@@ -49,3 +45,5 @@ export const runSheet: RunSheet = {
 } as const;
 
 export const DEFAULT_PROJECT_SHORTNAME = "Stp22";
+
+export const logger = new E2ETestRunLogger();

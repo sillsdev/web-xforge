@@ -1,10 +1,18 @@
 import { Page } from "npm:playwright";
-import { DEFAULT_PROJECT_SHORTNAME, E2E_ROOT_URL, OUTPUT_DIR, runSheet, ScreenshotContext } from "./e2e-globals.mts";
+import {
+  DEFAULT_PROJECT_SHORTNAME,
+  E2E_ROOT_URL,
+  OUTPUT_DIR,
+  runSheet,
+  ScreenshotContext,
+  UserRole
+} from "./e2e-globals.mts";
 import { ensureJoinedProject, pageName, screenshot } from "./e2e-utils.mts";
 import { logInAsPTUser } from "./pt_login.mts";
 // import locales from "../../locales.json" with { type: "json" };
 
 async function waitForAppLoad(page: Page): Promise<void> {
+  // FIXME this is hideous
   await page.waitForTimeout(500);
   await page.waitForSelector(".mat-progress-bar--closed");
   await page.waitForTimeout(1000);
@@ -23,7 +31,7 @@ async function screenshotLanguages(page: Page, context: ScreenshotContext): Prom
   const menu = await page.getByRole("menu");
   let items = await menu.getByRole("menuitem").all();
 
-  const name = await pageName(page);
+  const name = context.pageName ?? (await pageName(page));
   for (let i = 0; i < items.length; i++) {
     if (i !== 0) await changeLanguageButton.click();
     items = await menu.getByRole("menuitem").all();
@@ -87,47 +95,48 @@ async function traversePagesInMainNav(page: Page, context: ScreenshotContext) {
   for (const link of links) {
     await link.click();
     await waitForAppLoad(page);
-    await screenshotLanguages(page, context);
+    await screenshotLanguages(page, { ...context });
   }
 }
 
-// export async function joinAsRoleAndTraversePages(
-//   page: Page,
-//   context: ScreenshotContext & { role: Role }
-// ): Promise<void> {
-//   const role = context.role;
-//   // Go to join page
-//   await page.goto(INVITE_LINKS_BY_ROLE[context.role]);
-//   await page.focus("input");
-//   await page.waitForTimeout(500);
-//   await page.fill("input", `${role} test user`);
-//   await waitForAppLoad(page);
-//   await screenshot(page, { ...context, pageName: "join_page" });
-//   await page.getByRole("button", { name: "Join" }).click();
+export async function joinWithLinkAndTraversePages(
+  page: Page,
+  link: string,
+  context: ScreenshotContext & { role: UserRole }
+): Promise<void> {
+  const role = context.role;
+  // Go to join page
+  await page.goto(link);
+  await page.focus("input");
+  await page.waitForTimeout(500);
+  await page.fill("input", `${role} test user`);
+  await waitForAppLoad(page);
+  await screenshot(page, { ...context, pageName: "join_page" });
+  await page.getByRole("button", { name: "Join" }).click();
 
-//   // Check out all main pages
-//   await page.waitForSelector("app-navigation");
-//   const links = await page.locator("app-navigation a").all();
-//   for (const link of links) {
-//     await link.click();
-//     await waitForAppLoad(page);
-//     await screenshotLanguages(page, context);
-//   }
+  // Check out all main pages
+  await page.waitForSelector("app-navigation");
+  const links = await page.locator("app-navigation a").all();
+  for (const link of links) {
+    await link.click();
+    await waitForAppLoad(page);
+    await screenshotLanguages(page, context);
+  }
 
-//   // Check out the projects page
-//   await page.click("#sf-logo-button");
-//   await waitForAppLoad(page);
-//   await screenshotLanguages(page, context);
+  // Check out the projects page
+  await page.click("#sf-logo-button");
+  await waitForAppLoad(page);
+  await screenshotLanguages(page, context);
 
-//   await logOut(page);
-// }
+  await logOut(page);
+}
 
-// export async function logOut_old(page: Page) {
-//   await page.click("button.user-menu-btn");
-//   await page.getByRole("menuitem", { name: "Log out" }).click();
-//   // TODO for transparent auth, we need to click "yes, log out"
-//   await page.waitForURL(E2E_ROOT_URL);
-// }
+export async function logOut_old(page: Page) {
+  await page.click("button.user-menu-btn");
+  await page.getByRole("menuitem", { name: "Log out" }).click();
+  // TODO for transparent auth, we need to click "yes, log out"
+  await page.waitForURL(E2E_ROOT_URL);
+}
 
 export async function logOut(page: Page) {
   await page.getByRole("button", { name: "User" }).click();
@@ -135,4 +144,5 @@ export async function logOut(page: Page) {
   if (await page.getByRole("button", { name: "Yes, log out" }).isVisible()) {
     await page.getByRole("button", { name: "Yes, log out" }).click();
   }
+  await page.waitForURL(E2E_ROOT_URL);
 }

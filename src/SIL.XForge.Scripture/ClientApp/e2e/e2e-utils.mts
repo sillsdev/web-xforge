@@ -1,5 +1,12 @@
 import { Page } from "npm:playwright";
-import { DEFAULT_PROJECT_SHORTNAME, E2E_ROOT_URL, OUTPUT_DIR, runSheet, ScreenshotContext } from "./e2e-globals.mts";
+import {
+  DEFAULT_PROJECT_SHORTNAME,
+  E2E_ROOT_URL,
+  logger,
+  OUTPUT_DIR,
+  runSheet,
+  ScreenshotContext
+} from "./e2e-globals.mts";
 import { logInAsPTUser } from "./pt_login.mts";
 
 function cleanText(text: string): string {
@@ -16,9 +23,16 @@ export async function pageName(page: Page): Promise<string> {
   }
 
   const activeNavItem = await page.locator("app-navigation .activated-nav-item, app-navigation .active").first();
-  const textContent = await activeNavItem.textContent();
+  let textContent = await activeNavItem.textContent();
   if (!textContent) throw new Error("No active nav item found");
-  return cleanText(textContent);
+
+  // Remove the mat-icon name from the text content
+  const matIconText = await activeNavItem.locator("mat-icon").textContent();
+  if (matIconText != null && textContent?.startsWith(matIconText)) {
+    textContent = textContent.slice(matIconText.length).trim();
+  }
+
+  return cleanText(textContent.toLowerCase());
 }
 
 export async function ensureJoinedProject(page: Page, shortName: string): Promise<void> {
@@ -43,9 +57,15 @@ export async function screenshot(
   const fileNameParts = [context.engine, context.role, context.pageName ?? (await pageName(page)), context.locale];
   const fileName = fileNameParts.filter(part => part != null).join("_") + ".png";
   await page.screenshot({ path: `${OUTPUT_DIR}/${context.prefix}/${fileName}`, fullPage: true });
+  logger.logScreenshot(fileName, context);
 }
 
-export async function createShareLinksAsAdmin(page: Page, user: { email: string; password: string }) {
+export async function createShareLinksAsAdmin(
+  page: Page,
+  user: { email: string; password: string }
+): Promise<{
+  [role: string]: string;
+}> {
   await logInAsPTUser(page, user);
   await ensureJoinedProject(page, DEFAULT_PROJECT_SHORTNAME);
   await ensureNavigatedToProject(page, DEFAULT_PROJECT_SHORTNAME);
@@ -54,20 +74,29 @@ export async function createShareLinksAsAdmin(page: Page, user: { email: string;
 
   await page.getByTitle("Change invitation language").click();
   await page.getByRole("option", { name: "English (US)" }).click();
-  await page.getByTitle("Change invitation role").click();
-  await page.getByRole("option", { name: "Commenter View translation •" }).click();
-  await page.getByRole("button", { name: "Copy link" }).click();
 
-  const clipboardText = await page.evaluate("navigator.clipboard.readText()");
-  console.log("Copied link to clipboard:", clipboardText);
+  const roleToLink: { [role: string]: string } = {};
 
-  await page.getByTitle("Change invitation role").click();
-  await page.getByRole("option", { name: "Community Checker Answer" }).click();
-  await page.getByRole("button", { name: "Copy link" }).click();
-  await page.getByTitle("Change invitation role").click();
-  await page.getByRole("option", { name: "Viewer View translation •" }).click();
-  await page.getByRole("button", { name: "Copy link" }).click();
+  let optionCount = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < optionCount; i++) {
+    await page.getByTitle("Change invitation role").click();
+    const options = await page.getByRole("option").all();
+    optionCount = options.length;
+
+    const option = options[i];
+    const optionText = await option.locator(".role-name").textContent();
+    if (optionText == null) throw new Error("Role name not found");
+    await option.click();
+    await page.getByRole("button", { name: "Copy link" }).click();
+    const clipboardText = await page.evaluate("navigator.clipboard.readText()");
+    if (typeof clipboardText !== "string" || clipboardText === "") {
+      throw new Error("Clipboard text not found");
+    }
+    roleToLink[optionText] = clipboardText;
+  }
   await page.getByRole("heading", { name: "Share SF 2022 test project" }).getByRole("button").click();
+
+  return roleToLink;
 }
 
 /**
