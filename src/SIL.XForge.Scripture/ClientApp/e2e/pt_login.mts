@@ -44,21 +44,3 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
     await page.locator("#allow").click();
   }
 }
-
-// (async () => {
-//   const browser = await chromium.launch({ headless: false });
-//   const context = await browser.newContext();
-//   const page = await context.newPage();
-
-//   try {
-//     const email = secrets.users[0].email;
-//     const password = atob(secrets.users[0].password);
-//     await logInAsPTUser(page, { email, password });
-//   } catch (e) {
-//     console.error("Error running tests");
-//     console.error(e);
-//   } finally {
-//     await context.close();
-//     await browser.close();
-//   }
-// })();
