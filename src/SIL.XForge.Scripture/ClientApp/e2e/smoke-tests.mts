@@ -6,10 +6,9 @@ import {
   runSheet,
   ScreenshotContext,
   UserRole
-} from "./e2e-globals.mts";
-import { ensureJoinedProject, pageName, screenshot } from "./e2e-utils.mts";
-import { logInAsPTUser } from "./pt_login.mts";
-// import locales from "../../locales.json" with { type: "json" };
+} from "./e2e-globals.ts";
+import { ensureJoinedProject, pageName, screenshot } from "./e2e-utils.ts";
+import { logInAsPTUser } from "./pt_login.ts";
 
 async function waitForAppLoad(page: Page): Promise<void> {
   // FIXME this is hideous

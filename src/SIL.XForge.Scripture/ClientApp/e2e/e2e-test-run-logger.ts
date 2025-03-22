@@ -1,4 +1,4 @@
-import { OUTPUT_DIR, runSheet, ScreenshotContext } from "./e2e-globals.mts";
+import { OUTPUT_DIR, runSheet, ScreenshotContext } from './e2e-globals';
 
 interface ScreenshotEvent {
   fileName: string;
@@ -10,7 +10,7 @@ export class E2ETestRunLogger {
   private screenshotEvents: ScreenshotEvent[] = [];
 
   async saveToFile(): Promise<void> {
-    console.log("Saving run log to file...");
+    console.log('Saving run log to file...');
     const data = {
       timeStarted: this.timeStarted,
       timeEnded: new Date(),

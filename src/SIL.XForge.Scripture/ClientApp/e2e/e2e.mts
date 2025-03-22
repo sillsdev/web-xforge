@@ -1,7 +1,7 @@
-#!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write e2e.mts
+#!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write --unstable-sloppy-imports e2e.mts
 import { chromium, firefox, webkit } from "npm:playwright";
-import { logger, runSheet, ScreenshotContext, UserRole } from "./e2e-globals.mts";
-import { createShareLinksAsAdmin, screenshot } from "./e2e-utils.mts";
+import { logger, runSheet, ScreenshotContext, UserRole } from "./e2e-globals.ts";
+import { createShareLinksAsAdmin, screenshot } from "./e2e-utils.ts";
 import secrets from "./secrets.json" with { type: "json" };
 import {
   joinAsUserAndTraversePages,
