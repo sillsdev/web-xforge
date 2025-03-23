@@ -187,15 +187,12 @@ public class PreTranslationService(
 
         // Get the USFM
         string usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
-            translationEngineId,
-            corpusId,
-            GetTextId(bookNum),
-            PretranslationUsfmTextOrigin.OnlyPretranslated,
-            PretranslationUsfmTemplate.Source,
-            PretranslationUsfmMarkerBehavior.Preserve,
-            PretranslationUsfmMarkerBehavior.Preserve,
-            PretranslationUsfmMarkerBehavior.Strip,
-            cancellationToken
+            id: translationEngineId,
+            corpusId: corpusId,
+            textId: GetTextId(bookNum),
+            textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
+            template: PretranslationUsfmTemplate.Source,
+            cancellationToken: cancellationToken
         );
 
         // Return the entire book
