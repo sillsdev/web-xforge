@@ -108,6 +108,7 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
     }
 
     this.overlayService.close();
+    this.editor.focus();
   }
 
   dismissInsight(insight: LynxInsight): void {
