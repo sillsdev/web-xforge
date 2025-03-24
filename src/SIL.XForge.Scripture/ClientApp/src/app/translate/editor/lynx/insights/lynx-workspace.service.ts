@@ -2,6 +2,7 @@ import { DestroyRef, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   Diagnostic,
+  DiagnosticsChanged,
   DiagnosticSeverity,
   DocumentData,
   DocumentManager,
@@ -17,7 +18,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { Observable, Subscription, switchMap } from 'rxjs';
+import { concatMap, Observable, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -73,54 +74,7 @@ export class LynxWorkspaceService {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(bookChapter => this.onBookChapterActivated(bookChapter));
 
-    this.rawInsightSource$ = this.workspace.diagnosticsChanged$.pipe(
-      switchMap(async e => {
-        if (e.diagnostics.length === 0) {
-          this.curInsights.delete(e.uri);
-        } else {
-          const doc = await this.documentManager.get(e.uri);
-          const insights: LynxInsight[] = [];
-          if (doc != null) {
-            const textDocIdParts = e.uri.split(':', 3);
-            const textDocId = new TextDocId(
-              textDocIdParts[0],
-              Canon.bookIdToNumber(textDocIdParts[1]),
-              parseInt(textDocIdParts[2])
-            );
-            for (const diagnostic of e.diagnostics) {
-              let type: LynxInsightType = 'info';
-              switch (diagnostic.severity) {
-                case DiagnosticSeverity.Information:
-                case DiagnosticSeverity.Hint:
-                  type = 'info';
-                  break;
-                case DiagnosticSeverity.Warning:
-                  type = 'warning';
-                  break;
-                case DiagnosticSeverity.Error:
-                  type = 'error';
-                  break;
-              }
-              const start = doc.offsetAt(diagnostic.range.start);
-              const end = doc.offsetAt(diagnostic.range.end);
-              insights.push({
-                id: uuidv4(),
-                type,
-                textDocId,
-                range: { index: start, length: end - start },
-                code: diagnostic.code.toString(),
-                source: diagnostic.source,
-                description: diagnostic.message,
-                moreInfo: diagnostic.moreInfo,
-                data: diagnostic.data
-              });
-            }
-          }
-          this.curInsights.set(e.uri, insights);
-        }
-        return Array.from(this.curInsights.values()).flat();
-      })
-    );
+    this.rawInsightSource$ = this.workspace.diagnosticsChanged$.pipe(concatMap(e => this.onDiagnosticsChanged(e)));
   }
 
   get currentInsights(): ReadonlyMap<string, LynxInsight[]> {
@@ -201,7 +155,7 @@ export class LynxWorkspaceService {
       while (startIndex < text.length) {
         const chIndex = text.indexOf(ch, startIndex);
         if (chIndex >= 0) {
-          const chEdits = await this.workspace.getOnTypeEdits(curDocUri, doc.positionAt(offset + chIndex), ch);
+          const chEdits = await this.workspace.getOnTypeEdits(curDocUri, doc.positionAt(offset + chIndex + 1), ch);
 
           if (chEdits != null && chEdits.length > 0) {
             edits.push(new Delta(chEdits));
@@ -213,6 +167,53 @@ export class LynxWorkspaceService {
       }
     }
     return edits;
+  }
+
+  private async onDiagnosticsChanged(event: DiagnosticsChanged): Promise<LynxInsight[]> {
+    if (event.diagnostics.length === 0) {
+      this.curInsights.delete(event.uri);
+    } else {
+      const doc = await this.documentManager.get(event.uri);
+      const insights: LynxInsight[] = [];
+      if (doc != null) {
+        const textDocIdParts = event.uri.split(':', 3);
+        const textDocId = new TextDocId(
+          textDocIdParts[0],
+          Canon.bookIdToNumber(textDocIdParts[1]),
+          parseInt(textDocIdParts[2])
+        );
+        for (const diagnostic of event.diagnostics) {
+          let type: LynxInsightType = 'info';
+          switch (diagnostic.severity) {
+            case DiagnosticSeverity.Information:
+            case DiagnosticSeverity.Hint:
+              type = 'info';
+              break;
+            case DiagnosticSeverity.Warning:
+              type = 'warning';
+              break;
+            case DiagnosticSeverity.Error:
+              type = 'error';
+              break;
+          }
+          const start = doc.offsetAt(diagnostic.range.start);
+          const end = doc.offsetAt(diagnostic.range.end);
+          insights.push({
+            id: uuidv4(),
+            type,
+            textDocId,
+            range: { index: start, length: end - start },
+            code: diagnostic.code.toString(),
+            source: diagnostic.source,
+            description: diagnostic.message,
+            moreInfo: diagnostic.moreInfo,
+            data: diagnostic.data
+          });
+        }
+      }
+      this.curInsights.set(event.uri, insights);
+    }
+    return Array.from(this.curInsights.values()).flat();
   }
 
   private async onProjectActivated(projectDoc: SFProjectProfileDoc | undefined): Promise<void> {
