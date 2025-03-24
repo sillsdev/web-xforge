@@ -96,6 +96,16 @@ export class LynxEditor {
     }
   }
 
+  focus(): void {
+    switch (true) {
+      case this.isQuill(this.editor):
+        this.editor.focus();
+        break;
+      default:
+        throw new Error('Unsupported editor type');
+    }
+  }
+
   get root(): HTMLElement {
     switch (true) {
       case this.isQuill(this.editor):
