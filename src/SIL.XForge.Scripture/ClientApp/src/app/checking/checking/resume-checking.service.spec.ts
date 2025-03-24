@@ -1,13 +1,14 @@
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationEnd, Params, Router } from '@angular/router';
 import { OtJson0Op } from 'ot-json0';
+import { Json0OpBuilder } from 'realtime-server/lib/esm/common/utils/json0-op-builder';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { anything, instance, mock, resetCalls, when } from 'ts-mockito';
+import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -31,6 +32,7 @@ describe('ResumeCheckingService', () => {
 
   let service: ResumeCheckingService;
   let activatedProjectChange$: BehaviorSubject<SFProjectProfileDoc>;
+  let routerEvents$: BehaviorSubject<any>;
 
   beforeEach(async () => {
     resetCalls(mockRouter);
@@ -42,19 +44,19 @@ describe('ResumeCheckingService', () => {
     resetCalls(mockQuestionsService);
 
     activatedProjectChange$ = new BehaviorSubject<SFProjectProfileDoc>({} as SFProjectProfileDoc);
-
-    when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({} as SFProjectUserConfigDoc);
+    routerEvents$ = new BehaviorSubject<any>({});
 
     when(mockActivatedProjectService.projectId).thenReturn('project01');
     when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(mockActivatedProjectService.changes$).thenReturn(activatedProjectChange$);
 
     when(mockRouter.routerState).thenReturn({ snapshot: { root: {} as any } } as any);
-    when(mockRouter.events).thenReturn(of());
+    when(mockRouter.events).thenReturn(routerEvents$);
 
     when(mockUserService.currentUserId).thenReturn('user01');
     when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
-      changes$: of([]) as Observable<OtJson0Op[]>
+      changes$: of([]) as Observable<OtJson0Op[]>,
+      data: {} as SFProjectUserConfig
     } as SFProjectUserConfigDoc);
 
     TestBed.configureTestingModule({
@@ -163,6 +165,37 @@ describe('ResumeCheckingService', () => {
 
     expect(result).toEqual(['projects', 'project01', 'checking', 'MAT', '1']);
     flush();
+  }));
+
+  it('should update user config when currentParams$ changes during checking', fakeAsync(async () => {
+    const userConfigDoc = mock(SFProjectUserConfigDoc);
+    const opsSets: { path: string; value: any }[] = [];
+    when(userConfigDoc.submitJson0Op(anything())).thenCall((fn: (op: Json0OpBuilder<SFProjectUserConfig>) => void) => {
+      fn({
+        set: (path: any, value: any) => {
+          opsSets.push({ path: path.toString(), value });
+        }
+      } as Json0OpBuilder<SFProjectUserConfig>);
+    });
+
+    service['projectUserConfigDoc$'].next(instance(userConfigDoc));
+
+    when(mockRouter.url).thenReturn('/projects/project01/checking');
+    when(mockRouter.routerState).thenReturn({
+      snapshot: {
+        root: { firstChild: { params: { bookId: 'MRK', chapter: '23' } as Params } as ActivatedRouteSnapshot }
+      }
+    } as any);
+    routerEvents$.next(new NavigationEnd(-1, '', '')); // Trigger route change
+
+    verify(userConfigDoc.submitJson0Op(anything())).once();
+    expect(opsSets.length).toBe(3);
+    expect(opsSets[0].path).toContain('puc.selectedTask');
+    expect(opsSets[0].value).toEqual('checking');
+    expect(opsSets[1].path).toContain('puc.selectedBookNum');
+    expect(opsSets[1].value).toEqual(41);
+    expect(opsSets[2].path).toContain('puc.selectedChapterNum');
+    expect(opsSets[2].value).toEqual(23);
   }));
 
   function setUpQuestions(newLocal: QuestionDoc[]): void {
