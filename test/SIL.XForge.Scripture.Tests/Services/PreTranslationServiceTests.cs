@@ -650,12 +650,12 @@ public class PreTranslationServiceTests
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
             TranslationEnginesClient
                 .GetPretranslatedUsfmAsync(
-                    Arg.Any<string>(),
-                    Arg.Any<string>(),
-                    "MAT",
-                    PretranslationUsfmTextOrigin.OnlyPretranslated,
-                    PretranslationUsfmTemplate.Source,
-                    CancellationToken.None
+                    id: Arg.Any<string>(),
+                    corpusId: Arg.Any<string>(),
+                    textId: "MAT",
+                    textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
+                    template: PretranslationUsfmTemplate.Source,
+                    cancellationToken: CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);
             Service = Substitute.ForPartsOf<PreTranslationService>(

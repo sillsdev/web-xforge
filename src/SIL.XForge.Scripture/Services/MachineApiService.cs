@@ -17,6 +17,7 @@ using SIL.Converters.Usj;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
@@ -32,6 +33,7 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
     IDeltaUsxMapper deltaUsxMapper,
+    IEventMetricService eventMetricService,
     IExceptionHandler exceptionHandler,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
@@ -80,7 +82,7 @@ public class MachineApiService(
     private static readonly IEqualityComparer<IList<ProjectScriptureRange>> _listProjectScriptureRangeComparer =
         SequenceEqualityComparer.Create(EqualityComparer<ProjectScriptureRange>.Default);
 
-    public async Task CancelPreTranslationBuildAsync(
+    public async Task<string?> CancelPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
@@ -120,8 +122,27 @@ public class MachineApiService(
 
         try
         {
+            // TODO: When Serval implements https://github.com/sillsdev/serval/issues/648, this can be removed
+            TranslationBuild translationBuild;
+            try
+            {
+                translationBuild = await translationEnginesClient.GetCurrentBuildAsync(
+                    translationEngineId,
+                    minRevision: null,
+                    cancellationToken
+                );
+            }
+            catch (ServalApiException)
+            {
+                // Ignore all errors. Serious errors will be thrown in CancelBuildAsync() below
+                translationBuild = null;
+            }
+
             // Cancel the build on Serval
             await translationEnginesClient.CancelBuildAsync(translationEngineId, cancellationToken);
+
+            // Return the build id so it can be logged
+            return translationBuild?.Id;
         }
         catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
         {
@@ -131,6 +152,9 @@ public class MachineApiService(
         {
             ProcessServalApiException(e);
         }
+
+        // No build was cancelled
+        return null;
     }
 
     public async Task ExecuteWebhookAsync(string json, string signature)
@@ -192,6 +216,24 @@ public class MachineApiService(
             );
             return;
         }
+
+        // Record that the webhook was run successfully
+        var arguments = new Dictionary<string, object>
+        {
+            { "buildId", delivery.Payload.Build.Id },
+            { "buildStart", delivery.Payload.BuildState },
+            { "event", delivery.Event },
+            { "translationEngineId", delivery.Payload.Engine.Id },
+        };
+        await eventMetricService.SaveEventMetricAsync(
+            projectId,
+            userId: null,
+            nameof(ExecuteWebhookAsync),
+            EventScope.Drafting,
+            arguments,
+            result: delivery.Payload.Build.Id,
+            exception: null
+        );
 
         // Run the background job
         backgroundJobClient.Enqueue<MachineApiService>(r =>
