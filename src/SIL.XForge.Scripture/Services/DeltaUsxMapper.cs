@@ -500,10 +500,10 @@ public class DeltaUsxMapper : IDeltaUsxMapper
     public XDocument ToUsx(XDocument oldUsxDoc, IEnumerable<ChapterDelta> chapterDeltas)
     {
         var newUsxDoc = new XDocument(oldUsxDoc);
-        int curChapter = 1;
         bool isFirstChapterFound = false;
         ChapterDelta[] chapterDeltaArray = [.. chapterDeltas];
         int curChapterDeltaIndex = 0;
+        int curChapter = chapterDeltaArray[curChapterDeltaIndex].Number;
         try
         {
             if (chapterDeltaArray.Length == 1 && chapterDeltaArray[0]?.Delta.Ops.Count == 0)
@@ -542,6 +542,18 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                         var numberStr = (string)((XElement)curNode).Attribute("number");
                         if (int.TryParse(numberStr, out int number))
                             curChapter = number;
+
+                        if (curChapterDeltaIndex >= chapterDeltaArray.Length)
+                            return newUsxDoc;
+                        chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
+                        while (chapterDelta.Number < curChapter)
+                        {
+                            // Add new chapters in our deltas to the usx doc
+                            if (chapterDelta.IsValid)
+                                curNode.AddAfterSelf(ProcessDelta(chapterDelta.Delta));
+                            curChapterDeltaIndex++;
+                            chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
+                        }
                     }
                     else
                     {
@@ -554,12 +566,13 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                     return newUsxDoc;
                 }
 
-                if (
+                bool replaceNodeContent =
                     chapterDeltaArray[curChapterDeltaIndex].Number == curChapter
-                    && chapterDeltaArray[curChapterDeltaIndex].IsValid
-                    && !IsElement(curNode, "book")
-                )
+                    && chapterDeltaArray[curChapterDeltaIndex].IsValid;
+
+                if (replaceNodeContent && !IsElement(curNode, "book"))
                 {
+                    // If the chapter is valid, but the para is not, remove the para.
                     curNode.Remove();
                 }
             }
