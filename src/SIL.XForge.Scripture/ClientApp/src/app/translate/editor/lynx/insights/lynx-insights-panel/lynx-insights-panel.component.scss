@@ -106,6 +106,7 @@ $restoreActionColor: #5485e7;
     font-family: monospace;
     font-size: 0.7rem;
     flex-shrink: 0;
+    display: none; // TODO: is code needed for display, and is there a good way to display it?
   }
 
   .count {
