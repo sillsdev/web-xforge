@@ -221,6 +221,8 @@ export class LynxWorkspaceService {
       return;
     }
 
+    this.curInsights.clear();
+
     if (this.projectDocChangeSubscription != null) {
       this.projectDocChangeSubscription.unsubscribe();
       this.projectDocChangeSubscription = undefined;
