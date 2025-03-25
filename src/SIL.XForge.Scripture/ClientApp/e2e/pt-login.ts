@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page } from 'npm:playwright';
 
 export const E2E_ROOT_URL = 'http://localhost:5000';
 
@@ -44,4 +44,6 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
   if (page.url().startsWith(auth0AuthorizeUrl)) {
     await page.locator('#allow').click();
   }
+
+  await page.waitForURL(url => /^\/projects/.test(url.pathname));
 }

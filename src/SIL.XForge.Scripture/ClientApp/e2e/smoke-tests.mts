@@ -7,8 +7,8 @@ import {
   ScreenshotContext,
   UserRole
 } from "./e2e-globals.ts";
-import { ensureJoinedProject, pageName, screenshot } from "./e2e-utils.ts";
-import { logInAsPTUser } from "./pt_login.ts";
+import { ensureJoinedOrConnectedToProject, pageName, screenshot } from "./e2e-utils.ts";
+import { logInAsPTUser } from "./pt-login.ts";
 
 async function waitForAppLoad(page: Page): Promise<void> {
   // FIXME this is hideous
@@ -73,7 +73,7 @@ export async function joinAsUserAndTraversePages(
   await logInAsPTUser(page, { email: user.email, password: user.password });
 
   await page.waitForURL(/\/projects/);
-  await ensureJoinedProject(page, DEFAULT_PROJECT_SHORTNAME);
+  await ensureJoinedOrConnectedToProject(page, DEFAULT_PROJECT_SHORTNAME);
 
   // If we aren't redirected when joining the project, click the project button
   // It seems like maybe we only sometimes redirect on joining

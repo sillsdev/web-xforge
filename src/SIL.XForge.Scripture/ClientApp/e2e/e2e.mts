@@ -9,6 +9,7 @@ import {
   logOut,
   traverseHomePageAndLoginPage
 } from "./smoke-tests.mts";
+import { generateDraft } from "./workflows/generate-draft.ts";
 
 const availableEngines = { chromium, firefox, webkit };
 
@@ -45,6 +46,10 @@ for (const engineName of runSheet.browsers) {
         const role = roleName as UserRole; // FIXME invalid assertion
         await joinWithLinkAndTraversePages(page, link, { ...screenshotContext, role });
       }
+    }
+
+    if (runSheet.applicationScopes.includes("generate_draft")) {
+      await generateDraft(page, screenshotContext, secrets.users[0]);
     }
   } catch (e) {
     console.error("Error running tests");
