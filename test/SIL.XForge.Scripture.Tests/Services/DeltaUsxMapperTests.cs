@@ -1401,24 +1401,31 @@ public class DeltaUsxMapperTests
                     .InsertPara("toc1")
                     .InsertChapter("2")
                     .InsertVerse("1")
-                    .InsertText("This is verse 1.", "verse_2_1")
+                    .InsertText("This is verse 1 (edited).", "verse_2_1")
                     .InsertVerse("2")
-                    .InsertText("This is verse 2.", "verse_2_2")
+                    .InsertText("This is verse 2 (edited).", "verse_2_2")
                     .InsertPara("p")
             ),
         };
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
 
-        XDocument expected = Usx(
+        XDocument original = Usx(
             "PHM",
             Para("toc1", "Introductory material"),
             Chapter("2"),
             Para("p", Verse("1"), "This is verse 1.", Verse("2"), "This is verse 2.")
         );
 
+        XDocument expected = Usx(
+            "PHM",
+            Para("toc1", "Introductory material"),
+            Chapter("2"),
+            Para("p", Verse("1"), "This is verse 1 (edited).", Verse("2"), "This is verse 2 (edited).")
+        );
+
         // SUT
-        XDocument newUsxDoc = mapper.ToUsx(expected, chapterDeltas);
+        XDocument newUsxDoc = mapper.ToUsx(original, chapterDeltas);
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
     }
 
