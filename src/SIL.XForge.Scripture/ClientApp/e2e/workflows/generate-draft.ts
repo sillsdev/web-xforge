@@ -143,7 +143,7 @@ export async function generateDraft(
   // Completion
   await expect(page.getByText('Your draft is ready')).toBeVisible();
   await screenshot(page, { pageName: 'generate_draft_completed', ...context });
-  console.log('Draft generation took', (Date.now() - startTime) / 1000 / 60, 'minutes');
+  console.log('Draft generation took', ((Date.now() - startTime) / 1000 / 60).toFixed(2), 'minutes');
   await page.getByRole('button', { name: 'Serval administration' }).click();
   await page.getByRole('button', { name: 'Run webhook to update draft status' }).click();
   await page.getByRole('button', { name: 'Serval administration' }).click();

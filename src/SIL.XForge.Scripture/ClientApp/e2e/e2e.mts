@@ -32,7 +32,9 @@ for (const engineName of runSheet.browsers) {
   const screenshotContext: ScreenshotContext = { prefix: runSheet.screenshotPrefix, engine: engineName };
 
   try {
-    if (runSheet.applicationScopes.includes("home_and_login")) await traverseHomePageAndLoginPage(page);
+    if (runSheet.applicationScopes.includes("home_and_login")) {
+      await traverseHomePageAndLoginPage(page, screenshotContext);
+    }
 
     if (runSheet.applicationScopes.includes("main_application")) {
       for (const role of Object.keys(ptUsersByRole)) {

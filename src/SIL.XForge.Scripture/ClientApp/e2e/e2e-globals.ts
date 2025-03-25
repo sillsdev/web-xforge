@@ -1,7 +1,6 @@
 import { E2ETestRunLogger } from './e2e-test-run-logger.ts';
 
 export const E2E_ROOT_URL = 'http://localhost:5000';
-export const OUTPUT_DIR = 'screenshots';
 
 const testScopes = ['home_and_login', 'main_application', 'generate_draft'] as const;
 type TestScope = (typeof testScopes)[number];
@@ -47,3 +46,5 @@ export const runSheet: RunSheet = {
 export const DEFAULT_PROJECT_SHORTNAME = 'Stp22';
 
 export const logger = new E2ETestRunLogger();
+
+export const OUTPUT_DIR = `screenshots/${runSheet.screenshotPrefix}`;

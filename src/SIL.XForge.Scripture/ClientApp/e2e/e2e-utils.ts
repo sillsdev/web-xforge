@@ -91,7 +91,7 @@ export async function screenshot(
 
   const fileNameParts = [context.engine, context.role, context.pageName ?? (await pageName(page)), context.locale];
   const fileName = fileNameParts.filter(part => part != null).join('_') + '.png';
-  await page.screenshot({ path: `${OUTPUT_DIR}/${context.prefix}/${fileName}`, fullPage: true });
+  await page.screenshot({ path: `${OUTPUT_DIR}/${fileName}`, fullPage: true });
   logger.logScreenshot(fileName, context);
 }
 

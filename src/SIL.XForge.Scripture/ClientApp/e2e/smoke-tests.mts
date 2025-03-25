@@ -1,12 +1,5 @@
 import { Page } from "npm:playwright";
-import {
-  DEFAULT_PROJECT_SHORTNAME,
-  E2E_ROOT_URL,
-  OUTPUT_DIR,
-  runSheet,
-  ScreenshotContext,
-  UserRole
-} from "./e2e-globals.ts";
+import { DEFAULT_PROJECT_SHORTNAME, E2E_ROOT_URL, runSheet, ScreenshotContext, UserRole } from "./e2e-globals.ts";
 import { ensureJoinedOrConnectedToProject, pageName, screenshot } from "./e2e-utils.ts";
 import { logInAsPTUser } from "./pt-login.ts";
 
@@ -45,22 +38,22 @@ async function screenshotLanguages(page: Page, context: ScreenshotContext): Prom
   await items[0].click();
 }
 
-export async function traverseHomePageAndLoginPage(page: Page): Promise<void> {
+export async function traverseHomePageAndLoginPage(page: Page, context: ScreenshotContext): Promise<void> {
   // Home page
   await page.goto(E2E_ROOT_URL);
-  await page.screenshot({ path: `${OUTPUT_DIR}/home_page.png`, fullPage: true });
+  await screenshot(page, { pageName: "home_page", ...context });
 
   // Log in
   await page.click("text=Log in");
   await page.waitForSelector("text=Log in with paratext");
-  await page.screenshot({ path: `${OUTPUT_DIR}/login_page.png`, fullPage: true });
+  await screenshot(page, { pageName: "login_page", ...context });
 
   // Log in with Paratext
   await page.click("text=Log in with paratext");
   await page.waitForSelector("text=sign in with your Paratext Registry account");
   await page.fill("input[name=email]", "user@example.com");
   await page.click("#login-form button[type=submit]");
-  await page.screenshot({ path: `${OUTPUT_DIR}/registry_login_page.png`, fullPage: true });
+  await screenshot(page, { pageName: "registry_login_page", ...context });
 }
 
 export async function joinAsUserAndTraversePages(
