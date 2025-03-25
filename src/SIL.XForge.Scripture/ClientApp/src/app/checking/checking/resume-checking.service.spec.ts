@@ -12,6 +12,7 @@ import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -33,6 +34,18 @@ describe('ResumeCheckingService', () => {
   let service: ResumeCheckingService;
   let activatedProjectChange$: BehaviorSubject<SFProjectProfileDoc>;
   let routerEvents$: BehaviorSubject<any>;
+
+  configureTestingModule(() => ({
+    providers: [
+      { provide: Router, useMock: mockRouter },
+      { provide: UserService, useMock: mockUserService },
+      { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
+      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
+      { provide: SFProjectService, useMock: mockProjectService },
+      { provide: PermissionsService, useMock: mockPermissionsService },
+      { provide: CheckingQuestionsService, useMock: mockQuestionsService }
+    ]
+  }));
 
   beforeEach(async () => {
     resetCalls(mockRouter);
@@ -58,19 +71,6 @@ describe('ResumeCheckingService', () => {
       changes$: of([]) as Observable<OtJson0Op[]>,
       data: {} as SFProjectUserConfig
     } as SFProjectUserConfigDoc);
-
-    TestBed.configureTestingModule({
-      providers: [
-        ResumeCheckingService,
-        { provide: Router, useFactory: () => instance(mockRouter) },
-        { provide: UserService, useFactory: () => instance(mockUserService) },
-        { provide: ActivatedProjectService, useFactory: () => instance(mockActivatedProjectService) },
-        { provide: OnlineStatusService, useFactory: () => instance(mockOnlineStatusService) },
-        { provide: SFProjectService, useFactory: () => instance(mockProjectService) },
-        { provide: PermissionsService, useFactory: () => instance(mockPermissionsService) },
-        { provide: CheckingQuestionsService, useFactory: () => instance(mockQuestionsService) }
-      ]
-    });
 
     service = TestBed.inject(ResumeCheckingService);
 
@@ -189,7 +189,7 @@ describe('ResumeCheckingService', () => {
     routerEvents$.next(new NavigationEnd(-1, '', '')); // Trigger route change
 
     verify(userConfigDoc.submitJson0Op(anything())).once();
-    expect(opsSets.length).toBe(3);
+    expect(opsSets.length).toEqual(3);
     expect(opsSets[0].path).toContain('puc.selectedTask');
     expect(opsSets[0].value).toEqual('checking');
     expect(opsSets[1].path).toContain('puc.selectedBookNum');
