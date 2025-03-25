@@ -37,15 +37,6 @@ export class TextService extends DocService<TextData> {
     super(TEXT_MIGRATIONS);
   }
 
-  async allowCreate(docId: string, doc: TextData, session: ConnectSession): Promise<boolean> {
-    if (session.isServer || Object.keys(doc).length === 0) {
-      return true;
-    }
-
-    const project = await this.getProject(docId);
-    return project != null && this.hasRight(project, Operation.Create, session.userId);
-  }
-
   async allowRead(docId: string, doc: TextData, session: ConnectSession): Promise<boolean> {
     if (session.isServer || Object.keys(doc).length === 0) {
       return true;

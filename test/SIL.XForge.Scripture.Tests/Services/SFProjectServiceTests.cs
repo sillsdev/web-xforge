@@ -3776,76 +3776,16 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void AddChaptersAsync_BookMustBeInProject()
-    {
-        var env = new TestEnvironment();
-        const int book = 42;
-        int[] chapters = [3];
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.AddChaptersAsync(User01, Project01, book, chapters)
-        );
-    }
-
-    [Test]
-    public void AddChaptersAsync_UserMustHaveBookPermission()
-    {
-        var env = new TestEnvironment();
-        const int book = 40;
-        int[] chapters = [3];
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.AddChaptersAsync(User01, Project01, book, chapters));
-    }
-
-    [Test]
-    public async Task AddChaptersAsync_Success()
-    {
-        var env = new TestEnvironment();
-        const int book = 41;
-        int[] chapters = [3];
-
-        TextInfo text = env.GetProject(Project01).Texts.Single(t => t.BookNum == book);
-        Assert.That(text.Chapters.Select(c => c.Number), Is.EquivalentTo(new[] { 1, 2 }));
-
-        // SUT
-        await env.Service.AddChaptersAsync(User01, Project01, book, chapters);
-        text = env.GetProject(Project01).Texts.Single(t => t.BookNum == book);
-        Assert.That(text.Chapters.Select(c => c.Number), Is.EquivalentTo(new[] { 1, 2, 3 }));
-        Assert.That(text.Chapters.Single(c => c.Number == 3).Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
-    }
-
-    [Test]
-    public async Task AddChaptersAsync_SuccessSkipsExistingChapters()
-    {
-        var env = new TestEnvironment();
-        const int book = 41;
-        int[] chapters = [2, 3];
-
-        TextInfo text = env.GetProject(Project01).Texts.Single(t => t.BookNum == book);
-        Assert.That(text.Chapters.Select(c => c.Number), Is.EquivalentTo(new[] { 1, 2 }));
-
-        // SUT
-        await env.Service.AddChaptersAsync(User01, Project01, book, chapters);
-        text = env.GetProject(Project01).Texts.Single(t => t.BookNum == book);
-        Assert.That(text.Chapters.Select(c => c.Number), Is.EquivalentTo(new[] { 1, 2, 3 }));
-        Assert.That(text.Chapters.Single(c => c.Number == 1).Permissions, Is.Empty);
-        Assert.That(text.Chapters.Single(c => c.Number == 2).Permissions, Is.Empty);
-    }
-
-    [Test]
     public void SetDraftAppliedAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();
         const int book = 39;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
+            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
         );
     }
 
@@ -3856,11 +3796,10 @@ public class SFProjectServiceTests
         const int book = 40;
         const int chapter = 2;
         const bool draftApplied = true;
-        const int lastVerse = 25;
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
+            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
         );
     }
 
@@ -3871,11 +3810,10 @@ public class SFProjectServiceTests
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SetDraftAppliedAsync(User01, "invalid_project", book, chapter, draftApplied, lastVerse)
+            () => env.Service.SetDraftAppliedAsync(User01, "invalid_project", book, chapter, draftApplied)
         );
     }
 
@@ -3886,11 +3824,10 @@ public class SFProjectServiceTests
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SetDraftAppliedAsync(User01, Resource01, book, chapter, draftApplied, lastVerse)
+            () => env.Service.SetDraftAppliedAsync(User01, Resource01, book, chapter, draftApplied)
         );
     }
 
@@ -3901,7 +3838,6 @@ public class SFProjectServiceTests
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
 
         // Grant User01 write permission
         await env
@@ -3916,11 +3852,9 @@ public class SFProjectServiceTests
             );
 
         // SUT
-        await env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse);
+        await env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied);
 
-        SFProject project = env.GetProject(Project01);
-        Assert.IsTrue(project.Texts[0].Chapters[0].DraftApplied);
-        Assert.IsTrue(project.Texts[0].Chapters[0].LastVerse == lastVerse);
+        Assert.IsTrue(env.GetProject(Project01).Texts[0].Chapters[0].DraftApplied);
     }
 
     [Test]
@@ -3930,11 +3864,10 @@ public class SFProjectServiceTests
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SetDraftAppliedAsync(User02, Project01, book, chapter, draftApplied, lastVerse)
+            () => env.Service.SetDraftAppliedAsync(User02, Project01, book, chapter, draftApplied)
         );
     }
 
@@ -3945,11 +3878,10 @@ public class SFProjectServiceTests
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
+            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
         );
     }
 
@@ -3960,7 +3892,6 @@ public class SFProjectServiceTests
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
 
         // Grant User01 read permission
         await env
@@ -3976,7 +3907,7 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
+            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
         );
     }
 
@@ -4607,7 +4538,6 @@ public class SFProjectServiceTests
                                             Permissions = [],
                                         },
                                     },
-                                    Permissions = { { User01, TextInfoPermission.Write } },
                                 },
                             },
                             WritingSystem = new WritingSystem { Tag = "qaa" },

@@ -17,16 +17,6 @@ import { TextService } from './text-service';
 ShareDB.types.register(RichText.type);
 
 describe('TextService', () => {
-  it('allows administrator to create text', async () => {
-    const env = new TestEnvironment();
-    await env.createData();
-
-    const conn = clientConnect(env.server, 'administrator');
-    await expect(
-      createDoc<TextData>(conn, TEXTS_COLLECTION, getTextDocId('project01', 40, 2), new Delta())
-    ).resolves.not.toThrow();
-  });
-
   it('allows member to view text', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -102,10 +92,9 @@ class TestEnvironment {
 
   async createData(): Promise<void> {
     const conn = this.server.connect();
-    await createDoc<User>(conn, USERS_COLLECTION, 'administrator', createTestUser({}, 1));
-    await createDoc<User>(conn, USERS_COLLECTION, 'translator', createTestUser({}, 2));
-    await createDoc<User>(conn, USERS_COLLECTION, 'observer', createTestUser({}, 3));
-    await createDoc<User>(conn, USERS_COLLECTION, 'nonmember', createTestUser({}, 4));
+    await createDoc<User>(conn, USERS_COLLECTION, 'translator', createTestUser({}, 1));
+    await createDoc<User>(conn, USERS_COLLECTION, 'observer', createTestUser({}, 2));
+    await createDoc<User>(conn, USERS_COLLECTION, 'nonmember', createTestUser({}, 3));
 
     await createDoc<SFProject>(
       conn,
@@ -113,14 +102,10 @@ class TestEnvironment {
       'project01',
       createTestProject({
         userRoles: {
-          administrator: SFProjectRole.ParatextAdministrator,
           translator: SFProjectRole.ParatextTranslator,
           observer: SFProjectRole.ParatextObserver
         },
-        paratextUsers: [
-          { sfUserId: 'administrator', username: 'ptadministrator', opaqueUserId: 'opaqueadministrator' },
-          { sfUserId: 'translator', username: 'pttranslator', opaqueUserId: 'opaquetranslator' }
-        ]
+        paratextUsers: [{ sfUserId: 'translator', username: 'pttranslator', opaqueUserId: 'opaquetranslator' }]
       })
     );
 
