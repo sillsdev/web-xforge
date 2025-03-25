@@ -48,7 +48,6 @@ export class LynxInsightOverlayService {
 
     const overlayRef: LynxInsightOverlayRef = this.createOverlayRef(origin);
     const componentRef = overlayRef.ref.attach(new ComponentPortal(LynxInsightOverlayComponent));
-    overlayRef.ref.backdropClick().subscribe(() => this.close());
 
     componentRef.instance.insights = insights;
     componentRef.instance.editor = editor;
@@ -64,6 +63,23 @@ export class LynxInsightOverlayService {
         observeOn(asyncScheduler) // Delay to wait for DOM render (like setTimeout)
       )
       .subscribe(() => overlayRef.ref.updatePosition());
+
+    // Overlay does not have a backdrop to allow for clicking through items in the problems panel
+    // (clicking an insight in the problems panel should change the opened insight overlay).
+    // So, close the overlay when the user clicks outside of it if overlay action menu is not open.
+    overlayRef.ref
+      .outsidePointerEvents()
+      .pipe(takeUntil(overlayRef.closed$))
+      .subscribe(e => {
+        const target = e.target as HTMLElement;
+        const isActionMenuOpen =
+          target.matches('.cdk-overlay-backdrop') || target.closest('.lynx-insight-action-menu') != null;
+
+        // If the click is outside the overlay and not on the action menu, close the overlay
+        if (!isActionMenuOpen) {
+          this.close();
+        }
+      });
 
     this.openRef = overlayRef;
 
@@ -93,8 +109,6 @@ export class LynxInsightOverlayService {
   private getConfig(origin: HTMLElement): OverlayConfig {
     return {
       positionStrategy: this.getPositionStrategy(origin),
-      hasBackdrop: true,
-      backdropClass: 'cdk-overlay-transparent-backdrop',
       panelClass: 'lynx-insight-overlay-panel',
       scrollStrategy: this.overlay.scrollStrategies.reposition()
     };
