@@ -5,9 +5,8 @@ import { combineLatest, delay, filter, map, Observable, of, startWith, switchMap
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ResumeServiceBase } from './resume.service';
+import { ResumeBaseService } from './resume-base.service';
 
 /**
  * Provides information about what location the user should be sent to in order to resume translate (or start
@@ -16,7 +15,7 @@ import { ResumeServiceBase } from './resume.service';
  * This is their last location, if it exists. Otherwise, it will be the first chapter of the first book.
  */
 @Injectable({ providedIn: 'root' })
-export class ResumeTranslateService extends ResumeServiceBase {
+export class ResumeTranslateService extends ResumeBaseService {
   readonly resumeLink$: Observable<string[] | undefined> = this.createLink();
 
   constructor(
@@ -25,18 +24,9 @@ export class ResumeTranslateService extends ResumeServiceBase {
     activatedProjectService: ActivatedProjectService,
     onlineStatusService: OnlineStatusService,
     projectService: SFProjectService,
-    permissionsService: PermissionsService,
     destroyRef: DestroyRef
   ) {
-    super(
-      router,
-      userService,
-      activatedProjectService,
-      onlineStatusService,
-      projectService,
-      permissionsService,
-      destroyRef
-    );
+    super(router, userService, activatedProjectService, onlineStatusService, projectService, destroyRef);
   }
 
   protected createLink(): Observable<string[] | undefined> {
@@ -56,7 +46,7 @@ export class ResumeTranslateService extends ResumeServiceBase {
         const chapterNum = config?.selectedChapterNum ?? project?.texts[bookNum]?.chapters[0].number ?? 1;
         const bookId = Canon.bookNumberToId(bookNum);
 
-        return this.getProjectLink('translate', [bookId, String(chapterNum)]);
+        return this.getProjectLink([bookId, String(chapterNum)]);
       }),
       // The selected book and chapter are updated by CheckingQuestionsComponent during a change detection cycle.
       // This causes the link to the translate page to cause ExpressionChangedAfterItHasBeenCheckedError. To avoid this,
@@ -65,13 +55,10 @@ export class ResumeTranslateService extends ResumeServiceBase {
     );
   }
 
-  protected getProjectLink(
-    page: 'translate' | 'draft-generation' | 'checking' | 'sync' | 'users' | 'settings',
-    subPages: string[] = []
-  ): string[] {
+  protected getProjectLink(subPages: string[] = []): string[] {
     if (this.activatedProjectService.projectId == null) {
       return [];
     }
-    return ['/projects', this.activatedProjectService.projectId, page, ...subPages];
+    return ['/projects', this.activatedProjectService.projectId, 'translate', ...subPages];
   }
 }
