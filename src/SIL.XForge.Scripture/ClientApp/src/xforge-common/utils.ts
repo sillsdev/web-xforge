@@ -27,20 +27,21 @@ export function supportedBrowser(): boolean {
   // https://caniuse.com/mdn-css_properties_column-gap_flex_context
   // https://caniuse.com/mdn-css_properties_inset-inline-start
   // https://developer.mozilla.org/en-US/docs/Web/CSS/margin-inline-start#browser_compatibility
+  // ES2022 (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Static_initialization_blocks)
   const isSupportedBrowser = BROWSER.satisfies({
-    chrome: '>=87',
-    chromium: '>=87',
-    edge: '>=87',
-    firefox: '>=79',
-    safari: '>=14.1',
+    chrome: '>=94',
+    chromium: '>=94',
+    edge: '>=94',
+    firefox: '>=93',
+    safari: '>=16.4',
 
     mobile: {
-      chrome: '>=87',
-      firefox: '>=79',
-      opera: '>=73',
-      safari: '>=14.5',
-      'android browser': '>=87',
-      'samsung internet': '>=14.0'
+      chrome: '>=94',
+      firefox: '>=93',
+      opera: '>=80',
+      safari: '>=16.4',
+      'android browser': '>=94',
+      'samsung internet': '>=17.0'
     }
   });
   return isSupportedBrowser ? true : false;
