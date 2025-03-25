@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using System.Xml.Schema;
@@ -558,6 +559,13 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                     else
                     {
                         isFirstChapterFound = true;
+                        var numberStr = (string)((XElement)curNode).Attribute("number");
+                        if (!int.TryParse(numberStr, out int number))
+                        {
+                            // we cannot handle if the first chapter is invalid because we have no way to determine
+                            // how to update the content before this chapter
+                            throw new InvalidDataException("The first chapter number was invalid");
+                        }
                     }
                 }
 
@@ -583,6 +591,10 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                     newUsxDoc.Root.Add(ProcessDelta(chapterDeltaArray[i].Delta));
             }
             return newUsxDoc;
+        }
+        catch (InvalidDataException)
+        {
+            throw;
         }
         catch (Exception e)
         {
