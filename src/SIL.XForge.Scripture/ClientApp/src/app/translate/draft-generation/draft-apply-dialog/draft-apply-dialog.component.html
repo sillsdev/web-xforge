@@ -39,14 +39,6 @@
         <mat-error class="form-error" [ngClass]="{ visible: addToProjectClicked && !overwriteConfirmed }">{{
           t("confirm_overwrite")
         }}</mat-error>
-        @if (projectHasMissingChapters) {
-          <mat-checkbox class="create-chapters" formControlName="createChapters">{{
-            t("i_understand_missing_chapters_are_created", { projectName, bookName })
-          }}</mat-checkbox>
-          <mat-error class="form-error" [ngClass]="{ visible: addToProjectClicked && !confirmCreateChapters }">{{
-            t("confirm_create_chapters")
-          }}</mat-error>
-        }
       }
     </form>
     <div class="unlisted-project-message">

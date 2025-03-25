@@ -360,21 +360,12 @@ describe('DraftHandlingService', () => {
   describe('applyChapterDraftAsync', () => {
     it('should apply draft to text doc', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
-      const draftOps: DeltaOperation[] = [
-        { insert: { verse: { number: 1 } } },
-        { insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }
-      ];
+      const draftOps: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
       await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
       verify(
-        mockedProjectService.onlineSetDraftApplied(
-          textDocId.projectId,
-          textDocId.bookNum,
-          textDocId.chapterNum,
-          true,
-          1
-        )
+        mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
       ).once();
       expect().nothing();
     });
@@ -383,10 +374,7 @@ describe('DraftHandlingService', () => {
   describe('getAndApplyDraftAsync', () => {
     it('should get and apply draft', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
-      const draft: DeltaOperation[] = [
-        { insert: { verse: { number: 1 } } },
-        { insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }
-      ];
+      const draft: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
       when(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
       ).thenReturn(of(draft));
@@ -396,13 +384,7 @@ describe('DraftHandlingService', () => {
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
       verify(
-        mockedProjectService.onlineSetDraftApplied(
-          textDocId.projectId,
-          textDocId.bookNum,
-          textDocId.chapterNum,
-          true,
-          1
-        )
+        mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
       ).once();
       verify(
         mockedProjectService.onlineSetIsValid(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
@@ -439,30 +421,21 @@ describe('DraftHandlingService', () => {
 
     it('should return false if applying a draft fails', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
-      const draft: DeltaOperation[] = [
-        { insert: { verse: { number: 1 } } },
-        { insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }
-      ];
+      const draft: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
       when(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
       ).thenReturn(of(draft));
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
-      when(
-        mockedProjectService.onlineSetDraftApplied(anything(), anything(), anything(), anything(), anything())
-      ).thenReturn(Promise.reject(new Error('Failed')));
+      when(mockedProjectService.onlineSetDraftApplied(anything(), anything(), anything(), anything())).thenReturn(
+        Promise.reject(new Error('Failed'))
+      );
       const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId, textDocId);
       expect(result).toBe(false);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedErrorReportingService.silentError(anything(), anything())).once();
       verify(mockedTextDocService.overwrite(textDocId, anything(), anything())).never();
       verify(
-        mockedProjectService.onlineSetDraftApplied(
-          textDocId.projectId,
-          textDocId.bookNum,
-          textDocId.chapterNum,
-          true,
-          1
-        )
+        mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
       ).once();
     });
 
@@ -477,13 +450,7 @@ describe('DraftHandlingService', () => {
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedErrorReportingService.silentError(anything(), anything())).once();
       verify(
-        mockedProjectService.onlineSetDraftApplied(
-          textDocId.projectId,
-          textDocId.bookNum,
-          textDocId.chapterNum,
-          true,
-          anything()
-        )
+        mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
       ).never();
     });
   });

@@ -496,63 +496,17 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public async Task AddChapters_Success()
-    {
-        var env = new TestEnvironment();
-        const int book = 1;
-        int[] chapters = [2, 3];
-
-        // SUT
-        var result = await env.Controller.AddChapters(Project01, book, chapters);
-        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
-        await env.SFProjectService.Received().AddChaptersAsync(User01, Project01, book, chapters);
-    }
-
-    [Test]
-    public async Task AddChapters_Forbidden()
-    {
-        var env = new TestEnvironment();
-        const int book = 1;
-        int[] chapters = [2, 3];
-        env.SFProjectService.AddChaptersAsync(User01, Project01, book, chapters).Throws(new ForbiddenException());
-
-        // SUT
-        var result = await env.Controller.AddChapters(Project01, book, chapters);
-        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
-        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
-    }
-
-    [Test]
-    public async Task AddChapters_NotFound()
-    {
-        var env = new TestEnvironment();
-        const int book = 1;
-        int[] chapters = [2, 3];
-        const string errorMessage = "Not Found";
-        env.SFProjectService.AddChaptersAsync(User01, Project01, book, chapters)
-            .Throws(new DataNotFoundException(errorMessage));
-
-        // SUT
-        var result = await env.Controller.AddChapters(Project01, book, chapters);
-        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
-        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
-    }
-
-    [Test]
     public async Task SetDraftApplied_Success()
     {
         var env = new TestEnvironment();
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
 
         // SUT
-        var result = await env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied, lastVerse);
+        var result = await env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
-        await env
-            .SFProjectService.Received()
-            .SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse);
+        await env.SFProjectService.Received().SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied);
     }
 
     [Test]
@@ -562,12 +516,11 @@ public class SFProjectsRpcControllerTests
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
-        env.SFProjectService.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
+        env.SFProjectService.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
             .Throws(new ForbiddenException());
 
         // SUT
-        var result = await env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied, lastVerse);
+        var result = await env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
@@ -579,13 +532,12 @@ public class SFProjectsRpcControllerTests
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
         const string errorMessage = "Not Found";
-        env.SFProjectService.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
+        env.SFProjectService.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
-        var result = await env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied, lastVerse);
+        var result = await env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
         Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
@@ -598,13 +550,12 @@ public class SFProjectsRpcControllerTests
         const int book = 40;
         const int chapter = 1;
         const bool draftApplied = true;
-        const int lastVerse = 25;
-        env.SFProjectService.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
+        env.SFProjectService.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
             .Throws(new ArgumentNullException());
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied, lastVerse)
+            () => env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }

@@ -186,10 +186,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     });
   }
 
-  onlineAddChapters(projectId: string, book: number, chapters: number[]): Promise<void> {
-    return this.onlineInvoke<void>('addChapters', { projectId, book, chapters });
-  }
-
   onlineUpdateSettings(id: string, settings: SFProjectSettings): Promise<void> {
     return this.onlineInvoke('updateSettings', { projectId: id, settings });
   }
@@ -302,19 +298,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     });
   }
 
-  async onlineSetDraftApplied(
-    projectId: string,
-    book: number,
-    chapter: number,
-    draftApplied: boolean,
-    lastVerse: number
-  ): Promise<void> {
+  async onlineSetDraftApplied(projectId: string, book: number, chapter: number, draftApplied: boolean): Promise<void> {
     return await this.onlineInvoke('setDraftApplied', {
       projectId,
       book,
       chapter,
-      draftApplied,
-      lastVerse
+      draftApplied
     });
   }
 

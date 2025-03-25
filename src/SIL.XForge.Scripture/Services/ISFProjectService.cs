@@ -78,10 +78,8 @@ public interface ISFProjectService : IProjectService
     [LogEventMetric(EventScope.Drafting, nameof(curUserId))]
     Task SetServalConfigAsync(string curUserId, string[] systemRoles, string projectId, string? servalConfig);
 
-    Task AddChaptersAsync(string userId, string projectId, int book, int[] chapters);
-
     [LogEventMetric(EventScope.Drafting)]
-    Task SetDraftAppliedAsync(string userId, string projectId, int book, int chapter, bool draftApplied, int lastVerse);
+    Task SetDraftAppliedAsync(string userId, string projectId, int book, int chapter, bool draftApplied);
 
     [LogEventMetric(EventScope.Drafting)]
     Task SetIsValidAsync(string userId, string projectId, int book, int chapter, bool isValid);

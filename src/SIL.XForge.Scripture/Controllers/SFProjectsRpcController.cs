@@ -946,42 +946,11 @@ public class SFProjectsRpcController(
         }
     }
 
-    public async Task<IRpcMethodResult> AddChapters(string projectId, int book, int[] chapters)
-    {
-        try
-        {
-            await projectService.AddChaptersAsync(UserId, projectId, book, chapters);
-            return Ok();
-        }
-        catch (ForbiddenException)
-        {
-            return ForbiddenError();
-        }
-        catch (DataNotFoundException dnfe)
-        {
-            return NotFoundError(dnfe.Message);
-        }
-        catch
-        {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string>
-                {
-                    { "method", "AddChapters" },
-                    { "projectId", projectId },
-                    { "book", book.ToString() },
-                    { "chapters", string.Join(',', chapters) },
-                }
-            );
-            throw;
-        }
-    }
-
-    [Obsolete("New endpoints require lastVerse. Old clients do not provide lastVerse")]
     public async Task<IRpcMethodResult> SetDraftApplied(string projectId, int book, int chapter, bool draftApplied)
     {
         try
         {
-            await projectService.SetDraftAppliedAsync(UserId, projectId, book, chapter, draftApplied, 0);
+            await projectService.SetDraftAppliedAsync(UserId, projectId, book, chapter, draftApplied);
             return Ok();
         }
         catch (ForbiddenException)
@@ -1002,44 +971,6 @@ public class SFProjectsRpcController(
                     { "book", book.ToString() },
                     { "chapter", chapter.ToString() },
                     { "draftApplied", draftApplied.ToString() },
-                }
-            );
-            throw;
-        }
-    }
-
-    public async Task<IRpcMethodResult> SetDraftApplied(
-        string projectId,
-        int book,
-        int chapter,
-        bool draftApplied,
-        int lastVerse
-    )
-    {
-        try
-        {
-            await projectService.SetDraftAppliedAsync(UserId, projectId, book, chapter, draftApplied, lastVerse);
-            return Ok();
-        }
-        catch (ForbiddenException)
-        {
-            return ForbiddenError();
-        }
-        catch (DataNotFoundException ex)
-        {
-            return NotFoundError(ex.Message);
-        }
-        catch (Exception)
-        {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string>
-                {
-                    { "method", "SetDraftApplied" },
-                    { "projectId", projectId },
-                    { "book", book.ToString() },
-                    { "chapter", chapter.ToString() },
-                    { "draftApplied", draftApplied.ToString() },
-                    { "lastVerse", lastVerse.ToString() },
                 }
             );
             throw;
