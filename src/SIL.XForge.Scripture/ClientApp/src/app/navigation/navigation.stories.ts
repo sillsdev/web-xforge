@@ -35,6 +35,7 @@ const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedRouter = mock(Router);
+const mockedPermissionsService = mock(PermissionsService);
 const mockedResumeCheckingService = mock(ResumeCheckingService);
 const mockedResumeTranslateService = mock(ResumeTranslateService);
 let testActivatedProjectService: ActivatedProjectService;
@@ -137,7 +138,7 @@ const meta: Meta = {
           },
           {
             provide: PermissionsService,
-            useClass: PermissionsService
+            useValue: instance(mockedPermissionsService)
           },
           {
             provide: ActivatedProjectService,

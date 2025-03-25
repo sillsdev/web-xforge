@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -109,10 +108,5 @@ export class PermissionsService {
       SFProjectDomain.BiblicalTerms,
       Operation.View
     );
-  }
-
-  userHasPermission(project: SFProjectProfile, projectDomain: string, operation: Operation): boolean {
-    const userId = this.userService.currentUserId;
-    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, projectDomain, operation);
   }
 }
