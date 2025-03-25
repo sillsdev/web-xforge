@@ -60,9 +60,17 @@ export function rangeComparer(a: { range: Range }, b: { range: Range }): number 
 }
 
 /**
- * Extracts text from a delta within a range.
+ * Extracts text from a delta. If range is provided, extracts only text within that range.
  */
-export function getText(delta: Delta, range: Range): string {
+export function getText(delta: Delta, range?: Range): string {
+  if (!range) {
+    // Return full text when no range is provided
+    return delta
+      .filter(op => typeof op.insert === 'string')
+      .map(op => op.insert)
+      .join('');
+  }
+
   const { index, length } = range;
   return delta
     .slice(index, index + length)

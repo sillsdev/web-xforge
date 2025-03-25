@@ -44,6 +44,7 @@ export interface LynxInsightConfig {
   sortOrder: LynxInsightSortOrder;
   queryParamName: string;
   panelLinkTextMaxLength: number;
+  panelLinkTextMinLength: number;
   actionOverlayApplyPrimaryActionChord: Partial<KeyboardEvent>;
 }
 
@@ -63,6 +64,7 @@ export const EDITOR_INSIGHT_DEFAULTS = new InjectionToken<LynxInsightConfig>('ED
     sortOrder: 'severity',
     queryParamName: 'insight',
     panelLinkTextMaxLength: 30,
+    panelLinkTextMinLength: 15,
     actionOverlayApplyPrimaryActionChord: { altKey: true, shiftKey: true, key: 'Enter' }
   })
 });
