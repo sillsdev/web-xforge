@@ -264,43 +264,164 @@ export class LynxInsightsPanelComponent implements OnInit {
   }
 
   /**
-   * Adds text to insights according to their ranges.
+   * Adds text samples to insights based on their ranges.
+   * Ensures text sample meets length requirements and respects word boundaries.
    */
   private addRangeText(insights: LynxInsight[]): Promise<LynxInsightWithText[]> {
+    if (!this.activatedProject.projectId || insights.length === 0) {
+      return Promise.resolve([]);
+    }
+
+    // Cache TextDocs by id to avoid redundant fetches
     const textDocMap = new Map<string, Promise<TextDoc>>();
-    const insightWithSamples: Promise<LynxInsightWithText>[] = [];
 
-    if (this.activatedProject.projectId != null) {
-      for (const insight of insights) {
-        const textDocIdStr: string = insight.textDocId.toString();
+    // Process each insight to add text
+    const insightsWithText: Promise<LynxInsightWithText>[] = insights.map(insight => {
+      const textDocIdStr: string = insight.textDocId.toString();
 
-        if (!textDocMap.has(textDocIdStr)) {
-          textDocMap.set(
-            textDocIdStr,
-            this.projectService.getText(insight.textDocId).then(textDoc => {
-              // Update segment map for text doc
-              this.textDocSegments.set(
-                textDocIdStr,
-                textDoc.data?.ops != null ? this.editorSegmentService.parseSegments(textDoc.data.ops) : new Map()
-              );
-
-              return textDoc;
-            })
-          );
-        }
-
-        insightWithSamples.push(
-          textDocMap.get(textDocIdStr)!.then(textDoc => {
-            return {
-              ...insight,
-              rangeText: getText(new Delta(textDoc.data?.ops), insight.range)
-            };
+      // Fetch and cache TextDoc if not already cached
+      if (!textDocMap.has(textDocIdStr)) {
+        textDocMap.set(
+          textDocIdStr,
+          this.projectService.getText(insight.textDocId).then(textDoc => {
+            // Update segment map for text doc
+            this.textDocSegments.set(
+              textDocIdStr,
+              textDoc.data?.ops != null ? this.editorSegmentService.parseSegments(textDoc.data.ops) : new Map()
+            );
+            return textDoc;
           })
         );
       }
+
+      // Process text for this insight
+      return textDocMap.get(textDocIdStr)!.then(textDoc => this.processInsightText(insight, textDoc));
+    });
+
+    return Promise.all(insightsWithText);
+  }
+
+  /**
+   * Processes a single insight to extract appropriate text.
+   */
+  private processInsightText(insight: LynxInsight, textDoc: TextDoc): LynxInsightWithText {
+    const minLength = this.lynxInsightConfig.panelLinkTextMinLength;
+    const maxLength = this.lynxInsightConfig.panelLinkTextMaxLength;
+
+    if (!textDoc.data?.ops?.length) {
+      return { ...insight, rangeText: '' };
     }
 
-    return Promise.all(insightWithSamples);
+    // Get document content
+    const delta = new Delta(textDoc.data.ops);
+    const fullText: string = getText(delta);
+
+    if (fullText.length === 0) {
+      return { ...insight, rangeText: '' };
+    }
+
+    // Extract insight text in range
+    const range: LynxInsightRange = insight.range;
+    const insightText = fullText.substring(range.index, range.index + range.length);
+
+    if (insightText.length >= minLength) {
+      if (insightText.length <= maxLength) {
+        return { ...insight, rangeText: insightText };
+      } else {
+        // Too long, need to trim
+        return { ...insight, rangeText: this.trimToWordBoundary(insightText, maxLength, minLength) };
+      }
+    } else {
+      // Text is too short, need to expand
+      const expandedRange: LynxInsightRange = this.expandRangeToWordBoundaries(fullText, range, minLength);
+      const expandedText: string = fullText.substring(expandedRange.index, expandedRange.index + expandedRange.length);
+
+      // Check if expanded text needs trimming
+      if (expandedText.length > maxLength) {
+        return { ...insight, rangeText: this.trimToWordBoundary(expandedText, maxLength, minLength) };
+      }
+
+      return { ...insight, rangeText: expandedText };
+    }
+  }
+  /**
+   * Trims text to not exceed maxLength while respecting word boundaries.
+   */
+  private trimToWordBoundary(text: string, maxLength: number, minLength: number): string {
+    // No trimming needed if already within limits
+    if (text.length <= maxLength) {
+      return text;
+    }
+
+    // For single words longer than maxLength, just trim
+    if (!text.includes(' ')) {
+      return text.substring(0, maxLength);
+    }
+
+    // Find the last space before maxLength
+    const trimmedText = text.substring(0, maxLength);
+    const lastSpacePos = trimmedText.lastIndexOf(' ');
+
+    // If found a space after minLength, use it
+    if (lastSpacePos >= minLength) {
+      return text.substring(0, lastSpacePos);
+    }
+
+    // If no suitable space found, just trim at maxLength
+    return text.substring(0, maxLength);
+  }
+
+  /**
+   * Expands a range to meet minimum length while ensuring word boundaries are respected.
+   */
+  private expandRangeToWordBoundaries(
+    fullText: string,
+    originalRange: LynxInsightRange,
+    minLength: number
+  ): LynxInsightRange {
+    // Quick return for valid ranges
+    if (originalRange.length >= minLength) {
+      return originalRange;
+    }
+
+    const origStart = originalRange.index;
+    const origEnd = origStart + originalRange.length;
+
+    // Calculate expansion amounts
+    const extraNeeded = minLength - originalRange.length;
+    const addBefore = Math.floor(extraNeeded / 2);
+    const addAfter = Math.ceil(extraNeeded / 2);
+
+    // Calculate initial expanded boundaries
+    let startIndex = Math.max(0, origStart - addBefore);
+    let endIndex = Math.min(fullText.length, origEnd + addAfter);
+
+    // Adjust start to nearest whitespace boundary - look backward first
+    if (startIndex > 0) {
+      // Look for the previous space
+      const textBefore = fullText.substring(Math.max(0, startIndex - 20), startIndex);
+      const lastSpacePos = textBefore.lastIndexOf(' ');
+
+      if (lastSpacePos >= 0) {
+        startIndex = Math.max(0, startIndex - 20) + lastSpacePos + 1; // Position after space
+      }
+    }
+
+    // Adjust end to nearest whitespace boundary
+    if (endIndex < fullText.length) {
+      // Look for the next space
+      const textAfter = fullText.substring(endIndex, Math.min(fullText.length, endIndex + 20));
+      const nextSpacePos = textAfter.indexOf(' ');
+
+      if (nextSpacePos >= 0) {
+        endIndex = endIndex + nextSpacePos;
+      }
+    }
+
+    return {
+      index: startIndex,
+      length: endIndex - startIndex
+    };
   }
 
   /**
@@ -369,11 +490,7 @@ export class LynxInsightsPanelComponent implements OnInit {
       return segmentRef;
     }
 
-    const maxLength: number = this.lynxInsightConfig.panelLinkTextMaxLength;
-    const optionalRefStr: string = includeRef ? `[${segmentRef}] ` : '';
-    const text: string = insight.rangeText.substring(0, maxLength);
-
-    // TODO: should '...' be dependent on verse boundaries?
-    return `${optionalRefStr}— "...${text}..."`;
+    const prefix = includeRef ? `[${segmentRef}] ` : '';
+    return `${prefix}— "${insight.rangeText}"`;
   }
 }
