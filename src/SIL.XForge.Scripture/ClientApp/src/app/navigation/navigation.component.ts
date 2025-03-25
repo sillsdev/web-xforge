@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
@@ -106,8 +106,11 @@ export class NavigationComponent {
 
   get canManageQuestions(): boolean {
     if (this.activatedProjectService.projectDoc?.data === undefined) return false;
-    return this.permissionsService.userHasPermission(
+    if (this.activatedProjectService.projectDoc.data === undefined) return false;
+
+    return SF_PROJECT_RIGHTS.hasRight(
       this.activatedProjectService.projectDoc.data,
+      this.userService.currentUserId,
       SFProjectDomain.Questions,
       Operation.Edit
     );

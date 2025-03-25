@@ -9,6 +9,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -30,6 +31,17 @@ describe('ResumeTranslateService', () => {
   let activatedProjectChange$: BehaviorSubject<SFProjectProfileDoc>;
   let routerEvents$: BehaviorSubject<any>;
 
+  configureTestingModule(() => ({
+    providers: [
+      { provide: Router, useMock: mockRouter },
+      { provide: UserService, useMock: mockUserService },
+      { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
+      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
+      { provide: SFProjectService, useMock: mockProjectService },
+      { provide: PermissionsService, useMock: mockPermissionsService }
+    ]
+  }));
+
   beforeEach(async () => {
     resetCalls(mockRouter);
     resetCalls(mockUserService);
@@ -49,18 +61,6 @@ describe('ResumeTranslateService', () => {
 
     when(mockRouter.routerState).thenReturn({ snapshot: { root: {} as any } } as any);
     when(mockRouter.events).thenReturn(routerEvents$);
-
-    TestBed.configureTestingModule({
-      providers: [
-        ResumeTranslateService,
-        { provide: Router, useFactory: () => instance(mockRouter) },
-        { provide: UserService, useFactory: () => instance(mockUserService) },
-        { provide: ActivatedProjectService, useFactory: () => instance(mockActivatedProjectService) },
-        { provide: OnlineStatusService, useFactory: () => instance(mockOnlineStatusService) },
-        { provide: SFProjectService, useFactory: () => instance(mockProjectService) },
-        { provide: PermissionsService, useFactory: () => instance(mockPermissionsService) }
-      ]
-    });
 
     service = TestBed.inject(ResumeTranslateService);
 
@@ -115,7 +115,7 @@ describe('ResumeTranslateService', () => {
   it('should return empty array if project id is null', fakeAsync(() => {
     when(mockActivatedProjectService.projectId).thenReturn(undefined);
 
-    const result = service['getProjectLink']('translate', ['GEN', '1']);
+    const result = service['getProjectLink'](['GEN', '1']);
 
     expect(result).toEqual([]);
   }));
@@ -142,7 +142,7 @@ describe('ResumeTranslateService', () => {
     routerEvents$.next(new NavigationEnd(-1, '', '')); // Trigger route change
 
     verify(userConfigDoc.submitJson0Op(anything())).once();
-    expect(opsSets.length).toBe(3);
+    expect(opsSets.length).toEqual(3);
     expect(opsSets[0].path).toContain('puc.selectedTask');
     expect(opsSets[0].value).toEqual('translate');
     expect(opsSets[1].path).toContain('puc.selectedBookNum');

@@ -22,10 +22,9 @@ import { UserService } from 'xforge-common/user.service';
 import { areStringArraysEqual } from 'xforge-common/util/string-util';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingQuestionsService } from './checking-questions.service';
-import { ResumeServiceBase } from './resume.service';
+import { ResumeBaseService } from './resume-base.service';
 
 /**
  * Provides information about what location the user should be sent to in order to resume community checking (or start
@@ -35,7 +34,7 @@ import { ResumeServiceBase } from './resume.service';
  * the first unanswered question.
  */
 @Injectable({ providedIn: 'root' })
-export class ResumeCheckingService extends ResumeServiceBase {
+export class ResumeCheckingService extends ResumeBaseService {
   /**
    * Gets a path to navigate to the community checking component and resume checking. In general, this will lead
    * the user to first unanswered question.  If there are no unanswered questions, the path will be to the first
@@ -51,18 +50,9 @@ export class ResumeCheckingService extends ResumeServiceBase {
     activatedProjectService: ActivatedProjectService,
     onlineStatusService: OnlineStatusService,
     projectService: SFProjectService,
-    permissionsService: PermissionsService,
     destroyRef: DestroyRef
   ) {
-    super(
-      router,
-      userService,
-      activatedProjectService,
-      onlineStatusService,
-      projectService,
-      permissionsService,
-      destroyRef
-    );
+    super(router, userService, activatedProjectService, onlineStatusService, projectService, destroyRef);
   }
 
   private createLink(): Observable<string[] | undefined> {
