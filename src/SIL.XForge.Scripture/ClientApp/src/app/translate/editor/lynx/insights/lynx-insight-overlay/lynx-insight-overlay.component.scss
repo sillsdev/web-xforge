@@ -97,6 +97,7 @@ mat-icon {
         &.#{$type} {
           .severity-icon {
             color: insights.insight-color($type);
+            flex-shrink: 0;
           }
         }
       }
@@ -105,6 +106,7 @@ mat-icon {
         color: $secondaryTextColor;
         margin-inline-start: auto; // Push to right
         padding-inline-start: 1em;
+        flex-shrink: 0;
       }
     }
   }
