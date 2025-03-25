@@ -8,7 +8,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 
 /**
@@ -16,7 +15,7 @@ import { SFProjectService } from '../../core/sf-project.service';
  * chapter, and task in the user config.
  */
 @Injectable({ providedIn: 'root' })
-export abstract class ResumeServiceBase {
+export abstract class ResumeBaseService {
   abstract readonly resumeLink$: Observable<string[] | undefined>;
 
   protected readonly projectUserConfigDoc$ = new BehaviorSubject<SFProjectUserConfigDoc | undefined>(undefined);
@@ -33,7 +32,11 @@ export abstract class ResumeServiceBase {
     )
   ).pipe(
     filterNullish(),
-    distinctUntilChanged((prev, curr) => JSON.stringify(prev?.url) === JSON.stringify(curr?.url)),
+    distinctUntilChanged(
+      (prev, curr) =>
+        prev?.url.map(segment => segment.toString()).join('/') ===
+        curr?.url.map(segment => segment.toString()).join('/')
+    ),
     takeUntilDestroyed(this.destroyRef),
     shareReplay(1),
     map(route => route.params)
@@ -45,7 +48,6 @@ export abstract class ResumeServiceBase {
     protected readonly activatedProjectService: ActivatedProjectService,
     protected readonly onlineStatusService: OnlineStatusService,
     protected readonly projectService: SFProjectService,
-    protected readonly permissionsService: PermissionsService,
     protected readonly destroyRef: DestroyRef
   ) {
     this.activatedProjectService.projectId$
@@ -63,9 +65,16 @@ export abstract class ResumeServiceBase {
         routeBookId != null && routeBookId !== 'all' ? Canon.bookIdToNumber(routeBookId) : undefined;
 
       if (routeBookNum && this.projectUserConfigDoc$.value) {
+        let selectedTask: string | undefined = undefined;
+        if (this.router.url.includes('checking')) {
+          selectedTask = 'checking';
+        } else if (this.router.url.includes('translate')) {
+          selectedTask = 'translate';
+        }
         await this.projectUserConfigDoc$.value.submitJson0Op(op => {
-          if (this.router.url.includes('checking')) op.set<string>(puc => puc.selectedTask!, 'checking');
-          else if (this.router.url.includes('translate')) op.set<string>(puc => puc.selectedTask!, 'translate');
+          if (selectedTask != null) {
+            op.set<string>(puc => puc.selectedTask!, selectedTask);
+          }
           op.set(puc => puc.selectedBookNum!, routeBookNum);
           op.set(puc => puc.selectedChapterNum!, routeChapterNum ?? 1);
         });
