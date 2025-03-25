@@ -1748,16 +1748,7 @@ public class DeltaUsxMapperTests
         XDocument oldUsxDoc = Usx("PHM", Chapter("bad"), Para("p", Verse("1"), Verse("2")), Chapter("2"));
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(oldUsxDoc, new[] { chapterDelta });
-
-        XDocument expected = Usx(
-            "PHM",
-            Chapter("bad"),
-            Para("p", Verse("1"), Verse("2")),
-            Chapter("2"),
-            Para("p", Verse("1"), Verse("2"))
-        );
-        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        Assert.Throws<InvalidDataException>(() => mapper.ToUsx(oldUsxDoc, new[] { chapterDelta }));
     }
 
     [Test]
