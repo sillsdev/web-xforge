@@ -5,11 +5,11 @@ import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
 import {
   BehaviorSubject,
-  Observable,
   combineLatest,
   distinctUntilChanged,
   filter,
   map,
+  Observable,
   of,
   shareReplay,
   switchMap,
@@ -46,13 +46,12 @@ export class ActivatedBookChapterService {
         return of(undefined);
       }
 
-      if (chapter == null) {
+      const bookNum = Canon.bookIdToNumber(bookId);
+      if (chapter == null && bookNum === projectUserConfig.selectedBookNum) {
         chapter = projectUserConfig.selectedChapterNum;
-
-        if (chapter == null) {
-          let bookNum: number = Canon.bookIdToNumber(bookId);
-          chapter = projectProfile.texts.find(t => t.bookNum === bookNum)?.chapters[0]?.number;
-        }
+      }
+      if (chapter == null) {
+        chapter = projectProfile.texts.find(t => t.bookNum === bookNum)?.chapters[0]?.number;
       }
 
       return of({ bookId, chapter });
