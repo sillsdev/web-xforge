@@ -8,13 +8,17 @@
         <mat-icon matTooltip="More info" class="more-info-icon" (click)="toggleMoreInfo()">help_outline</mat-icon>
       }
     </h1>
+
     @if (primaryAction != null) {
       <div class="primary-action">
         <a (click)="selectAction(primaryAction!)">
           <mat-icon class="apply-icon">content_paste_go</mat-icon>
           {{ primaryAction.label }}
         </a>
-        <span class="shortcut">Alt + Shift + Enter</span>
+
+        @if (applyActionShortcut) {
+          <span class="shortcut">{{ applyActionShortcut }}</span>
+        }
       </div>
     }
     <div class="secondary-actions">
