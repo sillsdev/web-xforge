@@ -15,6 +15,7 @@ import { LynxWorkspaceService } from '../lynx-workspace.service';
 })
 export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
   showMoreInfo = false;
+  applyActionShortcut: string = '';
 
   private _insights: LynxInsight[] = [];
 
@@ -61,6 +62,8 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.document.addEventListener('keydown', this.handleKeyDownBound);
+
+    this.applyActionShortcut = this.formatKeyChord(this.config.actionOverlayApplyPrimaryActionChord);
   }
 
   ngOnDestroy(): void {
@@ -148,5 +151,25 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
     }
 
     return true;
+  }
+
+  /**
+   * Gets string format for shortcut key chord.
+   */
+  private formatKeyChord(chord: Partial<KeyboardEvent>): string {
+    const parts: string[] = [];
+
+    // Add modifier keys in conventional order
+    if (chord.ctrlKey) parts.push('Ctrl');
+    if (chord.altKey) parts.push('Alt');
+    if (chord.shiftKey) parts.push('Shift');
+    if (chord.metaKey) parts.push('Meta');
+
+    // Add the main key
+    if (chord.key) {
+      parts.push(chord.key);
+    }
+
+    return parts.join(' + ');
   }
 }
