@@ -136,6 +136,7 @@ h1 {
   .code {
     color: $secondaryTextColor;
     font-size: 0.9em;
+    display: none; // TODO: is code needed for display, and is there a good way to display it?
   }
 
   .more-info-icon {
