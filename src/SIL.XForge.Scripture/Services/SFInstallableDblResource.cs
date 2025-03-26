@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -376,7 +377,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <remarks>
     /// After the resource is extracted, it can be a source or target.
     /// </remarks>
-    public void ExtractToDirectory(string path)
+    async public Task ExtractToDirectory(string path)
     {
         // Check parameters
         if (string.IsNullOrWhiteSpace(path))
@@ -398,16 +399,16 @@ public class SFInstallableDblResource : InstallableResource
             this.DBLEntryUid,
             ProjectFileManager.resourceFileExtension
         );
-        if (RobustFile.Exists(resourceFile))
+        if (_fileSystemService.FileExists(resourceFile))
         {
-            using var stream = new FileStream(resourceFile, FileMode.Open);
-            using var zipFile = new ZipFile(stream);
-            zipFile.Password = this._passwordProvider?.GetPassword();
-            ExtractAll(zipFile, path);
+            await using Stream stream = _fileSystemService.OpenFile(resourceFile, FileMode.Open);
+            using ZipFile zipFile = new ZipFile(stream);
+            zipFile.Password = _passwordProvider?.GetPassword();
+            await ExtractAllAsync(zipFile, path);
         }
     }
 
-    private static void ExtractAll(ZipFile zip, string path)
+    private async Task ExtractAllAsync(ZipFile zip, string path)
     {
         foreach (ZipEntry entry in zip)
         {
@@ -416,16 +417,16 @@ public class SFInstallableDblResource : InstallableResource
 
             string entryPath = Path.Combine(path, entry.Name);
 
-            if (File.Exists(entryPath))
+            if (_fileSystemService.FileExists(entryPath))
                 continue; // Don't overwrite
 
             // Ensure directories in the ZIP entry are created
-            Directory.CreateDirectory(Path.GetDirectoryName(entryPath));
+            _fileSystemService.CreateDirectory(Path.GetDirectoryName(entryPath));
 
             // Extract the file
-            using Stream zipStream = zip.GetInputStream(entry);
-            using FileStream output = File.Create(entryPath);
-            zipStream.CopyTo(output);
+            await using Stream zipStream = zip.GetInputStream(entry);
+            await using Stream output = _fileSystemService.CreateFile(entryPath);
+            await zipStream.CopyToAsync(output);
         }
     }
 
@@ -498,7 +499,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <returns>
     /// A dictionary where the resource id is the key, and the revision is the value.
     /// </returns>
-    internal static IReadOnlyDictionary<string, int> GetInstalledResourceRevisions()
+    internal static async Task<IReadOnlyDictionary<string, int>> GetInstalledResourceRevisions()
     {
         // Initialize variables
         Dictionary<string, int> resourceRevisions = [];
@@ -533,7 +534,7 @@ public class SFInstallableDblResource : InstallableResource
                 // See if this a zip file, and if it contains the correct ID
                 try
                 {
-                    using var stream = new FileStream(resourceFile, FileMode.Open);
+                    await using var stream = new FileStream(resourceFile, FileMode.Open);
                     using var zipFile = new ZipFile(stream);
                     // Zip files use forward slashes, even on Windows
                     const string idSearchPath = DblFolderName + "/id/";
