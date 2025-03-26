@@ -11,6 +11,7 @@ import {
   screenshot
 } from '../e2e-utils.ts';
 import { logInAsPTUser } from '../pt-login.ts';
+import { logOut } from '../smoke-tests.mts';
 import { UserEmulator } from '../user.mts';
 
 export async function generateDraft(
@@ -46,15 +47,15 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'configure_sources_initial', ...context });
 
   await user.click(page.getByRole('combobox'));
-  await user.type(page.getByRole('combobox'), 'ntv');
+  await user.type('ntv');
   await user.click(page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
   await user.click(page.getByRole('button', { name: 'Next' }));
   await user.click(page.getByRole('combobox').first());
-  await user.type(page.getByRole('combobox').first(), 'ntv');
+  await user.type('ntv');
   await user.click(page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
   await user.click(page.getByRole('button', { name: 'Add another reference project' }));
   await user.click(page.getByRole('combobox').last());
-  await user.type(page.getByRole('combobox').last(), 'dhh94');
+  await user.type('dhh94');
   await user.click(page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }));
   await user.click(page.getByRole('button', { name: 'Next' }));
   await user.check(page.getByRole('checkbox', { name: 'All the language codes are' }));
@@ -158,4 +159,6 @@ export async function generateDraft(
   await user.check(page.getByRole('checkbox', { name: /I understand the draft will overwrite .* in .* project/ }));
   await user.click(page.getByRole('button', { name: 'Add to project' }));
   await screenshot(page, { pageName: 'generate_draft_add_to_project', ...context });
+
+  await logOut(page);
 }

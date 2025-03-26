@@ -9,6 +9,7 @@ import {
   logOut,
   traverseHomePageAndLoginPage
 } from "./smoke-tests.mts";
+import { communityChecking } from "./workflows/community-checking.ts";
 import { generateDraft } from "./workflows/generate-draft.ts";
 
 const availableEngines = { chromium, firefox, webkit };
@@ -55,6 +56,10 @@ for (const engineName of runSheet.browsers) {
 
     if (runSheet.testScopes.includes("generate_draft")) {
       await generateDraft(page, screenshotContext, secrets.users[0]);
+    }
+
+    if (runSheet.testScopes.includes("community_checking")) {
+      await communityChecking(page, screenshotContext, secrets.users[0]);
     }
   } catch (e) {
     console.error("Error running tests");
