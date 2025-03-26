@@ -76,10 +76,6 @@
     #connect-submit-button {
       align-self: center;
       margin: 32px 0;
-      &:not(:disabled) {
-        background-color: $pt-button-green;
-        color: white;
-      }
     }
 
     .helper-text {

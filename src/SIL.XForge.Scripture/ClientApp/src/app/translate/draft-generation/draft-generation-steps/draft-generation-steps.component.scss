@@ -51,10 +51,6 @@ h2 {
   }
 }
 
-:host ::ng-deep .mat-step-icon:not(.mat-step-icon-selected) {
-  background-color: var(--mat-stepper-header-edit-state-icon-background-color);
-}
-
 .button-strip {
   margin-top: 60px;
   display: flex;

@@ -1,7 +1,6 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
   <div [ngClass]="{ 'reviewer-panels': !canCreateQuestion }" class="header">
-    <mat-icon class="mirror-rtl">list</mat-icon>
-    <h2>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h2>
+    <h1>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h1>
     @if (canCreateQuestion) {
       <ng-container class="primary-actions">
         @if (showImportButton) {
@@ -14,7 +13,7 @@
             class="add-question-button hide-lt-sm"
             mat-flat-button
             type="button"
-            color="primary"
+            color="secondary"
             (click)="questionDialog()"
           >
             <mat-icon class="mirror-rtl">post_add</mat-icon> <span>{{ t("add_question") }}</span>
@@ -46,7 +45,7 @@
       }
       @for (text of texts; track text.bookNum) {
         @if (bookQuestionCount(text) > 0 || bookHasChapterAudio(text)) {
-          <mat-expansion-panel [togglePosition]="'before'" class="book-expander mat-elevation-z0">
+          <mat-expansion-panel [togglePosition]="'before'" class="book-expander">
             <mat-expansion-panel-header>
               <mat-panel-title>
                 <span class="flex">{{ getBookName(text) }}</span>
@@ -237,10 +236,7 @@
     <p id="loading-questions-message">{{ t("loading_questions") }}</p>
   }
 
-  <div class="header">
-    <mat-icon class="mirror-rtl">bar_chart</mat-icon>
-    <h2>{{ t(canCreateQuestion ? "project_stats" : "my_contributions") }}</h2>
-  </div>
+  <h2>{{ t(canCreateQuestion ? "project_stats" : "my_contributions") }}</h2>
 
   <div class="reviewer-panels stat-panels">
     @if (canCreateQuestion) {
@@ -286,17 +282,14 @@
   </div>
 
   @if (canEditQuestion) {
-    <div class="header">
-      <mat-icon>archive</mat-icon>
-      <h2>{{ t("archived_questions") }}</h2>
-    </div>
+    <h2>{{ t("archived_questions") }}</h2>
   }
 
   @if (canEditQuestion) {
     <div id="text-with-archived-questions">
       @for (text of texts; track text.bookNum) {
         @if (bookQuestionCount(text, true) > 0) {
-          <mat-expansion-panel [togglePosition]="'before'" class="book-expander mat-elevation-z0">
+          <mat-expansion-panel [togglePosition]="'before'" class="book-expander">
             <mat-expansion-panel-header>
               <mat-panel-title>
                 <div class="flex">

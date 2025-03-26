@@ -46,7 +46,6 @@
       id="admin-pages-menu-list"
       (click)="clickWithinNavList($event)"
     >
-      <mat-divider></mat-divider>
       @if (canSync$ | async) {
         <a mat-list-item [appRouterLink]="getProjectLink('sync')">
           <mat-icon
