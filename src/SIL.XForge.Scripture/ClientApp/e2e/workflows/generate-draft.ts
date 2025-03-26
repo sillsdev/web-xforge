@@ -2,7 +2,6 @@ import { expect } from 'npm:@playwright/test';
 import { Locator, Page } from 'npm:playwright';
 import { DEFAULT_PROJECT_SHORTNAME, ScreenshotContext } from '../e2e-globals.ts';
 import {
-  click,
   deleteProject,
   enableFeatureFlag,
   ensureJoinedOrConnectedToProject,
@@ -12,14 +11,16 @@ import {
   screenshot
 } from '../e2e-utils.ts';
 import { logInAsPTUser } from '../pt-login.ts';
+import { UserEmulator } from '../user.mts';
 
 export async function generateDraft(
   page: Page,
   context: ScreenshotContext,
-  user: { email: string; password: string }
+  credentials: { email: string; password: string }
 ): Promise<void> {
-  await logInAsPTUser(page, user);
+  await logInAsPTUser(page, credentials);
   await installMouseFollower(page);
+  const user = new UserEmulator(page);
 
   if (await isProjectJoined(page, DEFAULT_PROJECT_SHORTNAME)) {
     await deleteProject(page, DEFAULT_PROJECT_SHORTNAME);
@@ -30,35 +31,36 @@ export async function generateDraft(
 
   await enableFeatureFlag(page, 'Allow Fast Pre-Translation');
 
-  await click(page, page.getByRole('link', { name: 'Generate draft beta' }));
+  await user.click(page.getByRole('link', { name: 'Generate draft beta' }));
   await expect(page.getByRole('heading', { name: 'Generate translation drafts' })).toBeVisible();
   await screenshot(page, { pageName: 'generate_draft', ...context });
+  await user.wait(1500);
 
   // Enable pre-translation drafting, then close the panel
-  await click(page, page.getByRole('button', { name: 'Serval administration' }));
-  await page.getByRole('checkbox', { name: 'Pre-Translation Drafting Enabled' }).check();
-  await click(page, page.getByRole('button', { name: 'Serval administration' }));
+  await user.click(page.getByRole('button', { name: 'Serval administration' }));
+  await user.check(page.getByRole('checkbox', { name: 'Pre-Translation Drafting Enabled' }));
+  await user.click(page.getByRole('button', { name: 'Serval administration' }));
 
   // Configure sources page
-  await click(page, page.getByRole('button', { name: 'Configure sources' }));
+  await user.click(page.getByRole('button', { name: 'Configure sources' }));
   await screenshot(page, { pageName: 'configure_sources_initial', ...context });
 
-  await click(page, page.getByRole('combobox'));
-  await page.getByRole('combobox').fill('ntv');
-  await click(page, page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
-  await click(page, page.getByRole('button', { name: 'Next' }));
-  await click(page, page.getByRole('combobox').first());
-  await page.getByRole('combobox').first().fill('ntv');
-  await click(page, page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
-  await click(page, page.getByRole('button', { name: 'Add another reference project' }));
-  await click(page, page.getByRole('combobox').last());
-  await page.getByRole('combobox').last().fill('dhh94');
-  await click(page, page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }));
-  await click(page, page.getByRole('button', { name: 'Next' }));
-  await page.getByRole('checkbox', { name: 'All the language codes are' }).check();
+  await user.click(page.getByRole('combobox'));
+  await user.type(page.getByRole('combobox'), 'ntv');
+  await user.click(page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
+  await user.click(page.getByRole('button', { name: 'Next' }));
+  await user.click(page.getByRole('combobox').first());
+  await user.type(page.getByRole('combobox').first(), 'ntv');
+  await user.click(page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
+  await user.click(page.getByRole('button', { name: 'Add another reference project' }));
+  await user.click(page.getByRole('combobox').last());
+  await user.type(page.getByRole('combobox').last(), 'dhh94');
+  await user.click(page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }));
+  await user.click(page.getByRole('button', { name: 'Next' }));
+  await user.check(page.getByRole('checkbox', { name: 'All the language codes are' }));
   await screenshot(page, { pageName: 'configure_sources_final', ...context });
-  await click(page, page.getByRole('button', { name: 'Save & sync' }));
-  await click(page, page.getByRole('button', { name: 'Close' }));
+  await user.click(page.getByRole('button', { name: 'Save & sync' }));
+  await user.click(page.getByRole('button', { name: 'Close' }));
 
   // The stepper renders every step to the page at once, so we need to keep track of which step we're on
   let currentStep = 0;
@@ -66,13 +68,14 @@ export async function generateDraft(
     return page.locator(`#cdk-step-content-0-${currentStep}`);
   }
   async function goToNextStepExpectingHeading(expectedHeading: string): Promise<void> {
-    await click(page, getStep().getByRole('button', { name: 'Next' }));
+    await user.click(getStep().getByRole('button', { name: 'Next' }));
     currentStep++;
     await expect(getStep().getByRole('heading', { name: expectedHeading })).toBeVisible();
+    await user.wait(1500);
   }
 
   // Draft generation page
-  await click(page, page.getByRole('button', { name: 'Generate draft' }));
+  await user.click(page.getByRole('button', { name: 'Generate draft' }));
   await expect(page.getByRole('heading', { name: 'Review draft setup' })).toBeVisible();
   await screenshot(page, { pageName: 'generate_draft_confirm_sources', ...context });
 
@@ -84,7 +87,7 @@ export async function generateDraft(
   let firstBookFollowingLastSelectedBook: string | undefined;
   for (const option of options) {
     const isSelected = (await option.getAttribute('aria-selected')) === 'true';
-    if (isSelected) await click(page, option);
+    if (isSelected) await user.click(option);
 
     if (previousBookWasSelected && !isSelected) {
       firstBookFollowingLastSelectedBook = (await option.textContent())!.trim();
@@ -95,21 +98,21 @@ export async function generateDraft(
 
   const bookToDraft = firstBookFollowingLastSelectedBook == null ? 'Obadiah' : firstBookFollowingLastSelectedBook;
 
-  await click(page, getStep().getByRole('option', { name: bookToDraft }));
+  await user.click(getStep().getByRole('option', { name: bookToDraft }));
   await screenshot(page, { pageName: 'generate_draft_select_books_to_draft', ...context });
 
   await goToNextStepExpectingHeading('Select books to train on');
-  await page.getByRole('checkbox', { name: 'New Testament' }).check();
+  await user.check(page.getByRole('checkbox', { name: 'New Testament' }));
   await screenshot(page, { pageName: 'generate_draft_select_books_to_train', ...context });
 
   await goToNextStepExpectingHeading('Advanced');
-  await page.getByRole('checkbox', { name: 'Enable Fast Training' }).check();
+  await user.check(page.getByRole('checkbox', { name: 'Enable Fast Training' }));
   await screenshot(page, { pageName: 'generate_draft_advanced_settings', ...context });
 
   await goToNextStepExpectingHeading('Summary');
   await page.waitForTimeout(400);
   await screenshot(page, { pageName: 'generate_draft_summary', ...context });
-  await click(page, page.getByRole('button', { name: 'Generate draft' }));
+  await user.click(page.getByRole('button', { name: 'Generate draft' }));
   const startTime = Date.now();
 
   await expect(page.getByRole('paragraph')).toContainText('Your project is being synced before queuing the draft.');
@@ -147,12 +150,12 @@ export async function generateDraft(
   await expect(page.getByText('Your draft is ready')).toBeVisible();
   await screenshot(page, { pageName: 'generate_draft_completed', ...context });
   console.log('Draft generation took', ((Date.now() - startTime) / 1000 / 60).toFixed(2), 'minutes');
-  await click(page, page.getByRole('button', { name: 'Serval administration' }));
-  await click(page, page.getByRole('button', { name: 'Run webhook to update draft status' }));
-  await click(page, page.getByRole('button', { name: 'Serval administration' }));
-  await click(page, page.locator('app-draft-preview-books mat-button-toggle:last-child button'));
-  await click(page, page.getByRole('menuitem', { name: 'Add to project' }));
-  await page.getByRole('checkbox', { name: /I understand the draft will overwrite .* in .* project/ }).check();
-  await click(page, page.getByRole('button', { name: 'Add to project' }));
+  await user.click(page.getByRole('button', { name: 'Serval administration' }));
+  await user.click(page.getByRole('button', { name: 'Run webhook to update draft status' }));
+  await user.click(page.getByRole('button', { name: 'Serval administration' }));
+  await user.click(page.locator('app-draft-preview-books mat-button-toggle:last-child button'));
+  await user.click(page.getByRole('menuitem', { name: 'Add to project' }));
+  await user.check(page.getByRole('checkbox', { name: /I understand the draft will overwrite .* in .* project/ }));
+  await user.click(page.getByRole('button', { name: 'Add to project' }));
   await screenshot(page, { pageName: 'generate_draft_add_to_project', ...context });
 }

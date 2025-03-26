@@ -61,14 +61,21 @@ async function run(locale: string) {
     await Deno.readTextFile(`../src/assets/i18n/checking_${locale.replace(/-/g, "_")}.json`)
   );
   const browser = await chromium.launch({ headless: true });
+  const device = devices["Pixel 5"];
   const context = await browser.newContext({
-    ...devices["Pixel 5"],
-    recordVideo: { dir: outputDir }
+    ...device,
+    recordVideo: {
+      dir: outputDir,
+      size: {
+        width: device.viewport.width,
+        height: device.viewport.height
+      }
+    }
   });
 
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:5000/join/TbWBa20bL_HyzbQG/${locale}`);
+  await page.goto(`http://localhost:5000/join/isvMCG6ruSfMGNYW/${locale}`);
   await expect(page).toHaveTitle("Scripture Forge");
   await injectBlinkAnimation(page);
 

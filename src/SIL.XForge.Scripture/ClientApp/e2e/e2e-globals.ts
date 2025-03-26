@@ -24,6 +24,8 @@ interface RunSheet {
   browsers: Browser[];
   skipScreenshots: boolean;
   screenshotPrefix: string;
+  skipUserDelays: boolean;
+  clickDelay: number;
 }
 
 export interface ScreenshotContext {
@@ -40,7 +42,9 @@ export const runSheet: RunSheet = {
   testScopes: ['generate_draft'],
   browsers: ['chromium'],
   skipScreenshots: false,
-  screenshotPrefix: new Date().toISOString().slice(0, 19)
+  screenshotPrefix: new Date().toISOString().slice(0, 19),
+  skipUserDelays: false,
+  clickDelay: 1_000
 } as const;
 
 export const DEFAULT_PROJECT_SHORTNAME = 'Stp22';

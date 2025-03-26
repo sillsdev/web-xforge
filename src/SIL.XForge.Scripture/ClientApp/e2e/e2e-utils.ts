@@ -211,24 +211,25 @@ export async function installMouseFollower(page: Page): Promise<void> {
     mouseFollower.style['z-index'] = '1000000';
     mouseFollower.style.width = '30px';
     mouseFollower.style.filter = 'drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7))';
-    mouseFollower.style.transition = 'all 0.1s';
-    // mouseFollower.style.height = "10px";
-    // mouseFollower.style.backgroundColor = "red";
+    mouseFollower.style.transition = 'all 0.2s';
     mouseFollower.style.pointerEvents = 'none';
     document.body.appendChild(mouseFollower);
 
-    document.addEventListener('mousemove', event => {
+    document.addEventListener('mousemove', (event: { pageY: string; pageX: string }) => {
       mouseFollower.style.top = event.pageY + 'px';
       mouseFollower.style.left = event.pageX + 'px';
     });
+    document.documentElement.style.overflow = 'hidden';
   });
 }
 
 export async function click(page: Page, locator: Locator): Promise<void> {
   const rect = await locator.boundingBox();
   if (rect == null) throw new Error('Bounding client rect not found');
-  await page.mouse.move(rect.x + rect.width * 0.7, rect.y + rect.height * 0.7);
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(runSheet.clickDelay / 2);
+  await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  await page.waitForTimeout(runSheet.clickDelay);
 
   await locator.click();
+  await page.waitForTimeout(runSheet.clickDelay / 2);
 }
