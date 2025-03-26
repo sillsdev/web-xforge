@@ -6,6 +6,9 @@
     color: #{mat.get-theme-color($theme, primary, 20)};
     background: #{mat.get-theme-color($theme, primary, 100)};
   }
+  .name-and-edit-button {
+    color: #{mat.get-theme-color($theme, primary, 40)};
+  }
 }
 
 @mixin theme($theme) {
