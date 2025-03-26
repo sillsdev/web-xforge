@@ -54,7 +54,6 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
 
   /**
    * Gets a map of insight id -> vertical scroll position as a percent of the total scroll height.
-   * TODO: move to service?
    */
   private getScrollPosition(insight: LynxInsight, editor: LynxEditor): LynxInsightScrollPosition {
     const scrollPosition: LynxInsightScrollPosition = {
@@ -64,8 +63,10 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
     };
 
     if (insight.range != null) {
+      const container = editor.getScrollingContainer();
       const bounds = editor.getBounds(insight.range.index, 1);
-      scrollPosition.percent = (bounds.top / editor.getScrollingContainer().scrollHeight) * 100;
+      const absoluteTop = bounds.top + container.scrollTop; // Absolute position (viewport-relative + scroll offset)
+      scrollPosition.percent = (absoluteTop / container.scrollHeight) * 100;
     }
 
     return scrollPosition;
