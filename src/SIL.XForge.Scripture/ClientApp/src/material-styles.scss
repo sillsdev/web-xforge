@@ -4,6 +4,8 @@
 @use 'src/app/my-projects/my-projects-theme' as sf-my-projects;
 @use 'src/app/navigation/navigation-theme' as sf-navigation;
 @use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
+@use 'src/app/translate/draft-generation/draft-generation-steps/draft-generation-steps-theme' as
+  sf-draft-generation-steps;
 
 @mixin theme($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
@@ -16,6 +18,7 @@
   @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
   @include sf-tab-group.theme($theme);
+  @include sf-draft-generation-steps.theme($theme);
 
   // Custom variables
   --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
