@@ -16,20 +16,24 @@ export class QuillEditorSegmentService extends EditorSegmentService {
     let currentIndex = 0;
 
     for (const op of ops) {
-      if (isString(op.insert)) {
-        const length: number = op.insert.length;
-        const segment: string | undefined = op.attributes?.segment as string | undefined;
+      if (op.insert != null) {
+        if (isString(op.insert)) {
+          const length: number = op.insert.length;
+          const segment: string | undefined = op.attributes?.segment as string | undefined;
 
-        if (isString(segment)) {
-          if (segmentMap.has(segment)) {
-            const existingRange = segmentMap.get(segment)!;
-            existingRange.length += length;
-          } else {
-            segmentMap.set(segment, { index: currentIndex, length });
+          if (isString(segment)) {
+            if (segmentMap.has(segment)) {
+              const existingRange = segmentMap.get(segment)!;
+              existingRange.length += length;
+            } else {
+              segmentMap.set(segment, { index: currentIndex, length });
+            }
           }
-        }
 
-        currentIndex += length;
+          currentIndex += length;
+        } else {
+          currentIndex++; // Account for embeds
+        }
       }
     }
 
