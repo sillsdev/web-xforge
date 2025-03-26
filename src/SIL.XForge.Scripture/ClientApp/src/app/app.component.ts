@@ -294,7 +294,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
             // If the user is in the Serval administration page, do not check access,
             // as they will be modifying the project's properties
             if (
-              this.locationService.pathname.includes('serval-administration') &&
+              (this.locationService.pathname.includes('serval-administration') ||
+                this.locationService.pathname.includes('event-log')) &&
               this.currentUser?.roles.includes(SystemRole.ServalAdmin)
             ) {
               return;

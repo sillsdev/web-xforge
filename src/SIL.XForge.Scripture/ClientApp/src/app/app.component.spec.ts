@@ -323,6 +323,19 @@ describe('AppComponent', () => {
     verify(mockedDialogService.message(anything())).never();
   }));
 
+  it('response to remote project change for serval admin viewing event log', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUser('user05');
+    env.navigate(['/serval-administration', 'project01']);
+    when(mockedLocationService.pathname).thenReturn('/projects/project01/event-log');
+    env.init();
+
+    expect(env.selectedProjectId).toEqual('project01');
+    // Simulate an op coming from another source
+    env.updatePreTranslate('project01');
+    verify(mockedDialogService.message(anything())).never();
+  }));
+
   it('response to Commenter project role changed', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
