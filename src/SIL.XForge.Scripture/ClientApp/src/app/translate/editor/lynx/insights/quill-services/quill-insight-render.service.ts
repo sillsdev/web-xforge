@@ -55,9 +55,28 @@ export class QuillInsightRenderService extends InsightRenderService {
    * This avoids multiple calls to quill `formatText`, which will re-render the DOM after each call.
    */
   private refreshInsightFormatting(insights: LynxInsight[], editor: Quill): void {
-    const formatsToRemove: StringMap = {};
+    // Group insights by type and range
+    const insightsByTypeAndRange = new Map<string, Map<string, LynxInsight[]>>();
+
+    for (const insight of insights) {
+      const typeKey = `${this.prefix}-${insight.type}`;
+      const rangeKey = `${insight.range.index}:${insight.range.length}`;
+
+      if (!insightsByTypeAndRange.has(typeKey)) {
+        insightsByTypeAndRange.set(typeKey, new Map<string, LynxInsight[]>());
+      }
+
+      const rangeMap = insightsByTypeAndRange.get(typeKey)!;
+
+      if (!rangeMap.has(rangeKey)) {
+        rangeMap.set(rangeKey, []);
+      }
+
+      rangeMap.get(rangeKey)!.push(insight);
+    }
 
     // Prepare formats to remove
+    const formatsToRemove: StringMap = {};
     for (const type of LynxInsightTypes) {
       formatsToRemove[`${this.prefix}-${type}`] = null;
     }
@@ -65,16 +84,23 @@ export class QuillInsightRenderService extends InsightRenderService {
     // Apply removal of formats
     let delta = new Delta().retain(editor.getLength(), formatsToRemove);
 
-    // Apply formats, merging each format op with the result of the prev (let quill handle overlapping formats)
-    for (const insight of insights) {
-      const deltaToApply = new Delta().retain(insight.range.index).retain(insight.range.length, {
-        [`${this.prefix}-${insight.type}`]: insight
-      });
+    // Apply formats by group, merging each format op with the result of the prev (let quill handle overlapping formats)
+    for (const [typeKey, rangeMap] of insightsByTypeAndRange.entries()) {
+      for (const [rangeKey, rangeInsights] of rangeMap.entries()) {
+        const [indexStr, lengthStr] = rangeKey.split(':');
+        const index = parseInt(indexStr, 10);
+        const length = parseInt(lengthStr, 10);
 
-      delta = delta.compose(deltaToApply);
+        // Pass single insight or array based on count
+        const formatValue = rangeInsights.length === 1 ? rangeInsights[0] : rangeInsights;
+
+        const deltaToApply = new Delta().retain(index).retain(length, { [typeKey]: formatValue });
+
+        delta = delta.compose(deltaToApply);
+      }
     }
 
-    // Update contents with the combined delta
+    // Update editor
     editor.updateContents(delta, 'api');
   }
 
@@ -157,9 +183,13 @@ export class QuillInsightRenderService extends InsightRenderService {
   }
 
   /**
-   * Get all elements in the editor that contain the `[data-insight-id]` of the specified insight.
+   * Get all lynx-insight elements in the editor whose `[data-insight-id]` contains the specified insight id.
    */
   private getInsightElements(editor: Quill, insightId: string): NodeListOf<HTMLElement> {
-    return editor.root.querySelectorAll(`[data-${LynxInsightBlot.idAttributeName}="${insightId}"]`);
+    // Use 'contains' selector to match elements with multiple ids
+    // e.g. data-insight-id="id1,id2,id3"
+    return editor.root.querySelectorAll(
+      `${LynxInsightBlot.tagName}[data-${LynxInsightBlot.idAttributeName}*="${insightId}"]`
+    );
   }
 }
