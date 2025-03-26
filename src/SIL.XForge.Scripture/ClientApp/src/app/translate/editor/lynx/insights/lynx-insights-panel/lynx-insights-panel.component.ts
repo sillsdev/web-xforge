@@ -305,123 +305,41 @@ export class LynxInsightsPanelComponent implements OnInit {
    * Processes a single insight to extract appropriate text.
    */
   private processInsightText(insight: LynxInsight, textDoc: TextDoc): LynxInsightWithText {
-    const minLength = this.lynxInsightConfig.panelLinkTextMinLength;
     const maxLength = this.lynxInsightConfig.panelLinkTextMaxLength;
 
     if (!textDoc.data?.ops?.length) {
       return { ...insight, rangeText: '' };
     }
 
-    // Get document content
     const delta = new Delta(textDoc.data.ops);
-    const fullText: string = getText(delta);
+    const originalRange: LynxInsightRange = insight.range;
 
-    if (fullText.length === 0) {
-      return { ...insight, rangeText: '' };
+    // Get original insight text
+    const originalText: string = getText(delta, originalRange);
+
+    // If original text is long enough, use it directly
+    if (originalText.length >= maxLength * 0.7) {
+      return { ...insight, rangeText: originalText };
     }
 
-    // Extract insight text in range
-    const range: LynxInsightRange = insight.range;
-    const insightText = fullText.substring(range.index, range.index + range.length);
+    // Get expanded text with padding
+    const padding: number = Math.floor((maxLength - originalText.length) / 2);
+    const expandedStart: number = Math.max(0, originalRange.index - padding);
+    const expandedEnd: number = Math.min(delta.length(), originalRange.index + originalRange.length + padding);
+    const expandedRange: LynxInsightRange = { index: expandedStart, length: expandedEnd - expandedStart };
 
-    if (insightText.length >= minLength) {
-      if (insightText.length <= maxLength) {
-        return { ...insight, rangeText: insightText };
-      } else {
-        // Too long, need to trim
-        return { ...insight, rangeText: this.trimToWordBoundary(insightText, maxLength, minLength) };
-      }
-    } else {
-      // Text is too short, need to expand
-      const expandedRange: LynxInsightRange = this.expandRangeToWordBoundaries(fullText, range, minLength);
-      const expandedText: string = fullText.substring(expandedRange.index, expandedRange.index + expandedRange.length);
+    const expandedText: string = getText(delta, expandedRange);
 
-      // Check if expanded text needs trimming
-      if (expandedText.length > maxLength) {
-        return { ...insight, rangeText: this.trimToWordBoundary(expandedText, maxLength, minLength) };
-      }
+    // Trim back toward original text stopping at first space (on both ends)
+    const adjustedStart: number = Math.min(originalRange.index, expandedStart + expandedText.indexOf(' '));
+    const adjustedEnd: number = Math.max(
+      originalRange.index + originalRange.length,
+      expandedStart + expandedText.lastIndexOf(' ')
+    );
 
-      return { ...insight, rangeText: expandedText };
-    }
-  }
-  /**
-   * Trims text to not exceed maxLength while respecting word boundaries.
-   */
-  private trimToWordBoundary(text: string, maxLength: number, minLength: number): string {
-    // No trimming needed if already within limits
-    if (text.length <= maxLength) {
-      return text;
-    }
+    const adjustedExpandedText: string = getText(delta, { index: adjustedStart, length: adjustedEnd - adjustedStart });
 
-    // For single words longer than maxLength, just trim
-    if (!text.includes(' ')) {
-      return text.substring(0, maxLength);
-    }
-
-    // Find the last space before maxLength
-    const trimmedText = text.substring(0, maxLength);
-    const lastSpacePos = trimmedText.lastIndexOf(' ');
-
-    // If found a space after minLength, use it
-    if (lastSpacePos >= minLength) {
-      return text.substring(0, lastSpacePos);
-    }
-
-    // If no suitable space found, just trim at maxLength
-    return text.substring(0, maxLength);
-  }
-
-  /**
-   * Expands a range to meet minimum length while ensuring word boundaries are respected.
-   */
-  private expandRangeToWordBoundaries(
-    fullText: string,
-    originalRange: LynxInsightRange,
-    minLength: number
-  ): LynxInsightRange {
-    // Quick return for valid ranges
-    if (originalRange.length >= minLength) {
-      return originalRange;
-    }
-
-    const origStart = originalRange.index;
-    const origEnd = origStart + originalRange.length;
-
-    // Calculate expansion amounts
-    const extraNeeded = minLength - originalRange.length;
-    const addBefore = Math.floor(extraNeeded / 2);
-    const addAfter = Math.ceil(extraNeeded / 2);
-
-    // Calculate initial expanded boundaries
-    let startIndex = Math.max(0, origStart - addBefore);
-    let endIndex = Math.min(fullText.length, origEnd + addAfter);
-
-    // Adjust start to nearest whitespace boundary - look backward first
-    if (startIndex > 0) {
-      // Look for the previous space
-      const textBefore = fullText.substring(Math.max(0, startIndex - 20), startIndex);
-      const lastSpacePos = textBefore.lastIndexOf(' ');
-
-      if (lastSpacePos >= 0) {
-        startIndex = Math.max(0, startIndex - 20) + lastSpacePos + 1; // Position after space
-      }
-    }
-
-    // Adjust end to nearest whitespace boundary
-    if (endIndex < fullText.length) {
-      // Look for the next space
-      const textAfter = fullText.substring(endIndex, Math.min(fullText.length, endIndex + 20));
-      const nextSpacePos = textAfter.indexOf(' ');
-
-      if (nextSpacePos >= 0) {
-        endIndex = endIndex + nextSpacePos;
-      }
-    }
-
-    return {
-      index: startIndex,
-      length: endIndex - startIndex
-    };
+    return { ...insight, rangeText: adjustedExpandedText };
   }
 
   /**
@@ -490,7 +408,7 @@ export class LynxInsightsPanelComponent implements OnInit {
       return segmentRef;
     }
 
-    const prefix = includeRef ? `[${segmentRef}] ` : '';
+    const prefix: string = includeRef ? `[${segmentRef}] ` : '';
     return `${prefix}— "${insight.rangeText}"`;
   }
 }
