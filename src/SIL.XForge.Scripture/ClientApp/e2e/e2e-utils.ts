@@ -7,7 +7,23 @@ import {
   runSheet,
   ScreenshotContext
 } from './e2e-globals.ts';
-import { logInAsPTUser } from './pt-login.ts';
+
+export async function waitForAppLoad(page: Page): Promise<void> {
+  // FIXME this is hideous
+  await page.waitForTimeout(500);
+  try {
+    await page.waitForSelector('.mat-progress-bar--closed');
+  } catch (e: any) {
+    if (/page.waitForSelector: Timeout \d+ms exceeded/.test(e.message)) {
+      console.log('Timeout exceeded waiting for progress bar to close. Opening developer diagnostics to see why.');
+      await enableDeveloperMode(page);
+      await page.getByRole('menuitem', { name: 'Developer diagnostics' }).click();
+      await page.waitForTimeout(1000);
+      throw e;
+    }
+  }
+  await page.waitForTimeout(1000);
+}
 
 function cleanText(text: string): string {
   return text
@@ -95,14 +111,9 @@ export async function screenshot(
   logger.logScreenshot(fileName, context);
 }
 
-export async function createShareLinksAsAdmin(
-  page: Page,
-  user: { email: string; password: string }
-): Promise<{
+export async function createShareLinksAsAdmin(page: Page): Promise<{
   [role: string]: string;
 }> {
-  await logInAsPTUser(page, user);
-  await ensureJoinedOrConnectedToProject(page, DEFAULT_PROJECT_SHORTNAME);
   await ensureNavigatedToProject(page, DEFAULT_PROJECT_SHORTNAME);
   await page.getByRole('link', { name: 'Users' }).click();
   await page.getByRole('button', { name: 'Share' }).click();
@@ -232,4 +243,13 @@ export async function click(page: Page, locator: Locator): Promise<void> {
 
   await locator.click();
   await page.waitForTimeout(runSheet.clickDelay / 2);
+}
+
+export async function joinWithLink(page: Page, link: string, name: string): Promise<void> {
+  await page.goto(link);
+  await page.focus('input');
+  await page.waitForTimeout(500);
+  await page.fill('input', name);
+  await waitForAppLoad(page);
+  await page.getByRole('button', { name: 'Join' }).click();
 }

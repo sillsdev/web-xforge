@@ -1,7 +1,8 @@
 #!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write --unstable-sloppy-imports e2e.mts
 import { chromium, firefox, webkit } from "npm:playwright";
-import { logger, runSheet, ScreenshotContext, UserRole } from "./e2e-globals.ts";
-import { createShareLinksAsAdmin, screenshot } from "./e2e-utils.ts";
+import { DEFAULT_PROJECT_SHORTNAME, logger, runSheet, ScreenshotContext, UserRole } from "./e2e-globals.ts";
+import { createShareLinksAsAdmin, ensureJoinedOrConnectedToProject, screenshot } from "./e2e-utils.ts";
+import { logInAsPTUser } from "./pt-login.ts";
 import secrets from "./secrets.json" with { type: "json" };
 import {
   joinAsUserAndTraversePages,
@@ -25,13 +26,13 @@ for (const engineName of runSheet.browsers) {
   console.log(`Running tests in ${engineName}`);
   const engine = availableEngines[engineName];
   const browser = await engine.launch({ headless: false });
-  const context = await browser.newContext();
+  const browserContext = await browser.newContext();
 
   // Grant permission so share links can be copied and then read from clipboard
   // Only supported in Chromium
-  if (engineName === "chromium") await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  if (engineName === "chromium") await browserContext.grantPermissions(["clipboard-read", "clipboard-write"]);
 
-  const page = await context.newPage();
+  const page = await browserContext.newPage();
 
   const screenshotContext: ScreenshotContext = { prefix: runSheet.screenshotPrefix, engine: engineName };
 
@@ -45,7 +46,10 @@ for (const engineName of runSheet.browsers) {
         const user = ptUsersByRole[role];
         await joinAsUserAndTraversePages(page, user, { ...screenshotContext, role: role as UserRole });
       }
-      const shareLinks = await createShareLinksAsAdmin(page, secrets.users[0]);
+
+      await logInAsPTUser(page, secrets.users[0]);
+      await ensureJoinedOrConnectedToProject(page, DEFAULT_PROJECT_SHORTNAME);
+      const shareLinks = await createShareLinksAsAdmin(page);
       await logOut(page);
       for (const [roleName, link] of Object.entries(shareLinks)) {
         console.log(`Joining as ${roleName}`);
@@ -59,14 +63,14 @@ for (const engineName of runSheet.browsers) {
     }
 
     if (runSheet.testScopes.includes("community_checking")) {
-      await communityChecking(page, screenshotContext, secrets.users[0]);
+      await communityChecking(page, engine, screenshotContext, secrets.users[0]);
     }
   } catch (e) {
     console.error("Error running tests");
     console.error(e);
     await screenshot(page, { ...screenshotContext, pageName: "test_failure" }, { overrideScreenshotSkipping: true });
   } finally {
-    await context.close();
+    await browserContext.close();
     await browser.close();
     logger.saveToFile();
   }

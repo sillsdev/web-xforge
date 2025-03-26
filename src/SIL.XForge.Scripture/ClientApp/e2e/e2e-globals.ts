@@ -2,7 +2,7 @@ import { E2ETestRunLogger } from './e2e-test-run-logger.ts';
 
 export const E2E_ROOT_URL = 'http://localhost:5000';
 
-const testScopes = ['home_and_login', 'smoke_tests', 'generate_draft'] as const;
+const testScopes = ['home_and_login', 'smoke_tests', 'generate_draft', 'community_checking'] as const;
 type TestScope = (typeof testScopes)[number];
 const allBrowsers = ['chromium', 'firefox', 'webkit'] as const;
 type Browser = (typeof allBrowsers)[number];
@@ -39,12 +39,12 @@ export interface ScreenshotContext {
 export const runSheet: RunSheet = {
   locales: ['en'],
   roles: allRoles.slice(),
-  testScopes: ['generate_draft'],
+  testScopes: ['smoke_tests'],
   browsers: ['chromium'],
   skipScreenshots: false,
   screenshotPrefix: new Date().toISOString().slice(0, 19),
   skipUserDelays: false,
-  clickDelay: 1_000
+  clickDelay: 200
 } as const;
 
 export const DEFAULT_PROJECT_SHORTNAME = 'Stp22';
