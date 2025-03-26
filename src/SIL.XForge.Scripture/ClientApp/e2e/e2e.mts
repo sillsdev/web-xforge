@@ -25,18 +25,21 @@ for (const engineName of runSheet.browsers) {
   const engine = availableEngines[engineName];
   const browser = await engine.launch({ headless: false });
   const context = await browser.newContext();
-  // grant permission so share links can be copied and then read from clipboard
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+
+  // Grant permission so share links can be copied and then read from clipboard
+  // Only supported in Chromium
+  if (engineName === "chromium") await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+
   const page = await context.newPage();
 
   const screenshotContext: ScreenshotContext = { prefix: runSheet.screenshotPrefix, engine: engineName };
 
   try {
-    if (runSheet.applicationScopes.includes("home_and_login")) {
+    if (runSheet.testScopes.includes("home_and_login")) {
       await traverseHomePageAndLoginPage(page, screenshotContext);
     }
 
-    if (runSheet.applicationScopes.includes("main_application")) {
+    if (runSheet.testScopes.includes("smoke_tests")) {
       for (const role of Object.keys(ptUsersByRole)) {
         const user = ptUsersByRole[role];
         await joinAsUserAndTraversePages(page, user, { ...screenshotContext, role: role as UserRole });
@@ -50,7 +53,7 @@ for (const engineName of runSheet.browsers) {
       }
     }
 
-    if (runSheet.applicationScopes.includes("generate_draft")) {
+    if (runSheet.testScopes.includes("generate_draft")) {
       await generateDraft(page, screenshotContext, secrets.users[0]);
     }
   } catch (e) {

@@ -2,7 +2,7 @@ import { E2ETestRunLogger } from './e2e-test-run-logger.ts';
 
 export const E2E_ROOT_URL = 'http://localhost:5000';
 
-const testScopes = ['home_and_login', 'main_application', 'generate_draft'] as const;
+const testScopes = ['home_and_login', 'smoke_tests', 'generate_draft'] as const;
 type TestScope = (typeof testScopes)[number];
 const allBrowsers = ['chromium', 'firefox', 'webkit'] as const;
 type Browser = (typeof allBrowsers)[number];
@@ -20,7 +20,7 @@ export type UserRole = (typeof allRoles)[number];
 interface RunSheet {
   locales: string[];
   roles: UserRole[];
-  applicationScopes: TestScope[];
+  testScopes: TestScope[];
   browsers: Browser[];
   skipScreenshots: boolean;
   screenshotPrefix: string;
@@ -37,7 +37,7 @@ export interface ScreenshotContext {
 export const runSheet: RunSheet = {
   locales: ['en'],
   roles: allRoles.slice(),
-  applicationScopes: testScopes.slice(),
+  testScopes: ['smoke_tests'],
   browsers: ['chromium'],
   skipScreenshots: false,
   screenshotPrefix: new Date().toISOString().slice(0, 19)

@@ -178,6 +178,13 @@ export async function deleteProject(page: Page, shortName: string): Promise<void
 }
 
 export async function enableFeatureFlag(page: Page, flag: string): Promise<void> {
+  await enableDeveloperMode(page);
+  await page.getByRole('menuitem', { name: 'Developer settings' }).click();
+  await page.getByRole('checkbox', { name: flag }).check();
+  await page.keyboard.press('Escape');
+}
+
+export async function enableDeveloperMode(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Help' }).click();
 
   // Playwright refuses to click the version number because it's disabled. We override this with force: true. However,
@@ -189,8 +196,4 @@ export async function enableFeatureFlag(page: Page, flag: string): Promise<void>
   // See https://playwright.dev/docs/actionability#receives-events
   await page.getByRole('menuitem', { name: 'Open source licenses' }).click({ trial: true });
   await page.locator('#version-number').click({ force: true, clickCount: 7 });
-
-  await page.getByRole('menuitem', { name: 'Developer settings' }).click();
-  await page.getByRole('checkbox', { name: flag }).check();
-  await page.keyboard.press('Escape');
 }

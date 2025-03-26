@@ -1,12 +1,22 @@
 import { Page } from "npm:playwright";
 import { DEFAULT_PROJECT_SHORTNAME, E2E_ROOT_URL, runSheet, ScreenshotContext, UserRole } from "./e2e-globals.ts";
-import { ensureJoinedOrConnectedToProject, pageName, screenshot } from "./e2e-utils.ts";
+import { enableDeveloperMode, ensureJoinedOrConnectedToProject, pageName, screenshot } from "./e2e-utils.ts";
 import { logInAsPTUser } from "./pt-login.ts";
 
 async function waitForAppLoad(page: Page): Promise<void> {
   // FIXME this is hideous
   await page.waitForTimeout(500);
-  await page.waitForSelector(".mat-progress-bar--closed");
+  try {
+    await page.waitForSelector(".mat-progress-bar--closed");
+  } catch (e: any) {
+    if (/page.waitForSelector: Timeout \d+ms exceeded/.test(e.message)) {
+      console.log("Timeout exceeded waiting for progress bar to close. Opening developer diagnostics to see why.");
+      await enableDeveloperMode(page);
+      await page.getByRole("menuitem", { name: "Developer diagnostics" }).click();
+      await page.waitForTimeout(1000);
+      throw e;
+    }
+  }
   await page.waitForTimeout(1000);
 }
 
