@@ -4,6 +4,7 @@ import { map, Observable, of, switchMap, take } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TabStateService } from '../../../shared/sf-tab-group';
 import { TabAddRequestService } from '../../../shared/sf-tab-group/base-services/tab-add-request.service';
@@ -20,6 +21,7 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
   constructor(
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
+    private readonly permissionsService: PermissionsService,
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>
   ) {}
 
@@ -43,7 +45,13 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
     return this.tabState.tabs$.pipe(
       take(1),
       switchMap(tabs =>
-        Promise.all(tabs.map(tab => (tab.projectId != null ? this.projectService.get(tab.projectId) : undefined)))
+        Promise.all(
+          tabs.map(async tab =>
+            tab.projectId != null && (await this.permissionsService.isUserOnProject(tab.projectId))
+              ? this.projectService.get(tab.projectId)
+              : undefined
+          )
+        )
       ),
       map(projectDocs => projectDocs.map(doc => doc?.data?.paratextId).filter(id => id) as string[])
     );
