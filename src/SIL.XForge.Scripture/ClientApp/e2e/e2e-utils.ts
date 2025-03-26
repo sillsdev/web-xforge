@@ -1,4 +1,4 @@
-import { Page } from 'npm:playwright';
+import { Locator, Page } from 'npm:playwright';
 import {
   DEFAULT_PROJECT_SHORTNAME,
   E2E_ROOT_URL,
@@ -196,4 +196,39 @@ export async function enableDeveloperMode(page: Page): Promise<void> {
   // See https://playwright.dev/docs/actionability#receives-events
   await page.getByRole('menuitem', { name: 'Open source licenses' }).click({ trial: true });
   await page.locator('#version-number').click({ force: true, clickCount: 7 });
+}
+
+export async function installMouseFollower(page: Page): Promise<void> {
+  const document: any = {};
+  await page.evaluate(() => {
+    const span = document.createElement('span');
+    const arrowSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M0 55.2L0 426c0 12.2 9.9 22 22 22c6.3 0 12.4-2.7 16.6-7.5L121.2 346l58.1 116.3c7.9 15.8 27.1 22.2 42.9 14.3s22.2-27.1 14.3-42.9L179.8 320l118.1 0c12.2 0 22.1-9.9 22.1-22.1c0-6.3-2.7-12.3-7.4-16.5L38.6 37.9C34.3 34.1 28.9 32 23.2 32C10.4 32 0 42.4 0 55.2z"/></svg>`;
+    span.innerHTML = arrowSvg;
+    const mouseFollower = span.firstChild;
+    mouseFollower.outerHTML = arrowSvg;
+    mouseFollower.src = '/assets/icons/arrow.png';
+    mouseFollower.style.position = 'absolute';
+    mouseFollower.style['z-index'] = '1000000';
+    mouseFollower.style.width = '30px';
+    mouseFollower.style.filter = 'drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7))';
+    mouseFollower.style.transition = 'all 0.1s';
+    // mouseFollower.style.height = "10px";
+    // mouseFollower.style.backgroundColor = "red";
+    mouseFollower.style.pointerEvents = 'none';
+    document.body.appendChild(mouseFollower);
+
+    document.addEventListener('mousemove', event => {
+      mouseFollower.style.top = event.pageY + 'px';
+      mouseFollower.style.left = event.pageX + 'px';
+    });
+  });
+}
+
+export async function click(page: Page, locator: Locator): Promise<void> {
+  const rect = await locator.boundingBox();
+  if (rect == null) throw new Error('Bounding client rect not found');
+  await page.mouse.move(rect.x + rect.width * 0.7, rect.y + rect.height * 0.7);
+  await page.waitForTimeout(250);
+
+  await locator.click();
 }

@@ -37,7 +37,7 @@ export interface ScreenshotContext {
 export const runSheet: RunSheet = {
   locales: ['en'],
   roles: allRoles.slice(),
-  testScopes: ['smoke_tests'],
+  testScopes: ['generate_draft'],
   browsers: ['chromium'],
   skipScreenshots: false,
   screenshotPrefix: new Date().toISOString().slice(0, 19)

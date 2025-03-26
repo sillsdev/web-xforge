@@ -1,6 +1,12 @@
 import { Page } from "npm:playwright";
 import { DEFAULT_PROJECT_SHORTNAME, E2E_ROOT_URL, runSheet, ScreenshotContext, UserRole } from "./e2e-globals.ts";
-import { enableDeveloperMode, ensureJoinedOrConnectedToProject, pageName, screenshot } from "./e2e-utils.ts";
+import {
+  enableDeveloperMode,
+  ensureJoinedOrConnectedToProject,
+  installMouseFollower,
+  pageName,
+  screenshot
+} from "./e2e-utils.ts";
 import { logInAsPTUser } from "./pt-login.ts";
 
 async function waitForAppLoad(page: Page): Promise<void> {
@@ -86,6 +92,8 @@ export async function joinAsUserAndTraversePages(
 
   await page.waitForURL(/\/projects\/[a-z0-9]+/);
   await screenshot(page, { ...context, pageName });
+
+  await installMouseFollower(page);
 
   await traversePagesInMainNav(page, context);
   await logOut(page);

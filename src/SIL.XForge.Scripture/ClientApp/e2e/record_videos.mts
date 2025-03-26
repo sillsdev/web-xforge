@@ -60,7 +60,7 @@ async function run(locale: string) {
   const localizations = JSON.parse(
     await Deno.readTextFile(`../src/assets/i18n/checking_${locale.replace(/-/g, "_")}.json`)
   );
-  const browser = await chromium.launch({ headless: false });
+  const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
     ...devices["Pixel 5"],
     recordVideo: { dir: outputDir }
