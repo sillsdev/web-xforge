@@ -274,7 +274,7 @@ public class ParatextService : DisposableBase, IParatextService
                         + $"{paratextId}"
                 );
             }
-            EnsureProjectReposExists(userSecret, ptProject, source);
+            await EnsureProjectReposExists(userSecret, ptProject, source);
             if (ptProject is not ParatextResource)
             {
                 StartProgressReporting(progress);
@@ -2480,7 +2480,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary>
     /// Ensure the target project repository exists on the local SF server, cloning if necessary.
     /// </summary>
-    private void EnsureProjectReposExists(
+    private async Task EnsureProjectReposExists(
         UserSecret userSecret,
         ParatextProject target,
         IInternetSharedRepositorySource repositorySource
@@ -2492,7 +2492,7 @@ public class ParatextService : DisposableBase, IParatextService
         if (target is ParatextResource resource)
         {
             // If the target is a resource, install it
-            InstallResource(username, resource, target.ParatextId, targetNeedsCloned);
+            await InstallResource(username, resource, target.ParatextId, targetNeedsCloned);
         }
         else if (targetNeedsCloned)
         {
@@ -2515,7 +2515,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <remarks>
     ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
     /// </remarks>
-    private void InstallResource(
+    async private Task InstallResource(
         string username,
         ParatextResource resource,
         string targetParatextId,
@@ -2553,7 +2553,7 @@ public class ParatextService : DisposableBase, IParatextService
             {
                 string path = LocalProjectDir(targetParatextId);
                 _fileSystemService.CreateDirectory(path);
-                resource.InstallableResource.ExtractToDirectory(path);
+                await resource.InstallableResource.ExtractToDirectory(path);
                 MigrateResourceIfRequired(username, targetParatextId, overrideLanguageId);
             }
         }
@@ -2903,7 +2903,8 @@ public class ParatextService : DisposableBase, IParatextService
             _exceptionHandler,
             _dblServerUri
         );
-        IReadOnlyDictionary<string, int> resourceRevisions = SFInstallableDblResource.GetInstalledResourceRevisions();
+        IReadOnlyDictionary<string, int> resourceRevisions =
+            await SFInstallableDblResource.GetInstalledResourceRevisions();
         return resources
             .OrderBy(r => r.FullName)
             .Select(r =>
