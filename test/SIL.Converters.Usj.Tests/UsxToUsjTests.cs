@@ -227,6 +227,19 @@ public class UsxToUsjTests
     }
 
     [Test]
+    public void ShouldConvertFromUsxToUsjWithSingleSpace_Roundtrip()
+    {
+        Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxMrk1V1WithSingleSpace);
+        string usx = UsjToUsx.UsjToUsxString(usj);
+        usx = TestData.RemoveXmlWhiteSpace(usx);
+
+        string expected = TestData.RemoveXmlWhiteSpace(TestData.UsxMrk1V1WithSingleSpace);
+        expected = TestData.RemoveVidAttributes(expected);
+        expected = TestData.RemoveEidElements(expected);
+        Assert.That(usx, Is.EqualTo(expected));
+    }
+
+    [Test]
     public void ShouldConvertFromUsxToUsjWithTable()
     {
         Usj usj = UsxToUsj.UsxStringToUsj(TestData.UsxGen1V1WithTable);
