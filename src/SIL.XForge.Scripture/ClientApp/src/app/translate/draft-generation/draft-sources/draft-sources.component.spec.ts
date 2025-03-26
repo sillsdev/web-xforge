@@ -1,8 +1,9 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -69,24 +70,25 @@ describe('DraftSourcesComponent', () => {
   }));
 
   describe('save', () => {
-    it('should save the settings', fakeAsync(() => {
+    fit('should save the settings..............', fakeAsync(() => {
       const env = new TestEnvironment();
-      const draftingSource: SelectableProjectWithLanguageCode = {
-        paratextId: 'drafting-source-pt-id'
-      } as SelectableProjectWithLanguageCode;
-      const trainingSource1: SelectableProjectWithLanguageCode = {
-        paratextId: 'training-source-pt-id-1'
-      } as SelectableProjectWithLanguageCode;
-      const trainingSource2: SelectableProjectWithLanguageCode = {
-        paratextId: 'training-source-pt-id-2'
-      } as SelectableProjectWithLanguageCode;
-      const trainingTarget: SFProjectProfile = env.activatedProjectDoc.data!;
+      // const draftingSource: SelectableProjectWithLanguageCode = {
+      //   paratextId: 'drafting-source-pt-id'
+      // } as SelectableProjectWithLanguageCode;
+      // const trainingSource1: SelectableProjectWithLanguageCode = {
+      //   paratextId: 'training-source-pt-id-1'
+      // } as SelectableProjectWithLanguageCode;
+      // const trainingSource2: SelectableProjectWithLanguageCode = {
+      //   paratextId: 'training-source-pt-id-2'
+      // } as SelectableProjectWithLanguageCode;
+      // const trainingTarget: SFProjectProfile = env.activatedProjectDoc.data!;
+      tick(); //needed?
 
       // Set component state.
-      env.component.draftingSources = [draftingSource];
-      env.component.trainingSources = [trainingSource1, trainingSource2];
-      env.component.trainingTargets = [trainingTarget];
-      env.component.languageCodesConfirmed = true;
+      // env.component.draftingSources = [env.usersResources[0]];
+      // env.component.trainingSources = [env.usersProjectsSP[1], trainingSource2];
+      // env.component.trainingTargets = [trainingTarget];
+      // env.component.languageCodesConfirmed = true;
 
       // SUT
       env.component.save();
@@ -297,6 +299,8 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<DraftSourcesComponent>;
   readonly realtimeService: TestRealtimeService;
   readonly activatedProjectDoc: SFProjectDoc;
+  readonly usersResources: SelectableProjectWithLanguageCode[];
+  readonly usersProjectsSP: SelectableProjectWithLanguageCode[];
 
   // private readonly mockProjects: SelectableProject[] = [
   //   { paratextId: 'paratextId1', name: 'Test project 1', shortName: 'P1' },
@@ -310,103 +314,195 @@ class TestEnvironment {
   // ];
 
   constructor() {
-    const userSFProjectsCount: number = 6;
+    const sfProject0: SFProject = createTestProject(
+      {
+        paratextId: `pt-id-0`,
+        resourceConfig: undefined
+        // translateConfig: {
+        //   draftConfig: {
+        //     alternateSourceEnabled: true,
+        //     alternateSource: {
+        //       paratextId: 'paratextId2',
+        //       projectRef: 'sfp2',
+        //       name: 'Test project 2',
+        //       shortName: 'P2',
+        //       writingSystem: { tag: 'en' },
+        //       isRightToLeft: false
+        //     },
+        //     alternateTrainingSourceEnabled: true,
+        //     alternateTrainingSource: {
+        //       paratextId: 'resource02',
+        //       projectRef: 'sfr2',
+        //       name: 'Resource 2',
+        //       shortName: 'RSC2',
+        //       writingSystem: { tag: 'en' },
+        //       isRightToLeft: false
+        //     },
+        //     additionalTrainingSourceEnabled: true,
+        //     additionalTrainingSource: {
+        //       paratextId: 'paratextId3',
+        //       projectRef: 'sfp3',
+        //       name: 'Test project 3',
+        //       shortName: 'P3',
+        //       writingSystem: { tag: 'en' },
+        //       isRightToLeft: false
+        //     },
+        //     additionalTrainingData: false,
+        //     lastSelectedTrainingBooks: [],
+        //     lastSelectedTrainingDataFiles: [],
+        //     lastSelectedTranslationBooks: []
+        //   },
+        //   source: {
+        //     paratextId: 'resource01',
+        //     projectRef: 'sfr1',
+        //     name: 'Resource 1',
+        //     shortName: 'RSC1',
+        //     writingSystem: { tag: 'en' },
+        //     isRightToLeft: false
+        //   },
+        //   translationSuggestionsEnabled: false,
+        //   preTranslate: true
+        // }
+      },
+      0
+    );
+    const userSFProjectsAndResourcesCount: number = 6;
+    const userNonSFProjectsCount: number = 3;
+    const userNonSFResourcesCount: number = 3;
     // Make a set of projects and resources, already on SF, that the user has access to.
     const usersProjectsAndResourcesOnSF: SFProjectDoc[] = Array.from(
-      { length: userSFProjectsCount },
+      { length: userSFProjectsAndResourcesCount },
       (_, i) =>
         ({
           id: `sf-id-${i}`,
-          data: createTestProject({
-            paratextId: `pt-id-${i}`,
-            resourceConfig:
-              i <= userSFProjectsCount / 2
-                ? undefined
-                : { createdTimestamp: new Date(), manifestChecksum: '1234', permissionsChecksum: '2345', revision: 1 }
-          })
+          data:
+            i === 0
+              ? sfProject0
+              : createTestProject(
+                  {
+                    paratextId: `pt-id-${i}`,
+                    resourceConfig:
+                      i < userSFProjectsAndResourcesCount / 2
+                        ? undefined
+                        : {
+                            createdTimestamp: new Date(),
+                            manifestChecksum: '1234',
+                            permissionsChecksum: '2345',
+                            revision: 1
+                          }
+                  },
+                  i
+                )
         }) as SFProjectDoc
     );
 
-    // Put the non-resource projects into a ParatextProject array.
-    const usersProjectsOnSF: ParatextProject[] = usersProjectsAndResourcesOnSF
-      .filter(p => p.data != null)
-      .filter(p => p.data!.resourceConfig == null)
-      .map(p => ({
-        ...translateSourceToSelectableProjectWithLanguageTag(p.data!),
-        projectId: p.id,
-        isConnectable: false,
-        isConnected: true
-      }));
-    const userProjectsNotOnSF: ParatextProject[] = Array.from({ length: 3 }, (_, i) => ({
-      paratextId: `pt-id-${userSFProjectsCount + i}`,
-      name: `Test project ${userSFProjectsCount + i}`,
-      shortName: `P${userSFProjectsCount + i}`,
+    // usersProjectsAndResourcesOnSF[0].data!.translateConfig.translationSuggestionsEnabled = sfProj0TranslateConfig.translationSuggestionsEnabled;
+    // usersProjectsAndResourcesOnSF[0].data!.translateConfig.preTranslate = sfProj0TranslateConfig.preTranslate;
+    // usersProjectsAndResourcesOnSF[0].data!.translateConfig.draftConfig = sfProj0TranslateConfig.draftConfig;
+    // usersProjectsAndResourcesOnSF[0].data!.translateConfig.source = sfProj0TranslateConfig.source;
+
+    // Make a set of projects, not already on SF, that the user should have access to.
+    const usersProjectsNotOnSF: ParatextProject[] = Array.from({ length: userNonSFProjectsCount }, (_, i) => ({
+      paratextId: `pt-id-${userSFProjectsAndResourcesCount + i}`,
+      name: `Test project ${userSFProjectsAndResourcesCount + i}`,
+      shortName: `P${userSFProjectsAndResourcesCount + i}`,
       languageTag: 'en',
       projectId: undefined,
       isConnectable: true,
       isConnected: false
     }));
-    const usersProjects = usersProjectsOnSF.concat(userProjectsNotOnSF);
-    // Put the resources into a SelectableProjectWithLanguageCode array.
+
+    // Make a set of resources, not already on SF, that the user should have access to.
+    // TODO this maybe could just start life as a SPWLT instead of ParatextProject array.
+    const usersResourcesNotOnSF: ParatextProject[] = Array.from({ length: userNonSFResourcesCount }, (_, i) => ({
+      paratextId: `pt-id-${userSFProjectsAndResourcesCount + userNonSFProjectsCount + i}`,
+      name: `Test project ${userSFProjectsAndResourcesCount + userNonSFProjectsCount + i}`,
+      shortName: `P${userSFProjectsAndResourcesCount + userNonSFProjectsCount + i}`,
+      languageTag: 'en',
+      projectId: undefined,
+      isConnectable: true,
+      isConnected: false
+    }));
+
+    const usersProjectsOnSF: SFProjectDoc[] = usersProjectsAndResourcesOnSF
+      .filter(p => p.data != null)
+      .filter(p => p.data!.resourceConfig == null);
+    // Put the non-resource SF projects into a ParatextProject array.
+    const usersProjectsOnSFAsPP: ParatextProject[] = usersProjectsOnSF.map(p => ({
+      ...translateSourceToSelectableProjectWithLanguageTag(p.data!),
+      projectId: p.id,
+      isConnectable: false,
+      isConnected: true
+    }));
+    // Array of all non-resource projects the user has access to, whether on SF or not.
+    const usersProjects: ParatextProject[] = usersProjectsOnSFAsPP.concat(usersProjectsNotOnSF);
+    // All the non-resource projects, whether on SF or not, but as a SelectableProjectWithLanguageCode array.
+    this.usersProjectsSP = usersProjects.map(p => ({
+      name: p.name,
+      shortName: p.shortName,
+      paratextId: p.paratextId,
+      languageTag: p.languageTag
+    }));
+    // Array of the user accessible SF resources, as a SelectableProjectWithLanguageCode array.
     const usersResourcesOnSF: SelectableProjectWithLanguageCode[] = usersProjectsAndResourcesOnSF
       .filter(p => p.data != null)
       .filter(p => p.data!.resourceConfig != null)
       .map(p => translateSourceToSelectableProjectWithLanguageTag(p.data!));
+    // Array of the user accessible non-SF resources, as a SelectableProjectWithLanguageCode array.
+    const usersResourcesNotOnSFSP: SelectableProjectWithLanguageCode[] = usersResourcesNotOnSF.map(p => ({
+      name: p.name,
+      shortName: p.shortName,
+      paratextId: p.paratextId,
+      languageTag: p.languageTag
+    }));
+    // Array of user accessible SF and non-SF resources, as a SelectableProjectWithLanguageCode array.
+    this.usersResources = usersResourcesOnSF.concat(usersResourcesNotOnSFSP);
+
+    const usersProjectsAsTS: TranslateSource[] = usersProjectsOnSF.map(p => ({
+      paratextId: p.data!.paratextId,
+      projectRef: p.id,
+      name: p.data!.name,
+      shortName: p.data!.shortName,
+      writingSystem: p.data!.writingSystem,
+      isRightToLeft: p.data!.isRightToLeft
+    }));
+    const usersResourcesAsTS: TranslateSource[] = usersProjectsAndResourcesOnSF
+      .filter(p => p.data != null)
+      .filter(p => p.data!.resourceConfig != null)
+      .map(p => ({
+        paratextId: p.data!.paratextId,
+        projectRef: p.id,
+        name: p.data!.name,
+        shortName: p.data!.shortName,
+        writingSystem: p.data!.writingSystem,
+        isRightToLeft: p.data!.isRightToLeft
+      }));
+
+    // Now that various projects and resources are defined with known SF project ids, write the sf project 0's translate
+    // config values.
+    sfProject0.translateConfig.source = usersResourcesAsTS[0];
+    sfProject0.translateConfig.draftConfig.alternateSourceEnabled = true;
+    sfProject0.translateConfig.draftConfig.alternateSource = usersProjectsAsTS[1];
+    sfProject0.translateConfig.draftConfig.alternateTrainingSourceEnabled = true;
+    sfProject0.translateConfig.draftConfig.alternateTrainingSource = usersResourcesAsTS[2];
+    sfProject0.translateConfig.draftConfig.additionalTrainingSourceEnabled = true;
+    sfProject0.translateConfig.draftConfig.additionalTrainingSource = usersProjectsAsTS[2];
+    sfProject0.translateConfig.draftConfig.additionalTrainingData = false;
+    sfProject0.translateConfig.translationSuggestionsEnabled = false;
+    sfProject0.translateConfig.preTranslate = true;
 
     this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
     when(mockedParatextService.getProjects()).thenResolve(usersProjects);
-    when(mockedParatextService.getResources()).thenResolve(usersResourcesOnSF);
+    when(mockedParatextService.getResources()).thenResolve(this.usersResources);
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of(usersProjectsAndResourcesOnSF));
     when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
     when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
 
-    this.activatedProjectDoc = {
-      id: 'sfp1',
-      data: createTestProject({
-        translateConfig: {
-          draftConfig: {
-            alternateSourceEnabled: true,
-            alternateSource: {
-              paratextId: 'paratextId2',
-              projectRef: 'sfp2',
-              name: 'Test project 2',
-              shortName: 'P2',
-              writingSystem: { tag: 'en' },
-              isRightToLeft: false
-            },
-            alternateTrainingSourceEnabled: true,
-            alternateTrainingSource: {
-              paratextId: 'resource02',
-              projectRef: 'sfr2',
-              name: 'Resource 2',
-              shortName: 'RSC2',
-              writingSystem: { tag: 'en' },
-              isRightToLeft: false
-            },
-            additionalTrainingSourceEnabled: true,
-            additionalTrainingSource: {
-              paratextId: 'paratextId3',
-              projectRef: 'sfp3',
-              name: 'Test project 3',
-              shortName: 'P3',
-              writingSystem: { tag: 'en' },
-              isRightToLeft: false
-            }
-          },
-          source: {
-            paratextId: 'resource01',
-            projectRef: 'sfr1',
-            name: 'Resource 1',
-            shortName: 'RSC1',
-            writingSystem: { tag: 'en' },
-            isRightToLeft: false
-          }
-        }
-      })
-    } as SFProjectDoc;
+    this.activatedProjectDoc = usersProjectsAndResourcesOnSF[0];
 
-    this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [this.activatedProjectDoc]);
+    // this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [this.activatedProjectDoc]);
+    this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, usersProjectsAndResourcesOnSF);
 
     when(mockedActivatedProjectService.changes$).thenReturn(of(this.activatedProjectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
