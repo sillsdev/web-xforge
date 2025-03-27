@@ -210,12 +210,6 @@ public class MachineProjectService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // Ensure that the project is not a resource
-        if (paratextService.IsResource(project.ParatextId))
-        {
-            throw new DataNotFoundException("You cannot download a resource.");
-        }
-
         // Create the zip file from the directory in memory
         await CreateZipFileFromParatextDirectoryAsync(project.ParatextId, outputStream, cancellationToken);
 
