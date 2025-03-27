@@ -33,7 +33,7 @@ export class ResumeTranslateService extends ResumeBaseService {
     return combineLatest([
       this.activatedProjectService.changes$,
       this.projectUserConfigDoc$.pipe(
-        switchMap(async doc => doc?.changes$.pipe(startWith(undefined)) ?? of(undefined)),
+        switchMap(doc => doc?.changes$.pipe(startWith(undefined)) ?? of(undefined)),
         map(() => this.projectUserConfigDoc$.getValue())
       )
     ]).pipe(
