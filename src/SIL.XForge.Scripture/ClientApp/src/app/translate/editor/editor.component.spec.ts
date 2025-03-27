@@ -3920,7 +3920,7 @@ describe('EditorComponent', () => {
     });
 
     describe('updateAutoDraftTabVisibility', () => {
-      it('should add auto draft tab to source when available and "showSource" is true', fakeAsync(() => {
+      it('should add the draft preview tab to source when available and "showSource" is true', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
@@ -3938,7 +3938,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should add auto draft tab to target when available and "showSource" is false', fakeAsync(() => {
+      it('should add draft preview tab to target when available and "showSource" is false', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
@@ -3956,7 +3956,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should hide source auto draft tab when switching to chapter with no draft', fakeAsync(() => {
+      it('should hide source draft preview tab when switching to chapter with no draft', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
@@ -3977,7 +3977,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should hide auto draft tab when user is commenter', fakeAsync(() => {
+      it('should hide the draft preview tab when user is commenter', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
@@ -3992,7 +3992,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should hide target auto draft tab when switching to chapter with no draft', fakeAsync(() => {
+      it('should hide the target draft preview tab when switching to chapter with no draft', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
