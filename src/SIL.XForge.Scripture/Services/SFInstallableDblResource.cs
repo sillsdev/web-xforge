@@ -377,7 +377,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <remarks>
     /// After the resource is extracted, it can be a source or target.
     /// </remarks>
-    async public Task ExtractToDirectory(string path)
+    async public Task ExtractToDirectoryAsync(string path)
     {
         // Check parameters
         if (string.IsNullOrWhiteSpace(path))
@@ -499,7 +499,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <returns>
     /// A dictionary where the resource id is the key, and the revision is the value.
     /// </returns>
-    internal static async Task<IReadOnlyDictionary<string, int>> GetInstalledResourceRevisions()
+    internal static async Task<IReadOnlyDictionary<string, int>> GetInstalledResourceRevisionsAsync()
     {
         // Initialize variables
         Dictionary<string, int> resourceRevisions = [];
