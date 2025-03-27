@@ -223,9 +223,10 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                             );
                             break;
 
-                        // according to the USX schema, a verse can only occur within a paragraph, but Paratext 8.0
-                        // can still generate USX with verses at the top-level
+                        // According to the USX schema, a verse or note should only occur within a paragraph,
+                        // but Paratext 9.0 can still generate USX with verses or notes at the chapter level.
                         case "verse":
+                        case "note":
                             ProcessChildNode(elem, chapterDelta, invalidNodes, state);
                             state.ImpliedParagraph = true;
                             break;
@@ -820,7 +821,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
     {
         return charAttrs switch
         {
-            JArray array => new List<JObject>(array.Children<JObject>()),
+            JArray array => [.. array.Children<JObject>()],
             JObject obj => [obj],
             _ => [],
         };
