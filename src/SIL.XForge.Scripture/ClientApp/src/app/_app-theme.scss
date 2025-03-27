@@ -9,6 +9,8 @@
   .name-and-edit-button {
     color: #{mat.get-theme-color($theme, primary, 40)};
   }
+  --mat-icon-button-state-layer-color: #{mat.get-theme-color($theme, primary, 98)};
+  --mat-icon-button-hover-state-layer-opacity: 0.2;
 }
 
 @mixin theme($theme) {
