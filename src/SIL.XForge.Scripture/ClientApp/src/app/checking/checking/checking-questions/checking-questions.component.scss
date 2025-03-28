@@ -97,7 +97,7 @@ mat-icon {
     }
 
     &.selected {
-      background-color: vars.$questionSelectedColor;
+      background-color: var(--sf-list-selected-background-color);
       color: #fff;
 
       ::ng-deep .mdc-list-item__primary-text {
@@ -118,7 +118,6 @@ mat-icon {
       transition: 0.25s;
       position: relative;
       top: 4px; // Give some space for answer count badge
-      color: vars.$text-hint-on-background;
     }
 
     &.question-has-answers {
@@ -128,10 +127,11 @@ mat-icon {
     }
 
     &:hover {
-      background-color: #f5f5f5;
+      background-color: var(--sf-list-hover-background-color);
 
       &.selected {
-        background-color: lighten(vars.$questionSelectedColor, 10%);
+        background-color: var(--sf-list-selected-background-color);
+        opacity: 0.9;
       }
     }
   }
