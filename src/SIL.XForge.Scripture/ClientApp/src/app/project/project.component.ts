@@ -66,9 +66,6 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     navigateToProject$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       if (userDoc.data?.sites[environment.siteId].projects?.includes(projectId)) {
         this.navigateToProject(projectId);
-      } else {
-        await this.dialogService.message('app.project_has_been_deleted');
-        this.router.navigateByUrl('/projects', { replaceUrl: true });
       }
     });
   }
