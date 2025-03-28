@@ -1,0 +1,22 @@
+@use '@angular/material' as mat;
+@use 'src/_variables' as variables;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --mat-badge-background-color: #{mat.get-theme-color($theme, primary, if($is-dark, 60, 20))};
+  --mat-badge-text-color: #{mat.get-theme-color($theme, primary, 98)};
+  --mat-badge-small-size-text-size: 9px;
+  --sf-list-hover-background-color: #{mat.get-theme-color($theme, primary, if($is-dark, 10, 95))};
+  --sf-list-selected-background-color: #{mat.get-theme-color($theme, primary, if($is-dark, 20, 30))};
+
+  .view-answers mat-icon {
+    color: #{mat.get-theme-color($theme, primary, if($is-dark, 40, 60))};
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

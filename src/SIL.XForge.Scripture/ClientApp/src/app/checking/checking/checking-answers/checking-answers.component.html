@@ -42,7 +42,7 @@
       @if (!answerFormVisible) {
         <div class="actions">
           @if (currentUserTotalAnswers === 0 && canAddAnswer) {
-            <button mat-flat-button color="primary" (click)="showAnswerForm()" id="add-answer">
+            <button mat-flat-button color="tertiary" (click)="showAnswerForm()" id="add-answer">
               {{ t("add_answer") }}
             </button>
           }

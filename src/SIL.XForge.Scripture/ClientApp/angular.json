@@ -34,7 +34,7 @@
               "src/sf-service-worker.js",
               "src/offline.html"
             ],
-            "styles": ["src/styles.scss", "src/material-styles.scss"],
+            "styles": ["src/styles.scss", "src/material-styles.scss", "src/themes/themes.scss"],
             "stylePreprocessorOptions": {
               "includePaths": ["node_modules"]
             },
