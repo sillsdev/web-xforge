@@ -231,6 +231,7 @@
     "choose_additional_training_data_files_header": "Additional training",
     "choose_additional_training_data_files_title": "Choose additional files for training the language model",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
+    "choose_books_for_training_no_books_error": "No books are available for training. Your project must have at least one translated book to use for training.",
     "choose_books_for_training_title": "Select books to train on",
     "choose_books_for_training_header": "Training",
     "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
