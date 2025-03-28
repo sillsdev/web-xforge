@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
     "mic_not_found": "Mikrofon tidak ditemukan. Sambungkan mikrofon ke perangkat Anda.",
-    "record": "Record",
+    "record": "Rekam",
     "re_record": "Rekam ulang",
     "save": "Simpan Jawaban",
     "stop_recording": "Hentikan Perekaman"
@@ -38,9 +38,9 @@
     "update_is_available": "Pembaruan telah tersedia. Silakan muat ulang halaman."
   },
   "attach_audio": {
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
-    "tooltip_upload": "Upload audio"
+    "tooltip_record": "Rekam suara",
+    "tooltip_stop": "Berhenti merekam",
+    "tooltip_upload": "Unggah suara"
   },
   "canon": {
     "book_names": {
@@ -263,7 +263,7 @@
     "stop_recording": "Hentikan Perekaman"
   },
   "checking_input_form": {
-    "attach": "Attach Scripture",
+    "attach": "Melampirkan Alkitab",
     "cancel": "Batal",
     "save": "Simpan Jawaban",
     "your_answer": "Jawaban Anda",
@@ -345,10 +345,10 @@
   },
   "global_notices": {
     "close": "Tutup",
-    "hour_range": "{{ min }} to {{ max }} hours",
+    "hour_range": "{{ min }} ke {{ max }} jam",
     "learn_more": "Pelajari lebih lanjut",
-    "minute_range": "{{ min }} to {{ max }} minutes",
-    "upcoming_maintenance": "Scripture Forge will be down for maintenance for about {{ duration }} starting at {{ startTime }}."
+    "minute_range": "{{ min }} ke {{ max }} menit",
+    "upcoming_maintenance": "Scripture Forge akan berhenti beroperasi untuk pemeliharaan selama sekitar {{ duration }} mulai dari {{ startTime }}."
   },
   "issue_email": {
     "heading": "Tolong jelaskan masalahnya.",
@@ -377,13 +377,13 @@
     "access_another_project": "Jika Anda tidak melihat proyek yang Anda harapkan, Anda mungkin perlu menerima undangan ke proyek tersebut. Atau, jika Anda menggunakan Paratext, Anda bisa keluar dan masuk kembali menggunakan 'Masuk dengan Paratext', dan terhubung ke proyek Paratext Anda.",
     "connect_a_project_to_get_started": "Hubungkan proyek untuk memulai",
     "connected": "Terhubung",
-    "contact_admin_update_role": "Please contact your project administrator to sync this project.",
+    "contact_admin_update_role": "Silakan hubungi administrator proyek Anda untuk menyinkronkan proyek ini.",
     "dbl_resource": "Sumber Digital Bible Library",
     "dbl_resources": "Sumber Digital Bible Library",
     "drafting": "Draf",
     "failed_to_connect_to_pt_server": "Ada masalah saat menghubungkan ke Paratext untuk mendapatkan proyek Anda. Silakan coba lagi nanti. Jika masalah masih berlanjut setelah beberapa jam, silakan laporkan masalah tersebut untuk mendapatkan bantuan.",
     "failed_to_join_project": "Gagal bergabung dengan proyek. Periksa koneksi internet Anda dan coba lagi nanti.",
-    "failed_to_update_user_role": "Failed to update paratext role. Please contact your project administrator.",
+    "failed_to_update_user_role": "Gagal memperbarui peran Paratext. Silakan hubungi administrator proyek Anda.",
     "join": "Gabung",
     "loading_more_pt_projects": "Memuat proyek Paratext tambahan ...",
     "looking_for_another_project": "Mencari proyek lain?",
@@ -392,14 +392,14 @@
     "not_admin_cannot_connect_project": "Untuk bergabung dengan proyek ini di Scripture Forge, mintalah administrator proyek Paratext untuk menghubungkan proyek ini di Scripture Forge.",
     "not_connected": "Tidak terhubung",
     "offline": "Anda harus terhubung ke internet untuk memulai sebuah proyek.",
-    "offline_update": "You will need to connect to the internet to update your project.",
+    "offline_update": "Anda harus terhubung ke internet untuk memperbarui proyek Anda.",
     "offline-accessible": "Akses Luring",
     "open": "Buka",
     "problem_getting_pt_list": "Ada masalah dalam mendapatkan daftar proyek Paratext yang tersedia untuk disambungkan. Jika hal ini terus terjadi, dan keluar dan masuk kembali tidak menyelesaikan masalah, silakan laporkan masalah ini untuk mendapatkan bantuan.",
-    "update_role": "Update role",
-    "updated_roles": "Updated roles",
-    "update_paratext_role": "Your role on this project has changed in Paratext.",
-    "user_role_updated": "Your role on this project has been updated successfully."
+    "update_role": "Perbarui Peran",
+    "updated_roles": "Perbarui Peran",
+    "update_paratext_role": "Peran Anda dalam proyek ini telah berubah di Paratext.",
+    "user_role_updated": "Peran Anda dalam proyek ini telah berhasil diperbarui."
   },
   "roles": {
     "sf_community_checker": "Masyarakat Pemeriksa"
@@ -480,7 +480,7 @@
     "book_is_empty": "Kitab masih kosong. Tambahkan pasal di Paratext.",
     "loading": "Memuat...",
     "not_available_offline": "Teks ini tidak tersedia secara luring. Sambungkan ke Internet untuk melihat teks.",
-    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission."
+    "permission_denied": "Anda tidak memiliki izin untuk melihat teks ini. Silakan hubungi administrator proyek untuk mendapatkan izin."
   },
   "text_chooser_dialog": {
     "cancel": "Batal",
