@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using Ionic.Zip;
+using System.Threading.Tasks;
+using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
@@ -376,7 +377,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <remarks>
     /// After the resource is extracted, it can be a source or target.
     /// </remarks>
-    public void ExtractToDirectory(string path)
+    async public Task ExtractToDirectoryAsync(string path)
     {
         // Check parameters
         if (string.IsNullOrWhiteSpace(path))
@@ -398,11 +399,34 @@ public class SFInstallableDblResource : InstallableResource
             this.DBLEntryUid,
             ProjectFileManager.resourceFileExtension
         );
-        if (RobustFile.Exists(resourceFile))
+        if (_fileSystemService.FileExists(resourceFile))
         {
-            using var zipFile = ZipFile.Read(resourceFile);
-            zipFile.Password = this._passwordProvider?.GetPassword();
-            zipFile.ExtractAll(path, ExtractExistingFileAction.DoNotOverwrite);
+            await using Stream stream = _fileSystemService.OpenFile(resourceFile, FileMode.Open);
+            using ZipFile zipFile = new ZipFile(stream);
+            zipFile.Password = _passwordProvider?.GetPassword();
+            await ExtractAllAsync(zipFile, path);
+        }
+    }
+
+    private async Task ExtractAllAsync(ZipFile zip, string path)
+    {
+        foreach (ZipEntry entry in zip)
+        {
+            if (!entry.IsFile)
+                continue; // Skip directories
+
+            string entryPath = Path.Combine(path, entry.Name);
+
+            if (_fileSystemService.FileExists(entryPath))
+                continue; // Don't overwrite
+
+            // Ensure directories in the ZIP entry are created
+            _fileSystemService.CreateDirectory(Path.GetDirectoryName(entryPath));
+
+            // Extract the file
+            await using Stream zipStream = zip.GetInputStream(entry);
+            await using Stream output = _fileSystemService.CreateFile(entryPath);
+            await zipStream.CopyToAsync(output);
         }
     }
 
@@ -475,7 +499,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <returns>
     /// A dictionary where the resource id is the key, and the revision is the value.
     /// </returns>
-    internal static IReadOnlyDictionary<string, int> GetInstalledResourceRevisions()
+    internal static async Task<IReadOnlyDictionary<string, int>> GetInstalledResourceRevisionsAsync()
     {
         // Initialize variables
         Dictionary<string, int> resourceRevisions = [];
@@ -510,9 +534,8 @@ public class SFInstallableDblResource : InstallableResource
                 // See if this a zip file, and if it contains the correct ID
                 try
                 {
-                    // This only uses DotNetZip because ParatextData uses DotNetZip
-                    // You could use System.IO.Compression if you wanted to
-                    using var zipFile = ZipFile.Read(resourceFile);
+                    await using var stream = new FileStream(resourceFile, FileMode.Open);
+                    using var zipFile = new ZipFile(stream);
                     // Zip files use forward slashes, even on Windows
                     const string idSearchPath = DblFolderName + "/id/";
                     const string revisionSearchPath = DblFolderName + "/revision/";
@@ -524,19 +547,19 @@ public class SFInstallableDblResource : InstallableResource
                         if (
                             string.IsNullOrWhiteSpace(fileId)
                             && !entry.IsDirectory
-                            && entry.FileName.StartsWith(idSearchPath, StringComparison.OrdinalIgnoreCase)
+                            && entry.Name.StartsWith(idSearchPath, StringComparison.OrdinalIgnoreCase)
                         )
                         {
-                            fileId = entry.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
+                            fileId = entry.Name.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
                         }
                         else if (
                             revision == 0
                             && !entry.IsDirectory
-                            && entry.FileName.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase)
+                            && entry.Name.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase)
                         )
                         {
                             string revisionFilename = entry
-                                .FileName.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                                .Name.Split('/', StringSplitOptions.RemoveEmptyEntries)
                                 .Last();
                             if (!int.TryParse(revisionFilename, out revision))
                             {

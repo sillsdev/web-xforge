@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -4370,6 +4371,10 @@ public class ParatextServiceTests
             )
             .Returns(resourceScrText);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(true);
+        await using var zipStream = await TestEnvironment.CreateZipStubAsync();
+        env.MockFileSystemService.OpenFile(Arg.Is<string>(p => p.EndsWith(".p8z")), FileMode.Open).Returns(zipStream);
+        await using var stream = new MemoryStream();
+        env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
         // Set up the Resource ScrText when it is installed on disk
         using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
@@ -4420,6 +4425,10 @@ public class ParatextServiceTests
             )
             .Returns(resourceScrText);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(true);
+        await using var zipStream = await TestEnvironment.CreateZipStubAsync();
+        env.MockFileSystemService.OpenFile(Arg.Is<string>(p => p.EndsWith(".p8z")), FileMode.Open).Returns(zipStream);
+        await using var stream = new MemoryStream();
+        env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
         // Set up the Resource ScrText when it is installed on disk
         using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
@@ -4483,6 +4492,10 @@ public class ParatextServiceTests
         bool resourceDownloaded = false;
         env.MockFileSystemService.When(f => f.CreateDirectory(Arg.Any<string>())).Do(_ => resourceDownloaded = true);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(_ => resourceDownloaded);
+        await using var zipStream = await TestEnvironment.CreateZipStubAsync();
+        env.MockFileSystemService.OpenFile(Arg.Is<string>(p => p.EndsWith(".p8z")), FileMode.Open).Returns(zipStream);
+        await using var stream = new MemoryStream();
+        env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
         // Set up the Resource ScrText when it is installed on disk
         using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
@@ -7294,6 +7307,23 @@ public class ParatextServiceTests
 
         public static async Task<IDocument<NoteThread>> GetNoteThreadDocAsync(IConnection connection, string dataId) =>
             await connection.FetchAsync<NoteThread>("project01:" + dataId);
+
+        public static async Task<Stream> CreateZipStubAsync()
+        {
+            var outputMemStream = new MemoryStream();
+            await using (var zipStream = new ZipOutputStream(outputMemStream))
+            {
+                ZipEntry newEntry = new ZipEntry("test.txt");
+                await zipStream.PutNextEntryAsync(newEntry);
+                await zipStream.CloseEntryAsync(CancellationToken.None);
+
+                // Stop ZipStream.Dispose() from also closing the underlying stream.
+                zipStream.IsStreamOwner = false;
+            }
+
+            outputMemStream.Position = 0;
+            return outputMemStream;
+        }
 
         public string SetupProject(string baseId, ParatextUser associatedPtUser, bool hasEditPermission = true)
         {
