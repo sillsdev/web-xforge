@@ -25,6 +25,18 @@ quill-editor {
           display: none;
         }
 
+        // Hide cursor when editor loses focus
+        visibility: hidden;
+      }
+    }
+  }
+
+  // When editor has focus, show cursor and enable blinking animation for non-moving cursor
+  &:focus-within.custom-local-cursor {
+    ::ng-deep {
+      .ql-cursor.local-cursor {
+        visibility: visible;
+
         // Blink caret if caret is not moving
         &:not(.moving) {
           animation: local-cursor-blink 1s steps(1) infinite;
