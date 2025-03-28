@@ -61,7 +61,13 @@ export class LanguageCodesConfirmationComponent {
   }
 
   get sourceSideLanguageCodes(): string[] {
-    return [...this.draftingSources, ...this.trainingSources].filter(s => s != null).map(s => s.languageTag);
+    return (
+      [...this.draftingSources, ...this.trainingSources]
+        .map(s => s.languageTag)
+        .filter(t => t != null)
+        // SF-3288 Some projects such as back translations have an empty language tag until after being connected
+        .filter(t => t !== '')
+    );
   }
 
   get uniqueSourceSideLanguageCodes(): string[] {
