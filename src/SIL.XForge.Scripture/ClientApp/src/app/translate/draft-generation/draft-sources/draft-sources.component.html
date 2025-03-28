@@ -131,9 +131,7 @@
             } @else {
               <div class="project">
                 <span class="project-name">{{ project.name }}</span>
-                <span class="language-code">
-                  {{ t("language_code") }} <strong>{{ project.languageTag }}</strong>
-                </span>
+                <ng-container *ngTemplateOutlet="languageCode; context: { code: project.languageTag }"></ng-container>
               </div>
             }
           }
@@ -144,9 +142,8 @@
           @for (project of trainingTargets; track $index) {
             <div class="project">
               <span class="project-name">{{ project.name }}</span>
-              <span class="language-code">
-                {{ t("language_code") }} <strong>{{ project.writingSystem.tag }}</strong>
-              </span>
+              <ng-container *ngTemplateOutlet="languageCode; context: { code: project.writingSystem.tag }">
+              </ng-container>
             </div>
           }
         </div>
@@ -166,9 +163,7 @@
             } @else {
               <div class="project">
                 <span class="project-name">{{ project.name }}</span>
-                <span class="language-code">
-                  {{ t("language_code") }} <strong>{{ project.languageTag }}</strong>
-                </span>
+                <ng-container *ngTemplateOutlet="languageCode; context: { code: project.languageTag }"></ng-container>
               </div>
             }
           }
@@ -253,5 +248,16 @@
         <button mat-flat-button color="primary" (click)="goToStep(step + 1)">{{ t("next") }}</button>
       }
     </div>
+  </ng-template>
+
+  <ng-template #languageCode let-code="code">
+    <span class="language-code">
+      {{ t("language_code") }}
+      @if (code == null || code === "") {
+        <em>{{ t("unknown_language_code") }}</em>
+      } @else {
+        <strong>{{ code }}</strong>
+      }
+    </span>
   </ng-template>
 </ng-container>

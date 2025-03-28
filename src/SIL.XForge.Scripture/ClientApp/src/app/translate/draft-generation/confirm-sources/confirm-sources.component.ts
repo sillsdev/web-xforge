@@ -68,8 +68,8 @@ export class ConfirmSourcesComponent {
     return this.i18nService.enumerateList(this.draftingSources.filter(p => p != null).map(p => p.shortName));
   }
 
-  displayNameForProjectsLanguages(projects: { languageTag: string }[]): string {
-    const uniqueTags = Array.from(new Set(projects.filter(p => p != null).map(p => p.languageTag)));
+  displayNameForProjectsLanguages(projects: { languageTag?: string }[]): string {
+    const uniqueTags = [...new Set(projects.map(p => p.languageTag).filter(t => t != null))];
     const displayNames = uniqueTags.map(tag => this.i18nService.getLanguageDisplayName(tag) ?? tag);
     return this.i18nService.enumerateList(displayNames);
   }
