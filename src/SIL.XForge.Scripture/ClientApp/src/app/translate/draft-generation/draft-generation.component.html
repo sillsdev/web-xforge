@@ -7,7 +7,17 @@
         {{ t("generate_forward_translation_drafts_header") }}
       </h1>
     }
-
+    @if (showImprovedDraftGenerationNotice) {
+      <app-notice type="primary" mode="fill-dark" icon="bolt" data-test-id="improved-draft-generation-notice">
+        @for (portion of improvedDraftGenerationNotice | async; track $index) {
+          @if (portion.id === 1) {
+            <a href="mailto:{{ issueEmail }}" target="_blank" rel="noreferrer">{{ portion.text }}</a>
+          } @else if (portion.id == null) {
+            {{ portion.text }}
+          }
+        }
+      </app-notice>
+    }
     <section>
       @if (isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
         <div class="drafting-instructions">

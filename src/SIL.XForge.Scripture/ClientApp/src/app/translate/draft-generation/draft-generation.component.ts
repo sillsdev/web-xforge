@@ -124,6 +124,16 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   /** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
   private readonly projectChangeThrottlingMs = 500;
 
+  // TODO: Remove the SF-3219 notice entirely after it has expired
+  readonly improvedDraftGenerationNotice = this.i18n.interpolate('draft_generation.improved_draft_generation_notice');
+
+  // Stop showing the improved draft generation notice 60 days after it went live
+  readonly improvedDraftGenerationNoticeExpired = new Date() > new Date('2025-05-31');
+
+  get showImprovedDraftGenerationNotice(): boolean {
+    return this.draftEnabled && !this.improvedDraftGenerationNoticeExpired;
+  }
+
   get draftEnabled(): boolean {
     return this.isBackTranslationMode || this.isPreTranslationApproved;
   }
