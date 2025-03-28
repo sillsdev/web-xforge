@@ -1,7 +1,8 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
-@use 'src/app/app-theme' as sf-app;
 @use 'src/app/my-projects/my-projects-theme' as sf-my-projects;
+@use 'src/app/app-theme' as sf-app;
+@use 'src/app/checking/checking/checking-questions/checking-questions-theme' as sf-checking-questions;
 @use 'src/app/navigation/navigation-theme' as sf-navigation;
 @use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
 @use 'src/app/translate/draft-generation/draft-generation-steps/draft-generation-steps-theme' as
@@ -15,6 +16,7 @@
 
   // Custom components
   @include sf-app.theme($theme);
+  @include sf-checking-questions.theme($theme);
   @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
   @include sf-tab-group.theme($theme);
