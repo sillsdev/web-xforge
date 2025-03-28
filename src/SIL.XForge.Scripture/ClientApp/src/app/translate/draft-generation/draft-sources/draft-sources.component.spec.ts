@@ -1,5 +1,6 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -70,25 +71,34 @@ describe('DraftSourcesComponent', () => {
   }));
 
   describe('save', () => {
-    fit('should save the settings..............', fakeAsync(() => {
+    it('should save the settings', fakeAsync(() => {
       const env = new TestEnvironment();
-      // const draftingSource: SelectableProjectWithLanguageCode = {
-      //   paratextId: 'drafting-source-pt-id'
-      // } as SelectableProjectWithLanguageCode;
-      // const trainingSource1: SelectableProjectWithLanguageCode = {
-      //   paratextId: 'training-source-pt-id-1'
-      // } as SelectableProjectWithLanguageCode;
-      // const trainingSource2: SelectableProjectWithLanguageCode = {
-      //   paratextId: 'training-source-pt-id-2'
-      // } as SelectableProjectWithLanguageCode;
-      // const trainingTarget: SFProjectProfile = env.activatedProjectDoc.data!;
-      tick(); //needed?
+      tick();
+      env.fixture.detectChanges();
 
-      // Set component state.
-      // env.component.draftingSources = [env.usersResources[0]];
-      // env.component.trainingSources = [env.usersProjectsSP[1], trainingSource2];
-      // env.component.trainingTargets = [trainingTarget];
-      // env.component.languageCodesConfirmed = true;
+      // Find the language codes confirmation checkbox and click it
+      const languageCodesConfirmationComponent = env.fixture.debugElement.query(
+        By.css('app-language-codes-confirmation')
+      );
+      const checkbox = languageCodesConfirmationComponent.query(By.css('input[type="checkbox"]'));
+      checkbox.nativeElement.click();
+      // Or if the checkbox is in a mat-checkbox:
+      const matCheckbox = languageCodesConfirmationComponent.query(By.css('mat-checkbox'));
+      matCheckbox.nativeElement.click();
+      env.fixture.detectChanges();
+      tick();
+
+      const expectedSettingsChangeRequest: SFProjectSettings = {
+        alternateSourceEnabled: true,
+        alternateSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
+        additionalTrainingSourceEnabled: true,
+        additionalTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId
+      };
 
       // SUT
       env.component.save();
@@ -97,7 +107,105 @@ describe('DraftSourcesComponent', () => {
       const actualSettingsChangeRequest: SFProjectSettings = capture(
         mockedSFProjectService.onlineUpdateSettings
       ).last()[1];
-      expect(actualSettingsChangeRequest).toEqual({});
+      // The save method should have passed a specific settings change request.
+      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+    }));
+
+    it('clearing second training source works', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+
+      // Find the language codes confirmation checkbox and click it
+      const languageCodesConfirmationComponent = env.fixture.debugElement.query(
+        By.css('app-language-codes-confirmation')
+      );
+      const checkbox = languageCodesConfirmationComponent.query(By.css('input[type="checkbox"]'));
+      checkbox.nativeElement.click();
+      // Or if the checkbox is in a mat-checkbox:
+      const matCheckbox = languageCodesConfirmationComponent.query(By.css('mat-checkbox'));
+      matCheckbox.nativeElement.click();
+      env.fixture.detectChanges();
+      tick();
+
+      const expectedSettingsChangeRequest: SFProjectSettings = {
+        alternateSourceEnabled: true,
+        alternateSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
+        //The second training source, the "additional training source", should not be set.
+        additionalTrainingSourceEnabled: false,
+        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset
+      };
+
+      // Remove the second training source.
+      env.component.trainingSources.pop();
+      // Confirm that we have 1 training source.
+      expect(env.component.trainingSources.length).toEqual(1);
+
+      env.fixture.detectChanges();
+      tick();
+
+      // SUT
+      env.component.save();
+      tick();
+      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
+      const actualSettingsChangeRequest: SFProjectSettings = capture(
+        mockedSFProjectService.onlineUpdateSettings
+      ).last()[1];
+      // The save method should have passed a specific settings change request.
+      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+    }));
+
+    it('clearing first training source works', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+
+      // Find the language codes confirmation checkbox and click it
+      const languageCodesConfirmationComponent = env.fixture.debugElement.query(
+        By.css('app-language-codes-confirmation')
+      );
+      const checkbox = languageCodesConfirmationComponent.query(By.css('input[type="checkbox"]'));
+      checkbox.nativeElement.click();
+      // Or if the checkbox is in a mat-checkbox:
+      const matCheckbox = languageCodesConfirmationComponent.query(By.css('mat-checkbox'));
+      matCheckbox.nativeElement.click();
+      env.fixture.detectChanges();
+      tick();
+
+      const expectedSettingsChangeRequest: SFProjectSettings = {
+        alternateSourceEnabled: true,
+        alternateSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
+        //The first training source should be set and should be equal to what the second training source _was_.
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId,
+        // And the second training source, the "additional training source", should not be set.
+        additionalTrainingSourceEnabled: false,
+        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset
+      };
+
+      // Remove the first training source.
+      env.component.trainingSources[0] = undefined;
+      // Confirm that we have 1 other training source.
+      expect(env.component.trainingSources[1]).not.toBeNull();
+
+      env.fixture.detectChanges();
+      tick();
+
+      // SUT
+      env.component.save();
+      tick();
+      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
+      const actualSettingsChangeRequest: SFProjectSettings = capture(
+        mockedSFProjectService.onlineUpdateSettings
+      ).last()[1];
+      // The save method should have passed a specific settings change request.
+      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
     }));
   });
 
@@ -370,7 +478,7 @@ class TestEnvironment {
     const userNonSFProjectsCount: number = 3;
     const userNonSFResourcesCount: number = 3;
     // Make a set of projects and resources, already on SF, that the user has access to.
-    const usersProjectsAndResourcesOnSF: SFProjectDoc[] = Array.from(
+    const preparingUsersProjectsAndResourcesOnSF: SFProjectDoc[] = Array.from(
       { length: userSFProjectsAndResourcesCount },
       (_, i) =>
         ({
@@ -396,10 +504,14 @@ class TestEnvironment {
         }) as SFProjectDoc
     );
 
-    // usersProjectsAndResourcesOnSF[0].data!.translateConfig.translationSuggestionsEnabled = sfProj0TranslateConfig.translationSuggestionsEnabled;
-    // usersProjectsAndResourcesOnSF[0].data!.translateConfig.preTranslate = sfProj0TranslateConfig.preTranslate;
-    // usersProjectsAndResourcesOnSF[0].data!.translateConfig.draftConfig = sfProj0TranslateConfig.draftConfig;
-    // usersProjectsAndResourcesOnSF[0].data!.translateConfig.source = sfProj0TranslateConfig.source;
+    this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+
+    // Take the drafted SFProfileDoc objects, and run them into and out of TestRealtimeService so they get fields like
+    // `remoteChanges$`.
+    this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, preparingUsersProjectsAndResourcesOnSF);
+    const usersProjectsAndResourcesOnSF: SFProjectDoc[] = preparingUsersProjectsAndResourcesOnSF.map(o =>
+      this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id)
+    );
 
     // Make a set of projects, not already on SF, that the user should have access to.
     const usersProjectsNotOnSF: ParatextProject[] = Array.from({ length: userNonSFProjectsCount }, (_, i) => ({
@@ -491,8 +603,6 @@ class TestEnvironment {
     sfProject0.translateConfig.translationSuggestionsEnabled = false;
     sfProject0.translateConfig.preTranslate = true;
 
-    this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-
     when(mockedParatextService.getProjects()).thenResolve(usersProjects);
     when(mockedParatextService.getResources()).thenResolve(this.usersResources);
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of(usersProjectsAndResourcesOnSF));
@@ -501,15 +611,11 @@ class TestEnvironment {
 
     this.activatedProjectDoc = usersProjectsAndResourcesOnSF[0];
 
-    // this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [this.activatedProjectDoc]);
-    this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, usersProjectsAndResourcesOnSF);
-
     when(mockedActivatedProjectService.changes$).thenReturn(of(this.activatedProjectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     when(mockedActivatedProjectService.projectId).thenReturn(this.activatedProjectDoc.id);
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
-    when(mockedSFUserProjectsService.projectDocs$).thenReturn(of([this.activatedProjectDoc]));
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;

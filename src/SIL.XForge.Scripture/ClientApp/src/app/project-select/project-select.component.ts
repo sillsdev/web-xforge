@@ -61,12 +61,16 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   constructor(private destroyRef: DestroyRef) {
     this.paratextIdControl.valueChanges
       .pipe(distinctUntilChanged(), quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe((value: SelectableProject) => {
-        this.valueChange.next(value.paratextId);
-
-        if (value instanceof Object) {
-          this.projectSelect.emit(value);
+      .subscribe((value: SelectableProject | string) => {
+        // When the user clears the input box, or is typing the name of a project, `value` comes in as a string. When
+        // the user selects a project from the list, `value` comes in as a SelectableProject.
+        if (typeof value === 'string') {
+          this.valueChange.next(value);
+          return;
         }
+
+        this.valueChange.next(value.paratextId);
+        this.projectSelect.emit(value);
       });
 
     this.projects$

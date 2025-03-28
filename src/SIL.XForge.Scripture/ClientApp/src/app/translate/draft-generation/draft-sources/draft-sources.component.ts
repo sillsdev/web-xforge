@@ -19,8 +19,8 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { hasData } from '../../../../type-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { projectLabel } from '../../../shared/utils';
@@ -286,10 +286,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   async save(): Promise<void> {
-    if (this.activatedProjectService.projectDoc == null) throw new Error('Project doc is null');
-    if (this.activatedProjectService.projectDoc.data == null) throw new Error('Project doc data is null');
-    const currentSFProjectId = this.activatedProjectService.projectDoc.id;
-    if (currentSFProjectId == null) throw new Error('Project ID is null');
+    const currentProjectDoc: SFProjectProfileDoc | undefined = this.activatedProjectService.projectDoc;
+    if (!hasData(currentProjectDoc)) throw new Error('Project doc or data is null');
 
     const definedSources: SelectableProjectWithLanguageCode[] = this.draftingSources.filter(s => s != null);
     const definedReferences: SelectableProjectWithLanguageCode[] = this.trainingSources.filter(s => s != null);
@@ -302,25 +300,20 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     else if (this.languageCodeConfirmationMessageIfUserTriesToContinue) {
       messageKey = this.languageCodeConfirmationMessageIfUserTriesToContinue;
     }
-
     if (messageKey) {
       this.dialogService.message(this.i18n.translate(`draft_sources.${messageKey}`));
       return;
     }
 
-    const currentProjectParatextId: string = this.activatedProjectService.projectDoc.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
-      // definedReferences,
-      // definedSources,
-      this.trainingSources as SelectableProject[],
-      this.draftingSources as SelectableProject[],
+      definedReferences,
+      definedSources,
       this.trainingTargets as SelectableProject[],
-      currentProjectParatextId
+      currentProjectDoc.data.paratextId
     );
-    const projectSettingsChange: SFProjectSettings = sourcesSettingsChange;
     await this.checkUpdateStatus(
       'projectSettings',
-      this.projectService.onlineUpdateSettings(currentSFProjectId, projectSettingsChange)
+      this.projectService.onlineUpdateSettings(currentProjectDoc.id, sourcesSettingsChange)
     );
     this.monitorSyncStatus();
   }
