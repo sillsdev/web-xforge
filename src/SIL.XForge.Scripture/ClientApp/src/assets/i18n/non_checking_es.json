@@ -71,7 +71,7 @@
     "click_add_question": "Haga clic en {{ boldStart }}Agregar pregunta{{ boldEnd }}, arriba.",
     "confirm_bulk_archive": "¿Está seguro que desea archivar todas las preguntas en {{ scope }}?",
     "confirm_bulk_republish": "¿Está seguro de que quiere volver a publicar todas las preguntas en {{ scope }}?",
-    "confirm_delete_chapter_audio": "¿Está seguro de que desea eliminar los datos de audio y temporización de los capítulos de {{ book }} {{ chapter }}?",
+    "confirm_delete_chapter_audio": "¿Está seguro de que desea eliminar los datos de audio y temporización del capítulo {{ chapter }} de {{ book }}?",
     "delete": "Eliminar",
     "delete_chapter_audio": "Borrar el audio del capítulo",
     "edit_chapter_audio": "Editar el audio del capítulo",
