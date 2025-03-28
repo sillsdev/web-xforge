@@ -303,7 +303,8 @@
     "state_syncing": "Syncing",
     "stay_on_page": "Stay on page",
     "target_language_data": "Target language data",
-    "training_language_model": "Training the language model"
+    "training_language_model": "Training the language model",
+    "unknown_language_code": "unknown"
   },
   "editor": {
     "add_comment": "Add Comment",
