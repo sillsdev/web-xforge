@@ -61,7 +61,9 @@ export class LanguageCodesConfirmationComponent {
   }
 
   get sourceSideLanguageCodes(): string[] {
-    return [...this.draftingSources, ...this.trainingSources].filter(s => s != null).map(s => s.languageTag);
+    return [...this.draftingSources, ...this.trainingSources]
+      .map(s => s.languageTag)
+      .filter(t => t != null && t !== '');
   }
 
   get uniqueSourceSideLanguageCodes(): string[] {
