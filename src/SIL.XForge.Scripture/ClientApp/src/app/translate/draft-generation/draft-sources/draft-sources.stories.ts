@@ -96,10 +96,21 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
     name: `${languageName(languageCodes[i])} Project`,
     shortName: `P_${languageCodes[i].toUpperCase()}`,
     languageTag: languageCodes[i],
-    projectId: `project-${i}`,
+    projectId: null,
     isConnectable: true,
     isConnected: true
   }));
+
+  // Add a project that has an unknown language code
+  projects.push({
+    paratextId: 'project-00',
+    name: 'UNK',
+    shortName: 'UNK',
+    languageTag: '',
+    projectId: null,
+    isConnectable: true,
+    isConnected: false
+  });
 
   when(mockedParatextService.getResources()).thenResolve(resources);
   when(mockedParatextService.getProjects()).thenResolve(projects);
@@ -404,5 +415,23 @@ export const CannotSaveWithMultipleSourceLanguages: Story = {
     canvas.getByRole('heading', {
       name: 'All source and reference projects must be in the same language. Please select different source or reference projects.'
     });
+  }
+};
+
+// See SF-3288
+export const CanHandleBackTranslationProjectsWithUnknownLanguage: Story = {
+  ...Default,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Select a training source that does not have a language code defined
+    await selectSource(canvasElement, 'P_ES');
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+    await selectSource(canvasElement, 'R_ES');
+    await userEvent.click(canvas.getByRole('button', { name: /Add another reference project/ }));
+    await selectSource(canvasElement, 'UNK', 1);
+
+    expect(await warning(canvasElement)).toContain('Incorrect language codes will dramatically reduce draft quality.');
+    await userEvent.click(await canvas.findByRole('checkbox'));
   }
 };
