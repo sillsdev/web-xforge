@@ -434,7 +434,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         if (this.isDraftInProgress(job)) {
           this.draftJob = job;
           this.currentPage = 'initial';
-          this.noticeService.show(this.i18n.translateStatic('draft_generation.draft_already_running'));
+          this.dialogService.message('draft_generation.draft_already_running');
           return;
         }
       });

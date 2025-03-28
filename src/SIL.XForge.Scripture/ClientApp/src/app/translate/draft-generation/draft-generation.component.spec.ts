@@ -117,7 +117,7 @@ describe('DraftGenerationComponent', () => {
           allowForwardTranslationNmtDrafting: createTestFeatureFlag(false)
         }
       );
-      mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
+      mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog', 'message']);
       mockNoticeService = jasmine.createSpyObj<NoticeService>([
         'loadingStarted',
         'loadingFinished',
@@ -1014,7 +1014,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.currentPage).toBe('initial');
       expect(env.component['draftJob']).not.toBeNull();
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
-      expect(mockNoticeService.show).toHaveBeenCalledTimes(1);
+      expect(mockDialogService.message).toHaveBeenCalledTimes(1);
     });
 
     it('should not attempt "cancel dialog" close for queued build', () => {
