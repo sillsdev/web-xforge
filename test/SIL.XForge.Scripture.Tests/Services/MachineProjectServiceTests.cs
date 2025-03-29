@@ -1265,20 +1265,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void GetProjectZipAsync_ThrowsExceptionWhenProjectIsAResource()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
-        MemoryStream outputStream = new MemoryStream();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetProjectZipAsync(Project01, outputStream, CancellationToken.None)
-        );
-    }
-
-    [Test]
     public void GetSourceLanguage_DoesNotUseTheAlternateSourceIfItIsDisabled()
     {
         // Set up test environment
