@@ -188,14 +188,14 @@ public class MachineProjectService(
     }
 
     /// <summary>
-    /// Gets the project as a zip file, writing it to <paramref name="outputStream"/>.
+    /// Gets the project or resource as a zip file, writing it to <paramref name="outputStream"/>.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="outputStream">The output stream.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The name of the zip file, e.g. <c>ABC.zip</c>.</returns>
     /// <exception cref="DataNotFoundException">
-    /// The project does not exist, is a resource, or could not be found on disk.
+    /// The project does not exist, or could not be found on disk.
     /// </exception>
     public async Task<string> GetProjectZipAsync(
         string sfProjectId,
@@ -208,12 +208,6 @@ public class MachineProjectService(
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
-        }
-
-        // Ensure that the project is not a resource
-        if (paratextService.IsResource(project.ParatextId))
-        {
-            throw new DataNotFoundException("You cannot download a resource.");
         }
 
         // Create the zip file from the directory in memory
