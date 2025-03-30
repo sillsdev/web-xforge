@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Security.Claims;
-using IdentityModel;
+using Duende.IdentityModel;
 using Microsoft.AspNetCore.Http;
 using SIL.XForge.Utils;
 
