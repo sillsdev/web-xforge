@@ -1,6 +1,8 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, ElementRef, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
+import { fromEvent } from 'rxjs';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { LynxEditor } from '../lynx-editor';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightAction, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
@@ -13,7 +15,7 @@ import { LynxWorkspaceService } from '../lynx-workspace.service';
   styleUrl: './lynx-insight-overlay.component.scss',
   providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: { showDelay: 500 } }]
 })
-export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
+export class LynxInsightOverlayComponent implements OnInit {
   showMoreInfo = false;
   applyActionShortcut: string = '';
 
@@ -49,10 +51,9 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
   menuActions: LynxInsightAction[] = [];
   primaryAction?: LynxInsightAction;
 
-  // Create single reference to bound method so it can be removed in ngOnDestroy
-  private readonly handleKeyDownBound = this.handleKeyDown.bind(this);
-
   constructor(
+    private readonly destroyRef: DestroyRef,
+    private readonly elementRef: ElementRef,
     private readonly insightState: LynxInsightStateService,
     private readonly overlayService: LynxInsightOverlayService,
     private readonly lynxWorkspaceService: LynxWorkspaceService,
@@ -61,13 +62,20 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.document.addEventListener('keydown', this.handleKeyDownBound);
+    // Listen for keystrokes to apply chord shortcut
+    fromEvent<KeyboardEvent>(this.document, 'keydown')
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(event => this.handleKeyDown(event));
+
+    // Prevent editor from stealing focus when overlay is open
+    fromEvent<FocusEvent>(this.editor!.root, 'focus')
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.focusOverlay());
+
+    // After overlay renders, focus it to prevent editor edits from keystrokes
+    this.focusOverlay();
 
     this.applyActionShortcut = this.formatKeyChord(this.config.actionOverlayApplyPrimaryActionChord);
-  }
-
-  ngOnDestroy(): void {
-    this.document.removeEventListener('keydown', this.handleKeyDownBound);
   }
 
   handleKeyDown(event: KeyboardEvent): void {
@@ -118,6 +126,14 @@ export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
     console.log('Dismiss', insight.id);
     this.insightDismiss.emit(insight);
     this.insightState.dismissInsights([insight.id]);
+  }
+
+  private focusOverlay(): void {
+    setTimeout(() => {
+      // Make overlay focusable, then focus it
+      this.elementRef.nativeElement.setAttribute('tabindex', '0');
+      this.elementRef.nativeElement.focus();
+    });
   }
 
   private fetchInsightActions(insight: LynxInsight | undefined): void {
