@@ -142,12 +142,6 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
                 bsonType: 'string'
               }
             }
-          },
-          dismissedInsightIds: {
-            bsonType: 'array',
-            items: {
-              bsonType: 'string'
-            }
           }
         },
         additionalProperties: false
