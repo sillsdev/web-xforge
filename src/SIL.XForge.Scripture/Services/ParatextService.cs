@@ -988,6 +988,7 @@ public class ParatextService : DisposableBase, IParatextService
             BaseProjectShortName = scrText.Settings.TranslationInfo.BaseProjectName,
             CopyrightBanner = copyrightBanner,
             CopyrightNotice = copyrightNotice,
+            Versification = scrText.Settings.Versification,
         };
     }
 
