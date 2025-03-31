@@ -122,27 +122,14 @@ public class MachineApiService(
 
         try
         {
-            // TODO: When Serval implements https://github.com/sillsdev/serval/issues/648, this can be removed
-            TranslationBuild translationBuild;
-            try
-            {
-                translationBuild = await translationEnginesClient.GetCurrentBuildAsync(
-                    translationEngineId,
-                    minRevision: null,
-                    cancellationToken
-                );
-            }
-            catch (ServalApiException)
-            {
-                // Ignore all errors. Serious errors will be thrown in CancelBuildAsync() below
-                translationBuild = null;
-            }
-
             // Cancel the build on Serval
-            await translationEnginesClient.CancelBuildAsync(translationEngineId, cancellationToken);
+            TranslationBuild translationBuild = await translationEnginesClient.CancelBuildAsync(
+                translationEngineId,
+                cancellationToken
+            );
 
             // Return the build id so it can be logged
-            return translationBuild?.Id;
+            return translationBuild.Id;
         }
         catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
         {
