@@ -3136,6 +3136,10 @@ public class MachineApiServiceTests
                     new SFProject
                     {
                         Id = Project01,
+                        TranslateConfig = new TranslateConfig
+                        {
+                            DraftConfig = new DraftConfig { LastSelectedTrainingScriptureRange = "GEN" },
+                        },
                         ParatextId = Paratext01,
                         Texts =
                         [

@@ -14,7 +14,9 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Serval.Client;
 using SIL.Converters.Usj;
+using SIL.Linq;
 using SIL.ObjectModel;
+using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
@@ -295,6 +297,33 @@ public class MachineApiService(
                 .MaxBy(b => b.DateFinished);
             if (translationBuild is not null)
             {
+                // Verify that each book/chapter in the lastSelectedTranslationScriptureRange is marked as having a draft
+                // If the projects texts chapters are not all marked as having a draft, then the webhook likely failed
+                // and we want to retrieve the pre-translation status to update the chapters as having a draft
+                SFProject project = await projectService.GetProjectAsync(sfProjectId);
+
+                Dictionary<string, List<int>> scriptureRanges = ScriptureRangeParser.GetChapters(
+                    project.TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRange
+                );
+
+                string[] scriptureRangeIds = [.. scriptureRanges.Keys];
+
+                foreach (string bookId in Canon.AllBookIds.Where(bookId => scriptureRangeIds.Contains(bookId)))
+                {
+                    int bookNum = Canon.BookIdToNumber(bookId);
+
+                    project
+                        .Texts.Where(text => text.BookNum == bookNum)
+                        .ForEach(async info =>
+                        {
+                            if (info.Chapters.Any(c => !c.HasDraft ?? false))
+                            {
+                                await RetrievePreTranslationStatusAsync(sfProjectId, cancellationToken);
+                                return;
+                            }
+                        });
+                }
+
                 buildDto = CreateDto(translationBuild);
             }
         }
