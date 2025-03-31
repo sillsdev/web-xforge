@@ -1,3 +1,4 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
@@ -17,6 +18,9 @@ import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { TestingRetryingRequestService } from 'xforge-common/testing-retrying-request.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -40,14 +44,24 @@ const mockedRealtimeQuery: RealtimeQuery<QuestionDoc> = mock(RealtimeQuery);
 
 describe('ImportQuestionsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [DialogTestModule, TestOnlineStatusModule.forRoot()],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: DialogService, useMock: mockedDialogService },
-      { provide: CsvService, useMock: mockedCsvService }
+      { provide: CsvService, useMock: mockedCsvService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
+
+  let overlayContainer: OverlayContainer;
+  beforeEach(() => {
+    overlayContainer = TestBed.inject(OverlayContainer);
+  });
+  afterEach(() => {
+    // Prevents 'Error: Test did not clean up its overlay container content.'
+    overlayContainer.ngOnDestroy();
+  });
 
   it('shows questions only from the books in the project', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -318,6 +332,46 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.cancelButton);
   }));
 
+  it('can import from an Excel 97-2003 file', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    const genQuestions = [['Genesis 1:1', 'Question for Genesis 1:1']];
+    const matQuestions = Array.from(Array(100), (_, i) => [`MAT 1:${i + 1}`, `Question for Matthew 1:${i + 1}`]);
+
+    env.selectFileWithContents([['Reference', 'Questions'], ...genQuestions, ...matQuestions], 'test.xls');
+
+    expect(env.tableRows.length).toBe(1);
+    expect(env.getColumnTwoText(env.tableRows[0])).toEqual('Genesis 1:1');
+    env.click(env.continueImportButton);
+    env.click(env.cancelButton);
+  }));
+
+  it('can import from an Excel 2007 file', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    const genQuestions = [['Genesis 1:1', 'Question for Genesis 1:1']];
+    const matQuestions = Array.from(Array(100), (_, i) => [`MAT 1:${i + 1}`, `Question for Matthew 1:${i + 1}`]);
+
+    env.selectFileWithContents([['Reference', 'Questions'], ...genQuestions, ...matQuestions], 'test.xlsx');
+
+    expect(env.tableRows.length).toBe(1);
+    expect(env.getColumnTwoText(env.tableRows[0])).toEqual('Genesis 1:1');
+    env.click(env.continueImportButton);
+    env.click(env.cancelButton);
+  }));
+
+  it('does not import from an Excel file when offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.testOnlineStatusService.setIsOnline(false);
+
+    const genQuestions = [['Genesis 1:1', 'Question for Genesis 1:1']];
+    const matQuestions = Array.from(Array(100), (_, i) => [`MAT 1:${i + 1}`, `Question for Matthew 1:${i + 1}`]);
+
+    env.selectFileWithContents([['Reference', 'Questions'], ...genQuestions, ...matQuestions], 'test.xlsx');
+
+    expect(env.component.errorState).toBe('offline_conversion');
+  }));
+
   it('does not import exact duplicate questions from a CSV file', fakeAsync(() => {
     const question = { data: { text: 'Matthew 1:1 question', verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 } } };
     const env = new TestEnvironment({ existingQuestions: [question as QuestionDoc] });
@@ -458,6 +512,9 @@ class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;
   component: ImportQuestionsDialogComponent;
   dialogRef: MatDialogRef<ImportQuestionsDialogComponent>;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
   mockedScriptureChooserMatDialogRef = mock<MatDialogRef<ScriptureChooserDialogComponent>>(MatDialogRef);
   mockedImportQuestionsConfirmationDialogRef =
     mock<MatDialogRef<ImportQuestionsConfirmationDialogComponent>>(MatDialogRef);
@@ -684,6 +741,7 @@ class TestEnvironment {
 
   selectFileWithContents(contents: string[][], filename = 'filename.csv'): void {
     when(mockedCsvService.parse(anything())).thenResolve(contents);
+    when(mockedCsvService.convert(anything())).thenResolve(contents);
     this.component.fileSelected({ name: filename } as File);
     tick();
     this.fixture.detectChanges();
