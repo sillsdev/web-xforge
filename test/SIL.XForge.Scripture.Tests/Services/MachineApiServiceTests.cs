@@ -161,9 +161,12 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         await env.QueueBuildAsync(preTranslate: true);
+        env.TranslationEnginesClient.CancelBuildAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult(new TranslationBuild { Id = Build01 }));
 
         // SUT
-        await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+        string actual = await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+        Assert.AreEqual(Build01, actual);
 
         await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
         env.BackgroundJobClient.Received(1).ChangeState(JobId, Arg.Any<DeletedState>(), null); // Same as Delete()
