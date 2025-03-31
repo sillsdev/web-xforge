@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
-using IdentityModel;
+using Duende.IdentityModel;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using NUnit.Framework;
@@ -19,7 +19,7 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         const string expected = "auth_id";
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, expected) })
+            new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, expected)])
         );
 
         // SUT
@@ -53,7 +53,7 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         const string expected = "user_name";
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(new[] { new Claim(JwtClaimTypes.Subject, expected) })
+            new ClaimsIdentity([new Claim(JwtClaimTypes.Subject, expected)])
         );
 
         // SUT
@@ -119,11 +119,7 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
             new ClaimsIdentity(
-                new[]
-                {
-                    new Claim(XFClaimTypes.Role, SystemRole.SystemAdmin),
-                    new Claim(XFClaimTypes.Role, SystemRole.User),
-                }
+                [new Claim(XFClaimTypes.Role, SystemRole.SystemAdmin), new Claim(XFClaimTypes.Role, SystemRole.User)]
             )
         );
 
@@ -140,7 +136,7 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         const string expected = SystemRole.SystemAdmin;
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(new[] { new Claim(XFClaimTypes.Role, expected) })
+            new ClaimsIdentity([new Claim(XFClaimTypes.Role, expected)])
         );
 
         // SUT
@@ -155,7 +151,7 @@ public class UserAccessorTests
         var env = new TestEnvironment();
         const string expected = "user_id";
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(new[] { new Claim(XFClaimTypes.UserId, expected) })
+            new ClaimsIdentity([new Claim(XFClaimTypes.UserId, expected)])
         );
 
         // SUT

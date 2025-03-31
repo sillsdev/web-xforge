@@ -109,7 +109,7 @@ ProjectSettings settings = new ProjectSettings(reader);
 // Initialize the localizer, and hide its output
 var oldOut = Console.Out;
 Console.SetOut(StreamWriter.Null);
-Localizer.Str(string.Empty);
+Localizer.Str(string.Empty, string.Empty);
 Console.SetOut(oldOut);
 
 // Get the revisions
