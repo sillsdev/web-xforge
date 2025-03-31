@@ -41,9 +41,18 @@ export class ResumeTranslateService extends ResumeBaseService {
       map(([projectDoc, projectUserConfigDoc]) => {
         const project = projectDoc?.data;
         const config = projectUserConfigDoc?.data;
+        const doesLastBookExist =
+          projectDoc?.data?.texts.find(t => t.bookNum === config?.selectedBookNum) !== undefined;
 
-        const bookNum = config?.selectedBookNum ?? project?.texts[0]?.bookNum ?? Canon.firstBook;
-        const chapterNum = config?.selectedChapterNum ?? project?.texts[bookNum]?.chapters[0].number ?? 1;
+        let bookNum: number;
+        let chapterNum: number;
+        if (doesLastBookExist) {
+          bookNum = config!.selectedBookNum ?? project?.texts[0]?.bookNum ?? Canon.firstBook;
+          chapterNum = config?.selectedChapterNum ?? project?.texts[bookNum]?.chapters[0].number ?? 1;
+        } else {
+          bookNum = project?.texts[0]?.bookNum ?? Canon.firstBook;
+          chapterNum = project?.texts[bookNum]?.chapters[0].number ?? 1;
+        }
         const bookId = Canon.bookNumberToId(bookNum);
 
         return this.getProjectLink([bookId, String(chapterNum)]);

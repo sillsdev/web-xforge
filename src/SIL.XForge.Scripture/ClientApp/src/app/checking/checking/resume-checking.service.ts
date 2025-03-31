@@ -69,7 +69,9 @@ export class ResumeCheckingService extends ResumeBaseService {
       tap(([projectDoc]) => (projectId = projectDoc?.id || '')),
       map(([projectDoc, projectUserConfigDoc]) => {
         const config = projectUserConfigDoc?.data;
-        if (config?.selectedBookNum && config?.selectedChapterNum) {
+        const doesLastBookExist =
+          projectDoc?.data?.texts.find(t => t.bookNum === config?.selectedBookNum) !== undefined;
+        if (config?.selectedBookNum && config?.selectedChapterNum && doesLastBookExist) {
           return of(this.getLinkTokens(projectDoc!, config.selectedBookNum, config.selectedChapterNum));
         }
 
