@@ -198,8 +198,21 @@ export class LynxWorkspaceService {
           }
           const start = doc.offsetAt(diagnostic.range.start);
           const end = doc.offsetAt(diagnostic.range.end);
+          const range = { index: start, length: end - start };
+
+          // Look for matching existing insight
+          const existingMatchingInsight = (this.curInsights.get(event.uri) || []).find(curInsight => {
+            return (
+              curInsight.code === diagnostic.code.toString() &&
+              curInsight.source === diagnostic.source &&
+              curInsight.type === type &&
+              curInsight.range.index === range.index &&
+              curInsight.range.length === range.length
+            );
+          });
+
           insights.push({
-            id: uuidv4(),
+            id: existingMatchingInsight?.id ?? uuidv4(), // Reuse id if matching insight found, otherwise generate
             type,
             textDocId,
             range: { index: start, length: end - start },
