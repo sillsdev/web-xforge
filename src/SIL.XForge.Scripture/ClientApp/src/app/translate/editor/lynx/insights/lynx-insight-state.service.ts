@@ -272,32 +272,21 @@ export class LynxInsightStateService {
         this.insightPanelVisibleSource$.next(persistedUserState.panelData.isOpen);
       }
 
-      if (persistedUserState?.dismissedInsightIds != null) {
-        this.dismissedInsightIdsSource$.next(persistedUserState.dismissedInsightIds);
-      }
-
       // Notify to start persisting changes to user state data
       stateLoaded$.next(true);
     });
 
     // Save state to project user config
-    combineLatest([
-      this.filter$,
-      this.orderBy$,
-      this.insightPanelVisible$,
-      this.dismissedInsightIds$,
-      stateLoaded$.pipe(filter(loaded => loaded))
-    ])
+    combineLatest([this.filter$, this.orderBy$, this.insightPanelVisible$, stateLoaded$.pipe(filter(loaded => loaded))])
       .pipe(withLatestFrom(this.activatedProjectUserConfig.projectUserConfigDoc$))
-      .subscribe(([[filter, sortOrder, isOpen, dismissedInsightIds], pucDoc]) => {
+      .subscribe(([[filter, sortOrder, isOpen], pucDoc]) => {
         pucDoc?.submitJson0Op(op =>
           op.set(puc => puc.lynxInsightState, {
             panelData: {
               isOpen,
               filter,
               sortOrder
-            },
-            dismissedInsightIds
+            }
           })
         );
       });
