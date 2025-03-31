@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.ObjectModel;
+using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
@@ -280,7 +281,7 @@ public class MachineApiService(
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
         // Get the translation engine
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
@@ -295,6 +296,51 @@ public class MachineApiService(
                 .MaxBy(b => b.DateFinished);
             if (translationBuild is not null)
             {
+                // Verify that each book/chapter from the translationBuild is marked HasDraft = true
+                // If the projects texts chapters are not all marked as having a draft, then the webhook likely failed
+                // and we want to retrieve the pre-translation status to update the chapters as having a draft
+                Dictionary<string, List<int>> scriptureRanges = [];
+
+                IList<PretranslateCorpus> pretranslateCorpus = translationBuild.Pretranslate;
+
+                foreach (PretranslateCorpus ptc in pretranslateCorpus)
+                {
+                    // We are using the TranslationBuild.Pretranslate.SourceFilters.ScriptureRange to find the
+                    // books selected for drafting. Some projects may have used the now obsolete field
+                    // TranslationBuild.Pretranslate.ScriptureRange and will not get checked for webhook failures.
+                    foreach (ParallelCorpusFilter source in ptc.SourceFilters)
+                    {
+                        Dictionary<string, List<int>>? scriptureRange = ScriptureRangeParser.GetChapters(
+                            source.ScriptureRange
+                        );
+
+                        scriptureRanges = scriptureRanges
+                            .Union(scriptureRange)
+                            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
+                    }
+                }
+
+                string[] scriptureRangeIds = [.. scriptureRanges.Keys];
+
+                // check if any chapters from the scripture range have not been updated to HasDraft = true
+                bool hasDraftMissingFromChapters = Canon
+                    .AllBookIds.Where(book => scriptureRangeIds.Contains(book))
+                    .All(book =>
+                    {
+                        int bookNum = Canon.BookIdToNumber(book);
+                        return project.Texts.Any(text =>
+                            text.BookNum == bookNum
+                            && text.Chapters.Where(chapter => scriptureRanges[book].Contains(chapter.Number))
+                                .All(c => c.HasDraft ?? false)
+                        );
+                    });
+
+                if (hasDraftMissingFromChapters)
+                {
+                    // Chapters HasDraft is missing or false but should be true, retrieve the pre-translation status to update them.
+                    await RetrievePreTranslationStatusAsync(sfProjectId, cancellationToken);
+                }
+
                 buildDto = CreateDto(translationBuild);
             }
         }
