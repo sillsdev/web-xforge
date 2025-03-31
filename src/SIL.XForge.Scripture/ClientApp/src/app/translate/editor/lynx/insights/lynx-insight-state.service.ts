@@ -154,8 +154,8 @@ export class LynxInsightStateService {
   });
   readonly displayState$: Observable<LynxInsightDisplayState> = this.displayStateSource$.pipe(
     distinctUntilChanged(isEqual),
-    shareReplay(1),
-    tap(displayState => console.log('displayStateSource$ changed (LynxInsightStateService)', displayState))
+    tap(displayState => console.log('displayStateSource$ changed (LynxInsightStateService)', displayState)),
+    shareReplay(1)
   );
 
   constructor(
@@ -200,9 +200,8 @@ export class LynxInsightStateService {
       if (prop != null) {
         const currentVal = this.displayStateSource$.value[prop];
 
-        if (typeof currentVal === 'boolean') {
-          displayStateChanges[prop] = !currentVal;
-        }
+        // Toggle the value if it is set.  Set to true if it is not yet set.
+        displayStateChanges[prop] = typeof currentVal === 'boolean' ? !currentVal : true;
       }
     }
 
