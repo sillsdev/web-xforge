@@ -67,19 +67,6 @@
           "Microsoft.FeatureManagement": "3.4.0"
         }
       },
-      "Microsoft.ICU.ICU4C.Runtime": {
-        "type": "Direct",
-        "requested": "[72.1.0.3, )",
-        "resolved": "72.1.0.3",
-        "contentHash": "Z42uzvs0TN9Y02xgHtRgPcumLRnvK3MHVHZ0Pr3OrnvyZYhBwqDgdYBOvoELcTsayUgwqrPLb+C5Fqqk66zlUg==",
-        "dependencies": {
-          "Microsoft.ICU.ICU4C.Runtime.linux-arm64": "72.1.0.3",
-          "Microsoft.ICU.ICU4C.Runtime.linux-x64": "72.1.0.3",
-          "Microsoft.ICU.ICU4C.Runtime.win-arm64": "72.1.0.3",
-          "Microsoft.ICU.ICU4C.Runtime.win-x64": "72.1.0.3",
-          "Microsoft.ICU.ICU4C.Runtime.win-x86": "72.1.0.3"
-        }
-      },
       "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": {
         "type": "Direct",
         "requested": "[1.21.0, )",
@@ -154,6 +141,7 @@
         "resolved": "9.5.0.8",
         "contentHash": "TFRH8KBM77q5seEI6W8iOENk5XY5KXRIxJnllEVO6PT9D37nDHIqDKvq5Y3ilpsPZjhZj/F/lVciw1dOkZ9gzQ==",
         "dependencies": {
+          "DotNetZip": "1.16.0",
           "Icu4c.Win.Min": "59.1.7",
           "JetBrains.Annotations": "2021.2.0",
           "Microsoft.CSharp": "4.7.0",
@@ -180,6 +168,12 @@
           "Newtonsoft.Json": "13.0.3",
           "System.ComponentModel.Annotations": "5.0.0"
         }
+      },
+      "SharpZipLib": {
+        "type": "Direct",
+        "requested": "[1.4.2, )",
+        "resolved": "1.4.2",
+        "contentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A=="
       },
       "Swashbuckle.AspNetCore": {
         "type": "Direct",
@@ -319,6 +313,15 @@
         "contentHash": "4H/f2uYJOZ+YObZjpY9ABrKZI+JNw3uizp6oMzTXwDw6F+2qIPhpRl/1t68O/6e98+vqNiYGu+lswmwdYUy3gg==",
         "dependencies": {
           "Microsoft.Win32.Registry": "5.0.0"
+        }
+      },
+      "DotNetZip": {
+        "type": "Transitive",
+        "resolved": "1.16.0",
+        "contentHash": "CS9sjjXF23FLIbwlLT5k/jXBYxVnLMn01lyAvN/hxFM+UDvSicjTPB9ZMA+Wp/QlvBPbD2pzkAXUp1O50gP/Lw==",
+        "dependencies": {
+          "System.Security.Permissions": "4.7.0",
+          "System.Text.Encoding.CodePages": "4.7.1"
         }
       },
       "Duende.IdentityModel": {
@@ -786,31 +789,6 @@
           "Microsoft.Extensions.Logging": "2.1.1"
         }
       },
-      "Microsoft.ICU.ICU4C.Runtime.linux-arm64": {
-        "type": "Transitive",
-        "resolved": "72.1.0.3",
-        "contentHash": "u/2cPX6JBgSgTOeDjkb2A672LsL3zQo60ViYUTqHOrxuFOIx0ag6bFu2WgN4zRZ71K6L0fubnrlS1HpN+k5kyA=="
-      },
-      "Microsoft.ICU.ICU4C.Runtime.linux-x64": {
-        "type": "Transitive",
-        "resolved": "72.1.0.3",
-        "contentHash": "q1iHc4EGCBYbpb+gfMZGn6L/WuBei/la52pRbxlVy4ed7FdB9UmvUXhoRzv6OsYa6E4VlTlj6EKgYvrwPkVGKQ=="
-      },
-      "Microsoft.ICU.ICU4C.Runtime.win-arm64": {
-        "type": "Transitive",
-        "resolved": "72.1.0.3",
-        "contentHash": "/h8OPK1fqrI9t8hKNmpnSy7MYssGB1CtoXANsduFqf0Sc+OOtfoCIvRp2Mt9Fk80CmtU/53TldGvt1oCH7KpEA=="
-      },
-      "Microsoft.ICU.ICU4C.Runtime.win-x64": {
-        "type": "Transitive",
-        "resolved": "72.1.0.3",
-        "contentHash": "7j6NsmvKuVxgoFsoy0Ty7I09V/tvrQBZN+ddfHtz/OWNRaEIy7PsAguGoyD4AcQZh/KkfT9RQlHoQJ4xVQPr6g=="
-      },
-      "Microsoft.ICU.ICU4C.Runtime.win-x86": {
-        "type": "Transitive",
-        "resolved": "72.1.0.3",
-        "contentHash": "xTHoHJKtgHDsYkQ/RU3o4U36ktjQqnR+ML00HDDK2SWr+9nMekxnXvtLZ2I4cqF8s51frxqTRgx1jDVtIzCf3w=="
-      },
       "Microsoft.IdentityModel.Abstractions": {
         "type": "Transitive",
         "resolved": "8.0.1",
@@ -1230,11 +1208,6 @@
         "type": "Transitive",
         "resolved": "0.30.1",
         "contentHash": "XqD4TpfyYGa7QTPzaGlMVbcecKnXy4YmYLDWrU+JIj7IuRNl7DH2END+Ll7ekWIY8o3dAMWLFDE1xdhfIWD1nw=="
-      },
-      "SharpZipLib": {
-        "type": "Transitive",
-        "resolved": "1.4.2",
-        "contentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A=="
       },
       "SIL.Core": {
         "type": "Transitive",
