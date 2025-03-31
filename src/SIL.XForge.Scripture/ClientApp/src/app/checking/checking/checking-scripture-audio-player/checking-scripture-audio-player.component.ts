@@ -9,6 +9,7 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.utils';
+
 @Component({
   selector: 'app-checking-scripture-audio-player',
   templateUrl: './checking-scripture-audio-player.component.html',
@@ -38,8 +39,14 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
     this.doAudioSubscriptions();
   }
 
+  @Input() set showSegment(value: boolean) {
+    this._showSegment = value;
+  }
+
   verseLabel: string = this.emptyVerseLabel;
   audioSource?: string;
+
+  protected _showSegment = false;
 
   private _audioIsAvailable: boolean = false;
   private _timing: AudioTiming[] = [];
@@ -63,6 +70,20 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
 
   get isPlaying(): boolean {
     return !!this.audioPlayer?.audio?.isPlaying;
+  }
+
+  get currentSegmentDisplay(): number {
+    // Find the last index where the segment's start time is less than or equal to the current time
+    for (let i = this._timing.length - 1; i >= 0; i--) {
+      if (this._timing[i].from <= (this.audioPlayer?.audio?.currentTime ?? 0)) {
+        return i + 1;
+      }
+    }
+    return 0;
+  }
+
+  get numberOfSegments(): number {
+    return this._timing.length;
   }
 
   private get currentVerseLabel(): string {

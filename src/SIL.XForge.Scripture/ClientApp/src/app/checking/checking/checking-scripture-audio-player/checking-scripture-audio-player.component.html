@@ -23,5 +23,10 @@
     }
   </div>
   <app-audio-player #audioPlayer [source]="audioSource"></app-audio-player>
-  <span class="verse-label">{{ verseLabel }}</span>
+  <div class="footer">
+    <span class="verse-label">{{ verseLabel }}</span>
+    @if (_showSegment) {
+      <span class="verse-label">{{ t("segment") }} {{ currentSegmentDisplay }}/{{ numberOfSegments }}</span>
+    }
+  </div>
 </div>
