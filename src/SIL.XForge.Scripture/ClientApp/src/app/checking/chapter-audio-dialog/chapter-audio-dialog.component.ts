@@ -18,6 +18,7 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
+import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
@@ -49,12 +50,15 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;
   @ViewChild('fileDropzone') fileDropzone?: ElementRef<HTMLInputElement>;
   @ViewChild('chapterAudio') chapterAudio?: SingleButtonAudioPlayerComponent;
-  private audio?: AudioAttachment;
+
+  protected readonly textDocId: TextDocId;
+  protected audio?: AudioAttachment;
+  protected timing_processed: AudioTiming[] = [];
+
   private _book: number = this.books[0];
   private _chapter: number = 1;
   private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
   private timing: AudioTiming[] = [];
-  private timing_processed: AudioTiming[] = [];
   private _editState: boolean = false;
   private _selectionHasAudioAlready: boolean = false;
   private _audioLength: number = 0;
@@ -77,6 +81,8 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     protected readonly externalUrlService: ExternalUrlService
   ) {
     this.getStartingLocation();
+
+    this.textDocId = new TextDocId(this.data.projectId, this.book, this.chapter, 'target');
   }
 
   get isAudioInvalid(): boolean {
@@ -89,10 +95,6 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
 
   get audioBlob(): string | undefined {
     return this._audioBlob;
-  }
-
-  get selectionHasAudioAlready(): boolean {
-    return this._selectionHasAudioAlready;
   }
 
   get book(): number {
@@ -129,7 +131,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     return text.chapters.map(c => c.number);
   }
 
-  get hasTimingBeenUploaded(): boolean {
+  get isTimingUploaded(): boolean {
     return this.timing_processed.length > 0;
   }
 
@@ -137,7 +139,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     return this.timingErrorMessageKey !== '';
   }
 
-  get hasAudioBeenUploaded(): boolean {
+  get isAudioUploaded(): boolean {
     return this.audio?.blob != null && this.audio?.fileName != null;
   }
 
@@ -181,7 +183,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
       }
       await this.getDuration(audio.url).then(l => {
         this._audioLength = l;
-        if (this.hasTimingBeenUploaded) {
+        if (this.isTimingUploaded) {
           this.validateTimingEntries(this._audioLength);
         }
       });
@@ -194,7 +196,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
 
   deleteAudioData(): void {
     this.audio = undefined;
-    this.fileDropzone!.nativeElement.value = '';
+    if (this.fileDropzone) this.fileDropzone.nativeElement.value = '';
   }
 
   deleteTimingData(): void {
@@ -257,22 +259,35 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     this.validateTimingEntries(this._audioLength);
   }
 
-  async save(): Promise<void> {
-    const canSave: boolean =
-      this.hasAudioBeenUploaded &&
-      this.hasTimingBeenUploaded &&
+  get allFieldsValid(): boolean {
+    return (
+      this.isAudioUploaded &&
+      this.isTimingUploaded &&
+      !this.hasAudioDataError &&
       !this.hasTimingDataError &&
       this.book != null &&
-      this.chapter != null;
-    if (!this.hasTimingBeenUploaded) {
-      this._timingErrorKey = 'no_timing_data_uploaded';
-    }
-    if (!this.hasAudioBeenUploaded) {
-      this._audioErrorKey = 'no_audio_file_uploaded';
-    }
-    if (!canSave) {
+      this.chapter !== null
+    );
+  }
+
+  async save(): Promise<void> {
+    let canSave = false;
+    if (this.allFieldsValid) {
+      canSave = true;
+    } else if (!this.isAudioUploaded && !this.isTimingUploaded && this._selectionHasAudioAlready) {
+      await this.projectService.onlineDeleteAudioTimingData(this.data.projectId, this.book, this.chapter);
+      this.dialogRef.close();
       return;
     }
+
+    if (!this.isTimingUploaded && !canSave) {
+      this._timingErrorKey = 'no_timing_data_uploaded';
+    }
+    if (!this.isAudioUploaded && !canSave) {
+      this._audioErrorKey = 'no_audio_file_uploaded';
+    }
+
+    if (!canSave) return;
 
     // Adding chapter audio offline needs a bit more help to work; see SF-2213. Returning may seem unnecessary if we
     // also disable the Save button when offline, but returning could prevent a problem from the unlikely situation of
