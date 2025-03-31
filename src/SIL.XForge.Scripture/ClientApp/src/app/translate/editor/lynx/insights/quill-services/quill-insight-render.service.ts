@@ -7,6 +7,7 @@ import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxEditor } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
+import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { getLeadingInsight, getMostNestedInsight } from '../lynx-insight-util';
 import { LynxInsightBlot } from './blots/lynx-insight-blot';
 
@@ -19,7 +20,10 @@ export class QuillInsightRenderService extends InsightRenderService {
   readonly activeInsightClass = `action-overlay-active`;
   readonly cursorActiveClass = `cursor-active`;
 
-  constructor(private readonly overlayService: LynxInsightOverlayService) {
+  constructor(
+    private readonly overlayService: LynxInsightOverlayService,
+    private insightState: LynxInsightStateService
+  ) {
     super();
   }
 
@@ -125,9 +129,15 @@ export class QuillInsightRenderService extends InsightRenderService {
             new LynxEditor(editor)
           );
 
-          // Clear editor attention when overlay is closed
           if (ref != null) {
-            ref.closed$.pipe(take(1)).subscribe(() => this.setEditorAttention(false, editor));
+            ref.closed$.pipe(take(1)).subscribe(() => {
+              // Clear editor attention when overlay is closed
+              this.setEditorAttention(false, editor);
+
+              // Ensure display state matches closed overlay state
+              this.insightState.updateDisplayState({ actionOverlayActive: false });
+            });
+
             ref.hoverMultiInsight$
               .pipe(takeUntil(ref.closed$))
               .subscribe(insight => this.setEditorAttention(true, editor, insight != null ? [insight] : insights));
