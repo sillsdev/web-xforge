@@ -8,16 +8,6 @@
         "resolved": "33.0.1",
         "contentHash": "fev4lynklAU2A9GVMLtwarkwaanjSYB4wUqO2nOJX5hnzObORzUqVLe+bDYCUyIIRQM4o5Bsq3CcyJR89iMmEQ=="
       },
-      "DotNetZip": {
-        "type": "Direct",
-        "requested": "[1.16.0, )",
-        "resolved": "1.16.0",
-        "contentHash": "CS9sjjXF23FLIbwlLT5k/jXBYxVnLMn01lyAvN/hxFM+UDvSicjTPB9ZMA+Wp/QlvBPbD2pzkAXUp1O50gP/Lw==",
-        "dependencies": {
-          "System.Security.Permissions": "4.7.0",
-          "System.Text.Encoding.CodePages": "4.7.1"
-        }
-      },
       "Duende.AccessTokenManagement": {
         "type": "Direct",
         "requested": "[3.2.0, )",
@@ -164,7 +154,6 @@
         "resolved": "9.5.0.8",
         "contentHash": "TFRH8KBM77q5seEI6W8iOENk5XY5KXRIxJnllEVO6PT9D37nDHIqDKvq5Y3ilpsPZjhZj/F/lVciw1dOkZ9gzQ==",
         "dependencies": {
-          "DotNetZip": "1.16.0",
           "Icu4c.Win.Min": "59.1.7",
           "JetBrains.Annotations": "2021.2.0",
           "Microsoft.CSharp": "4.7.0",
