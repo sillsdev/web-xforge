@@ -72,7 +72,14 @@ export class LynxInsightOverlayService {
       .pipe(takeUntil(overlayRef.closed$))
       .subscribe(e => {
         const target = e.target as HTMLElement;
-        const isActionMenuOpen =
+
+        // Ignore clicks on the action prompt (it will toggle overlay, itself)
+        const isTargetActionPrompt: boolean = target.closest('app-lynx-insight-action-prompt') != null;
+        if (isTargetActionPrompt) {
+          return;
+        }
+
+        const isActionMenuOpen: boolean =
           target.matches('.cdk-overlay-backdrop') || target.closest('.lynx-insight-action-menu') != null;
 
         // If the click is outside the overlay and not on the action menu, close the overlay
@@ -90,7 +97,7 @@ export class LynxInsightOverlayService {
     if (this.openRef != null) {
       this.openRef.ref.dispose();
       this.openRef.closed$.next();
-      this.openRef.closed$.complete();
+      this.openRef?.closed$.complete(); // Need null safe operator in case 'closed$.next()' triggers a 'close()' call
       this.openRef = undefined;
     }
   }

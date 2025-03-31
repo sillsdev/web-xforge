@@ -1,8 +1,8 @@
 import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { isEqual } from 'lodash-es';
 import { Delta } from 'quill';
-import { combineLatest, filter, fromEvent, merge, switchMap, tap } from 'rxjs';
-import { map, pairwise } from 'rxjs/operators';
+import { asapScheduler, combineLatest, EMPTY, filter, fromEvent, merge, switchMap, tap } from 'rxjs';
+import { map, observeOn, scan } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
@@ -50,7 +50,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
       fromEvent(this.editor, 'selection-change').pipe(map(([range]) => range)),
       this.insightState.filteredChapterInsights$
     ])
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), observeOn(asapScheduler))
       .subscribe(([range, insights]) => this.handleSelectionChange(range, insights));
 
     combineLatest([fromEvent(this.editor.root, 'mouseover'), this.insightState.filteredChapterInsights$])
@@ -60,49 +60,53 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
     this.editorReadyService
       .listenEditorReadyState(this.editor)
       .pipe(
-        filter(ready => ready),
-        tap(() => {
-          // When editor becomes ready, close all action overlays,
-          // including those for insights from other books/chapters
+        switchMap(ready => {
+          if (!ready) {
+            return EMPTY;
+          }
+
+          // Close all action overlays, including those for insights from other books/chapters
           this.overlayService.close();
-        }),
-        switchMap(() =>
-          merge(
+
+          // When editor is ready, subscribe to insights and display state
+          return merge(
             // Render blots when insights change
             this.insightState.filteredChapterInsights$.pipe(
-              tap(insights => {
-                this.insightRenderService.render(insights, this.editor!);
-              })
+              tap(insights => this.insightRenderService.render(insights, this.editor!))
             ),
             // Check display state to render action overlay or cursor active state
             this.insightState.displayState$.pipe(
-              pairwise(),
-              tap(([prev, curr]) => {
-                const activeInsightsChanged: boolean = !isEqual(prev.activeInsightIds, curr.activeInsightIds);
-                const actionOverlayActiveChanged: boolean = prev.actionOverlayActive !== curr.actionOverlayActive;
-                const cursorActiveInsightIdsChanged: boolean = !isEqual(
-                  prev.cursorActiveInsightIds,
-                  curr.cursorActiveInsightIds
-                );
+              scan(
+                (prev, curr) => {
+                  // For first emission, always render
+                  const activeInsightsChanged = !prev || !isEqual(prev.activeInsightIds, curr.activeInsightIds);
+                  const actionOverlayActiveChanged = !prev || prev.actionOverlayActive !== curr.actionOverlayActive;
+                  const cursorActiveInsightIdsChanged =
+                    !prev || !isEqual(prev.cursorActiveInsightIds, curr.cursorActiveInsightIds);
 
-                if (activeInsightsChanged || actionOverlayActiveChanged) {
-                  const activeInsights = curr.activeInsightIds
-                    .map(id => this.insightState.getInsight(id))
-                    .filter(i => i != null);
-                  this.insightRenderService.renderActionOverlay(
-                    activeInsights,
-                    this.editor!,
-                    !!curr.actionOverlayActive
-                  );
-                }
+                  if (activeInsightsChanged || actionOverlayActiveChanged) {
+                    const activeInsights = curr.activeInsightIds
+                      .map(id => this.insightState.getInsight(id))
+                      .filter(i => i != null);
 
-                if (cursorActiveInsightIdsChanged) {
-                  this.insightRenderService.renderCursorActiveState(curr.cursorActiveInsightIds, this.editor!);
-                }
-              })
+                    this.insightRenderService.renderActionOverlay(
+                      activeInsights,
+                      this.editor!,
+                      !!curr.actionOverlayActive
+                    );
+                  }
+
+                  if (cursorActiveInsightIdsChanged) {
+                    this.insightRenderService.renderCursorActiveState(curr.cursorActiveInsightIds, this.editor!);
+                  }
+
+                  return curr;
+                },
+                null as LynxInsightDisplayState | null
+              )
             )
-          )
-        ),
+          );
+        }),
         quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe();
@@ -154,10 +158,10 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
       let currentEl: HTMLElement | null | undefined = el;
 
       while (currentEl != null) {
-        const id = currentEl.dataset[this.dataIdProp];
+        const id: string | undefined = currentEl.dataset[this.dataIdProp];
 
         if (id != null) {
-          ids.push(id);
+          ids.push(...id.split(','));
         }
 
         currentEl = currentEl.parentElement?.closest(this.insightSelector);
