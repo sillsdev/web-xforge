@@ -1062,7 +1062,60 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetLastCompletedPreTranslationBuildAsync_Success()
+    public async Task GetLastCompletedPreTranslationBuildAsync_RetrievePreTranslationStatusAsyncCall_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string buildDtoId = $"{Project01}.{Build01}";
+        const string message = "Completed";
+        const double percentCompleted = 0;
+        const int revision = 43;
+        const JobState state = JobState.Completed;
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>(
+                    [
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                            DateFinished = DateTimeOffset.UtcNow,
+                        },
+                    ]
+                )
+            );
+        SFProject project = env.Projects.Get(Project01);
+        project.Texts[0].Chapters[1].HasDraft = true;
+
+        env.ProjectService.GetProjectAsync(Project01).Returns(Task.FromResult<SFProject>(project));
+        // SUT
+        ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+            User01,
+            Project01,
+            false,
+            CancellationToken.None
+        );
+
+        await env.Service.Received().RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        Assert.IsNotNull(actual);
+        Assert.AreEqual(message, actual.Message);
+        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+        Assert.AreEqual(revision, actual.Revision);
+        Assert.AreEqual(state.ToString().ToUpperInvariant(), actual.State);
+        Assert.AreEqual(buildDtoId, actual.Id);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
+        Assert.AreEqual(Project01, actual.Engine.Id);
+        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+    }
+
+    [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_NoRetrievePreTranslationStatusAsyncCall_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1090,6 +1143,7 @@ public class MachineApiServiceTests
                 )
             );
 
+        env.ProjectService.GetProjectAsync(Project01).Returns(Task.FromResult<SFProject>(env.Projects.Get(Project01)));
         // SUT
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
             User01,
@@ -1097,6 +1151,8 @@ public class MachineApiServiceTests
             false,
             CancellationToken.None
         );
+
+        await env.Service.DidNotReceive().RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
         Assert.IsNotNull(actual);
         Assert.AreEqual(message, actual.Message);
@@ -1350,6 +1406,7 @@ public class MachineApiServiceTests
             );
         List<DocumentRevision> revisions = [];
 
+        env.ProjectService.GetProjectAsync(Project01).Returns(Task.FromResult<SFProject>(env.Projects.Get(Project01)));
         // SUT
         await foreach (
             DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
@@ -3136,6 +3193,10 @@ public class MachineApiServiceTests
                     new SFProject
                     {
                         Id = Project01,
+                        TranslateConfig = new TranslateConfig
+                        {
+                            DraftConfig = new DraftConfig { LastSelectedTranslationScriptureRange = "GEN" },
+                        },
                         ParatextId = Paratext01,
                         Texts =
                         [
