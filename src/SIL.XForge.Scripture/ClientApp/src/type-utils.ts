@@ -49,8 +49,8 @@ export function hasPropWithValue<X, Y extends PropertyKey>(
 }
 
 /** Guarantees that the value is not null or undefined. */
-export function isInstantiated<T>(value: T): value is NonNullable<T> {
-  return value !== null && value !== undefined;
+export function notNull<T>(value: T): value is NonNullable<T> {
+  return value != null;
 }
 
 /**

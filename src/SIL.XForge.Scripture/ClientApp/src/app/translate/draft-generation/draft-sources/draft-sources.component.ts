@@ -19,7 +19,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
-import { hasData, isInstantiated } from '../../../../type-utils';
+import { hasData, notNull } from '../../../../type-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -115,10 +115,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
         this.trainingTargets = trainingTargets;
         this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
 
-        this.nonSelectableProjects = [
-          ...this.trainingSources.filter(isInstantiated),
-          ...this.draftingSources.filter(isInstantiated)
-        ];
+        this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
         if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
@@ -140,13 +137,13 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   get referenceLanguageDisplayName(): string {
-    const uniqueTags = Array.from(new Set(this.trainingSources.filter(isInstantiated).map(p => p.languageTag)));
+    const uniqueTags = Array.from(new Set(this.trainingSources.filter(notNull).map(p => p.languageTag)));
     const displayNames = uniqueTags.map(tag => this.i18n.getLanguageDisplayName(tag) ?? tag);
     return this.i18n.enumerateList(displayNames);
   }
 
   get sourceLanguageDisplayName(): string | undefined {
-    const definedSources = this.draftingSources.filter(isInstantiated);
+    const definedSources = this.draftingSources.filter(notNull);
 
     if (definedSources.length > 1) throw new Error('Multiple drafting sources not supported');
     else if (definedSources.length < 1) return undefined;
@@ -164,15 +161,15 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   get sourceSubtitle(): string {
-    return this.i18n.enumerateList(this.draftingSources.filter(isInstantiated).map(s => s.shortName) ?? []);
+    return this.i18n.enumerateList(this.draftingSources.filter(notNull).map(s => s.shortName) ?? []);
   }
 
   get referencesSubtitle(): string {
-    return this.i18n.enumerateList(this.trainingSources.filter(isInstantiated).map(r => r.shortName) ?? []);
+    return this.i18n.enumerateList(this.trainingSources.filter(notNull).map(r => r.shortName) ?? []);
   }
 
   get targetSubtitle(): string {
-    return this.i18n.enumerateList(this.trainingTargets.filter(isInstantiated).map(t => t.shortName) ?? []);
+    return this.i18n.enumerateList(this.trainingTargets.filter(notNull).map(t => t.shortName) ?? []);
   }
 
   parentheses(value?: string): string {
@@ -194,10 +191,10 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   get draftSourcesAsArray(): DraftSourcesAsSelectableProjectArrays {
     return {
-      draftingSources: this.draftingSources.filter(isInstantiated),
-      trainingSources: this.trainingSources.filter(isInstantiated),
+      draftingSources: this.draftingSources.filter(notNull),
+      trainingSources: this.trainingSources.filter(notNull),
       trainingTargets: this.trainingTargets
-        .filter(isInstantiated)
+        .filter(notNull)
         .map(t => translateSourceToSelectableProjectWithLanguageTag(t))
     };
   }
@@ -257,7 +254,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     return (
       this.featureFlags.allowAdditionalTrainingSource.enabled &&
       this.trainingSources.length < 2 &&
-      this.trainingSources.every(isInstantiated)
+      this.trainingSources.every(notNull)
     );
   }
 
@@ -289,8 +286,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     const currentProjectDoc: SFProjectProfileDoc | undefined = this.activatedProjectService.projectDoc;
     if (!hasData(currentProjectDoc)) throw new Error('Project doc or data is null');
 
-    const definedSources: SelectableProjectWithLanguageCode[] = this.draftingSources.filter(isInstantiated);
-    const definedReferences: SelectableProjectWithLanguageCode[] = this.trainingSources.filter(isInstantiated);
+    const definedSources: SelectableProjectWithLanguageCode[] = this.draftingSources.filter(notNull);
+    const definedReferences: SelectableProjectWithLanguageCode[] = this.trainingSources.filter(notNull);
 
     let messageKey: I18nKeyForComponent<'draft_sources'> | undefined;
     if (definedSources.length === 0 && definedReferences.length === 0) {

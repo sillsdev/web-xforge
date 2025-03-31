@@ -17,7 +17,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
-import { hasData, isInstantiated, WithData } from '../../../../type-utils';
+import { hasData, notNull, WithData } from '../../../../type-utils';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectSettings } from '../../../core/models/sf-project-settings';
@@ -28,7 +28,9 @@ import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft
 import { translateSourceToSelectableProjectWithLanguageTag } from '../draft-utils';
 import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';
 
-interface UltimateProjectDescription {
+/** This interface allows specification of a project using multiple types at once, to help the spec provide the
+ * different types required by the component. */
+interface MultiTypeProjectDescription {
   paratextProject: ParatextProject;
   selectableProjectWithLanguageCode: SelectableProjectWithLanguageCode;
   projectType: 'project' | 'resource';
@@ -399,7 +401,7 @@ class TestEnvironment {
     // Make some projects and resources, already on SF, that the user has access to. These will be available as a
     // variety of types.
 
-    const projects: UltimateProjectDescription[] = Array.from(
+    const projects: MultiTypeProjectDescription[] = Array.from(
       { length: userSFProjectsAndResourcesCount },
       (_, i) =>
         ({
@@ -489,11 +491,11 @@ class TestEnvironment {
     const usersSFResources: TranslateSource[] = projects
       .filter(o => o.projectType === 'resource')
       .map(o => o.translateSource)
-      .filter(isInstantiated);
+      .filter(notNull);
     const usersSFProjects: TranslateSource[] = projects
       .filter(o => o.projectType === 'project')
       .map(o => o.translateSource)
-      .filter(isInstantiated);
+      .filter(notNull);
 
     this.activatedProjectDoc = usersProjectsAndResourcesOnSF[0];
 
