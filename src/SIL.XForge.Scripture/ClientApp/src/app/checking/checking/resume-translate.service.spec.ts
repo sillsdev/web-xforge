@@ -93,6 +93,26 @@ describe('ResumeTranslateService', () => {
     flush();
   }));
 
+  it('should create link using first book if last location is invalid', fakeAsync(async () => {
+    when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
+      changes$: of([]) as Observable<OtJson0Op[]>,
+      data: { selectedTask: 'checking', selectedBookNum: 6, selectedChapterNum: 2 } as SFProjectUserConfig
+    } as SFProjectUserConfigDoc);
+
+    await service['updateProjectUserConfig']('project01');
+
+    let result: string[] | undefined;
+    service.resumeLink$.subscribe(link => {
+      result = link;
+    });
+
+    tick(1); // Account for the delay(0)
+
+    expect(result).toEqual(['/projects', 'project01', 'translate', 'MAT', '1']);
+
+    flush();
+  }));
+
   it('should create link using first book if no user config exists', fakeAsync(async () => {
     when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
       changes$: of([]) as Observable<OtJson0Op[]>

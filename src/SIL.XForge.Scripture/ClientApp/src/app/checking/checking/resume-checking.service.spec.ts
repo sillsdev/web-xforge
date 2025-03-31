@@ -114,6 +114,33 @@ describe('ResumeCheckingService', () => {
     flush();
   }));
 
+  it('should create link using first unanswered question if last location is invalid', fakeAsync(async () => {
+    when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
+      changes$: of([]) as Observable<OtJson0Op[]>,
+      data: { selectedBookNum: 5, selectedChapterNum: 2 } as SFProjectUserConfig
+    } as SFProjectUserConfigDoc);
+    setUpQuestions([
+      {
+        data: { verseRef: { bookNum: 2, chapterNum: 2 }, answers: [{ ownerRef: 'user01' }] as Answer[] }
+      } as QuestionDoc,
+      {
+        data: { verseRef: { bookNum: 2, chapterNum: 3 }, answers: [{ ownerRef: 'user02' }] as Answer[] }
+      } as QuestionDoc
+    ]);
+
+    await service['updateProjectUserConfig']('project01');
+
+    let result: string[] | undefined;
+    service.resumeLink$.subscribe(link => {
+      result = link;
+    });
+
+    tick(1); // Account for the delay(0)
+
+    expect(result).toEqual(['projects', 'project01', 'checking', 'EXO', '3']);
+    flush();
+  }));
+
   it('should create link using first unanswered question if no last location', fakeAsync(async () => {
     let result: string[] | undefined;
     service.resumeLink$.subscribe(link => {
