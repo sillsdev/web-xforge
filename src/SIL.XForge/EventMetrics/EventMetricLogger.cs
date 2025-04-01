@@ -95,7 +95,7 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
                 try
                 {
                     // Get parameter names
-                    List<string> parameterNames = invocation.Method.GetParameters().Select(p => p.Name).ToList();
+                    List<string> parameterNames = [.. invocation.Method.GetParameters().Select(p => p.Name)];
 
                     // Combine names with values
                     Dictionary<string, object> argumentsWithNames = parameterNames

@@ -13,6 +13,11 @@ public class QueryResults<T>
     where T : class
 {
     /// <summary>
+    /// An empty query results set.
+    /// </summary>
+    public static QueryResults<T> Empty { get; } = new QueryResults<T> { Results = new List<T>(), UnpagedCount = 0L };
+
+    /// <summary>
     /// The documents returned by the query.
     /// </summary>
     public required IEnumerable<T> Results { get; init; }
@@ -20,5 +25,5 @@ public class QueryResults<T>
     /// <summary>
     /// The number of documents that would have been returned if the query was not paginated.
     /// </summary>
-    public required long UnpagedCount { get; set; }
+    public required long UnpagedCount { get; init; }
 }

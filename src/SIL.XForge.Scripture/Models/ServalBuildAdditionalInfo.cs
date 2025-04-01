@@ -10,5 +10,7 @@ public class ServalBuildAdditionalInfo
     public DateTimeOffset? DateFinished { get; init; }
     public IEnumerable<string>? ParallelCorporaIds { get; init; }
     public int Step { get; init; }
+    public HashSet<ProjectScriptureRange> TrainingScriptureRanges { get; init; } = [];
     public string TranslationEngineId { get; init; } = string.Empty;
+    public HashSet<ProjectScriptureRange> TranslationScriptureRanges { get; init; } = [];
 }
