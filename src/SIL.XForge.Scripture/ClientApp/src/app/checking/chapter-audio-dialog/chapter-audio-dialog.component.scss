@@ -158,3 +158,7 @@
 .flex-spacer {
   flex-grow: 1;
 }
+
+.white-spinner {
+  --mdc-circular-progress-active-indicator-color: white;
+}

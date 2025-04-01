@@ -85,17 +85,15 @@
       <mat-icon>help</mat-icon> {{ t("help") }}
     </a>
     <span class="flex-spacer"></span>
-    @if (isLoadingAudio) {
-      <div class="uploading">
-        <span>{{ t("uploading") }}</span>
-        <mat-spinner diameter="24"></mat-spinner>
-      </div>
-    }
     <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
       {{ t("cancel") }}
     </button>
     <button mat-flat-button color="primary" type="submit" (click)="save()" id="audio-save-btn" [disabled]="!isOnline">
-      {{ t("save") }}
+      @if (isLoadingAudio) {
+        <mat-spinner diameter="24" class="white-spinner"></mat-spinner>
+      } @else {
+        {{ t("save") }}
+      }
     </button>
   </mat-dialog-actions>
 </ng-container>
