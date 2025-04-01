@@ -266,7 +266,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
       !this.hasAudioDataError &&
       !this.hasTimingDataError &&
       this.book != null &&
-      this.chapter !== null
+      this.chapter != null
     );
   }
 
