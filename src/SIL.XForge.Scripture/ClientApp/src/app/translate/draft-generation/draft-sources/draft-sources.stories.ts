@@ -32,6 +32,8 @@ const blankProjectDoc = { id: 'project1', data: createTestProjectProfile() } as 
 const projectDocWithExistingSources = {
   id: 'project1',
   data: createTestProjectProfile({
+    shortName: 'P_RU',
+    name: 'Russian Project',
     translateConfig: {
       translationSuggestionsEnabled: false,
       preTranslate: true,
@@ -370,6 +372,25 @@ export const CannotSelectSameProjectTwiceInOneStep: Story = {
     await userEvent.click(canvas.getByRole('button', { name: /Previous/ }));
     expect(canvas.getAllByRole('combobox').length).toBe(1);
     canvas.getByRole('button', { name: /Add another reference project/ });
+  }
+};
+
+export const CannotSelectTargetAsASource: Story = {
+  ...Default,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Select English project
+    await userEvent.click(canvas.getAllByRole('combobox')[0]);
+    expect(canvas.queryByRole('option', { name: /P_RU/ })).toBeNull();
+    await selectSource(canvasElement, 'P_EN');
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+    // Wait for the project select menu to fully close
+    // await waitFor(() => expect(canvas.queryAllByRole('option').length).toBe(0));
+
+    // Make sure English project can't be selected in second project select
+    await userEvent.click(canvas.getAllByRole('combobox')[0]);
+    expect(canvas.queryByRole('option', { name: /P_RU/ })).toBeNull();
   }
 };
 
