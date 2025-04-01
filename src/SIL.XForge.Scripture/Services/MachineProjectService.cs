@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using Serval.Client;
 using SIL.Scripture;
@@ -35,7 +34,6 @@ public class MachineProjectService(
     ICorporaClient corporaClient,
     IDataFilesClient dataFilesClient,
     IExceptionHandler exceptionHandler,
-    IFeatureManager featureManager,
     IFileSystemService fileSystemService,
     ILogger<MachineProjectService> logger,
     IParatextService paratextService,
@@ -77,7 +75,7 @@ public class MachineProjectService(
             && !string.IsNullOrWhiteSpace(project.WritingSystem.Tag)
         )
         {
-            return await CreateServalProjectAsync(project, preTranslate: false, cancellationToken);
+            return await CreateServalProjectAsync(project, preTranslate: false, useEcho: false, cancellationToken);
         }
 
         logger.LogInformation("The source or target language is missing from the project");
@@ -217,22 +215,6 @@ public class MachineProjectService(
         string fileName = Path.GetInvalidFileNameChars()
             .Aggregate(project.ShortName, (current, c) => current.Replace(c.ToString(), string.Empty));
         return $"{fileName}.zip";
-    }
-
-    /// <summary>
-    /// Gets the translation engine type string for Serval.
-    /// </summary>
-    /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
-    /// <returns>The translation engine type string for Serval.</returns>
-    public async Task<string> GetTranslationEngineTypeAsync(bool preTranslate)
-    {
-        bool useEcho = await featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-        return preTranslate switch
-        {
-            true when useEcho => Echo,
-            true => Nmt,
-            false => SmtTransfer,
-        };
     }
 
     /// <summary>
@@ -540,14 +522,17 @@ public class MachineProjectService(
             projectDoc,
             projectSecret,
             preTranslate,
+            buildConfig.UseEcho,
             cancellationToken
         );
 
-        // Recreate the translation engine if it is missing, or update if the language has changed
+        // Recreate the translation engine if it is missing or the type has changed,
+        // or update if the language has changed.
         await RecreateOrUpdateTranslationEngineIfRequiredAsync(
             translationEngineId,
             projectDoc.Data,
             preTranslate,
+            buildConfig.UseEcho,
             cancellationToken
         );
 
@@ -704,6 +689,7 @@ public class MachineProjectService(
     /// </summary>
     /// <param name="sfProject">The Scripture Forge project</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="useEcho">If <c>true</c> use Echo if <paramref name="preTranslate"/> is <c>true</c>.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The translation engine id.</returns>
     /// <exception cref="DataNotFoundException">The translation engine could not be created.</exception>
@@ -711,6 +697,7 @@ public class MachineProjectService(
     protected internal virtual async Task<string> CreateServalProjectAsync(
         SFProject sfProject,
         bool preTranslate,
+        bool useEcho,
         CancellationToken cancellationToken
     )
     {
@@ -723,8 +710,8 @@ public class MachineProjectService(
             {
                 Name = sfProject.Id,
                 SourceLanguage = GetSourceLanguage(sfProject, preTranslate),
-                TargetLanguage = await GetTargetLanguageAsync(sfProject, preTranslate),
-                Type = await GetTranslationEngineTypeAsync(preTranslate),
+                TargetLanguage = GetTargetLanguage(sfProject, preTranslate, useEcho),
+                Type = GetTranslationEngineType(preTranslate, useEcho),
             };
 
             // Add the project to Serval
@@ -868,6 +855,7 @@ public class MachineProjectService(
     /// <param name="projectDoc">The project document.</param>
     /// <param name="projectSecret">The project secret.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="useEcho">If <c>true</c> use Echo if <paramref name="preTranslate"/> is <c>true</c>.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The translation engine identifier.</returns>
     /// <exception cref="DataNotFoundException">The project, user, or translation engine does not exist.</exception>
@@ -878,6 +866,7 @@ public class MachineProjectService(
         IDocument<SFProject> projectDoc,
         SFProjectSecret projectSecret,
         bool preTranslate,
+        bool useEcho,
         CancellationToken cancellationToken
     )
     {
@@ -977,7 +966,12 @@ public class MachineProjectService(
             );
 
             // Create the Serval project, and get the translation engine id
-            translationEngineId = await CreateServalProjectAsync(projectDoc.Data!, preTranslate, cancellationToken);
+            translationEngineId = await CreateServalProjectAsync(
+                projectDoc.Data!,
+                preTranslate,
+                useEcho,
+                cancellationToken
+            );
         }
 
         // Ensure a translation engine id is present
@@ -1024,6 +1018,7 @@ public class MachineProjectService(
     /// </summary>
     /// <param name="project">The project.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="useEcho">If <c>true</c> use Echo if <paramref name="preTranslate"/> is <c>true</c>.</param>
     /// <returns>The target language.</returns>
     /// <exception cref="DataNotFoundException">
     /// The source was not specified for the project, or the project does not exist.
@@ -1032,13 +1027,10 @@ public class MachineProjectService(
     /// <remarks>
     /// If Echo is enabled, the source language will be returned.
     /// This can be mocked in unit tests.
+    /// Echo requires the target and source language to be the same, as it outputs your source texts
     /// </remarks>
-    protected internal virtual async Task<string> GetTargetLanguageAsync(SFProject project, bool preTranslate)
-    {
-        // Echo requires the target and source language to be the same, as it outputs your source texts
-        bool useEcho = await featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-        return useEcho ? GetSourceLanguage(project, preTranslate) : project.WritingSystem.Tag!;
-    }
+    protected internal virtual string GetTargetLanguage(SFProject project, bool preTranslate, bool useEcho) =>
+        useEcho ? GetSourceLanguage(project, preTranslate) : project.WritingSystem.Tag!;
 
     /// <summary>
     /// Gets the segments from the text with Unix/Linux line endings.
@@ -1212,11 +1204,26 @@ public class MachineProjectService(
     }
 
     /// <summary>
+    /// Gets the translation engine type string for Serval.
+    /// </summary>
+    /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="useEcho">If <c>true</c> use Echo if <paramref name="preTranslate"/> is <c>true</c>.</param>
+    /// <returns>The translation engine type string for Serval.</returns>
+    protected internal virtual string GetTranslationEngineType(bool preTranslate, bool useEcho) =>
+        preTranslate switch
+        {
+            true when useEcho => Echo,
+            true => Nmt,
+            false => SmtTransfer,
+        };
+
+    /// <summary>
     /// Recreates the translation engine if the source or target language has changed.
     /// </summary>
     /// <param name="translationEngineId">The translation engine identifier.</param>
     /// <param name="project">The project.</param>
     /// <param name="preTranslate">If <c>true</c> use NMT; otherwise if <c>false</c> use SMT.</param>
+    /// <param name="useEcho">If <c>true</c> use Echo if <paramref name="preTranslate"/> is <c>true</c>.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An asynchronous task.</returns>
     /// <remarks>This can be mocked in unit tests.</remarks>
@@ -1224,6 +1231,7 @@ public class MachineProjectService(
         string translationEngineId,
         SFProject project,
         bool preTranslate,
+        bool useEcho,
         CancellationToken cancellationToken
     )
     {
@@ -1235,9 +1243,10 @@ public class MachineProjectService(
                 cancellationToken
             );
             bool updateTranslationEngineLanguages = false;
+            bool recreateTranslationEngine = false;
 
             // See if the target language has changed
-            string projectTargetLanguage = await GetTargetLanguageAsync(project, preTranslate);
+            string projectTargetLanguage = GetTargetLanguage(project, preTranslate, useEcho);
             if (translationEngine.TargetLanguage != projectTargetLanguage)
             {
                 string message =
@@ -1256,9 +1265,25 @@ public class MachineProjectService(
                 updateTranslationEngineLanguages = true;
             }
 
-            // Update the translation engine to match the new languages
-            if (updateTranslationEngineLanguages)
+            // See if the translation engine type has changed
+            string translationEngineType = GetTranslationEngineType(preTranslate, useEcho);
+            if (translationEngine.Type != translationEngineType)
             {
+                string message =
+                    $"Translation engine has changed from {translationEngine.Type} to {translationEngineType}.";
+                logger.LogInformation(message);
+                recreateTranslationEngine = true;
+            }
+
+            if (recreateTranslationEngine)
+            {
+                // Recreate the translation engine to use the new engine type
+                await RemoveProjectAsync(project.Id, preTranslate, cancellationToken);
+                await CreateServalProjectAsync(project, preTranslate, useEcho, cancellationToken);
+            }
+            else if (updateTranslationEngineLanguages)
+            {
+                // Update the translation engine to match the new languages
                 await translationEnginesClient.UpdateAsync(
                     translationEngineId,
                     new TranslationEngineUpdateConfig
@@ -1292,7 +1317,7 @@ public class MachineProjectService(
             );
 
             // Create the new translation engine id
-            translationEngineId = await CreateServalProjectAsync(project, preTranslate, cancellationToken);
+            translationEngineId = await CreateServalProjectAsync(project, preTranslate, useEcho, cancellationToken);
             logger.LogInformation($"Created Translation Engine {translationEngineId}.");
         }
     }
@@ -1421,7 +1446,7 @@ public class MachineProjectService(
             additionalTrainingData.TargetCorpusId = await UploadAdditionalTrainingDataAsync(
                 project.Id,
                 additionalTrainingData.TargetCorpusId,
-                languageCode: await GetTargetLanguageAsync(project, preTranslate: true),
+                languageCode: GetTargetLanguage(project, preTranslate: true, buildConfig.UseEcho),
                 targetCorpusFiles,
                 targetTexts,
                 cancellationToken
@@ -1858,7 +1883,9 @@ public class MachineProjectService(
                 translationEngineId,
                 cancellationToken
             );
-            string type = await GetTranslationEngineTypeAsync(preTranslate);
+
+            bool useEcho = translationEngine.Type == Echo;
+            string type = GetTranslationEngineType(preTranslate, useEcho);
 
             // We check for the type, taking account of Pascal Case (Serval 1.1) and Kebab Case (Serval 1.2)
             return translationEngine.Name == projectId
