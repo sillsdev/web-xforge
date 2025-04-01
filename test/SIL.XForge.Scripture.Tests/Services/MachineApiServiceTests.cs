@@ -9,6 +9,8 @@ using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -18,6 +20,7 @@ using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.XForge.DataAccess;
+using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
@@ -410,7 +413,7 @@ public class MachineApiServiceTests
                     {
                         Url = "https://example.com",
                         Id = Build01,
-                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        Engine = { Id = "engineId", Url = "https://example.com" },
                         Message = message,
                         PercentCompleted = percentCompleted,
                         Revision = revision,
@@ -474,7 +477,7 @@ public class MachineApiServiceTests
                     {
                         Url = "https://example.com",
                         Id = Build01,
-                        Engine = new ResourceLink { Id = engineId, Url = "https://example.com" },
+                        Engine = { Id = engineId, Url = "https://example.com" },
                         Message = message,
                         PercentCompleted = percentCompleted,
                         Revision = revision,
@@ -506,11 +509,11 @@ public class MachineApiServiceTests
                                 [
                                     new ParallelCorpusFilter
                                     {
-                                        Corpus = new ResourceLink { Id = corpusId1, Url = "https://example.com" },
+                                        Corpus = { Id = corpusId1, Url = "https://example.com" },
                                     },
                                     new ParallelCorpusFilter
                                     {
-                                        Corpus = new ResourceLink { Id = corpusId2, Url = "https://example.com" },
+                                        Corpus = { Id = corpusId2, Url = "https://example.com" },
                                     },
                                 ],
                             },
@@ -529,14 +532,14 @@ public class MachineApiServiceTests
                                 [
                                     new ParallelCorpusFilter
                                     {
-                                        Corpus = new ResourceLink { Id = corpusId3, Url = "https://example.com" },
+                                        Corpus = { Id = corpusId3, Url = "https://example.com" },
                                     },
                                 ],
                                 TargetFilters =
                                 [
                                     new ParallelCorpusFilter
                                     {
-                                        Corpus = new ResourceLink { Id = corpusId4, Url = "https://example.com" },
+                                        Corpus = { Id = corpusId4, Url = "https://example.com" },
                                     },
                                 ],
                             },
@@ -582,6 +585,500 @@ public class MachineApiServiceTests
         Assert.IsNotNull(actual.AdditionalInfo.ParallelCorporaIds);
         Assert.AreEqual(parallelCorpusId1, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(0));
         Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds.ElementAt(1));
+    }
+
+    [Test]
+    public void GetBuildsAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        {
+            await foreach (
+                ServalBuildDto _ in env.Service.GetBuildsAsync(
+                    User02,
+                    Project01,
+                    preTranslate: false,
+                    isServalAdmin: false,
+                    CancellationToken.None
+                )
+            ) { }
+        });
+    }
+
+    [Test]
+    public void GetBuildsAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(async () =>
+        {
+            await foreach (
+                ServalBuildDto _ in env.Service.GetBuildsAsync(
+                    User01,
+                    "invalid_project_id",
+                    preTranslate: false,
+                    isServalAdmin: false,
+                    CancellationToken.None
+                )
+            ) { }
+        });
+    }
+
+    [Test]
+    public void GetBuildsAsync_NoTranslationEngine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(async () =>
+        {
+            await foreach (
+                ServalBuildDto _ in env.Service.GetBuildsAsync(
+                    User01,
+                    Project03,
+                    preTranslate: false,
+                    isServalAdmin: false,
+                    CancellationToken.None
+                )
+            ) { }
+        });
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_QueuedState()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.QueueBuildAsync(preTranslate: true);
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([]));
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+        List<ServalBuildDto> builds = [];
+
+        // SUT
+        await foreach (
+            ServalBuildDto build in env.Service.GetBuildsAsync(
+                User02,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+        )
+        {
+            builds.Add(build);
+        }
+
+        Assert.AreEqual(1, builds.Count);
+        Assert.AreEqual(MachineApiService.BuildStateQueued, builds[0].State);
+        Assert.AreEqual(Project01, builds[0].Id);
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_QueuedStateWithEventMetric()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string trainingScriptureRange = "GEN;EXO";
+        const string translationScriptureRange = "LEV;NUM";
+        await env.QueueBuildAsync(preTranslate: true);
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([]));
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(
+                Task.FromResult(
+                    new QueryResults<EventMetric>
+                    {
+                        Results =
+                        [
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
+                                Payload =
+                                {
+                                    {
+                                        "buildConfig",
+                                        BsonDocument.Parse(
+                                            JsonConvert.SerializeObject(
+                                                new BuildConfig
+                                                {
+                                                    TrainingScriptureRange = trainingScriptureRange,
+                                                    TranslationScriptureRange = translationScriptureRange,
+                                                    ProjectId = Project01,
+                                                }
+                                            )
+                                        )
+                                    },
+                                },
+                                ProjectId = Project01,
+                                Scope = EventScope.Drafting,
+                            },
+                        ],
+                        UnpagedCount = 1,
+                    }
+                )
+            );
+        List<ServalBuildDto> builds = [];
+
+        // SUT
+        await foreach (
+            ServalBuildDto build in env.Service.GetBuildsAsync(
+                User02,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+        )
+        {
+            builds.Add(build);
+        }
+
+        Assert.AreEqual(1, builds.Count);
+        Assert.AreEqual(MachineApiService.BuildStateQueued, builds[0].State);
+        Assert.AreEqual(Project01, builds[0].Id);
+        Assert.IsEmpty(builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ProjectId);
+        Assert.AreEqual(
+            trainingScriptureRange,
+            builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ScriptureRange
+        );
+        Assert.AreEqual(Project01, builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ProjectId);
+        Assert.AreEqual(
+            translationScriptureRange,
+            builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ScriptureRange
+        );
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([new TranslationBuild()]));
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+        List<ServalBuildDto> builds = [];
+
+        // SUT
+        await foreach (
+            ServalBuildDto build in env.Service.GetBuildsAsync(
+                User02,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+        )
+        {
+            builds.Add(build);
+        }
+
+        Assert.AreEqual(1, builds.Count);
+    }
+
+    [Test]
+    public void GetBuildsAsync_ServalApiException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Throws(ServalApiExceptions.NotFound);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(async () =>
+        {
+            await foreach (
+                ServalBuildDto _ in env.Service.GetBuildsAsync(
+                    User01,
+                    Project01,
+                    preTranslate: false,
+                    isServalAdmin: false,
+                    CancellationToken.None
+                )
+            ) { }
+        });
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string buildDtoId = $"{Project01}.{Build01}";
+        const string message = "Finalizing";
+        const double percentCompleted = 0.95;
+        const int revision = 553;
+        const JobState state = JobState.Active;
+        var translationBuild = new TranslationBuild
+        {
+            Url = "https://example.com",
+            Id = Build01,
+            Engine = { Id = "engineId", Url = "https://example.com" },
+            Message = message,
+            PercentCompleted = percentCompleted,
+            Revision = revision,
+            State = state,
+        };
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+        List<ServalBuildDto> builds = [];
+
+        // SUT
+        await foreach (
+            ServalBuildDto build in env.Service.GetBuildsAsync(
+                User02,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+        )
+        {
+            builds.Add(build);
+        }
+
+        Assert.AreEqual(1, builds.Count);
+        Assert.AreEqual(message, builds[0].Message);
+        Assert.AreEqual(percentCompleted, builds[0].PercentCompleted);
+        Assert.AreEqual(revision, builds[0].Revision);
+        Assert.AreEqual(state.ToString().ToUpperInvariant(), builds[0].State);
+        Assert.AreEqual(buildDtoId, builds[0].Id);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), builds[0].Href);
+        Assert.AreEqual(Project01, builds[0].Engine.Id);
+        Assert.AreEqual(MachineApi.GetEngineHref(Project01), builds[0].Engine.Href);
+        Assert.NotNull(builds[0].AdditionalInfo);
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_SuccessWithEventMetric()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string buildDtoId = $"{Project01}.{Build01}";
+        const string message = "Finalizing";
+        const double percentCompleted = 0.95;
+        const int revision = 553;
+        const JobState state = JobState.Active;
+        var translationBuild = new TranslationBuild
+        {
+            Url = "https://example.com",
+            Id = Build01,
+            Engine = { Id = "engineId", Url = "https://example.com" },
+            Message = message,
+            PercentCompleted = percentCompleted,
+            Revision = revision,
+            State = state,
+        };
+        const string trainingScriptureRange = "GEN;EXO";
+        const string translationScriptureRange = "LEV;NUM";
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(
+                Task.FromResult(
+                    new QueryResults<EventMetric>
+                    {
+                        Results =
+                        [
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineProjectService.BuildProjectAsync),
+                                Payload =
+                                {
+                                    {
+                                        "buildConfig",
+                                        BsonDocument.Parse(
+                                            JsonConvert.SerializeObject(
+                                                new BuildConfig
+                                                {
+                                                    TrainingScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project02,
+                                                            ScriptureRange = trainingScriptureRange,
+                                                        },
+                                                    ],
+                                                    TranslationScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project02,
+                                                            ScriptureRange = translationScriptureRange,
+                                                        },
+                                                    ],
+                                                }
+                                            )
+                                        )
+                                    },
+                                },
+                                ProjectId = Project01,
+                                Result = new BsonString(Build01),
+                                Scope = EventScope.Drafting,
+                            },
+                        ],
+                        UnpagedCount = 1,
+                    }
+                )
+            );
+        List<ServalBuildDto> builds = [];
+
+        // SUT
+        await foreach (
+            ServalBuildDto build in env.Service.GetBuildsAsync(
+                User02,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+        )
+        {
+            builds.Add(build);
+        }
+
+        Assert.AreEqual(1, builds.Count);
+        Assert.AreEqual(message, builds[0].Message);
+        Assert.AreEqual(percentCompleted, builds[0].PercentCompleted);
+        Assert.AreEqual(revision, builds[0].Revision);
+        Assert.AreEqual(state.ToString().ToUpperInvariant(), builds[0].State);
+        Assert.AreEqual(buildDtoId, builds[0].Id);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), builds[0].Href);
+        Assert.AreEqual(Project01, builds[0].Engine.Id);
+        Assert.AreEqual(MachineApi.GetEngineHref(Project01), builds[0].Engine.Href);
+        Assert.NotNull(builds[0].AdditionalInfo);
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_SuccessWithFallbackToLegacyBuild()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string buildDtoId = $"{Project01}.{Build01}";
+        const string message = "Finalizing";
+        const double percentCompleted = 0.95;
+        const int revision = 553;
+        const JobState state = JobState.Active;
+        const string scriptureRange = "GEN;EXO";
+        var translationBuild = new TranslationBuild
+        {
+            Url = "https://example.com",
+            Id = Build01,
+            Engine = { Id = "engineId", Url = "https://example.com" },
+            Message = message,
+            PercentCompleted = percentCompleted,
+            Revision = revision,
+            State = state,
+#pragma warning disable CS0612 // Type or member is obsolete
+            Pretranslate = [new PretranslateCorpus { ScriptureRange = scriptureRange }],
+#pragma warning restore CS0612 // Type or member is obsolete
+        };
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+        List<ServalBuildDto> builds = [];
+
+        // SUT
+        await foreach (
+            ServalBuildDto build in env.Service.GetBuildsAsync(
+                User02,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+        )
+        {
+            builds.Add(build);
+        }
+
+        Assert.AreEqual(1, builds.Count);
+        Assert.AreEqual(message, builds[0].Message);
+        Assert.AreEqual(percentCompleted, builds[0].PercentCompleted);
+        Assert.AreEqual(revision, builds[0].Revision);
+        Assert.AreEqual(state.ToString().ToUpperInvariant(), builds[0].State);
+        Assert.AreEqual(buildDtoId, builds[0].Id);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), builds[0].Href);
+        Assert.AreEqual(Project01, builds[0].Engine.Id);
+        Assert.AreEqual(MachineApi.GetEngineHref(Project01), builds[0].Engine.Href);
+        Assert.NotNull(builds[0].AdditionalInfo);
+        Assert.AreEqual(Project01, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ProjectId);
+        Assert.AreEqual(scriptureRange, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange);
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_SuccessWithFallbackToPreTranslateBuild()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string buildDtoId = $"{Project01}.{Build01}";
+        const string message = "Finalizing";
+        const double percentCompleted = 0.95;
+        const int revision = 553;
+        const JobState state = JobState.Active;
+        const string scriptureRange = "GEN;EXO";
+        var translationBuild = new TranslationBuild
+        {
+            Url = "https://example.com",
+            Id = Build01,
+            Engine = { Id = "engineId", Url = "https://example.com" },
+            Message = message,
+            PercentCompleted = percentCompleted,
+            Revision = revision,
+            State = state,
+#pragma warning disable CS0612 // Type or member is obsolete
+            Pretranslate =
+            [
+                new PretranslateCorpus
+                {
+                    SourceFilters = [new ParallelCorpusFilter { ScriptureRange = scriptureRange }],
+                },
+            ],
+#pragma warning restore CS0612 // Type or member is obsolete
+        };
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+        List<ServalBuildDto> builds = [];
+
+        // SUT
+        await foreach (
+            ServalBuildDto build in env.Service.GetBuildsAsync(
+                User02,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+        )
+        {
+            builds.Add(build);
+        }
+
+        Assert.AreEqual(1, builds.Count);
+        Assert.AreEqual(message, builds[0].Message);
+        Assert.AreEqual(percentCompleted, builds[0].PercentCompleted);
+        Assert.AreEqual(revision, builds[0].Revision);
+        Assert.AreEqual(state.ToString().ToUpperInvariant(), builds[0].State);
+        Assert.AreEqual(buildDtoId, builds[0].Id);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), builds[0].Href);
+        Assert.AreEqual(Project01, builds[0].Engine.Id);
+        Assert.AreEqual(MachineApi.GetEngineHref(Project01), builds[0].Engine.Href);
+        Assert.NotNull(builds[0].AdditionalInfo);
+        Assert.AreEqual(Project01, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ProjectId);
+        Assert.AreEqual(scriptureRange, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange);
     }
 
     [Test]
@@ -734,7 +1231,7 @@ public class MachineApiServiceTests
                     {
                         Url = "https://example.com",
                         Id = Build01,
-                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        Engine = { Id = "engineId", Url = "https://example.com" },
                         Message = message,
                         PercentCompleted = percentCompleted,
                         Revision = revision,
@@ -788,7 +1285,7 @@ public class MachineApiServiceTests
                         {
                             Url = "https://example.com",
                             Id = Build01,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Engine = { Id = "engineId", Url = "https://example.com" },
                             Message = message,
                             PercentCompleted = percentCompleted,
                             Revision = revision,
@@ -966,7 +1463,7 @@ public class MachineApiServiceTests
                         {
                             Url = "https://example.com",
                             Id = Build01,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Engine = { Id = "engineId", Url = "https://example.com" },
                             Message = string.Empty,
                             PercentCompleted = 0,
                             Revision = 0,
@@ -1079,7 +1576,7 @@ public class MachineApiServiceTests
                         {
                             Url = "https://example.com",
                             Id = Build01,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Engine = { Id = "engineId", Url = "https://example.com" },
                             Message = message,
                             PercentCompleted = percentCompleted,
                             Revision = revision,
@@ -1338,7 +1835,7 @@ public class MachineApiServiceTests
                         {
                             Url = "https://example.com",
                             Id = Build01,
-                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Engine = { Id = "engineId", Url = "https://example.com" },
                             Message = "completed",
                             PercentCompleted = 0,
                             Revision = 43,

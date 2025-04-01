@@ -41,6 +41,7 @@ public class MachineProjectServiceTests
     private const string Project04 = "project04";
     private const string Project05 = "project05";
     private const string User01 = "user01";
+    private const string Build01 = "build01";
     private const string Corpus01 = "corpus01";
     private const string Corpus02 = "corpus02";
     private const string Corpus03 = "corpus03";
@@ -343,7 +344,7 @@ public class MachineProjectServiceTests
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
             .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(Build01));
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
@@ -3849,6 +3850,9 @@ public class MachineProjectServiceTests
                         }
                     )
                 );
+            TranslationEnginesClient
+                .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+                .Returns(Task.FromResult(new TranslationBuild { Id = Build01 }));
             CorporaClient
                 .CreateAsync(Arg.Any<CorpusConfig>(), CancellationToken.None)
                 .Returns(Task.FromResult(new Corpus { Id = Corpus01 }));

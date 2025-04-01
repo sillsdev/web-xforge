@@ -518,6 +518,113 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public void GetBuildsAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildsAsync(
+                User01,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<IAsyncEnumerable<ServalBuildDto>> actual = env.Controller.GetBuildsAsync(
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public void GetBuildsAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildsAsync(
+                User01,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<IAsyncEnumerable<ServalBuildDto>> actual = env.Controller.GetBuildsAsync(
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public void GetBuildsAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildsAsync(
+                User01,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new DataNotFoundException(string.Empty));
+
+        // SUT
+        ActionResult<IAsyncEnumerable<ServalBuildDto>> actual = env.Controller.GetBuildsAsync(
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildsAsync(
+                User01,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Returns(env.ServalBuilds());
+
+        // SUT
+        ActionResult<IAsyncEnumerable<ServalBuildDto>> actual = env.Controller.GetBuildsAsync(
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        bool buildsExist = false;
+        var builds = (IAsyncEnumerable<ServalBuildDto>)((OkObjectResult)actual.Result!).Value!;
+        await foreach (ServalBuildDto build in builds)
+        {
+            buildsExist = true;
+            Assert.AreEqual(env.TestBuild, build);
+        }
+
+        Assert.IsTrue(buildsExist);
+    }
+
+    [Test]
     public async Task GetEngineAsync_MachineApiDown()
     {
         // Set up test environment
@@ -2124,6 +2231,7 @@ public class MachineApiControllerTests
     private class TestEnvironment
     {
         private static readonly DateTime Timestamp = DateTime.UtcNow;
+        public readonly ServalBuildDto TestBuild = new ServalBuildDto { Id = Build01 };
         public readonly DocumentRevision TestRevision = new DocumentRevision
         {
             Timestamp = Timestamp,
@@ -2148,6 +2256,12 @@ public class MachineApiControllerTests
         public async IAsyncEnumerable<DocumentRevision> RevisionHistory()
         {
             yield return TestRevision;
+            await Task.CompletedTask;
+        }
+
+        public async IAsyncEnumerable<ServalBuildDto> ServalBuilds()
+        {
+            yield return TestBuild;
             await Task.CompletedTask;
         }
     }

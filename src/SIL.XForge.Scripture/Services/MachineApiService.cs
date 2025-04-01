@@ -11,6 +11,7 @@ using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 using Serval.Client;
 using SIL.Converters.Usj;
@@ -268,6 +269,106 @@ public class MachineApiService(
         }
 
         return buildDto;
+    }
+
+    public async IAsyncEnumerable<ServalBuildDto> GetBuildsAsync(
+        string curUserId,
+        string sfProjectId,
+        bool preTranslate,
+        bool isServalAdmin,
+        [EnumeratorCancellation] CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+
+        // Execute on Serval, if it is enabled
+        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
+
+        // Get the builds from Serval
+        IList<TranslationBuild> translationBuilds = [];
+        try
+        {
+            translationBuilds = await translationEnginesClient.GetAllBuildsAsync(
+                translationEngineId,
+                cancellationToken
+            );
+        }
+        catch (ServalApiException e)
+        {
+            ProcessServalApiException(e);
+        }
+
+        // Get the event metrics for build configurations, if we are pre-translating
+        QueryResults<EventMetric> eventMetrics = QueryResults<EventMetric>.Empty;
+        if (preTranslate)
+        {
+            eventMetrics = await eventMetricService.GetEventMetricsAsync(
+                sfProjectId,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync), nameof(StartPreTranslationBuildAsync)]
+            );
+        }
+
+        // Return the builds as DTOs
+        foreach (TranslationBuild translationBuild in translationBuilds)
+        {
+            ServalBuildDto buildDto = CreateDto(translationBuild);
+
+            // If we have event metrics, add the scripture ranges to the DTO
+            EventMetric eventMetric = eventMetrics.Results.FirstOrDefault(e =>
+                e.Result == translationBuild.Id && e.EventType == nameof(MachineProjectService.BuildProjectAsync)
+            );
+            if (eventMetric is not null)
+            {
+                buildDto = UpdateDto(buildDto, eventMetric);
+            }
+            else if (preTranslate)
+            {
+                // Fallback for builds previous to the event metric being recorded:
+                //  - As there is no event metric, get the translation scripture range from the pre-translation corpus
+                //  - We cannot accurately determine the source projects, so do not record the training scripture ranges.
+                PretranslateCorpus corpus = translationBuild.Pretranslate?.FirstOrDefault();
+                if (corpus is not null)
+                {
+#pragma warning disable CS0612 // Type or member is obsolete
+                    string scriptureRange =
+                        corpus.SourceFilters?.FirstOrDefault()?.ScriptureRange ?? corpus.ScriptureRange;
+#pragma warning restore CS0612 // Type or member is obsolete
+                    if (!string.IsNullOrWhiteSpace(scriptureRange))
+                    {
+                        buildDto.AdditionalInfo?.TranslationScriptureRanges.Add(
+                            new ProjectScriptureRange { ProjectId = sfProjectId, ScriptureRange = scriptureRange }
+                        );
+                    }
+                }
+            }
+
+            // Make sure the DTO conforms to the machine-api URLs
+            yield return UpdateDto(buildDto, sfProjectId);
+        }
+
+        // See if any builds are queued at our end
+        ServalBuildDto? queuedState = await GetQueuedStateAsync(
+            curUserId,
+            sfProjectId,
+            preTranslate,
+            isServalAdmin,
+            cancellationToken
+        );
+        if (queuedState is not null && queuedState.State != BuildStateFinishing)
+        {
+            // The last build started will match the queued state
+            EventMetric eventMetric = eventMetrics.Results.LastOrDefault(e =>
+                e.EventType == nameof(StartPreTranslationBuildAsync)
+            );
+            if (eventMetric is not null)
+            {
+                queuedState = UpdateDto(queuedState, eventMetric);
+            }
+
+            yield return queuedState;
+        }
     }
 
     public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
@@ -1423,6 +1524,54 @@ public class MachineApiService(
 
         // We use this special ID format so that the DTO ID can be an optional URL parameter
         buildDto.Id = $"{sfProjectId}.{buildDto.Id}".TrimEnd('.');
+        return buildDto;
+    }
+
+    private static ServalBuildDto UpdateDto(ServalBuildDto buildDto, EventMetric eventMetric)
+    {
+        // Ensure that there is the Serval additional data
+        buildDto.AdditionalInfo ??= new ServalBuildAdditionalInfo();
+
+        // Retrieve the training and translation books from the build config, as the build from Serval
+        // will not have project information.
+
+        // Get the build config from the event metric, by converting BSON to JSON, and then to the object type
+        BuildConfig buildConfig = JsonConvert.DeserializeObject<BuildConfig>(
+            eventMetric.Payload["buildConfig"].ToJson()
+        );
+
+        // Add the training scripture ranges
+        foreach (ProjectScriptureRange scriptureRange in buildConfig.TrainingScriptureRanges)
+        {
+            buildDto.AdditionalInfo.TrainingScriptureRanges.Add(scriptureRange);
+        }
+
+        // Add the older training scripture range. We don't know what source project it came from
+        if (!string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange))
+        {
+            buildDto.AdditionalInfo.TrainingScriptureRanges.Add(
+                new ProjectScriptureRange { ScriptureRange = buildConfig.TrainingScriptureRange }
+            );
+        }
+
+        // Add the translation scripture ranges
+        foreach (ProjectScriptureRange scriptureRange in buildConfig.TranslationScriptureRanges)
+        {
+            buildDto.AdditionalInfo.TranslationScriptureRanges.Add(scriptureRange);
+        }
+
+        // Add the older translation scripture range
+        if (!string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange))
+        {
+            buildDto.AdditionalInfo.TranslationScriptureRanges.Add(
+                new ProjectScriptureRange
+                {
+                    ProjectId = buildConfig.ProjectId,
+                    ScriptureRange = buildConfig.TranslationScriptureRange,
+                }
+            );
+        }
+
         return buildDto;
     }
 
