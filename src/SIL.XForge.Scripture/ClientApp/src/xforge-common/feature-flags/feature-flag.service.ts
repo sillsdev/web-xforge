@@ -277,9 +277,9 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  private readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly useEchoForPreTranslation: FeatureFlag = new FeatureFlagFromStorage(
     'UseEchoForPreTranslation',
-    'Use Echo for Pre-Translation Drafting',
+    'Allow Echo for Pre-Translation Drafting',
     10,
     this.featureFlagStore
   );

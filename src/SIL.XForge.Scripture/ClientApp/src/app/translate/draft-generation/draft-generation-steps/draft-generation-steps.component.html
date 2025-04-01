@@ -202,17 +202,27 @@
           </div>
         </mat-step>
       }
-      @if (featureFlags.allowFastTraining.enabled) {
+      @if (featureFlags.allowFastTraining.enabled || featureFlags.useEchoForPreTranslation.enabled) {
         <mat-step [completed]="true">
           <ng-template matStepLabel>
             {{ t("configure_advanced_settings_header") }}
           </ng-template>
           <h1 class="mat-headline-4">{{ t("configure_advanced_settings_title") }}</h1>
-          <div>
-            <mat-checkbox class="fast-training" [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
-          </div>
-          @if (fastTraining) {
-            <app-notice icon="warning" type="warning" class="warning">{{ t("fast_training_warning") }}</app-notice>
+          @if (featureFlags.allowFastTraining.enabled) {
+            <div>
+              <mat-checkbox class="fast-training" [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
+            </div>
+            @if (fastTraining) {
+              <app-notice icon="warning" type="warning" class="warning">{{ t("fast_training_warning") }}</app-notice>
+            }
+          }
+          @if (featureFlags.useEchoForPreTranslation.enabled) {
+            <div>
+              <mat-checkbox class="use-echo" [(ngModel)]="useEcho">{{ t("use_echo") }}</mat-checkbox>
+            </div>
+            @if (useEcho) {
+              <app-notice icon="warning" type="warning" class="warning">{{ t("use_echo_warning") }}</app-notice>
+            }
           }
           <div class="button-strip">
             <button mat-stroked-button matStepperPrevious>
