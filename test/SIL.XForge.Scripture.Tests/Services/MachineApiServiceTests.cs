@@ -3409,11 +3409,6 @@ public class MachineApiServiceTests
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             EventMetricService = Substitute.For<IEventMetricService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
-
-            var machineProjectService = Substitute.For<IMachineProjectService>();
-            machineProjectService
-                .GetTranslationEngineTypeAsync(preTranslate: true)
-                .Returns(Task.FromResult(Services.MachineProjectService.Nmt));
             MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
@@ -3516,7 +3511,6 @@ public class MachineApiServiceTests
                 EventMetricService,
                 ExceptionHandler,
                 MockLogger,
-                machineProjectService,
                 ParatextService,
                 PreTranslationService,
                 ProjectSecrets,

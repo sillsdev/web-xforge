@@ -22,12 +22,14 @@ namespace SIL.XForge.Scripture.Controllers;
 [TestFixture]
 public class AnonymousControllerTests
 {
+    private const string TestFeatureFlag = "test_feature_flag";
+
     [Test]
     public async Task FeatureFlags_ReturnsFeatureFlags()
     {
         var env = new TestEnvironment();
         env.FeatureManager.GetFeatureNamesAsync().Returns(TestEnvironment.GetFeatureFlags());
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation).Returns(Task.FromResult(true));
+        env.FeatureManager.IsEnabledAsync(TestFeatureFlag).Returns(Task.FromResult(true));
 
         // SUT
         var actual = await env.Controller.FeatureFlags();
@@ -36,7 +38,7 @@ public class AnonymousControllerTests
         Assert.IsInstanceOf<JsonResult>(actual.Result);
         Dictionary<string, bool> featureFlags = (actual.Result as JsonResult)?.Value as Dictionary<string, bool>;
         Assert.IsNotNull(featureFlags);
-        Assert.IsTrue(featureFlags![FeatureFlags.UseEchoForPreTranslation]);
+        Assert.IsTrue(featureFlags![TestFeatureFlag]);
     }
 
     [Test]
@@ -193,7 +195,7 @@ public class AnonymousControllerTests
 
         public static async IAsyncEnumerable<string> GetFeatureFlags()
         {
-            yield return FeatureFlags.UseEchoForPreTranslation;
+            yield return TestFeatureFlag;
             await Task.CompletedTask;
         }
 
