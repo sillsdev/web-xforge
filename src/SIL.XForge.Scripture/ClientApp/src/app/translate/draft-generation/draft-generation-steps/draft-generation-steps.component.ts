@@ -32,6 +32,7 @@ export interface DraftGenerationStepsResult {
   translationScriptureRange?: string;
   translationScriptureRanges?: ProjectScriptureRange[];
   fastTraining: boolean;
+  useEcho: boolean;
 }
 
 export interface Book {
@@ -89,6 +90,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   trainingDataFilesAvailable = false;
   fastTraining: boolean = false;
+  useEcho: boolean = false;
 
   expandUnusableTranslateBooks = false;
   expandUnusableTrainingBooks = false;
@@ -464,7 +466,8 @@ export class DraftGenerationStepsComponent implements OnInit {
         translationScriptureRange: this.booksToTranslate()
           .map(b => Canon.bookNumberToId(b.number))
           .join(';'),
-        fastTraining: this.fastTraining
+        fastTraining: this.fastTraining,
+        useEcho: this.useEcho
       });
     }
   }
