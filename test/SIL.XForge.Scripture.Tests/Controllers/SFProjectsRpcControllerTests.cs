@@ -176,7 +176,7 @@ public class SFProjectsRpcControllerTests
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
         await env
             .SFProjectService.Received()
-            .GetEventMetricsAsync(User01, Roles, Project01, scope: null, pageIndex, pageSize);
+            .GetEventMetricsAsync(User01, Roles, Project01, scopes: null, eventTypes: null, pageIndex, pageSize);
     }
 
     [Test]
@@ -185,7 +185,15 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         const int pageIndex = 0;
         const int pageSize = 10;
-        env.SFProjectService.GetEventMetricsAsync(User01, Roles, Project01, scope: null, pageIndex, pageSize)
+        env.SFProjectService.GetEventMetricsAsync(
+                User01,
+                Roles,
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                pageIndex,
+                pageSize
+            )
             .Throws(new ForbiddenException());
 
         // SUT
@@ -201,7 +209,15 @@ public class SFProjectsRpcControllerTests
         const int pageIndex = 0;
         const int pageSize = 10;
         const string errorMessage = "Invalid Format";
-        env.SFProjectService.GetEventMetricsAsync(User01, Roles, Project01, scope: null, pageIndex, pageSize)
+        env.SFProjectService.GetEventMetricsAsync(
+                User01,
+                Roles,
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                pageIndex,
+                pageSize
+            )
             .Throws(new FormatException(errorMessage));
 
         // SUT
@@ -217,7 +233,15 @@ public class SFProjectsRpcControllerTests
         const int pageIndex = 0;
         const int pageSize = 10;
         const string errorMessage = "Not Found";
-        env.SFProjectService.GetEventMetricsAsync(User01, Roles, Project01, scope: null, pageIndex, pageSize)
+        env.SFProjectService.GetEventMetricsAsync(
+                User01,
+                Roles,
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                pageIndex,
+                pageSize
+            )
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -233,7 +257,15 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         const int pageIndex = 0;
         const int pageSize = 10;
-        env.SFProjectService.GetEventMetricsAsync(User01, Roles, Project01, scope: null, pageIndex, pageSize)
+        env.SFProjectService.GetEventMetricsAsync(
+                User01,
+                Roles,
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                pageIndex,
+                pageSize
+            )
             .Throws(new ArgumentNullException());
 
         // SUT
