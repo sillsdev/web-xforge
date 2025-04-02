@@ -1,9 +1,13 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -13,13 +17,26 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
+import { hasData, isInstantiated, WithData } from '../../../../type-utils';
 import { ParatextProject } from '../../../core/models/paratext-project';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
-import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { ParatextService, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
+import { translateSourceToSelectableProjectWithLanguageTag } from '../draft-utils';
 import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';
+
+interface UltimateProjectDescription {
+  paratextProject: ParatextProject;
+  selectableProjectWithLanguageCode: SelectableProjectWithLanguageCode;
+  projectType: 'project' | 'resource';
+  /** sfProjectDoc may be undefined if the project is not in SF. */
+  sfProjectDoc: WithData<SFProjectDoc> | undefined;
+  /** translateSource may be undefined if the project is not in SF. */
+  translateSource: TranslateSource | undefined;
+}
 
 const mockedParatextService = mock(ParatextService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -64,6 +81,114 @@ describe('DraftSourcesComponent', () => {
     expect(env.component.projects).toBeDefined();
     expect(env.component.resources).toBeDefined();
   }));
+
+  describe('save', () => {
+    it('should save the settings', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      env.clickLanguageCodesConfirmationCheckbox();
+
+      // Suppose the user loads up the sources configuration page, changes no projects, and clicks Save. The settings
+      // change request will just correspond to what the project already has for its settings.
+      const expectedSettingsChangeRequest: SFProjectSettings = {
+        alternateSourceEnabled: true,
+        alternateSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
+        additionalTrainingSourceEnabled: true,
+        additionalTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId
+      };
+
+      // SUT
+      env.component.save();
+      tick();
+      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
+      const actualSettingsChangeRequest: SFProjectSettings = capture(
+        mockedSFProjectService.onlineUpdateSettings
+      ).last()[1];
+      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+    }));
+
+    it('clearing second training source works', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      env.clickLanguageCodesConfirmationCheckbox();
+
+      // Suppose the user loads up the page, clears the second training/reference project box, and clicks Save. The
+      // settings change request will show a requested change for unsetting the additional-training-source.
+      const expectedSettingsChangeRequest: SFProjectSettings = {
+        alternateSourceEnabled: true,
+        alternateSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
+        // The second training source, the "additional training source", should not be set.
+        additionalTrainingSourceEnabled: false,
+        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset
+      };
+
+      // Remove the second training source.
+      env.component.trainingSources.pop();
+      // Confirm that we have 1 training source.
+      expect(env.component.trainingSources.length).toEqual(1);
+      env.fixture.detectChanges();
+      tick();
+
+      // SUT
+      env.component.save();
+      tick();
+      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
+      const actualSettingsChangeRequest: SFProjectSettings = capture(
+        mockedSFProjectService.onlineUpdateSettings
+      ).last()[1];
+      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+    }));
+
+    it('clearing first training source works', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      env.clickLanguageCodesConfirmationCheckbox();
+
+      // Suppose the user comes to the page, leaves the second reference/training project selection alone, and clears
+      // the first reference/training project selection. Let's respond by clearing the additional-training-source, and
+      // setting the alternate-training-source to the remaining reference/training project that is still specified.
+      const expectedSettingsChangeRequest: SFProjectSettings = {
+        alternateSourceEnabled: true,
+        alternateSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
+        // The first training source should be set and should be equal to what the second training source _was_.
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId,
+        // And the second training source, the "additional training source", should not be set.
+        additionalTrainingSourceEnabled: false,
+        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset
+      };
+
+      // Remove the first training source.
+      env.component.trainingSources[0] = undefined;
+      // Confirm that we have 1 other training source.
+      expect(env.component.trainingSources[1]).not.toBeNull();
+      env.fixture.detectChanges();
+      tick();
+
+      // SUT
+      env.component.save();
+      tick();
+      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
+      const actualSettingsChangeRequest: SFProjectSettings = capture(
+        mockedSFProjectService.onlineUpdateSettings
+      ).last()[1];
+      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+    }));
+  });
 
   describe('sourceArraysToSettingsChange', () => {
     const currentProjectParatextId = 'project01';
@@ -262,79 +387,158 @@ class TestEnvironment {
   readonly component: DraftSourcesComponent;
   readonly fixture: ComponentFixture<DraftSourcesComponent>;
   readonly realtimeService: TestRealtimeService;
-
-  private readonly mockProjects: SelectableProject[] = [
-    { paratextId: 'paratextId1', name: 'Test project 1', shortName: 'P1' },
-    { paratextId: 'paratextId2', name: 'Test project 2', shortName: 'P2' },
-    { paratextId: 'paratextId3', name: 'Test project 3', shortName: 'P3' }
-  ];
-
-  private readonly mockResources: SelectableProjectWithLanguageCode[] = [
-    { paratextId: 'resource01', name: 'Resource 1', shortName: 'RSC1', languageTag: 'en' },
-    { paratextId: 'resource02', name: 'Resource 2', shortName: 'RSC2', languageTag: 'en' }
-  ];
+  readonly activatedProjectDoc: WithData<SFProjectDoc>;
 
   constructor() {
+    const userSFProjectsAndResourcesCount: number = 6;
+    const userNonSFProjectsCount: number = 3;
+    const userNonSFResourcesCount: number = 3;
+
     this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-    when(mockedParatextService.getProjects()).thenResolve(this.mockProjects as ParatextProject[]);
-    when(mockedParatextService.getResources()).thenResolve(this.mockResources);
+    // Make some projects and resources, already on SF, that the user has access to. These will be available as a
+    // variety of types.
+
+    const projects: UltimateProjectDescription[] = Array.from(
+      { length: userSFProjectsAndResourcesCount },
+      (_, i) =>
+        ({
+          id: `sf-id-${i}`,
+          data: createTestProject(
+            {
+              paratextId: `pt-id-${i}`,
+              resourceConfig:
+                i < userSFProjectsAndResourcesCount / 2
+                  ? undefined
+                  : {
+                      createdTimestamp: new Date(),
+                      manifestChecksum: '1234',
+                      permissionsChecksum: '2345',
+                      revision: 1
+                    }
+            },
+            i
+          )
+        }) as SFProjectDoc
+    )
+      .map(o => {
+        // Run it into and out of realtime service so it has fields like `remoteChanges$`.
+        this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, o);
+        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id);
+      })
+      .filter(hasData)
+      .map(o => ({
+        sfProjectDoc: o,
+        paratextProject: {
+          ...translateSourceToSelectableProjectWithLanguageTag(o.data),
+          projectId: o.id,
+          isConnectable: false,
+          isConnected: true
+        },
+        selectableProjectWithLanguageCode: translateSourceToSelectableProjectWithLanguageTag(o.data),
+        translateSource: {
+          paratextId: o.data.paratextId,
+          projectRef: o.id,
+          name: o.data.name,
+          shortName: o.data.shortName,
+          writingSystem: o.data.writingSystem,
+          isRightToLeft: o.data.isRightToLeft
+        },
+        projectType: o.data.resourceConfig == null ? 'project' : 'resource'
+      }));
+    const usersProjectsAndResourcesOnSF: WithData<SFProjectDoc>[] = projects.map(o => o.sfProjectDoc).filter(hasData);
+
+    // Set of projects, not already on SF, that the user should have access to.
+    projects.push(
+      ...Array.from({ length: userNonSFProjectsCount }, (_, i) => ({
+        paratextId: `pt-id-${userSFProjectsAndResourcesCount + i}`,
+        name: `Test project ${userSFProjectsAndResourcesCount + i}`,
+        shortName: `P${userSFProjectsAndResourcesCount + i}`,
+        languageTag: 'en',
+        projectId: undefined,
+        isConnectable: true,
+        isConnected: false
+      })).map((o: ParatextProject) => ({
+        paratextProject: o,
+        selectableProjectWithLanguageCode: o,
+        projectType: 'project' as const,
+        sfProjectDoc: undefined,
+        translateSource: undefined
+      }))
+    );
+
+    // Set of resources, not already on SF, that the user should have access to.
+    projects.push(
+      ...Array.from({ length: userNonSFResourcesCount }, (_, i) => ({
+        paratextId: `pt-id-${userSFProjectsAndResourcesCount + userNonSFProjectsCount + i}`,
+        name: `Test project ${userSFProjectsAndResourcesCount + userNonSFProjectsCount + i}`,
+        shortName: `P${userSFProjectsAndResourcesCount + userNonSFProjectsCount + i}`,
+        languageTag: 'en',
+        projectId: undefined,
+        isConnectable: true,
+        isConnected: false
+      })).map((o: ParatextProject) => ({
+        paratextProject: o,
+        selectableProjectWithLanguageCode: o,
+        projectType: 'resource' as const,
+        sfProjectDoc: undefined,
+        translateSource: undefined
+      }))
+    );
+
+    const usersSFResources: TranslateSource[] = projects
+      .filter(o => o.projectType === 'resource')
+      .map(o => o.translateSource)
+      .filter(isInstantiated);
+    const usersSFProjects: TranslateSource[] = projects
+      .filter(o => o.projectType === 'project')
+      .map(o => o.translateSource)
+      .filter(isInstantiated);
+
+    this.activatedProjectDoc = usersProjectsAndResourcesOnSF[0];
+
+    // Now that various projects and resources are defined with known SF project ids, and as various needed types, write
+    // the sf project 0's translate config values.
+    const sfProject0: SFProject = this.activatedProjectDoc.data;
+    sfProject0.translateConfig.source = usersSFResources[0];
+    sfProject0.translateConfig.draftConfig.alternateSourceEnabled = true;
+    sfProject0.translateConfig.draftConfig.alternateSource = usersSFProjects[1];
+    sfProject0.translateConfig.draftConfig.alternateTrainingSourceEnabled = true;
+    sfProject0.translateConfig.draftConfig.alternateTrainingSource = usersSFResources[2];
+    sfProject0.translateConfig.draftConfig.additionalTrainingSourceEnabled = true;
+    sfProject0.translateConfig.draftConfig.additionalTrainingSource = usersSFProjects[2];
+    sfProject0.translateConfig.draftConfig.additionalTrainingData = false;
+    sfProject0.translateConfig.translationSuggestionsEnabled = false;
+    sfProject0.translateConfig.preTranslate = true;
+
+    when(mockedParatextService.getProjects()).thenResolve(
+      projects.filter(o => o.projectType === 'project').map(o => o.paratextProject)
+    );
+    when(mockedParatextService.getResources()).thenResolve(
+      projects.filter(o => o.projectType === 'resource').map(o => o.selectableProjectWithLanguageCode)
+    );
+    when(mockedSFUserProjectsService.projectDocs$).thenReturn(of(usersProjectsAndResourcesOnSF));
     when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
     when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
-
-    const sfProjectProfileDoc = {
-      data: createTestProjectProfile({
-        translateConfig: {
-          draftConfig: {
-            alternateSourceEnabled: true,
-            alternateSource: {
-              paratextId: 'paratextId2',
-              projectRef: 'sfp2',
-              name: 'Test project 2',
-              shortName: 'P2',
-              writingSystem: { tag: 'en' },
-              isRightToLeft: false
-            },
-            alternateTrainingSourceEnabled: true,
-            alternateTrainingSource: {
-              paratextId: 'resource02',
-              projectRef: 'sfr2',
-              name: 'Resource 2',
-              shortName: 'RSC2',
-              writingSystem: { tag: 'en' },
-              isRightToLeft: false
-            },
-            additionalTrainingSourceEnabled: true,
-            additionalTrainingSource: {
-              paratextId: 'paratextId3',
-              projectRef: 'sfp3',
-              name: 'Test project 3',
-              shortName: 'P3',
-              writingSystem: { tag: 'en' },
-              isRightToLeft: false
-            }
-          },
-          source: {
-            paratextId: 'resource01',
-            projectRef: 'sfr1',
-            name: 'Resource 1',
-            shortName: 'RSC1',
-            writingSystem: { tag: 'en' },
-            isRightToLeft: false
-          }
-        }
-      })
-    } as SFProjectProfileDoc;
-    when(mockedActivatedProjectService.changes$).thenReturn(of(sfProjectProfileDoc));
-    when(mockedActivatedProjectService.projectDoc).thenReturn(sfProjectProfileDoc);
-    when(mockedActivatedProjectService.projectId).thenReturn(sfProjectProfileDoc.id);
-    when(mockedActivatedProjectService.projectDoc).thenReturn(sfProjectProfileDoc);
+    when(mockedActivatedProjectService.changes$).thenReturn(of(this.activatedProjectDoc));
+    when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
+    when(mockedActivatedProjectService.projectId).thenReturn(this.activatedProjectDoc.id);
+    when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
-    when(mockedSFUserProjectsService.projectDocs$).thenReturn(of([sfProjectProfileDoc]));
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
     tick();
+  }
+
+  clickLanguageCodesConfirmationCheckbox(): void {
+    const languageCodesConfirmationComponent: DebugElement = this.fixture.debugElement.query(
+      By.css('app-language-codes-confirmation')
+    );
+    const checkbox: DebugElement = languageCodesConfirmationComponent.query(By.css('input[type="checkbox"]'));
+    checkbox.nativeElement.click();
+    tick();
+    this.fixture.detectChanges();
   }
 }

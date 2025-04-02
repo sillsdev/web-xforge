@@ -19,8 +19,8 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { hasData, isInstantiated } from '../../../../type-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { projectLabel } from '../../../shared/utils';
@@ -116,8 +116,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
         this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
 
         this.nonSelectableProjects = [
-          ...this.trainingSources.filter(s => s != null),
-          ...this.draftingSources.filter(s => s != null)
+          ...this.trainingSources.filter(isInstantiated),
+          ...this.draftingSources.filter(isInstantiated)
         ];
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
@@ -140,13 +140,13 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   get referenceLanguageDisplayName(): string {
-    const uniqueTags = Array.from(new Set(this.trainingSources.filter(s => s != null).map(p => p.languageTag)));
+    const uniqueTags = Array.from(new Set(this.trainingSources.filter(isInstantiated).map(p => p.languageTag)));
     const displayNames = uniqueTags.map(tag => this.i18n.getLanguageDisplayName(tag) ?? tag);
     return this.i18n.enumerateList(displayNames);
   }
 
   get sourceLanguageDisplayName(): string | undefined {
-    const definedSources = this.draftingSources.filter(s => s != null);
+    const definedSources = this.draftingSources.filter(isInstantiated);
 
     if (definedSources.length > 1) throw new Error('Multiple drafting sources not supported');
     else if (definedSources.length < 1) return undefined;
@@ -164,15 +164,15 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   get sourceSubtitle(): string {
-    return this.i18n.enumerateList(this.draftingSources.filter(s => s != null).map(s => s.shortName) ?? []);
+    return this.i18n.enumerateList(this.draftingSources.filter(isInstantiated).map(s => s.shortName) ?? []);
   }
 
   get referencesSubtitle(): string {
-    return this.i18n.enumerateList(this.trainingSources.filter(s => s != null).map(r => r.shortName) ?? []);
+    return this.i18n.enumerateList(this.trainingSources.filter(isInstantiated).map(r => r.shortName) ?? []);
   }
 
   get targetSubtitle(): string {
-    return this.i18n.enumerateList(this.trainingTargets.filter(s => s != null).map(t => t.shortName) ?? []);
+    return this.i18n.enumerateList(this.trainingTargets.filter(isInstantiated).map(t => t.shortName) ?? []);
   }
 
   parentheses(value?: string): string {
@@ -194,10 +194,10 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   get draftSourcesAsArray(): DraftSourcesAsSelectableProjectArrays {
     return {
-      draftingSources: this.draftingSources.filter(s => s != null),
-      trainingSources: this.trainingSources.filter(s => s != null),
+      draftingSources: this.draftingSources.filter(isInstantiated),
+      trainingSources: this.trainingSources.filter(isInstantiated),
       trainingTargets: this.trainingTargets
-        .filter(s => s != null)
+        .filter(isInstantiated)
         .map(t => translateSourceToSelectableProjectWithLanguageTag(t))
     };
   }
@@ -216,9 +216,6 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     index: number,
     paratextId: string | undefined
   ): void {
-    // When still loading projects, the project selectors will temporarily set the value to null
-    if (!this.isLoaded) return;
-
     const selectedProject: SelectableProject | null =
       this.projects?.find(p => p.paratextId === paratextId) ??
       this.resources?.find(r => r.paratextId === paratextId) ??
@@ -260,7 +257,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     return (
       this.featureFlags.allowAdditionalTrainingSource.enabled &&
       this.trainingSources.length < 2 &&
-      this.trainingSources.every(s => s != null)
+      this.trainingSources.every(isInstantiated)
     );
   }
 
@@ -289,13 +286,11 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   async save(): Promise<void> {
-    if (this.activatedProjectService.projectDoc == null) throw new Error('Project doc is null');
-    if (this.activatedProjectService.projectDoc.data == null) throw new Error('Project doc data is null');
-    const currentSFProjectId = this.activatedProjectService.projectDoc.id;
-    if (currentSFProjectId == null) throw new Error('Project ID is null');
+    const currentProjectDoc: SFProjectProfileDoc | undefined = this.activatedProjectService.projectDoc;
+    if (!hasData(currentProjectDoc)) throw new Error('Project doc or data is null');
 
-    const definedSources = this.draftingSources.filter(s => s != null);
-    const definedReferences = this.trainingSources.filter(s => s != null);
+    const definedSources: SelectableProjectWithLanguageCode[] = this.draftingSources.filter(isInstantiated);
+    const definedReferences: SelectableProjectWithLanguageCode[] = this.trainingSources.filter(isInstantiated);
 
     let messageKey: I18nKeyForComponent<'draft_sources'> | undefined;
     if (definedSources.length === 0 && definedReferences.length === 0) {
@@ -305,23 +300,20 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     else if (this.languageCodeConfirmationMessageIfUserTriesToContinue) {
       messageKey = this.languageCodeConfirmationMessageIfUserTriesToContinue;
     }
-
     if (messageKey) {
       this.dialogService.message(this.i18n.translate(`draft_sources.${messageKey}`));
       return;
     }
 
-    const currentProjectParatextId: string = this.activatedProjectService.projectDoc.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
-      this.trainingSources as SelectableProject[],
-      this.draftingSources as SelectableProject[],
-      this.trainingTargets as SelectableProject[],
-      currentProjectParatextId
+      definedReferences,
+      definedSources,
+      this.trainingTargets,
+      currentProjectDoc.data.paratextId
     );
-    const projectSettingsChange: SFProjectSettings = sourcesSettingsChange;
     await this.checkUpdateStatus(
       'projectSettings',
-      this.projectService.onlineUpdateSettings(currentSFProjectId, projectSettingsChange)
+      this.projectService.onlineUpdateSettings(currentProjectDoc.id, sourcesSettingsChange)
     );
     this.monitorSyncStatus();
   }

@@ -2,8 +2,6 @@
   <h1>{{ t("configure_draft_sources") }}</h1>
 
   <mat-card class="draft-sources-stepper">
-    <!-- The value on app-project-select is intentionally set to undefined until sources load, otherwise it won't correctly load -->
-
     <div class="step" [class.active]="step === 1">
       <div class="step-header" matRipple (click)="goToStep(1)">
         <div class="step-header-description">
@@ -20,12 +18,13 @@
             [projects]="projects"
             [resources]="resources"
             [nonSelectableProjects]="nonSelectableProjects"
-            [value]="loading ? undefined : source?.paratextId"
+            [value]="source?.paratextId"
             [hiddenParatextIds]="otherParatextIds(draftingSources, source?.paratextId)"
             (valueChange)="sourceSelected(draftingSources, $index, $event)"
             [placeholder]="projectPlaceholder(source)"
           ></app-project-select>
         }
+
         <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
       </div>
     </div>
@@ -54,14 +53,13 @@
             {{ t("same_language_as_source") }}
           }
         </p>
-
         @for (source of trainingSources; track $index) {
           <app-project-select
             [isDisabled]="loading"
             [projects]="projects"
             [resources]="resources"
             [nonSelectableProjects]="nonSelectableProjects"
-            [value]="loading ? undefined : source?.paratextId"
+            [value]="source?.paratextId"
             [hiddenParatextIds]="otherParatextIds(trainingSources, source?.paratextId)"
             (valueChange)="sourceSelected(trainingSources, $index, $event)"
             [placeholder]="projectPlaceholder(source)"
@@ -107,11 +105,12 @@
             [projects]="projects"
             [resources]="resources"
             [nonSelectableProjects]="nonSelectableProjects"
-            [value]="loading ? undefined : source?.paratextId"
+            [value]="source?.paratextId"
             [hiddenParatextIds]="otherParatextIds(trainingTargets, source?.paratextId)"
             [placeholder]="projectPlaceholder(source)"
           ></app-project-select>
         }
+
         <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
       </div>
     </div>
