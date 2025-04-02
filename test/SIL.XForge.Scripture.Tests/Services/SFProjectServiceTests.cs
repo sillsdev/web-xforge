@@ -49,6 +49,7 @@ public class SFProjectServiceTests
     private const string LinkExpiredUser = "linkexpireduser";
     private const string SiteId = "xf";
     private const string PTProjectIdNotYetInSF = "paratext_notYetInSF";
+    private const string EventType01 = "eventType01";
     private const string Role01 = "role01";
     private static readonly string[] Permissions =
     [
@@ -4245,7 +4246,8 @@ public class SFProjectServiceTests
                     User01,
                     systemRoles: [SystemRole.User],
                     Project01,
-                    scope: null,
+                    scopes: null,
+                    eventTypes: null,
                     pageIndex: -1,
                     pageSize: 0
                 )
@@ -4264,7 +4266,8 @@ public class SFProjectServiceTests
                     User01,
                     systemRoles: [SystemRole.User],
                     Project01,
-                    scope: null,
+                    scopes: null,
+                    eventTypes: null,
                     pageIndex: 0,
                     pageSize: 0
                 )
@@ -4283,7 +4286,8 @@ public class SFProjectServiceTests
                     User01,
                     systemRoles: [SystemRole.User],
                     projectId: "invalid_project",
-                    scope: null,
+                    scopes: null,
+                    eventTypes: null,
                     pageIndex: 0,
                     pageSize: 10
                 )
@@ -4295,7 +4299,13 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
-        env.EventMetricService.GetEventMetricsAsync(Project01, scope: EventScope.Checking, pageIndex: 0, pageSize: 10)
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                scopes: Arg.Is<EventScope[]?>(s => s[0] == EventScope.Checking),
+                eventTypes: Arg.Is<string[]?>(s => s[0] == EventType01),
+                pageIndex: 0,
+                pageSize: 10
+            )
             .Returns(expected);
 
         // SUT
@@ -4303,14 +4313,21 @@ public class SFProjectServiceTests
             User01,
             systemRoles: [SystemRole.User],
             Project01,
-            scope: EventScope.Checking,
+            scopes: [EventScope.Checking],
+            eventTypes: [EventType01],
             pageIndex: 0,
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
         await env
             .EventMetricService.Received()
-            .GetEventMetricsAsync(Project01, scope: EventScope.Checking, pageIndex: 0, pageSize: 10);
+            .GetEventMetricsAsync(
+                Project01,
+                scopes: Arg.Is<EventScope[]?>(s => s[0] == EventScope.Checking),
+                eventTypes: Arg.Is<string[]?>(s => s[0] == EventType01),
+                pageIndex: 0,
+                pageSize: 10
+            );
     }
 
     [Test]
@@ -4318,7 +4335,13 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
-        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10, scope: null)
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                pageIndex: 0,
+                pageSize: 10
+            )
             .Returns(expected);
 
         // SUT
@@ -4326,14 +4349,15 @@ public class SFProjectServiceTests
             User06,
             systemRoles: [SystemRole.ServalAdmin],
             Project01,
-            scope: null,
+            scopes: null,
+            eventTypes: null,
             pageIndex: 0,
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
         await env
             .EventMetricService.Received()
-            .GetEventMetricsAsync(Project01, scope: null, pageIndex: 0, pageSize: 10);
+            .GetEventMetricsAsync(Project01, scopes: null, eventTypes: null, pageIndex: 0, pageSize: 10);
     }
 
     [Test]
@@ -4341,7 +4365,13 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
-        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10, scope: null)
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                pageIndex: 0,
+                pageSize: 10
+            )
             .Returns(expected);
 
         // SUT
@@ -4349,14 +4379,15 @@ public class SFProjectServiceTests
             User06,
             systemRoles: [SystemRole.SystemAdmin],
             Project01,
-            scope: null,
+            scopes: null,
+            eventTypes: null,
             pageIndex: 0,
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
         await env
             .EventMetricService.Received()
-            .GetEventMetricsAsync(Project01, scope: null, pageIndex: 0, pageSize: 10);
+            .GetEventMetricsAsync(Project01, scopes: null, eventTypes: null, pageIndex: 0, pageSize: 10);
     }
 
     [Test]
@@ -4371,7 +4402,8 @@ public class SFProjectServiceTests
                     User05,
                     systemRoles: [SystemRole.User],
                     Project01,
-                    scope: null,
+                    scopes: null,
+                    eventTypes: null,
                     pageIndex: 0,
                     pageSize: 10
                 )

@@ -656,13 +656,22 @@ public class SFProjectsRpcController(
         string projectId,
         int pageIndex,
         int pageSize,
-        EventScope? scope = null
+        EventScope[]? scopes = null,
+        string[]? eventTypes = null
     )
     {
         try
         {
             return Ok(
-                await projectService.GetEventMetricsAsync(UserId, SystemRoles, projectId, scope, pageIndex, pageSize)
+                await projectService.GetEventMetricsAsync(
+                    UserId,
+                    SystemRoles,
+                    projectId,
+                    scopes,
+                    eventTypes,
+                    pageIndex,
+                    pageSize
+                )
             );
         }
         catch (ForbiddenException)
@@ -686,7 +695,8 @@ public class SFProjectsRpcController(
                     { "projectId", projectId },
                     { "pageIndex", pageIndex.ToString() },
                     { "pageSize", pageSize.ToString() },
-                    { "scope", scope?.ToString() },
+                    { "scope", string.Join(',', scopes ?? []) },
+                    { "eventTypes", string.Join(',', eventTypes ?? []) },
                 }
             );
             throw;

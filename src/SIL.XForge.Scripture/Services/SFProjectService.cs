@@ -976,7 +976,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string curUserId,
         string[] systemRoles,
         string projectId,
-        EventScope? scope,
+        EventScope[]? scopes,
+        string[]? eventTypes,
         int pageIndex,
         int pageSize
     )
@@ -1015,7 +1016,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // Return the event metrics
-        return await _eventMetricService.GetEventMetricsAsync(projectId, scope, pageIndex, pageSize);
+        return await _eventMetricService.GetEventMetricsAsync(projectId, scopes, eventTypes, pageIndex, pageSize);
     }
 
     public SFProjectSecret GetProjectSecretByShareKey(string shareKey)
