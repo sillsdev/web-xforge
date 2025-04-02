@@ -10,9 +10,10 @@ public interface IEventMetricService
 {
     Task<QueryResults<EventMetric>> GetEventMetricsAsync(
         string? projectId,
-        EventScope? scope,
-        int pageIndex,
-        int pageSize
+        EventScope[]? scopes,
+        string[]? eventTypes,
+        int pageIndex = 0,
+        int pageSize = int.MaxValue
     );
     Task SaveEventMetricAsync(
         string? projectId,

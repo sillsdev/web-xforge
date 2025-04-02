@@ -43,7 +43,8 @@ public interface ISFProjectService : IProjectService
         string curUserId,
         string[] systemRoles,
         string projectId,
-        EventScope? scope,
+        EventScope[]? scopes,
+        string[]? eventTypes,
         int pageIndex,
         int pageSize
     );

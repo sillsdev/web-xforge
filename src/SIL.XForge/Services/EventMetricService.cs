@@ -16,9 +16,10 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
 {
     public async Task<QueryResults<EventMetric>> GetEventMetricsAsync(
         string? projectId,
-        EventScope? scope,
-        int pageIndex,
-        int pageSize
+        EventScope[]? scopes,
+        string[]? eventTypes,
+        int pageIndex = 0,
+        int pageSize = int.MaxValue
     )
     {
         // Do not allow querying of event metrics without a project identifier
@@ -28,20 +29,45 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         }
 
         // Build the filter expression for the query
-        Expression<Func<EventMetric, bool>> filter = scope is not null
-            ? m => m.ProjectId == projectId && m.Scope == scope
-            : m => m.ProjectId == projectId;
-
-        return new QueryResults<EventMetric>
+        Expression<Func<EventMetric, bool>> filter;
+        if (scopes is not null && eventTypes is not null)
         {
-            Results = eventMetrics
+            filter = m => m.ProjectId == projectId && scopes.Contains(m.Scope) && eventTypes.Contains(m.EventType);
+        }
+        else if (scopes is not null)
+        {
+            filter = m => m.ProjectId == projectId && scopes.Contains(m.Scope);
+        }
+        else if (eventTypes is not null)
+        {
+            filter = m => m.ProjectId == projectId && eventTypes.Contains(m.EventType);
+        }
+        else
+        {
+            filter = m => m.ProjectId == projectId;
+        }
+
+        // See if we are paginating the results
+        List<EventMetric> results;
+        long unpagedCount;
+        if (pageIndex == 0 && pageSize == int.MaxValue)
+        {
+            results = await eventMetrics.Query().Where(filter).OrderByDescending(m => m.TimeStamp).ToListAsync();
+            unpagedCount = results.Count;
+        }
+        else
+        {
+            results = await eventMetrics
                 .Query()
                 .Where(filter)
                 .OrderByDescending(m => m.TimeStamp)
                 .Skip(pageIndex * pageSize)
-                .Take(pageSize),
-            UnpagedCount = await eventMetrics.CountDocumentsAsync(filter),
-        };
+                .Take(pageSize)
+                .ToListAsync();
+            unpagedCount = await eventMetrics.CountDocumentsAsync(filter);
+        }
+
+        return new QueryResults<EventMetric> { Results = results, UnpagedCount = unpagedCount };
     }
 
     public async Task SaveEventMetricAsync(
