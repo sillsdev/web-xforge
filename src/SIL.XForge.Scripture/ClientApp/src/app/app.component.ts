@@ -291,10 +291,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.permissionsChangedSub?.unsubscribe();
         this.permissionsChangedSub = this._selectedProjectDoc?.remoteChanges$.subscribe(() => {
           if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
-            // If the user is in the Serval administration page, do not check access,
-            // as they will be modifying the project's properties
+            // If the user is in the Serval administration area, do not check access, as they will be modifying the
+            // project's properties. We suppress this in the event log, as if a sync occurs while a serval admin is
+            // viewing it, it will result in the project deleted dialog erroneously being shown.
+            const servalAdminAreaRegex = /serval-administration|event-log/;
             if (
-              this.locationService.pathname.includes('serval-administration') &&
+              servalAdminAreaRegex.test(this.locationService.pathname) &&
               this.currentUser?.roles.includes(SystemRole.ServalAdmin)
             ) {
               return;
