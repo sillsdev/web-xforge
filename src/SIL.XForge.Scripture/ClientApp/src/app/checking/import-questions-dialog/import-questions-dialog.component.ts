@@ -12,6 +12,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { objectId } from 'xforge-common/utils';
@@ -61,7 +62,7 @@ interface DialogListItem {
   sfVersionOfQuestion?: QuestionDoc;
 }
 
-type DialogErrorState = 'update_transcelerator' | 'file_import_errors' | 'missing_header_row';
+type DialogErrorState = 'update_transcelerator' | 'file_import_errors' | 'missing_header_row' | 'offline_conversion';
 type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progress' | DialogErrorState;
 
 @Component({
@@ -84,6 +85,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   importedCount: number = 0;
   toImportCount: number = 0;
   importCanceled: boolean = false;
+  fileExtensions: string = '.csv,.tsv';
 
   @ViewChild('selectAllCheckbox') selectAllCheckbox!: MatCheckbox;
   @ViewChild('dialogContentBody') dialogContentBody!: ElementRef;
@@ -108,6 +110,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,
     projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogRef: MatDialogRef<ImportQuestionsDialogComponent>,
     private readonly transloco: TranslocoService,
     private readonly dialogService: DialogService,
@@ -147,6 +150,15 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     });
 
     this.promiseForQuestionDocQuery = checkingQuestionsService.queryQuestions(this.data.projectId, {}, this.destroyRef);
+
+    // Filter the dialog to only allow uploading Excel files if the user is online
+    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
+      if (isOnline) {
+        this.fileExtensions = '.csv,.tsv,.xls,.xlsx';
+      } else {
+        this.fileExtensions = '.csv,.tsv';
+      }
+    });
   }
 
   get status(): DialogStatus {
@@ -394,7 +406,18 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     const possibleBookIds = file.name.split(/[-_.]/).filter(part => Canon.allBookIds.includes(part.toUpperCase()));
     const defaultBookId = possibleBookIds.length === 1 ? possibleBookIds[0].toUpperCase() : undefined;
 
-    const result = await this.csvService.parse(file);
+    let result: string[][];
+    const upperCaseFileName = file.name.toUpperCase();
+    if (upperCaseFileName.endsWith('.XLS') || upperCaseFileName.endsWith('.XLSX')) {
+      if (!this.onlineStatusService.isOnline) {
+        this.errorState = 'offline_conversion';
+        return;
+      }
+
+      result = await this.csvService.convert(file);
+    } else {
+      result = await this.csvService.parse(file);
+    }
 
     const referenceColumn = result[0].findIndex(value => /^\s*References?\s*$/i.test(value));
     const questionColumn = result[0].findIndex(value => /^\s*Questions?\s*$/i.test(value));
