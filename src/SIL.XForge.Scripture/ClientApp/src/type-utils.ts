@@ -48,6 +48,18 @@ export function hasPropWithValue<X, Y extends PropertyKey>(
   return hasProp(obj, prop) && obj[prop] === val;
 }
 
+/** Guarantees that the value is not null or undefined. */
+export function notNull<T>(value: T): value is NonNullable<T> {
+  return value != null;
+}
+
+/**
+ * Guarantees that the input object has a non-null data property.
+ */
+export function hasData<T extends { data: any }>(input: T | null | undefined): input is WithData<T> {
+  return hasProp(input, 'data') && input.data != null;
+}
+
 // The CaretPosition type is no longer in the TypeScript DOM API type definitions, though it is still in Firefox,
 // as of Firefox 104.0, on 2022-09-06
 export interface CaretPosition {
@@ -101,3 +113,8 @@ export type ObjectPaths<T, Depth extends number = 10> = Depth extends never
   : T extends object
     ? { [Key in keyof T]-?: JoinWithDot<Key, ObjectPaths<T[Key], OneLessThan[Depth]>> }[keyof T]
     : '';
+
+/**
+ * This has a data field that is not null. Such as for a realtime document that has a non-null data field.
+ */
+export type WithData<T extends { data: any }> = T & { data: NonNullable<T['data']> };

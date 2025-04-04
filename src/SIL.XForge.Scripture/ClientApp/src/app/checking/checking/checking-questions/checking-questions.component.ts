@@ -368,7 +368,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     this.activeQuestionDoc = questionDoc;
 
     if (verseRef != null) {
-      this.storeMostRecentQuestion(verseRef.bookNum, verseRef.chapterNum).then(() => {
+      this.storeMostRecentQuestion().then(() => {
         // Only emit if not a filter to avoid duplicate emission, as an emit from filter is called elsewhere
         if (!actionSource?.isQuestionListChange) {
           this.changed.emit({ questionDoc, actionSource });
@@ -426,7 +426,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     });
   }
 
-  private async storeMostRecentQuestion(bookNum: number, chapterNum: number): Promise<void> {
+  private async storeMostRecentQuestion(): Promise<void> {
     if (this._projectUserConfigDoc != null && this._projectUserConfigDoc.data != null) {
       const activeQuestionDoc = this.activeQuestionDoc;
       if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
@@ -441,10 +441,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
           );
         }
         await this._projectUserConfigDoc.submitJson0Op(op => {
-          op.set<string>(puc => puc.selectedTask!, 'checking');
           op.set(puc => puc.selectedQuestionRef!, activeQuestionDoc.id);
-          op.set(puc => puc.selectedBookNum!, bookNum);
-          op.set(puc => puc.selectedChapterNum!, chapterNum);
           op.unset(puc => puc.selectedSegment);
           op.unset(puc => puc.selectedSegmentChecksum!);
         });

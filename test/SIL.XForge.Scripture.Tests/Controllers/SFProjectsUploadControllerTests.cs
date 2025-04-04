@@ -5,8 +5,11 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using NPOI.HSSF.UserModel;
+using NPOI.XSSF.UserModel;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -23,6 +26,110 @@ public class SFProjectsUploadControllerTests
     private const string Project01 = "project01";
     private const string User01 = "user01";
     private static readonly string[] Roles = [SystemRole.User];
+
+    [Test]
+    public async Task ConvertToCsvAsync_EmptyRequestFails()
+    {
+        await using var env = new TestEnvironment();
+        env.CreateEmptyRequest();
+
+        // SUT
+        IActionResult actual = await env.Controller.ConvertToCsvAsync();
+        Assert.IsInstanceOf<BadRequestResult>(actual);
+    }
+
+    [Test]
+    public async Task ConvertToCsvAsync_MissingFileFails()
+    {
+        await using var env = new TestEnvironment();
+        using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(Data01, Project01, null, null);
+
+        // SUT
+        IActionResult actual = await env.Controller.ConvertToCsvAsync();
+        Assert.IsInstanceOf<BadRequestResult>(actual);
+    }
+
+    [Test]
+    public async Task ConvertToCsvAsync_MissingFilenameFails()
+    {
+        await using var env = new TestEnvironment();
+        await using MemoryStream fileStream = new MemoryStream();
+        using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(Data01, Project01, null, fileStream);
+
+        // SUT
+        IActionResult actual = await env.Controller.ConvertToCsvAsync();
+        Assert.IsInstanceOf<BadRequestResult>(actual);
+    }
+
+    [Test]
+    public async Task ConvertToCsvAsync_UnexpectedException()
+    {
+        await using var env = new TestEnvironment();
+
+        // Set up the file upload of an invalid file that will throw an error
+        const string fileName = "test.xlsx";
+        await using MemoryStream fileStream = new MemoryStream();
+        using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(null, null, fileName, fileStream);
+
+        // SUT
+        Assert.ThrowsAsync<ZipException>(env.Controller.ConvertToCsvAsync);
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task ConvertToCsvAsync_UnknownFileFails()
+    {
+        await using var env = new TestEnvironment();
+
+        // Set up the file upload of an invalid file that will throw an error
+        const string fileName = "test.xlsm";
+        await using MemoryStream fileStream = new MemoryStream();
+        using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(Data01, Project01, fileName, fileStream);
+
+        // SUT
+        IActionResult actual = await env.Controller.ConvertToCsvAsync();
+        Assert.IsInstanceOf<BadRequestResult>(actual);
+    }
+
+    [Test]
+    public async Task ConvertExcelToCsvAsync_UploadXlsFile()
+    {
+        await using var env = new TestEnvironment();
+
+        // Set up the file upload
+        const string fileName = "test.xls";
+        await using MemoryStream fileStream = new MemoryStream();
+        using HSSFWorkbook workbook = new HSSFWorkbook();
+        workbook.Write(fileStream, leaveOpen: true);
+        fileStream.Seek(0, SeekOrigin.Begin);
+        using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(null, null, fileName, fileStream);
+
+        // SUT
+        IActionResult actual = await env.Controller.ConvertToCsvAsync();
+        Assert.IsNotNull(actual);
+        Assert.IsInstanceOf<FileResult>(actual);
+        Assert.AreEqual("text/csv", (actual as FileResult)?.ContentType);
+    }
+
+    [Test]
+    public async Task ConvertExcelToCsvAsync_UploadXlsxFile()
+    {
+        await using var env = new TestEnvironment();
+
+        // Set up the file upload
+        const string fileName = "test.xlsx";
+        await using MemoryStream fileStream = new MemoryStream();
+        using XSSFWorkbook workbook = new XSSFWorkbook();
+        workbook.Write(fileStream, leaveOpen: true);
+        fileStream.Seek(0, SeekOrigin.Begin);
+        using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(null, null, fileName, fileStream);
+
+        // SUT
+        IActionResult actual = await env.Controller.ConvertToCsvAsync();
+        Assert.IsNotNull(actual);
+        Assert.IsInstanceOf<FileResult>(actual);
+        Assert.AreEqual("text/csv", (actual as FileResult)?.ContentType);
+    }
 
     [Test]
     public async Task UploadAudioAsync_EmptyRequestFails()
@@ -297,18 +404,20 @@ public class SFProjectsUploadControllerTests
         /// <param name="fileStream">The file stream.</param>
         /// <returns>The Http Request Message. This must be disposed.</returns>
         public async Task<HttpRequestMessage> CreateFileUploadRequestAsync(
-            string dataId,
-            string projectId,
+            string? dataId,
+            string? projectId,
             string? fileName,
             Stream? fileStream
         )
         {
             // Create the form content
-            var content = new MultipartFormDataContent
+            var content = new MultipartFormDataContent();
+
+            // Add the data id if specified
+            if (dataId is not null)
             {
-                { new StringContent(dataId), "dataId" },
-                { new StringContent(projectId), "projectId" },
-            };
+                content.Add(new StringContent(dataId), "dataId");
+            }
 
             // Set the file stream if specified
             if (fileStream is not null)
@@ -319,12 +428,13 @@ public class SFProjectsUploadControllerTests
                     Name = "file",
                     FileName = fileName,
                 };
-                content = new MultipartFormDataContent
-                {
-                    { new StringContent(dataId), "dataId" },
-                    { streamContent, "file" },
-                    { new StringContent(projectId), "projectId" },
-                };
+                content.Add(streamContent, "file");
+            }
+
+            // Add the project id if specified
+            if (projectId is not null)
+            {
+                content.Add(new StringContent(projectId), "projectId");
             }
 
             // Add form fields to a new request message
@@ -354,8 +464,8 @@ public class SFProjectsUploadControllerTests
         /// <param name="data">The file data.</param>
         /// <returns>The Http Request Message. This must be disposed.</returns>
         public async Task<HttpRequestMessage> CreateSuccessfulFileUploadResultAsync(
-            string dataId,
-            string projectId,
+            string? dataId,
+            string? projectId,
             string? fileName,
             string data
         )
