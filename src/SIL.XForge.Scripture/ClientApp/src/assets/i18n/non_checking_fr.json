@@ -196,6 +196,7 @@
     "generate_draft_button": "Générer une ébauche",
     "generate_forward_translation_drafts_header": "Générer des brouillons de traduction",
     "generate_new_draft": "Nouvelle ébauche",
+    "improved_draft_generation_notice": "La rédaction a été améliorée ! Un plus grand nombre de marqueurs de l'USFM seront correctement préservés lorsque vous générez un brouillon. Veuillez {1}nous contacter{2} si vous constatez des problèmes.",
     "info_alert_last_sync_failed": "Votre projet n'a pas réussi à se synchroniser. Il sera synchronisé lorsque vous générerez votre prochaine ébauche.",
     "info_alert_no_source_access": "Vous n'avez pas accès au projet de traduction {{ name }}. Veuillez contacter votre administrateur Paratext pour obtenir l'accès, puis [link:connectProjectUrl]connectez-vous à ce projet[/link] avant de pouvoir générer une ébauche.",
     "info_alert_no_training_source_access": "Vous n'avez pas accès au projet source de formation {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
@@ -303,7 +304,8 @@
     "state_syncing": "Synchronisation en cours",
     "stay_on_page": "Restez sur la page",
     "target_language_data": "Données sur la langue cible",
-    "training_language_model": "Formation du modèle de langue"
+    "training_language_model": "Formation du modèle de langue",
+    "unknown_language_code": "inconnu"
   },
   "editor": {
     "add_comment": "Ajouter un commentaire",
@@ -346,7 +348,7 @@
   "editor_tabs_menu": {
     "biblical_terms_menu_item": "Termes bibliques",
     "history_menu_item": "Historique",
-    "draft_menu_item": "Ébauche automatique",
+    "draft_menu_item": "Générer une ébauche",
     "project_resource_menu_item": "Ressource..."
   },
   "editor_tab_factory": {
@@ -354,7 +356,7 @@
     "default_history_tab_header": "Historique",
     "default_project_tab_header": "Projet",
     "default_resource_tab_header": "Ressource",
-    "draft_tab_header": "Ébauche automatique"
+    "draft_tab_header": "Générer un brouillon"
   },
   "event_metric_dialog": {
     "close": "Fermer",

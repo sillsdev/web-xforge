@@ -1,7 +1,7 @@
 {
   "audio_recorder_dialog": {
     "mic_access_denied": "El acceso a su micrófono fue denegado. Por favor, habilite el micrófono desde su navegador.",
-    "mic_not_found": "No se ha encontrado ningún micrófono. Por favor, conecta un micrófono a tu dispositivo.",
+    "mic_not_found": "No se ha encontrado ningún micrófono. Por favor, conecte un micrófono a su dispositivo.",
     "record": "Grabar",
     "re_record": "Regrabar",
     "save": "Guardar respuesta",

@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>Alat Pemeriksaan Komunitas kami memfasilitasi kampanye pemeriksaan Kitab Suci secara modular, untuk memberikan umpan balik yang lebih luas kepada komite penerjemahan, dengan lebih cepat.</value>
+    <value>Alat Pemeriksaan Masyarakat kami memfasilitasi kampanye pemeriksaan Alkitab secara modular, untuk memberikan umpan balik yang lebih luas kepada komite penerjemahan, dengan lebih cepat.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
     <value>Proyek-proyek Alkitab melibatkan kelompok-kelompok penutur bahasa yang semakin beragam secara geografis.</value>
@@ -136,10 +136,10 @@
     <value>Perluas Jangkauan Anda dengan Pemeriksaan Alkitab</value>
   </data>
   <data name="AboutChecking" xml:space="preserve">
-    <value>3 Meluncurkan kampanye Pemeriksaan Komunitas modular untuk mengumpulkan umpan balik yang luas dengan cepat. Alat ini memastikan bahwa terjemahan dilakukan secara menyeluruh dan akurat dengan melibatkan anggota komunitas dalam proses verifikasi.</value>
+    <value>3 Meluncurkan kampanye Pemeriksaan Masyarakat modular untuk mengumpulkan umpan balik yang luas dengan cepat. Alat ini memastikan bahwa terjemahan dilakukan secara menyeluruh dan akurat dengan melibatkan anggota masyarakat dalam proses verifikasi.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>Aplikasi daring untuk penerjemahan berbasis tim, dengan bantuankecerdasan buatan dan alat bantu untuk tinjauan komunitas</value>
+    <value>Aplikasi daring untuk penerjemahan berbasis tim, dengan bantuan kecerdasan buatan dan alat bantu untuk pemeriksaan masyarakat</value>
   </data>
   <data name="EngageDrafting" xml:space="preserve">
     <value>Pembuatan Konsep</value>
@@ -148,7 +148,7 @@
     <value>Penyuntingan Kolaboratif</value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
-    <value>Pemeriksaan Komunitas</value>
+    <value>Pemeriksaan Masyarakat</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Terlibat dengan komunitas bahasa. Berkolaborasi dengan rekan-rekan Anda.</value>
