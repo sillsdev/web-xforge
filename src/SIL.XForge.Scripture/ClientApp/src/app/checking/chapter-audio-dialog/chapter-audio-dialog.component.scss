@@ -31,6 +31,22 @@
     top: 0;
     right: 0;
   }
+
+  .audio-player-manage-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    row-gap: 8px;
+    margin-block-start: 12px;
+  }
+
+  .audio-player-manage {
+    padding: 12px;
+    background-color: #e8eae6;
+    border-radius: 20px;
+    align-self: stretch;
+    margin-block-start: 20px;
+  }
 }
 
 .dropzone {
@@ -70,11 +86,6 @@
     font-size: 1.25rem;
     line-height: 1.25em;
     margin-bottom: 1rem;
-  }
-}
-mat-select.book-select-menu ::ng-deep {
-  .mat-mdc-select-arrow-wrapper {
-    margin-inline-end: 5px;
   }
 }
 
@@ -122,11 +133,6 @@ mat-select.book-select-menu ::ng-deep {
       overflow: hidden;
     }
 
-    .chapter-select-menu {
-      flex-basis: 60px;
-      margin-inline-start: 5px;
-    }
-
     .divider {
       flex: 0 0 1px;
       border-left: 1px solid variables.$border-color;
@@ -152,4 +158,8 @@ mat-select.book-select-menu ::ng-deep {
 
 .flex-spacer {
   flex-grow: 1;
+}
+
+.white-spinner {
+  --mdc-circular-progress-active-indicator-color: white;
 }
