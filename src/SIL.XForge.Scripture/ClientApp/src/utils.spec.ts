@@ -1,4 +1,4 @@
-import { hasFunctionProp, hasProp, hasStringProp, isObj, isString } from './type-utils';
+import { hasData, hasFunctionProp, hasProp, hasStringProp, isObj, isString, notNull } from './type-utils';
 
 const miscValues = [undefined, null, NaN, true, false, Infinity, -1, 0, Symbol(), '', '\0', () => {}, BigInt(3)];
 
@@ -65,5 +65,27 @@ describe('type utils', () => {
     expect(hasFunctionProp({}, 'hello')).toBeFalse();
     expect(hasFunctionProp({ hello: 'world' }, 'hello')).toBeFalse();
     expect(hasFunctionProp({ hello: () => {} }, 'hello')).toBeTrue();
+  });
+
+  it('hasData works', () => {
+    expect(hasData({ data: 'hello' })).toBeTrue();
+    expect(hasData({ data: {} })).toBeTrue();
+    expect(hasData({ data: null })).toBeFalse();
+    expect(hasData({ data: undefined })).toBeFalse();
+    expect(hasData(null)).toBeFalse();
+    expect(hasData(undefined)).toBeFalse();
+    // These could be good expectations, but are not expected to compile
+    // at this time.
+    // expect(hasData({})).toBeFalse();
+    // expect(hasData({ a: 'b' })).toBeFalse();
+  });
+
+  it('isInstantiated works', () => {
+    expect(notNull(null)).toBeFalse();
+    expect(notNull(undefined)).toBeFalse();
+    expect(notNull('hello')).toBeTrue();
+    expect(notNull({})).toBeTrue();
+    expect(notNull(1)).toBeTrue();
+    expect(notNull({ a: 'b' })).toBeTrue();
   });
 });
