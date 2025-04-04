@@ -6,6 +6,7 @@
   justify-content: flex-end;
   align-items: center;
   column-gap: 8px;
+  h1,
   h2 {
     flex-grow: 1;
   }
@@ -72,6 +73,14 @@ app-donut-chart {
   }
 }
 
+#text-with-questions-list,
+#text-with-archived-questions {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 #reviewer-questions-list {
   flex: 1;
 
@@ -118,8 +127,9 @@ app-donut-chart {
   place-content: stretch space-between;
 }
 
+#text-with-questions-list,
 .stat-panels {
-  margin: 16px 0;
+  margin-bottom: 32px;
 }
 
 .card {

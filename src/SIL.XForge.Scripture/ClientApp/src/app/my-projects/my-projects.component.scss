@@ -27,7 +27,6 @@ h2 {
 }
 
 .pt-content-container {
-  background: #f4f4f4;
   margin: 30px -20px -14px;
   padding: 20px;
   height: 100%;
@@ -43,9 +42,6 @@ h2 {
 
     max-width: 600px;
     margin: 0 auto;
-    .user-unconnected-project:nth-child(even) {
-      background: #e6e6e6;
-    }
   }
 }
 mat-card {
@@ -107,11 +103,6 @@ mat-card:active {
   grid-template-areas:
     'project-name project-name'
     'description empty';
-  background-color: lighten(variables.$info-color, 40%);
-}
-
-.user-update-project-btn:not(:hover):not(:disabled) {
-  background-color: variables.$info-color !important;
 }
 
 .loading-card {
@@ -138,7 +129,7 @@ mat-card:active {
 
 .project-description,
 .loading-project-description {
-  color: variables.$lighterTextColor;
+  opacity: 0.7;
   grid-area: description;
   align-self: center;
 }
@@ -149,13 +140,8 @@ mat-card a,
   justify-self: end;
 }
 
-.active-project {
-  background-color: #e2efdc;
-}
-
 .loading-card > * {
   animation: loading-card-animation 1s ease-in-out 0s infinite alternate;
-  background-color: variables.$greyLight;
 }
 
 .loading-project-name {
@@ -193,5 +179,4 @@ mat-card a,
 
 .cannot-connect {
   opacity: 0.5;
-  background-color: #eee;
 }

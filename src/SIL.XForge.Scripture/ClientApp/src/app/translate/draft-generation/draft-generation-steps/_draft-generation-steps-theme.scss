@@ -1,0 +1,17 @@
+@use '@angular/material' as mat;
+@use 'src/_variables' as variables;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --mat-stepper-header-icon-background-color: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 10))};
+  --mat-stepper-header-icon-foreground-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 90, 98))};
+  --mat-stepper-header-edit-state-icon-background-color: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 10))};
+  --mat-stepper-header-edit-state-icon-foreground-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 90, 98))};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
