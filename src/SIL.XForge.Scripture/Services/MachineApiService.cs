@@ -36,7 +36,6 @@ public class MachineApiService(
     IEventMetricService eventMetricService,
     IExceptionHandler exceptionHandler,
     ILogger<MachineApiService> logger,
-    IMachineProjectService machineProjectService,
     IParatextService paratextService,
     IPreTranslationService preTranslationService,
     IRepository<SFProjectSecret> projectSecrets,
@@ -800,9 +799,8 @@ public class MachineApiService(
 
     public async Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken)
     {
-        string engineType = await machineProjectService.GetTranslationEngineTypeAsync(preTranslate: true);
         LanguageInfo languageInfo = await translationEngineTypesClient.GetLanguageInfoAsync(
-            engineType,
+            engineType: MachineProjectService.Nmt,
             languageCode,
             cancellationToken
         );

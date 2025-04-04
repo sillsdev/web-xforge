@@ -72,6 +72,12 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
             serializer.Serialize(writer, value.FastTraining);
         }
 
+        if (value.UseEcho)
+        {
+            writer.WritePropertyName(nameof(value.UseEcho));
+            serializer.Serialize(writer, value.UseEcho);
+        }
+
         writer.WritePropertyName(nameof(value.ProjectId));
         serializer.Serialize(writer, value.ProjectId);
 

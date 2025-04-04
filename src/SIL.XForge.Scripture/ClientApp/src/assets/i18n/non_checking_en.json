@@ -259,7 +259,9 @@
     "training_books_will_appear": "Training books will appear as you select books under translated books",
     "translated_books": "Translated books",
     "translated_book_selected_no_training_pair": "Some of the training books you selected have no matching reference books selected. Please select matching reference books.",
-    "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
+    "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project.",
+    "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
+    "use_echo": "Use Echo Translation Engine"
   },
   "draft_preview_books": {
     "add_to_project": "Add to project",
