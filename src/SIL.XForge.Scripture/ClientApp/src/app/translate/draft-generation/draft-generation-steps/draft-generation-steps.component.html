@@ -141,7 +141,11 @@
             ></app-book-multi-select>
           }
         }
-        @if (!translatedBooksSelectedInTrainingSources) {
+        @if (!isTrainingOptional && selectableTrainingBooksByProj(activatedProject.projectId).length === 0) {
+          <app-notice class="error-no-translated-books" type="error">
+            {{ t("choose_books_for_training_no_books_error") }}
+          </app-notice>
+        } @else if (!translatedBooksSelectedInTrainingSources) {
           <app-notice class="error-translated-books-unselected" type="error">
             {{ t("translated_book_selected_no_training_pair") }}
           </app-notice>
