@@ -115,7 +115,9 @@
                                   class="archive-btn"
                                 >
                                   <mat-icon>archive</mat-icon>
-                                  <span>{{ t("archive_multiple", { location: getBookName(text) }) }}</span>
+                                  <span>
+                                    {{ t("archive_multiple", { location: getBookName(text) + " " + chapter.number }) }}
+                                  </span>
                                 </button>
                               }
                               @if (!chapter.hasAudio && canCreateScriptureAudio) {
