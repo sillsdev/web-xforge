@@ -2,6 +2,7 @@
 @use '@angular/material' as mat;
 @use 'src/app/my-projects/my-projects-theme' as sf-my-projects;
 @use 'src/app/app-theme' as sf-app;
+@use 'src/app/checking/checking/checking-theme' as sf-checking;
 @use 'src/app/checking/checking/checking-questions/checking-questions-theme' as sf-checking-questions;
 @use 'src/app/navigation/navigation-theme' as sf-navigation;
 @use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
@@ -16,6 +17,7 @@
 
   // Custom components
   @include sf-app.theme($theme);
+  @include sf-checking.theme($theme);
   @include sf-checking-questions.theme($theme);
   @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
