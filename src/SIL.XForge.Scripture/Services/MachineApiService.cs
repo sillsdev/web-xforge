@@ -1035,6 +1035,9 @@ public class MachineApiService(
         // We use project service, as it provides permission and token checks
         string jobId = await projectService.SyncAsync(curUserId, buildConfig.ProjectId);
 
+        // Store the project ids in a hashset to prevent duplicates
+        HashSet<string> syncProjectIds = [];
+
         // If we have an alternate source, sync that first
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
         if (
@@ -1042,15 +1045,7 @@ public class MachineApiService(
             && !string.IsNullOrWhiteSpace(alternateSourceProjectId)
         )
         {
-            jobId = await syncService.SyncAsync(
-                new SyncConfig
-                {
-                    ParentJobId = jobId,
-                    ProjectId = alternateSourceProjectId,
-                    TargetOnly = true,
-                    UserId = curUserId,
-                }
-            );
+            syncProjectIds.Add(alternateSourceProjectId);
         }
 
         // If we have an alternate training source, sync that next
@@ -1065,15 +1060,7 @@ public class MachineApiService(
             && !string.IsNullOrWhiteSpace(alternateTrainingSourceProjectId)
         )
         {
-            jobId = await syncService.SyncAsync(
-                new SyncConfig
-                {
-                    ParentJobId = jobId,
-                    ProjectId = alternateTrainingSourceProjectId,
-                    TargetOnly = true,
-                    UserId = curUserId,
-                }
-            );
+            syncProjectIds.Add(alternateTrainingSourceProjectId);
         }
 
         // If we have an additional training source, sync that next
@@ -1088,11 +1075,24 @@ public class MachineApiService(
             && !string.IsNullOrWhiteSpace(additionalTrainingSourceProjectId)
         )
         {
+            syncProjectIds.Add(additionalTrainingSourceProjectId);
+        }
+
+        // Remove the source project, as it was synced when the target was synced
+        string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
+        if (sourceProjectId is not null && syncProjectIds.Contains(sourceProjectId))
+        {
+            syncProjectIds.Remove(sourceProjectId);
+        }
+
+        // Sync the projects
+        foreach (string syncProjectId in syncProjectIds)
+        {
             jobId = await syncService.SyncAsync(
                 new SyncConfig
                 {
                     ParentJobId = jobId,
-                    ProjectId = additionalTrainingSourceProjectId,
+                    ProjectId = syncProjectId,
                     TargetOnly = true,
                     UserId = curUserId,
                 }
