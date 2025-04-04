@@ -136,7 +136,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
   private async navigateToChecking(projectId: string, task: TaskType = 'checking'): Promise<void> {
     const defaultCheckingLink: string[] = ['/projects', projectId, task];
-    const link = await lastValueFrom(this.resumeCheckingService.checkingLink$.pipe(first()));
+    const link = await lastValueFrom(this.resumeCheckingService.resumeLink$.pipe(first()));
 
     this.router.navigate(link ?? defaultCheckingLink, { replaceUrl: true });
   }
