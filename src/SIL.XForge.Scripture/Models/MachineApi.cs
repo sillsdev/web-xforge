@@ -13,6 +13,7 @@ public static class MachineApi
     public const string Namespace = "machine-api/v3";
     public const string StartBuild = "translation/builds";
     public const string GetBuild = "translation/builds/id:{sfProjectId}.{buildId?}";
+    public const string GetBuilds = "translation/builds/project:{sfProjectId}";
     public const string GetEngine = "translation/engines/project:{sfProjectId}";
     public const string GetWordGraph = "translation/engines/project:{sfProjectId}/actions/getWordGraph";
     public const string IsLanguageSupported = "translation/languages/{languageCode}";

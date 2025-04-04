@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -13,7 +14,13 @@ namespace SIL.XForge.Services;
 
 public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventMetricService
 {
-    public async Task<QueryResults<EventMetric>> GetEventMetricsAsync(string? projectId, int pageIndex, int pageSize)
+    public async Task<QueryResults<EventMetric>> GetEventMetricsAsync(
+        string? projectId,
+        EventScope[]? scopes,
+        string[]? eventTypes,
+        int pageIndex = 0,
+        int pageSize = int.MaxValue
+    )
     {
         // Do not allow querying of event metrics without a project identifier
         if (projectId is null)
@@ -21,23 +28,53 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             return new QueryResults<EventMetric> { Results = [], UnpagedCount = 0 };
         }
 
-        return new QueryResults<EventMetric>
+        // Build the filter expression for the query
+        Expression<Func<EventMetric, bool>> filter;
+        if (scopes is not null && eventTypes is not null)
         {
-            Results = eventMetrics
+            filter = m => m.ProjectId == projectId && scopes.Contains(m.Scope) && eventTypes.Contains(m.EventType);
+        }
+        else if (scopes is not null)
+        {
+            filter = m => m.ProjectId == projectId && scopes.Contains(m.Scope);
+        }
+        else if (eventTypes is not null)
+        {
+            filter = m => m.ProjectId == projectId && eventTypes.Contains(m.EventType);
+        }
+        else
+        {
+            filter = m => m.ProjectId == projectId;
+        }
+
+        // See if we are paginating the results
+        List<EventMetric> results;
+        long unpagedCount;
+        if (pageIndex == 0 && pageSize == int.MaxValue)
+        {
+            results = await eventMetrics.Query().Where(filter).OrderByDescending(m => m.TimeStamp).ToListAsync();
+            unpagedCount = results.Count;
+        }
+        else
+        {
+            results = await eventMetrics
                 .Query()
-                .Where(m => m.ProjectId == projectId)
+                .Where(filter)
                 .OrderByDescending(m => m.TimeStamp)
                 .Skip(pageIndex * pageSize)
-                .Take(pageSize),
-            UnpagedCount = await eventMetrics.CountDocumentsAsync(m => m.ProjectId == projectId),
-        };
+                .Take(pageSize)
+                .ToListAsync();
+            unpagedCount = await eventMetrics.CountDocumentsAsync(filter);
+        }
+
+        return new QueryResults<EventMetric> { Results = results, UnpagedCount = unpagedCount };
     }
 
     public async Task SaveEventMetricAsync(
         string? projectId,
         string? userId,
         string eventType,
-        EventScope eventScope,
+        EventScope scope,
         Dictionary<string, object> argumentsWithNames,
         object? result,
         Exception? exception
@@ -58,7 +95,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             EventType = eventType,
             Payload = payload,
             ProjectId = projectId,
-            Scope = eventScope,
+            Scope = scope,
             UserId = userId,
         };
 

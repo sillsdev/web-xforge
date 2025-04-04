@@ -175,6 +175,51 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the previous and current builds for a project.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="preTranslate"><c>true</c> if the builds are pre-translation builds.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The builds are returned.</response>
+    /// <response code="403">You do not have permission to retrieve builds for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetBuilds)]
+    public ActionResult<IAsyncEnumerable<ServalBuildDto>> GetBuildsAsync(
+        string sfProjectId,
+        [FromQuery] bool preTranslate,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+            return Ok(
+                _machineApiService.GetBuildsAsync(
+                    _userAccessor.UserId,
+                    sfProjectId,
+                    preTranslate,
+                    isServalAdmin,
+                    cancellationToken
+                )
+            );
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
     /// Gets a translation engine.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>

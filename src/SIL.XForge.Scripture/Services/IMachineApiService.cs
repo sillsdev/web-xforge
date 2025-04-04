@@ -30,6 +30,13 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
+    public IAsyncEnumerable<ServalBuildDto> GetBuildsAsync(
+        string curUserId,
+        string sfProjectId,
+        bool preTranslate,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    );
     Task<ServalBuildDto?> GetCurrentBuildAsync(
         string curUserId,
         string sfProjectId,
