@@ -196,6 +196,7 @@
     "generate_draft_button": "Generar borrador",
     "generate_forward_translation_drafts_header": "Generar borradores de traducción",
     "generate_new_draft": "Nuevo borrador",
+    "improved_draft_generation_notice": "¡Se ha actualizado el borrador! Se conservarán correctamente más marcadores USFM cuando generes un borrador. Por favor {1}contáctenos{2} si nota algún problema.",
     "info_alert_last_sync_failed": "Su proyecto no se ha sincronizado. Se sincronizará la próxima vez que genere un borrador.",
     "info_alert_no_source_access": "No tiene acceso al proyecto fuente de traducción {{ name }}. Póngase en contacto con su administrador de Paratext para obtener acceso y, a continuación, [link:connectProjectUrl]conéctese a este proyecto[/link] antes de poder generar un borrador.",
     "info_alert_no_training_source_access": "No tiene acceso al proyecto fuente de formación {{ name }}. Póngase en contacto con su administrador de Paratext para obtener acceso y, a continuación, [link:connectProjectUrl]conéctese a este proyecto[/link] antes de poder generar un borrador.",
@@ -303,7 +304,8 @@
     "state_syncing": "Sincronizando",
     "stay_on_page": "Permanecer en la página",
     "target_language_data": "Datos de idioma de destino",
-    "training_language_model": "Entrenamiento del modelo de idioma"
+    "training_language_model": "Entrenamiento del modelo de idioma",
+    "unknown_language_code": "desconocido"
   },
   "editor": {
     "add_comment": "Añadir comentario",
@@ -335,7 +337,7 @@
     "draft_legacy_warning": "Hemos actualizado nuestra funcionalidad de borrador. Puede aprovecharla [link:generateDraftUrl]generando un nuevo borrador[/link].",
     "error_applying_draft": "No se ha podido añadir el borrador al proyecto. Vuelva a intentarlo más tarde.",
     "no_draft_notice": "{{ bookChapterName }} no tiene borrador.",
-    "offline_notice": "El borrador automático no está disponible fuera de línea.",
+    "offline_notice": "Los borradores generados no están disponibles sin conexión.",
     "overwrite": "Añadir el borrador sobrescribirá el capítulo actual. ¿Está seguro de que desea continuar?",
     "reapply_to_project": "Volver a añadir al proyecto",
     "yes": "Sobrescribir capítulo"
@@ -346,7 +348,7 @@
   "editor_tabs_menu": {
     "biblical_terms_menu_item": "Vocablos bíblicos",
     "history_menu_item": "Historial",
-    "draft_menu_item": "Guardado Automático",
+    "draft_menu_item": "Borrador generado",
     "project_resource_menu_item": "Recurso..."
   },
   "editor_tab_factory": {
@@ -354,7 +356,7 @@
     "default_history_tab_header": "Historial",
     "default_project_tab_header": "Proyecto",
     "default_resource_tab_header": "Recurso",
-    "draft_tab_header": "Guardado Automático"
+    "draft_tab_header": "Borrador generado"
   },
   "event_metric_dialog": {
     "close": "Cerrar",

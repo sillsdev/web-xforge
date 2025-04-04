@@ -196,6 +196,7 @@
     "generate_draft_button": "Generate draft",
     "generate_forward_translation_drafts_header": "Generate translation drafts",
     "generate_new_draft": "New draft",
+    "improved_draft_generation_notice": "Drafting has been upgraded! More of the USFM markers will be properly preserved when you generate a draft. Please {1}contact us{2} if you notice any issues.",
     "info_alert_last_sync_failed": "Your project failed to synchronize. It will be synchronized when you next generate a draft.",
     "info_alert_no_source_access": "You do not have access to the translation source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_no_training_source_access": "You do not have access to the training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
@@ -303,7 +304,8 @@
     "state_syncing": "Syncing",
     "stay_on_page": "Stay on page",
     "target_language_data": "Target language data",
-    "training_language_model": "Training the language model"
+    "training_language_model": "Training the language model",
+    "unknown_language_code": "unknown"
   },
   "editor": {
     "add_comment": "Add Comment",
@@ -335,7 +337,7 @@
     "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "error_applying_draft": "Failed to add the draft to the project. Try again later.",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
-    "offline_notice": "Auto draft is not available offline.",
+    "offline_notice": "Generated drafts are not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
     "reapply_to_project": "Re-add to project",
     "yes": "Overwrite chapter"
@@ -346,7 +348,7 @@
   "editor_tabs_menu": {
     "biblical_terms_menu_item": "Biblical Terms",
     "history_menu_item": "History",
-    "draft_menu_item": "Auto Draft",
+    "draft_menu_item": "Generated draft",
     "project_resource_menu_item": "Resource..."
   },
   "editor_tab_factory": {
@@ -354,7 +356,7 @@
     "default_history_tab_header": "History",
     "default_project_tab_header": "Project",
     "default_resource_tab_header": "Resource",
-    "draft_tab_header": "Auto Draft"
+    "draft_tab_header": "Generated draft"
   },
   "event_metric_dialog": {
     "close": "Închide",

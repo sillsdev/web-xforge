@@ -196,6 +196,7 @@
     "generate_draft_button": "Entwurf generieren",
     "generate_forward_translation_drafts_header": "Übersetzungsentwurf generieren",
     "generate_new_draft": "Neuer Entwurf",
+    "improved_draft_generation_notice": "Das Generieren von Entwürfen wurde ausgebaut! Mehr der USFMs werden korrekt beibehalten, wenn Du einen Entwurf generierst. Bitte {1}kontaktiere uns{2}, falls Du irgendwelche Probleme bemerkst.",
     "info_alert_last_sync_failed": "Dein Projekt konnte nicht synchronisiert werden. Es wird synchronisiert, wenn Du das nächste Mal einen Entwurf generierst.",
     "info_alert_no_source_access": "Du hast keinen Zugriff auf das Übersetzungsprojekt {{ name }}. Bitte wende Dich an Deinen Paratext-Administrator, um Zugang zu erhalten, und stelle dann eine [link:connectProjectUrl]Verbindung zu diesem Projekt[/link] her, bevor Du einen Entwurf generieren kannst.",
     "info_alert_no_training_source_access": "Du hast keinen Zugriff auf das Quellprojekt für Schulung {{ name }}. Bitte wende Dich an Deinen Paratext-Administrator, um Zugang zu erhalten, und stelle dann eine [link:connectProjectUrl]Verbindung zu diesem Projekt[/link] her, bevor Du einen Entwurf generieren kannst.",
@@ -303,7 +304,8 @@
     "state_syncing": "Wird synchronisiert",
     "stay_on_page": "Bleibe auf dieser Seite",
     "target_language_data": "Daten in der Zielsprache",
-    "training_language_model": "Sprachmodell schulen"
+    "training_language_model": "Sprachmodell schulen",
+    "unknown_language_code": "unbekannt"
   },
   "editor": {
     "add_comment": "Kommentar hinzufügen",
@@ -335,7 +337,7 @@
     "draft_legacy_warning": "Wir haben unsere Redaktionsfunktion aktualisiert. Du kannst diese nutzen, indem Du [link:generateDraftUrl]einen neuen Entwurf[/link] erstellst.",
     "error_applying_draft": "Hinzufügen des Entwurfs zum Projekt ist fehlgeschlagen. Versuche es später noch einmal.",
     "no_draft_notice": "{{ bookChapterName }} hat keinen Entwurf.",
-    "offline_notice": "Das automatische Erstellen eines Entwurfs ist offline nicht verfügbar.",
+    "offline_notice": "Generierte Entwürfe sind offline nicht verfügbar.",
     "overwrite": "Das Hinzufügen des Entwurfs wird das aktuelle Kapitel überschreiben. Bist Du sicher, dass Du fortfahren möchtest?",
     "reapply_to_project": "Wieder zum Projekt hinzufügen",
     "yes": "Kapitel überschreiben"
@@ -346,7 +348,7 @@
   "editor_tabs_menu": {
     "biblical_terms_menu_item": "Biblische Begriffe",
     "history_menu_item": "Verlauf",
-    "draft_menu_item": "Automatischer Entwurf",
+    "draft_menu_item": "Generierter Entwurf",
     "project_resource_menu_item": "Ressource..."
   },
   "editor_tab_factory": {
@@ -354,7 +356,7 @@
     "default_history_tab_header": "Verlauf",
     "default_project_tab_header": "Projekt",
     "default_resource_tab_header": "Ressource",
-    "draft_tab_header": "Automatischer Entwurf"
+    "draft_tab_header": "Generierter Entwurf"
   },
   "event_metric_dialog": {
     "close": "Schließen",
