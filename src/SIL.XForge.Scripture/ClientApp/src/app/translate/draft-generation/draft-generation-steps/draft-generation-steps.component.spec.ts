@@ -73,79 +73,6 @@ describe('DraftGenerationStepsComponent', () => {
     when(mockOnlineStatusService.isOnline).thenReturn(true);
   }));
 
-  describe('training and drafting sources different', async () => {
-    const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
-    const config: DraftSourcesAsArrays = {
-      trainingSources: [
-        {
-          projectRef: 'source1',
-          paratextId: 'PT_SP',
-          name: 'Source Project',
-          shortName: 'sP1',
-          writingSystem: { tag: 'eng' },
-          texts: availableBooks
-        },
-        {
-          projectRef: 'source2',
-          paratextId: 'PT_SP2',
-          name: 'Source Project 2',
-          shortName: 'sP2',
-          writingSystem: { tag: 'grc' },
-          texts: availableBooks
-        }
-      ],
-      trainingTargets: [
-        {
-          projectRef: mockActivatedProjectService.projectId!,
-          paratextId: 'PT_TT',
-          name: 'Target Project',
-          shortName: 'tT',
-          writingSystem: { tag: 'xyz' },
-          texts: availableBooks
-        }
-      ],
-      draftingSources: [
-        {
-          projectRef: 'source2',
-          paratextId: 'PT_SP2',
-          name: 'Source Project 2',
-          shortName: 'sP2',
-          writingSystem: { tag: 'es' },
-          texts: availableBooks
-        }
-      ]
-    };
-
-    beforeEach(fakeAsync(() => {
-      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
-      const mockTargetProjectDoc = {
-        id: 'project01',
-        data: createTestProjectProfile({
-          texts: availableBooks,
-          translateConfig: {
-            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'xyz' } }
-          },
-          writingSystem: { tag: 'eng' }
-        })
-      } as SFProjectProfileDoc;
-      const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
-
-      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
-      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
-        instance(mockTrainingDataQuery)
-      );
-      when(mockTrainingDataQuery.docs).thenReturn([]);
-      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
-
-      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
-      tick();
-      fixture.detectChanges();
-    }));
-  });
-
   describe('one training source', async () => {
     const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
     const allBooks = [...availableBooks, { bookNum: 6 }, { bookNum: 7 }];
@@ -197,6 +124,8 @@ describe('DraftGenerationStepsComponent', () => {
 
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
+      when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
         instance(mockTrainingDataQuery)
       );
@@ -391,6 +320,34 @@ describe('DraftGenerationStepsComponent', () => {
       ]);
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
       expect(component.selectedTrainingBooksByProj('project01')).toEqual([{ number: 1, selected: true }]);
+    });
+
+    it('shows error when project has no translated books', () => {
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      // all books
+      component.onTranslateBookSelect([1, 2, 3]);
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.selectedTrainingBooksByProj('project01').length).toBe(0);
+      expect(fixture.nativeElement.querySelector('.error-no-translated-books')).not.toBeNull();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      expect(component.showBookSelectionError).toBe(true);
+      component.stepper.selectedIndex = 1;
+      fixture.detectChanges();
+      // deselect Genesis and Exodus
+      component.onTranslateBookSelect([3]);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      // Genesis and Exodus becomes a selectable training book
+      expect(component.selectableTrainingBooksByProj('project01')).toEqual([
+        { number: 1, selected: false },
+        { number: 2, selected: false }
+      ]);
+      expect(fixture.nativeElement.querySelector('.error-no-translated-books')).toBeNull();
+      expect(component.showBookSelectionError).toBe(false);
     });
   });
 
