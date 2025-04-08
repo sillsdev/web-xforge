@@ -15,7 +15,7 @@
 
 .training-data,
 .translation-data {
-  background: #f6f6f6;
+  background: var(--sf-source-background);
   border-radius: 4px;
   padding: 1em;
 }
