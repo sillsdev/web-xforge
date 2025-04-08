@@ -687,7 +687,7 @@ public class MachineApiServiceTests
             trainingScriptureRange,
             builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ScriptureRange
         );
-        Assert.AreEqual(Project01, builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ProjectId);
+        Assert.IsEmpty(builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ProjectId);
         Assert.AreEqual(
             translationScriptureRange,
             builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ScriptureRange

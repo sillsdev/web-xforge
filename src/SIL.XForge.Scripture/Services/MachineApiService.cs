@@ -1564,11 +1564,7 @@ public class MachineApiService(
         if (!string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange))
         {
             buildDto.AdditionalInfo.TranslationScriptureRanges.Add(
-                new ProjectScriptureRange
-                {
-                    ProjectId = buildConfig.ProjectId,
-                    ScriptureRange = buildConfig.TranslationScriptureRange,
-                }
+                new ProjectScriptureRange { ScriptureRange = buildConfig.TranslationScriptureRange }
             );
         }
 

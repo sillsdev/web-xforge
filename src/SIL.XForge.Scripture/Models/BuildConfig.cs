@@ -71,7 +71,7 @@ public class BuildConfig
     public string? TranslationScriptureRange { get; set; }
 
     /// <summary>
-    /// Gets or sets the per-project books and chapters to use for training.
+    /// Gets or sets the per-project books and chapters to use for translation.
     /// </summary>
     /// <value>
     /// A list containing the project identifiers and scripture ranges.
