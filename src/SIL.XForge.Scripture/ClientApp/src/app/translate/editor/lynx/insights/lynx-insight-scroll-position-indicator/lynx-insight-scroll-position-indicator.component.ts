@@ -3,7 +3,7 @@ import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/l
 import { combineLatest, debounceTime, filter, fromEvent, map, startWith, switchMap } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
-import { LynxableEditor, LynxEditor } from '../lynx-editor';
+import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
@@ -20,7 +20,7 @@ interface LynxInsightScrollPosition {
 })
 export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
   @Input() set editor(value: LynxableEditor | undefined) {
-    this.lynxEditor = value == null ? undefined : new LynxEditor(value);
+    this.lynxEditor = value == null ? undefined : this.lynxEditorAdapterFactory.getAdapter(value);
   }
 
   scrollPositions: LynxInsightScrollPosition[] = [];
@@ -30,7 +30,8 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly editorInsightState: LynxInsightStateService,
-    private readonly editorReadyService: EditorReadyService
+    private readonly editorReadyService: EditorReadyService,
+    private readonly lynxEditorAdapterFactory: LynxEditorAdapterFactory
   ) {}
 
   ngOnInit(): void {
@@ -39,7 +40,7 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
     }
 
     combineLatest([
-      this.editorReadyService.listenEditorReadyState(this.lynxEditor.editor).pipe(filter(loaded => loaded)),
+      this.editorReadyService.listenEditorReadyState(this.lynxEditor.getEditor()).pipe(filter(loaded => loaded)),
       fromEvent(window, 'resize').pipe(debounceTime(200), startWith(undefined))
     ])
       .pipe(
