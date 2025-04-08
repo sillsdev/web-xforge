@@ -1,121 +1,37 @@
+import { Injectable } from '@angular/core';
 import Quill, { Delta, EmitterSource, Op } from 'quill';
+import { QuillLynxEditorAdapter } from './quill-services/quill-lynx-editor-adapter';
 
 export type LynxableEditor = Quill; // Add future editor as union type
 
-export class LynxEditor {
-  readonly editor: LynxableEditor;
+export interface LynxEditor {
+  getEditor(): LynxableEditor;
+  insertText(index: number, text: string, formats?: any): void;
+  deleteText(index: number, length: number): void;
+  getLength(): number;
+  formatText(index: number, length: number, formats: any): void;
+  setContents(delta: any, source: EmitterSource): void;
+  setSelection(index: number, length: number, source: EmitterSource): void;
+  getScrollingContainer(): Element;
+  getBounds(index: number, length: number): any;
+  updateContents(delta: Delta | Op[]): void;
+  focus(): void;
+  getRoot(): HTMLElement;
+}
 
-  constructor(editor: LynxableEditor) {
-    this.editor = editor;
-  }
-
-  insertText(index: number, text: string, formats?: any): void {
-    switch (true) {
-      case this.isQuill(this.editor):
-        this.editor.insertText(index, text, formats);
-        break;
-      default:
-        throw new Error('Unsupported editor type');
+@Injectable({ providedIn: 'root' })
+export class LynxEditorAdapterFactory {
+  getAdapter(editor: LynxableEditor): LynxEditor {
+    if (editor instanceof Quill) {
+      return new QuillLynxEditorAdapter(editor);
     }
+    throw new Error('Unsupported editor type');
   }
+}
 
-  deleteText(index: number, length: number): void {
-    switch (true) {
-      case this.isQuill(this.editor):
-        this.editor.deleteText(index, length);
-        break;
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  getLength(): number {
-    switch (true) {
-      case this.isQuill(this.editor):
-        return this.editor.getLength();
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  formatText(index: number, length: number, formats: any): void {
-    switch (true) {
-      case this.isQuill(this.editor):
-        this.editor.formatText(index, length, formats);
-        break;
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  setContents(delta: any, source: EmitterSource): void {
-    switch (true) {
-      case this.isQuill(this.editor):
-        this.editor.setContents(delta, source);
-        break;
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  setSelection(index: number, length: number, source: EmitterSource): void {
-    switch (true) {
-      case this.isQuill(this.editor):
-        this.editor.setSelection(index, length, source);
-        break;
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  getScrollingContainer(): Element {
-    switch (true) {
-      case this.isQuill(this.editor):
-        return this.editor.root; // TODO: is there a way to get scrolling container in Quill v2?
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  getBounds(index: number, length: number): any {
-    switch (true) {
-      case this.isQuill(this.editor):
-        return this.editor.getBounds(index, length);
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  updateContents(delta: Delta | Op[]): void {
-    switch (true) {
-      case this.isQuill(this.editor):
-        this.editor.updateContents(delta, 'user');
-        break;
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  focus(): void {
-    switch (true) {
-      case this.isQuill(this.editor):
-        this.editor.focus();
-        break;
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  get root(): HTMLElement {
-    switch (true) {
-      case this.isQuill(this.editor):
-        return this.editor.root;
-      default:
-        throw new Error('Unsupported editor type');
-    }
-  }
-
-  private isQuill(editor: LynxableEditor): editor is Quill {
-    return editor instanceof Quill;
+@Injectable({ providedIn: 'root' })
+export class TestLynxEditorAdapterFactory extends LynxEditorAdapterFactory {
+  getAdapter(mockEditor: any): LynxEditor {
+    return mockEditor;
   }
 }

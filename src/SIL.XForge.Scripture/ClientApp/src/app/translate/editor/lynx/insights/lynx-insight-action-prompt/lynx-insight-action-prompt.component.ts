@@ -4,7 +4,7 @@ import { Bounds } from 'quill';
 import { combineLatest, debounceTime, EMPTY, filter, fromEvent, iif, map, startWith, switchMap, tap } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
-import { LynxableEditor, LynxEditor } from '../lynx-editor';
+import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { getMostNestedInsight } from '../lynx-insight-util';
@@ -16,7 +16,7 @@ import { getMostNestedInsight } from '../lynx-insight-util';
 })
 export class LynxInsightActionPromptComponent implements OnInit {
   @Input() set editor(value: LynxableEditor | undefined) {
-    this.lynxEditor = value == null ? undefined : new LynxEditor(value);
+    this.lynxEditor = value == null ? undefined : this.lynxEditorAdapterFactory.getAdapter(value);
   }
 
   activeInsights: LynxInsight[] = [];
@@ -35,6 +35,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
     private readonly el: ElementRef,
     private readonly editorInsightState: LynxInsightStateService,
     private readonly editorReadyService: EditorReadyService,
+    private readonly lynxEditorAdapterFactory: LynxEditorAdapterFactory,
     private readonly dir: Directionality
   ) {}
 
@@ -47,7 +48,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
     this.yOffsetAdjustment = -this.getLineHeight() / 2;
 
     combineLatest([
-      this.editorReadyService.listenEditorReadyState(this.lynxEditor.editor).pipe(
+      this.editorReadyService.listenEditorReadyState(this.lynxEditor.getEditor()).pipe(
         filter(loaded => loaded),
         switchMap(() => this.editorInsightState.displayState$),
         map(displayState =>
@@ -109,7 +110,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
 
   private getLineHeight(): number {
     if (this.lynxEditor != null) {
-      const editorElement = this.lynxEditor.editor.root;
+      const editorElement = this.lynxEditor.getRoot();
       const lineHeight = window.getComputedStyle(editorElement).lineHeight;
       return Number.parseFloat(lineHeight);
     }
