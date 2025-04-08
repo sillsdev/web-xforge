@@ -215,7 +215,7 @@ header {
   }
 
   #question-nav {
-    background-color: lighten(vars.$sf_grey, 70%);
+    background-color: var(--sf-community-checking-questions-nav-background);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -304,11 +304,6 @@ header {
 }
 
 .menu-list {
-  h2 {
-    color: #000;
-    font-weight: bold;
-  }
-
   :not(.selected) mat-icon {
     visibility: hidden;
   }
@@ -320,6 +315,7 @@ header {
 }
 
 .scripture-audio-player-wrapper {
+  background: var(--sf-community-checking-audio-player-background);
   padding: 0.25rem;
 }
 
@@ -329,7 +325,6 @@ header {
 
 .active-question-scope-button ::ng-deep {
   font-size: 13px;
-  color: vars.$blueMedium !important;
   font-weight: 400;
   align-self: flex-start;
   height: 26px;
@@ -346,7 +341,6 @@ header {
     height: 18px;
     width: 18px;
     margin-inline-end: 4px;
-    color: lighten(vars.$blueMedium, 15%);
   }
 
   .divider {

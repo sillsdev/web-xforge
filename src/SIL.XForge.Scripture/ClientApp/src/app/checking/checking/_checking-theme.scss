@@ -1,12 +1,10 @@
 @use '@angular/material' as mat;
-@use 'src/_variables' as variables;
 
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
 
-  .scripture-audio-player-wrapper {
-    background: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 98))};
-  }
+  --sf-community-checking-questions-nav-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 95))};
+  --sf-community-checking-audio-player-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 98))};
 }
 
 @mixin theme($theme) {

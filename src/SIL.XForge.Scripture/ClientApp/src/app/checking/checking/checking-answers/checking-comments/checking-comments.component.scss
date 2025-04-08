@@ -19,16 +19,16 @@
 
     @keyframes comment-unread {
       from {
-        background: $commentUnread;
+        background: var(--sf-community-checking-new-comment-background);
       }
       to {
-        background: #fff;
+        background: var(--sf-community-checking-new-comment-fade-background);
       }
     }
   }
 
   &.shaded {
-    background-color: $shadedBackgroundColor;
+    background-color: var(--sf-community-checking-comment-alt-background);
   }
 
   .comment-text {
@@ -43,10 +43,6 @@
 
     .mat-icon {
       @include md-icon-size(18px);
-    }
-
-    button:not(:hover) {
-      color: rgba(0, 0, 0, 0.7);
     }
   }
 
