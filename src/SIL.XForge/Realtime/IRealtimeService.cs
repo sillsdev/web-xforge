@@ -8,6 +8,7 @@ public interface IRealtimeService
 {
     void StartServer();
     void StopServer();
+    void CheckIfRunning();
 
     Task<IConnection> ConnectAsync(string userId = null);
 
