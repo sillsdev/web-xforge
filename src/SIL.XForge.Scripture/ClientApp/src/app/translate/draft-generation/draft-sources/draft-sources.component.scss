@@ -172,6 +172,13 @@ strong {
   background: var(--sf-draft-source-active-blank-background);
 }
 
+#offline-message {
+  display: flex;
+  justify-self: flex-end;
+  gap: 0.5em;
+  margin-bottom: 0.5em;
+}
+
 .page-actions {
   display: flex;
   gap: 0.5em;
