@@ -65,24 +65,10 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   transition:
     color 0.15s,
     background-color 0.15s;
-
-  &:not(:disabled):hover {
-    background-color: variables.$greenLight;
-    color: variables.$sf_grey;
-  }
 }
 
 .mat-mdc-icon-button.mat-mdc-button-base.mdc-icon-button {
   transition: color 0.15s;
-
-  &:not([disabled]):hover {
-    color: variables.$greenLight;
-  }
-}
-
-.mat-step-icon.mat-step-icon-selected {
-  --mat-stepper-header-selected-state-icon-background-color: #{variables.$greenLight};
-  --mat-stepper-header-selected-state-icon-foreground-color: #{variables.$sf_grey};
 }
 
 .offline-text {
@@ -90,7 +76,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 }
 
 .locale-fonts mat-option {
-  font-family: variables.$languageFonts;
+  font-family: var(--sf-language-font-family);
 }
 
 // Titles with icons need extra padding above the text
@@ -119,6 +105,22 @@ body[dir='rtl'] .mirror-rtl {
   transform: scaleX(-1);
   .mat-badge-content {
     transform: scaleX(-1);
+  }
+}
+
+@mixin dense_mat_select() {
+  ::ng-deep {
+    height: 36px;
+    .mat-mdc-form-field-infix {
+      min-height: initial;
+      padding-top: 7px;
+      padding-bottom: 5px;
+      width: initial;
+      min-width: 25px; // prevent weird transparent gap between content and scrollbar in Chromium
+    }
+    .mat-mdc-select-arrow-wrapper {
+      margin-inline-start: 5px;
+    }
   }
 }
 

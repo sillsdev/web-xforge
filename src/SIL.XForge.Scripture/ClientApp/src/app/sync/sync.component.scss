@@ -1,4 +1,16 @@
 @use 'src/variables';
+@use 'src/breakpoints';
+
+h1 {
+  text-align: center;
+}
+
+.base-container {
+  padding: 32px;
+  @include breakpoints.media-breakpoint-only(xs) {
+    padding: 32px 16px;
+  }
+}
 
 .base-container,
 .card-content {
@@ -10,10 +22,15 @@
 
 .sync-card {
   justify-content: center;
+  text-align: center;
   padding: 0;
   min-height: 10rem;
   max-width: 37rem;
   min-width: 25rem;
+
+  @include breakpoints.media-breakpoint-only(xs) {
+    min-width: 100%;
+  }
 }
 
 .sync-progress {

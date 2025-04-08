@@ -1,15 +1,28 @@
 /**
  * Based on https://material.angular.io/guide/theming-your-components
  */
-@use 'sass:map';
 @use '@angular/material' as mat;
 
 @mixin color($theme) {
-  $accent-palette: mat.get-theme-color($theme, 'accent', 500);
+  $is-dark: mat.get-theme-type($theme) == dark;
+  $background: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 100))};
+  $background-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 10, 98))};
+  $background-hover-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 20, 95))};
+  $background-button-hover-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 90))};
 
-  :root {
-    --sf-tab-header-active-tab-accent-color: #{$accent-palette};
-  }
+  --sf-tab-header-active-tab-accent-color: #{mat.get-theme-color($theme, primary, 20)};
+  --sf-tab-group-border-color: #{if($is-dark, rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.12))};
+  --sf-tab-group-background-color: #{$background};
+  --sf-tab-header-inactive-background-color: #{$background-inactive};
+  --sf-tab-header-inactive-hover-background-color: #{$background-hover-inactive};
+  --sf-tab-header-inactive-button-hover-background-color: #{$background-button-hover-inactive};
+  --sf-tab-header-button-hover-background-color: #{$background-hover-inactive};
+  --sf-tab-header-group-scroll-button-background-color: #{$background-inactive};
+
+  --sf-tab-header-border-radius: 4px;
+  --sf-tab-group-border-width: 1px;
+  --sf-tab-header-border-width: 1px;
+  --sf-tab-header-top-offset: 1px;
 }
 
 @mixin theme($theme) {

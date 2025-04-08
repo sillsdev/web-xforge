@@ -1,22 +1,13 @@
-@use 'src/variables';
-
 mat-nav-list .mdc-list-item {
   font-weight: 500;
   font-size: 14px;
   padding-inline: 12px 0;
+  --mat-list-active-indicator-shape: 0;
 
   mat-icon {
-    color: variables.$purpleMedium;
-    fill: variables.$purpleMedium;
     transition: color 0.15s;
     padding: 4px;
     box-sizing: content-box;
-  }
-  &:hover {
-    mat-icon {
-      color: variables.$purpleLight;
-      fill: variables.$purpleLight;
-    }
   }
 
   ::ng-deep .mat-mdc-list-item-unscoped-content {
@@ -37,7 +28,14 @@ mat-nav-list .mdc-list-item {
 
   &.activated-nav-item,
   &.active {
-    background-color: #e7e8e7;
+    background-color: var(--sf-navigation-list-item-active-background-color);
+    --mdc-list-list-item-label-text-color: var(--sf-navigation-list-item-active);
+    --mdc-list-list-item-hover-label-text-color: var(--sf-navigation-list-item-active);
+    --mdc-list-list-item-focus-label-text-color: var(--sf-navigation-list-item-active);
+    .nav-label {
+      background-color: var(--sf-navigation-list-item-active);
+      color: var(--sf-navigation-list-item-active-background-color);
+    }
   }
 }
 
@@ -51,6 +49,10 @@ mat-nav-list .mdc-list-item {
 #tools-menu-list,
 #admin-pages-menu-list {
   padding-block: 0;
+}
+
+#admin-pages-menu-list {
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 #tools-menu-list {
@@ -70,11 +72,13 @@ mat-nav-list .mdc-list-item {
 #sync-icon ::ng-deep .mat-badge-content {
   font-family: 'Material Icons';
   background: transparent;
-  color: variables.$errorColor;
+  color: var(--sf-error-foreground);
   font-weight: normal;
   font-size: 1.4rem;
   top: 4px;
-  width: auto; // Fixes broken badge icon in Firefox
+  width: 1.4em;
+  height: 1.4em;
+  line-height: 1.4rem;
 }
 
 .navigation-header {
@@ -88,17 +92,17 @@ mat-nav-list .mdc-list-item {
 .mat-mdc-nav-list.disabled-offline ::ng-deep .mat-mdc-list-item-unscoped-content {
   &,
   mat-icon {
-    color: variables.$disabled-text-color !important;
+    color: var(--sf-disabled-foreground) !important;
   }
 }
 
 .nav-label {
-  color: white;
   padding: 2px 6px;
   line-height: 1rem;
   border-radius: 100px;
   font-size: 0.95em;
-  background: #4678d6;
   margin-inline-start: auto;
   margin-inline-end: 12px;
+  background-color: var(--sf-navigation-list-item-active-background-color);
+  color: var(--sf-navigation-list-item-active);
 }
