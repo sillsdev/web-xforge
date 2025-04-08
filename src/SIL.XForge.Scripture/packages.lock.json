@@ -223,8 +223,8 @@
       },
       "Autofac": {
         "type": "Transitive",
-        "resolved": "8.2.0",
-        "contentHash": "T+4+W4byzyUOarCbIcFRbxpYKC+cndfQm/+VeWpB60P2MCN0JMsewUhZqvH5Ooe936HQjn5uHvEY9tq6BfbiIw==",
+        "resolved": "8.2.1",
+        "contentHash": "q5xYBykgdvBlcmrXzHcDWcfeVktGEraluypkC0IRTupfxk+r+z+JcXgKj5kldKGe1fflyW3Ya3y9Soe9J2CqEA==",
         "dependencies": {
           "System.Diagnostics.DiagnosticSource": "8.0.1"
         }
@@ -1981,7 +1981,7 @@
         "type": "Project",
         "dependencies": {
           "AbrarJahin.DiffMatchPatch": "[0.1.0, )",
-          "Autofac": "[8.2.0, )",
+          "Autofac": "[8.2.1, )",
           "Autofac.Extensions.DependencyInjection": "[10.0.0, )",
           "Autofac.Extras.DynamicProxy": "[7.1.0, )",
           "Bugsnag.AspNet.Core": "[4.0.0, )",
