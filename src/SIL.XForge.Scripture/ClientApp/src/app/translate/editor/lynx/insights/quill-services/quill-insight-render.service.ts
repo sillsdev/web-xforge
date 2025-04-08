@@ -4,12 +4,12 @@ import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/
 import { StringMap } from 'rich-text';
 import { take, takeUntil } from 'rxjs';
 import { InsightRenderService } from '../base-services/insight-render.service';
-import { LynxEditor } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { getLeadingInsight, getMostNestedInsight } from '../lynx-insight-util';
 import { LynxInsightBlot } from './blots/lynx-insight-blot';
+import { QuillLynxEditorAdapter } from './quill-lynx-editor-adapter';
 
 @Injectable({
   providedIn: 'root'
@@ -126,7 +126,7 @@ export class QuillInsightRenderService extends InsightRenderService {
           const ref: LynxInsightOverlayRef | undefined = this.overlayService.open(
             overlayAnchor,
             insights,
-            new LynxEditor(editor)
+            new QuillLynxEditorAdapter(editor)
           );
 
           if (ref != null) {

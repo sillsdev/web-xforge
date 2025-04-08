@@ -68,7 +68,7 @@ export class LynxInsightOverlayComponent implements OnInit {
       .subscribe(event => this.handleKeyDown(event));
 
     // Prevent editor from stealing focus when overlay is open
-    fromEvent<FocusEvent>(this.editor!.root, 'focus')
+    fromEvent<FocusEvent>(this.editor!.getRoot(), 'focus')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.focusOverlay());
 
