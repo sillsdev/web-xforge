@@ -117,6 +117,8 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
+
+    [Mutex]
     Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]

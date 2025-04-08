@@ -198,6 +198,7 @@ public class Startup
         containerBuilder.RegisterSFEventMetrics();
 
         ApplicationContainer = containerBuilder.Build();
+        GlobalConfiguration.Configuration.UseAutofacActivator(ApplicationContainer);
         return new AutofacServiceProvider(ApplicationContainer);
     }
 

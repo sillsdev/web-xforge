@@ -349,6 +349,15 @@
           "Hangfire.NetCore": "[1.8.14]"
         }
       },
+      "Hangfire.Autofac": {
+        "type": "Transitive",
+        "resolved": "2.7.0",
+        "contentHash": "9LaNzbCMJm6yUOw+NKud5KwdQpXHR4j8V3MV0ufgmSO3SHRlzIWf+h2Qbldn8leAx9dnwtUkndMh+wF8k3Mx4w==",
+        "dependencies": {
+          "Autofac": "5.0.0",
+          "Hangfire.Core": "1.6.0"
+        }
+      },
       "Hangfire.Core": {
         "type": "Transitive",
         "resolved": "1.8.14",
@@ -1979,6 +1988,7 @@
           "Duende.IdentityModel": "[7.0.0, )",
           "EdjCase.JsonRpc.Router": "[6.1.0, )",
           "Hangfire": "[1.8.14, )",
+          "Hangfire.Autofac": "[2.7.0, )",
           "Hangfire.Mongo": "[1.10.7, )",
           "Jering.Javascript.NodeJS": "[6.3.1, )",
           "MailKit": "[4.11.0, )",
