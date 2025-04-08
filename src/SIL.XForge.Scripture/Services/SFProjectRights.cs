@@ -14,7 +14,7 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class SFProjectRights : ISFProjectRights
 {
-    internal static readonly string Filename = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "rightsByRole.json");
+    internal static readonly string Filename = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "rightsByRole.json");
     private readonly Dictionary<string, string[]> _rights = [];
 
     public SFProjectRights(IFileSystemService fileSystemService)

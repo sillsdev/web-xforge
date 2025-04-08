@@ -96,7 +96,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!userSecretAttempt.TryResult(out UserSecret userSecret))
             throw new DataNotFoundException("The user does not exist.");
 
-        string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", settings.ParatextId);
+        string projectDir = Path.Join(SiteOptions.Value.SiteDir, "sync", settings.ParatextId);
         if (FileSystemService.DirectoryExists(projectDir))
             throw new InvalidOperationException("A directory for this project already exists.");
 
@@ -291,13 +291,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 ptProjectId,
                 curUserId
             );
-            string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
+            string projectDir = Path.Join(SiteOptions.Value.SiteDir, "sync", ptProjectId);
             if (FileSystemService.DirectoryExists(projectDir))
                 FileSystemService.DeleteDirectory(projectDir);
             string audioDir = GetAudioDir(projectId);
             if (FileSystemService.DirectoryExists(audioDir))
                 FileSystemService.DeleteDirectory(audioDir);
-            string trainingDataDir = Path.Combine(
+            string trainingDataDir = Path.Join(
                 SiteOptions.Value.SiteDir,
                 TrainingDataService.DirectoryName,
                 ptProjectId

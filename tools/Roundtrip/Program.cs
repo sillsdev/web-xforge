@@ -197,7 +197,7 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
         if (outputAllFiles)
         {
             File.WriteAllText(
-                Path.Combine(
+                Path.Join(
                     "output",
                     $"{Path.GetFileName(path)}-{Path.GetFileNameWithoutExtension(fileName)}-delta.json"
                 ),
@@ -217,10 +217,7 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
         if (outputAllFiles)
         {
             File.WriteAllText(
-                Path.Combine(
-                    "output",
-                    $"{Path.GetFileName(path)}-{Path.GetFileNameWithoutExtension(fileName)}-usj.json"
-                ),
+                Path.Join("output", $"{Path.GetFileName(path)}-{Path.GetFileNameWithoutExtension(fileName)}-usj.json"),
                 JsonConvert.SerializeObject(usj, Newtonsoft.Json.Formatting.Indented)
             );
         }
@@ -265,21 +262,21 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
         if (outputSfmFiles && Directory.CreateDirectory("output").Exists)
         {
             File.WriteAllText(
-                Path.Combine(
+                Path.Join(
                     "output",
                     $"{Path.GetFileName(path)}-{Path.GetFileNameWithoutExtension(fileName)}-actual{Path.GetExtension(fileName)}"
                 ),
                 actualUsfm
             );
             File.WriteAllText(
-                Path.Combine(
+                Path.Join(
                     "output",
                     $"{Path.GetFileName(path)}-{Path.GetFileNameWithoutExtension(fileName)}-expected{Path.GetExtension(fileName)}"
                 ),
                 expectedUsfm
             );
             File.WriteAllText(
-                Path.Combine(
+                Path.Join(
                     "output",
                     $"{Path.GetFileName(path)}-{Path.GetFileNameWithoutExtension(fileName)}-original{Path.GetExtension(fileName)}"
                 ),

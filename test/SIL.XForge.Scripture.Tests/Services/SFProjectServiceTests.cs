@@ -2810,7 +2810,7 @@ public class SFProjectServiceTests
     public async Task DeleteProjectAsync_Success()
     {
         var env = new TestEnvironment();
-        string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
+        string ptProjectDir = Path.Join("xforge", "sync", "paratext_" + Project01);
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.True, "setup");
 
@@ -2841,7 +2841,7 @@ public class SFProjectServiceTests
         env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
 
-        ptProjectDir = Path.Combine("xforge", "sync", "pt_source_no_suggestions");
+        ptProjectDir = Path.Join("xforge", "sync", "pt_source_no_suggestions");
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.GetProject(Project03).TranslateConfig.Source, Is.Not.Null);
 
@@ -2963,7 +2963,7 @@ public class SFProjectServiceTests
             )
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
         SFProject existingSfProject = env.GetProject(Project01);
-        string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
+        string ptProjectDir = Path.Join("xforge", "sync", "paratext_" + Project01);
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.True, "setup");
         InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(

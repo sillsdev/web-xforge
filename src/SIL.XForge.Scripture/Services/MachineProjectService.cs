@@ -805,7 +805,7 @@ public class MachineProjectService(
     )
     {
         // Get the path to the Paratext directory
-        string path = Path.Combine(siteOptions.Value.SiteDir, "sync", paratextId, "target");
+        string path = Path.Join(siteOptions.Value.SiteDir, "sync", paratextId, "target");
 
         // Ensure that the path exists
         if (!fileSystemService.DirectoryExists(path))

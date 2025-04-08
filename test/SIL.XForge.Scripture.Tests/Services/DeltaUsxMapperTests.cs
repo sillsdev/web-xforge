@@ -3946,7 +3946,7 @@ public class DeltaUsxMapperTests
 
     private async Task RoundTripTestHelper(string projectZipFilename, string projectShortName)
     {
-        string zipFilePath = Path.Combine(GetPathToTestProject(), "SampleData", $"{projectZipFilename}.zip");
+        string zipFilePath = Path.Join(GetPathToTestProject(), "SampleData", $"{projectZipFilename}.zip");
         await using FileStream zipFileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
         using ZipArchive archive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
         Assert.That(archive.Entries.Any(), "setup. unexpected input size.");

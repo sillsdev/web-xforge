@@ -157,12 +157,12 @@ public class SFInstallableDblResource : InstallableResource
             {
                 // First check the resources by ID directory
                 string fileName = Name + "." + DBLEntryUid + ProjectFileManager.resourceFileExtension;
-                string projectPath = Path.Combine(SFScrTextCollection.ResourcesByIdDirectory, fileName);
+                string projectPath = Path.Join(SFScrTextCollection.ResourcesByIdDirectory, fileName);
                 if (!_fileSystemService.FileExists(projectPath))
                 {
                     // If that does not exist, use the resources directory
                     fileName = Name + ProjectFileManager.resourceFileExtension;
-                    projectPath = Path.Combine(ScrTextCollection.ResourcesDirectory, fileName);
+                    projectPath = Path.Join(ScrTextCollection.ResourcesDirectory, fileName);
                 }
 
                 // Generate an ExistingScrText from the p8z file on disk
@@ -419,7 +419,7 @@ public class SFInstallableDblResource : InstallableResource
             if (!entry.IsFile)
                 continue; // Skip directories
 
-            string entryPath = Path.Combine(path, entry.Name);
+            string entryPath = Path.Join(path, entry.Name);
 
             if (_fileSystemService.FileExists(entryPath))
                 continue; // Don't overwrite
@@ -466,7 +466,7 @@ public class SFInstallableDblResource : InstallableResource
         }
 
         sourceDirectory = this.CreateTempSourceDirectory();
-        string filePath = Path.Combine(sourceDirectory, this.Name + ProjectFileManager.resourceFileExtension);
+        string filePath = Path.Join(sourceDirectory, this.Name + ProjectFileManager.resourceFileExtension);
         if (!this.GetFile(filePath))
         {
             if (RobustFile.Exists(filePath))
@@ -519,7 +519,7 @@ public class SFInstallableDblResource : InstallableResource
         }
         catch (ArgumentNullException)
         {
-            // Path.Combine() in ScrTextCollection will have thrown this error
+            // Path.Join() in ScrTextCollection will have thrown this error
             resourcesDirectory = string.Empty;
             resourcesByIdDirectory = string.Empty;
         }
@@ -770,10 +770,10 @@ public class SFInstallableDblResource : InstallableResource
     /// </returns>
     private string CreateTempSourceDirectory()
     {
-        string dirName = Path.Combine(temporaryDirectoryName, Name + '_' + Path.GetRandomFileName());
+        string dirName = Path.Join(temporaryDirectoryName, Name + '_' + Path.GetRandomFileName());
 
         // This following is an implementation of Paratext.Data.FileUtils.GetTemporaryDirectory(dirName)
-        string path = Path.Combine(Path.GetTempPath(), dirName);
+        string path = Path.Join(Path.GetTempPath(), dirName);
         if (!Directory.Exists(path))
         {
             // If we don't have the file system service, just ignore

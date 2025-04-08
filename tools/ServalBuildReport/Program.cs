@@ -33,7 +33,7 @@ ServiceProvider services = SetupServices(environment);
 ITranslationEnginesClient translationEnginesClient = services.GetService<ITranslationEnginesClient>()!;
 
 // Set up the Spreadsheet
-string spreadsheetPath = Path.Combine(Path.GetTempPath(), $"{environment}.xlsx");
+string spreadsheetPath = Path.Join(Path.GetTempPath(), $"{environment}.xlsx");
 using XSSFWorkbook workbook = new XSSFWorkbook();
 await using FileStream fs = new FileStream(spreadsheetPath, FileMode.Create, FileAccess.Write);
 int summarySheetRow = 0;

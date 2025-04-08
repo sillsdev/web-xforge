@@ -29,7 +29,7 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
         const string path = "file.wav";
-        string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
 
         // SUT
         Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, path);
@@ -43,7 +43,7 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
         const string path = "file.mp3";
-        string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
         env.AudioService.IsMp3FileAsync(path).Returns(Task.FromResult(true));
 
         // SUT
@@ -80,7 +80,7 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
-        string filePath = Path.Combine("site", "audio", Project01, $"{User02}_{dataId}.mp3");
+        string filePath = Path.Join("site", "audio", Project01, $"{User02}_{dataId}.mp3");
         env.FileSystemService.FileExists(filePath).Returns(true);
 
         await env.Service.DeleteAudioAsync(User02, Project01, User02, dataId);
@@ -92,7 +92,7 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
-        string filePath = Path.Combine("site", "audio", Project01, $"{User02}_{dataId}.mp3");
+        string filePath = Path.Join("site", "audio", Project01, $"{User02}_{dataId}.mp3");
         env.FileSystemService.FileExists(filePath).Returns(true);
 
         await env.Service.DeleteAudioAsync(User01, Project01, User02, dataId);
@@ -104,7 +104,7 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
-        string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
         env.FileSystemService.FileExists(filePath).Returns(true);
 
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.DeleteAudioAsync(User02, Project01, User01, dataId));

@@ -655,7 +655,7 @@ public class NotesFormatterTests
 
         private MockScrText GetScrText(ParatextUser associatedPtUser, string projectId, bool hasEditPermission = true)
         {
-            string scrTextDir = Path.Combine(_syncDir, projectId, "target");
+            string scrTextDir = Path.Join(_syncDir, projectId, "target");
             ProjectName projectName = new ProjectName { ProjectPath = scrTextDir, ShortName = "Proj" };
             var scrText = new MockScrText(associatedPtUser, projectName) { CachedGuid = HexId.FromStr(projectId) };
             scrText.Permissions.CreateFirstAdminUser();

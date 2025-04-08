@@ -57,14 +57,14 @@ namespace SIL.XForge.Scripture.Services
                 return null;
             }
 
-            string baseProjectPath = Path.Combine(SettingsDirectory, projectId);
+            string baseProjectPath = Path.Join(SettingsDirectory, projectId);
             if (!FileSystemService.DirectoryExists(baseProjectPath))
             {
                 return null;
             }
 
-            string fullProjectPath = Path.Combine(baseProjectPath, "source");
-            string settingsFile = Path.Combine(fullProjectPath, ProjectSettings.fileName);
+            string fullProjectPath = Path.Join(baseProjectPath, "source");
+            string settingsFile = Path.Join(fullProjectPath, ProjectSettings.fileName);
             if (!FileSystemService.FileExists(settingsFile))
             {
                 // If this is an older project (most likely a resource), there will be an SSF file

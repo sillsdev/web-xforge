@@ -4200,7 +4200,7 @@ public class ParatextServiceTests
         MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
         env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(null, scrText);
 
-        string clonePath = Path.Combine(env.SyncDir, ptProjectId, "target");
+        string clonePath = Path.Join(env.SyncDir, ptProjectId, "target");
         env.MockFileSystemService.DirectoryExists(clonePath).Returns(false);
 
         // SUT
@@ -4270,7 +4270,7 @@ public class ParatextServiceTests
 
         // Replaces obsolete source project if the source project has been changed
         string newSourceProjectId = env.PTProjectIds[env.Project03].Id;
-        string sourcePath = Path.Combine(env.SyncDir, newSourceProjectId, "target");
+        string sourcePath = Path.Join(env.SyncDir, newSourceProjectId, "target");
 
         // Only set the new source ScrText when it is "cloned" to the filesystem
         env.MockFileSystemService.When(fs => fs.CreateDirectory(sourcePath))
@@ -5069,7 +5069,7 @@ public class ParatextServiceTests
         Assert.IsTrue(result);
         env.MockHgWrapper.ReceivedWithAnyArgs().RestoreRepository(default, default);
         env.MockHgWrapper.ReceivedWithAnyArgs().MarkSharedChangeSetsPublic(default);
-        string projectRepository = Path.Combine(scrtextDir, "_Backups", ptProjectId);
+        string projectRepository = Path.Join(scrtextDir, "_Backups", ptProjectId);
         string restoredRepository = projectRepository + "_Restored";
         // Removes leftover folders from a failed previous restore
         env.MockFileSystemService.Received().DeleteDirectory(projectRepository);
@@ -5388,7 +5388,7 @@ public class ParatextServiceTests
         string projectPTId = env.SetupProject(env.Project01, associatedPtUser);
         string rev = "some-desired-revision";
         env.MockHgWrapper.GetRepoRevision(
-                Arg.Is<string>((string repoPath) => repoPath.EndsWith(Path.Combine(projectPTId, "target")))
+                Arg.Is<string>((string repoPath) => repoPath.EndsWith(Path.Join(projectPTId, "target")))
             )
             .Returns(rev);
         // SUT
@@ -7081,7 +7081,7 @@ public class ParatextServiceTests
             RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(projects));
             MockFileSystemService
                 .DirectoryExists(
-                    Arg.Is<string>((string path) => path.EndsWith(Path.Combine(PTProjectIds[Project01].Id, "target")))
+                    Arg.Is<string>((string path) => path.EndsWith(Path.Join(PTProjectIds[Project01].Id, "target")))
                 )
                 .Returns(true);
         }
@@ -7480,7 +7480,7 @@ public class ParatextServiceTests
             string zipLanguageCode = "eng"
         )
         {
-            string scrTextDir = Path.Combine(SyncDir, $"{shortName}.p8z");
+            string scrTextDir = Path.Join(SyncDir, $"{shortName}.p8z");
             ProjectName projectName = new ProjectName { ProjectPath = scrTextDir, ShortName = shortName };
             var scrText = new MockResourceScrText(
                 projectName,
@@ -7492,14 +7492,14 @@ public class ParatextServiceTests
             };
             scrText.Settings.LanguageID = LanguageId.English;
             scrText.ZipFile.AddFile(
-                Path.Combine(ZippedProjectFileManagerBase.DBLFolderName, "language", "iso", zipLanguageCode)
+                Path.Join(ZippedProjectFileManagerBase.DBLFolderName, "language", "iso", zipLanguageCode)
             );
             return scrText;
         }
 
         public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId, bool hasEditPermission = true)
         {
-            string scrTextDir = Path.Combine(SyncDir, projectId, "target");
+            string scrTextDir = Path.Join(SyncDir, projectId, "target");
             ProjectName projectName = new ProjectName { ProjectPath = scrTextDir, ShortName = "Proj" };
             var scrText = new MockScrText(associatedPtUser, projectName) { CachedGuid = HexId.FromStr(projectId) };
             scrText.Permissions.CreateFirstAdminUser();

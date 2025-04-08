@@ -17,7 +17,7 @@ public class MockCommentTags : CommentTags
 
     public static MockCommentTags GetCommentTags(string username, string ptProjectId)
     {
-        var scrtextDir = Path.Combine(Path.GetTempPath(), ptProjectId, "target");
+        var scrtextDir = Path.Join(Path.GetTempPath(), ptProjectId, "target");
         var associatedPtUser = new SFParatextUser(username);
         ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
         MockScrText scrText = new MockScrText(associatedPtUser, projectName);

@@ -16,7 +16,7 @@ public class LazyScrTextCollectionTests
     [SetUp]
     public void BeforeEachTest()
     {
-        _testDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        _testDirectory = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
         _fileSystemService = Substitute.For<IFileSystemService>();
         _fileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
         _fileSystemService.FileExists(Arg.Any<string>()).Returns(false);
@@ -39,7 +39,7 @@ public class LazyScrTextCollectionTests
         string projectId = "Project01";
         string username = "User";
         string projectTextName = "Proj01";
-        string path = Path.Combine(_testDirectory, projectId, "target");
+        string path = Path.Join(_testDirectory, projectId, "target");
         string content = $"<ScriptureText><Name>{projectTextName}</Name><guid>{projectId}</guid></ScriptureText>";
         _fileSystemService.FileReadText(Arg.Any<string>()).Returns(content);
         _fileSystemService.FileExists(Arg.Any<string>()).Returns(true);
@@ -48,6 +48,6 @@ public class LazyScrTextCollectionTests
         Assert.NotNull(scrText);
         Assert.AreEqual(projectTextName, scrText.Name);
         Assert.AreEqual(path, scrText.Directory);
-        _fileSystemService.Received(1).FileExists(Path.Combine(path, ProjectSettings.fileName));
+        _fileSystemService.Received(1).FileExists(Path.Join(path, ProjectSettings.fileName));
     }
 }

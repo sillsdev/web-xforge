@@ -390,7 +390,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
 
         // Create the output file
-        string path = Path.Combine(
+        string path = Path.Join(
             env.SiteOptions.Value.SiteDir,
             TrainingDataService.DirectoryName,
             Project01,
@@ -432,7 +432,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel2007, FileMode.Open).Returns(fileStream);
 
         // Create the output file
-        string path = Path.Combine(
+        string path = Path.Join(
             env.SiteOptions.Value.SiteDir,
             TrainingDataService.DirectoryName,
             Project01,
