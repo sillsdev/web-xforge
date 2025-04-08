@@ -172,6 +172,13 @@ strong {
   background: #b6d7a8;
 }
 
+#offline-message {
+  display: flex;
+  justify-self: flex-end;
+  gap: 0.5em;
+  margin-bottom: 0.5em;
+}
+
 .page-actions {
   display: flex;
   gap: 0.5em;

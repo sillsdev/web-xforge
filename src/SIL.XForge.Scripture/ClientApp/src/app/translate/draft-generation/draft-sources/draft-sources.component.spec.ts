@@ -13,6 +13,9 @@ import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -52,7 +55,12 @@ const mockedAuthService = mock(AuthService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule, TestTranslocoModule],
+    imports: [
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      NoopAnimationsModule,
+      TestTranslocoModule
+    ],
     declarations: [],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
@@ -63,7 +71,8 @@ describe('DraftSourcesComponent', () => {
       { provide: DraftSourcesService, useMock: mockedDraftSourcesService },
       { provide: SFUserProjectsService, useMock: mockedSFUserProjectsService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
-      { provide: AuthService, useMock: mockedAuthService }
+      { provide: AuthService, useMock: mockedAuthService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -382,6 +391,32 @@ describe('DraftSourcesComponent', () => {
         alternateTrainingSourceParatextId: 'unset'
       });
     });
+
+    it('should disable save and sync button and display offline message when offline', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.testOnlineStatusService.setIsOnline(false);
+      env.fixture.detectChanges();
+      tick();
+
+      const offlineMessage: DebugElement = env.fixture.debugElement.query(By.css('#offline-message'));
+      expect(offlineMessage).not.toBeNull();
+
+      const saveButton: DebugElement = env.fixture.debugElement.query(By.css('#save_button'));
+      expect(saveButton.attributes.disabled).toBe('true');
+    }));
+
+    it('should enable save & sync button and not display offline message when online', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.testOnlineStatusService.setIsOnline(true);
+      env.fixture.detectChanges();
+      tick();
+
+      const offlineMessage: DebugElement = env.fixture.debugElement.query(By.css('#offline-message'));
+      expect(offlineMessage).toBeNull();
+
+      const saveButton: DebugElement = env.fixture.debugElement.query(By.css('#save_button'));
+      expect(saveButton.attributes.disabled).toBeUndefined();
+    }));
   });
 });
 
@@ -390,6 +425,9 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<DraftSourcesComponent>;
   readonly realtimeService: TestRealtimeService;
   readonly activatedProjectDoc: WithData<SFProjectDoc>;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   constructor() {
     const userSFProjectsAndResourcesCount: number = 6;

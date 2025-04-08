@@ -11,6 +11,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -26,6 +27,7 @@ const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedRouter = mock(Router);
 const mockedFeatureFlags = mock(FeatureFlagService);
 const mockedAuthService = mock(AuthService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 const blankProjectDoc = { id: 'project1', data: createTestProjectProfile() } as SFProjectProfileDoc;
 
@@ -78,6 +80,15 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
   when(mockedFeatureFlags.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(args.mixedSource));
   when(mockedAuthService.currentUserId).thenReturn('user1');
 
+  when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(args.online));
+  when(mockedOnlineStatusService.isOnline).thenReturn(args.online);
+  when(mockedOnlineStatusService.online).thenReturn(
+    new Promise(resolve => {
+      if (args.online) resolve();
+      // Else, never resolve.
+    })
+  );
+
   const languageCodes = ['en', 'fr', 'es', 'pt', 'de', 'ru', 'zh', 'ar', 'hi', 'bn'];
 
   function languageName(code: string): string {
@@ -120,11 +131,13 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
 interface DraftSourcesComponentStoryState {
   project: SFProjectProfileDoc;
   mixedSource: boolean;
+  online: boolean;
 }
 
 const defaultArgs: DraftSourcesComponentStoryState = {
   project: blankProjectDoc,
-  mixedSource: true
+  mixedSource: true,
+  online: true
 };
 
 export default {
@@ -143,6 +156,7 @@ export default {
         { provide: Router, useValue: instance(mockedRouter) },
         { provide: FeatureFlagService, useValue: instance(mockedFeatureFlags) },
         { provide: AuthService, useValue: instance(mockedAuthService) },
+        { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
         defaultTranslocoMarkupTranspilers()
       ]
     })
@@ -433,5 +447,24 @@ export const CanHandleBackTranslationProjectsWithUnknownLanguage: Story = {
 
     expect(await warning(canvasElement)).toContain('Incorrect language codes will dramatically reduce draft quality.');
     await userEvent.click(await canvas.findByRole('checkbox'));
+  }
+};
+
+// See SF-3271
+export const CannotSaveAndSyncWhenOffline: Story = {
+  args: {
+    project: blankProjectDoc,
+    mixedSource: true,
+    online: false
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const offlineMessage = canvasElement.querySelector('mat-error')?.textContent ?? '';
+    // Offline message is displayed
+    expect(offlineMessage).toContain(
+      'You are offline. Please connect to the internet to save and sync your draft sources.'
+    );
+    // Save button is disabled
+    expect(canvas.getByRole('button', { name: /Save & sync/ })).toBeDisabled();
   }
 };

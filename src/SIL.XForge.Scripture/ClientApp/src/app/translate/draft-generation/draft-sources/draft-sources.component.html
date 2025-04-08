@@ -179,9 +179,14 @@
   ></app-language-codes-confirmation>
 
   <div class="component-footer">
+    @if (!appOnline) {
+      <mat-error id="offline-message">
+        {{ t("offline_message") }}
+      </mat-error>
+    }
     <div class="page-actions">
       <button mat-button (click)="cancel()"><mat-icon>close</mat-icon>{{ t("cancel") }}</button>
-      <button mat-flat-button color="primary" (click)="save()">
+      <button id="save_button" mat-flat-button color="primary" (click)="save()" [disabled]="!appOnline">
         <mat-icon>check</mat-icon>{{ t("save_and_sync") }}
       </button>
     </div>
