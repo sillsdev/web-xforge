@@ -1,15 +1,12 @@
-@import 'src/variables';
-
 .scripture-audio,
 .question-text {
   display: flex;
   flex-direction: row;
   align-items: center;
   column-gap: 8px;
-  color: $greyLight;
   min-height: 30px;
   p {
-    margin: 0px;
+    margin: 0;
     transition: color 0.3s;
   }
 }
@@ -32,7 +29,6 @@
 .scripture-audio.scripture-audio-label,
 .question-text.question-audio-label {
   font-weight: bold;
-  color: black;
   span {
     display: none;
   }
@@ -40,6 +36,7 @@
 
 .scripture-audio.question-audio-label,
 .question-text.scripture-audio-label {
+  opacity: 0.6;
   p {
     cursor: pointer;
   }

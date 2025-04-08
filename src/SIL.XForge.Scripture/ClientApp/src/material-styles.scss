@@ -3,6 +3,8 @@
 @use 'src/app/my-projects/my-projects-theme' as sf-my-projects;
 @use 'src/app/app-theme' as sf-app;
 @use 'src/app/checking/checking/checking-theme' as sf-checking;
+@use 'src/app/checking/checking/checking-answers/checking-answers-theme' as sf-checking-answer;
+@use 'src/app/checking/checking/checking-answers/checking-comments/checking-comments-theme' as sf-checking-comments;
 @use 'src/app/checking/checking/checking-questions/checking-questions-theme' as sf-checking-questions;
 @use 'src/app/navigation/navigation-theme' as sf-navigation;
 @use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
@@ -18,6 +20,8 @@
   // Custom components
   @include sf-app.theme($theme);
   @include sf-checking.theme($theme);
+  @include sf-checking-answer.theme($theme);
+  @include sf-checking-comments.theme($theme);
   @include sf-checking-questions.theme($theme);
   @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
@@ -26,6 +30,7 @@
 
   // Custom variables
   --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
+  --sf-border-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 60, 90))};
   --sf-error-foreground: #{mat.get-theme-color($theme, error, if($is-dark, 80, 40))};
   --sf-language-font-family: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
 
