@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRippleModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
@@ -16,6 +17,7 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
@@ -45,6 +47,7 @@ export interface ProjectStatus {
   standalone: true,
   imports: [
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
     XForgeCommonModule,
     MatRippleModule,
@@ -98,6 +101,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     private readonly userProjectsService: SFUserProjectsService,
     private readonly router: Router,
     private readonly featureFlags: FeatureFlagService,
+    private readonly onlineStatus: OnlineStatusService,
     readonly i18n: I18nService,
     noticeService: NoticeService
   ) {
@@ -130,6 +134,10 @@ export class DraftSourcesComponent extends DataLoadingComponent {
       });
 
     this.loadProjects();
+  }
+
+  get appOnline(): boolean {
+    return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
   }
 
   get loading(): boolean {

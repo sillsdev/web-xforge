@@ -282,6 +282,7 @@
     "language_code": "Language code: ",
     "leave_and_discard": "Leave & discard changes",
     "next": "Next",
+    "offline_message": "You are offline. Please connect to the internet to save and sync your draft sources.",
     "overview_reference": "Reference",
     "overview_source": "Source",
     "overview_translated_project": "Translated project",
