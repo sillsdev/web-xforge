@@ -14,6 +14,9 @@ public class FileSystemService : IFileSystemService
 
     public Stream OpenFile(string path, FileMode mode) => File.Open(path, mode);
 
+    public Stream OpenFile(string path, FileMode mode, FileAccess access, FileShare share) =>
+        File.Open(path, mode, access, share);
+
     public string FileReadText(string path) => File.ReadAllText(path);
 
     public void DeleteFile(string path) => File.Delete(path);

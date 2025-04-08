@@ -377,31 +377,36 @@ public class SFInstallableDblResource : InstallableResource
     /// <remarks>
     /// After the resource is extracted, it can be a source or target.
     /// </remarks>
-    async public Task ExtractToDirectoryAsync(string path)
+    public async Task ExtractToDirectoryAsync(string path)
     {
         // Check parameters
         if (string.IsNullOrWhiteSpace(path))
         {
             throw new ArgumentNullException(nameof(path));
         }
-        else if (string.IsNullOrWhiteSpace(this.DBLEntryUid.Id))
+        else if (string.IsNullOrWhiteSpace(DBLEntryUid.Id))
         {
-            throw new ArgumentNullException(nameof(this.DBLEntryUid.Id));
+            throw new ArgumentNullException(nameof(DBLEntryUid.Id));
         }
-        else if (string.IsNullOrWhiteSpace(this.Name))
+        else if (string.IsNullOrWhiteSpace(Name))
         {
-            throw new ArgumentNullException(nameof(this.Name));
+            throw new ArgumentNullException(nameof(Name));
         }
 
         string resourceFile = ScrTextCollection.GetResourcePath(
-            this.ExistingScrText,
-            this.Name,
-            this.DBLEntryUid,
+            ExistingScrText,
+            Name,
+            DBLEntryUid,
             ProjectFileManager.resourceFileExtension
         );
         if (_fileSystemService.FileExists(resourceFile))
         {
-            await using Stream stream = _fileSystemService.OpenFile(resourceFile, FileMode.Open);
+            await using Stream stream = _fileSystemService.OpenFile(
+                resourceFile,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read
+            );
             using ZipFile zipFile = new ZipFile(stream);
             zipFile.Password = _passwordProvider?.GetPassword();
             await ExtractAllAsync(zipFile, path);
@@ -534,7 +539,12 @@ public class SFInstallableDblResource : InstallableResource
                 // See if this a zip file, and if it contains the correct ID
                 try
                 {
-                    await using var stream = new FileStream(resourceFile, FileMode.Open);
+                    await using var stream = new FileStream(
+                        resourceFile,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.Read
+                    );
                     using var zipFile = new ZipFile(stream);
                     // Zip files use forward slashes, even on Windows
                     const string idSearchPath = DblFolderName + "/id/";

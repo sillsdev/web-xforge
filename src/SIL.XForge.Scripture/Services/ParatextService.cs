@@ -2515,7 +2515,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <remarks>
     ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
     /// </remarks>
-    async private Task InstallResourceAsync(
+    private async Task InstallResourceAsync(
         string username,
         ParatextResource resource,
         string targetParatextId,
