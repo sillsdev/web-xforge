@@ -127,7 +127,7 @@ describe('ServalProjectComponent', () => {
 
     it('should have a download button', fakeAsync(() => {
       const env = new TestEnvironment();
-      expect(env.downloadButtions.length).toBe(4);
+      expect(env.downloadButtons.length).toBe(4);
       expect(env.firstDownloadButton.innerText).toContain('Download');
       expect(env.firstDownloadButton.disabled).toBe(false);
     }));
@@ -201,12 +201,14 @@ describe('ServalProjectComponent', () => {
   });
 
   describe('last draft configuration', () => {
-    it('shows the last draft configs no training books', fakeAsync(() => {
+    it('shows the last draft configs no translation or training books', fakeAsync(() => {
       const env = new TestEnvironment({ preTranslate: true, draftConfig: {} });
       const trainingSources = env.trainingSources;
       expect(trainingSources.length).toEqual(1);
       expect(trainingSources[0].textContent).toEqual('None');
-      expect(env.TranslationSourceBookNames).toEqual('Leviticus, Numbers');
+      const translationSources = env.translationSources;
+      expect(translationSources.length).toEqual(1);
+      expect(translationSources[0].textContent).toEqual('None');
     }));
 
     it('shows the last draft configs single training source', fakeAsync(() => {
@@ -214,7 +216,9 @@ describe('ServalProjectComponent', () => {
       const trainingSources = env.trainingSources;
       expect(trainingSources.length).toEqual(1);
       expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis, Exodus');
-      expect(env.TranslationSourceBookNames).toEqual('Leviticus, Numbers');
+      const translationSources = env.translationSources;
+      expect(translationSources.length).toEqual(1);
+      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus, Numbers');
     }));
 
     it('shows the last draft configs multiple training sources', fakeAsync(() => {
@@ -225,14 +229,17 @@ describe('ServalProjectComponent', () => {
           lastSelectedTrainingScriptureRanges: [
             { projectId: 'project04', scriptureRange: 'GEN;EXO' },
             { projectId: 'project05', scriptureRange: 'GEN' }
-          ]
+          ],
+          lastSelectedTranslationScriptureRanges: [{ projectId: 'project03', scriptureRange: 'LEV;NUM' }]
         } as DraftConfig
       });
       const trainingSources = env.trainingSources;
       expect(trainingSources.length).toEqual(2);
       expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis, Exodus');
       expect(env.getTrainingSourceBookNames(trainingSources[1])).toEqual('Genesis');
-      expect(env.TranslationSourceBookNames).toEqual('Leviticus, Numbers');
+      const translationSources = env.translationSources;
+      expect(translationSources.length).toEqual(1);
+      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus, Numbers');
     }));
   });
 
@@ -289,7 +296,13 @@ describe('ServalProjectComponent', () => {
                   : 'GEN;EXO'
                 : undefined,
               lastSelectedTrainingScriptureRanges: args.draftConfig?.lastSelectedTrainingScriptureRanges ?? undefined,
-              lastSelectedTranslationScriptureRange: args.preTranslate ? 'LEV;NUM' : undefined
+              lastSelectedTranslationScriptureRange: args.preTranslate
+                ? args.draftConfig != null
+                  ? args.draftConfig.lastSelectedTranslationScriptureRange
+                  : 'LEV;NUM'
+                : undefined,
+              lastSelectedTranslationScriptureRanges:
+                args.draftConfig?.lastSelectedTranslationScriptureRanges ?? undefined
             },
             preTranslate: args.preTranslate,
             source: {
@@ -338,7 +351,7 @@ describe('ServalProjectComponent', () => {
       return this.fixture.nativeElement.querySelector('td button');
     }
 
-    get downloadButtions(): NodeListOf<HTMLButtonElement> {
+    get downloadButtons(): NodeListOf<HTMLButtonElement> {
       return this.fixture.nativeElement.querySelectorAll('td button');
     }
 
@@ -350,8 +363,8 @@ describe('ServalProjectComponent', () => {
       return this.fixture.nativeElement.querySelectorAll('.training');
     }
 
-    get TranslationSourceBookNames(): string {
-      return this.fixture.nativeElement.querySelector('.translation-range').textContent;
+    get translationSources(): NodeListOf<HTMLElement> {
+      return this.fixture.nativeElement.querySelectorAll('.translation');
     }
 
     set onlineStatus(hasConnection: boolean) {
@@ -369,6 +382,10 @@ describe('ServalProjectComponent', () => {
 
     getTrainingSourceBookNames(node: HTMLElement): string {
       return node.querySelector('.training-source-range')?.textContent ?? '';
+    }
+
+    getTranslationBookNames(node: HTMLElement): string {
+      return node.querySelector('.translation-range')?.textContent ?? '';
     }
   }
 });

@@ -65,7 +65,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
   trainingBooksByProject: ProjectAndRange[] = [];
   trainingFiles: string[] = [];
-  translationBooks: string[] = [];
+  translationBooksByProject: ProjectAndRange[] = [];
 
   downloadBooksProgress: number = 0;
   downloadBooksTotal: number = 0;
@@ -171,9 +171,25 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             }
           }
           this.trainingFiles = draftConfig.lastSelectedTrainingDataFiles;
-          this.translationBooks = booksFromScriptureRange(draftConfig.lastSelectedTranslationScriptureRange ?? '').map(
-            bookNum => Canon.bookNumberToEnglishName(bookNum)
-          );
+          this.translationBooksByProject = [];
+          if (draftConfig.lastSelectedTranslationScriptureRange != null) {
+            this.translationBooksByProject.push({
+              source: 'Source 1',
+              scriptureRange: booksFromScriptureRange(draftConfig.lastSelectedTranslationScriptureRange ?? '')
+                .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
+                .join(', ')
+            });
+          } else if (draftConfig.lastSelectedTranslationScriptureRanges != null) {
+            let sourceCount = 1;
+            for (const range of draftConfig.lastSelectedTranslationScriptureRanges) {
+              this.translationBooksByProject.push({
+                source: `Source ${sourceCount++}`,
+                scriptureRange: booksFromScriptureRange(range.scriptureRange)
+                  .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
+                  .join(', ')
+              });
+            }
+          }
 
           this.draftConfig = draftConfig;
           this.draftJob$ = SFProjectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
