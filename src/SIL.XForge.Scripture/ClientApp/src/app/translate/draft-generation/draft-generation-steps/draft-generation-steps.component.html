@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
-  @if (availableTranslateBooks.length > 0) {
+  @if (allAvailableTranslateBooks.length > 0) {
     <mat-stepper linear (selectionChange)="onStepChange()" labelPosition="bottom" [disableRipple]="true">
       <!-- Icon overrides -->
       <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
@@ -24,13 +24,16 @@
           {{ t("choose_books_to_translate_header") }}
         </ng-template>
         <h1 class="mat-headline-4">{{ t("choose_books_to_translate_title") }}</h1>
-        <app-book-multi-select
-          [availableBooks]="availableTranslateBooks"
-          [selectedBooks]="booksToTranslate()"
-          [basicMode]="true"
-          (bookSelect)="onTranslateBookSelect($event)"
-          data-test-id="draft-stepper-translate-books"
-        ></app-book-multi-select>
+        @for (source of draftingSources; track source) {
+          <p class="reference-project-label">{{ projectLabel(source) }}</p>
+          <app-book-multi-select
+            [availableBooks]="selectableTranslateBooksByProj(source.projectRef)"
+            [selectedBooks]="selectedTranslateBooksByProj(source.projectRef)"
+            [basicMode]="true"
+            (bookSelect)="onTranslateBookSelect($event, source)"
+            data-test-id="draft-stepper-translate-books"
+          ></app-book-multi-select>
+        }
         @if (unusableTranslateSourceBooks.length) {
           <app-notice icon="info" mode="basic" type="light" class="unusable-translate-books">
             <div class="notice-container">
@@ -311,7 +314,7 @@
     </mat-stepper>
   }
 
-  @if (hasLoaded && availableTranslateBooks.length <= 0) {
+  @if (hasLoaded && allAvailableTranslateBooks.length <= 0) {
     <p>{{ t("no_available_books") }}</p>
   } @else if (!hasLoaded) {
     <div class="loading">

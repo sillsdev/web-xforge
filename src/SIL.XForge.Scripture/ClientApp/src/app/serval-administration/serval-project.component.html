@@ -96,7 +96,14 @@
 <h3>Training data files</h3>
 <p>{{ trainingFiles.join(", ") || "None" }}</p>
 <h3>Translation books</h3>
-<p class="translation-range">{{ translationBooks.join(", ") || "None" }}</p>
+@for (book of translationBooksByProject; track book.source) {
+  <div class="translation">
+    <p>{{ book.source }}</p>
+    <p class="translation-range">{{ book.scriptureRange }}</p>
+  </div>
+} @empty {
+  <p class="translation">None</p>
+}
 
 @if (draftJob$ | async; as draftJob) {
   <h3>Diagnostic Information</h3>
