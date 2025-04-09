@@ -499,7 +499,7 @@ describe('DraftGenerationStepsComponent', () => {
           { projectId: 'source1', scriptureRange: 'EXO;LEV' },
           { projectId: 'source2', scriptureRange: 'EXO;JOS' }
         ],
-        translationScriptureRange: 'JDG',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
         useEcho: false
       } as DraftGenerationStepsResult);
@@ -541,7 +541,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles: [],
         trainingScriptureRanges: [{ projectId: 'source2', scriptureRange: 'EXO;JOS' }],
-        translationScriptureRange: 'JDG',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
         useEcho: false
       } as DraftGenerationStepsResult);
@@ -680,7 +680,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles: [],
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
-        translationScriptureRange: 'EXO',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: true,
         useEcho: false
       } as DraftGenerationStepsResult);
@@ -768,7 +768,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles: [],
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
-        translationScriptureRange: 'EXO',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: false,
         useEcho: true
       } as DraftGenerationStepsResult);
@@ -819,11 +819,11 @@ describe('DraftGenerationStepsComponent', () => {
         translateConfig: {
           draftConfig: {
             lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationScriptureRange: 'EXO;LEV',
             lastSelectedTrainingScriptureRanges: [
               { projectId: 'source1', scriptureRange: 'GEN;1SA' },
               { projectId: 'source2', scriptureRange: '1SA;2SA' }
-            ]
+            ],
+            lastSelectedTranslationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO;LEV' }]
           }
         }
       })
@@ -983,7 +983,7 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'EXO' }],
-        translationScriptureRange: 'LEV',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'LEV' }],
         trainingDataFiles: fileIds,
         fastTraining: false,
         useEcho: false
@@ -1039,11 +1039,11 @@ describe('DraftGenerationStepsComponent', () => {
         translateConfig: {
           draftConfig: {
             lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationScriptureRange: 'GEN;EXO',
             lastSelectedTrainingScriptureRanges: [
               { projectId: 'source1', scriptureRange: 'LEV;NUM;DEU;JOS' },
               { projectId: 'source2', scriptureRange: 'DEU;JOS;1SA' }
-            ]
+            ],
+            lastSelectedTranslationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'GEN;EXO' }]
           }
         }
       })

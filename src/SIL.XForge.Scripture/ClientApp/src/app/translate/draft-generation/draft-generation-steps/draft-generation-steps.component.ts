@@ -27,9 +27,7 @@ import { TrainingDataMultiSelectComponent } from '../training-data/training-data
 import { TrainingDataService } from '../training-data/training-data.service';
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
-  trainingScriptureRange?: string;
   trainingScriptureRanges: ProjectScriptureRange[];
-  translationScriptureRange?: string;
   translationScriptureRanges?: ProjectScriptureRange[];
   fastTraining: boolean;
   useEcho: boolean;
@@ -99,6 +97,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   protected nextClickedOnLanguageVerification = false;
   protected hasLoaded = false;
 
+  protected draftingSources: DraftSource[] = [];
   protected trainingSources: DraftSource[] = [];
   protected trainingTargets: DraftSource[] = [];
   protected translatedBooksWithNoSource: number[] = [];
@@ -143,6 +142,7 @@ export class DraftGenerationStepsComponent implements OnInit {
             (await this.nllbLanguageService.isNllbLanguageAsync(target.writingSystem.tag)) &&
             (await this.nllbLanguageService.isNllbLanguageAsync(draftingSource.writingSystem.tag));
 
+          this.draftingSources = draftingSources.filter(s => s !== undefined) ?? [];
           this.trainingSources = trainingSources.filter(s => s !== undefined) ?? [];
           this.trainingTargets = trainingTargets.filter(t => t !== undefined) ?? [];
 
@@ -463,9 +463,14 @@ export class DraftGenerationStepsComponent implements OnInit {
       this.done.emit({
         trainingScriptureRanges: trainingData,
         trainingDataFiles: this.selectedTrainingFileIds,
-        translationScriptureRange: this.booksToTranslate()
-          .map(b => Canon.bookNumberToId(b.number))
-          .join(';'),
+        translationScriptureRanges: [
+          {
+            projectId: this.draftingSources[0].projectRef,
+            scriptureRange: this.booksToTranslate()
+              .map(b => Canon.bookNumberToId(b.number))
+              .join(';')
+          }
+        ],
         fastTraining: this.fastTraining,
         useEcho: this.useEcho
       });
@@ -500,8 +505,13 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   private setInitialTranslateBooks(): void {
     // Get the previously selected translation books from the target project
+    const previousTranslation =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges ?? [];
     const previousTranslationRange: string =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange ?? '';
+      previousTranslation.length > 0
+        ? previousTranslation[0].scriptureRange
+        : (this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange ??
+          '');
     const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTranslationRange));
 
     for (const bookNum of previousBooks) {
