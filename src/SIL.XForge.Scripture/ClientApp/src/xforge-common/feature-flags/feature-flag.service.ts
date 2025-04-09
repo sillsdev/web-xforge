@@ -221,25 +221,25 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly showNmtDrafting: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  private readonly showNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
     'SHOW_NMT_DRAFTING',
     'Show NMT drafting',
     2,
-    new StaticFeatureFlagStore(true, { readonly: true })
+    this.featureFlagStore
   );
 
-  readonly allowForwardTranslationNmtDrafting: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  private readonly allowForwardTranslationNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
     'ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING',
     'Allow Forward Translation NMT drafting',
     3,
-    new StaticFeatureFlagStore(true, { readonly: true })
+    this.featureFlagStore
   );
 
-  private readonly scriptureAudio: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  private readonly scriptureAudio: FeatureFlag = new ServerOnlyFeatureFlag(
     'SCRIPTURE_AUDIO',
     'Scripture audio',
     4,
-    new StaticFeatureFlagStore(true, { readonly: true })
+    this.featureFlagStore
   );
 
   readonly preventOpSubmission: ObservableFeatureFlag = new FeatureFlagFromStorage(
@@ -298,11 +298,11 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly allowAdditionalTrainingSource: FeatureFlag = new FeatureFlagFromStorage(
+  private readonly allowAdditionalTrainingSource: FeatureFlag = new ServerOnlyFeatureFlag(
     'AllowAdditionalTrainingSource',
     'Allow mixing in an additional training source',
     13,
-    new StaticFeatureFlagStore(true, { readonly: true })
+    this.featureFlagStore
   );
 
   private readonly updatedLearningRateForServal: FeatureFlag = new ServerOnlyFeatureFlag(

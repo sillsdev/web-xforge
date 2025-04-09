@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'draft_generation'">
   @if (currentPage === "initial") {
-    @if (isBackTranslationMode) {
+    @if (isBackTranslation) {
       <h1>{{ t("generate_back_translation_drafts_header") }}</h1>
     } @else {
       <h1>
@@ -21,7 +21,7 @@
     <section>
       @if (isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
         <div class="drafting-instructions">
-          @if (isBackTranslationMode) {
+          @if (isBackTranslation) {
             <div>
               <p>
                 <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
@@ -60,7 +60,7 @@
         </div>
       }
 
-      @if (isBackTranslationMode && !isTargetLanguageSupported) {
+      @if (isBackTranslation && !isTargetLanguageSupported) {
         <app-notice type="warning" class="requirements">
           <p>
             <transloco

@@ -17,7 +17,6 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -135,7 +134,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get draftEnabled(): boolean {
-    return this.isBackTranslationMode || this.isPreTranslationApproved;
+    return this.isBackTranslation || this.isPreTranslationApproved;
   }
 
   get issueEmail(): string {
@@ -150,7 +149,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftSourcesService: DraftSourcesService,
-    private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -176,22 +174,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get isPreviewSupported(): boolean {
-    return (
-      (!this.isBackTranslationMode || this.isBackTranslation) && this.isTargetLanguageSupported && this.draftEnabled
-    );
-  }
-
-  /**
-   * True if project is a back translation OR if forward translation drafting feature flag is not set.
-   * If the forward translation feature flag is not set, forward translation projects are treated as invalid
-   * due to failing the back translation project requirement.
-   */
-  get isBackTranslationMode(): boolean {
-    return this.isBackTranslation || !this.isForwardTranslationEnabled;
-  }
-
-  get isForwardTranslationEnabled(): boolean {
-    return this.featureFlags.allowForwardTranslationNmtDrafting.enabled;
+    return this.isTargetLanguageSupported && this.draftEnabled;
   }
 
   get issueMailTo(): string {
@@ -252,7 +235,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           this.hasDraftBooksAvailable = projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
         })
       ),
-      this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
       this.draftSourcesService.getDraftProjectSources().pipe(
         tap(({ trainingSources, draftingSources }) => {
           this.source = draftingSources[0];
@@ -264,7 +246,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async () => {
         this.isTargetLanguageSupported =
-          !this.isBackTranslationMode || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
+          !this.isBackTranslation || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
 
         if (!this.draftEnabled) {
           this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();

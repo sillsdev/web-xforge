@@ -10,7 +10,6 @@ import { of } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -50,7 +49,6 @@ const mockedI18nService = mock(I18nService);
 const mockedDraftSourcesService = mock(DraftSourcesService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedSFUserProjectsService = mock(SFUserProjectsService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedAuthService = mock(AuthService);
 
 describe('DraftSourcesComponent', () => {
@@ -70,7 +68,6 @@ describe('DraftSourcesComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: DraftSourcesService, useMock: mockedDraftSourcesService },
       { provide: SFUserProjectsService, useMock: mockedSFUserProjectsService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
@@ -564,7 +561,6 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     when(mockedActivatedProjectService.projectId).thenReturn(this.activatedProjectDoc.id);
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
-    when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;

@@ -10,7 +10,6 @@ import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
@@ -25,7 +24,6 @@ const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedRouter = mock(Router);
-const mockedFeatureFlags = mock(FeatureFlagService);
 const mockedAuthService = mock(AuthService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 
@@ -77,7 +75,6 @@ const projectDocWithExistingSources = {
 function setUpMocks(args: DraftSourcesComponentStoryState): void {
   when(mockedActivatedProjectService.changes$).thenReturn(of(args.project));
   when(mockedActivatedProjectService.projectDoc).thenReturn(args.project);
-  when(mockedFeatureFlags.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(args.mixedSource));
   when(mockedAuthService.currentUserId).thenReturn('user1');
 
   when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(args.online));
@@ -154,7 +151,6 @@ export default {
         { provide: SFProjectService, useValue: instance(mockedProjectService) },
         { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) },
         { provide: Router, useValue: instance(mockedRouter) },
-        { provide: FeatureFlagService, useValue: instance(mockedFeatureFlags) },
         { provide: AuthService, useValue: instance(mockedAuthService) },
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
         defaultTranslocoMarkupTranspilers()

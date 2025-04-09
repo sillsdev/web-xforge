@@ -13,7 +13,6 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -100,7 +99,6 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     private readonly projectService: SFProjectService,
     private readonly userProjectsService: SFUserProjectsService,
     private readonly router: Router,
-    private readonly featureFlags: FeatureFlagService,
     private readonly onlineStatus: OnlineStatusService,
     readonly i18n: I18nService,
     noticeService: NoticeService
@@ -259,11 +257,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   get allowAddingATrainingSource(): boolean {
-    return (
-      this.featureFlags.allowAdditionalTrainingSource.enabled &&
-      this.trainingSources.length < 2 &&
-      this.trainingSources.every(notNull)
-    );
+    return this.trainingSources.length < 2 && this.trainingSources.every(notNull);
   }
 
   get allProjectsSavedAndSynced(): boolean {

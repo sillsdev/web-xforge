@@ -58,8 +58,6 @@ function setUpMocks(args: StoryState): void {
   when(mockedAuthService.isLoggedIn).thenResolve(true);
   when(mockedUserService.currentUserId).thenReturn(userId);
   when(onlineStatusService.isOnline).thenReturn(args.online);
-  when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(true));
-  when(mockedFeatureFlagService.allowForwardTranslationNmtDrafting).thenReturn(createTestFeatureFlag(true));
   when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
   when(mockedRouter.url).thenReturn(`/projects/${projectId}/${args.path}`);
   when(mockedRouter.createUrlTree(anything(), anything())).thenCall((portions: any[]) => portions.join('/'));
