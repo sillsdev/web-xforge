@@ -8,6 +8,7 @@ public interface IFileSystemService
     Stream CreateFile(string path);
     bool FileExists(string path);
     Stream OpenFile(string path, FileMode mode);
+    Stream OpenFile(string path, FileMode mode, FileAccess access, FileShare share);
     string FileReadText(string path);
     void DeleteFile(string path);
     void CreateDirectory(string path);

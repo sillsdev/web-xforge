@@ -4372,7 +4372,13 @@ public class ParatextServiceTests
             .Returns(resourceScrText);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(true);
         await using var zipStream = await TestEnvironment.CreateZipStubAsync();
-        env.MockFileSystemService.OpenFile(Arg.Is<string>(p => p.EndsWith(".p8z")), FileMode.Open).Returns(zipStream);
+        env.MockFileSystemService.OpenFile(
+                Arg.Is<string>(p => p.EndsWith(".p8z")),
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read
+            )
+            .Returns(zipStream);
         await using var stream = new MemoryStream();
         env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
@@ -4426,7 +4432,13 @@ public class ParatextServiceTests
             .Returns(resourceScrText);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(true);
         await using var zipStream = await TestEnvironment.CreateZipStubAsync();
-        env.MockFileSystemService.OpenFile(Arg.Is<string>(p => p.EndsWith(".p8z")), FileMode.Open).Returns(zipStream);
+        env.MockFileSystemService.OpenFile(
+                Arg.Is<string>(p => p.EndsWith(".p8z")),
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read
+            )
+            .Returns(zipStream);
         await using var stream = new MemoryStream();
         env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
@@ -4493,7 +4505,13 @@ public class ParatextServiceTests
         env.MockFileSystemService.When(f => f.CreateDirectory(Arg.Any<string>())).Do(_ => resourceDownloaded = true);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(_ => resourceDownloaded);
         await using var zipStream = await TestEnvironment.CreateZipStubAsync();
-        env.MockFileSystemService.OpenFile(Arg.Is<string>(p => p.EndsWith(".p8z")), FileMode.Open).Returns(zipStream);
+        env.MockFileSystemService.OpenFile(
+                Arg.Is<string>(p => p.EndsWith(".p8z")),
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read
+            )
+            .Returns(zipStream);
         await using var stream = new MemoryStream();
         env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
