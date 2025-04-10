@@ -14,7 +14,7 @@
     )};
   --sf-community-checking-answered-question-color: #{mat.get-theme-color($theme, tertiary, if($is-dark, 60, 80))};
   --sf-community-checking-new-comment-icon-color: #{mat.get-theme-color($theme, primary, if($is-dark, 40, 80))};
-  --sf-community-checking-question-unread-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 10, 99))};
+  --sf-community-checking-question-unread-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 10, 98))};
   --sf-community-checking-question-list-divider-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 80, 70))}1f;
 }
 

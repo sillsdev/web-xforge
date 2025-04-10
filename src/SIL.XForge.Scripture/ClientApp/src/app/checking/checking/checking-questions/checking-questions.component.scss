@@ -77,7 +77,7 @@ mat-icon {
     &.question-unread {
       background: var(--sf-community-checking-question-unread-background);
       .question-item {
-        font-weight: 500;
+        font-weight: bold;
       }
 
       // Don't bold the selected verse, as the inverted colors with the small font makes it hard to see
