@@ -213,6 +213,9 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     index: number,
     paratextId: string | undefined
   ): void {
+    // When still loading projects, the project selectors will temporarily set the value to null
+    if (!this.isLoaded) return;
+
     const selectedProject: SelectableProject | null =
       this.projects?.find(p => p.paratextId === paratextId) ??
       this.resources?.find(r => r.paratextId === paratextId) ??
