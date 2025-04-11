@@ -231,6 +231,7 @@
     "choose_additional_training_data_files_header": "Entrenamiento adicional",
     "choose_additional_training_data_files_title": "Elija archivos adicionales para entrenar el modelo lingüístico",
     "choose_books_for_training_error": "No hay libros seleccionados. Seleccione libros de formación para continuar.",
+    "choose_books_for_training_no_books_error": "No hay libros disponibles para la formación. Su proyecto debe tener al menos un libro traducido para utilizarlo en la formación.",
     "choose_books_for_training_title": "Seleccione libros en los que entrenar",
     "choose_books_for_training_header": "Entrenamiento",
     "choose_books_to_translate_error": "No hay libros seleccionados. Seleccione los libros a traducir para continuar.",
@@ -259,7 +260,9 @@
     "training_books_will_appear": "Los libros de formación aparecerán cuando selecciones los libros traducidos",
     "translated_books": "Libros traducidos",
     "translated_book_selected_no_training_pair": "Algunos de los libros de formación que ha seleccionado no tienen libros de referencia correspondientes. Por favor, seleccione los libros de referencia correspondientes.",
-    "unusable_target_books": "¿No encuentras el libro que buscas? Asegúrate de que el libro se ha creado en Paratext y, a continuación, sincroniza tu proyecto."
+    "unusable_target_books": "¿No encuentras el libro que buscas? Asegúrate de que el libro se ha creado en Paratext y, a continuación, sincroniza tu proyecto.",
+    "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
+    "use_echo": "Use Echo Translation Engine"
   },
   "draft_preview_books": {
     "add_to_project": "Añadir al proyecto",
@@ -410,6 +413,7 @@
     "cancel": "Cancelar",
     "canceling_import_not_remove_questions": "Nota: La cancelación no borrará las preguntas ya importadas.",
     "canceling_import": "Cancelando importación...",
+    "cannot_convert_offline": "No se pueden importar archivos Excel sin conexión. Conéctese a Internet e inténtelo de nuevo.",
     "close": "Cerrar",
     "continue_import": "Seguir importando",
     "csv_instructions": "Cree una hoja de cálculo con una columna para la referencia y otra para la pregunta, como se muestra a continuación:\nExporta o guarda la hoja de cálculo como un archivo CSV.\nHaga clic en {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} abajo y seleccione el archivo.",

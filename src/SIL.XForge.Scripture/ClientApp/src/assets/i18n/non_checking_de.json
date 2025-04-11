@@ -231,6 +231,7 @@
     "choose_additional_training_data_files_header": "Zusätzliche Schulung",
     "choose_additional_training_data_files_title": "Zusätzliche Dateien für die Schulung des Sprachmodells wählen",
     "choose_books_for_training_error": "Keine Bücher ausgewählt. Wähle Bücher für die Schulung aus, um fortzufahren.",
+    "choose_books_for_training_no_books_error": "Für die Schulung sind keine Bücher verfügbar. Dein Projekt muss mindestens ein übersetztes Buch für die Schulung haben.",
     "choose_books_for_training_title": "Bücher für die Schulung auswählen",
     "choose_books_for_training_header": "Schulung",
     "choose_books_to_translate_error": "Keine Bücher ausgewählt. Wähle zu übersetzende Bücher aus, um fortzufahren.",
@@ -259,7 +260,9 @@
     "training_books_will_appear": "Bücher für die Schulung werden angezeigt, wenn Du Bücher unter übersetzten Büchern auswählst",
     "translated_books": "Übersetzte Bücher",
     "translated_book_selected_no_training_pair": "Für einige der von Dir ausgewählten Bücher für die Schulung sind keine passenden Referenzbücher ausgewählt. Bitte wähle passende Referenzbücher aus.",
-    "unusable_target_books": "Du kannst das Buch nicht finden? Stelle sicher, dass das Buch in Paratext erstellt wurde und synchronisiere Dein Projekt."
+    "unusable_target_books": "Du kannst das Buch nicht finden? Stelle sicher, dass das Buch in Paratext erstellt wurde und synchronisiere Dein Projekt.",
+    "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
+    "use_echo": "Use Echo Translation Engine"
   },
   "draft_preview_books": {
     "add_to_project": "Zum Projekt hinzufügen",
@@ -410,6 +413,7 @@
     "cancel": "Abbrechen",
     "canceling_import_not_remove_questions": "Bemerkung: Beim Abbrechen werden bereits importierte Fragen nicht gelöscht.",
     "canceling_import": "Import wird abgebrochen...",
+    "cannot_convert_offline": "Excel-Dateien können nicht importiert werden, wenn Du offline bist. Bitte verbinde Dich mit dem Internet und versuche es erneut.",
     "close": "Schliessen",
     "continue_import": "Import fortsetzen",
     "csv_instructions": "Erstelle eine Tabelle mit einer Spalte für die Referenz und einer Spalte für die Frage, wie unten gezeigt:\nExportiere oder speichere die Tabelle als CSV- oder TSV-Datei.\nKlicke unten auf {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} und wähle die Datei aus.",
