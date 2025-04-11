@@ -1,0 +1,15 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --draft-history-entry-heading-background-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 95))};
+  --draft-history-entry-heading-background-hover-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 30, 90))};
+  --draft-history-entry-details-background-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 10, 98))};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

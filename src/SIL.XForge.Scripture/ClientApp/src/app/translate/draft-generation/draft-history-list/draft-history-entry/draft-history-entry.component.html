@@ -1,0 +1,39 @@
+@if (entry != null) {
+  <div class="draft-entry-heading" (click)="headerClicked()" [class.expandable]="!forceDetailsOpen">
+    <div class="entry-description">
+      <span class="drafted-books">{{ i18n.enumerateList(bookNames) }}</span>
+      <span class="date">{{ formatDate(entry.additionalInfo.dateFinished) }}</span>
+    </div>
+    <span class="spacer"></span>
+    <span class="status" [style.color]="getStatus(entry.state).color">
+      <mat-icon class="status-icon">{{ getStatus(entry.state).icons }}</mat-icon>
+      {{ getStatus(entry.state).text }}
+    </span>
+    @if (!forceDetailsOpen) {
+      <mat-icon>expand_{{ detailsOpen ? "less" : "more" }}</mat-icon>
+    }
+  </div>
+  @if (detailsOpen) {
+    <div class="draft-entry-body">
+      <p>Click a book below to preview the draft and add it to your project.</p>
+      <p class="book-buttons">
+        @for (bookId of bookIds; track bookId) {
+          <a mat-stroked-button>{{ i18n.localizeBook(bookId) }}</a>
+        }
+      </p>
+      <button mat-flat-button><mat-icon>cloud_download</mat-icon> Download draft as ZIP file</button>
+      <p>
+        <a href="#" (click)="$event.preventDefault(); trainingDataOpen = !trainingDataOpen" class="training-data-link">
+          <mat-icon>expand_{{ trainingDataOpen ? "less" : "more" }}</mat-icon>
+          {{ trainingDataOpen ? "Hide" : "Show" }} model training data
+        </a>
+      </p>
+      @if (trainingDataOpen) {
+        <p class="training-data">
+          <strong>The language model was training on this configuration:</strong>
+          [TODO]
+        </p>
+      }
+    </div>
+  }
+}

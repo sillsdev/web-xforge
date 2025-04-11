@@ -78,6 +78,12 @@ export class DraftGenerationService {
     );
   }
 
+  getBuildHistory(sfProjectId: string): Observable<any> {
+    return this.httpClient
+      .get<any>(`translation/builds/project:${sfProjectId}?pretranslate=true`)
+      .pipe(map(res => res.data));
+  }
+
   /**
    * Gets the last completed pre-translation build.
    * @param projectId The SF project id for the target translation.
