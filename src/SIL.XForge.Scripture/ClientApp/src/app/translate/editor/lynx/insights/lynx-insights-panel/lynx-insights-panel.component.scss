@@ -16,6 +16,8 @@ $restoreActionColor: #5485e7;
 }
 
 .mat-tree-node {
+  --mat-tree-node-min-height: none;
+
   &:hover {
     background-color: #eee;
   }
