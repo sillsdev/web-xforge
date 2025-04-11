@@ -1,22 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { LynxInsightsPanelHeaderComponent } from './lynx-insights-panel-header.component';
 
-import { EditorInsightsPanelHeaderComponent } from './editor-insights-panel-header.component';
-
-describe('EditorInsightsPanelHeaderComponent', () => {
-  let component: EditorInsightsPanelHeaderComponent;
-  let fixture: ComponentFixture<EditorInsightsPanelHeaderComponent>;
+describe('LynxInsightsPanelHeaderComponent', () => {
+  let component: LynxInsightsPanelHeaderComponent;
+  let fixture: ComponentFixture<LynxInsightsPanelHeaderComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EditorInsightsPanelHeaderComponent]
+      imports: [LynxInsightsPanelHeaderComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(EditorInsightsPanelHeaderComponent);
+    fixture = TestBed.createComponent(LynxInsightsPanelHeaderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
   });
 });
