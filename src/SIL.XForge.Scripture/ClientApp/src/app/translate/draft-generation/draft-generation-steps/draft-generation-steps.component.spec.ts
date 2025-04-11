@@ -131,6 +131,7 @@ describe('DraftGenerationStepsComponent', () => {
       );
       when(mockTrainingDataQuery.docs).thenReturn([]);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
@@ -394,6 +395,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
       when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
       when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
@@ -498,7 +500,8 @@ describe('DraftGenerationStepsComponent', () => {
           { projectId: 'source2', scriptureRange: 'EXO;JOS' }
         ],
         translationScriptureRange: 'JDG',
-        fastTraining: false
+        fastTraining: false,
+        useEcho: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
     }));
@@ -539,7 +542,8 @@ describe('DraftGenerationStepsComponent', () => {
         trainingDataFiles: [],
         trainingScriptureRanges: [{ projectId: 'source2', scriptureRange: 'EXO;JOS' }],
         translationScriptureRange: 'JDG',
-        fastTraining: false
+        fastTraining: false,
+        useEcho: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
     });
@@ -637,6 +641,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
       when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
+      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
         instance(mockTrainingDataQuery)
       );
@@ -676,7 +681,96 @@ describe('DraftGenerationStepsComponent', () => {
         trainingDataFiles: [],
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
         translationScriptureRange: 'EXO',
-        fastTraining: true
+        fastTraining: true,
+        useEcho: false
+      } as DraftGenerationStepsResult);
+      expect(generateDraftButton['disabled']).toBe(true);
+    });
+  });
+
+  describe('use echo feature flag is enabled', () => {
+    const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 9 }, { bookNum: 10 }];
+    const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 8 }];
+    const config: DraftSourcesAsArrays = {
+      trainingSources: [
+        {
+          projectRef: 'source1',
+          paratextId: 'PT_SP1',
+          name: 'Source Project 1',
+          shortName: 'sP1',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks.concat({ bookNum: 1 })
+        }
+      ],
+      trainingTargets: [
+        {
+          projectRef: mockActivatedProjectService.projectId!,
+          paratextId: 'PT_TT',
+          name: 'Target Project',
+          shortName: 'tT',
+          writingSystem: { tag: 'nllb' },
+          texts: allBooks.filter(b => b.bookNum !== 1 && b.bookNum !== 7)
+        }
+      ],
+      draftingSources: [
+        {
+          projectRef: 'draftingSource',
+          paratextId: 'PT_DS',
+          name: 'Drafting Source',
+          shortName: 'dS',
+          writingSystem: { tag: 'eng' },
+          texts: availableBooks.concat({ bookNum: 7 })
+        }
+      ]
+    };
+
+    beforeEach(fakeAsync(() => {
+      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
+      when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(true));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+        instance(mockTrainingDataQuery)
+      );
+      when(mockTrainingDataQuery.docs).thenReturn([]);
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
+
+    it('should emit the use echo value if checked', () => {
+      component.onTranslateBookSelect([2]);
+      component.onTranslatedBookSelect([3, 9, 10]);
+      component.onSourceTrainingBookSelect([3, 9, 10], config.trainingSources[0]);
+
+      spyOn(component.done, 'emit');
+
+      fixture.detectChanges();
+      const step = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      step[3].nativeElement.click(); //click the next step
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+
+      // Tick the checkbox
+      const useEchoCheckbox = fixture.nativeElement.querySelector('mat-checkbox.use-echo input');
+      useEchoCheckbox.click();
+
+      // Click next on the final step to generate the draft
+      fixture.detectChanges();
+      const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
+      expect(generateDraftButton['disabled']).toBe(false);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+
+      expect(component.done.emit).toHaveBeenCalledWith({
+        trainingDataFiles: [],
+        trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
+        translationScriptureRange: 'EXO',
+        fastTraining: false,
+        useEcho: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
     });
@@ -823,6 +917,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
         instance(mockTrainingDataQuery)
       );
@@ -890,7 +985,8 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'EXO' }],
         translationScriptureRange: 'LEV',
         trainingDataFiles: fileIds,
-        fastTraining: false
+        fastTraining: false,
+        useEcho: false
       });
     });
   });
@@ -964,6 +1060,7 @@ describe('DraftGenerationStepsComponent', () => {
       );
       when(mockTrainingDataQuery.docs).thenReturn([]);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
