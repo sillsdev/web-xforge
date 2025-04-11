@@ -67,6 +67,7 @@ mat-icon {
       color: #bdbdbd;
       border-bottom: 1px solid #777;
       font-size: 0.8em;
+      line-height: normal;
     }
 
     .insight-item {
@@ -132,6 +133,7 @@ h1 {
   color: #fff;
   margin: 0;
   font-weight: 400;
+  line-height: normal;
 
   .code {
     color: $secondaryTextColor;
@@ -162,7 +164,7 @@ h1 {
   a {
     position: relative;
     padding-inline-start: 2.3em;
-    color: $applyActionColor;
+    color: $applyActionColor !important; // TODO: work with new theming
     text-wrap: nowrap;
     cursor: pointer;
     display: flex;
