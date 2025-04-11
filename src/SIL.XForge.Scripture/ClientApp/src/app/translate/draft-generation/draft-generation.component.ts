@@ -39,6 +39,7 @@ import {
   DraftGenerationStepsResult
 } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
+import { DraftHistoryListComponent } from './draft-history-list/draft-history-list.component';
 import { DraftInformationComponent } from './draft-information/draft-information.component';
 import { DraftPreviewBooksComponent } from './draft-preview-books/draft-preview-books.component';
 import { DraftSource, DraftSourcesService } from './draft-sources.service';
@@ -61,7 +62,8 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     DraftGenerationStepsComponent,
     DraftInformationComponent,
     ServalProjectComponent,
-    DraftPreviewBooksComponent
+    DraftPreviewBooksComponent,
+    DraftHistoryListComponent
   ]
 })
 export class DraftGenerationComponent extends DataLoadingComponent implements OnInit {
