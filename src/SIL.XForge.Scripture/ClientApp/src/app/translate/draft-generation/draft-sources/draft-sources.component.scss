@@ -1,9 +1,6 @@
 @use 'src/breakpoints';
 @use 'src/variables';
 
-$active-color: #edf5e9;
-$active-hover-color: lighten($active-color, 4%);
-
 :host {
   display: grid;
   grid-column-gap: 2em;
@@ -58,14 +55,14 @@ strong {
 
 .step-subtitle {
   font-size: 0.9em;
-  color: #444;
+  opacity: 0.6;
 }
 
 .step-header {
-  background-color: #eee;
+  background-color: var(--sf-draft-source-step-header-background);
   cursor: pointer;
   &:hover {
-    background-color: $active-hover-color;
+    background-color: var(--sf-draft-source-active-hover-background);
   }
 }
 
@@ -80,7 +77,7 @@ strong {
 
 .step.active .step-header,
 .overview .active {
-  background-color: $active-color;
+  background-color: var(--sf-draft-source-active-background);
 }
 
 .step:not(.active):not(:last-child) {
@@ -142,10 +139,13 @@ strong {
   flex-basis: 50%;
 
   &.active {
-    background: $active-color;
+    background: var(--sf-draft-source-active-background);
   }
-  &:hover {
-    background: $active-hover-color;
+  &:hover:not(.active) {
+    background: var(--sf-draft-source-active-hover-background);
+    .blank-project > * {
+      background: var(--sf-draft-source-blank-hover-background);
+    }
   }
 }
 
@@ -166,10 +166,10 @@ strong {
 
 .blank-project > * {
   height: 1em;
-  background: #eee;
+  background: var(--sf-draft-source-blank-background);
 }
 .active .blank-project > * {
-  background: #b6d7a8;
+  background: var(--sf-draft-source-active-blank-background);
 }
 
 .page-actions {

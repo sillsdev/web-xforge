@@ -1,0 +1,18 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --sf-draft-source-active-background: #{mat.get-theme-color($theme, primary, if($is-dark, 20, 90))};
+  --sf-draft-source-active-hover-background: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 95))};
+  --sf-draft-source-active-blank-background: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 80))};
+  --sf-draft-source-blank-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 95))};
+  --sf-draft-source-blank-hover-background: #{mat.get-theme-color($theme, primary, if($is-dark, 40, 90))};
+  --sf-draft-source-step-header-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 40, 95))};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

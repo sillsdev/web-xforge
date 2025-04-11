@@ -6,8 +6,11 @@
 @use 'src/app/checking/checking/checking-questions/checking-questions-theme' as sf-checking-questions;
 @use 'src/app/navigation/navigation-theme' as sf-navigation;
 @use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
+@use 'src/app/shared/book-multi-select/book-multi-select-theme' as sf-book-multi-select;
 @use 'src/app/translate/draft-generation/draft-generation-steps/draft-generation-steps-theme' as
   sf-draft-generation-steps;
+@use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
+@use 'src/app/translate/draft-generation/draft-sources/draft-sources-theme' as sf-draft-sources;
 
 @mixin theme($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
@@ -17,12 +20,15 @@
 
   // Custom components
   @include sf-app.theme($theme);
+  @include sf-book-multi-select.theme($theme);
   @include sf-checking.theme($theme);
   @include sf-checking-questions.theme($theme);
+  @include sf-confirm-sources.theme($theme);
+  @include sf-draft-generation-steps.theme($theme);
+  @include sf-draft-sources.theme($theme);
   @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
   @include sf-tab-group.theme($theme);
-  @include sf-draft-generation-steps.theme($theme);
 
   // Custom variables
   --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
@@ -53,6 +59,12 @@
     (
       container-max-width: initial,
       container-color: mat.get-theme-color($theme, neutral, if($is-dark, 20, 100))
+    )
+  );
+
+  @include mat.expansion-overrides(
+    (
+      container-background-color: mat.get-theme-color($theme, neutral, if($is-dark, 20, 98))
     )
   );
 
