@@ -161,7 +161,6 @@ export class LynxInsightsPanelComponent implements OnInit {
     };
   }
 
-  // TODO: move to service?
   /**
    * Groups insights by code and flattens them into InsightPanelNode.
    */
@@ -173,10 +172,11 @@ export class LynxInsightsPanelComponent implements OnInit {
     const flattenedInsightNodes: InsightPanelNode[] = [];
     const dismissedIdSet: Set<string> = new Set(dismissedIds);
 
-    for (const [code, byCode] of Object.entries(groupBy(insights, 'code'))) {
+    for (const [_desc, byDescGroup] of Object.entries(groupBy(insights, 'description'))) {
       let codeNodeContainsAllDismissed = true;
+      const groupRepresentative: LynxInsightWithText = byDescGroup[0];
 
-      const children: InsightPanelNode[] = byCode.map(insight => {
+      const children: InsightPanelNode[] = byDescGroup.map(insight => {
         const isDismissed: boolean = dismissedIdSet.has(insight.id);
         if (!isDismissed) {
           codeNodeContainsAllDismissed = false;
@@ -193,12 +193,12 @@ export class LynxInsightsPanelComponent implements OnInit {
       });
 
       const codeNode: InsightPanelNode = {
-        name: code,
-        description: byCode[0].description,
-        type: byCode[0].type,
+        name: groupRepresentative.code,
+        description: groupRepresentative.description,
+        type: groupRepresentative.type,
         children,
-        count: byCode.length,
-        range: byCode[0].range,
+        count: byDescGroup.length,
+        range: groupRepresentative.range,
         isDismissed: codeNodeContainsAllDismissed
       };
 
