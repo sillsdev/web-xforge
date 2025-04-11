@@ -1,0 +1,60 @@
+:host {
+  background-color: var(--draft-history-entry-details-background-color);
+  border-radius: 8px;
+  > * {
+    padding: 8px 16px;
+    border-radius: 8px;
+  }
+}
+
+.draft-entry-heading {
+  background-color: var(--draft-history-entry-heading-background-color);
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  &.expandable {
+    cursor: pointer;
+  }
+  &.expandable:hover {
+    background-color: var(--draft-history-entry-heading-background-hover-color);
+  }
+}
+
+.drafted-books {
+  font-size: 1.1em;
+}
+
+.spacer {
+  flex-grow: 1;
+}
+
+.entry-description {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.training-data-link {
+  display: flex;
+  align-items: center;
+}
+
+strong {
+  font-weight: 500;
+}
+
+.book-buttons {
+  display: flex;
+  gap: 4px;
+}
