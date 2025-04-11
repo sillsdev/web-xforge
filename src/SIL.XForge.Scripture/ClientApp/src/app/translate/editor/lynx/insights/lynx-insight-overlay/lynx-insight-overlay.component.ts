@@ -62,13 +62,17 @@ export class LynxInsightOverlayComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (this.editor == null) {
+      throw new Error('Editor is not set');
+    }
+
     // Listen for keystrokes to apply chord shortcut
     fromEvent<KeyboardEvent>(this.document, 'keydown')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(event => this.handleKeyDown(event));
 
     // Prevent editor from stealing focus when overlay is open
-    fromEvent<FocusEvent>(this.editor!.getRoot(), 'focus')
+    fromEvent<FocusEvent>(this.editor.getRoot(), 'focus')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.focusOverlay());
 

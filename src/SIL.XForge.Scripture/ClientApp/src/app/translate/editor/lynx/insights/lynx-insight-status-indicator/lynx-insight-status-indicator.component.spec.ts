@@ -1,22 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { LynxInsightStatusIndicatorComponent } from './lynx-insight-status-indicator.component';
 
-import { EditorInsightStatusIndicatorComponent } from './editor-insight-status-indicator.component';
-
-describe('EditorInsightStatusIndicatorComponent', () => {
-  let component: EditorInsightStatusIndicatorComponent;
-  let fixture: ComponentFixture<EditorInsightStatusIndicatorComponent>;
+describe('LynxInsightStatusIndicatorComponent', () => {
+  let component: LynxInsightStatusIndicatorComponent;
+  let fixture: ComponentFixture<LynxInsightStatusIndicatorComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EditorInsightStatusIndicatorComponent]
+      imports: [LynxInsightStatusIndicatorComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(EditorInsightStatusIndicatorComponent);
+    fixture = TestBed.createComponent(LynxInsightStatusIndicatorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
   });
 });

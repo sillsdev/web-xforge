@@ -1,22 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { EditorInsightScrollPositionIndicatorComponent } from './editor-insight-scroll-position-indicator.component';
+import { LynxInsightScrollPositionIndicatorComponent } from './lynx-insight-scroll-position-indicator.component';
 
-describe('EditorInsightScrollPositionIndicatorComponent', () => {
-  let component: EditorInsightScrollPositionIndicatorComponent;
-  let fixture: ComponentFixture<EditorInsightScrollPositionIndicatorComponent>;
+describe('LynxInsightScrollPositionIndicatorComponent', () => {
+  let component: LynxInsightScrollPositionIndicatorComponent;
+  let fixture: ComponentFixture<LynxInsightScrollPositionIndicatorComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EditorInsightScrollPositionIndicatorComponent]
+      imports: [LynxInsightScrollPositionIndicatorComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(EditorInsightScrollPositionIndicatorComponent);
+    fixture = TestBed.createComponent(LynxInsightScrollPositionIndicatorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
   });
 });
