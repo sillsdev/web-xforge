@@ -1,0 +1,11 @@
+@if (latestBuild != null) {
+  <h2>{{ lastCompletedBuildMessage }}</h2>
+  <app-draft-history-entry [entry]="latestBuild" [forceDetailsOpen]="true"></app-draft-history-entry>
+}
+
+@if (historicalBuilds.length > 0) {
+  <h2>Previously generated drafts</h2>
+  @for (entry of historicalBuilds; track entry.id) {
+    <app-draft-history-entry [entry]="entry"></app-draft-history-entry>
+  }
+}

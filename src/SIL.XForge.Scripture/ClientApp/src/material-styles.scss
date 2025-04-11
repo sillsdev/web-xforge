@@ -13,6 +13,8 @@
   sf-draft-generation-steps;
 @use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
 @use 'src/app/translate/draft-generation/draft-sources/draft-sources-theme' as sf-draft-sources;
+@use 'src/app/translate/draft-generation/draft-history-list/draft-history-entry/draft-history-entry-theme' as
+  sf-draft-history-entry;
 
 @mixin theme($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
@@ -33,6 +35,7 @@
   @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
   @include sf-tab-group.theme($theme);
+  @include sf-draft-history-entry.theme($theme);
 
   // Custom variables
   --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
