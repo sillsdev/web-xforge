@@ -231,6 +231,7 @@
     "choose_additional_training_data_files_header": "Additional training",
     "choose_additional_training_data_files_title": "Choose additional files for training the language model",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
+    "choose_books_for_training_no_books_error": "No books are available for training. Your project must have at least one translated book to use for training.",
     "choose_books_for_training_title": "Select books to train on",
     "choose_books_for_training_header": "Training",
     "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
@@ -259,7 +260,9 @@
     "training_books_will_appear": "Training books will appear as you select books under translated books",
     "translated_books": "Translated books",
     "translated_book_selected_no_training_pair": "Some of the training books you selected have no matching reference books selected. Please select matching reference books.",
-    "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
+    "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project.",
+    "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
+    "use_echo": "Use Echo Translation Engine"
   },
   "draft_preview_books": {
     "add_to_project": "Add to project",
@@ -410,9 +413,10 @@
     "cancel": "取消",
     "canceling_import_not_remove_questions": "Note: Cancelling will not delete questions that are already imported.",
     "canceling_import": "Canceling import...",
+    "cannot_convert_offline": "You cannot import Excel files when offline. Please connect to the internet and try again.",
     "close": "关闭",
     "continue_import": "Continue import",
-    "csv_instructions": "Create a spreadsheet with a column for the reference and a column for the question, as shown below:\nExport or save the spreadsheet as a CSV or TSV file.\nClick {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} below and select the file.",
+    "csv_instructions": "Create a spreadsheet with a column for the reference and a column for the question, as shown below:\nExport or save the spreadsheet as an Excel, CSV or TSV file.\nClick {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} below and select the file.",
     "csv_questions_duplicates": "Note: Some of the selected questions are exact duplicates of questions that are already part of your project. They will not be re-imported.",
     "filter_questions": "Filter questions",
     "help_options": "If you need help with either of these import methods, ask a question on { 1 }the community support site{ 2 }, or reach out to the team at { 3 }{ 4 }.",

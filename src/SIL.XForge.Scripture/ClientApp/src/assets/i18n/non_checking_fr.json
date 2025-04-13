@@ -231,6 +231,7 @@
     "choose_additional_training_data_files_header": "Formation complémentaire",
     "choose_additional_training_data_files_title": "Choisir des fichiers supplémentaires pour la formation du modèle de langue",
     "choose_books_for_training_error": "Aucun livre sélectionné. Sélectionnez les livres de formation pour continuer.",
+    "choose_books_for_training_no_books_error": "Aucun livre n'est disponible pour la formation. Votre projet doit avoir au moins un livre traduit à utiliser pour la formation.",
     "choose_books_for_training_title": "Sélectionner des livres pour s'entraîner",
     "choose_books_for_training_header": "Formation",
     "choose_books_to_translate_error": "Aucun livre sélectionné. Sélectionnez les livres pour continuer à traduire.",
@@ -259,7 +260,9 @@
     "training_books_will_appear": "Les livres de formation apparaîtront lorsque vous sélectionnerez des livres dans la rubrique \"livres traduits\".",
     "translated_books": "Livres traduits",
     "translated_book_selected_no_training_pair": "Certains des livres de formation que vous avez sélectionnés n'ont aucun livre de référence correspondant. Veuillez sélectionner les livres de référence correspondants.",
-    "unusable_target_books": "Vous ne trouvez pas le livre que vous cherchez ? Assurez-vous que le livre est créé dans Paratext, puis synchronisez votre projet."
+    "unusable_target_books": "Vous ne trouvez pas le livre que vous cherchez ? Assurez-vous que le livre est créé dans Paratext, puis synchronisez votre projet.",
+    "use_echo_warning": "En activant cette option, vous ferez écho à votre texte source au lieu de le traduire.",
+    "use_echo": "Utiliser le moteur de traduction d'Echo"
   },
   "draft_preview_books": {
     "add_to_project": "Ajouter au Projet",
@@ -410,6 +413,7 @@
     "cancel": "Annuler",
     "canceling_import_not_remove_questions": "Remarque : L'annulation ne supprimera pas les questions qui sont déjà importées.",
     "canceling_import": "Annulation de l'importation...",
+    "cannot_convert_offline": "Vous ne pouvez pas importer de fichiers Excel en mode hors connexion. Veuillez vous connecter à internet et réessayer.",
     "close": "Fermer",
     "continue_import": "Continuer l'importation",
     "csv_instructions": "Créez une feuille de calcul avec une colonne pour la référence et une colonne pour la question, comme indiqué ci-dessous :\nExportez ou enregistrez la feuille de calcul sous forme de fichier CSV ou TSV.\nCliquez sur {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} ci-dessous et sélectionnez le fichier.",
