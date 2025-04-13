@@ -1,7 +1,8 @@
-using System.IO.Compression;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Paratext.Data;
@@ -9,6 +10,7 @@ using Paratext.Data.Languages;
 using Paratext.Data.Users;
 using Roundtrip;
 using SIL.Converters.Usj;
+using SIL.XForge.Configuration;
 using SIL.XForge.Scripture.Services;
 
 // The first argument must be the path containing the zip files or projects
@@ -37,12 +39,19 @@ using var scrText = new DummyScrText(useFakeStylesheet: false);
 ScrTextCollection.Add(scrText);
 ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
 
+// Set up the password provider
+ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+IConfiguration configuration = configurationBuilder.AddUserSecrets<Program>().Build();
+ParatextOptions? paratextOptions = configuration.GetSection("Paratext").Get<ParatextOptions>();
+var passwordProvider = new ParatextZippedResourcePasswordProvider(paratextOptions);
+
 // Iterate over every zip file in the directory
 foreach (string zipFilePath in Directory.EnumerateFiles(args[0], "*.zip", SearchOption.AllDirectories))
 {
     await using FileStream zipFileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
-    using ZipArchive archive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
-    foreach (ZipArchiveEntry entry in archive.Entries)
+    using ZipFile zipFile = new ZipFile(zipFileStream);
+    bool noUsfmFiles = true;
+    foreach (ZipEntry entry in zipFile)
     {
         if (
             entry.Name.EndsWith(".usfm", StringComparison.OrdinalIgnoreCase)
@@ -50,18 +59,80 @@ foreach (string zipFilePath in Directory.EnumerateFiles(args[0], "*.zip", Search
         )
         {
             // Load the USFM
-            await using Stream entryStream = entry.Open();
+            await using Stream entryStream = zipFile.GetInputStream(entry);
             using StreamReader reader = new StreamReader(entryStream);
             string usfm = await reader.ReadToEndAsync();
             Roundtrip(usfm, entry.Name, Path.GetFileName(zipFilePath), RoundtripMethod.Delta);
             Roundtrip(usfm, entry.Name, Path.GetFileName(zipFilePath), RoundtripMethod.Usj);
             Roundtrip(usfm, entry.Name, Path.GetFileName(zipFilePath), RoundtripMethod.Usx);
+            noUsfmFiles = false;
         }
+    }
+
+    // Warn if there are no USFM files in the resource
+    if (noUsfmFiles)
+    {
+        Console.WriteLine($"No USFM files found in {zipFilePath}");
+    }
+}
+
+// Iterate over every DBL resource file in the directory
+// This is helpful to roundtrip C:\My Paratext 9 Projects\_Resources or /var/lib/scriptureforge/sync/_Resources
+foreach (string zipFilePath in Directory.EnumerateFiles(args[0], "*.p8z", SearchOption.AllDirectories))
+{
+    // Open the zip file
+    await using FileStream zipFileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
+    using ZipFile zipFile = new ZipFile(zipFileStream);
+    zipFile.Password = passwordProvider.GetPassword();
+
+    // Get the extension for the resource
+    List<string> extensions = [".usfm", ".sfm"];
+    foreach (ZipEntry entry in zipFile)
+    {
+        if (
+            entry.Name.Equals("settings.xml", StringComparison.OrdinalIgnoreCase)
+            || entry.Name.EndsWith(".ssf", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            // Load the XML
+            await using Stream entryStream = zipFile.GetInputStream(entry);
+            XDocument doc = await XDocument.LoadAsync(entryStream, LoadOptions.None, CancellationToken.None);
+
+            // Get the file extension
+            string? postPart = doc.Root?.Element("Naming")?.Attribute("PostPart")?.Value;
+            if (!string.IsNullOrWhiteSpace(postPart))
+            {
+                extensions.Add(postPart);
+            }
+        }
+    }
+
+    // Iterate over each USFM file in the zip file
+    bool noUsfmFiles = true;
+    foreach (ZipEntry entry in zipFile)
+    {
+        if (extensions.Any(extension => entry.Name.EndsWith(extension, StringComparison.OrdinalIgnoreCase)))
+        {
+            // Load the USFM
+            await using Stream entryStream = zipFile.GetInputStream(entry);
+            using StreamReader reader = new StreamReader(entryStream);
+            string usfm = await reader.ReadToEndAsync();
+            Roundtrip(usfm, entry.Name, Path.GetFileName(zipFilePath), RoundtripMethod.Delta);
+            Roundtrip(usfm, entry.Name, Path.GetFileName(zipFilePath), RoundtripMethod.Usj);
+            Roundtrip(usfm, entry.Name, Path.GetFileName(zipFilePath), RoundtripMethod.Usx);
+            noUsfmFiles = false;
+        }
+    }
+
+    // Warn if there are no USFM files in the resource
+    if (noUsfmFiles)
+    {
+        Console.WriteLine($"No USFM files found in {zipFilePath}");
     }
 }
 
 // Iterate over every SFM file in the directory.
-// This is helpful to roundtrip c:\My Paratext 9 Projects or /var/lib/scriptureforge/sync
+// This is helpful to roundtrip C:\My Paratext 9 Projects or /var/lib/scriptureforge/sync
 foreach (string sfmFile in Directory.EnumerateFiles(args[0], "*.sfm", SearchOption.AllDirectories))
 {
     // Load the USFM
