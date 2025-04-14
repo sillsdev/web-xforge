@@ -362,7 +362,7 @@ public class SyncAllService : ISyncAllService
 
         foreach (SFProject project in projects)
         {
-            string projectPath = Path.Combine(projectRootDir, project.ParatextId, "target");
+            string projectPath = Path.Join(projectRootDir, project.ParatextId, "target");
             string repoRevision = _hgWrapper.GetRepoRevision(projectPath);
             if (repoRevision != project.Sync.SyncedToRepositoryVersion)
             {

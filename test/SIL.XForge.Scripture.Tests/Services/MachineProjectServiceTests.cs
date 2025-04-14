@@ -3944,11 +3944,11 @@ public class MachineProjectServiceTests
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
             FileSystemService
                 .EnumerateFiles(Arg.Any<string>())
-                .Returns(callInfo => [Path.Combine(callInfo.ArgAt<string>(0), "file")]);
+                .Returns(callInfo => [Path.Join(callInfo.ArgAt<string>(0), "file")]);
             FileSystemService
                 .OpenFile(Arg.Any<string>(), FileMode.Open)
                 .Returns(callInfo => new MemoryStream(
-                    Encoding.UTF8.GetBytes(Path.Combine(callInfo.ArgAt<string>(0) + "_file_contents"))
+                    Encoding.UTF8.GetBytes(Path.Join(callInfo.ArgAt<string>(0) + "_file_contents"))
                 ));
 
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(

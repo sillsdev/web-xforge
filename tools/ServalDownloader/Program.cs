@@ -20,7 +20,7 @@ ITranslationEnginesClient translationEnginesClient = services.GetService<ITransl
 
 // Set up the translation engine directory and get the translation engine
 string translationEngineId = args[0];
-string translationEnginePath = Path.Combine(Path.GetTempPath(), translationEngineId);
+string translationEnginePath = Path.Join(Path.GetTempPath(), translationEngineId);
 Directory.CreateDirectory(translationEnginePath);
 TranslationEngine translationEngine = await translationEnginesClient.GetAsync(translationEngineId);
 if (translationEngine.Type != "nmt")
@@ -34,12 +34,12 @@ if (translationEngine.Type != "nmt")
 foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorporaAsync(translationEngineId))
 #pragma warning restore CS0612 // Type or member is obsolete
 {
-    string corpusPath = Path.Combine(translationEnginePath, corpus.Id);
+    string corpusPath = Path.Join(translationEnginePath, corpus.Id);
     Directory.CreateDirectory(corpusPath);
     foreach (TranslationCorpusFile sourceFile in corpus.SourceFiles)
     {
         // Create the source directory
-        string sourcePath = Path.Combine(corpusPath, "source");
+        string sourcePath = Path.Join(corpusPath, "source");
         Directory.CreateDirectory(sourcePath);
 
         // Get the file extension
@@ -50,7 +50,7 @@ foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorpor
         FileResponse file = await dataFilesClient.DownloadAsync(sourceFile.File.Id);
 
         // Write the file
-        string path = Path.Combine(sourcePath, $"{sourceFile.TextId}_({sourceFile.File.Id}){extension}");
+        string path = Path.Join(sourcePath, $"{sourceFile.TextId}_({sourceFile.File.Id}){extension}");
         Console.WriteLine($"Writing {path}...");
         await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
         file.Stream.CopyTo(fileStream);
@@ -58,7 +58,7 @@ foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorpor
 
     foreach (TranslationCorpusFile targetFile in corpus.TargetFiles)
     {
-        string targetPath = Path.Combine(corpusPath, "target");
+        string targetPath = Path.Join(corpusPath, "target");
         Directory.CreateDirectory(targetPath);
 
         // Get the file extension
@@ -69,7 +69,7 @@ foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorpor
         FileResponse file = await dataFilesClient.DownloadAsync(targetFile.File.Id);
 
         // Write the file
-        string path = Path.Combine(targetPath, $"{targetFile.TextId}_({targetFile.File.Id}){extension}");
+        string path = Path.Join(targetPath, $"{targetFile.TextId}_({targetFile.File.Id}){extension}");
         Console.WriteLine($"Writing {path}...");
         await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
         file.Stream.CopyTo(fileStream);
@@ -83,12 +83,12 @@ foreach (
     )
 )
 {
-    string parallelCorpusPath = Path.Combine(translationEnginePath, parallelCorpus.Id);
+    string parallelCorpusPath = Path.Join(translationEnginePath, parallelCorpus.Id);
     Directory.CreateDirectory(parallelCorpusPath);
     foreach (ResourceLink sourceCorpus in parallelCorpus.SourceCorpora)
     {
         // Create the source directory
-        string sourcePath = Path.Combine(parallelCorpusPath, "source");
+        string sourcePath = Path.Join(parallelCorpusPath, "source");
         Directory.CreateDirectory(sourcePath);
 
         Corpus corpus = await corporaClient.GetAsync(sourceCorpus.Id);
@@ -102,7 +102,7 @@ foreach (
             FileResponse file = await dataFilesClient.DownloadAsync(corpusFile.File.Id);
 
             // Write the file
-            string path = Path.Combine(sourcePath, $"{corpusFile.TextId}_({corpusFile.File.Id}){extension}");
+            string path = Path.Join(sourcePath, $"{corpusFile.TextId}_({corpusFile.File.Id}){extension}");
             Console.WriteLine($"Writing {path}...");
             await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
             file.Stream.CopyTo(fileStream);
@@ -112,7 +112,7 @@ foreach (
     foreach (ResourceLink sourceCorpus in parallelCorpus.SourceCorpora)
     {
         // Create the target directory
-        string targetPath = Path.Combine(parallelCorpusPath, "target");
+        string targetPath = Path.Join(parallelCorpusPath, "target");
         Directory.CreateDirectory(targetPath);
 
         Corpus corpus = await corporaClient.GetAsync(sourceCorpus.Id);
@@ -126,7 +126,7 @@ foreach (
             FileResponse file = await dataFilesClient.DownloadAsync(corpusFile.File.Id);
 
             // Write the file
-            string path = Path.Combine(targetPath, $"{corpusFile.TextId}_({corpusFile.File.Id}){extension}");
+            string path = Path.Join(targetPath, $"{corpusFile.TextId}_({corpusFile.File.Id}){extension}");
             Console.WriteLine($"Writing {path}...");
             await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
             file.Stream.CopyTo(fileStream);

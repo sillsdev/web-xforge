@@ -237,7 +237,7 @@ public class Startup
         app.UseStaticFiles(
             new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SiteDir, "audio")),
+                FileProvider = new PhysicalFileProvider(Path.Join(siteOptions.Value.SiteDir, "audio")),
                 RequestPath = "/assets/audio",
             }
         );
@@ -245,7 +245,7 @@ public class Startup
             new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(
-                    Path.Combine(siteOptions.Value.SiteDir, TrainingDataService.DirectoryName)
+                    Path.Join(siteOptions.Value.SiteDir, TrainingDataService.DirectoryName)
                 ),
                 RequestPath = $"/assets/{TrainingDataService.DirectoryName}",
             }

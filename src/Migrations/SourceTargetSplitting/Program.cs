@@ -46,7 +46,7 @@ namespace SourceTargetSplitting
         public static async Task Main(string[] args)
         {
             const string siteDir = "/var/lib/scriptureforge";
-            string syncDir = Path.Combine(siteDir, "sync");
+            string syncDir = Path.Join(siteDir, "sync");
             bool doWrite = (args.Length >= 1 ? args[0] : string.Empty) == "run";
             MigrationsDisabled = !doWrite;
             string sfAppDir = args.Length >= 2 ? args[1] : string.Empty;
@@ -180,7 +180,7 @@ namespace SourceTargetSplitting
                 foreach (string projectPath in projectPaths)
                 {
                     string projectId = Path.GetFileName(projectPath.TrimEnd(Path.DirectorySeparatorChar));
-                    string targetPath = Path.Combine(projectPath, "target");
+                    string targetPath = Path.Join(projectPath, "target");
                     if (Directory.Exists(targetPath))
                     {
                         projectIds.Add(projectId);
@@ -198,7 +198,7 @@ namespace SourceTargetSplitting
                     Log($"Directory {projectId}");
 
                     // Check for the target path
-                    string targetPath = Path.Combine(projectPath, "target");
+                    string targetPath = Path.Join(projectPath, "target");
                     if (!Directory.Exists(targetPath))
                     {
                         Log("\tNo target folder - skipping as this is not a project");
@@ -206,7 +206,7 @@ namespace SourceTargetSplitting
                     }
 
                     // Check for the source path
-                    string sourcePath = Path.Combine(projectPath, "source");
+                    string sourcePath = Path.Join(projectPath, "source");
                     if (!Directory.Exists(sourcePath))
                     {
                         Log("\tNo source folder - no need to split");
@@ -227,7 +227,7 @@ namespace SourceTargetSplitting
 
                     // Get the source project id (if a resource)
                     string? sourceProjectId = null;
-                    string dblIdDirectoryPath = Path.Combine(sourcePath, ".dbl", "id");
+                    string dblIdDirectoryPath = Path.Join(sourcePath, ".dbl", "id");
                     if (Directory.Exists(dblIdDirectoryPath))
                     {
                         string[] files = Directory.GetFiles(dblIdDirectoryPath, "*");
@@ -252,7 +252,7 @@ namespace SourceTargetSplitting
                     if (sourceProjectId == null)
                     {
                         // Check for the source settings file
-                        string settingsXmlPath = Path.Combine(sourcePath, "Settings.xml");
+                        string settingsXmlPath = Path.Join(sourcePath, "Settings.xml");
                         if (!File.Exists(settingsXmlPath))
                         {
                             Log("\tNo Settings.xml in the source folder - cannot split project");
@@ -273,8 +273,8 @@ namespace SourceTargetSplitting
                     if (!projectIds.Contains(sourceProjectId))
                     {
                         Log($"\tMoving source directory to its own project: {sourceProjectId}");
-                        string newProjectDirectoryPath = Path.Combine(syncDir, sourceProjectId);
-                        string newProjectTargetDirectoryPath = Path.Combine(newProjectDirectoryPath, "target");
+                        string newProjectDirectoryPath = Path.Join(syncDir, sourceProjectId);
+                        string newProjectTargetDirectoryPath = Path.Join(newProjectDirectoryPath, "target");
                         if (doWrite)
                         {
                             Directory.CreateDirectory(newProjectDirectoryPath);

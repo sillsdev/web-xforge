@@ -52,7 +52,7 @@ namespace PTDDCloneAll
             var env = new TestEnvironment();
             string[] projectIds = new[] { "project01", "project02" };
             IEnumerable<SFProject> projectsToClone = await env.GetSFProjects(projectIds);
-            string project01Path = Path.Combine("scriptureforge", "sync", "target01");
+            string project01Path = Path.Join("scriptureforge", "sync", "target01");
             env.FileSystemService.DirectoryExists(project01Path).Returns(true);
             await env.Service.CloneSFProjects(CloneAllService.CLONE, projectsToClone);
             env.FileSystemService.Received(2).DirectoryExists(Arg.Any<string>());

@@ -187,7 +187,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         string audioDir = GetAudioDir(projectId);
         if (!FileSystemService.DirectoryExists(audioDir))
             FileSystemService.CreateDirectory(audioDir);
-        string outputPath = Path.Combine(audioDir, $"{curUserId}_{dataId}.mp3");
+        string outputPath = Path.Join(audioDir, $"{curUserId}_{dataId}.mp3");
         if (await _audioService.IsMp3FileAsync(path))
         {
             // Delete the existing file, if it exists
@@ -234,7 +234,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
             throw new ForbiddenException();
 
         string audioDir = GetAudioDir(projectId);
-        string filePath = Path.Combine(audioDir, $"{ownerId}_{dataId}.mp3");
+        string filePath = Path.Join(audioDir, $"{ownerId}_{dataId}.mp3");
         if (FileSystemService.FileExists(filePath))
             FileSystemService.DeleteFile(filePath);
     }
@@ -324,7 +324,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     protected bool IsProjectAdmin(TModel project, string userId) =>
         project.UserRoles.TryGetValue(userId, out string role) && role == ProjectAdminRole;
 
-    protected string GetAudioDir(string projectId) => Path.Combine(SiteOptions.Value.SiteDir, "audio", projectId);
+    protected string GetAudioDir(string projectId) => Path.Join(SiteOptions.Value.SiteDir, "audio", projectId);
 
     protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
 

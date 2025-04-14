@@ -344,7 +344,7 @@ public class SFProjectsUploadController : ControllerBase
                     .Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
 
                 // Get the path to the temporary file
-                path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + Path.GetExtension(fileName));
+                path = Path.Join(Path.GetTempPath(), Path.GetRandomFileName() + Path.GetExtension(fileName));
 
                 // Write the incoming file data to the temporary file
                 await using Stream fileStream = _fileSystemService.CreateFile(path);

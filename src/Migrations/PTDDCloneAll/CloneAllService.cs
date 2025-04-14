@@ -72,9 +72,9 @@ namespace PTDDCloneAll
         /// </summary>
         public async Task CloneSFProjects(string mode, IEnumerable<SFProject> projectsToClone)
         {
-            string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
+            string syncDir = Path.Join(_siteOptions.Value.SiteDir, "sync");
 
-            string syncDirOld = Path.Combine(_siteOptions.Value.SiteDir, "sync_old");
+            string syncDirOld = Path.Join(_siteOptions.Value.SiteDir, "sync_old");
             if (mode == CLONE_AND_MOVE_OLD)
             {
                 if (!_fileSystemService.DirectoryExists(syncDirOld))
@@ -111,8 +111,8 @@ namespace PTDDCloneAll
 
                             if (mode == CLONE_AND_MOVE_OLD)
                             {
-                                string projectDir = Path.Combine(syncDir, proj.Id);
-                                string projectDirOld = Path.Combine(syncDirOld, proj.Id);
+                                string projectDir = Path.Join(syncDir, proj.Id);
+                                string projectDirOld = Path.Join(syncDirOld, proj.Id);
                                 _fileSystemService.MoveDirectory(projectDir, projectDirOld);
                             }
                             break;
@@ -141,7 +141,7 @@ namespace PTDDCloneAll
             bool pushLocal = mode == SYNCHRONIZE_PT_SF;
             bool syncMode = mode == SYNCHRONIZE_SF || mode == SYNCHRONIZE_PT_SF;
             Log($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
-            string existingCloneDir = Path.Combine(syncDir, proj.ParatextId);
+            string existingCloneDir = Path.Join(syncDir, proj.ParatextId);
             // If the project directory already exists, no need to sync the project
             if (_fileSystemService.DirectoryExists(existingCloneDir) && !syncMode)
             {

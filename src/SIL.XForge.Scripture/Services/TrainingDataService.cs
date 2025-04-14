@@ -149,7 +149,7 @@ public class TrainingDataService(
         MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
 
         // Ensure that the training data directory exists
-        string trainingDataDir = Path.Combine(siteOptions.Value.SiteDir, DirectoryName, projectId);
+        string trainingDataDir = Path.Join(siteOptions.Value.SiteDir, DirectoryName, projectId);
         if (!fileSystemService.DirectoryExists(trainingDataDir))
         {
             throw new DataNotFoundException("The training data directory does not exist");
@@ -174,7 +174,7 @@ public class TrainingDataService(
                 fileName = fileName.Split('?').First();
             }
 
-            string path = Path.Combine(trainingDataDir, fileName);
+            string path = Path.Join(trainingDataDir, fileName);
             if (!fileSystemService.FileExists(path))
             {
                 // Skip if the file does not exist
@@ -347,13 +347,13 @@ public class TrainingDataService(
             .Aggregate(dataId, (current, c) => current.Replace(c.ToString(), string.Empty));
 
         // Ensure that the training data directory exists
-        string trainingDataDir = Path.Combine(siteOptions.Value.SiteDir, DirectoryName, projectId);
+        string trainingDataDir = Path.Join(siteOptions.Value.SiteDir, DirectoryName, projectId);
         if (!fileSystemService.DirectoryExists(trainingDataDir))
         {
             fileSystemService.CreateDirectory(trainingDataDir);
         }
 
         // Return the full path
-        return Path.Combine(trainingDataDir, $"{userId}_{dataId}.csv");
+        return Path.Join(trainingDataDir, $"{userId}_{dataId}.csv");
     }
 }

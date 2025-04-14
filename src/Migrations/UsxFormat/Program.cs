@@ -15,7 +15,7 @@ namespace Migrations
         static async Task Main(string[] args)
         {
             const string siteDir = "/var/lib/scriptureforge";
-            string syncDir = Path.Combine(siteDir, "sync");
+            string syncDir = Path.Join(siteDir, "sync");
             bool doWrite = ((args.Length >= 1 ? args[0] : "") == "run");
 
             Console.WriteLine("Migrate USX XML sync files.\n");
@@ -46,7 +46,7 @@ namespace Migrations
                     Console.WriteLine(
                         $"Project ID {projectPath.Substring(projectPath.LastIndexOf(Path.DirectorySeparatorChar) + 1)}"
                     );
-                    string targetPath = Path.Combine(projectPath, "target");
+                    string targetPath = Path.Join(projectPath, "target");
                     if (!Directory.Exists(targetPath))
                     {
                         Console.WriteLine("\tNo target folder.");
@@ -55,7 +55,7 @@ namespace Migrations
                     Console.Write("\tTarget folder: ");
                     await ProcessUsxFilesAsync(targetPath, doWrite);
 
-                    string sourcePath = Path.Combine(projectPath, "source");
+                    string sourcePath = Path.Join(projectPath, "source");
                     if (!Directory.Exists(sourcePath))
                         continue;
                     Console.Write("\tSource folder: ");

@@ -171,7 +171,7 @@ public class ParatextService : DisposableBase, IParatextService
         // Stop ParatextData.dll Trace output from appearing on the server.
         System.Diagnostics.Trace.Listeners.Clear();
 
-        SyncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
+        SyncDir = Path.Join(_siteOptions.Value.SiteDir, "sync");
         if (!_fileSystemService.DirectoryExists(SyncDir))
             _fileSystemService.CreateDirectory(SyncDir);
         // Disable caching VersionedText instances since multiple repos may exist on SF server with the same GUID
@@ -1763,8 +1763,8 @@ public class ParatextService : DisposableBase, IParatextService
         // BackupProject and RestoreProject implementations in Paratext.Data.Repository.VersionedText.
         try
         {
-            string directory = Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups");
-            string path = Path.Combine(directory, scrText.Guid + ".bndl");
+            string directory = Path.Join(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups");
+            string path = Path.Join(directory, scrText.Guid + ".bndl");
             string tempPath = path + "_temp";
             _fileSystemService.CreateDirectory(directory);
 
@@ -1821,7 +1821,7 @@ public class ParatextService : DisposableBase, IParatextService
         if (BackupExistsInternal(scrText))
         {
             string source = scrText.Directory;
-            string destination = Path.Combine(
+            string destination = Path.Join(
                 Paratext.Data.ScrTextCollection.SettingsDirectory,
                 "_Backups",
                 scrText.Guid.ToString()
@@ -2305,7 +2305,7 @@ public class ParatextService : DisposableBase, IParatextService
     {
         try
         {
-            string path = Path.Combine(
+            string path = Path.Join(
                 Paratext.Data.ScrTextCollection.SettingsDirectory,
                 "_Backups",
                 $"{scrText.Guid}.bndl"
@@ -2457,7 +2457,7 @@ public class ParatextService : DisposableBase, IParatextService
             _logger.LogError(msg);
             throw new InvalidOperationException(msg);
         }
-        var hgMerge = Path.Combine(AssemblyDirectory, "ParatextMerge.py");
+        var hgMerge = Path.Join(AssemblyDirectory, "ParatextMerge.py");
         _hgHelper.SetDefault(new Hg(customHgPath, hgMerge, AssemblyDirectory));
     }
 
@@ -2467,8 +2467,8 @@ public class ParatextService : DisposableBase, IParatextService
         string[] resources = ["usfm.sty", "revisionStyle.sty", "revisionTemplate.tem", "usfm_mod.sty", "usfm_sb.sty"];
         foreach (string resource in resources)
         {
-            string target = Path.Combine(SyncDir, resource);
-            string source = Path.Combine(AssemblyDirectory, resource);
+            string target = Path.Join(SyncDir, resource);
+            string source = Path.Join(AssemblyDirectory, resource);
             if (!File.Exists(target))
             {
                 _logger.LogInformation($"Installing missing {target}");
@@ -2640,8 +2640,8 @@ public class ParatextService : DisposableBase, IParatextService
         // If the publisher updates this resource, this file will be overwritten with the fully migrated language file,
         // stopping this migration from running in the future and negating its need.
         string path = LocalProjectDir(paratextId);
-        string oldLdmlFile = Path.Combine(path, "ldml.xml");
-        string newLdmlFile = Path.Combine(path, scrText.Settings.LdmlFileName);
+        string oldLdmlFile = Path.Join(path, "ldml.xml");
+        string newLdmlFile = Path.Join(path, scrText.Settings.LdmlFileName);
         if (_fileSystemService.FileExists(oldLdmlFile) && !_fileSystemService.FileExists(newLdmlFile))
         {
             _fileSystemService.MoveFile(oldLdmlFile, newLdmlFile);
@@ -2689,7 +2689,7 @@ public class ParatextService : DisposableBase, IParatextService
         // Historically, SF used both "target" and "source" projects in adjacent directories. Then
         // moved to just using "target".
         string subDirForMainProject = "target";
-        return Path.Combine(SyncDir, paratextId, subDirForMainProject);
+        return Path.Join(SyncDir, paratextId, subDirForMainProject);
     }
 
     private void CloneProjectRepo(IInternetSharedRepositorySource source, string paratextId, SharedRepository repo)
@@ -2821,7 +2821,7 @@ public class ParatextService : DisposableBase, IParatextService
     {
         CommentList userComments = [.. commentManager.AllComments.Where(comment => comment.User == username)];
         string fileName = commentManager.GetUserFileName(username);
-        string path = Path.Combine(commentManager.ScrText.Directory, fileName);
+        string path = Path.Join(commentManager.ScrText.Directory, fileName);
         using Stream stream = _fileSystemService.CreateFile(path);
         _fileSystemService.WriteXmlFile(stream, userComments);
     }

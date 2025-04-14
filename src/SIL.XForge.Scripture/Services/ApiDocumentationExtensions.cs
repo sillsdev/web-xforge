@@ -37,7 +37,7 @@ public static class ApiDocumentationExtensions
 
             // Add the documentation XML file, if it exists
             string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+            string xmlPath = Path.Join(AppContext.BaseDirectory, xmlFilename);
             if (RobustFile.Exists(xmlPath))
             {
                 options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
