@@ -37,6 +37,7 @@ export interface AudioAttachment {
 
 export interface AudioRecorderDialogData {
   countdown?: boolean;
+  requireSave?: boolean;
   audio?: AudioAttachment;
 }
 
@@ -68,6 +69,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
   countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
 
+  private _requireSave: boolean;
   private destroyed = false;
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
@@ -90,6 +92,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     private readonly destroyRef: DestroyRef
   ) {
     this.showCountdown = data?.countdown ?? false;
+    this._requireSave = data?.requireSave ?? false;
     if (data?.audio != null) {
       this.audio = data.audio;
     }
@@ -206,10 +209,13 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     this.audio = { status: 'stopped' };
     // Additional promise for when the audio has been processed and is available
     await new Promise<void>(resolve => {
-      const statusPromise = this.status.subscribe((status: AudioAttachment) => {
-        if (status.status === 'processed') {
+      const statusPromise = this.status.subscribe((audio: AudioAttachment) => {
+        if (audio.status === 'processed') {
           statusPromise.unsubscribe();
           resolve();
+          if (!this._requireSave) {
+            this.saveRecording();
+          }
         }
       });
     });
