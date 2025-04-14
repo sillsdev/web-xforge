@@ -13,7 +13,6 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -39,7 +38,6 @@ import { TrainingDataService } from './training-data/training-data.service';
 
 describe('DraftGenerationComponent', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
-  let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
   let mockDraftSourcesService: jasmine.SpyObj<DraftSourcesService>;
@@ -87,7 +85,6 @@ describe('DraftGenerationComponent', () => {
         imports: [TestOnlineStatusModule.forRoot(), RouterModule.forRoot([]), TestTranslocoModule],
         providers: [
           { provide: AuthService, useValue: mockAuthService },
-          { provide: FeatureFlagService, useValue: mockFeatureFlagService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: DraftSourcesService, useValue: mockDraftSourcesService },
           { provide: DraftHandlingService, useValue: mockDraftHandlingService },
@@ -113,13 +110,6 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
-      mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-        'FeatureFlagService',
-        {},
-        {
-          allowForwardTranslationNmtDrafting: createTestFeatureFlag(false)
-        }
-      );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog', 'message']);
       mockNoticeService = jasmine.createSpyObj<NoticeService>([
         'loadingStarted',
@@ -283,7 +273,7 @@ describe('DraftGenerationComponent', () => {
             tag: 'xyz'
           },
           translateConfig: {
-            projectType: ProjectType.Standard
+            projectType: ProjectType.BackTranslation
           },
           userRoles: { user01: SFProjectRole.ParatextAdministrator }
         })
@@ -300,7 +290,7 @@ describe('DraftGenerationComponent', () => {
       env.fixture.detectChanges();
       tick();
 
-      expect(env.component.isBackTranslation).toBe(false);
+      expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.configureDraftButton).not.toBeNull();
     }));
@@ -312,15 +302,7 @@ describe('DraftGenerationComponent', () => {
     (shouldRunTest ? it : xit)(
       'should show notice if back translation or pre-translate approved',
       fakeAsync(() => {
-        const env = new TestEnvironment(() => {
-          mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-            'FeatureFlagService',
-            {},
-            {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-            }
-          );
-        });
+        const env = new TestEnvironment();
         env.component.isBackTranslation = true;
         env.component.isPreTranslationApproved = false;
         env.fixture.detectChanges();
@@ -342,15 +324,7 @@ describe('DraftGenerationComponent', () => {
     );
 
     it('should not show notice if not back translation nor pre-translate approved.', fakeAsync(() => {
-      const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-      });
+      const env = new TestEnvironment();
       env.component.isBackTranslation = false;
       env.component.isPreTranslationApproved = false;
       env.fixture.detectChanges();
@@ -433,13 +407,6 @@ describe('DraftGenerationComponent', () => {
               trainingSources: [],
               trainingTargets: []
             } as DraftSourcesAsArrays)
-          );
-          mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-            'FeatureFlagService',
-            {},
-            {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-            }
           );
         });
         env.component.isBackTranslation = false;
@@ -554,13 +521,6 @@ describe('DraftGenerationComponent', () => {
               ],
               trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
-          );
-          mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-            'FeatureFlagService',
-            {},
-            {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-            }
           );
         });
         env.component.isBackTranslation = false;
@@ -692,13 +652,6 @@ describe('DraftGenerationComponent', () => {
               ],
               trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
-          );
-          mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-            'FeatureFlagService',
-            {},
-            {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-            }
           );
         });
         env.component.isBackTranslation = false;
@@ -869,56 +822,32 @@ describe('DraftGenerationComponent', () => {
 
   describe('getInfoAlert', () => {
     it('should show "approval needed" info alert when isPreTranslationApproved is false and project is not in back translation mode', () => {
-      const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-      });
+      const env = new TestEnvironment();
       env.component.isBackTranslation = false;
       env.component.isTargetLanguageSupported = true;
       env.component.isPreTranslationApproved = false;
       env.fixture.detectChanges();
-      expect(env.component.isBackTranslationMode).toBe(false);
+      expect(env.component.isBackTranslation).toBe(false);
       expect(env.getElementByTestId('approval-needed')).not.toBeNull();
     });
 
     it('should not show "approval needed" info alert when isPreTranslationApproved is true', () => {
-      const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-      });
+      const env = new TestEnvironment();
       env.component.isBackTranslation = false;
       env.component.isTargetLanguageSupported = true;
       env.component.isPreTranslationApproved = true;
       env.fixture.detectChanges();
-      expect(env.component.isBackTranslationMode).toBe(false);
+      expect(env.component.isBackTranslation).toBe(false);
       expect(env.getElementByTestId('approval-needed')).toBeNull();
     });
 
     it('should not show "approval needed" info alert when project is in back translation mode', () => {
-      const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-      });
+      const env = new TestEnvironment();
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isPreTranslationApproved = true;
       env.fixture.detectChanges();
-      expect(env.component.isBackTranslationMode).toBe(true);
+      expect(env.component.isBackTranslation).toBe(true);
       expect(env.getElementByTestId('approval-needed')).toBeNull();
     });
   });
@@ -942,14 +871,6 @@ describe('DraftGenerationComponent', () => {
         })
       } as SFProjectProfileDoc;
       const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -958,7 +879,6 @@ describe('DraftGenerationComponent', () => {
           changes$: of(projectDoc)
         });
       });
-      expect(env.component.isForwardTranslationEnabled).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(true);
     });
 
@@ -980,14 +900,6 @@ describe('DraftGenerationComponent', () => {
         })
       } as SFProjectProfileDoc;
       const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -998,8 +910,7 @@ describe('DraftGenerationComponent', () => {
       });
       env.fixture.detectChanges();
       tick();
-      expect(env.component.isForwardTranslationEnabled).toBe(true);
-      expect(env.component.isBackTranslationMode).toBe(true);
+      expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
     }));
   });
@@ -1583,13 +1494,6 @@ describe('DraftGenerationComponent', () => {
         mockDraftGenerationService.getBuildProgress.and.returnValue(buildObservable);
         mockDraftGenerationService.pollBuildProgress.and.returnValue(buildObservable);
         mockDraftGenerationService.getLastCompletedBuild.and.returnValue(buildObservable);
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
       });
       tick(500);
       env.fixture.detectChanges();

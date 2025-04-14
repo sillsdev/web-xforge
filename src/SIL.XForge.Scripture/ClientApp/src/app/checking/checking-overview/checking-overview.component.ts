@@ -10,7 +10,6 @@ import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -55,7 +54,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly destroyRef: DestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly dialogService: DialogService,
-    readonly featureFlags: FeatureFlagService,
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,

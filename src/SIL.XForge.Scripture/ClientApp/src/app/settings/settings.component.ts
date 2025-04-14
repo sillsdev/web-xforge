@@ -16,7 +16,6 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -105,7 +104,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     readonly i18n: I18nService,
     readonly authService: AuthService,
-    readonly featureFlags: FeatureFlagService,
     readonly externalUrls: ExternalUrlService,
     private readonly activatedProjectService: ActivatedProjectService,
     private destroyRef: DestroyRef
@@ -136,7 +134,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get showPreTranslationSettings(): boolean {
     const translateConfig = this.projectDoc?.data?.translateConfig;
-    if (translateConfig == null || !this.featureFlags.showNmtDrafting.enabled) {
+    if (translateConfig == null) {
       return false;
     } else if (this.authService.currentUserRoles.includes(SystemRole.ServalAdmin)) {
       return true;

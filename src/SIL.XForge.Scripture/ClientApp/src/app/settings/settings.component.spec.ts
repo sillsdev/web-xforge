@@ -22,7 +22,6 @@ import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/trans
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
@@ -53,7 +52,6 @@ const mockedParatextService = mock(ParatextService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialog = mock(MatDialog);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -83,7 +81,6 @@ describe('SettingsComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useValue: instance(mockedFeatureFlagService) },
       { provide: MatDialog, useMock: mockedDialog }
     ]
   }));
@@ -258,16 +255,6 @@ describe('SettingsComponent', () => {
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).not.toBeNull();
-      }));
-
-      it('should not display for serval administrators when the feature flag is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.servalConfigTextArea).toBeNull();
       }));
 
       it('should display for serval administrators on forward translations when not approved', fakeAsync(() => {
@@ -980,7 +967,6 @@ class TestEnvironment {
         languageTag: 'en'
       }
     ]);
-    when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(true));
 
     when(mockedSFProjectService.queryAudioText(anything(), anything())).thenCall(sfProjectId => {
       const queryParams: QueryParameters = {

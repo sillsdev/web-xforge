@@ -3,11 +3,9 @@ import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/ro
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, from, Observable, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../core/permissions.service';
@@ -108,31 +106,13 @@ export class NmtDraftAuthGuard extends RouterGuard {
   constructor(
     authGuard: AuthGuard,
     projectService: SFProjectService,
-    private userService: UserService,
-    private readonly featureFlagService: FeatureFlagService
+    private userService: UserService
   ) {
     super(authGuard, projectService);
   }
 
-  allowTransition(projectId: string): Observable<boolean> {
-    // Re-run check when feature flags change
-    return combineLatest([
-      this.featureFlagService.showNmtDrafting.enabled$,
-      this.featureFlagService.allowForwardTranslationNmtDrafting.enabled$
-    ]).pipe(switchMap(() => super.allowTransition(projectId)));
-  }
-
   check(projectDoc: SFProjectProfileDoc): boolean {
     if (projectDoc.data == null) {
-      return false;
-    }
-
-    if (!this.featureFlagService.showNmtDrafting.enabled) {
-      return false;
-    }
-
-    const isBackTranslationProject = projectDoc.data.translateConfig?.projectType === ProjectType.BackTranslation;
-    if (!isBackTranslationProject && !this.featureFlagService.allowForwardTranslationNmtDrafting.enabled) {
       return false;
     }
 
