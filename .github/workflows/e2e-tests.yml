@@ -137,7 +137,10 @@ jobs:
           deno-version: v2.x
 
       - name: Playwright install browsers
-        run: npx playwright install
+        run: |
+          set -xueo pipefail
+          sudo npx playwright install-deps
+          npx playwright install
 
       - name: Run E2E tests
         run: ./src/SIL.XForge.Scripture/ClientApp/e2e/pre_merge_ci.sh
