@@ -261,8 +261,8 @@
     "translated_books": "Kitab yang diterjemahkan",
     "translated_book_selected_no_training_pair": "Beberapa kitab pelatihan yang Anda pilih tidak memiliki kitab referensi yang cocok. Pilihlah kitab referensi yang sesuai.",
     "unusable_target_books": "Tidak dapat menemukan kitab yang Anda cari? Pastikan kitab tersebut dibuat di Paratext, lalu sinkronkan proyek Anda.",
-    "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
-    "use_echo": "Use Echo Translation Engine"
+    "use_echo_warning": "Mengaktifkan ini akan menggunakan mesin Echo Translation terhadap teks sumber Anda alih-alih menerjemahkannya.",
+    "use_echo": "Gunakan Mesin Echo Translation"
   },
   "draft_preview_books": {
     "add_to_project": "Tambahkan ke proyek",
