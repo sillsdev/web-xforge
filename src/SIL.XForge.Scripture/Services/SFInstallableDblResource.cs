@@ -11,7 +11,6 @@ using Paratext.Data;
 using Paratext.Data.Archiving;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectFileAccess;
-using PtxUtils;
 using PtxUtils.Http;
 using SIL.Extensions;
 using SIL.IO;
@@ -848,51 +847,6 @@ public class SFInstallableDblResource : InstallableResource
             {
                 return langIdDbl;
             }
-        }
-    }
-
-    /// <summary>
-    /// An implementation of the Paratext zipped resource password provider.
-    /// </summary>
-    /// <seealso cref="Paratext.Data.ProjectFileAccess.IZippedResourcePasswordProvider" />
-    private class ParatextZippedResourcePasswordProvider : IZippedResourcePasswordProvider
-    {
-        /// <summary>
-        /// The cached password value.
-        /// </summary>
-        private string cachedValue;
-
-        /// <summary>
-        /// The paratext options.
-        /// </summary>
-        private readonly ParatextOptions _paratextOptions;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ParatextZippedResourcePasswordProvider"/> class.
-        /// </summary>
-        /// <param name="paratextOptions">The paratext options.</param>
-        internal ParatextZippedResourcePasswordProvider(ParatextOptions paratextOptions) =>
-            this._paratextOptions = paratextOptions;
-
-        /// <inheritdoc />
-        public string GetPassword()
-        {
-            // We can handle zip files with no password (for testing)
-            if (
-                this._paratextOptions == null
-                || string.IsNullOrWhiteSpace(this._paratextOptions.ResourcePasswordBase64)
-                || string.IsNullOrWhiteSpace(this._paratextOptions.ResourcePasswordHash)
-            )
-            {
-                return string.Empty;
-            }
-
-            cachedValue ??= StringUtils.DecryptStringFromBase64(
-                this._paratextOptions.ResourcePasswordBase64,
-                this._paratextOptions.ResourcePasswordHash
-            );
-
-            return cachedValue;
         }
     }
 }

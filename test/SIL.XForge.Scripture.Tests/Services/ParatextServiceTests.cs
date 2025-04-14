@@ -1576,11 +1576,11 @@ public class ParatextServiceTests
         var associatedPtUser = new SFParatextUser(env.Username01);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-        string threadId = "thread1";
-        string text1 = "Text in first verse ";
-        string text2 = "text after ";
-        string selected = "stanza";
-        string text3 = " break";
+        const string threadId = "thread1";
+        const string text1 = "Text in first verse ";
+        const string text2 = "text after ";
+        const string selected = "stanza";
+        const string text3 = " break";
 
         var comment = new Paratext.Data.ProjectComments.Comment(associatedPtUser)
         {
@@ -1591,7 +1591,7 @@ public class ParatextServiceTests
             ContextAfter = text3,
             StartPosition = text1.Length + text2.Length,
             Contents = null,
-            Date = $"2019-12-31T08:00:00.0000000+00:00",
+            Date = "2019-12-31T08:00:00.0000000+00:00",
             Deleted = false,
             Status = NoteStatus.Todo,
             Type = NoteType.Normal,
@@ -1604,7 +1604,12 @@ public class ParatextServiceTests
         {
             IEnumerable<IDocument<NoteThread>> noteThreadDocs = Array.Empty<IDocument<NoteThread>>();
             Dictionary<int, ChapterDelta> chapterDeltas = [];
-            string chapterText =
+            // These deltas represent the following USFM:
+            // \c 1
+            // \q
+            // \v 1 Text in first verse
+            // \b text after stanza break
+            const string chapterText =
                 "[ { \"insert\": { \"chapter\": { \"style\": \"c\", \"number\": \"1\" } } }, "
                 + "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"q_1\" } },"
                 + "{ \"insert\": { \"verse\": { \"style\": \"v\", \"number\": \"1\" } } }, "
@@ -1612,12 +1617,12 @@ public class ParatextServiceTests
                 + text1
                 + "\", \"attributes\": { \"segment\": \"verse_1_1\" } }, "
                 + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"q\" } } }, "
-                + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"b\" } } }, "
                 + "{ \"insert\": \""
                 + text2
                 + selected
                 + text3
-                + "\", \"attributes\": { \"segment\": \"verse_1_1/q_1\" } } ]";
+                + "\", \"attributes\": { \"segment\": \"verse_1_1/b_1\" } }, "
+                + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"b\" } } } ]";
             var delta = new Delta(JToken.Parse(chapterText));
             ChapterDelta chapterDelta = new ChapterDelta(1, 1, true, delta);
             chapterDeltas.Add(1, chapterDelta);
