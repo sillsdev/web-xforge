@@ -384,7 +384,7 @@ export class CheckingAnswersComponent implements OnInit {
     if (this.questionDoc?.data == null) return;
     const dialogRef: MatDialogRef<AudioRecorderDialogComponent, AudioRecorderDialogResult> =
       this.dialogService.openMatDialog(AudioRecorderDialogComponent, {
-        data: { countdown: true } as AudioRecorderDialogData
+        data: { countdown: true, requireSave: true } as AudioRecorderDialogData
       });
 
     const result: AudioRecorderDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
