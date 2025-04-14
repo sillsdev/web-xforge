@@ -1,5 +1,32 @@
 # Scripture Forge End-to-End Tests
 
+## Setup
+
+Install [Deno](https://deno.com/).
+
+Playwright may need some dependencies installed. For example, on Ubuntu:
+
+```bash
+sudo apt install libavif-bin
+```
+
+Install other dependencies:
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp/e2e
+deno install
+npx playwright install
+```
+
+Populate file `secrets.json` with secrets for testing.
+
+## Run
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp/e2e
+./e2e.mts
+```
+
 ## Testing philosophy
 
 ### The testing pyramid
@@ -62,7 +89,7 @@ that is possible. For example, the smoke tests should test only the user roles s
 certain tests are specific to a given role (for example, you have to be an admin to set up a community checking
 project), and won't need to consider the specified roles.
 
-To run the tests, make any necessary edits to the run sheet, then run `e2e.ts`.
+To run the tests, make any necessary edits to the run sheet, then run `e2e.mts`.
 
 Screenshots are saved in the `screenshots` directory, in a subfolder specified by the run sheet. The default subfolder
 name is the timestamp when the tests started.
