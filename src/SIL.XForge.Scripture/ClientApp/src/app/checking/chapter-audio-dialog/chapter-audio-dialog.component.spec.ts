@@ -1,3 +1,4 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -14,6 +15,7 @@ import { CsvService } from 'xforge-common/csv-service.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -45,6 +47,7 @@ describe('ChapterAudioDialogComponent', () => {
     providers: [
       { provide: CsvService, useMock: mockedCsvService },
       { provide: FileService, useMock: mockedFileService },
+      { provide: BreakpointObserver, useClass: TestBreakpointObserver },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
@@ -387,6 +390,8 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('can drag and drop to initiate an upload', fakeAsync(() => {
+    const breakpoints = env.component['breakpointObserver'] as TestBreakpointObserver;
+    breakpoints.emitObserveValue(false);
     env.component.prepareTimingFileUpload(anything());
     env.fixture.detectChanges();
     const dataTransfer = new DataTransfer();
@@ -648,6 +653,7 @@ class TestEnvironment {
   ) as TestOnlineStatusService;
   private numTimesClosedFired: number;
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+  readonly breakpointObserver: TestBreakpointObserver = TestBed.inject(BreakpointObserver) as TestBreakpointObserver;
 
   constructor(config?: MatDialogConfig<ChapterAudioDialogData>) {
     if (!config) {
@@ -664,6 +670,7 @@ class TestEnvironment {
       this.addTextAudioData(config.data);
     }
 
+    this.breakpointObserver.matchedResult = false;
     when(mockedCsvService.parse(anything())).thenResolve([
       ['0.1', '0', 'v1'],
       ['1', '0', 'v2']

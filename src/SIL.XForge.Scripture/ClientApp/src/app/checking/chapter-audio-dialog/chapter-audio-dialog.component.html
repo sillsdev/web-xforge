@@ -1,31 +1,20 @@
 <ng-container *transloco="let t; read: 'chapter_audio_dialog'">
-  <h2 mat-dialog-title>{{ bookName(book) }} {{ chapter }} {{ t("audio") }}</h2>
-  <mat-dialog-content class="mat-typography">
-    @if (allFieldsValid) {
-      <div class="audio-player-manage-container">
-        <div class="audio-player-manage">
-          <app-checking-scripture-audio-player
-            [canClose]="false"
-            [source]="audio!.url"
-            [timing]="timing_processed"
-            [textDocId]="textDocId"
-            [showSegment]="true"
-          />
-        </div>
-
-        <button mat-button class="delete-audio" [matMenuTriggerFor]="menu">
-          <mat-icon>delete</mat-icon> {{ t("delete") }}
-        </button>
-        <mat-menu #menu="matMenu">
-          <button mat-menu-item (click)="deleteAudioData()">{{ t("delete_audio") }}</button>
-          <button mat-menu-item (click)="deleteTimingData()">{{ t("delete_timing") }}</button>
-          <button mat-menu-item (click)="deleteAudioData(); deleteTimingData()">{{ t("delete_both") }}</button>
-        </mat-menu>
-      </div>
-    } @else {
-      <div class="dropzone" #dropzone>
-        <input type="file" multiple #fileDropzone accept=".csv,.tsv,.txt,audio/*" (change)="uploadedFiles($event)" />
-        <label>{{ t("drag_and_drop_files") }}<br />- {{ t("drag_and_drop_or_browse") }} -</label>
+  <div #dropzone>
+    @if (showDragDropOverlay) {
+      <div class="overlay">{{ t("drag_and_drop_overlay") }}</div>
+    }
+    <h2 mat-dialog-title>{{ bookName(book) }} {{ chapter }} {{ t("audio") }}</h2>
+    <mat-dialog-content class="mat-typography">
+      <div class="browse-container dashed-border-box">
+        <input
+          type="file"
+          multiple
+          #fileDropzone
+          accept=".csv,.tsv,.txt,audio/*"
+          (change)="uploadedFiles($event)"
+          title="{{ t('browse_files_tooltip') }}"
+        />
+        <label>{{ t("drag_and_drop_files") }}, {{ t("drag_and_drop_or_browse") }}</label>
         <button mat-flat-button color="primary" type="submit">{{ t("browse_files") }}</button>
       </div>
       <div class="data-blocks">
@@ -72,28 +61,41 @@
           }
         </div>
       </div>
-    }
-
-    @if (!isOnline) {
-      <app-notice id="offline-error" type="error" icon="cloud_off">
-        {{ t("not_upload_audio_offline") }}
-      </app-notice>
-    }
-  </mat-dialog-content>
-  <mat-dialog-actions>
-    <a mat-button [href]="externalUrlService.chapterAudioHelpPage" target="_blank">
-      <mat-icon>help</mat-icon> {{ t("help") }}
-    </a>
-    <span class="flex-spacer"></span>
-    <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
-      {{ t("cancel") }}
-    </button>
-    <button mat-flat-button color="primary" type="submit" (click)="save()" id="audio-save-btn" [disabled]="!isOnline">
-      @if (isLoadingAudio) {
-        <mat-spinner diameter="24" class="white-spinner"></mat-spinner>
-      } @else {
-        {{ t("save") }}
+      @if (allFieldsValid) {
+        <div class="audio-player-manage-container">
+          <div class="audio-player-manage">
+            <app-checking-scripture-audio-player
+              [canClose]="false"
+              [source]="audio!.url"
+              [timing]="timing_processed"
+              [textDocId]="textDocId"
+              [showSegment]="true"
+            />
+          </div>
+        </div>
       }
-    </button>
-  </mat-dialog-actions>
+
+      @if (!isOnline) {
+        <app-notice id="offline-error" type="error" icon="cloud_off">
+          {{ t("not_upload_audio_offline") }}
+        </app-notice>
+      }
+    </mat-dialog-content>
+    <mat-dialog-actions>
+      <a mat-button [href]="externalUrlService.chapterAudioHelpPage" target="_blank">
+        <mat-icon>help</mat-icon> {{ t("help") }}
+      </a>
+      <span class="flex-spacer"></span>
+      <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
+        {{ t("cancel") }}
+      </button>
+      <button mat-flat-button color="primary" type="submit" (click)="save()" id="audio-save-btn" [disabled]="!isOnline">
+        @if (isLoadingAudio) {
+          <mat-spinner diameter="24" class="white-spinner"></mat-spinner>
+        } @else {
+          {{ t("save") }}
+        }
+      </button>
+    </mat-dialog-actions>
+  </div>
 </ng-container>
