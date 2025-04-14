@@ -47,13 +47,14 @@ export interface ChapterAudioDialogResult {
   styleUrls: ['./chapter-audio-dialog.component.scss']
 })
 export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;
+  @ViewChild('dropzone') dropzone!: ElementRef<HTMLElement>;
   @ViewChild('fileDropzone') fileDropzone?: ElementRef<HTMLInputElement>;
   @ViewChild('chapterAudio') chapterAudio?: SingleButtonAudioPlayerComponent;
 
   protected readonly textDocId: TextDocId;
   protected audio?: AudioAttachment;
   protected timing_processed: AudioTiming[] = [];
+  protected showDragDropOverlay: boolean = false;
 
   private _book: number = this.books[0];
   private _chapter: number = 1;
@@ -211,19 +212,36 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.dropzone?.nativeElement.addEventListener('dragover', _ => {
-      this.dropzone?.nativeElement.classList.add('dragover');
+    this.dropzone.nativeElement.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      this.showDragDropOverlay = true;
     });
-    this.dropzone?.nativeElement.addEventListener('dragleave', _ => {
-      this.dropzone?.nativeElement.classList.remove('dragover');
+
+    this.dropzone.nativeElement.addEventListener('dragleave', e => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // When leaving the browser window, relatedTarget will be null.
+      // It could also be an element that's not in the dropzone.
+      const relatedTarget = e.relatedTarget as Node;
+      if (relatedTarget === null || !this.dropzone.nativeElement.contains(relatedTarget)) {
+        this.showDragDropOverlay = false;
+      }
     });
-    this.dropzone?.nativeElement.addEventListener('drop', (e: DragEvent) => {
-      this.dropzone?.nativeElement.classList.remove('dragover');
+
+    this.dropzone.nativeElement.addEventListener('drop', (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      this.showDragDropOverlay = false;
       if (e?.dataTransfer?.files == null) {
         return;
       }
       this.processUploadedFiles(e.dataTransfer.files);
     });
+
     this.projectService.queryAudioText(this.data.projectId, this.destroyRef).then(query => {
       this.textAudioQuery = query;
       this.populateExistingData();
