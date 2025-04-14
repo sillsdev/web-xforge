@@ -93,7 +93,7 @@ jobs:
 
           # Add repository
           {
-          tee >/dev/null /etc/apt/sources.list.d/mongodb-org.sources <<END
+          sudo tee >/dev/null /etc/apt/sources.list.d/mongodb-org.sources <<END
           Enabled: yes
           Types: deb
           URIs: https://repo.mongodb.org/apt/ubuntu
