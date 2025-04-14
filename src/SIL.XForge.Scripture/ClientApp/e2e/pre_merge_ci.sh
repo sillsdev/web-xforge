@@ -28,11 +28,12 @@ nohup dotnet run &
 SERVER_PID=$!
 echo "Server started with PID: $SERVER_PID"
 
+sleep 10s
 max_retries=3
 attempt=1
 until nc -z localhost 5000 || ((attempt > max_retries)); do
   echo "Waiting for dotnet server to start... (attempt $attempt)"
-  sleep 10
+  sleep 10s
   attempt=$((attempt + 1))
 done
 if ((attempt > max_retries)); then
@@ -41,10 +42,11 @@ if ((attempt > max_retries)); then
 fi
 echo "dotnet server is up and running."
 
+sleep 10s
 attempt=1
 until nc -z localhost 4200 || ((attempt > max_retries)); do
   echo "Waiting for ng server to start... (attempt $attempt)"
-  sleep 10
+  sleep 10s
   attempt=$((attempt + 1))
 done
 if ((attempt > max_retries)); then
