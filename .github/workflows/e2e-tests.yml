@@ -117,6 +117,9 @@ jobs:
           cd deploy
           ansible-playbook dev-server.playbook.yml --limit localhost --diff
 
+      - name: "hg path"
+        run: tee --append ~/.pam_environment <<< 'HG_PATH=/usr/bin/hg'
+
       - name: "Configure secrets"
         env:
           PARATEXT_CLIENT_ID: ${{ secrets.PARATEXT_CLIENT_ID }}
