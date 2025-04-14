@@ -81,33 +81,41 @@ jobs:
       - name: "Build: Frontend"
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
 
-      - name: "Install MongoDB"
+      # - name: "Install MongoDB"
+      #   run: |
+      #     set -xueo pipefail
+
+      #     # Add repository key
+      #     sudo curl --silent --fail --show-error --location \
+      #       https://www.mongodb.org/static/pgp/server-8.0.asc \
+      #       --output /usr/share/keyrings/mongodb-server-8.0.asc
+      #     sha512sum /usr/share/keyrings/mongodb-server-8.0.asc
+
+      #     # Add repository
+      #     {
+      #     sudo tee >/dev/null /etc/apt/sources.list.d/mongodb-org.sources <<END
+      #     Enabled: yes
+      #     Types: deb
+      #     URIs: https://repo.mongodb.org/apt/ubuntu
+      #     Suites: $(source /etc/os-release && echo ${VERSION_CODENAME})/mongodb-org/8.0
+      #     Components: multiverse
+      #     Architectures: amd64
+      #     Signed-By: /usr/share/keyrings/mongodb-server-8.0.asc
+      #     END
+      #     }
+
+      #     # Install and run MongoDB
+      #     sudo apt-get update
+      #     sudo apt-get --assume-yes install mongodb-org
+      #     sudo systemctl start mongod.service
+
+      - name: "SF deps"
         run: |
           set -xueo pipefail
-
-          # Add repository key
-          sudo curl --silent --fail --show-error --location \
-            https://www.mongodb.org/static/pgp/server-8.0.asc \
-            --output /usr/share/keyrings/mongodb-server-8.0.asc
-          sha512sum /usr/share/keyrings/mongodb-server-8.0.asc
-
-          # Add repository
-          {
-          sudo tee >/dev/null /etc/apt/sources.list.d/mongodb-org.sources <<END
-          Enabled: yes
-          Types: deb
-          URIs: https://repo.mongodb.org/apt/ubuntu
-          Suites: $(source /etc/os-release && echo ${VERSION_CODENAME})/mongodb-org/8.0
-          Components: multiverse
-          Architectures: amd64
-          Signed-By: /usr/share/keyrings/mongodb-server-8.0.asc
-          END
-          }
-
-          # Install and run MongoDB
-          sudo apt-get update
-          sudo apt-get --assume-yes install mongodb-org
-          sudo systemctl start mongod.service
+          sudo add-apt-repository --yes --update ppa:ansible/ansible
+          sudo apt-get install --assume-yes ansible
+          cd deploy
+          ansible-playbook dev-server.playbook.yml --limit localhost --diff
 
       - name: "Configure secrets"
         env:
@@ -139,6 +147,7 @@ jobs:
       - name: Playwright install browsers
         run: |
           set -xueo pipefail
+          cd src/SIL.XForge.Scripture/ClientApp/e2e
           sudo npx playwright install-deps
           npx playwright install
 
