@@ -11,7 +11,11 @@ using SIL.XForge.Realtime.RichText;
 
 namespace SIL.XForge.Scripture.Services;
 
-public class DeltaUsxMapper : IDeltaUsxMapper
+public class DeltaUsxMapper(
+    IGuidService guidService,
+    ILogger<DeltaUsxMapper> logger,
+    IExceptionHandler exceptionHandler
+) : IDeltaUsxMapper
 {
     private static readonly XmlSchemaSet Schemas = CreateSchemaSet();
 
@@ -57,21 +61,19 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         "li",
         "lf",
         "lim",
+        // Should not contain verse text, but sometimes do
+        "b",
     ];
-
-    private IGuidService GuidService;
-    private ILogger<DeltaUsxMapper> Logger;
-    private readonly IExceptionHandler ExceptionHandler;
 
     private class ParseState
     {
-        public string CurRef { get; set; }
-        public string CurChapter { get; set; }
+        public string? CurRef { get; set; }
+        public string? CurChapter { get; set; }
         public bool CurChapterIsValid { get; set; } = true;
         public int TableIndex { get; set; }
         public bool ImpliedParagraph { get; set; }
         public int LastVerse { get; set; }
-        public string LastVerseStr
+        public string? LastVerseStr
         {
             set
             {
@@ -81,26 +83,12 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                     int dashIndex = value.IndexOf('-');
                     if (dashIndex != -1)
                         value = value[(dashIndex + 1)..];
-                    if (
-                        int.TryParse(
-                            value,
-                            System.Globalization.NumberStyles.Integer,
-                            CultureInfo.InvariantCulture,
-                            out int _lastVerse
-                        )
-                    )
-                        lastVerse = _lastVerse;
+                    if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int lastVerseInt))
+                        lastVerse = lastVerseInt;
                     LastVerse = lastVerse;
                 }
             }
         }
-    }
-
-    public DeltaUsxMapper(IGuidService guidService, ILogger<DeltaUsxMapper> logger, IExceptionHandler exceptionHandler)
-    {
-        GuidService = guidService;
-        Logger = logger;
-        ExceptionHandler = exceptionHandler;
     }
 
     public static bool CanParaContainVerseText(string style)
@@ -135,7 +123,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         var invalidNodes = new HashSet<XNode>();
         usxDoc.Validate(
             Schemas,
-            (o, e) =>
+            (o, _) =>
             {
                 XNode node;
                 if (o is XAttribute attr)
@@ -151,7 +139,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         var nextIds = new Dictionary<string, int>();
         var state = new ParseState();
         bool bookIsValid = true;
-        foreach (XNode node in usxDoc.Element("usx").Nodes())
+        foreach (XNode node in usxDoc.Element("usx")!.Nodes())
         {
             switch (node)
             {
@@ -184,13 +172,6 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                                 {
                                     state.CurRef = GetParagraphRef(nextIds, style, style);
                                 }
-                            }
-                            else if (style == "b")
-                            {
-                                // insert the line break and continue processing with the current verse ref
-                                ProcessChildNodes(elem, chapterDelta, invalidNodes);
-                                InsertPara(elem, chapterDelta, invalidNodes, state);
-                                break;
                             }
                             else
                             {
@@ -300,7 +281,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                         JToken existingCharAttrs = newChildAttributes["char"];
                         JObject newCharAttrs = GetAttributes(elem);
                         if (!newCharAttrs.ContainsKey("cid"))
-                            newCharAttrs.Add("cid", GuidService.Generate());
+                            newCharAttrs.Add("cid", guidService.Generate());
 
                         if (existingCharAttrs == null)
                             newChildAttributes.Add(new JProperty(elem.Name.LocalName, newCharAttrs));
@@ -521,10 +502,10 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                         + $"(just one 'chapter' with a Delta.Ops.Count of 0), and USX with {usxChapterCount} "
                         + "chapters. This may indicate corrupt data in the SF DB. Handling by ignoring "
                         + "chapterDeltas and returning the input USX.";
-                    Logger.LogWarning(errorExplanation);
+                    logger.LogWarning(errorExplanation);
                     // Report to bugsnag, but don't throw.
                     var report = new ArgumentException(errorExplanation);
-                    ExceptionHandler.ReportException(report);
+                    exceptionHandler.ReportException(report);
                 }
                 return oldUsxDoc;
             }
@@ -615,15 +596,15 @@ public class DeltaUsxMapper : IDeltaUsxMapper
     /// <summary>
     /// Make USX from a Delta's ops.
     /// </summary>
-    private static IEnumerable<XNode> ProcessDelta(Delta delta)
+    private static List<XNode> ProcessDelta(Delta delta)
     {
         // Output XML.
-        var content = new List<XNode>();
+        List<XNode> content = [];
         // Outer-to-inner set of nested character formatting, which applies to top childNodes elements.
-        var curCharAttrs = new List<JObject>();
+        List<JObject> curCharAttrs = [];
         // In-progress nested text and formatting, with the top of the stack representing the inner part of the nesting.
         // Each element contains a first-to-last set of XML nodes.
-        var childNodes = new Stack<List<XNode>>();
+        Stack<List<XNode>> childNodes = [];
         childNodes.Push([]);
         JObject curTableAttrs = null;
         JObject curRowAttrs = null;
@@ -636,12 +617,12 @@ public class DeltaUsxMapper : IDeltaUsxMapper
             // If we were tracking character attributes for childNodes, but the text being inserted by the current op
             // does not have any character attributes, then record char XML elements for all tracked character
             // attributes.
-            if (curCharAttrs.Count > 0 && (attrs == null || attrs["char"] == null))
+            if (curCharAttrs.Count > 0 && attrs?["char"] == null)
             {
                 while (curCharAttrs.Count > 0)
                     CharEnded(childNodes, curCharAttrs);
             }
-            else if (attrs != null && attrs["char"] != null)
+            else if (attrs?["char"] != null)
             {
                 List<JObject> charAttrs = GetCharAttributes(attrs["char"]);
                 // Record character formatting for existing text if it does not apply to the text being inserted in the
@@ -664,7 +645,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                 var text = (string)op[Delta.InsertType];
                 // If we were recently working with table information, but the current op doesn't describe the end of a
                 // table cell, and we seem to be done with the table, then end the table.
-                if (curTableAttrs != null && (attrs == null || attrs["table"] == null) && text == "\n")
+                if (curTableAttrs != null && attrs?["table"] == null && text == "\n")
                 {
                     List<XNode> nextBlockNodes = RowEnded(childNodes, ref curRowAttrs);
                     TableEnded(content, childNodes, ref curTableAttrs);
@@ -674,7 +655,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                 // observed. Take the top childNodes node-set and put it into a cell XML element. Leave childNodes with
                 // an empty node-set at the top for upcoming content, followed by a node-set with the cell XML element appended,
                 // followed by at least one more node-set (possibly being existing content).
-                else if (attrs != null && attrs["table"] != null)
+                else if (attrs?["table"] != null)
                 {
                     var cellAttrs = (JObject)attrs["cell"];
                     XElement cellElem;
@@ -763,6 +744,13 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                     switch (prop.Name)
                     {
                         case "chapter":
+                            // If there is a table before the chapter (i.e. in an introduction), end it
+                            if (curTableAttrs != null)
+                            {
+                                RowEnded(childNodes, ref curRowAttrs);
+                                TableEnded(content, childNodes, ref curTableAttrs);
+                            }
+
                             XElement chapterElem = new XElement("chapter");
                             AddAttributes(chapterElem, prop.Value);
                             content.Add(chapterElem);
@@ -830,7 +818,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
     /// <summary>
     /// Create XML element of a given name, with attributes and optional children content.
     /// </summary>
-    private static XElement CreateContainerElement(string name, JToken attributes, object content = null)
+    private static XElement CreateContainerElement(string name, JToken attributes, object? content = null)
     {
         var elem = new XElement(name);
         AddAttributes(elem, attributes);
@@ -879,7 +867,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
     /// append it to the bottom `childNodes` node-set. Return the top node-set if there were 3. Leave
     /// childNodes as only the bottom node-set.
     /// </summary>
-    private static List<XNode> RowEnded(Stack<List<XNode>> childNodes, ref JObject curRowAttrs)
+    private static List<XNode>? RowEnded(Stack<List<XNode>> childNodes, ref JObject? curRowAttrs)
     {
         if (childNodes.Count > 3)
             throw new InvalidOperationException("A table is not valid in the current location.");
@@ -898,7 +886,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
     /// Create an XML table element using the top `childNodes` node-set as content, and append it to
     /// `content`.
     /// </summary>
-    private static void TableEnded(List<XNode> content, Stack<List<XNode>> childNodes, ref JObject curTableAttrs)
+    private static void TableEnded(List<XNode> content, Stack<List<XNode>> childNodes, ref JObject? curTableAttrs)
     {
         content.Add(CreateContainerElement("table", curTableAttrs, childNodes.Peek()));
         childNodes.Peek().Clear();
