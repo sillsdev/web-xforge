@@ -92,7 +92,8 @@ jobs:
           sha512sum /usr/share/keyrings/mongodb-server-8.0.asc
 
           # Add repository
-          {tee >/dev/null /etc/apt/sources.list.d/mongodb-org.sources <<END
+          {
+          tee >/dev/null /etc/apt/sources.list.d/mongodb-org.sources <<END
           Enabled: yes
           Types: deb
           URIs: https://repo.mongodb.org/apt/ubuntu
