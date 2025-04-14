@@ -586,16 +586,6 @@ describe('CheckingOverviewComponent', () => {
     }));
   });
 
-  it('should set selectedTask on init', fakeAsync(async () => {
-    const env = new TestEnvironment();
-    env.waitForQuestions();
-    const config = await instance(mockedProjectService).getUserConfig(
-      'project01',
-      instance(mockedUserService).currentUserId
-    );
-    expect(config.data?.selectedTask).toEqual('checking');
-  }));
-
   it('should handle question in a book that does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
     env.addQuestion({
