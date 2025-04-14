@@ -35,6 +35,10 @@ until nc -z localhost 5000 || ((attempt > max_retries)); do
   sleep 1
   attempt=$((attempt + 1))
 done
+if ((attempt > max_retries)); then
+  echo "Server failed to start after $max_retries attempts."
+  exit 1
+fi
 echo "Server is up and running."
 
 cd "${SCRIPT_DIR}"
