@@ -86,7 +86,7 @@ jobs:
           set -xueo pipefail
 
           # Add repository key
-          curl --silent --fail --show-error --location \
+          sudo curl --silent --fail --show-error --location \
             https://www.mongodb.org/static/pgp/server-8.0.asc \
             --output /usr/share/keyrings/mongodb-server-8.0.asc
           sha512sum /usr/share/keyrings/mongodb-server-8.0.asc
@@ -105,11 +105,10 @@ jobs:
           }
 
           # Install and run MongoDB
-          apt update
-          apt-get --assume-yes install mongodb-org
-          systemctl start mongod.service
+          sudo apt-get update
+          sudo apt-get --assume-yes install mongodb-org
+          sudo systemctl start mongod.service
 
-      # Set up secrets
       - name: "Configure secrets"
         env:
           PARATEXT_CLIENT_ID: ${{ secrets.PARATEXT_CLIENT_ID }}
