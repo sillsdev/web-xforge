@@ -58,6 +58,21 @@ export async function isProjectJoined(page: Page, shortName: string): Promise<bo
   return (await page.locator(`.user-connected-project:has-text("${shortName}")`).count()) === 1;
 }
 
+export async function isProjectConnected(page: Page, shortName: string): Promise<boolean> {
+  if ((await getShortNameOnPage(page)) === shortName) return true;
+
+  await ensureOnMyProjectsPage(page);
+
+  await Promise.race([
+    page.waitForSelector(`.user-unconnected-project:has-text("${shortName}")`),
+    page.waitForSelector(`.user-connected-project:has-text("${shortName}")`)
+  ]);
+
+  if (await page.locator(`.user-connected-project:has-text("${shortName}")`).isVisible()) return true;
+  if (await page.locator(`.user-unconnected-project:has-text(Join):has-text("${shortName}")`).isVisible()) return true;
+  return false;
+}
+
 export async function ensureOnMyProjectsPage(page: Page): Promise<void> {
   if (new URL(await page.url()).pathname !== '/projects') {
     console.log('clicking sf logo button');
