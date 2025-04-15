@@ -26,7 +26,7 @@ export interface ScreenshotContext {
 
 // TODO Create a separate project for each test
 export const DEFAULT_PROJECT_SHORTNAME = 'Stp22';
-export const CHECKING_PROJECT_NAMES = 'SEEC2';
+export const CHECKING_PROJECT_NAME = 'SEEC2';
 
 export const logger = new E2ETestRunLogger();
 
