@@ -132,8 +132,7 @@ export async function localizedScreenshots(
     );
   }
 
-  // const shortName = 'SEEDSP2';
-  const shortName = 'Stp22';
+  const shortName = 'SEEDSP2';
   await logInAsPTUser(page, credentials);
   await switchLanguage(page, 'en');
   await ensureJoinedOrConnectedToProject(page, shortName);
@@ -178,7 +177,7 @@ export async function localizedScreenshots(
   });
 
   await connectButtonLocator.click();
-  await page.waitForURL(/\/projects\/[a-z0-9]+/);
+  await page.waitForURL(/\/projects\/[a-z0-9]+/, { timeout: 60_000 });
 
   await navLocator(page, 'sync').click();
 
