@@ -24,7 +24,9 @@ trap 'shutDownServer' EXIT
 cd "${SCRIPT_DIR}"
 cd "../.."
 
-nohup dotnet run &
+DOTNET_LOG=$(mktemp)
+echo "Logging dotnet to ${DOTNET_LOG}"
+nohup dotnet run &>${DOTNET_LOG} &
 SERVER_PID=$!
 echo "Server started with PID: $SERVER_PID"
 
