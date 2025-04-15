@@ -134,6 +134,7 @@ jobs:
 
   prepare-dotnet-backend:
     name: "Prepare dotnet backend"
+    needs: [prepare-realtimeserver-backend]
     strategy:
       matrix:
         os: ["ubuntu-22.04"]
@@ -181,6 +182,14 @@ jobs:
             ./test/SIL.XForge.Scripture.Tests/obj
             ./test/SIL.XForge.Scripture.Tests/bin
             ~/.nuget
+      - name: "Restore cached backend realtimeserver"
+        id: cache-restore-realtimeserver
+        uses: actions/cache/restore@v4
+        with:
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          path: |
+            src/RealtimeServer/lib
+            src/RealtimeServer/node_modules
       - name: "Deps: .NET"
         uses: actions/setup-dotnet@v4
         with:
@@ -199,16 +208,7 @@ jobs:
       - name: "Deps: Backend nuget"
         run: dotnet restore
       - name: "Build: dotnet Backend"
-        run: |
-          set -xueo pipefail
-
-          # Skip building Realtime Server.
-          sudo apt-get --assume-yes install xmlstarlet
-          for target in EnsureNodeInstalled DebugEnsureNodeEnv BuildRealtimeServer; do
-            xmlstarlet edit --inplace --delete "/Project/Target[@Name=\"${target}\"]" src/SIL.XForge.Scripture/SIL.XForge.Scripture.csproj
-          done
-
-          dotnet build xForge.sln
+        run: dotnet build xForge.sln
 
   prepare-e2e:
     name: "Prepare E2E"
@@ -271,7 +271,7 @@ jobs:
 
   run_e2e_tests:
     name: "Run E2E tests"
-    needs: [prepare-frontend, prepare-realtimeserver-backend, prepare-dotnet-backend, prepare-e2e]
+    needs: [prepare-realtimeserver-backend, prepare-frontend, prepare-dotnet-backend, prepare-e2e]
     environment: "e2e_tests"
     strategy:
       matrix:
@@ -285,6 +285,78 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+
+      - name: "Restore cached backend realtimeserver"
+        id: cache-restore-realtimeserver
+        uses: actions/cache/restore@v4
+        with:
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          path: |
+            src/RealtimeServer/lib
+            src/RealtimeServer/node_modules
+
+      - name: "Restore cached frontend"
+        id: cache-restore-frontend
+        uses: actions/cache/restore@v4
+        with:
+          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
+          path: |
+            src/SIL.XForge.Scripture/ClientApp/dist
+            src/SIL.XForge.Scripture/ClientApp/.angular/cache
+            src/SIL.XForge.Scripture/ClientApp/node_modules
+
+      - name: "Generate dotnet backend source hash"
+        id: dotnet-backend-source-hash
+        run: |
+          set -xueo pipefail
+          # Generate a hash of all the files in the repo, except for RealtimeServer and frontend.
+          # This is useful lieu of being able to give exclusions to the hashFiles() function.
+          echo "hash=$(find -type f -not -path './src/RealtimeServer/*' \
+            -and -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
+            xargs -0 sha256sum |
+            sort |
+            sha512sum |
+            cut --delimiter ' ' --fields 1)" >> $GITHUB_OUTPUT
+
+      - name: "Restore cached backend dotnet"
+        id: cache-restore-dotnet
+        uses: actions/cache/restore@v4
+        with:
+          key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}
+          path: |
+            ./src/SIL.Converters.Usj/obj
+            ./src/SIL.Converters.Usj/bin
+            ./src/SIL.XForge/obj
+            ./src/SIL.XForge/bin
+            ./src/Help/UpdateHelp/obj
+            ./src/Help/UpdateHelp/bin
+            ./src/SIL.XForge.Scripture/obj
+            ./src/SIL.XForge.Scripture/bin
+            ./src/Docker/obj
+            ./src/Docker/bin
+            ./test/SIL.XForge.Tests/obj
+            ./test/SIL.XForge.Tests/bin
+            ./test/SIL.Converters.Usj.Tests/obj
+            ./test/SIL.Converters.Usj.Tests/bin
+            ./test/SIL.XForge.Scripture.Tests/obj
+            ./test/SIL.XForge.Scripture.Tests/bin
+            ~/.nuget
+
+      - name: "Generate year-month stamp"
+        id: year-month-stamp
+        run: |
+          set -xueo pipefail
+          echo "year_month_stamp=$(date +%Y-%m)" >> $GITHUB_OUTPUT
+      - name: "Restore cache e2e dependencies"
+        id: cache-restore-e2e-dependencies
+        uses: actions/cache/restore@v4
+        with:
+          key: playwright-browsers-${{ runner.os }}-${{ steps.year-month-stamp.outputs.year_month_stamp }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+          path: |
+            ~/.cache/ms-playwright
+
       - name: "Deps: .NET"
         uses: actions/setup-dotnet@v4
         with:
@@ -363,20 +435,6 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - name: "Generate year-month stamp"
-        id: year-month-stamp
-        run: |
-          set -xueo pipefail
-          echo "year_month_stamp=$(date +%Y-%m)" >> $GITHUB_OUTPUT
-      - name: "Cache Playwright browsers"
-        id: cache-playwright-browsers
-        uses: actions/cache@v4
-        with:
-          key: playwright-browsers-${{ runner.os }}-${{ steps.year-month-stamp.outputs.year_month_stamp }}
-          restore-keys: |
-            playwright-browsers-${{ runner.os }}-
-          path: |
-            ~/.cache/ms-playwright
       - name: Playwright install browsers and package dependencies
         run: |
           set -xueo pipefail
