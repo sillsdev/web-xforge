@@ -94,6 +94,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
           path: |
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
@@ -151,10 +153,11 @@ jobs:
         id: dotnet-backend-source-hash
         run: |
           set -xueo pipefail
-          # Generate a hash of all the files in the repo, except for RealtimeServer and frontend.
+          # Generate a hash of all the files in the repo, except for frontend.
           # This is useful lieu of being able to give exclusions to the hashFiles() function.
-          echo "hash=$(find -type f -not -path './src/RealtimeServer/*' \
-            -and -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
+          # We include Realtime Server since it is included in the dotnet backend
+          # build product.
+          echo "hash=$(find -type f -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
             xargs -0 sha256sum |
             sort |
             sha512sum |
@@ -187,6 +190,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
           path: |
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
@@ -291,6 +296,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
           path: |
             src/RealtimeServer/lib
             src/RealtimeServer/node_modules
@@ -300,6 +307,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
           path: |
             src/SIL.XForge.Scripture/ClientApp/dist
             src/SIL.XForge.Scripture/ClientApp/.angular/cache
@@ -323,6 +332,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
           path: |
             ./src/SIL.Converters.Usj/obj
             ./src/SIL.Converters.Usj/bin
@@ -354,6 +365,8 @@ jobs:
           key: playwright-browsers-${{ runner.os }}-${{ steps.year-month-stamp.outputs.year_month_stamp }}
           restore-keys: |
             playwright-browsers-${{ runner.os }}-
+          # (Cache miss here means a mistake in workflow design, or a month-boundary problem.)
+          fail-on-cache-miss: true
           path: |
             ~/.cache/ms-playwright
 
