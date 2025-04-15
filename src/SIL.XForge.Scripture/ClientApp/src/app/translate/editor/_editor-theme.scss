@@ -1,0 +1,14 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --sf-editor-note-fab-background-color: #{mat.get-theme-color($theme, tertiary, 80)};
+  --sf-editor-note-fab-foreground-color: #{mat.get-theme-color($theme, tertiary, 10)};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
