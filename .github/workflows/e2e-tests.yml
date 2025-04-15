@@ -67,6 +67,7 @@ jobs:
 
   prepare-frontend:
     name: "Prepare frontend "
+    needs: [prepare-realtimeserver-backend]
     strategy:
       matrix:
         os: ["ubuntu-22.04"]
