@@ -24,7 +24,6 @@ import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
-import { en } from 'xforge-common/i18n.service';
 import { GoogleTagManagerModule } from 'angular-google-tag-manager';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
