@@ -8,64 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  prepare-frontend:
-    name: "Prepare frontend "
-    strategy:
-      matrix:
-        os: ["ubuntu-22.04"]
-        dotnet_version: ["8.0.x"]
-        node_version: ["22.13.0"]
-        npm_version: ["10.9.2"]
-    runs-on: ${{matrix.os}}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: "Cache frontend"
-        id: cache-frontend
-        uses: actions/cache@v4
-        with:
-          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
-          path: |
-            src/SIL.XForge.Scripture/ClientApp/dist
-            src/SIL.XForge.Scripture/ClientApp/.angular/cache
-            src/SIL.XForge.Scripture/ClientApp/node_modules
-      - name: "Deps: Node"
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{matrix.node_version}}
-          cache: "npm"
-          cache-dependency-path: |
-            src/SIL.XForge.Scripture/ClientApp/package-lock.json
-      - name: "Deps: npm"
-        env:
-          NPM_VERSION: ${{matrix.npm_version}}
-        run: |
-          set -xueo pipefail
-          npm install --global npm@${NPM_VERSION}
-      - name: Pre-build report
-        run: |
-          set -xueo pipefail
-          lsb_release -a
-          which node
-          node --version
-          which npm
-          npm --version
-      - name: "Ensure desired tool versions"
-        # The build machine may come with newer tools than we are ready for.
-        env:
-          NODE_VERSION: ${{matrix.node_version}}
-          NPM_VERSION: ${{matrix.npm_version}}
-        run: |
-          set -xueo pipefail
-          [[ $(node --version) == v${NODE_VERSION} ]]
-          [[ $(npm --version) == ${NPM_VERSION} ]]
-      - name: "Deps: Frontend npm"
-        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
-      - name: "Build: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
-
   prepare-realtimeserver-backend:
     name: "Prepare Realtime Server backend"
     strategy:
@@ -122,6 +64,72 @@ jobs:
         run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
       - name: "Build: RealtimeServer"
         run: cd src/RealtimeServer  && npm run build
+
+  prepare-frontend:
+    name: "Prepare frontend "
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04"]
+        dotnet_version: ["8.0.x"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: "Cache frontend"
+        id: cache-frontend
+        uses: actions/cache@v4
+        with:
+          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
+          path: |
+            src/SIL.XForge.Scripture/ClientApp/dist
+            src/SIL.XForge.Scripture/ClientApp/.angular/cache
+            src/SIL.XForge.Scripture/ClientApp/node_modules
+      - name: "Restore cached backend realtimeserver"
+        id: cache-restore-realtimeserver
+        uses: actions/cache/restore@v4
+        with:
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          path: |
+            src/RealtimeServer/lib
+            src/RealtimeServer/node_modules
+      - name: "Deps: Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which node
+          node --version
+          which npm
+          npm --version
+      - name: "Ensure desired tool versions"
+        # The build machine may come with newer tools than we are ready for.
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+      - name: "Deps: Frontend npm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
 
   prepare-dotnet-backend:
     name: "Prepare dotnet backend"
