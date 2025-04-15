@@ -12,7 +12,6 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { BuildDto } from '../../machine-api/build-dto';
-import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import { getBookFileNameDigits } from '../../shared/utils';
 import {
@@ -47,7 +46,7 @@ export class DraftGenerationService {
   pollBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return timer(0, this.options.pollRate).pipe(
       switchMap(() => this.getBuildProgress(projectId)),
-      takeWhile(job => activeBuildStates.includes(job?.state as BuildStates), true),
+      takeWhile(job => job != null && activeBuildStates.includes(job.state), true),
       distinct(job => `${job?.state}${job?.queueDepth}${job?.percentCompleted}`),
       shareReplay({ bufferSize: 1, refCount: true })
     );
@@ -78,10 +77,28 @@ export class DraftGenerationService {
     );
   }
 
-  getBuildHistory(sfProjectId: string): Observable<any> {
-    return this.httpClient
-      .get<any>(`translation/builds/project:${sfProjectId}?pretranslate=true`)
-      .pipe(map(res => res.data));
+  /**
+   * Gets pre-translation builds for specified project.
+   * @param projectId The SF project id for the target translation.
+   * @returns An observable array of BuildDto objects, describing
+   * the state and progress of past and present builds.
+   */
+  getBuildHistory(projectId: string): Observable<BuildDto[] | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
+    return this.httpClient.get<BuildDto[]>(`translation/builds/project:${projectId}?pretranslate=true`).pipe(
+      map(res => res.data),
+      catchError(err => {
+        // If no build has ever been started, return undefined
+        if (err.status === 403 || err.status === 404) {
+          return of(undefined);
+        }
+
+        this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+        return of(undefined);
+      })
+    );
   }
 
   /**
@@ -119,7 +136,7 @@ export class DraftGenerationService {
     return this.getBuildProgress(buildConfig.projectId).pipe(
       switchMap((job: BuildDto | undefined) => {
         // If existing build is currently active, return polling observable
-        if (activeBuildStates.includes(job?.state as BuildStates)) {
+        if (job != null && activeBuildStates.includes(job.state)) {
           return this.pollBuildProgress(buildConfig.projectId);
         }
 
