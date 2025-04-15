@@ -141,6 +141,34 @@ describe('DraftGenerationService', () => {
     }));
   });
 
+  describe('getBuildHistory', () => {
+    it('should get project builds and return an observable array of BuildDto', fakeAsync(() => {
+      // SUT
+      service.getBuildHistory(projectId).subscribe(result => {
+        expect(result).toEqual([buildDto]);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?pretranslate=true`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush([buildDto]);
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getBuildHistory(projectId).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+    }));
+  });
+
   describe('getBuildProgress', () => {
     it('should get build progress and return an observable of BuildDto', fakeAsync(() => {
       // SUT

@@ -120,6 +120,7 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
         'cancelBuild',
+        'getBuildHistory',
         'getBuildProgress',
         'pollBuildProgress',
         'getGeneratedDraftUsfm',
@@ -130,6 +131,7 @@ describe('DraftGenerationComponent', () => {
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
 
       mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(this.startedOrActiveBuild$);
+      mockDraftGenerationService.getBuildHistory.and.returnValue(of([buildDto]));
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
