@@ -15,6 +15,8 @@ export const allRoles = [
 ] as const;
 export type UserRole = (typeof allRoles)[number];
 
+export const E2E_SYNC_DEFAULT_TIMEOUT = 60_000;
+
 export interface ScreenshotContext {
   engine: BrowserName;
   role?: UserRole;
