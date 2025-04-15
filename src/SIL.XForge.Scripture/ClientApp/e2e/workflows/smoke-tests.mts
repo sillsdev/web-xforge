@@ -1,4 +1,5 @@
 import { Page } from "npm:playwright";
+import { expect } from "npm:playwright/test";
 import locales from "../../../locales.json" with { type: "json" };
 import { DEFAULT_PROJECT_SHORTNAME, preset, ptUsersByRole, ScreenshotContext, UserRole } from "../e2e-globals.ts";
 import {
@@ -61,13 +62,13 @@ export async function traverseHomePageAndLoginPage(page: Page, context: Screensh
   await screenshot(page, { pageName: "home_page", ...context });
 
   // Log in
-  await page.click("text=Log in");
-  await page.waitForSelector("text=Sign in with paratext");
+  await page.getByRole("link", { name: "Log in" }).click();
+  await expect(page.getByText("Log in with Paratext")).toBeVisible();
   await screenshot(page, { pageName: "login_page", ...context });
 
   // Log in with Paratext
-  await page.click("text=Sign in with paratext");
-  await page.waitForSelector("text=sign in with your Paratext Registry account");
+  await page.locator("a").filter({ hasText: "Log in with Paratext" }).click();
+  await expect(page.getByText("Sign in with your Paratext Registry account")).toBeVisible();
   await page.fill("input[name=email]", "user@example.com");
   await page.click("#login-form button[type=submit]");
   await screenshot(page, { pageName: "registry_login_page", ...context });
