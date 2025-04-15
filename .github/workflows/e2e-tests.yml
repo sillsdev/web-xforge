@@ -464,3 +464,11 @@ jobs:
         env:
           HG_PATH: /usr/bin/hg
         run: ./src/SIL.XForge.Scripture/ClientApp/e2e/pre_merge_ci.sh
+
+      - name: Publish test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: ./src/SIL.XForge.Scripture/ClientApp/e2e/test_output/ci_e2e_test_results/*.zip
+          # Don't fail if no zip files are found
+          if-no-files-found: ignore
