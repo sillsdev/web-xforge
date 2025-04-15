@@ -1,7 +1,7 @@
 import { Locator, Page, ViewportSize } from 'npm:playwright';
 import { expect } from 'npm:playwright/test';
 import { navLocator } from '../components/navigation.ts';
-import { logger, preset, ScreenshotContext } from '../e2e-globals.ts';
+import { E2E_SYNC_DEFAULT_TIMEOUT, logger, preset, ScreenshotContext } from '../e2e-globals.ts';
 import {
   deleteProject,
   deleteUserAsSiteAdmin,
@@ -177,7 +177,7 @@ export async function localizedScreenshots(
   });
 
   await connectButtonLocator.click();
-  await page.waitForURL(/\/projects\/[a-z0-9]+/, { timeout: 60_000 });
+  await page.waitForURL(/\/projects\/[a-z0-9]+/, { timeout: E2E_SYNC_DEFAULT_TIMEOUT });
 
   await navLocator(page, 'sync').click();
 
