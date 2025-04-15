@@ -147,6 +147,7 @@ export class DraftGenerationStepsComponent implements OnInit {
           this.trainingSources = trainingSources.filter(s => s !== undefined) ?? [];
           this.trainingTargets = trainingTargets.filter(t => t !== undefined) ?? [];
 
+          // TODO: When implementing multiple drafting sources, this will need to be updated to handle multiple sources
           const draftingSourceBooks = new Set<number>();
           for (const text of draftingSource.texts) {
             draftingSourceBooks.add(text.bookNum);
@@ -180,6 +181,7 @@ export class DraftGenerationStepsComponent implements OnInit {
             }
 
             // Translate books
+            // TODO: When implementing multiple drafting sources, this should be updated to handle multiple sources
             if (draftingSourceBooks.has(bookNum)) {
               const book: Book = { number: bookNum, selected: false };
               this.availableTranslateBooks[draftingSources[0]!.projectRef].push(book);
@@ -377,9 +379,7 @@ export class DraftGenerationStepsComponent implements OnInit {
     const booksInTargetAndSource = this.availableTrainingBooks[projectRef] ?? [];
     //filter out selected books to draft
     const booksNotBeingTranslated = booksInTargetAndSource.filter(
-      b =>
-        this.availableTranslateBooks[this.draftingSources[0]!.projectRef].find(x => x.number === b.number)?.selected ===
-        false
+      b => this.allAvailableTranslateBooks.find(x => x.number === b.number)?.selected === false
     );
 
     let value: Book[];
@@ -517,9 +517,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   private updateSelectedTrainingBooks(): void {
-    const booksForTranslation: number[] = this.availableTranslateBooks[this.draftingSources[0]!.projectRef]
-      .filter(b => b.selected)
-      .map(b => b.number);
+    const booksForTranslation: number[] = this.allAvailableTranslateBooks.filter(b => b.selected).map(b => b.number);
     for (const [, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
       // set the selected state of any training book to false if it is selected for translation
       trainingBooks.forEach(b => (b.selected = booksForTranslation.includes(b.number) ? false : b.selected));
@@ -548,7 +546,7 @@ export class DraftGenerationStepsComponent implements OnInit {
     const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTranslationRange));
 
     for (const bookNum of previousBooks) {
-      const book = this.availableTranslateBooks[this.draftingSources[0]!.projectRef]?.find(b => b.number === bookNum);
+      const book = this.allAvailableTranslateBooks?.find(b => b.number === bookNum);
       if (book !== undefined) {
         book.selected = true;
       }
