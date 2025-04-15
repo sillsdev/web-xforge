@@ -18,7 +18,10 @@ export enum TagEventType {
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
-  constructor(private readonly onlineStatus: OnlineStatusService, private gtmService: GoogleTagManagerService) {}
+  constructor(
+    private readonly onlineStatus: OnlineStatusService,
+    private gtmService: GoogleTagManagerService
+  ) {}
 
   /**
    * Logs the page navigation event to the analytics service. This method is responsible for sanitizing the URL before
@@ -28,8 +31,7 @@ export class AnalyticsService {
   logNavigation(event: PageViewEvent): void {
     event.event = TagEventType.PageView;
     event.pageName = sanitizeUrl(event.pageName);
-    console.log(event);
-    // this.gtmService.pushTag(event);
+    this.gtmService.pushTag(event);
   }
 }
 
