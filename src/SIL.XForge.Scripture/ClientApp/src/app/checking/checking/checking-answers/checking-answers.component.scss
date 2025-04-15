@@ -1,4 +1,3 @@
-@use 'src/variables';
 @use '../checking-global-vars' as checking-vars;
 @use 'src/breakpoints';
 
@@ -30,7 +29,7 @@
 .answers-container {
   .answer {
     display: flex;
-    border-top: 1px solid checking-vars.$borderColor;
+    border-top: 1px solid var(--sf-border-color);
     padding-top: 10px;
     &:not(:last-child) {
       padding-bottom: 10px;
@@ -43,10 +42,10 @@
 
       @keyframes attention {
         from {
-          background: checking-vars.$attention;
+          background: var(--sf-community-checking-new-answer-background);
         }
         to {
-          background: #fff;
+          background: var(--sf-community-checking-new-answer-fade-background);
         }
       }
     }
@@ -79,17 +78,14 @@
         button {
           &.answer-status {
             &.status-exportable {
-              background: checking-vars.$answerExportable;
-              color: #fff;
+              background: var(--sf-community-checking-answer-exportable-background);
+              color: var(--sf-community-checking-answer-exportable-text-color);
             }
 
             &.status-resolved {
-              background: checking-vars.$answerResolved;
-              color: #fff;
+              background: var(--sf-community-checking-answer-resolved-background);
+              color: var(--sf-community-checking-answer-resolved-text-color);
             }
-          }
-          &.answer-delete {
-            color: variables.$errorColor;
           }
         }
         .delete-divider {
@@ -131,9 +127,6 @@
 
           button {
             height: 40px;
-            &:not(:hover) {
-              color: rgba(0, 0, 0, 0.7);
-            }
           }
         }
       }
@@ -145,7 +138,7 @@
 .scripture-text {
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--sf-community-checking-answer-scripture-background);
   padding-inline-start: 6px;
   border-radius: 4px;
 }

@@ -1,0 +1,19 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --sf-community-checking-new-answer-background: #{mat.get-theme-color($theme, tertiary, if($is-dark, 60, 98))};
+  --sf-community-checking-new-answer-fade-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 6, 100))};
+  --sf-community-checking-answer-exportable-background: #{mat.get-theme-color($theme, primary, 40)};
+  --sf-community-checking-answer-exportable-text-color: #{mat.get-theme-color($theme, neutral, 98)};
+  --sf-community-checking-answer-resolved-background: #{mat.get-theme-color($theme, tertiary, 70)};
+  --sf-community-checking-answer-resolved-text-color: #{mat.get-theme-color($theme, neutral, 98)};
+  --sf-community-checking-answer-scripture-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 95))};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
