@@ -30,8 +30,12 @@ const routes: Routes = [
   { path: 'join/:shareKey', component: JoinComponent, title: `Join Project - ${environment.siteName}` },
   { path: 'join/:shareKey/:locale', component: JoinComponent, title: `Join Project - ${environment.siteName}` },
   {
-    path: 'projects/:projectId/event-log', component: EventMetricsComponent, canActivate: [EventMetricsAuthGuard] },
-  { path: 'projects/:projectId/settings',
+    path: 'projects/:projectId/event-log',
+    component: EventMetricsComponent,
+    canActivate: [EventMetricsAuthGuard]
+  },
+  {
+    path: 'projects/:projectId/settings',
     component: SettingsComponent,
     canActivate: [SettingsAuthGuard],
     title: `Project Settings - ${environment.siteName}`
