@@ -1,7 +1,7 @@
 import { Browser, chromium, Locator, Page, PageScreenshotOptions } from 'npm:playwright';
 import { expect } from 'npm:playwright/test';
 import locales from '../../locales.json' with { type: 'json' };
-import { logger, preset, ScreenshotContext } from './e2e-globals.ts';
+import { E2E_SYNC_DEFAULT_TIMEOUT, logger, preset, ScreenshotContext } from './e2e-globals.ts';
 import secrets from './secrets.json' with { type: 'json' };
 
 export async function waitForAppLoad(page: Page): Promise<void> {
@@ -89,7 +89,7 @@ export async function ensureJoinedOrConnectedToProject(page: Page, shortName: st
     throw new Error('Neither Join nor Connect button found');
   }
 
-  await page.waitForURL(url => /\/projects\/[a-z0-9]+/.test(url.pathname));
+  await page.waitForURL(url => /\/projects\/[a-z0-9]+/.test(url.pathname), { timeout: E2E_SYNC_DEFAULT_TIMEOUT });
 }
 
 export async function screenshot(
