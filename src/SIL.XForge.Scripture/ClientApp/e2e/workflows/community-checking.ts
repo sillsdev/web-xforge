@@ -1,6 +1,6 @@
 import { BrowserType, Page } from 'npm:playwright';
 import { expect } from 'npm:playwright/test';
-import { CHECKING_PROJECT_NAMES, preset, ScreenshotContext } from '../e2e-globals.ts';
+import { CHECKING_PROJECT_NAME, preset, ScreenshotContext } from '../e2e-globals.ts';
 import {
   createShareLinksAsAdmin,
   deleteProject,
@@ -37,13 +37,15 @@ export async function communityChecking(
   if (preset.showArrow) await installMouseFollower(page);
   const user = new UserEmulator(page);
 
-  if (await isProjectJoined(page, CHECKING_PROJECT_NAMES)) {
-    await deleteProject(page, CHECKING_PROJECT_NAMES);
+  if (await isProjectJoined(page, CHECKING_PROJECT_NAME)) {
+    await deleteProject(page, CHECKING_PROJECT_NAME);
   }
 
-  await ensureJoinedOrConnectedToProject(page, CHECKING_PROJECT_NAMES);
-  await ensureNavigatedToProject(page, CHECKING_PROJECT_NAMES);
+  await ensureJoinedOrConnectedToProject(page, CHECKING_PROJECT_NAME);
+  await ensureNavigatedToProject(page, CHECKING_PROJECT_NAME);
   await user.click(page.getByRole('link', { name: 'Manage questions' }));
+  await expect(page.getByText('There are no published questions. Click Add question, above.')).toBeVisible();
+  await expect(page.getByText('There are no archived questions.')).toBeVisible();
 
   // Add an answer
   await user.click(page.getByRole('button', { name: 'Add question' }));
@@ -107,7 +109,7 @@ export async function communityChecking(
 
   await screenshot(page, { pageName: 'community_check_questions_q_and_a_page', ...screenshotContext });
 
-  const shareLinks = await createShareLinksAsAdmin(page, CHECKING_PROJECT_NAMES);
+  const shareLinks = await createShareLinksAsAdmin(page, CHECKING_PROJECT_NAME);
 
   const link = shareLinks['Community Checker'];
   const checkerCount = 1;
