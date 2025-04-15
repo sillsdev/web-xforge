@@ -7,7 +7,7 @@ import {
   ensureJoinedOrConnectedToProject,
   ensureNavigatedToProject,
   installMouseFollower,
-  isProjectJoined,
+  isProjectConnected,
   joinWithLink,
   logInAsPTUser,
   screenshot
@@ -37,7 +37,7 @@ export async function communityChecking(
   if (preset.showArrow) await installMouseFollower(page);
   const user = new UserEmulator(page);
 
-  if (await isProjectJoined(page, CHECKING_PROJECT_NAME)) {
+  if (await isProjectConnected(page, CHECKING_PROJECT_NAME)) {
     await deleteProject(page, CHECKING_PROJECT_NAME);
   }
 
