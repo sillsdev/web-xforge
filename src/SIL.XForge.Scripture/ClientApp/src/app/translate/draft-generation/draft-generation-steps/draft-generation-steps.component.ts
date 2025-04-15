@@ -68,7 +68,8 @@ export class DraftGenerationStepsComponent implements OnInit {
   @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
 
-  availableTranslateBooks: Book[] = [];
+  allAvailableTranslateBooks: Book[] = []; // A flattened instance of the values from availableTranslateBooks
+  availableTranslateBooks: { [projectRef: string]: Book[] } = {};
   availableTrainingBooks: { [projectRef: string]: Book[] } = {}; //books in both source and target
   availableTrainingFiles: Readonly<TrainingData>[] = [];
 
@@ -156,7 +157,10 @@ export class DraftGenerationStepsComponent implements OnInit {
             trainingSources[1]?.texts.map(t => t.bookNum)
           );
 
-          this.availableTranslateBooks = [];
+          for (const source of this.draftingSources) {
+            this.availableTranslateBooks[source?.projectRef] = [];
+          }
+
           this.availableTrainingBooks[projectId!] = [];
           for (const source of this.trainingSources) {
             this.availableTrainingBooks[source?.projectRef] = [];
@@ -177,7 +181,9 @@ export class DraftGenerationStepsComponent implements OnInit {
 
             // Translate books
             if (draftingSourceBooks.has(bookNum)) {
-              this.availableTranslateBooks.push({ number: bookNum, selected: false });
+              const book: Book = { number: bookNum, selected: false };
+              this.availableTranslateBooks[draftingSources[0]!.projectRef].push(book);
+              this.allAvailableTranslateBooks.push(book);
             } else {
               this.unusableTranslateSourceBooks.push(bookNum);
             }
@@ -282,11 +288,30 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   private _booksToTranslate?: Book[];
   booksToTranslate(): Book[] {
-    const value = this.availableTranslateBooks?.filter(b => b.selected) ?? [];
+    const value =
+      Object.values(this.availableTranslateBooks)
+        .flat()
+        .filter(b => b.selected) ?? [];
     if (this._booksToTranslate?.toString() !== value?.toString()) {
       this._booksToTranslate = value;
     }
     return this._booksToTranslate;
+  }
+
+  private _selectedTranslateBooks: { [projectRef: string]: Book[] } = {};
+  selectedTranslateBooksByProj(projectRef?: string): Book[] {
+    if (projectRef == null) return [];
+    const value = this.availableTranslateBooks[projectRef]?.filter(b => b.selected) ?? [];
+    if (this._selectedTranslateBooks[projectRef]?.toString() !== value?.toString()) {
+      this._selectedTranslateBooks[projectRef] = value;
+    }
+
+    return this._selectedTranslateBooks[projectRef];
+  }
+
+  selectableTranslateBooksByProj(projectRef?: string): Book[] {
+    if (this.activatedProject.projectId == null || projectRef == null) return [];
+    return this.availableTranslateBooks[projectRef] ?? [];
   }
 
   selectedTranslateBooksAsString(): string {
@@ -352,7 +377,9 @@ export class DraftGenerationStepsComponent implements OnInit {
     const booksInTargetAndSource = this.availableTrainingBooks[projectRef] ?? [];
     //filter out selected books to draft
     const booksNotBeingTranslated = booksInTargetAndSource.filter(
-      b => this.availableTranslateBooks.find(x => x.number === b.number)?.selected === false
+      b =>
+        this.availableTranslateBooks[this.draftingSources[0]!.projectRef].find(x => x.number === b.number)?.selected ===
+        false
     );
 
     let value: Book[];
@@ -422,8 +449,8 @@ export class DraftGenerationStepsComponent implements OnInit {
     this.clearErrorMessage();
   }
 
-  onTranslateBookSelect(selectedBooks: number[]): void {
-    for (const book of this.availableTranslateBooks) {
+  onTranslateBookSelect(selectedBooks: number[], source: TranslateSource): void {
+    for (const book of this.availableTranslateBooks[source.projectRef]) {
       book.selected = selectedBooks.includes(book.number);
     }
     this.clearErrorMessage();
@@ -460,17 +487,21 @@ export class DraftGenerationStepsComponent implements OnInit {
         }
       }
 
+      const translationData: ProjectScriptureRange[] = [];
+      for (const source of this.draftingSources) {
+        const booksForThisSource: Book[] = this.selectedTranslateBooksByProj(source.projectRef);
+        if (booksForThisSource.length > 0) {
+          translationData.push({
+            projectId: source.projectRef,
+            scriptureRange: booksForThisSource.map(b => Canon.bookNumberToId(b.number)).join(';')
+          });
+        }
+      }
+
       this.done.emit({
         trainingScriptureRanges: trainingData,
         trainingDataFiles: this.selectedTrainingFileIds,
-        translationScriptureRanges: [
-          {
-            projectId: this.draftingSources[0].projectRef,
-            scriptureRange: this.booksToTranslate()
-              .map(b => Canon.bookNumberToId(b.number))
-              .join(';')
-          }
-        ],
+        translationScriptureRanges: translationData,
         fastTraining: this.fastTraining,
         useEcho: this.useEcho
       });
@@ -486,7 +517,9 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   private updateSelectedTrainingBooks(): void {
-    const booksForTranslation: number[] = this.availableTranslateBooks.filter(b => b.selected).map(b => b.number);
+    const booksForTranslation: number[] = this.availableTranslateBooks[this.draftingSources[0]!.projectRef]
+      .filter(b => b.selected)
+      .map(b => b.number);
     for (const [, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
       // set the selected state of any training book to false if it is selected for translation
       trainingBooks.forEach(b => (b.selected = booksForTranslation.includes(b.number) ? false : b.selected));
@@ -515,7 +548,7 @@ export class DraftGenerationStepsComponent implements OnInit {
     const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTranslationRange));
 
     for (const bookNum of previousBooks) {
-      const book = this.availableTranslateBooks?.find(b => b.number === bookNum);
+      const book = this.availableTranslateBooks[this.draftingSources[0]!.projectRef]?.find(b => b.number === bookNum);
       if (book !== undefined) {
         book.selected = true;
       }
