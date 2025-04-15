@@ -1,23 +1,10 @@
 import { Component, Input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { I18nService } from '../../../../../xforge-common/i18n.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { I18nService } from 'xforge-common/i18n.service';
+import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
-
-interface ScriptureRange {
-  projectId: string;
-  scriptureRange: string;
-}
-
-export interface DraftHistoryEntry {
-  state: BuildStates;
-  id: string;
-  percentCompleted: number;
-  additionalInfo: {
-    translationScriptureRanges: ScriptureRange[];
-    dateFinished: string;
-  };
-}
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
   ACTIVE: { icons: 'hourglass_empty', text: 'Running', color: 'grey' },
@@ -32,12 +19,12 @@ const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: str
 @Component({
   selector: 'app-draft-history-entry',
   standalone: true,
-  imports: [MatIconModule, MatButtonModule],
+  imports: [MatButtonModule, MatIconModule, TranslocoModule],
   templateUrl: './draft-history-entry.component.html',
   styleUrl: './draft-history-entry.component.scss'
 })
 export class DraftHistoryEntryComponent {
-  @Input() entry?: DraftHistoryEntry;
+  @Input() entry?: BuildDto;
   private _forceDetailsOpen = false;
   @Input() set forceDetailsOpen(value: boolean) {
     this._forceDetailsOpen = value;
@@ -52,18 +39,16 @@ export class DraftHistoryEntryComponent {
   constructor(readonly i18n: I18nService) {}
 
   get bookIds(): string[] {
-    if (this.entry == null) return [];
-    return [
-      ...new Set(this.entry?.additionalInfo.translationScriptureRanges.flatMap(r => r.scriptureRange.split(';')))
-    ];
+    if (this.entry?.additionalInfo == null) return [];
+    return [...new Set(this.entry.additionalInfo.translationScriptureRanges.flatMap(r => r.scriptureRange.split(';')))];
   }
 
   get bookNames(): string[] {
     return this.bookIds.map(id => this.i18n.localizeBook(id));
   }
 
-  formatDate(date: string): string {
-    return this.i18n.formatDate(new Date(date));
+  formatDate(date?: string): string {
+    return date == null ? '' : this.i18n.formatDate(new Date(date));
   }
 
   getStatus(state: BuildStates): { icons: string; text: string; color: string } {
