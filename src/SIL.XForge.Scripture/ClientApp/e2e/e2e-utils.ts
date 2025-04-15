@@ -321,7 +321,7 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
 
   await switchToLocaleOnHomePage(page, 'en');
   await page.getByRole('link', { name: 'Log In' }).click();
-  await page.locator('a').filter({ hasText: 'Sign in with paratext' }).click();
+  await page.locator('a').filter({ hasText: 'Log in with Paratext' }).click();
 
   // Paratext Registry login
 
