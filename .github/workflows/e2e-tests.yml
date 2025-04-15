@@ -478,6 +478,8 @@ jobs:
 
       - name: Publish test results
         uses: actions/upload-artifact@v4
+        # Run this step even if the job fails.
+        if: always()
         with:
           name: e2e-test-results
           path: ./src/SIL.XForge.Scripture/ClientApp/e2e/test_output/ci_e2e_test_results/*.zip
