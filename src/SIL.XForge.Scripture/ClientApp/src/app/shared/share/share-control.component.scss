@@ -20,7 +20,7 @@ p.mat-hint {
 form {
   display: flex;
   width: 100%;
-  column-gap: 20px;
+  gap: 20px;
   @include breakpoints.media-breakpoint-down(sm) {
     flex-direction: column;
   }
