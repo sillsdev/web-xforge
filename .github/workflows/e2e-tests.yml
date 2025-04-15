@@ -162,7 +162,8 @@ jobs:
           # This is useful lieu of being able to give exclusions to the hashFiles() function.
           # We include Realtime Server since it is included in the dotnet backend
           # build product.
-          echo "hash=$(find -type f -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
+          echo "hash=$(find -type f -not -path './.git/*' -and \
+            -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
             xargs -0 sha256sum |
             sort |
             sha512sum |
@@ -309,7 +310,8 @@ jobs:
           # This is useful lieu of being able to give exclusions to the hashFiles() function.
           # We include Realtime Server since it is included in the dotnet backend
           # build product.
-          echo "hash=$(find -type f -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
+          echo "hash=$(find -type f -not -path './.git/*' -and \
+            -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
             xargs -0 sha256sum |
             sort |
             sha512sum |
