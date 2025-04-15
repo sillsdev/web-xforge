@@ -247,7 +247,7 @@ quill-editor.rtl {
     }
 
     &[data-style='io2'] {
-      margin-right-left: 15%;
+      margin-right: 15%;
     }
 
     &[data-style='io3'] {
@@ -359,7 +359,7 @@ usx-chapter {
   font-size: 1.5em;
   margin-top: 8pt;
   margin-bottom: 4pt;
-  color: #7c7c7c;
+  color: var(--sf-usx-chapter-color);
 }
 
 usx-verse {
@@ -371,11 +371,11 @@ usx-verse {
     position: relative;
     font-size: 75%;
     padding: 0.2em 0.4em;
-    background-color: #f5f3ef;
+    background-color: var(--sf-usx-verse-background);
     border-radius: 8px;
     white-space: nowrap;
     margin: 0 0.2em 0 0.3em;
-    color: #7c7c7c;
+    color: var(--sf-usx-verse-color);
     span[data-style='va'] {
       font-size: 85%;
       color: #5faa5f;
@@ -471,5 +471,12 @@ usx-unmatched {
       margin-top: 0.5em;
       margin-bottom: 0.5em;
     }
+  }
+}
+
+quill-editor.read-only-editor {
+  usx-verse > span > span > span {
+    background-color: var(--sf-usx-readonly-verse-background);
+    color: var(--sf-usx-readonly-verse-color);
   }
 }

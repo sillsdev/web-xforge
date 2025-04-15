@@ -13,6 +13,10 @@
   sf-draft-generation-steps;
 @use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
 @use 'src/app/translate/draft-generation/draft-sources/draft-sources-theme' as sf-draft-sources;
+@use 'src/app/translate/editor/editor-theme' as sf-editor;
+@use 'src/app/translate/editor/note-dialog/note-dialog-theme' as sf-note-dialog;
+@use 'src/app/translate/editor/editor-draft/editor-draft-theme' as sf-editor-draft;
+@use 'src/app/translate/biblical-terms/biblical-terms-theme' as sf-biblical-terms;
 @use 'text' as sf-text;
 
 @mixin theme($theme) {
@@ -24,6 +28,7 @@
   // Custom components
   @include sf-app.theme($theme);
   @include sf-book-multi-select.theme($theme);
+  @include sf-biblical-terms.theme($theme);
   @include sf-checking.theme($theme);
   @include sf-checking-answer.theme($theme);
   @include sf-checking-comments.theme($theme);
@@ -31,8 +36,11 @@
   @include sf-confirm-sources.theme($theme);
   @include sf-draft-generation-steps.theme($theme);
   @include sf-draft-sources.theme($theme);
+  @include sf-editor.theme($theme);
+  @include sf-editor-draft.theme($theme);
   @include sf-my-projects.theme($theme);
   @include sf-navigation.theme($theme);
+  @include sf-note-dialog.theme($theme);
   @include sf-tab-group.theme($theme);
   @include sf-text.theme($theme);
 
