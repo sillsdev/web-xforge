@@ -277,14 +277,14 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly useEchoForPreTranslation: FeatureFlag = new FeatureFlagFromStorage(
+  private readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
     'UseEchoForPreTranslation',
     'Allow Echo for Pre-Translation Drafting',
     10,
     this.featureFlagStore
   );
 
-  readonly allowFastTraining: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  private readonly allowFastTraining: FeatureFlag = new ServerOnlyFeatureFlag(
     'ALLOW_FAST_TRAINING',
     'Allow Fast Pre-Translation Training',
     11,
@@ -314,7 +314,7 @@ export class FeatureFlagService {
 
   readonly darkMode: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'DarkMode',
-    'Dark Mode',
+    'Dark mode',
     15,
     this.featureFlagStore
   );
