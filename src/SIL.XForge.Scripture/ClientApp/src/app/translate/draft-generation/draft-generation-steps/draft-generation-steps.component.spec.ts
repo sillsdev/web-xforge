@@ -130,8 +130,7 @@ describe('DraftGenerationStepsComponent', () => {
         instance(mockTrainingDataQuery)
       );
       when(mockTrainingDataQuery.docs).thenReturn([]);
-      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
-      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
@@ -394,8 +393,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
       when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
-      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
-      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
       when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
@@ -600,7 +598,7 @@ describe('DraftGenerationStepsComponent', () => {
     });
   });
 
-  describe('allow fast training feature flag is enabled', () => {
+  describe('show developer tools feature flag is enabled', () => {
     const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 9 }, { bookNum: 10 }];
     const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 8 }];
     const config: DraftSourcesAsArrays = {
@@ -640,8 +638,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
       when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
-      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
-      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(true));
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
         instance(mockTrainingDataQuery)
       );
@@ -686,60 +683,6 @@ describe('DraftGenerationStepsComponent', () => {
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
     });
-  });
-
-  describe('use echo feature flag is enabled', () => {
-    const availableBooks = [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 9 }, { bookNum: 10 }];
-    const allBooks = [{ bookNum: 1 }, ...availableBooks, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 8 }];
-    const config: DraftSourcesAsArrays = {
-      trainingSources: [
-        {
-          projectRef: 'source1',
-          paratextId: 'PT_SP1',
-          name: 'Source Project 1',
-          shortName: 'sP1',
-          writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 1 })
-        }
-      ],
-      trainingTargets: [
-        {
-          projectRef: mockActivatedProjectService.projectId!,
-          paratextId: 'PT_TT',
-          name: 'Target Project',
-          shortName: 'tT',
-          writingSystem: { tag: 'nllb' },
-          texts: allBooks.filter(b => b.bookNum !== 1 && b.bookNum !== 7)
-        }
-      ],
-      draftingSources: [
-        {
-          projectRef: 'draftingSource',
-          paratextId: 'PT_DS',
-          name: 'Drafting Source',
-          shortName: 'dS',
-          writingSystem: { tag: 'eng' },
-          texts: availableBooks.concat({ bookNum: 7 })
-        }
-      ]
-    };
-
-    beforeEach(fakeAsync(() => {
-      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
-      when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
-      when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
-      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
-      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(true));
-      when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
-        instance(mockTrainingDataQuery)
-      );
-      when(mockTrainingDataQuery.docs).thenReturn([]);
-
-      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
-      tick();
-    }));
 
     it('should emit the use echo value if checked', () => {
       component.onTranslateBookSelect([2]);
@@ -916,8 +859,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
-      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
-      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
         instance(mockTrainingDataQuery)
       );
@@ -1059,8 +1001,7 @@ describe('DraftGenerationStepsComponent', () => {
         instance(mockTrainingDataQuery)
       );
       when(mockTrainingDataQuery.docs).thenReturn([]);
-      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
-      when(mockFeatureFlagService.useEchoForPreTranslation).thenReturn(createTestFeatureFlag(false));
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
