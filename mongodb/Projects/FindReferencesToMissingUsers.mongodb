@@ -1,0 +1,36 @@
+use("xforge");
+// Find projects with user roles that reference users not in the users collection
+//
+// To remove the reference, submit this op to the sf_project document using manipulate-sharedb.ts:
+//
+// await utils.submitDocOp(doc, {
+//   p: ['userRoles', 'user_id_goes_here'],
+//   od: 'sf_community_checker'
+// });
+//
+db.sf_projects.aggregate([
+  {
+    $project: {
+      userRoles: {
+        $objectToArray: "$userRoles"
+      }
+    }
+  },
+  { $unwind: "$userRoles" },
+  {
+    $lookup: {
+      from: "users",
+      localField: "userRoles.k",
+      foreignField: "_id",
+      as: "matchedUser"
+    }
+  },
+  { $match: { matchedUser: { $eq: [] } } },
+  {
+    $project: {
+      _id: 1,
+      missingUserId: "$userRoles.k",
+      role: "$userRoles.v"
+    }
+  }
+]);
