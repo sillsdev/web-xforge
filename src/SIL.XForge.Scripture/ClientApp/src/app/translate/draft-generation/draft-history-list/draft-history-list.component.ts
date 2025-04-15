@@ -1,54 +1,65 @@
 import { Component } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { take } from 'rxjs';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { filterNullish } from '../../../../xforge-common/util/rxjs-util';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { BuildDto } from '../../../machine-api/build-dto';
+import { BuildStates } from '../../../machine-api/build-states';
 import { activeBuildStates } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
-import { DraftHistoryEntry, DraftHistoryEntryComponent } from './draft-history-entry/draft-history-entry.component';
+import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-entry.component';
 
 @Component({
   selector: 'app-draft-history-list',
   standalone: true,
-  imports: [MatIconModule, DraftHistoryEntryComponent],
+  imports: [MatIconModule, DraftHistoryEntryComponent, TranslocoModule],
   templateUrl: './draft-history-list.component.html',
   styleUrl: './draft-history-list.component.scss'
 })
 export class DraftHistoryListComponent {
-  history?: DraftHistoryEntry[];
+  history?: BuildDto[];
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
-    private readonly draftGenerationService: DraftGenerationService
+    private readonly draftGenerationService: DraftGenerationService,
+    private readonly transloco: TranslocoService
   ) {
     this.activatedProject.projectId$.pipe(filterNullish(), take(1)).subscribe(projectId => {
       this.draftGenerationService.getBuildHistory(projectId).subscribe(result => {
-        this.history = result.reverse();
+        this.history = result?.reverse() ?? [];
       });
     });
   }
 
-  get nonActiveBuilds(): DraftHistoryEntry[] {
+  get nonActiveBuilds(): BuildDto[] {
     return this.history?.filter(entry => !activeBuildStates.includes(entry.state)) || [];
   }
 
-  get latestBuild(): DraftHistoryEntry | undefined {
+  get latestBuild(): BuildDto | undefined {
     return this.isBuildActive ? undefined : this.nonActiveBuilds[0];
   }
 
   get lastCompletedBuildMessage(): string {
     if (this.latestBuild == null) return '';
-    const entry = this.latestBuild;
-    return (
-      {
-        COMPLETED: 'Your draft is ready',
-        CANCELED: 'Your draft was cancelled',
-        FAULTED: 'The draft failed'
-      }[entry.state] || entry.state
-    );
+    const state = this.latestBuild.state.toString();
+    switch (state) {
+      case BuildStates.Canceled:
+        return this.transloco.translate('draft_history_list.draft_canceled');
+      case BuildStates.Completed:
+        return this.transloco.translate('draft_history_list.draft_completed');
+      case BuildStates.Faulted:
+        return this.transloco.translate('draft_history_list.draft_faulted');
+      case BuildStates.Active:
+      case BuildStates.Finishing:
+      case BuildStates.Pending:
+      case BuildStates.Queued:
+      default:
+        return state.charAt(0).toUpperCase() + state.slice(1).toLowerCase();
+    }
   }
 
-  get historicalBuilds(): DraftHistoryEntry[] {
+  get historicalBuilds(): BuildDto[] {
     return this.latestBuild == null ? this.nonActiveBuilds : this.nonActiveBuilds.slice(1);
   }
 
