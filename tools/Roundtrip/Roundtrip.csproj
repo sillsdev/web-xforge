@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ParatextData.Tests" Version="9.5.0.8" />
+    <PackageReference Include="ParatextData.Tests" Version="9.5.0.10" />
   </ItemGroup>
 
   <ItemGroup>
