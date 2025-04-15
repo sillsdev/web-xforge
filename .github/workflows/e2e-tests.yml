@@ -22,6 +22,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: "Cache frontend"
+        id: cache-frontend
+        uses: actions/cache@v4
+        with:
+          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
+          path: |
+            src/SIL.XForge.Scripture/ClientApp/dist
+            src/SIL.XForge.Scripture/ClientApp/.angular/cache
+            src/SIL.XForge.Scripture/ClientApp/node_modules
       - name: "Deps: Node"
         uses: actions/setup-node@v4
         with:
@@ -29,6 +38,62 @@ jobs:
           cache: "npm"
           cache-dependency-path: |
             src/SIL.XForge.Scripture/ClientApp/package-lock.json
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which node
+          node --version
+          which npm
+          npm --version
+      - name: "Ensure desired tool versions"
+        # The build machine may come with newer tools than we are ready for.
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+      - name: "Deps: Frontend npm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+
+  prepare-realtimeserver-backend:
+    name: "Prepare Realtime Server backend"
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04"]
+        dotnet_version: ["8.0.x"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: "Cache realtimeserver backend"
+        id: cache-realtimeserver-backend
+        uses: actions/cache@v4
+        with:
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          path: |
+            src/RealtimeServer/lib
+            src/RealtimeServer/node_modules
+      - name: "Deps: Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: |
             src/RealtimeServer/package-lock.json
       - name: "Deps: npm"
         env:
@@ -55,16 +120,11 @@ jobs:
           [[ $(npm --version) == ${NPM_VERSION} ]]
       - name: "Deps: RealtimeServer npm"
         run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
-      - name: "Deps: Frontend npm"
-        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
-
       - name: "Build: RealtimeServer"
         run: cd src/RealtimeServer  && npm run build
-      - name: "Build: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
 
-  prepare-backend:
-    name: "Prepare backend"
+  prepare-dotnet-backend:
+    name: "Prepare dotnet backend"
     strategy:
       matrix:
         os: ["ubuntu-22.04"]
@@ -77,7 +137,41 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-
+      - name: "Generate dotnet backend source hash"
+        id: dotnet-backend-source-hash
+        run: |
+          set -xueo pipefail
+          # Generate a hash of all the files in the repo, except for RealtimeServer and frontend.
+          # This is useful lieu of being able to give exclusions to the hashFiles() function.
+          echo "hash=$(find -type f -not -path './src/RealtimeServer/*' \
+            -and -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
+            xargs -0 sha256sum |
+            sort |
+            sha512sum |
+            cut --delimiter ' ' --fields 1)" >> $GITHUB_OUTPUT
+      - name: "Cache backend"
+        id: cache-backend
+        uses: actions/cache@v4
+        with:
+          key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}
+          path: |
+            ./src/SIL.Converters.Usj/obj
+            ./src/SIL.Converters.Usj/bin
+            ./src/SIL.XForge/obj
+            ./src/SIL.XForge/bin
+            ./src/Help/UpdateHelp/obj
+            ./src/Help/UpdateHelp/bin
+            ./src/SIL.XForge.Scripture/obj
+            ./src/SIL.XForge.Scripture/bin
+            ./src/Docker/obj
+            ./src/Docker/bin
+            ./test/SIL.XForge.Tests/obj
+            ./test/SIL.XForge.Tests/bin
+            ./test/SIL.Converters.Usj.Tests/obj
+            ./test/SIL.Converters.Usj.Tests/bin
+            ./test/SIL.XForge.Scripture.Tests/obj
+            ./test/SIL.XForge.Scripture.Tests/bin
+            ~/.nuget
       - name: "Deps: .NET"
         uses: actions/setup-dotnet@v4
         with:
@@ -102,14 +196,13 @@ jobs:
           # Skip building Realtime Server.
           sudo apt-get --assume-yes install xmlstarlet
           for target in EnsureNodeInstalled DebugEnsureNodeEnv BuildRealtimeServer; do
-            xmlstarlet edit --inplace --delete "/Project/Target[@Name=\"${target}\"]" SIL.XForge.Scripture.csproj
+            xmlstarlet edit --inplace --delete "/Project/Target[@Name=\"${target}\"]" src/SIL.XForge.Scripture/SIL.XForge.Scripture.csproj
           done
 
           dotnet build xForge.sln
 
   prepare-e2e:
     name: "Prepare E2E"
-    environment: "e2e_tests"
     strategy:
       matrix:
         os: ["ubuntu-22.04"]
@@ -137,10 +230,82 @@ jobs:
         run: |
           set -xueo pipefail
           npm install --global npm@${NPM_VERSION}
+      - name: "Ensure desired tool versions"
+        # The build machine may come with newer tools than we are ready for.
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+
+      - name: "Generate year-month stamp"
+        id: year-month-stamp
+        run: |
+          set -xueo pipefail
+          echo "year_month_stamp=$(date +%Y-%m)" >> $GITHUB_OUTPUT
+      - name: "Cache Playwright browsers"
+        id: cache-playwright-browsers
+        uses: actions/cache@v4
+        with:
+          key: playwright-browsers-${{ runner.os }}-${{ steps.year-month-stamp.outputs.year_month_stamp }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+          path: |
+            ~/.cache/ms-playwright
+      - name: Playwright install browsers
+        run: |
+          set -xueo pipefail
+          cd src/SIL.XForge.Scripture/ClientApp/e2e
+          npx playwright install
+
+  run_e2e_tests:
+    name: "Run E2E tests"
+    needs: [prepare-frontend, prepare-realtimeserver-backend, prepare-dotnet-backend, prepare-e2e]
+    environment: "e2e_tests"
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04"]
+        dotnet_version: ["8.0.x"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: "Deps: .NET"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{matrix.dotnet_version}}
+          cache: true
+          cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
+
+      - name: "Deps: Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
       - name: Pre-build report
         run: |
           set -xueo pipefail
           lsb_release -a
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
           which node
           node --version
           which npm
@@ -189,84 +354,26 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-
-      - name: Playwright install browsers
+      - name: "Generate year-month stamp"
+        id: year-month-stamp
+        run: |
+          set -xueo pipefail
+          echo "year_month_stamp=$(date +%Y-%m)" >> $GITHUB_OUTPUT
+      - name: "Cache Playwright browsers"
+        id: cache-playwright-browsers
+        uses: actions/cache@v4
+        with:
+          key: playwright-browsers-${{ runner.os }}-${{ steps.year-month-stamp.outputs.year_month_stamp }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+          path: |
+            ~/.cache/ms-playwright
+      - name: Playwright install browsers and package dependencies
         run: |
           set -xueo pipefail
           cd src/SIL.XForge.Scripture/ClientApp/e2e
           sudo npx playwright install-deps
           npx playwright install
-
-  run_e2e_tests:
-    name: "Run E2E tests"
-    strategy:
-      matrix:
-        os: ["ubuntu-22.04"]
-        dotnet_version: ["8.0.x"]
-        node_version: ["22.13.0"]
-        npm_version: ["10.9.2"]
-    runs-on: ${{matrix.os}}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: "Deps: .NET"
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{matrix.dotnet_version}}
-          cache: true
-          cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
-      - name: "Deps: Node"
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{matrix.node_version}}
-          cache: "npm"
-          cache-dependency-path: |
-            src/SIL.XForge.Scripture/ClientApp/package-lock.json
-            src/RealtimeServer/package-lock.json
-      - name: "Deps: npm"
-        env:
-          NPM_VERSION: ${{matrix.npm_version}}
-        run: |
-          set -xueo pipefail
-          npm install --global npm@${NPM_VERSION}
-      - name: Pre-build report
-        run: |
-          set -xueo pipefail
-          lsb_release -a
-          which dotnet
-          dotnet --version
-          dpkg -l dotnet\*
-          dotnet --list-sdks
-          dotnet --list-runtimes
-          which node
-          node --version
-          which npm
-          npm --version
-      - name: "Ensure desired tool versions"
-        # The build machine may come with newer tools than we are ready for.
-        env:
-          NODE_VERSION: ${{matrix.node_version}}
-          NPM_VERSION: ${{matrix.npm_version}}
-        run: |
-          set -xueo pipefail
-          [[ $(node --version) == v${NODE_VERSION} ]]
-          [[ $(npm --version) == ${NPM_VERSION} ]]
-
-      - name: "SF deps"
-        run: |
-          set -xueo pipefail
-          sudo add-apt-repository --yes --update ppa:ansible/ansible
-          sudo apt-get install --assume-yes ansible
-          cd deploy
-          ansible-playbook dev-server.playbook.yml --limit localhost --diff
-
-      - name: Set up Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
 
       - name: Run E2E tests
         env:
