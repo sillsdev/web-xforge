@@ -16,9 +16,17 @@
 }
 
 /* Fix the menu appearing below the table header */
-.mat-mdc-header-cell {
+:host .mat-mdc-header-cell {
   padding: 5px;
   z-index: 2 !important;
+}
+
+.mat-mdc-header-row:first-child {
+  background: var(--sf-tab-toolbar-background-color);
+}
+
+.mat-mdc-header-row:last-child {
+  background: var(--sf-biblical-terms-tabler-header-background);
 }
 
 /* Stretch the table across the page */
@@ -78,7 +86,6 @@
   align-items: center;
   justify-content: flex-start;
   padding: 1em 0.5em 0.75em 0.5em;
-  background: #fff;
 }
 
 .biblical-terms-select {

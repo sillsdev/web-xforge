@@ -12,10 +12,10 @@ mat-progress-bar {
 
 app-history-chooser {
   padding: 0.5em;
-  border-bottom: 1px solid var(--sf-tab-group-border-color);
+  border-bottom: 1px solid var(--sf-border-color);
   position: sticky;
   top: 0;
-  background: #fff;
+  background: var(--sf-tab-toolbar-background-color);
   z-index: 1;
 }
 

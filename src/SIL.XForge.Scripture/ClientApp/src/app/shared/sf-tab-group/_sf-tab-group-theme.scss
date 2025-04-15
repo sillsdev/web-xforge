@@ -23,6 +23,8 @@
   --sf-tab-group-border-width: 1px;
   --sf-tab-header-border-width: 1px;
   --sf-tab-header-top-offset: 1px;
+
+  --sf-tab-toolbar-background-color: #{$background};
 }
 
 @mixin theme($theme) {
