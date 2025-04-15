@@ -56,8 +56,17 @@ export async function communityChecking(
   await user.click(page.getByRole('button', { name: /John \d+ questions/ }).first());
   await user.click(page.getByRole('button', { name: /John \d+ \d+ questions/ }).first());
   await user.click(page.getByRole('button').filter({ hasText: 'edit' }).first());
-  await user.click(page.getByRole('textbox', { name: 'Question' }));
-  await user.clearField(page.getByRole('textbox', { name: 'Question' }));
+
+  const editQuestionWarningLocator = page.getByRole('heading', { name: 'This question has an answer.' });
+  const questionInputLocator = page.getByRole('textbox', { name: 'Question' });
+  await expect(editQuestionWarningLocator.or(questionInputLocator)).toBeVisible();
+
+  if (await editQuestionWarningLocator.isVisible()) {
+    await user.click(page.getByRole('button', { name: 'Edit anyway' }));
+  }
+
+  await user.click(questionInputLocator);
+  await user.clearField(questionInputLocator);
   await user.type('Who or what was in the beginning?');
   await user.click(page.getByRole('button', { name: 'Save' }));
 
