@@ -132,6 +132,7 @@ jobs:
       - name: "Deps: Frontend npm"
         run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
       - name: "Build: Frontend"
+        if: steps.cache-frontend.outputs.cache-hit != 'true'
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
 
   prepare-dotnet-backend:
@@ -213,6 +214,7 @@ jobs:
       - name: "Deps: Backend nuget"
         run: dotnet restore
       - name: "Build: dotnet Backend"
+        if: steps.cache-backend.outputs.cache-hit != 'true'
         run: dotnet build xForge.sln
 
   prepare-e2e:
