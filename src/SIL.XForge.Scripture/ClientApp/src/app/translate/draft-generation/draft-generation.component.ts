@@ -380,7 +380,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   isDraftInProgress(job?: BuildDto): boolean {
-    return activeBuildStates.includes(job?.state as BuildStates);
+    return job != null && activeBuildStates.includes(job.state);
   }
 
   isSyncing(): boolean {
@@ -388,23 +388,23 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   isDraftQueued(job?: BuildDto): boolean {
-    return [BuildStates.Queued, BuildStates.Pending].includes(job?.state as BuildStates);
+    return job != null && [BuildStates.Queued, BuildStates.Pending].includes(job.state);
   }
 
   isDraftActive(job?: BuildDto): boolean {
-    return (job?.state as BuildStates) === BuildStates.Active;
+    return job?.state === BuildStates.Active;
   }
 
   isDraftFinishing(job?: BuildDto): boolean {
-    return (job?.state as BuildStates) === BuildStates.Finishing;
+    return job?.state === BuildStates.Finishing;
   }
 
   isDraftComplete(job?: BuildDto): boolean {
-    return (job?.state as BuildStates) === BuildStates.Completed;
+    return job?.state === BuildStates.Completed;
   }
 
   isDraftFaulted(job?: BuildDto): boolean {
-    return (job?.state as BuildStates) === BuildStates.Faulted;
+    return job?.state === BuildStates.Faulted;
   }
 
   isServalAdmin(): boolean {
