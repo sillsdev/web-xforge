@@ -3,6 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
+import { UserService } from 'xforge-common/user.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 
@@ -24,7 +25,24 @@ const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: str
   styleUrl: './draft-history-entry.component.scss'
 })
 export class DraftHistoryEntryComponent {
-  @Input() entry?: BuildDto;
+  private _entry?: BuildDto;
+  @Input() set entry(value: BuildDto | undefined) {
+    this._entry = value;
+
+    // Get the user who requested the build
+    this._buildRequestedByUserName = undefined;
+    if (this._entry?.additionalInfo?.requestedByUserId != null) {
+      this.userService.getProfile(this._entry.additionalInfo.requestedByUserId).then(user => {
+        if (user.data != null) {
+          this._buildRequestedByUserName = user.data.displayName;
+        }
+      });
+    }
+  }
+  get entry(): BuildDto | undefined {
+    return this._entry;
+  }
+
   private _forceDetailsOpen = false;
   @Input() set forceDetailsOpen(value: boolean) {
     this._forceDetailsOpen = value;
@@ -33,10 +51,24 @@ export class DraftHistoryEntryComponent {
   get forceDetailsOpen(): boolean {
     return this._forceDetailsOpen;
   }
+
+  private _buildRequestedByUserName: string | undefined;
+  get buildRequestedByUserName(): string | undefined {
+    return this._buildRequestedByUserName;
+  }
+
+  get buildRequestedByDate(): string {
+    if (this._entry?.additionalInfo?.dateRequested == null) return '';
+    return this.i18n.formatDate(new Date(this._entry?.additionalInfo?.dateRequested));
+  }
+
   detailsOpen = false;
   trainingDataOpen = false;
 
-  constructor(readonly i18n: I18nService) {}
+  constructor(
+    readonly i18n: I18nService,
+    private readonly userService: UserService
+  ) {}
 
   get bookIds(): string[] {
     if (this.entry?.additionalInfo == null) return [];

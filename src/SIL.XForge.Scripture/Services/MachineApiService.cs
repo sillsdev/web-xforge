@@ -361,7 +361,7 @@ public class MachineApiService(
             EventMetric eventMetric = eventMetrics.Results.LastOrDefault(e =>
                 e.EventType == nameof(StartPreTranslationBuildAsync)
             );
-            if (eventMetric is not null)
+            if (preTranslate && eventMetric is not null)
             {
                 queuedState = UpdateDto(queuedState, eventMetric);
             }
@@ -1528,6 +1528,10 @@ public class MachineApiService(
     {
         // Ensure that there is the Serval additional data
         buildDto.AdditionalInfo ??= new ServalBuildAdditionalInfo();
+
+        // Set the user who requested the build and when they did so
+        buildDto.AdditionalInfo.DateRequested = new DateTimeOffset(eventMetric.TimeStamp, TimeSpan.Zero);
+        buildDto.AdditionalInfo.RequestedByUserId = eventMetric.UserId;
 
         // Retrieve the training and translation books from the build config, as the build from Serval
         // will not have project information.
