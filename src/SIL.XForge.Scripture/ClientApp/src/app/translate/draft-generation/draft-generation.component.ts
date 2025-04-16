@@ -32,7 +32,8 @@ import { ServalProjectComponent } from '../../serval-administration/serval-proje
 import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
-import { activeBuildStates, BuildConfig, DraftZipProgress } from './draft-generation';
+import { DraftDownloadButtonComponent } from './draft-download-button/draft-download-button.component';
+import { activeBuildStates, BuildConfig } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
   DraftGenerationStepsResult
@@ -61,6 +62,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     DraftGenerationStepsComponent,
     DraftInformationComponent,
     ServalProjectComponent,
+    DraftDownloadButtonComponent,
     DraftPreviewBooksComponent,
     DraftHistoryListComponent
   ]
@@ -86,7 +88,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   additionalTrainingSource?: DraftSource;
 
   jobSubscription?: Subscription;
-  zipSubscription?: Subscription;
   isOnline = true;
 
   currentPage: 'initial' | 'steps' = 'initial';
@@ -109,12 +110,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
    * Determines if there are draft books available for download.
    */
   hasDraftBooksAvailable = false;
-
-  /**
-   * Tracks how many books have been downloaded for the zip file.
-   */
-  downloadBooksProgress: number = 0;
-  downloadBooksTotal: number = 0;
 
   isPreTranslationApproved = false;
   signupFormUrl?: string;
@@ -160,11 +155,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
-  }
-
-  get downloadProgress(): number {
-    if (this.downloadBooksTotal === 0) return 0;
-    return (this.downloadBooksProgress / this.downloadBooksTotal) * 100;
   }
 
   get hasAnyCompletedBuild(): boolean {
@@ -312,19 +302,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     // Display pre-generation steps
     this.currentPage = 'steps';
-  }
-
-  downloadDraft(): void {
-    this.zipSubscription?.unsubscribe();
-    this.zipSubscription = this.draftGenerationService
-      .downloadGeneratedDraftZip(this.activatedProject.projectDoc, this.lastCompletedBuild)
-      .subscribe({
-        next: (draftZipProgress: DraftZipProgress) => {
-          this.downloadBooksProgress = draftZipProgress.current;
-          this.downloadBooksTotal = draftZipProgress.total;
-        },
-        error: (error: Error) => this.noticeService.showError(error.message)
-      });
   }
 
   async cancel(): Promise<void> {

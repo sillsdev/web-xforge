@@ -460,13 +460,13 @@ describe('DraftGenerationService', () => {
   });
 
   describe('getGeneratedDraftUsfm', () => {
-    it('should get the pre-translation USFM for the specified book/chapter and return an observable', fakeAsync(() => {
+    it('should get USFM for the specified book/chapter without a timestamp and return an observable', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
       const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
 
       // SUT
-      service.getGeneratedDraftUsfm(projectId, book, chapter).subscribe(result => {
+      service.getGeneratedDraftUsfm(projectId, book, chapter, undefined).subscribe(result => {
         expect(result).toEqual(usfm);
       });
       tick();
@@ -480,12 +480,33 @@ describe('DraftGenerationService', () => {
       tick();
     }));
 
+    it('should get USFM for the specified book/chapter with a timestamp and return an observable', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
+      const date = new Date();
+
+      // SUT
+      service.getGeneratedDraftUsfm(projectId, book, chapter, date).subscribe(result => {
+        expect(result).toEqual(usfm);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm?timestamp=${date.toISOString()}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(usfm);
+      tick();
+    }));
+
     it('should return undefined for a 404 error', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
 
       // SUT
-      service.getGeneratedDraftUsfm(projectId, book, chapter).subscribe(result => {
+      service.getGeneratedDraftUsfm(projectId, book, chapter, undefined).subscribe(result => {
         expect(result).toBeUndefined();
       });
       tick();
@@ -505,7 +526,7 @@ describe('DraftGenerationService', () => {
       testOnlineStatusService.setIsOnline(false);
 
       // SUT
-      service.getGeneratedDraftUsfm(projectId, book, chapter).subscribe(result => {
+      service.getGeneratedDraftUsfm(projectId, book, chapter, undefined).subscribe(result => {
         expect(result).toBeUndefined();
       });
       tick();
@@ -587,7 +608,7 @@ describe('DraftGenerationService', () => {
       });
     });
 
-    it('should create a zip file containing all of the books with drafts', fakeAsync(() => {
+    it('should create a zip file containing all of the books with drafts without a generated date', fakeAsync(() => {
       const projectDoc: SFProjectProfileDoc = {
         id: projectId,
         data: createTestProjectProfile({
@@ -629,6 +650,37 @@ describe('DraftGenerationService', () => {
       );
       expect(req2jn.request.method).toEqual('GET');
       req2jn.flush(usfm);
+      tick();
+    }));
+
+    it('should create a zip file containing all of the books with drafts at the generated date', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        id: projectId,
+        data: createTestProjectProfile({
+          texts: [{ bookNum: 62, chapters: [{ number: 1, hasDraft: true }] }]
+        })
+      } as SFProjectProfileDoc;
+      const lastCompletedBuild: BuildDto = {
+        additionalInfo: {
+          dateFinished: '2024-08-27T00:00:00.000+00:00',
+          dateGenerated: '2024-08-27T01:02:03.004+00:00'
+        }
+      } as BuildDto;
+
+      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
+        complete: () => {
+          expect(saveAs).toHaveBeenCalled();
+        }
+      });
+      tick();
+
+      // Setup the HTTP request for 1 John
+      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
+      const req1jn = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm?timestamp=2024-08-27T01:02:03.004Z`
+      );
+      expect(req1jn.request.method).toEqual('GET');
+      req1jn.flush(usfm);
       tick();
     }));
   });
