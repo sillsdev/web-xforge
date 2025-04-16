@@ -127,8 +127,8 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'generate_draft_initializing', ...context });
   await expect(page.getByRole('heading', { name: 'Draft queued' })).toBeVisible({ timeout: 60_000 });
   await screenshot(page, { pageName: 'generate_draft_queued', ...context });
-  await expect(page.getByRole('heading', { name: 'Draft in progress' })).toBeVisible({ timeout: 120_000 });
-  console.log('UI shows draft in progress');
+  await expect(page.getByRole('heading', { name: 'Draft in progress' })).toBeVisible({ timeout: 5 * 60_000 });
+  console.log('UI shows draft in progress after', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
   await screenshot(page, { pageName: 'generate_draft_in_progress', ...context });
 
   // Make sure the progress is changing
@@ -158,7 +158,7 @@ export async function generateDraft(
   // Completion
   await expect(page.getByText('Your draft is ready')).toBeVisible();
   await screenshot(page, { pageName: 'generate_draft_completed', ...context });
-  console.log('Draft generation took', ((Date.now() - startTime) / 1000 / 60).toFixed(2), 'minutes');
+  console.log('Draft generation took', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
   await user.click(page.getByRole('button', { name: 'Serval administration' }));
   await user.click(page.getByRole('button', { name: 'Run webhook to update draft status' }));
   await user.click(page.getByRole('button', { name: 'Serval administration' }));

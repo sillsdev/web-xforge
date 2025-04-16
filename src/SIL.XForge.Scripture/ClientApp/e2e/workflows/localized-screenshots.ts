@@ -265,6 +265,7 @@ export async function localizedScreenshots(
   });
   await page.getByRole('button', { name: 'Generate draft' }).click();
 
+  // FIXME(application-bug) This sometimes fails when "You have no books available for drafting." is shown
   await expect(page.getByRole('heading', { name: 'Review draft setup' })).toBeVisible();
   await forEachLocale(async locale => {
     await screenshotElements(
