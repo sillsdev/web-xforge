@@ -284,7 +284,7 @@ public class MachineApiController : ControllerBase
                 cancellationToken
             );
 
-            // A null means no build is running
+            // A null means no build has run
             if (build is null)
             {
                 return NoContent();
