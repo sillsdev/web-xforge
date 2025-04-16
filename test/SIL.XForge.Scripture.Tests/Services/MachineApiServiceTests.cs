@@ -627,6 +627,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const string trainingScriptureRange = "GEN;EXO";
         const string translationScriptureRange = "LEV;NUM";
+        DateTime requestedDateTime = DateTime.UtcNow;
         await env.QueueBuildAsync(preTranslate: true);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
@@ -658,6 +659,8 @@ public class MachineApiServiceTests
                                 },
                                 ProjectId = Project01,
                                 Scope = EventScope.Drafting,
+                                TimeStamp = requestedDateTime,
+                                UserId = User01,
                             },
                         ],
                         UnpagedCount = 1,
@@ -683,6 +686,8 @@ public class MachineApiServiceTests
         Assert.AreEqual(1, builds.Count);
         Assert.AreEqual(MachineApiService.BuildStateQueued, builds[0].State);
         Assert.AreEqual(Project01, builds[0].Id);
+        Assert.AreEqual(new DateTimeOffset(requestedDateTime, TimeSpan.Zero), builds[0].AdditionalInfo?.DateRequested);
+        Assert.AreEqual(User01, builds[0].AdditionalInfo?.RequestedByUserId);
         Assert.IsEmpty(builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ProjectId);
         Assert.AreEqual(
             trainingScriptureRange,
