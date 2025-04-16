@@ -251,7 +251,8 @@ export async function localizedScreenshots(
 
   await page.getByRole('checkbox', { name: 'All the language codes are correct' }).check();
   await page.getByRole('button', { name: 'Save & sync' }).click();
-  await page.getByRole('button', { name: 'Close' }).click({ timeout: 60_000 });
+  // Wait for the sync (if there are any) to finish
+  await page.getByRole('button', { name: 'Close' }).click({ timeout: 3 * 60_000 });
 
   // Back on main generate draft page
   await forEachLocale(async locale => {
