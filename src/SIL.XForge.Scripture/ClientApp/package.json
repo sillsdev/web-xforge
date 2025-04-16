@@ -76,7 +76,7 @@
     "papaparse": "^5.3.2",
     "process": "^0.11.10",
     "quill": "^2.0.3",
-    "quill-cursors": "^3.1.2",
+    "quill-cursors": "^4.0.4",
     "realtime-server": "file:../../RealtimeServer",
     "reconnecting-websocket": "^4.4.0",
     "rich-text": "^4.1.0",

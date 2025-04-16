@@ -51,7 +51,7 @@ describe('CollaboratorsComponent', () => {
       UICommonModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      SharedModule,
+      SharedModule.forRoot(),
       TestOnlineStatusModule.forRoot(),
       AvatarComponent
     ],

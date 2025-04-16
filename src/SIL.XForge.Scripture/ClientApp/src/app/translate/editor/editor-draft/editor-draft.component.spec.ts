@@ -43,7 +43,7 @@ describe('EditorDraftComponent', () => {
     declarations: [EditorDraftComponent],
     imports: [
       MatProgressBarModule,
-      SharedModule,
+      SharedModule.forRoot(),
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestTranslocoModule,

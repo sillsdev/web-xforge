@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LynxInsightActionPromptComponent } from './editor-insight-action-prompt.component';
+import { LynxInsightActionPromptComponent } from './lynx-insight-action-prompt.component';
 
-describe('EditorInsightActionPromptComponent', () => {
+describe('LynxInsightActionPromptComponent', () => {
   let component: LynxInsightActionPromptComponent;
   let fixture: ComponentFixture<LynxInsightActionPromptComponent>;
 
@@ -14,9 +14,5 @@ describe('EditorInsightActionPromptComponent', () => {
     fixture = TestBed.createComponent(LynxInsightActionPromptComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
   });
 });

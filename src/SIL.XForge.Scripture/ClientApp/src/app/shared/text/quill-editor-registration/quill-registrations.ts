@@ -97,7 +97,7 @@ export function registerScriptureFormats(formatRegistry: QuillFormatRegistryServ
   Quill.register('blots/scroll', ScrollBlot, true);
   Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
-  Quill.register('modules/cursors', QuillCursors);
+  Quill.register('modules/cursors', QuillCursors, true);
   Quill.register('modules/history', FixSelectionHistory, true);
-  Quill.register('modules/dragAndDrop', DragAndDrop);
+  Quill.register('modules/dragAndDrop', DragAndDrop, true);
 }
