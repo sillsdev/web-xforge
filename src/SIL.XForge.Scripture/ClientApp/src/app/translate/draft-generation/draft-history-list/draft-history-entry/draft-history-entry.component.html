@@ -16,16 +16,18 @@
     </div>
     @if (detailsOpen) {
       <div class="draft-entry-body">
-        <p>{{ t("click_book_to_preview") }}</p>
-        <p class="book-buttons">
-          @for (bookId of bookIds; track bookId) {
-            <a mat-stroked-button>{{ i18n.localizeBook(bookId) }}</a>
-          }
-        </p>
-        <button mat-flat-button><mat-icon>cloud_download</mat-icon> {{ t("download_zip") }}</button>
+        <ng-container *ngIf="canDownloadBuild">
+          <p>{{ t("click_book_to_preview") }}</p>
+          <p class="book-buttons">
+            @for (bookId of bookIds; track bookId) {
+              <a mat-stroked-button>{{ i18n.localizeBook(bookId) }}</a>
+            }
+          </p>
+          <app-draft-download-button [build]="entry" [flat]="true" />
+        </ng-container>
         <p>
           <a
-            href="#"
+            href="javascript:;"
             (click)="$event.preventDefault(); trainingDataOpen = !trainingDataOpen"
             class="training-data-link"
           >

@@ -119,7 +119,7 @@ public class MachineApiService(
         }
 
         // Get the translation engine id
-        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
+        string translationEngineId = GetTranslationId(projectSecret, preTranslate: true);
 
         try
         {
@@ -209,7 +209,7 @@ public class MachineApiService(
         var arguments = new Dictionary<string, object>
         {
             { "buildId", delivery.Payload.Build.Id },
-            { "buildStart", delivery.Payload.BuildState },
+            { "buildState", delivery.Payload.BuildState },
             { "event", delivery.Event },
             { "translationEngineId", delivery.Payload.Engine.Id },
         };
@@ -306,7 +306,12 @@ public class MachineApiService(
             eventMetrics = await eventMetricService.GetEventMetricsAsync(
                 sfProjectId,
                 scopes: [EventScope.Drafting],
-                eventTypes: [nameof(MachineProjectService.BuildProjectAsync), nameof(StartPreTranslationBuildAsync)]
+                eventTypes:
+                [
+                    nameof(MachineProjectService.BuildProjectAsync),
+                    nameof(RetrievePreTranslationStatusAsync),
+                    nameof(StartPreTranslationBuildAsync),
+                ]
             );
         }
 
@@ -315,8 +320,17 @@ public class MachineApiService(
         {
             ServalBuildDto buildDto = CreateDto(translationBuild);
 
-            // If we have event metrics, add the scripture ranges to the DTO
+            // See if we have event metrics for downloading the pre-translation USFM to Scripture Forge
             EventMetric eventMetric = eventMetrics.Results.FirstOrDefault(e =>
+                e.Result == translationBuild.Id && e.EventType == nameof(RetrievePreTranslationStatusAsync)
+            );
+            if (eventMetric is not null)
+            {
+                buildDto.AdditionalInfo!.DateGenerated = new DateTimeOffset(eventMetric.TimeStamp, TimeSpan.Zero);
+            }
+
+            // If we have event metrics for sending the build to Serval, add the scripture ranges to the DTO
+            eventMetric = eventMetrics.Results.FirstOrDefault(e =>
                 e.Result == translationBuild.Id && e.EventType == nameof(MachineProjectService.BuildProjectAsync)
             );
             if (eventMetric is not null)
@@ -337,7 +351,7 @@ public class MachineApiService(
 #pragma warning restore CS0612 // Type or member is obsolete
                     if (!string.IsNullOrWhiteSpace(scriptureRange))
                     {
-                        buildDto.AdditionalInfo?.TranslationScriptureRanges.Add(
+                        buildDto.AdditionalInfo!.TranslationScriptureRanges.Add(
                             new ProjectScriptureRange { ProjectId = sfProjectId, ScriptureRange = scriptureRange }
                         );
                     }
@@ -998,7 +1012,17 @@ public class MachineApiService(
         };
     }
 
-    public async Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Retrieves the pre-translation status and text from Serval.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The id of the build the pre-translations were retrieved for.</returns>
+    /// <remarks>We return the build id so it can be logged in event metrics.</remarks>
+    public async Task<string?> RetrievePreTranslationStatusAsync(
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -1017,6 +1041,14 @@ public class MachineApiService(
             // False means another process is running this function.
             if (projectSecret.ServalData?.PreTranslationsRetrieved ?? true)
             {
+                // Get the last completed build
+                string translationEngineId = GetTranslationId(projectSecret, preTranslate: true);
+                TranslationBuild? translationBuild = (
+                    await translationEnginesClient.GetAllBuildsAsync(translationEngineId, cancellationToken)
+                )
+                    .Where(b => b.State == JobState.Completed)
+                    .MaxBy(b => b.DateFinished);
+
                 // Set the retrieved flag as in progress
                 await projectSecrets.UpdateAsync(
                     sfProjectId,
@@ -1034,6 +1066,9 @@ public class MachineApiService(
                     sfProjectId,
                     u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true)
                 );
+
+                // Return the build id
+                return translationBuild?.Id;
             }
         }
         catch (TaskCanceledException e) when (e.InnerException is not TimeoutException)
@@ -1055,6 +1090,8 @@ public class MachineApiService(
             // Ensure that the retrieved flag is cleared
             await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationsRetrieved));
         }
+
+        return null;
     }
 
     public async Task StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
@@ -1352,7 +1389,7 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        IEnumerable<TranslationResult> translationResults = Array.Empty<TranslationResult>();
+        IEnumerable<TranslationResult> translationResults = [];
 
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
@@ -1540,6 +1577,26 @@ public class MachineApiService(
             .Key;
     }
 
+    private static string GetTranslationId(
+        SFProjectSecret projectSecret,
+        bool preTranslate,
+        bool returnEmptyStringIfMissing = false
+    )
+    {
+        // Ensure we have a translation engine ID
+        string? translationEngineId = preTranslate
+            ? projectSecret.ServalData?.PreTranslationEngineId
+            : projectSecret.ServalData?.TranslationEngineId;
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            return returnEmptyStringIfMissing
+                ? string.Empty
+                : throw new DataNotFoundException("The translation engine is not configured");
+        }
+
+        return translationEngineId;
+    }
+
     /// <summary>
     /// This method maps Serval API exceptions to the exceptions that Machine.js understands.
     /// </summary>
@@ -1714,17 +1771,6 @@ public class MachineApiService(
                 : throw new DataNotFoundException("The project secret is missing");
         }
 
-        // Ensure we have a translation engine ID
-        string? translationEngineId = preTranslate
-            ? projectSecret.ServalData?.PreTranslationEngineId
-            : projectSecret.ServalData?.TranslationEngineId;
-        if (string.IsNullOrWhiteSpace(translationEngineId))
-        {
-            return returnEmptyStringIfMissing
-                ? string.Empty
-                : throw new DataNotFoundException("The translation engine is not configured");
-        }
-
-        return translationEngineId;
+        return GetTranslationId(projectSecret, preTranslate, returnEmptyStringIfMissing);
     }
 }

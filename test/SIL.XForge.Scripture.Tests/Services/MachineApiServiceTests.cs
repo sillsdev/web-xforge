@@ -780,7 +780,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetBuildsAsync_SuccessWithEventMetric()
+    public async Task GetBuildsAsync_SuccessWithEventMetrics()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -826,6 +826,14 @@ public class MachineApiServiceTests
                                         )
                                     },
                                 },
+                                ProjectId = Project01,
+                                Result = new BsonString(Build01),
+                                Scope = EventScope.Drafting,
+                            },
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineApiService.RetrievePreTranslationStatusAsync),
+                                Payload = { { "sfProjectId", Project01 } },
                                 ProjectId = Project01,
                                 Result = new BsonString(Build01),
                                 Scope = EventScope.Drafting,
