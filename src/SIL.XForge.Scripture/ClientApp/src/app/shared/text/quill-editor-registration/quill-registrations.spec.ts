@@ -1,18 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import Quill from 'quill';
+import QuillCursors from 'quill-cursors';
 import QuillInlineBlot from 'quill/blots/inline';
 import QuillScrollBlot from 'quill/blots/scroll';
+import { SharedModule } from '../../shared.module';
 import { DragAndDrop } from '../drag-and-drop';
 import { DisableHtmlClipboard } from './quill-clipboard';
 import { QuillFormatRegistryService } from './quill-format-registry.service';
-import {
-  CheckingQuestionSegmentClass,
-  DeleteSegmentClass,
-  HighlightParaClass,
-  HighlightSegmentClass,
-  InsertSegmentClass
-} from './quill-formats/quill-attributors';
-import { ChapterEmbed, NotNormalizedText, ParaBlock } from './quill-formats/quill-blots';
+import { ChapterEmbed, NotNormalizedText, ParaBlock, ScrollBlot } from './quill-formats/quill-blots';
 import { FixSelectionHistory } from './quill-history';
 import { registerScriptureFormats } from './quill-registrations';
 
@@ -24,6 +19,7 @@ describe('QuillRegistrations', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      imports: [SharedModule.forRoot()],
       providers: [QuillFormatRegistryService]
     });
     formatRegistry = TestBed.inject(QuillFormatRegistryService);
@@ -40,7 +36,7 @@ describe('QuillRegistrations', () => {
   it('should register all formats', () => {
     registerScriptureFormats(formatRegistry);
 
-    // Verify all expected formats are registered
+    // Blots
     const registeredFormats = formatRegistry.getRegisteredFormats();
     expect(registeredFormats).toContain('verse');
     expect(registeredFormats).toContain('blank');
@@ -57,25 +53,32 @@ describe('QuillRegistrations', () => {
     expect(registeredFormats).toContain('segment');
     expect(registeredFormats).toContain('text-anchor');
     expect(registeredFormats).toContain('para');
-  });
 
-  it('should register attributors', () => {
-    registerScriptureFormats(formatRegistry);
-
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/insert-segment', InsertSegmentClass);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/delete-segment', DeleteSegmentClass);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/highlight-segment', HighlightSegmentClass);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/highlight-para', HighlightParaClass);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/question-segment', CheckingQuestionSegmentClass);
+    // Attributors
+    expect(registeredFormats).toContain('insert-segment');
+    expect(registeredFormats).toContain('delete-segment');
+    expect(registeredFormats).toContain('highlight-segment');
+    expect(registeredFormats).toContain('highlight-para');
+    expect(registeredFormats).toContain('question-segment');
+    expect(registeredFormats).toContain('note-thread-segment');
+    expect(registeredFormats).toContain('note-thread-highlight');
+    expect(registeredFormats).toContain('commenter-selection');
+    expect(registeredFormats).toContain('invalid-block');
+    expect(registeredFormats).toContain('invalid-inline');
+    expect(registeredFormats).toContain('draft');
+    expect(registeredFormats).toContain('question-count');
+    expect(registeredFormats).toContain('style-description');
   });
 
   it('should register core modules', () => {
     registerScriptureFormats(formatRegistry);
 
+    expect(quillRegisterSpy).toHaveBeenCalledWith('blots/scroll', ScrollBlot, true);
     expect(quillRegisterSpy).toHaveBeenCalledWith('blots/text', NotNormalizedText, true);
     expect(quillRegisterSpy).toHaveBeenCalledWith('modules/clipboard', DisableHtmlClipboard, true);
+    expect(quillRegisterSpy).toHaveBeenCalledWith('modules/cursors', QuillCursors, true);
     expect(quillRegisterSpy).toHaveBeenCalledWith('modules/history', FixSelectionHistory, true);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('modules/dragAndDrop', DragAndDrop);
+    expect(quillRegisterSpy).toHaveBeenCalledWith('modules/dragAndDrop', DragAndDrop, true);
   });
 
   it('should update QuillInlineBlot order', () => {
