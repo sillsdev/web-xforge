@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable } from '@angular/core';
+import { DestroyRef, Inject, Injectable } from '@angular/core';
 import {
   Diagnostic,
   DiagnosticsChanged,
@@ -6,11 +6,9 @@ import {
   DocumentData,
   DocumentManager,
   DocumentReader,
-  Localizer,
   Workspace
 } from '@sillsdev/lynx';
-import { ScriptureDeltaDocument, ScriptureDeltaDocumentFactory, ScriptureDeltaEditFactory } from '@sillsdev/lynx-delta';
-import { StandardRuleSets } from '@sillsdev/lynx-punctuation-checker';
+import { ScriptureDeltaDocument } from '@sillsdev/lynx-delta';
 import { Canon } from '@sillsdev/scripture';
 import Delta, { Op } from 'quill-delta';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -34,9 +32,6 @@ const TEXTS_PATH_TEMPLATE = obj<SFProjectProfile>().pathTemplate(p => p.texts);
   providedIn: 'root'
 })
 export class LynxWorkspaceService {
-  private readonly documentReader: TextDocReader;
-  private readonly documentManager: DocumentManager<ScriptureDeltaDocument, Op, Delta>;
-  private readonly workspace: Workspace<Op>;
   private projectId?: string;
   private textDocId?: TextDocId;
   private textDocChangeSubscription?: Subscription;
@@ -49,24 +44,11 @@ export class LynxWorkspaceService {
     private readonly i18n: I18nService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly activatedBookChapterService: ActivatedBookChapterService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: DestroyRef,
+    private readonly documentReader: TextDocReader,
+    @Inject(DocumentManager) private readonly documentManager: DocumentManager<ScriptureDeltaDocument, Op, Delta>,
+    @Inject(Workspace) public readonly workspace: Workspace<Op>
   ) {
-    const documentFactory = new ScriptureDeltaDocumentFactory();
-    const editFactory = new ScriptureDeltaEditFactory();
-    this.documentReader = new TextDocReader(this.projectService);
-    this.documentManager = new DocumentManager<ScriptureDeltaDocument, Op, Delta>(documentFactory, this.documentReader);
-
-    const localizer = new Localizer();
-    this.workspace = new Workspace<Op>({
-      localizer,
-      diagnosticProviders: [
-        ...StandardRuleSets.English.createDiagnosticProviders(localizer, this.documentManager, editFactory, true)
-      ],
-      onTypeFormattingProviders: [
-        ...StandardRuleSets.English.createOnTypeFormattingProviders(this.documentManager, editFactory)
-      ]
-    });
-
     this.activatedProjectService.projectDoc$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(projectDoc => this.onProjectActivated(projectDoc));
@@ -80,7 +62,6 @@ export class LynxWorkspaceService {
   get currentInsights(): ReadonlyMap<string, LynxInsight[]> {
     return this.curInsights;
   }
-
   async init(): Promise<void> {
     await this.workspace.init();
     await this.workspace.changeLanguage(this.i18n.localeCode);
@@ -307,7 +288,10 @@ export class LynxWorkspaceService {
   }
 }
 
-class TextDocReader implements DocumentReader<Delta> {
+@Injectable({
+  providedIn: 'root'
+})
+export class TextDocReader implements DocumentReader<Delta> {
   public textDocIds: Set<string> = new Set();
 
   constructor(private readonly projectService: SFProjectService) {}
