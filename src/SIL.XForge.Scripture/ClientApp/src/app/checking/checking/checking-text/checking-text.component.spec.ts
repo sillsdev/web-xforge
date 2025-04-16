@@ -35,7 +35,7 @@ describe('CheckingTextComponent', () => {
     declarations: [CheckingTextComponent],
     imports: [
       NoopAnimationsModule,
-      SharedModule,
+      SharedModule.forRoot(),
       UICommonModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),

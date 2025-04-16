@@ -27,7 +27,7 @@ export class QuillFormatRegistryService {
       const prefix = isAttr ? 'formats' : 'blots';
       const name = isAttr ? format.attrName : format.blotName;
 
-      Quill.register(`${prefix}/${name}`, format);
+      Quill.register(`${prefix}/${name}`, format, true);
       this.registeredFormats.add(name);
       this.registeredFormatClasses.add(format);
       formatNames.push(name);
