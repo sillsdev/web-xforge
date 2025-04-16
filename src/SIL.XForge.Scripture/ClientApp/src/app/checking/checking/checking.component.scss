@@ -46,12 +46,16 @@ header {
   header {
     flex-direction: column;
     align-items: stretch;
-    padding-inline-start: $questionsHeaderInlineStartPadding;
     padding-inline-end: 4px;
     padding-bottom: 4px;
 
     &.filter-applied {
       height: auto;
+    }
+
+    //counteract the negative margin below
+    @include media-breakpoint('<', md) {
+      margin-inline-start: 20px;
     }
   }
 
@@ -330,7 +334,7 @@ header {
   height: 26px;
   display: flex;
   align-items: center;
-  margin-inline-start: -($questionsHeaderInlineStartPadding - 2px);
+  margin-inline-start: -($questionsHeaderInlineStartPadding + 5px);
   padding-top: 4px;
   padding-bottom: 4px;
   padding-inline: 5px 8px; // Reduce padding from mat-button defaults
