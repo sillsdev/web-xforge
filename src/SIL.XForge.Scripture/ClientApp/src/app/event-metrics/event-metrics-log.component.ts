@@ -159,15 +159,18 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
     //       I have not localized at this time because these strings are likely to change based on feedback.
     //       When this feature is mature, these should be localized to help Project Administrators.
     const eventTypeMap: { [key: string]: string } = {
+      BuildProjectAsync: 'Start draft generation on Serval',
       CancelPreTranslationBuildAsync: 'Cancel draft generation',
       CancelSyncAsync: 'Cancel synchronization with Paratext',
+      RetrievePreTranslationStatusAsync: 'Save drafts to Scripture Forge',
       SetDraftAppliedAsync: "Updated the chapter's draft applied status",
       SetIsValidAsync: 'Marked chapter as valid/invalid',
       SetPreTranslateAsync: 'Set drafting as enabled/disabled for the project',
       SetServalConfigAsync: 'Manually update drafting configuration for the project',
       StartBuildAsync: 'Begin training translation suggestions',
-      StartPreTranslationBuildAsync: 'Start draft generation',
-      SyncAsync: 'Start synchronization with Paratext'
+      StartPreTranslationBuildAsync: 'Request draft generation',
+      SyncAsync: 'Start synchronization with Paratext',
+      UpdateSettingsAsync: 'Update Scripture Forge settings'
     };
 
     // Allow specific cases based on payload values

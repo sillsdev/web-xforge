@@ -214,11 +214,7 @@ describe('DraftGenerationComponent', () => {
     }
 
     get downloadButton(): HTMLElement | null {
-      return this.getElementByTestId('download-button');
-    }
-
-    get downloadSpinner(): HTMLElement | null {
-      return this.getElementByTestId('download-spinner');
+      return (this.fixture.nativeElement as HTMLElement).querySelector('app-draft-download-button');
     }
 
     get improvedDraftGenerationNotice(): HTMLElement | null {
@@ -298,7 +294,7 @@ describe('DraftGenerationComponent', () => {
 
   describe('Improved draft generation notice', () => {
     // Do not run this test after April 1 2025
-    const shouldRunTest = new Date() < new Date('2025-04-01');
+    const shouldRunTest = new Date() < new Date('2025-05-31');
     (shouldRunTest ? it : xit)(
       'should show notice if back translation or pre-translate approved',
       fakeAsync(() => {
@@ -1399,22 +1395,6 @@ describe('DraftGenerationComponent', () => {
     });
   });
 
-  describe('downloadProgress', () => {
-    it('should show number between 0 and 100', () => {
-      const env = new TestEnvironment();
-      env.component.downloadBooksProgress = 4;
-      env.component.downloadBooksTotal = 8;
-      expect(env.component.downloadProgress).toBe(50);
-    });
-
-    it('should not divide by zero', () => {
-      const env = new TestEnvironment();
-      env.component.downloadBooksProgress = 4;
-      env.component.downloadBooksTotal = 0;
-      expect(env.component.downloadProgress).toBe(0);
-    });
-  });
-
   describe('download draft button', () => {
     it('button should display if there are draft books available', () => {
       const env = new TestEnvironment();
@@ -1512,66 +1492,5 @@ describe('DraftGenerationComponent', () => {
       // Verify the button is visible
       expect(env.downloadButton).not.toBeNull();
     }));
-
-    it('button should start the download', () => {
-      const env = new TestEnvironment();
-      spyOn(env.component, 'downloadDraft').and.stub();
-      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
-      env.component.hasDraftBooksAvailable = true;
-      env.fixture.detectChanges();
-
-      env.downloadButton!.click();
-      expect(env.component.downloadDraft).toHaveBeenCalled();
-    });
-
-    it('button should not display if there are no draft books available', () => {
-      const env = new TestEnvironment();
-      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
-      env.component.hasDraftBooksAvailable = false;
-      env.fixture.detectChanges();
-
-      expect(env.downloadButton).toBeNull();
-    });
-
-    it('spinner should display while the download is in progress', () => {
-      const env = new TestEnvironment();
-      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
-      env.component.hasDraftBooksAvailable = true;
-      env.component.downloadBooksProgress = 2;
-      env.component.downloadBooksTotal = 4;
-      env.fixture.detectChanges();
-
-      expect(env.downloadSpinner).not.toBeNull();
-    });
-
-    it('spinner should not display while no download is in progress', () => {
-      const env = new TestEnvironment();
-      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
-      env.component.hasDraftBooksAvailable = true;
-      env.component.downloadBooksProgress = 0;
-      env.component.downloadBooksTotal = 0;
-      env.fixture.detectChanges();
-
-      expect(env.downloadSpinner).toBeNull();
-    });
-  });
-
-  describe('downloadDraft', () => {
-    it('should display an error if one occurs', () => {
-      const env = new TestEnvironment();
-      mockDraftGenerationService.downloadGeneratedDraftZip.and.returnValue(throwError(() => new Error()));
-
-      env.component.downloadDraft();
-      expect(mockNoticeService.showError).toHaveBeenCalledTimes(1);
-    });
-
-    it('should emit draft progress', () => {
-      const env = new TestEnvironment();
-      mockDraftGenerationService.downloadGeneratedDraftZip.and.returnValue(of({ current: 1, total: 2 }));
-
-      env.component.downloadDraft();
-      expect(env.component.downloadBooksProgress).toBe(1);
-      expect(env.component.downloadBooksTotal).toBe(2);
-    });
   });
 });
