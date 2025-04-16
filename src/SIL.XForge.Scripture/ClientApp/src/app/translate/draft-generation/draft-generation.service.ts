@@ -228,25 +228,33 @@ export class DraftGenerationService {
   }
 
   /**
-   * Gets the pre-translation USFM for the specified book/chapter using the last completed build.
+   * Gets the pre-translation USFM for the specified book/chapter.
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
    * @param chapter The chapter number. Specify 0 to return all chapters in the book.
+   * @param timestamp The timestamp to download the draft at. If undefined, the latest draft will be downloaded.
    * @returns An observable string of USFM data, or undefined if no pre-translations exist.
    */
-  getGeneratedDraftUsfm(projectId: string, book: number, chapter: number): Observable<string | undefined> {
+  getGeneratedDraftUsfm(
+    projectId: string,
+    book: number,
+    chapter: number,
+    timestamp: Date | undefined
+  ): Observable<string | undefined> {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
     }
-    return this.httpClient
-      .get<string>(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`)
-      .pipe(
-        map(res => res.data),
-        catchError(() => {
-          // If no USFM could be retrieved, return undefined
-          return of(undefined);
-        })
-      );
+    let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`;
+    if (timestamp != null) {
+      url += `?timestamp=${timestamp.toISOString()}`;
+    }
+    return this.httpClient.get<string>(url).pipe(
+      map(res => res.data),
+      catchError(() => {
+        // If no USFM could be retrieved, return undefined
+        return of(undefined);
+      })
+    );
   }
 
   /**
@@ -279,17 +287,25 @@ export class DraftGenerationService {
       const zipProgress: DraftZipProgress = { current: 0, total: books.length };
       observer.next(zipProgress);
 
+      // Get the date the draft was generated and written to Scripture Forge
+      let dateGenerated: Date | undefined = undefined;
+      if (lastCompletedBuild?.additionalInfo?.dateGenerated != null) {
+        dateGenerated = new Date(lastCompletedBuild.additionalInfo.dateGenerated);
+      }
+
       // Create the promises to download each book's USFM
       for (const bookNum of books) {
-        const usfmFile = firstValueFrom(this.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0)).then(usfm => {
-          if (usfm != null) {
-            const fileName: string =
-              getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.SFM';
-            zip.file(fileName, usfm);
-            zipProgress.current++;
-            observer.next(zipProgress);
+        const usfmFile = firstValueFrom(this.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0, dateGenerated)).then(
+          usfm => {
+            if (usfm != null) {
+              const fileName: string =
+                getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.SFM';
+              zip.file(fileName, usfm);
+              zipProgress.current++;
+              observer.next(zipProgress);
+            }
           }
-        });
+        );
         usfmFiles.push(usfmFile);
       }
 
