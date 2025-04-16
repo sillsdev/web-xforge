@@ -357,9 +357,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.startBuild({
       projectId: sfProjectId,
       trainingDataFiles: result.trainingDataFiles,
-      trainingScriptureRange: result.trainingScriptureRange,
       trainingScriptureRanges: result.trainingScriptureRanges,
-      translationScriptureRange: result.translationScriptureRange,
       translationScriptureRanges: result.translationScriptureRanges || [],
       fastTraining: result.fastTraining,
       useEcho: result.useEcho
@@ -509,7 +507,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   private hasStartedBuild(projectDoc: SFProjectProfileDoc): boolean {
     return (
       projectDoc.data?.translateConfig.preTranslate === true &&
-      projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange != null
+      (projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange != null ||
+        projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges != null)
     );
   }
 }

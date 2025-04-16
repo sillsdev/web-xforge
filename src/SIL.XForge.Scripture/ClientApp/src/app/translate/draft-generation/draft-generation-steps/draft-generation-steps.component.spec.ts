@@ -139,12 +139,22 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
     }));
 
-    it('should set "availableTranslateBooks" correctly', fakeAsync(() => {
-      expect(component.availableTranslateBooks).toEqual([
+    it('should set "allAvailableTranslateBooks" correctly', fakeAsync(() => {
+      expect(component.allAvailableTranslateBooks).toEqual([
         { number: 1, selected: false },
         { number: 2, selected: false },
         { number: 3, selected: false }
       ]);
+    }));
+
+    it('should set "availableTranslateBooks" correctly', fakeAsync(() => {
+      expect(component.availableTranslateBooks).toEqual({
+        sourceProject: [
+          { number: 1, selected: false },
+          { number: 2, selected: false },
+          { number: 3, selected: false }
+        ]
+      });
     }));
 
     it('should set "availableTrainingBooks" correctly', fakeAsync(() => {
@@ -198,7 +208,7 @@ describe('DraftGenerationStepsComponent', () => {
       // Go to translation books
       component.tryAdvanceStep();
       fixture.detectChanges();
-      component.onTranslateBookSelect([1]);
+      component.onTranslateBookSelect([1], config.draftingSources[0]);
       fixture.detectChanges();
       // Go to training books
       component.tryAdvanceStep();
@@ -275,7 +285,7 @@ describe('DraftGenerationStepsComponent', () => {
     it('clears selected translated and reference books in training when translate book selected', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
-      component.onTranslateBookSelect([3]);
+      component.onTranslateBookSelect([3], config.draftingSources[0]);
       component.tryAdvanceStep();
       fixture.detectChanges();
       component.onTranslatedBookSelect([1, 2]);
@@ -289,7 +299,7 @@ describe('DraftGenerationStepsComponent', () => {
       ]);
       component.stepper.selectedIndex = 1;
       fixture.detectChanges();
-      component.onTranslateBookSelect([2, 3]);
+      component.onTranslateBookSelect([2, 3], config.draftingSources[0]);
       component.tryAdvanceStep();
       fixture.detectChanges();
       expect(component.selectedTrainingBooksByProj('sourceProject')).toEqual([{ number: 1, selected: true }]);
@@ -300,7 +310,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
       // select Exodus and Leviticus
-      component.onTranslateBookSelect([2, 3]);
+      component.onTranslateBookSelect([2, 3], config.draftingSources[0]);
       component.tryAdvanceStep();
       fixture.detectChanges();
       component.onTranslatedBookSelect([1]);
@@ -310,7 +320,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.stepper.selectedIndex = 1;
       fixture.detectChanges();
       // deselect Exodus and keep Leviticus
-      component.onTranslateBookSelect([3]);
+      component.onTranslateBookSelect([3], config.draftingSources[0]);
       component.tryAdvanceStep();
       fixture.detectChanges();
       // Exodus becomes a selectable training book
@@ -326,7 +336,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.tryAdvanceStep();
       fixture.detectChanges();
       // all books
-      component.onTranslateBookSelect([1, 2, 3]);
+      component.onTranslateBookSelect([1, 2, 3], config.draftingSources[0]);
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
@@ -338,7 +348,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.stepper.selectedIndex = 1;
       fixture.detectChanges();
       // deselect Genesis and Exodus
-      component.onTranslateBookSelect([3]);
+      component.onTranslateBookSelect([3], config.draftingSources[0]);
       component.tryAdvanceStep();
       fixture.detectChanges();
       // Genesis and Exodus becomes a selectable training book
@@ -407,12 +417,22 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
     }));
 
-    it('should set "availableTranslateBooks" correctly and with canonical book order', fakeAsync(() => {
-      expect(component.availableTranslateBooks).toEqual([
+    it('should set "allAvailableTranslateBooks" correctly and with canonical book order', fakeAsync(() => {
+      expect(component.allAvailableTranslateBooks).toEqual([
         { number: 2, selected: false },
         { number: 3, selected: false },
         { number: 7, selected: false }
       ]);
+    }));
+
+    it('should set "availableTranslateBooks" correctly and with canonical book order', fakeAsync(() => {
+      expect(component.availableTranslateBooks).toEqual({
+        draftingSource: [
+          { number: 2, selected: false },
+          { number: 3, selected: false },
+          { number: 7, selected: false }
+        ]
+      });
     }));
 
     it('should set "availableTrainingBooks" correctly and with canonical book order', fakeAsync(() => {
@@ -471,7 +491,7 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should correctly emit the selected books when done', fakeAsync(() => {
-      component.onTranslateBookSelect([7]);
+      component.onTranslateBookSelect([7], config.draftingSources[0]);
       component.onTranslatedBookSelect([2, 3, 6]);
       component.onSourceTrainingBookSelect([2, 3], config.trainingSources[0]);
       component.onSourceTrainingBookSelect([2, 6], config.trainingSources[1]);
@@ -497,7 +517,7 @@ describe('DraftGenerationStepsComponent', () => {
           { projectId: 'source1', scriptureRange: 'EXO;LEV' },
           { projectId: 'source2', scriptureRange: 'EXO;JOS' }
         ],
-        translationScriptureRange: 'JDG',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
         useEcho: false
       } as DraftGenerationStepsResult);
@@ -515,7 +535,7 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('should allow one source to have no books selected', () => {
-      component.onTranslateBookSelect([7]);
+      component.onTranslateBookSelect([7], config.draftingSources[0]);
       component.onTranslatedBookSelect([2, 6]);
       component.onSourceTrainingBookSelect([], config.trainingSources[0]);
       component.onSourceTrainingBookSelect([2, 6], config.trainingSources[1]);
@@ -539,7 +559,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles: [],
         trainingScriptureRanges: [{ projectId: 'source2', scriptureRange: 'EXO;JOS' }],
-        translationScriptureRange: 'JDG',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
         useEcho: false
       } as DraftGenerationStepsResult);
@@ -547,7 +567,7 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('show warning when both source books missing translated books', () => {
-      component.onTranslateBookSelect([7]);
+      component.onTranslateBookSelect([7], config.draftingSources[0]);
       component.onTranslatedBookSelect([2, 6]);
       component.onSourceTrainingBookSelect([2, 6], config.trainingSources[0]);
       component.onSourceTrainingBookSelect([], config.trainingSources[1]);
@@ -651,7 +671,7 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should emit the fast training value if checked', () => {
-      component.onTranslateBookSelect([2]);
+      component.onTranslateBookSelect([2], config.draftingSources[0]);
       component.onTranslatedBookSelect([3, 9, 10]);
       component.onSourceTrainingBookSelect([3, 9, 10], config.trainingSources[0]);
 
@@ -677,7 +697,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles: [],
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
-        translationScriptureRange: 'EXO',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: true,
         useEcho: false
       } as DraftGenerationStepsResult);
@@ -685,7 +705,7 @@ describe('DraftGenerationStepsComponent', () => {
     });
 
     it('should emit the use echo value if checked', () => {
-      component.onTranslateBookSelect([2]);
+      component.onTranslateBookSelect([2], config.draftingSources[0]);
       component.onTranslatedBookSelect([3, 9, 10]);
       component.onSourceTrainingBookSelect([3, 9, 10], config.trainingSources[0]);
 
@@ -711,7 +731,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingDataFiles: [],
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
-        translationScriptureRange: 'EXO',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: false,
         useEcho: true
       } as DraftGenerationStepsResult);
@@ -762,11 +782,11 @@ describe('DraftGenerationStepsComponent', () => {
         translateConfig: {
           draftConfig: {
             lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationScriptureRange: 'EXO;LEV',
             lastSelectedTrainingScriptureRanges: [
               { projectId: 'source1', scriptureRange: 'GEN;1SA' },
               { projectId: 'source2', scriptureRange: '1SA;2SA' }
-            ]
+            ],
+            lastSelectedTranslationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO;LEV' }]
           }
         }
       })
@@ -880,7 +900,7 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
-      component.onTranslateBookSelect([3]);
+      component.onTranslateBookSelect([3], config.draftingSources[0]);
       fixture.detectChanges();
       component.tryAdvanceStep();
       component.onTranslatedBookSelect([2]);
@@ -905,7 +925,7 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
       fixture.detectChanges();
-      component.onTranslateBookSelect([3]);
+      component.onTranslateBookSelect([3], config.draftingSources[0]);
       fixture.detectChanges();
       component.tryAdvanceStep();
       component.onTranslatedBookSelect([2]);
@@ -925,7 +945,7 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'EXO' }],
-        translationScriptureRange: 'LEV',
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'LEV' }],
         trainingDataFiles: fileIds,
         fastTraining: false,
         useEcho: false
@@ -981,11 +1001,11 @@ describe('DraftGenerationStepsComponent', () => {
         translateConfig: {
           draftConfig: {
             lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationScriptureRange: 'GEN;EXO',
             lastSelectedTrainingScriptureRanges: [
               { projectId: 'source1', scriptureRange: 'LEV;NUM;DEU;JOS' },
               { projectId: 'source2', scriptureRange: 'DEU;JOS;1SA' }
-            ]
+            ],
+            lastSelectedTranslationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'GEN;EXO' }]
           }
         }
       })

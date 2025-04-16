@@ -173,8 +173,6 @@ describe('DraftGenerationComponent', () => {
               }
             },
             draftConfig: {
-              lastSelectedTrainingBooks: preTranslate ? [1] : [],
-              lastSelectedTranslationBooks: preTranslate ? [2] : [],
               lastSelectedTrainingScriptureRange: preTranslate ? 'GEN' : undefined,
               lastSelectedTranslationScriptureRange: preTranslate ? 'EXO' : undefined
             }
