@@ -3,7 +3,7 @@ import { Locator, Page } from 'npm:playwright';
 import { DEFAULT_PROJECT_SHORTNAME, preset, ScreenshotContext } from '../e2e-globals.ts';
 import {
   deleteProject,
-  enableFeatureFlag,
+  enableDeveloperMode,
   ensureJoinedOrConnectedToProject,
   ensureNavigatedToProject,
   installMouseFollower,
@@ -33,7 +33,7 @@ export async function generateDraft(
   await ensureJoinedOrConnectedToProject(page, DEFAULT_PROJECT_SHORTNAME);
   await ensureNavigatedToProject(page, DEFAULT_PROJECT_SHORTNAME);
 
-  await enableFeatureFlag(page, 'Allow Fast Pre-Translation');
+  await enableDeveloperMode(page, { closeMenu: true });
 
   await user.click(page.getByRole('link', { name: 'Generate draft beta' }));
   await expect(page.getByRole('heading', { name: 'Generate translation drafts' })).toBeVisible();

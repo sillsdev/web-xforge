@@ -224,7 +224,7 @@ export async function enableFeatureFlag(page: Page, flag: string): Promise<void>
   await page.keyboard.press('Escape');
 }
 
-export async function enableDeveloperMode(page: Page): Promise<void> {
+export async function enableDeveloperMode(page: Page, options = { closeMenu: false }): Promise<void> {
   await page.getByRole('button', { name: 'Help' }).click();
 
   // Playwright refuses to click the version number because it's disabled. We override this with force: true. However,
@@ -236,6 +236,7 @@ export async function enableDeveloperMode(page: Page): Promise<void> {
   // See https://playwright.dev/docs/actionability#receives-events
   await page.getByRole('menuitem', { name: 'Open source licenses' }).click({ trial: true });
   await page.locator('#version-number').click({ force: true, clickCount: 7 });
+  if (options.closeMenu) await page.keyboard.press('Escape');
 }
 
 export async function installMouseFollower(page: Page): Promise<void> {
