@@ -40,7 +40,7 @@ describe('MyProjectsComponent', () => {
     declarations: [MyProjectsComponent],
     imports: [
       UICommonModule,
-      SharedModule,
+      SharedModule.forRoot(),
       RouterModule.forRoot([
         { path: 'projects/:projectId', component: EmptyComponent },
         { path: 'connect-project', component: EmptyComponent }

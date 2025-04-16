@@ -21,7 +21,7 @@ describe('AttachAudioComponent', () => {
   let env: TestEnvironment;
 
   configureTestingModule(() => ({
-    imports: [UICommonModule, ngfModule, SharedModule, TestTranslocoModule, TestOnlineStatusModule.forRoot()],
+    imports: [UICommonModule, ngfModule, SharedModule.forRoot(), TestTranslocoModule, TestOnlineStatusModule.forRoot()],
     declarations: [AttachAudioComponent],
     providers: [{ provide: DialogService, useMock: mockDialogService }]
   }));

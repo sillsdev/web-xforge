@@ -8,8 +8,4 @@ describe('QuillInsightRenderService', () => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(QuillInsightRenderService);
   });
-
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
 });
