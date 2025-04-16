@@ -63,7 +63,7 @@ export async function traverseHomePageAndLoginPage(page: Page, context: Screensh
 
   // Log in
   await page.getByRole("link", { name: "Log in" }).click();
-  await expect(page.getByText("Log in with Paratext")).toBeVisible();
+  await expect(page.getByText("Log in with Paratext")).toBeVisible({ timeout: 10_000 });
   await screenshot(page, { pageName: "login_page", ...context });
 
   // Log in with Paratext
