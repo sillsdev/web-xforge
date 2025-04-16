@@ -31,7 +31,7 @@ SERVER_PID=$!
 echo "Server started with PID: $SERVER_PID"
 
 sleep 10s
-max_retries=3
+max_retries=10
 attempt=1
 until nc -z localhost 5000 || ((attempt > max_retries)); do
   echo "Waiting for dotnet server to start... (attempt $attempt)"
