@@ -40,6 +40,8 @@ until nc -z localhost 5000 || ((attempt > max_retries)); do
 done
 if ((attempt > max_retries)); then
   echo "dotnet server failed to start after $max_retries attempts."
+  echo "Log output:"
+  cat "${DOTNET_LOG}"
   exit 1
 fi
 echo "dotnet server is up and running."
