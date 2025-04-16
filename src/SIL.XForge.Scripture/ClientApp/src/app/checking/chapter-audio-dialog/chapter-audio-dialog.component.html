@@ -1,109 +1,101 @@
 <ng-container *transloco="let t; read: 'chapter_audio_dialog'">
-  <h2 mat-dialog-title>{{ t("chapter_audio") }}</h2>
-  <mat-dialog-content class="mat-typography">
-    <div class="dropzone" #dropzone>
-      <input type="file" multiple #fileDropzone accept=".csv,.tsv,.txt,audio/*" (change)="uploadedFiles($event)" />
-      <label>{{ t("drag_and_drop_files") }}<br />- {{ t("drag_and_drop_or_browse") }} -</label>
-      <button mat-flat-button color="primary" type="submit">{{ t("browse_files") }}</button>
-    </div>
-    <div class="data-blocks">
-      <div class="wrapper wrapper-book-chapter valid">
-        @if (!selectionHasAudioAlready || inEditState) {
-          <mat-icon>book</mat-icon>
-        } @else {
-          <app-info [text]="t('audio_already_exists')" icon="warning" type="warning"></app-info>
-        }
-        <mat-select
-          [(value)]="book"
-          [disabled]="inEditState"
-          class="book-select-menu"
-          [hideSingleSelectionIndicator]="true"
-        >
-          @for (b of books; track b) {
-            <mat-option [value]="b">{{ bookName(b) }}</mat-option>
-          }
-        </mat-select>
-        <div class="divider"></div>
-        <mat-select
-          [(value)]="chapter"
-          [disabled]="inEditState"
-          class="chapter-select-menu"
-          [hideSingleSelectionIndicator]="true"
-          [panelWidth]="80"
-        >
-          @for (c of chapters; track c) {
-            <mat-option [value]="c">{{ c }}</mat-option>
-          }
-        </mat-select>
+  <div #dropzone>
+    @if (showDragDropOverlay) {
+      <div class="overlay">{{ t("drag_and_drop_overlay") }}</div>
+    }
+    <h2 mat-dialog-title>{{ bookName(book) }} {{ chapter }} {{ t("audio") }}</h2>
+    <mat-dialog-content class="mat-typography">
+      <div class="browse-container dashed-border-box">
+        <input
+          type="file"
+          multiple
+          #fileDropzone
+          accept=".csv,.tsv,.txt,audio/*"
+          (change)="uploadedFiles($event)"
+          title="{{ t('browse_files_tooltip') }}"
+        />
+        <label>{{ t("drag_and_drop_files") }}, {{ t("drag_and_drop_or_browse") }}</label>
+        <button mat-flat-button color="primary" type="submit">{{ t("browse_files") }}</button>
       </div>
-      <div class="wrapper wrapper-audio" [ngClass]="{ valid: hasAudioBeenUploaded, invalid: isAudioInvalid }">
-        @if (hasAudioBeenUploaded) {
-          <app-single-button-audio-player
-            #chapterAudio
-            id="chapterAudio"
-            [source]="audioBlob"
-            (click)="chapterAudio.playing ? chapterAudio.stop() : chapterAudio.play()"
-          >
-            <mat-icon>{{ chapterAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
-          </app-single-button-audio-player>
-          @if (hasAudioBeenUploaded && !hasAudioDataError) {
-            <span>{{ audioFilename }}</span>
-          }
-          @if (hasAudioBeenUploaded) {
-            <mat-icon (click)="deleteAudioData()" class="delete">delete</mat-icon>
-          }
-        } @else {
-          <mat-icon>play_disabled</mat-icon>
-          @if (!hasAudioDataError) {
-            <span>{{ t("no_audio_file_uploaded") }}</span>
+      <div class="data-blocks">
+        <div class="wrapper wrapper-audio" [ngClass]="{ valid: isAudioUploaded, invalid: isAudioInvalid }">
+          @if (isAudioUploaded) {
+            <app-single-button-audio-player
+              #chapterAudio
+              id="chapterAudio"
+              [source]="audioBlob"
+              (click)="chapterAudio.playing ? chapterAudio.stop() : chapterAudio.play()"
+            >
+              <mat-icon>{{ chapterAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
+            </app-single-button-audio-player>
+            @if (isAudioUploaded && !hasAudioDataError) {
+              <span>{{ audioFilename }}</span>
+            }
+            @if (isAudioUploaded) {
+              <mat-icon (click)="deleteAudioData()" class="delete">delete</mat-icon>
+            }
           } @else {
-            <span>{{ t(audioErrorMessageKey) }}</span>
+            <mat-icon>play_disabled</mat-icon>
+            @if (!hasAudioDataError) {
+              <span>{{ t("no_audio_file_uploaded") }}</span>
+            } @else {
+              <span>{{ t(audioErrorMessageKey) }}</span>
+            }
           }
-        }
+        </div>
+        <div class="wrapper wrapper-timing" [ngClass]="{ valid: isTimingUploaded, invalid: hasTimingDataError }">
+          <mat-icon class="material-icons-outlined">timer</mat-icon>
+          @if (isTimingUploaded && !hasTimingDataError) {
+            <span>
+              {{ t("segments_found", { segments: numberOfTimingSegments }) }}
+            </span>
+          }
+          @if (!isTimingUploaded && !hasTimingDataError) {
+            <span>{{ t("no_timing_data_uploaded") }}</span>
+          }
+          @if (hasTimingDataError) {
+            <span>{{ t(timingErrorMessageKey) }}</span>
+          }
+          @if (isTimingUploaded && !hasTimingDataError) {
+            <mat-icon (click)="deleteTimingData()" class="delete">delete</mat-icon>
+          }
+        </div>
       </div>
-      <div
-        class="wrapper wrapper-timing"
-        [ngClass]="{ valid: hasTimingBeenUploaded, invalid: timingErrorMessageKey !== '' }"
-      >
-        <mat-icon class="material-icons-outlined">timer</mat-icon>
-        @if (hasTimingBeenUploaded && !hasTimingDataError) {
-          <span>
-            {{ t("segments_found", { segments: numberOfTimingSegments }) }}
-          </span>
+      @if (allFieldsValid) {
+        <div class="audio-player-manage-container">
+          <div class="audio-player-manage">
+            <app-checking-scripture-audio-player
+              [canClose]="false"
+              [source]="audio!.url"
+              [timing]="timing_processed"
+              [textDocId]="textDocId"
+              [showSegment]="true"
+            />
+          </div>
+        </div>
+      }
+
+      @if (!isOnline) {
+        <app-notice id="offline-error" type="error" icon="cloud_off">
+          {{ t("not_upload_audio_offline") }}
+        </app-notice>
+      }
+    </mat-dialog-content>
+    <mat-dialog-actions>
+      <a mat-button [href]="externalUrlService.chapterAudioHelpPage" target="_blank">
+        <mat-icon>help</mat-icon> {{ t("help") }}
+      </a>
+      <span class="flex-spacer"></span>
+      <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
+        {{ t("cancel") }}
+      </button>
+      <button mat-flat-button color="primary" type="submit" (click)="save()" id="audio-save-btn" [disabled]="!isOnline">
+        @if (isLoadingAudio) {
+          <mat-spinner diameter="24" class="white-spinner"></mat-spinner>
+        } @else {
+          {{ t("save") }}
         }
-        @if (!hasTimingBeenUploaded && !hasTimingDataError) {
-          <span>{{ t("no_timing_data_uploaded") }}</span>
-        }
-        @if (hasTimingDataError) {
-          <span>{{ t(timingErrorMessageKey) }}</span>
-        }
-        @if (hasTimingBeenUploaded && !hasTimingDataError) {
-          <mat-icon (click)="deleteTimingData()" class="delete">delete</mat-icon>
-        }
-      </div>
-    </div>
-    @if (!isOnline) {
-      <app-notice id="offline-error" type="error" icon="cloud_off">
-        {{ t("not_upload_audio_offline") }}
-      </app-notice>
-    }
-  </mat-dialog-content>
-  <mat-dialog-actions>
-    <a mat-button [href]="externalUrlService.chapterAudioHelpPage" target="_blank">
-      <mat-icon>help</mat-icon> {{ t("help") }}
-    </a>
-    <span class="flex-spacer"></span>
-    @if (isLoadingAudio) {
-      <div class="uploading">
-        <span>{{ t("uploading") }}</span>
-        <mat-spinner diameter="24"></mat-spinner>
-      </div>
-    }
-    <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
-      {{ t("cancel") }}
-    </button>
-    <button mat-flat-button color="primary" type="submit" (click)="save()" id="audio-save-btn" [disabled]="!isOnline">
-      {{ t("save") }}
-    </button>
-  </mat-dialog-actions>
+      </button>
+    </mat-dialog-actions>
+  </div>
 </ng-container>

@@ -9,7 +9,7 @@ import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforg
 import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { firstValueFrom } from 'rxjs';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, mock, spy, when } from 'ts-mockito';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
@@ -119,14 +119,14 @@ describe('ChapterAudioDialogComponent', () => {
     )?.[1]!;
 
     expect(env.component.chapter).not.toEqual(firstChapterWithAudio.number);
-    expect(env.component.selectionHasAudioAlready).not.toBeTruthy();
+    expect(env.component['_selectionHasAudioAlready']).not.toBeTruthy();
 
     env.component.book = containingBook.bookNum;
     env.component.chapter = firstChapterWithAudio.number;
 
     expect(env.component.book).toEqual(containingBook.bookNum);
     expect(env.component.chapter).toEqual(firstChapterWithAudio.number);
-    expect(env.component.selectionHasAudioAlready).toBeTruthy();
+    expect(env.component['_selectionHasAudioAlready']).toBeTruthy();
   }));
 
   it('detects if first chapter has audio already', fakeAsync(() => {
@@ -156,7 +156,7 @@ describe('ChapterAudioDialogComponent', () => {
     // Ensure that the UI shows that hte chapter has audio
     expect(env.component.book).toEqual(containingBook.bookNum);
     expect(env.component.chapter).toEqual(firstChapterWithAudio.number);
-    expect(env.component.selectionHasAudioAlready).toBeTruthy();
+    expect(env.component['_selectionHasAudioAlready']).toBeTruthy();
 
     flush();
   }));
@@ -397,8 +397,7 @@ describe('ChapterAudioDialogComponent', () => {
     env.dropzoneElement.dispatchEvent(dropEvent);
     tick();
 
-    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
-    expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
+    expect(env.component.allFieldsValid).toEqual(true);
   }));
 
   it('can browse to upload files', fakeAsync(() => {
@@ -413,8 +412,7 @@ describe('ChapterAudioDialogComponent', () => {
     env.fileUploadElement.dispatchEvent(event);
     tick();
 
-    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
-    expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
+    expect(env.component.allFieldsValid).toEqual(true);
   }));
 
   // TODO: Enable once we have audio stub merged in
@@ -512,6 +510,33 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.numberOfTimesDialogClosed).withContext('saving should occur and close dialog when online').toEqual(1);
   }));
 
+  it('will allow saving when fields are empty if they began filled', fakeAsync(() => {
+    env.component.book = 1;
+    env.component.chapter = 2;
+    const projectServiceSpy = spy(env.component['projectService']);
+    when(projectServiceSpy.onlineDeleteAudioTimingData('project01', 1, 2)).thenResolve();
+
+    env.component['checkForPreexistingAudio'];
+
+    env.onlineStatus = true;
+    env.component.audioUpdate(env.audioFile);
+    tick();
+    env.component.prepareTimingFileUpload(anything());
+    tick();
+
+    env.component.deleteAudioData();
+    tick();
+    env.component.deleteTimingData();
+    tick();
+
+    // SUT
+    env.component.save();
+    tick();
+    env.fixture.detectChanges();
+    flush();
+    expect(env.numberOfTimesDialogClosed).withContext('saving should occur and close dialog when online').toEqual(1);
+  }));
+
   it('disables save button if offline, shows message', fakeAsync(async () => {
     const config: MatDialogConfig<ChapterAudioDialogData> = {
       data: {
@@ -562,10 +587,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.book).toEqual(expectedBook);
     expect(env.component.chapter).toEqual(expectedChapter);
     expect(env.component.audioFilename).toEqual('Genesis 3');
-    expect(env.bookSelect.classList.contains('mat-mdc-select-disabled')).toBe(true);
-    expect(env.chapterSelect.classList.contains('mat-mdc-select-disabled')).toBe(true);
-    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
-    expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
+    expect(env.component.allFieldsValid).toEqual(true);
 
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
@@ -693,14 +715,6 @@ class TestEnvironment {
     });
   }
 
-  get bookSelect(): HTMLInputElement {
-    return this.overlayContainerElement.querySelector('.book-select-menu') as HTMLInputElement;
-  }
-
-  get chapterSelect(): HTMLInputElement {
-    return this.overlayContainerElement.querySelector('.chapter-select-menu') as HTMLInputElement;
-  }
-
   set onlineStatus(isOnline: boolean) {
     this.testOnlineStatusService.setIsOnline(isOnline);
     tick();
@@ -708,11 +722,11 @@ class TestEnvironment {
   }
 
   get fileUploadElement(): HTMLInputElement {
-    return this.dropzoneElement.querySelector('input[type=file]') as HTMLInputElement;
+    return this.overlayContainerElement.querySelector('input[type=file]') as HTMLInputElement;
   }
 
   get dropzoneElement(): HTMLElement {
-    return this.overlayContainerElement.querySelector('.dropzone') as HTMLElement;
+    return this.overlayContainerElement.querySelector('.mat-mdc-dialog-content')!.parentElement as HTMLElement;
   }
 
   get numberOfTimesDialogClosed(): number {

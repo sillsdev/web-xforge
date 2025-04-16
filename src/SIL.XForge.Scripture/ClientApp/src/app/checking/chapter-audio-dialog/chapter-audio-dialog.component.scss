@@ -31,28 +31,58 @@
     top: 0;
     right: 0;
   }
+
+  .audio-player-manage {
+    padding: 12px;
+    background-color: #e8eae6;
+    border-radius: 20px;
+    align-self: stretch;
+    margin-block-start: 20px;
+  }
 }
 
-.dropzone {
+:host {
   position: relative;
-  padding: 15px 20px 20px;
+}
+
+.overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(variables.$info-color, 0.75);
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  font-weight: 500;
+}
+
+.browse-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 10px 0 20px 0;
+  row-gap: 8px;
+
+  label {
+    font-size: 0.9em;
+    line-height: 1.25em;
+  }
+}
+
+.dashed-border-box {
   border: 2px dashed variables.$border-color;
   border-radius: 4px;
+  padding: 15px 10px;
   margin-bottom: 24px;
+}
 
-  &:hover {
-    button {
-      background-color: variables.$greenLight;
-      color: variables.$greyDark;
-    }
-  }
-
-  &.dragover {
-    background: variables.$border-color;
-  }
+.browse-container {
+  position: relative;
+  display: flex;
+  flex-direction: row;
 
   input {
     opacity: 0;
@@ -65,16 +95,11 @@
     cursor: pointer;
   }
 
-  label {
-    text-align: center;
-    font-size: 1.25rem;
-    line-height: 1.25em;
-    margin-bottom: 1rem;
-  }
-}
-mat-select.book-select-menu ::ng-deep {
-  .mat-mdc-select-arrow-wrapper {
-    margin-inline-end: 5px;
+  &:hover {
+    button {
+      background-color: variables.$greenLight;
+      color: variables.$greyDark;
+    }
   }
 }
 
@@ -122,11 +147,6 @@ mat-select.book-select-menu ::ng-deep {
       overflow: hidden;
     }
 
-    .chapter-select-menu {
-      flex-basis: 60px;
-      margin-inline-start: 5px;
-    }
-
     .divider {
       flex: 0 0 1px;
       border-left: 1px solid variables.$border-color;
@@ -152,4 +172,8 @@ mat-select.book-select-menu ::ng-deep {
 
 .flex-spacer {
   flex-grow: 1;
+}
+
+.white-spinner {
+  --mdc-circular-progress-active-indicator-color: white;
 }
