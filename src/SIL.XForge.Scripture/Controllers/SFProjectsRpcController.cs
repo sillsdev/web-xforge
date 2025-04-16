@@ -708,7 +708,7 @@ public class SFProjectsRpcController(
         try
         {
             // Run the background job
-            backgroundJobClient.Enqueue<MachineApiService>(r =>
+            backgroundJobClient.Enqueue<IMachineApiService>(r =>
                 r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
             );
             return Ok();

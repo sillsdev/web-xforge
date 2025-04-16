@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,6 +7,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
+import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
   ACTIVE: { icons: 'hourglass_empty', text: 'Running', color: 'grey' },
@@ -20,7 +22,7 @@ const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: str
 @Component({
   selector: 'app-draft-history-entry',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, TranslocoModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, TranslocoModule, DraftDownloadButtonComponent],
   templateUrl: './draft-history-entry.component.html',
   styleUrl: './draft-history-entry.component.scss'
 })
@@ -28,6 +30,9 @@ export class DraftHistoryEntryComponent {
   private _entry?: BuildDto;
   @Input() set entry(value: BuildDto | undefined) {
     this._entry = value;
+
+    // See if a draft can be downloaded
+    this.canDownloadBuild = this._entry?.additionalInfo?.dateGenerated != null;
 
     // Get the user who requested the build
     this._buildRequestedByUserName = undefined;
@@ -61,6 +66,8 @@ export class DraftHistoryEntryComponent {
     if (this._entry?.additionalInfo?.dateRequested == null) return '';
     return this.i18n.formatDate(new Date(this._entry?.additionalInfo?.dateRequested));
   }
+
+  @Input() canDownloadBuild = false;
 
   detailsOpen = false;
   trainingDataOpen = false;
