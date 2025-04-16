@@ -223,7 +223,7 @@ public class MachineApiService(
         );
 
         // Run the background job
-        backgroundJobClient.Enqueue<MachineApiService>(r =>
+        backgroundJobClient.Enqueue<IMachineApiService>(r =>
             r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
         );
     }
@@ -912,7 +912,6 @@ public class MachineApiService(
         };
     }
 
-    [Mutex]
     public async Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken)
     {
         try
@@ -990,7 +989,7 @@ public class MachineApiService(
         string syncJobId = await projectService.SyncAsync(curUserId, sfProjectId);
 
         // Run the training after the sync has completed. If the sync failed or stopped, retrain anyway
-        string buildJobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
+        string buildJobId = backgroundJobClient.ContinueJobWith<IMachineProjectService>(
             syncJobId,
             r =>
                 r.BuildProjectForBackgroundJobAsync(
@@ -1199,7 +1198,7 @@ public class MachineApiService(
         }
 
         // Run the training after the sync has completed
-        jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
+        jobId = backgroundJobClient.ContinueJobWith<IMachineProjectService>(
             jobId,
             r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
         );

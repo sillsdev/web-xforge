@@ -93,7 +93,7 @@ public class SyncService(
                 // the job unless the queued count and job ids have been incremented appropriately.
                 // We need to sync the source first so that we can link the source texts and train the engine.
                 string sourceJobId = !string.IsNullOrWhiteSpace(syncConfig.ParentJobId)
-                    ? backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(
+                    ? backgroundJobClient.ContinueJobWith<IParatextSyncRunner>(
                         syncConfig.ParentJobId,
                         r =>
                             r.RunAsync(
@@ -106,7 +106,7 @@ public class SyncService(
                         null,
                         JobContinuationOptions.OnAnyFinishedState
                     )
-                    : backgroundJobClient.Schedule<ParatextSyncRunner>(
+                    : backgroundJobClient.Schedule<IParatextSyncRunner>(
                         r =>
                             r.RunAsync(
                                 sourceProjectId,
@@ -117,7 +117,7 @@ public class SyncService(
                             ),
                         TimeSpan.FromMinutes(5)
                     );
-                string targetJobId = backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(
+                string targetJobId = backgroundJobClient.ContinueJobWith<IParatextSyncRunner>(
                     sourceJobId,
                     r =>
                         r.RunAsync(
@@ -191,7 +191,7 @@ public class SyncService(
                 try
                 {
                     // Build the SMT suggestions after the target has synced successfully
-                    buildJobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
+                    buildJobId = backgroundJobClient.ContinueJobWith<IMachineProjectService>(
                         targetJobId,
                         r =>
                             r.BuildProjectForBackgroundJobAsync(
@@ -247,7 +247,7 @@ public class SyncService(
         // Sync the target project only, as it does not have a source, or the source cannot be synced
         // See the comments in the block above regarding scheduling for rationale on the process
         string jobId = !string.IsNullOrWhiteSpace(syncConfig.ParentJobId)
-            ? backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(
+            ? backgroundJobClient.ContinueJobWith<IParatextSyncRunner>(
                 syncConfig.ParentJobId,
                 r =>
                     r.RunAsync(
@@ -260,7 +260,7 @@ public class SyncService(
                 null,
                 JobContinuationOptions.OnAnyFinishedState
             )
-            : backgroundJobClient.Schedule<ParatextSyncRunner>(
+            : backgroundJobClient.Schedule<IParatextSyncRunner>(
                 r =>
                     r.RunAsync(
                         syncConfig.ProjectId,

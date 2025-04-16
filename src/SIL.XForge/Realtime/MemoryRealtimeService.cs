@@ -53,6 +53,8 @@ public class MemoryRealtimeService : IRealtimeService
 
     public void StopServer() { }
 
+    public void CheckIfRunning() { }
+
     public Task<IConnection> ConnectAsync(string userId = null) =>
         Task.FromResult<IConnection>(new MemoryConnection(this));
 

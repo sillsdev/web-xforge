@@ -223,8 +223,8 @@
       },
       "Autofac": {
         "type": "Transitive",
-        "resolved": "8.2.0",
-        "contentHash": "T+4+W4byzyUOarCbIcFRbxpYKC+cndfQm/+VeWpB60P2MCN0JMsewUhZqvH5Ooe936HQjn5uHvEY9tq6BfbiIw==",
+        "resolved": "8.2.1",
+        "contentHash": "q5xYBykgdvBlcmrXzHcDWcfeVktGEraluypkC0IRTupfxk+r+z+JcXgKj5kldKGe1fflyW3Ya3y9Soe9J2CqEA==",
         "dependencies": {
           "System.Diagnostics.DiagnosticSource": "8.0.1"
         }
@@ -347,6 +347,15 @@
         "contentHash": "aTPzKN/g9SW30QB1SLTOMuckKqTVL1YAhtEpWll4LPbPTgyeBHJTChdRhrN127fj+mqJ6P4P7+HJBhNYUFTfNw==",
         "dependencies": {
           "Hangfire.NetCore": "[1.8.14]"
+        }
+      },
+      "Hangfire.Autofac": {
+        "type": "Transitive",
+        "resolved": "2.7.0",
+        "contentHash": "9LaNzbCMJm6yUOw+NKud5KwdQpXHR4j8V3MV0ufgmSO3SHRlzIWf+h2Qbldn8leAx9dnwtUkndMh+wF8k3Mx4w==",
+        "dependencies": {
+          "Autofac": "5.0.0",
+          "Hangfire.Core": "1.6.0"
         }
       },
       "Hangfire.Core": {
@@ -1972,13 +1981,14 @@
         "type": "Project",
         "dependencies": {
           "AbrarJahin.DiffMatchPatch": "[0.1.0, )",
-          "Autofac": "[8.2.0, )",
+          "Autofac": "[8.2.1, )",
           "Autofac.Extensions.DependencyInjection": "[10.0.0, )",
           "Autofac.Extras.DynamicProxy": "[7.1.0, )",
           "Bugsnag.AspNet.Core": "[4.0.0, )",
           "Duende.IdentityModel": "[7.0.0, )",
           "EdjCase.JsonRpc.Router": "[6.1.0, )",
           "Hangfire": "[1.8.14, )",
+          "Hangfire.Autofac": "[2.7.0, )",
           "Hangfire.Mongo": "[1.10.7, )",
           "Jering.Javascript.NodeJS": "[6.3.1, )",
           "MailKit": "[4.11.0, )",

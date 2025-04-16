@@ -96,7 +96,6 @@ public class MachineProjectService(
     /// <remarks>
     /// This cannot be run multiple times in different threads.
     /// </remarks>
-    [Mutex]
     public async Task BuildProjectForBackgroundJobAsync(
         string curUserId,
         BuildConfig buildConfig,
@@ -365,9 +364,8 @@ public class MachineProjectService(
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <returns></returns>
+    /// <returns>The asynchronous task.</returns>
     /// <exception cref="DataNotFoundException">The project or user secret does not exist.</exception>
-    [Mutex]
     public async Task UpdateTranslationSourcesAsync(string curUserId, string sfProjectId)
     {
         // Get the user secret
