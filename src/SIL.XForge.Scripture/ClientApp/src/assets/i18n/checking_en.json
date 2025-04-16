@@ -296,10 +296,11 @@
     "tooltip_edit": "Edit"
   },
   "checking_questions": {
+    "go_to": "Go to questions",
+    "go_to_question_label": "Click here to go to the first question you haven't answered:",
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
     "loading": "Loading...",
-    "no_questions_found_filtered": "No questions found to match your filter",
-    "no_questions_found_unfiltered": "No questions found",
+    "no_questions_found": "No questions found for the settings above.",
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"
   },

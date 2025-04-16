@@ -22,9 +22,10 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { merge, Subject, Subscription } from 'rxjs';
+import { debounceTime, finalize } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../../core/models/question-doc';
@@ -33,6 +34,8 @@ import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-con
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { BookChapter, bookChapterMatchesVerseRef, CheckingUtils } from '../../checking.utils';
+import { CheckingQuestionsService } from '../checking-questions.service';
+
 export interface QuestionChangeActionSource {
   /** True during events due to a questions doc change such as with a filter. */
   isQuestionListChange?: boolean;
@@ -62,7 +65,6 @@ export interface QuestionChangedEvent {
 export class CheckingQuestionsComponent implements OnInit, OnChanges {
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionChangedEvent>();
-  @Input() isFiltered: boolean = false;
 
   /** The book/chapter from the route.  Stored question activation is constrained to this book/chapter. */
   @Input() routeBookChapter?: BookChapter;
@@ -81,6 +83,18 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
         this.setProjectAdmin();
       });
     this.setProjectAdmin();
+
+    this.questionsService
+      .queryFirstUnansweredQuestion(projectProfileDoc.id, this.userService.currentUserId, this.destroyRef)
+      .then(query => {
+        this._firstUnansweredQuestion = query;
+        merge(query.ready$, query.localChanges$, query.remoteChanges$, query.remoteDocChanges$)
+          .pipe(quietTakeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            this.changeDetector.markForCheck();
+          }),
+          finalize(() => query.dispose());
+      });
   }
 
   @Input()
@@ -126,14 +140,16 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
   private projectProfileDocChangesSubscription?: Subscription;
   private projectUserConfigDocChangesSubscription?: Subscription;
+  private _firstUnansweredQuestion?: RealtimeQuery<QuestionDoc>;
 
   constructor(
+    private readonly questionsService: CheckingQuestionsService,
     private readonly userService: UserService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly projectService: SFProjectService,
     private readonly i18n: I18nService,
-    private destroyRef: DestroyRef
+    private readonly destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
@@ -191,6 +207,16 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
   get questionDocs(): Readonly<QuestionDoc[]> {
     return this._questionDocs;
+  }
+
+  get hasUnansweredQuestion(): boolean {
+    if (this._firstUnansweredQuestion === undefined) return false;
+    return this._firstUnansweredQuestion.count > 0;
+  }
+
+  protected emitNewQuestion(): void {
+    if (this._firstUnansweredQuestion === undefined) return;
+    this.activateQuestion(this._firstUnansweredQuestion.docs[0], { isQuestionListChange: false });
   }
 
   private get canAddAnswer(): boolean {
