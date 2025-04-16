@@ -30,11 +30,13 @@
     </mat-list>
   }
   @if (!hasQuestions && haveQuestionsLoaded) {
-    <div class="no-questions-found">
-      @if (isFiltered) {
-        {{ t("no_questions_found_filtered") }}
-      } @else {
-        {{ t("no_questions_found_unfiltered") }}
+    <div>
+      <div class="no-questions-found">{{ t("no_questions_found") }}</div>
+      @if (hasUnansweredQuestion) {
+        <div class="next-question">
+          {{ t("go_to_question_label") }}
+          <a mat-flat-button (click)="emitNewQuestion()">{{ t("go_to") }}</a>
+        </div>
       }
     </div>
   }

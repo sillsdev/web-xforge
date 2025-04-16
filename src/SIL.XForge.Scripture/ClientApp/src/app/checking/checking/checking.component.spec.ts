@@ -342,7 +342,7 @@ describe('CheckingComponent', () => {
         questionScope: 'chapter'
       });
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anything())).times(
-        15
+        14 + 1 + 1
       );
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
