@@ -8,8 +8,16 @@ function output() {
   echo "${PROGRAM_NAME}:" "$@"
 }
 
+function reportElapsedTime() {
+  local elapsed="${SECONDS}"
+  local minutes="$((elapsed / 60))"
+  local seconds="$((elapsed % 60))"
+  output "Elapsed time: ${minutes}m ${seconds}s"
+}
+
 function shutDownServer() {
   local pid="$1"
+  reportElapsedTime
   output "Shutting down server with PID ${pid}."
 
   kill -TERM "${pid}" 2>/dev/null || {
@@ -38,18 +46,18 @@ function startServer() {
   nohup dotnet run &>"${DOTNET_LOG}" &
   local SERVER_PID="$!"
   trap "shutDownServer ${SERVER_PID}" EXIT
-  output "Server started with PID: ${SERVER_PID}"
+  output "Server started with PID ${SERVER_PID}"
 
   sleep 20s
   local max_retries=10
   local attempt=1
   until nc -z localhost 5000 &>/dev/null || ((attempt > max_retries)); do
-    output "Waiting for dotnet server to start... (attempt $attempt)"
+    output "Waiting for dotnet server to be ready. (Attempt ${attempt}/${max_retries})"
     sleep 10s
     attempt=$((attempt + 1))
   done
   if ((attempt > max_retries)); then
-    output "dotnet server failed to start after $max_retries attempts."
+    output "dotnet server failed to be ready after ${max_retries} attempts."
     output "dotnet output:"
     cat "${DOTNET_LOG}"
     exit 1
@@ -59,12 +67,12 @@ function startServer() {
   sleep 10s
   attempt=1
   until nc -z localhost 4200 &>/dev/null || ((attempt > max_retries)); do
-    output "Waiting for ng server to start... (attempt $attempt)"
+    output "Waiting for ng server to be ready. (Attempt ${attempt}/${max_retries})"
     sleep 10s
     attempt=$((attempt + 1))
   done
   if ((attempt > max_retries)); then
-    output "ng server failed to start after $max_retries attempts."
+    output "ng server failed to be ready after ${max_retries} attempts."
     output "dotnet output:"
     cat "${DOTNET_LOG}"
     exit 1
@@ -74,6 +82,7 @@ function startServer() {
   sleep 5s
 }
 
+output "$(date -Is) Starting."
 startServer
 cd "${SCRIPT_DIR}"
 ./e2e.mts pre_merge_ci
