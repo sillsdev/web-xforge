@@ -38,6 +38,7 @@ export async function communityChecking(
   const user = new UserEmulator(page);
 
   if (await isProjectConnected(page, CHECKING_PROJECT_NAME)) {
+    await ensureJoinedOrConnectedToProject(page, CHECKING_PROJECT_NAME);
     await deleteProject(page, CHECKING_PROJECT_NAME);
   }
 
