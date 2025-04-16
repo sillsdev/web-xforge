@@ -63,13 +63,18 @@ export async function isProjectConnected(page: Page, shortName: string): Promise
 
   await ensureOnMyProjectsPage(page);
 
-  await Promise.race([
-    page.waitForSelector(`.user-unconnected-project:has-text("${shortName}")`),
-    page.waitForSelector(`.user-connected-project:has-text("${shortName}")`)
-  ]);
+  const goToProjectButtonLocator = page.locator('.user-connected-project').filter({ hasText: shortName });
+  const unconnectedProjectLocator = page.locator('.user-unconnected-project').filter({ hasText: shortName });
 
-  if (await page.locator(`.user-connected-project:has-text("${shortName}")`).isVisible()) return true;
-  if (await page.locator(`.user-unconnected-project:has-text(Join):has-text("${shortName}")`).isVisible()) return true;
+  await expect(goToProjectButtonLocator.or(unconnectedProjectLocator)).toBeVisible();
+
+  if (await goToProjectButtonLocator.isVisible()) {
+    return true;
+  }
+  // FIXME this doesn't appear to be working as intended
+  if (await unconnectedProjectLocator.getByRole('button', { name: 'Join' }).isVisible()) {
+    return true;
+  }
   return false;
 }
 
