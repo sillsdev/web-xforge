@@ -398,20 +398,24 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should login with defined logo', fakeAsync(() => {
+  it('should login with appropriate logo', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
+    const sfLogoUrl = 'https://auth0.languagetechnology.org/assets/sf.svg';
+    when(mockedLocationService.hostname).thenReturn('scriptureforge.org');
 
     env.service.logIn({ returnUrl: 'test-returnUrl' });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
-    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
+    let authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
       mockedWebAuth.loginWithRedirect
     ).last()[0];
-    expect(authOptions).toBeDefined();
-    if (authOptions != null) {
-      expect(authOptions.authorizationParams!.logo).toBeDefined();
-    }
+    expect(authOptions!.authorizationParams!.logo).toEqual(sfLogoUrl);
+
+    // a different domain
+    when(mockedLocationService.hostname).thenReturn('other.domain.org');
+    env.service.logIn({ returnUrl: 'test-returnUrl' });
+    authOptions = capture<RedirectLoginOptions | undefined>(mockedWebAuth.loginWithRedirect).last()[0];
+    expect(authOptions!.authorizationParams!.logo).not.toEqual(sfLogoUrl);
   }));
 
   it('should link with Paratext', fakeAsync(() => {

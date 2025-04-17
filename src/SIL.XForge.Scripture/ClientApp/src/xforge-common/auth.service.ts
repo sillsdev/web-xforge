@@ -243,11 +243,16 @@ export class AuthService {
     const state: AuthState = { returnUrl };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const ui_locales: string = language;
+    const sfHosts = ['scriptureforge.org', 'qa.scriptureforge.org', 'localhost'];
+    const useBranding: boolean = sfHosts.includes(this.locationService.hostname);
+
     const auth0Parameters: xForgeAuth0Parameters = {
       ui_locales: language,
       language,
       login_hint: ui_locales,
-      logo: 'https://auth0.languagetechnology.org/assets/sf.svg'
+      logo: useBranding
+        ? 'https://auth0.languagetechnology.org/assets/sf.svg'
+        : 'https://auth0.languagetechnology.org/assets/sd.svg'
     };
 
     if (signUp || this.isJoining) {
