@@ -77,6 +77,14 @@ jobs:
       - name: Upgrade npm
         run: npm install -g npm@${{matrix.npm_version}}
 
+      # Install NPM dependencies. This is an attempt to fix errors building TypeScript that occur in the Autobuild step.
+      # They might be caused by NPM dependencies not being successfully installed before trying to build. If this
+      # doesn't prevent those errors, we should remove this step.
+      # Another possible approach would be to create a C# build config that does not build the realtime server at all,
+      # which would result in faster analysis and remove this failure mode.
+      - name: Install realtime-server dependencies
+        run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
