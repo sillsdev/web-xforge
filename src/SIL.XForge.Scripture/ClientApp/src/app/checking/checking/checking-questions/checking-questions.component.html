@@ -34,7 +34,6 @@
       <div class="no-questions-found">{{ t("no_questions_found") }}</div>
       @if (hasUnansweredQuestion) {
         <div class="next-question">
-          {{ t("go_to_question_label") }}
           <a mat-flat-button (click)="activateFirstUnansweredQuestion()">{{ t("go_to") }}</a>
         </div>
       }
