@@ -391,13 +391,15 @@ export const CannotSelectTargetAsASource: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await userEvent.click(canvas.getAllByRole('combobox')[0]);
+    await userEvent.click(canvas.getByRole('combobox'));
     // Make sure current target Russian project can't be selected
+    expect(canvas.queryByRole('option', { name: /P_ES/ })).not.toBeNull();
     expect(canvas.queryByRole('option', { name: /P_RU/ })).toBeNull();
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
 
-    // Make sure current target Russian project can't be selected
     await userEvent.click(canvas.getAllByRole('combobox')[0]);
+    // Make sure current target Russian project can't be selected
+    expect(canvas.queryAllByRole('option', { name: /P_ES/ })).not.toBeNull();
     expect(canvas.queryByRole('option', { name: /P_RU/ })).toBeNull();
   }
 };
