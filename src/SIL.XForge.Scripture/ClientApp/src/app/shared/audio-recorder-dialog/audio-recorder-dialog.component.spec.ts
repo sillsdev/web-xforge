@@ -127,6 +127,20 @@ describe('AudioRecorderDialogComponent', () => {
     expect(result.audio.status).toEqual('processed');
     expect(result.audio.url).toContain('blob:');
   });
+
+  it('saves after recording and processing if manual save is not required', async () => {
+    const env = new TestEnvironment(false);
+    const promiseForResult: Promise<AudioRecorderDialogResult> = firstValueFrom(env.dialogRef.afterClosed());
+
+    env.clickButton(env.recordButton);
+    await env.waitForRecorder(1000);
+    env.clickButton(env.stopRecordingButton);
+    await env.waitForRecorder(100);
+
+    const result: AudioRecorderDialogResult = await promiseForResult;
+    expect(result.audio.status).toEqual('processed');
+    expect(result.audio.url).toContain('blob:');
+  });
 });
 
 class TestEnvironment {
@@ -141,10 +155,10 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(countdown: boolean = false) {
+  constructor(saveRequired: boolean = true, countdown: boolean = false) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(AudioRecorderDialogComponent, {
-      data: { countdown } as AudioRecorderDialogData
+      data: { countdown, requireSave: saveRequired } as AudioRecorderDialogData
     });
     this.component = this.dialogRef.componentInstance;
 
