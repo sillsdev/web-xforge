@@ -433,3 +433,17 @@ export async function getNewBrowserForSideWork(): Promise<{ page: Page; browser:
   const page = await context.newPage();
   return { page, browser };
 }
+
+/** Utilities. */
+export class Utils {
+  /** Returns date as a string in the format 'YYYY-mm-DD-HHMMSS'. */
+  static formatDate(date: Date): string {
+    const formatted: string = `${date.getFullYear()}-${Utils.pad(date.getMonth() + 1)}-${Utils.pad(date.getDate())}-${Utils.pad(date.getHours())}${Utils.pad(date.getMinutes())}${Utils.pad(date.getSeconds())}`;
+
+    return formatted;
+  }
+
+  private static pad(n: number): string {
+    return n.toString().padStart(2, '0');
+  }
+}
