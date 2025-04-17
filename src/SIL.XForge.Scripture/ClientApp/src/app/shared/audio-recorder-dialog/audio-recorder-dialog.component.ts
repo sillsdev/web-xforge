@@ -69,7 +69,8 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
   countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
 
-  private _requireSave: boolean;
+  protected _requireSave: boolean;
+
   private destroyed = false;
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
