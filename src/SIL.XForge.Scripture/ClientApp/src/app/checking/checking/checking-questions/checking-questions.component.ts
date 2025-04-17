@@ -214,9 +214,9 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     return this._firstUnansweredQuestion.count > 0;
   }
 
-  protected emitNewQuestion(): void {
-    if (this._firstUnansweredQuestion === undefined) return;
-    this.activateQuestion(this._firstUnansweredQuestion.docs[0], { isQuestionListChange: false });
+  protected activateFirstUnansweredQuestion(): void {
+    if (!this.hasUnansweredQuestion) return;
+    this.activateQuestion(this._firstUnansweredQuestion!.docs[0], { isQuestionListChange: false });
   }
 
   private get canAddAnswer(): boolean {
