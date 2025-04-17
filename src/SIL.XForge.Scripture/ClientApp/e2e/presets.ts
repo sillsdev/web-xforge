@@ -41,7 +41,7 @@ const defaultPreset: TestPreset = {
   defaultUserDelay: 500,
   showArrow: true,
   trace: true,
-  outputDir: `test_output/${new Date().toISOString().slice(0, 19)}`,
+  outputDir: `test_output/${new Date().toISOString().slice(0, 19).replaceAll(/[-:]/g, '_')}`,
   pauseOnFailure: true,
   headless: false
 } as const;
