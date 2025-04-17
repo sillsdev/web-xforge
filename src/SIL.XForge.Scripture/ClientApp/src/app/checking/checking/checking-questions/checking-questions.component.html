@@ -35,7 +35,7 @@
       @if (hasUnansweredQuestion) {
         <div class="next-question">
           {{ t("go_to_question_label") }}
-          <a mat-flat-button (click)="emitNewQuestion()">{{ t("go_to") }}</a>
+          <a mat-flat-button (click)="activateFirstUnansweredQuestion()">{{ t("go_to") }}</a>
         </div>
       }
     </div>
