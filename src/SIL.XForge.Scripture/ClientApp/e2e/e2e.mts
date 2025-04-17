@@ -51,7 +51,7 @@ try {
 
       const testFn = tests[test];
       if (testFn == null) throw new Error(`Test ${test} not found`);
-      const attempts = numberOfTimesToAttemptTest(test);
+      const attempts = Math.min(numberOfTimesToAttemptTest(test), preset.maxTries ?? Number.POSITIVE_INFINITY);
 
       console.log(`Running test ${test} with up to ${attempts} attempts`);
       let reRun = false;
