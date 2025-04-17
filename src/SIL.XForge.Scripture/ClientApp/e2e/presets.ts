@@ -11,6 +11,7 @@ export interface TestPreset {
   skipScreenshots: boolean;
   trace: boolean;
   defaultUserDelay: number;
+  maxTries?: number;
   showArrow: boolean;
   pauseOnFailure: boolean;
   headless: boolean;
@@ -68,6 +69,7 @@ export const presets = {
     headless: true,
     defaultUserDelay: 0,
     showArrow: true,
-    outputDir: 'test_output/ci_e2e_test_results'
+    outputDir: 'test_output/ci_e2e_test_results',
+    maxTries: 2
   }
 } as const satisfies { [key: string]: TestPreset };
