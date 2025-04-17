@@ -127,7 +127,7 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'generate_draft_initializing', ...context });
   await expect(page.getByRole('heading', { name: 'Draft queued' })).toBeVisible({ timeout: 60_000 });
   await screenshot(page, { pageName: 'generate_draft_queued', ...context });
-  await expect(page.getByRole('heading', { name: 'Draft in progress' })).toBeVisible({ timeout: 5 * 60_000 });
+  await expect(page.getByRole('heading', { name: 'Draft in progress' })).toBeVisible({ timeout: 2 * 60_000 });
   console.log('UI shows draft in progress after', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
   await screenshot(page, { pageName: 'generate_draft_in_progress', ...context });
 
