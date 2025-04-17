@@ -35,6 +35,7 @@ strong {
 
 .draft-sources-stepper {
   grid-area: accordion;
+  overflow: hidden;
 }
 
 .step-header {
