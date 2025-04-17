@@ -1,6 +1,7 @@
 import locales from '../../locales.json' with { type: 'json' };
 import { BrowserName, UserRole } from './e2e-globals.ts';
 import { E2ETestRunLogger } from './e2e-test-run-logger.ts';
+import { Utils } from './e2e-utils.ts';
 
 export interface TestPreset {
   rootUrl: string;
@@ -41,7 +42,7 @@ const defaultPreset: TestPreset = {
   defaultUserDelay: 500,
   showArrow: true,
   trace: true,
-  outputDir: `test_output/${new Date().toISOString().slice(0, 19).replaceAll(/[-:]/g, '_')}`,
+  outputDir: `test_output/${Utils.formatDate(new Date())}`,
   pauseOnFailure: true,
   headless: false
 } as const;
