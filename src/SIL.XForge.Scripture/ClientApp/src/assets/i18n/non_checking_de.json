@@ -261,8 +261,8 @@
     "translated_books": "Übersetzte Bücher",
     "translated_book_selected_no_training_pair": "Für einige der von Dir ausgewählten Bücher für die Schulung sind keine passenden Referenzbücher ausgewählt. Bitte wähle passende Referenzbücher aus.",
     "unusable_target_books": "Du kannst das Buch nicht finden? Stelle sicher, dass das Buch in Paratext erstellt wurde und synchronisiere Dein Projekt.",
-    "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
-    "use_echo": "Use Echo Translation Engine"
+    "use_echo_warning": "Wenn Du dies aktivierst, wird Dein Quelltext wiedergeben, anstatt ihn zu übersetzen.",
+    "use_echo": "Die Funktion Übersetzung Wiedergeben verwenden"
   },
   "draft_preview_books": {
     "add_to_project": "Zum Projekt hinzufügen",
@@ -284,6 +284,7 @@
     "language_code": "Sprachcode: ",
     "leave_and_discard": "Verlassen und Änderungen verwerfen",
     "next": "Weiter",
+    "offline_message": "You are offline. Please connect to the internet to save and sync your draft sources.",
     "overview_reference": "Verweis",
     "overview_source": "Quelle",
     "overview_translated_project": "Übersetztes Projekt",
@@ -710,7 +711,7 @@
     "progress": "Fortschritt",
     "quality": "Qualität",
     "retrain": "Neu schulen",
-    "suggestion_engine": "Vorschlagsfunktion",
+    "suggestion_engine": "Funktion Vorschlagen",
     "trained_segments": "geschulte Segmente",
     "training": "Schulung...",
     "training_unavailable": "Schulung ist vorübergehend nicht verfügbar",
