@@ -284,6 +284,7 @@
     "language_code": "Code de la langue :",
     "leave_and_discard": "Laisser & annuler les modifications",
     "next": "Suivant",
+    "offline_message": "You are offline. Please connect to the internet to save and sync your draft sources.",
     "overview_reference": "Référence",
     "overview_source": "Source",
     "overview_translated_project": "Projet traduit",
