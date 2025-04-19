@@ -16,5 +16,8 @@ export const environment = {
   realtimeUrl: '/realtime-api/',
   authDomain: 'dev-sillsdev.auth0.com',
   authClientId: '4eHLjo40mAEGFU6zUxdYjnpnC1K1Ydnj',
-  offlineDBVersion: 8
+  offlineDBVersion: 8,
+  googleTagManagerId: 'GTM-P2DF8SLM',
+  googleTagManagerAuth: 'pcbHrZyROB6E6AS0PZsD1Q',
+  googleTagManagerPreview: 'env-7'
 };

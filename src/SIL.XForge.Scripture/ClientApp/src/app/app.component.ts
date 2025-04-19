@@ -1,6 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
@@ -9,7 +9,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Observable, Subscription } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -36,6 +36,7 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { ThemeService } from 'xforge-common/theme.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AnalyticsService, PageViewEvent } from 'xforge-common/analytics.service';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -43,8 +44,6 @@ import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { checkAppAccess } from './shared/utils';
-
-declare function gtag(...args: any): void;
 
 @Component({
   selector: 'app-root',
@@ -91,7 +90,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly pwaService: PwaService,
     private readonly themeService: ThemeService,
     onlineStatusService: OnlineStatusService,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private readonly analytics: AnalyticsService,
+    private readonly activatedRoute: ActivatedRoute
   ) {
     super(noticeService);
     this.breakpointObserver
@@ -125,18 +126,26 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     pwaService.hasUpdate$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => (this.hasUpdate = true));
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
-    if (environment.releaseStage === 'live') {
-      const navEndEvent$ = router.events.pipe(
-        filter(e => e instanceof NavigationEnd),
-        map(e => e as NavigationEnd)
-      );
-      navEndEvent$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(e => {
-        if (this.isAppOnline) {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
-        }
-      });
-    }
+    const navEndEvent$ = router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      distinctUntilChanged((previous, current) => {
+        const previousUrl = new URL((previous as NavigationEnd).urlAfterRedirects, location.origin);
+        const currentUrl = new URL((current as NavigationEnd).urlAfterRedirects, location.origin);
+        return previousUrl.pathname === currentUrl.pathname;
+      }),
+      map(e => {
+        const navEndEvent = e as NavigationEnd;
+        let route = this.activatedRoute.root;
+        while (route.firstChild) route = route.firstChild;
+        return {
+          pageName: this.locationService.host + navEndEvent.urlAfterRedirects,
+          title: route.snapshot.routeConfig?.title?.toString()
+        } as PageViewEvent;
+      })
+    );
+    navEndEvent$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(pageViewEvent => this.analytics.logNavigation(pageViewEvent));
   }
 
   get canInstallOnDevice$(): Observable<boolean> {

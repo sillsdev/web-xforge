@@ -24,6 +24,7 @@ import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { GoogleTagManagerModule } from 'angular-google-tag-manager';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -82,7 +83,12 @@ import { UsersModule } from './users/users.module';
     AvatarComponent,
     MatRipple,
     GlobalNoticesComponent,
-    QuillModule.forRoot()
+    QuillModule.forRoot(),
+    GoogleTagManagerModule.forRoot({
+      id: environment.googleTagManagerId,
+      gtm_auth: environment.googleTagManagerAuth,
+      gtm_preview: environment.googleTagManagerPreview
+    })
   ],
   providers: [
     { provide: APP_ID, useValue: 'ng-cli-universal' },
