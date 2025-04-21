@@ -5,6 +5,11 @@ $mainSectionBGColor: #343a32;
 $secondaryTextColor: #9b9b9b;
 $applyActionColor: #5485e7;
 $dismissActionColor: $applyActionColor;
+$borderColor: #999;
+$borderColorDark: #777;
+$borderColorDarker: #555;
+$headerColor: #bdbdbd;
+$hoverBackgroundColor: #06395c;
 $borderRadius: 0.3em;
 
 :host {
@@ -17,11 +22,11 @@ mat-icon {
   width: auto;
   height: auto;
   cursor: pointer;
-}
 
-.main-section.focused,
-.more-info-section {
-  padding: 0.7em 0.8em 0.4em 1em;
+  &:not(.apply-icon):hover {
+    transform: scale(1.1);
+    transform-origin: center;
+  }
 }
 
 .main-section {
@@ -29,6 +34,8 @@ mat-icon {
 
   // When prompt is for single insight, or insight is selected from multi-picker
   &.focused {
+    padding: 0.7em 0.8em 0.7em 1em;
+
     > * {
       animation: fade-in 0.3s;
     }
@@ -46,16 +53,8 @@ mat-icon {
     }
 
     @each $type in insights.$insightTypes {
-      &.#{$type} {
-        &::before {
-          background-color: insights.insight-color($type);
-        }
-      }
-    }
-
-    mat-icon:not(.apply-icon) {
-      &:hover {
-        transform: scale(1.1);
+      &.#{$type}::before {
+        background-color: insights.insight-color($type);
       }
     }
   }
@@ -64,8 +63,8 @@ mat-icon {
   &.list {
     > h1 {
       padding: 0.5em 0.8em;
-      color: #bdbdbd;
-      border-bottom: 1px solid #777;
+      color: $headerColor;
+      border-bottom: 1px solid $borderColorDark;
       font-size: 0.8em;
       line-height: normal;
     }
@@ -83,11 +82,11 @@ mat-icon {
       }
 
       &:not(:last-child) {
-        border-bottom: 1px solid #555;
+        border-bottom: 1px solid $borderColorDarker;
       }
 
       &:hover {
-        background-color: #06395c;
+        background-color: $hoverBackgroundColor;
       }
 
       .severity-icon {
@@ -95,17 +94,15 @@ mat-icon {
       }
 
       @each $type in insights.$insightTypes {
-        &.#{$type} {
-          .severity-icon {
-            color: insights.insight-color($type);
-            flex-shrink: 0;
-          }
+        &.#{$type} .severity-icon {
+          color: insights.insight-color($type);
+          flex-shrink: 0;
         }
       }
 
       .ellipsis-icon {
         color: $secondaryTextColor;
-        margin-inline-start: auto; // Push to right
+        margin-inline-start: auto;
         padding-inline-start: 1em;
         flex-shrink: 0;
       }
@@ -115,14 +112,11 @@ mat-icon {
 
 .more-info-section {
   padding: 0.8em 0.7em;
-  border: 1px solid #999;
-  border-width: 0 1px 1px 1px;
-  border-radius: 0 0 $borderRadius $borderRadius;
-}
-
-.more-info-section {
   background-color: #fff;
   font-size: 0.8em;
+  border: 1px solid $borderColor;
+  border-width: 0 1px 1px 1px;
+  border-radius: 0 0 $borderRadius $borderRadius;
 }
 
 h1 {
