@@ -1,4 +1,4 @@
-@for (insight of insightCountsByType$ | async; track insight) {
+@for (insight of insightCountsByType$ | async; track insight.type) {
   <div class="type-count">
     <mat-icon [svgIcon]="'lynx_' + insight.type" />
     <span [class]="insight.type">{{ insight.count }}</span>
