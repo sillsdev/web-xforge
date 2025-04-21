@@ -3,9 +3,9 @@ import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/mode
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { mock, when } from 'ts-mockito';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectUserConfigDoc } from '../app/core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
-import { configureTestingModule } from '../xforge-common/test-utils';
 import { ActivatedProjectUserConfigService } from './activated-project-user-config.service';
 import { ActivatedProjectService } from './activated-project.service';
 import { UserService } from './user.service';
