@@ -12,8 +12,7 @@ import {
   Observable,
   of,
   shareReplay,
-  switchMap,
-  tap
+  switchMap
 } from 'rxjs';
 import { ActivatedProjectUserConfigService } from './activated-project-user-config.service';
 import { ActivatedProjectService } from './activated-project.service';
@@ -47,17 +46,16 @@ export class ActivatedBookChapterService {
       }
 
       const bookNum = Canon.bookIdToNumber(bookId);
+
       if (chapter == null && bookNum === projectUserConfig.selectedBookNum) {
         chapter = projectUserConfig.selectedChapterNum;
       }
-      if (chapter == null) {
-        chapter = projectProfile.texts.find(t => t.bookNum === bookNum)?.chapters[0]?.number;
-      }
+
+      chapter ??= projectProfile.texts.find(t => t.bookNum === bookNum)?.chapters[0]?.number;
 
       return of({ bookId, chapter });
     }),
     distinctUntilChanged(isEqual),
-    tap(activatedBookChapter => console.log('activatedBookChapter$', activatedBookChapter)),
     shareReplay(1)
   );
 

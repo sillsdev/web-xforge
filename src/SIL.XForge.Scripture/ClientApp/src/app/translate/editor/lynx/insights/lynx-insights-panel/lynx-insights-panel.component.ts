@@ -141,7 +141,6 @@ export class LynxInsightsPanelComponent implements OnInit {
   }
 
   restoreDismissedInsight(insight: LynxInsight): void {
-    console.log('Restore', insight.id);
     this.editorInsightState.restoreDismissedInsights([insight.id]);
   }
 
