@@ -27,7 +27,6 @@ export class LynxInsightOverlayComponent implements OnInit {
 
   @Input()
   set insights(value: LynxInsight[]) {
-    console.log(`set insights(${value.map(i => i.id).join(', ')})`);
     this._insights = value;
 
     // Focus if single insight
@@ -115,7 +114,6 @@ export class LynxInsightOverlayComponent implements OnInit {
       return;
     }
 
-    console.log('Performing action', action);
     this.editor.updateContents(action.ops);
 
     if (this.focusedInsight == null) {
@@ -127,7 +125,6 @@ export class LynxInsightOverlayComponent implements OnInit {
   }
 
   dismissInsight(insight: LynxInsight): void {
-    console.log('Dismiss', insight.id);
     this.insightDismiss.emit(insight);
     this.insightState.dismissInsights([insight.id]);
   }

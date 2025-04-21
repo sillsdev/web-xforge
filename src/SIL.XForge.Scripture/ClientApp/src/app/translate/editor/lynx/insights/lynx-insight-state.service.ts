@@ -16,7 +16,6 @@ import {
   Observable,
   shareReplay,
   take,
-  tap,
   withLatestFrom
 } from 'rxjs';
 import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
@@ -34,7 +33,6 @@ type BooleanProp<T> = { [K in keyof T]: T[K] extends boolean | undefined ? K : n
 export class LynxInsightStateService {
   private rawInsights$: Observable<LynxInsight[]> = this.lynxWorkspaceService.rawInsightSource$.pipe(
     distinctUntilChanged(isEqual),
-    tap(insights => console.log('rawInsights$ changed (LynxInsightStateService)', insights)),
     shareReplay(1)
   );
 
@@ -64,7 +62,6 @@ export class LynxInsightStateService {
       )
     ),
     distinctUntilChanged(isEqual),
-    tap(insights => console.log('filteredChapterInsights$ changed (LynxInsightStateService)', insights)),
     shareReplay(1)
   );
 
@@ -80,7 +77,6 @@ export class LynxInsightStateService {
       )
     ),
     distinctUntilChanged(isEqual),
-    tap(val => console.log('filteredInsights$ changed (LynxInsightStateService)', val)),
     shareReplay(1)
   );
 
@@ -123,7 +119,6 @@ export class LynxInsightStateService {
       return result;
     }),
     distinctUntilChanged(isEqual),
-    tap(val => console.log('filteredInsightCountsByScope$ changed (LynxInsightStateService)', val)),
     shareReplay(1)
   );
 
@@ -141,7 +136,6 @@ export class LynxInsightStateService {
       return result;
     }),
     distinctUntilChanged(isEqual),
-    tap(val => console.log('filteredInsightCountsByType$ changed (LynxInsightStateService)', val)),
     shareReplay(1)
   );
 
@@ -154,7 +148,6 @@ export class LynxInsightStateService {
   });
   readonly displayState$: Observable<LynxInsightDisplayState> = this.displayStateSource$.pipe(
     distinctUntilChanged(isEqual),
-    tap(displayState => console.log('displayStateSource$ changed (LynxInsightStateService)', displayState)),
     shareReplay(1)
   );
 
