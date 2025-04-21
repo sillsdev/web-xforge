@@ -128,7 +128,7 @@ describe('LynxInsightStateService', () => {
     when(mockActivatedProjectUserConfigService.projectUserConfigDoc$).thenReturn(projectUserConfigDoc$);
 
     when(mockInsightFilterService.matchesFilter(anything(), anything(), anything(), anything())).thenCall(
-      (insight: LynxInsight, filter: any, bookChapter: RouteBookChapter, dismissedIds: string[]) => {
+      (insight: LynxInsight, filter: any, _bookChapter: RouteBookChapter, dismissedIds: string[]) => {
         if (!filter.types.includes(insight.type)) {
           return false;
         }
@@ -154,7 +154,7 @@ describe('LynxInsightStateService', () => {
     );
 
     when(mockInsightFilterService.getScope(anything(), anything())).thenCall(
-      (insight: LynxInsight, bookChapter: RouteBookChapter) => {
+      (insight: LynxInsight, _bookChapter: RouteBookChapter) => {
         if (insight.textDocId.bookNum === 40 && insight.textDocId.chapterNum === 1) {
           return 'chapter';
         } else if (insight.textDocId.bookNum === 40) {
