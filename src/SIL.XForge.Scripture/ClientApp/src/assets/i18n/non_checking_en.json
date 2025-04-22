@@ -264,6 +264,12 @@
   "draft_history_entry": {
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "download_zip": "Download draft as ZIP file",
+    "draft_active": "Running",
+    "draft_canceled": "Canceled",
+    "draft_completed": "Completed",
+    "draft_faulted": "Failed",
+    "draft_pending": "Pending",
+    "draft_unknown": "Unknown",
     "hide_model_training_data": "Hide model training data",
     "show_model_training_data": "Show model training data",
     "training_data_configuration": "The language model was trained on this configuration"
@@ -271,7 +277,7 @@
   "draft_history_list": {
     "draft_canceled": "Your draft was canceled",
     "draft_completed": "Your draft is ready",
-    "drafT_faulted": "The draft failed",
+    "draft_faulted": "The draft failed",
     "previously_generated_drafts": "Previously generated drafts"
   },
   "draft_preview_books": {

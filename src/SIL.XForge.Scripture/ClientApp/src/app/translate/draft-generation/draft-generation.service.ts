@@ -11,9 +11,10 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { Revision } from '../../core/paratext.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { HttpClient } from '../../machine-api/http-client';
-import { getBookFileNameDigits } from '../../shared/utils';
+import { booksFromScriptureRange, getBookFileNameDigits } from '../../shared/utils';
 import {
   activeBuildStates,
   BuildConfig,
@@ -199,30 +200,65 @@ export class DraftGenerationService {
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
    * @param chapter The chapter number.
+   * @param timestamp The timestamp to download the draft at. If undefined, the latest draft will be downloaded.
    * @returns An array of delta operations or an empty array at if no pre-translations exist.
    * The 405 error that occurs when there is no USFM support is thrown to the caller.
    */
-  getGeneratedDraftDeltaOperations(projectId: string, book: number, chapter: number): Observable<DeltaOperation[]> {
+  getGeneratedDraftDeltaOperations(
+    projectId: string,
+    book: number,
+    chapter: number,
+    timestamp?: Date
+  ): Observable<DeltaOperation[]> {
     if (!this.onlineStatusService.isOnline) {
       return of([]);
     }
+    let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`;
+    if (timestamp != null) {
+      url += `?timestamp=${timestamp.toISOString()}`;
+    }
+    return this.httpClient.get<Snapshot<TextData> | undefined>(url).pipe(
+      map(res => res.data?.data.ops ?? []),
+      catchError(err => {
+        // If no pre-translations exist, return empty array
+        if (err.status === 403 || err.status === 404 || err.status === 409) {
+          return of([]);
+        } else if (err.status === 405) {
+          // Rethrow a 405 so the frontend can use getGeneratedDraft()
+          return throwError(() => err);
+        }
+
+        this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Gets the draft revisions saved in Scripture Forge for the specified book/chapter.
+   * @param projectId The SF project id for the target translation.
+   * @param book The book number.
+   * @param chapter The chapter number.
+   * @returns The Draft revisions, or undefined if an issue occurred retrieving the revisions.
+   */
+  getGeneratedDraftHistory(projectId: string, book: number, chapter: number): Observable<Revision[] | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
     return this.httpClient
       .get<
-        Snapshot<TextData> | undefined
-      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`)
+        Revision[] | undefined
+      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/history`)
       .pipe(
-        map(res => res.data?.data.ops ?? []),
+        map(res => res?.data ?? []),
         catchError(err => {
-          // If no pre-translations exist, return empty array
+          // If no pre-translations exist, return undefined
           if (err.status === 403 || err.status === 404 || err.status === 409) {
-            return of([]);
-          } else if (err.status === 405) {
-            // Rethrow a 405 so the frontend can use getGeneratedDraft()
-            return throwError(() => err);
+            return of(undefined);
           }
 
           this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
-          return of([]);
+          return of(undefined);
         })
       );
   }
@@ -239,7 +275,7 @@ export class DraftGenerationService {
     projectId: string,
     book: number,
     chapter: number,
-    timestamp: Date | undefined
+    timestamp?: Date
   ): Observable<string | undefined> {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
@@ -277,13 +313,12 @@ export class DraftGenerationService {
       const projectShortName: string = projectDoc.data.shortName;
       const usfmFiles: Promise<void>[] = [];
 
-      // Build the list of book numbers
-      const books: number[] = projectDoc.data.texts.reduce<number[]>((acc, text) => {
-        if (text.chapters.some(c => c.hasDraft)) {
-          acc.push(text.bookNum);
-        }
-        return acc;
-      }, []);
+      // Build the list of book numbers, first checking the build, then the project document if that is null
+      const books: number[] =
+        lastCompletedBuild?.additionalInfo?.translationScriptureRanges?.flatMap(range =>
+          booksFromScriptureRange(range.scriptureRange)
+        ) ?? projectDoc.data.texts.filter(text => text.chapters.some(c => c.hasDraft)).map(text => text.bookNum);
+
       const zipProgress: DraftZipProgress = { current: 0, total: books.length };
       observer.next(zipProgress);
 

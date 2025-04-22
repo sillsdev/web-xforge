@@ -1,3 +1,4 @@
+@use 'src/styles';
 @use 'src/variables';
 
 :host {
@@ -20,14 +21,17 @@ app-notice {
   background: #fff;
   z-index: 1;
   display: flex; //fill vertical space
+  padding: 0.5em;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  border-bottom: 1px solid var(--sf-tab-group-border-color);
 }
 
 .apply-draft-button-container {
   flex-grow: 1;
   display: flex;
   justify-content: flex-end;
-  padding: 0.5em;
-  border-bottom: 1px solid var(--sf-tab-group-border-color);
 }
 
 .draft-indicator {
@@ -39,4 +43,8 @@ app-notice {
   display: inline-flex;
   align-items: center;
   margin: 0 1em;
+}
+
+.draft-select {
+  @include styles.dense_mat_select();
 }
