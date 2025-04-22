@@ -218,6 +218,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
+  draftTimestamp?: Date;
   showInsights = false;
 
   @ViewChild('source') source?: TextComponent;
@@ -1443,11 +1444,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.tabState.getFirstTabOfTypeIndex('draft');
 
     const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams['draft-active'] === 'true';
+    if (this.activatedRoute.snapshot.queryParams['draft-timestamp'] != null) {
+      this.draftTimestamp = new Date(this.activatedRoute.snapshot.queryParams['draft-timestamp']);
+    } else {
+      this.draftTimestamp = undefined;
+    }
     const canViewDrafts: boolean = this.permissionsService.canAccessDrafts(
       this.projectDoc,
       this.userService.currentUserId
     );
-    if (hasDraft && (!draftApplied || urlDraftActive) && canViewDrafts) {
+    if (((hasDraft && !draftApplied) || urlDraftActive) && canViewDrafts) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 
@@ -1470,7 +1476,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
 
       if (urlDraftActive) {
-        // Remove 'draft-active' query string from url when another tab from group is selected
+        // Remove 'draft-active' and 'draft-timestamp' query string from url when another tab from group is selected
         this.tabState.tabs$
           .pipe(
             filter(tabs => tabs.some(tab => tab.groupId === groupIdToAddTo && tab.type !== 'draft' && tab.isSelected)),
@@ -1478,7 +1484,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           )
           .subscribe(() => {
             this.router.navigate([], {
-              queryParams: { 'draft-active': null },
+              queryParams: { 'draft-active': null, 'draft-timestamp': null },
               queryParamsHandling: 'merge',
               replaceUrl: true
             });

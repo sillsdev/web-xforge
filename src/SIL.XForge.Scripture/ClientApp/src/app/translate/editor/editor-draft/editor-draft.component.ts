@@ -1,17 +1,21 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
+import { MatSelectChange } from '@angular/material/select';
 import { translate } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
 import {
   asyncScheduler,
+  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
   EMPTY,
   filter,
   from,
   map,
+  merge,
   Observable,
+  observeOn,
   startWith,
   Subject,
   switchMap,
@@ -29,6 +33,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { isString } from '../../../../type-utils';
 import { TextDocId } from '../../../core/models/text-doc';
+import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
@@ -44,11 +49,14 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @Input() chapter?: number;
   @Input() isRightToLeft!: boolean;
   @Input() fontSize?: string;
+  @Input() timestamp?: Date;
 
   @ViewChild(TextComponent) draftText!: TextComponent;
 
   inputChanged$ = new Subject<void>();
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
+  draftRevisions: Revision[] = [];
+  selectedRevision: Revision | undefined;
   bookChapterName = '';
   generateDraftUrl?: string;
   targetProject?: SFProjectProfile;
@@ -56,6 +64,18 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   isDraftReady = false;
   isDraftApplied = false;
   userAppliedDraft = false;
+
+  private selectedRevisionSubject = new BehaviorSubject<Revision | undefined>(undefined);
+  private selectedRevision$ = this.selectedRevisionSubject.asObservable();
+
+  // 'asyncScheduler' prevents ExpressionChangedAfterItHasBeenCheckedError
+  private loading$ = new BehaviorSubject<boolean>(false);
+  isLoading$: Observable<boolean> = this.loading$.pipe(observeOn(asyncScheduler));
+
+  isSelectDisabled$: Observable<boolean> = combineLatest([
+    this.isLoading$,
+    this.onlineStatusService.onlineStatus$
+  ]).pipe(map(([isLoading, isOnline]) => isLoading || !isOnline));
 
   private draftDelta?: Delta;
   private targetDelta?: Delta;
@@ -88,6 +108,11 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.populateDraftTextInit();
   }
 
+  async onSelectionChanged(e: MatSelectChange): Promise<void> {
+    this.selectedRevision = e.value;
+    this.selectedRevisionSubject.next(this.selectedRevision);
+  }
+
   populateDraftTextInit(): void {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
@@ -98,9 +123,38 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         quietTakeUntilDestroyed(this.destroyRef),
         filter(([isOnline]) => isOnline),
         tap(() => this.setInitialState()),
-        switchMap(() => this.draftExists()),
-        switchMap((draftExists: boolean) => {
-          if (!draftExists) {
+        switchMap(() =>
+          combineLatest([
+            merge(
+              this.draftGenerationService
+                .getGeneratedDraftHistory(
+                  this.textDocId!.projectId,
+                  this.textDocId!.bookNum,
+                  this.textDocId!.chapterNum
+                )
+                .pipe(
+                  map(revisions => {
+                    if (revisions != null) {
+                      this.draftRevisions = revisions;
+                      const date = this.timestamp ?? new Date();
+                      // Don't emit this.selectedRevision$, as the merge will handle this
+                      this.selectedRevision = this.findClosestRevision(date, this.draftRevisions);
+                      return date;
+                    } else {
+                      return undefined;
+                    }
+                  })
+                ),
+              this.selectedRevision$.pipe(
+                filter((rev): rev is { timestamp: string } => rev != null),
+                map(revision => new Date(revision.timestamp))
+              )
+            ),
+            this.draftExists()
+          ])
+        ),
+        switchMap(([timestamp, draftExists]) => {
+          if (!draftExists && timestamp == null) {
             this.draftCheckState = 'draft-empty';
             return EMPTY;
           }
@@ -111,13 +165,14 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             tap(projectDoc => {
               this.targetProject = projectDoc.data;
             }),
-            distinctUntilChanged()
+            distinctUntilChanged(),
+            map(() => timestamp)
           );
         }),
-        switchMap(() =>
+        switchMap((timestamp: Date | undefined) =>
           combineLatest([
             this.getTargetOps(),
-            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false })
+            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false, timestamp })
           ])
         ),
         tap(([_, draft]) => {
@@ -199,6 +254,31 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   private draftExists(): Observable<boolean> {
     // This method of checking for draft may be temporary until there is a better way supplied by serval
     return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
+  }
+
+  findClosestRevision(date: Date, revisions: Revision[]): Revision {
+    const targetTime: number = date.getTime();
+    const oneHour: number = 60 * 60 * 1000;
+
+    let closestBefore: Revision | null = null;
+    let closestAfter: Revision | null = null;
+
+    for (const rev of revisions) {
+      const revTime = new Date(rev.timestamp).getTime();
+      if (revTime <= targetTime) {
+        closestBefore = rev;
+      } else {
+        closestAfter = rev;
+        break;
+      }
+    }
+
+    // If there is no revision after, or it's too far in the future, prefer the one before
+    if (closestAfter == null || new Date(closestAfter.timestamp).getTime() - targetTime > oneHour) {
+      return closestBefore!;
+    }
+
+    return closestAfter;
   }
 
   private hasContent(delta?: DeltaOperation[]): boolean {
