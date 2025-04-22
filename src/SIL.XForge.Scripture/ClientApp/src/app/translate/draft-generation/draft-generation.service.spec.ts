@@ -12,6 +12,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { TextDocSource } from '../../core/models/text-doc';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { MACHINE_API_BASE_URL } from '../../machine-api/http-client';
@@ -372,7 +373,7 @@ describe('DraftGenerationService', () => {
       };
 
       // SUT
-      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter, undefined).subscribe(result => {
         expect(result).toEqual(ops);
       });
       tick();
@@ -386,12 +387,63 @@ describe('DraftGenerationService', () => {
       tick();
     }));
 
+    it('should get the pre-translation ops at the specified time and return an observable', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      const timestamp = new Date();
+      const ops = [
+        {
+          insert: {
+            chapter: {
+              number: '1',
+              style: 'c'
+            }
+          }
+        },
+        {
+          insert: {
+            verse: {
+              number: '1',
+              style: 'v'
+            }
+          }
+        },
+        {
+          insert: 'Verse 1 Contents',
+          attributes: {
+            segment: 'verse_1_1'
+          }
+        }
+      ];
+      const preTranslationDeltaData = {
+        id: `${projectId}:${Canon.bookNumberToId(book)}:${chapter}:target`,
+        version: 0,
+        data: {
+          ops
+        }
+      };
+
+      // SUT
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter, timestamp).subscribe(result => {
+        expect(result).toEqual(ops);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta?timestamp=${timestamp.toISOString()}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(preTranslationDeltaData);
+      tick();
+    }));
+
     it('should return an empty array for missing data', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
 
       // SUT
-      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter, undefined).subscribe(result => {
         expect(result).toEqual([]);
       });
       tick();
@@ -410,7 +462,7 @@ describe('DraftGenerationService', () => {
       const chapter = 3;
 
       // SUT
-      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter, undefined).subscribe(result => {
         expect(result).toEqual([]);
       });
       tick();
@@ -429,7 +481,7 @@ describe('DraftGenerationService', () => {
       const chapter = 3;
 
       // SUT
-      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe({
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter, undefined).subscribe({
         error: (err: HttpErrorResponse) => {
           expect(err.status).toEqual(405);
           expect(err.statusText).toEqual('Not Allowed');
@@ -452,8 +504,79 @@ describe('DraftGenerationService', () => {
       testOnlineStatusService.setIsOnline(false);
 
       // SUT
-      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter, undefined).subscribe(result => {
         expect(result).toEqual([]);
+      });
+      tick();
+    }));
+  });
+
+  describe('getGeneratedDraftHistory', () => {
+    it('should get the draft history for the specified book/chapter and return an observable', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      const revisions = [{ source: 'Draft' as TextDocSource, timestamp: new Date().toISOString() }];
+      // SUT
+      service.getGeneratedDraftHistory(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual(revisions);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/history`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(revisions);
+      tick();
+    }));
+
+    it('should return undefined for missing data', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+
+      // SUT
+      service.getGeneratedDraftHistory(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual([]);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/history`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null);
+      tick();
+    }));
+
+    it('should return undefined for a 404 error', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+
+      // SUT
+      service.getGeneratedDraftHistory(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual(undefined);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/history`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getGeneratedDraftHistory(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual(undefined);
       });
       tick();
     }));
@@ -653,7 +776,7 @@ describe('DraftGenerationService', () => {
       tick();
     }));
 
-    it('should create a zip file containing all of the books with drafts at the generated date', fakeAsync(() => {
+    it('should create a zip file containing all of the books with drafts at the generated date if the build scripture range is missing', fakeAsync(() => {
       const projectDoc: SFProjectProfileDoc = {
         id: projectId,
         data: createTestProjectProfile({
@@ -664,6 +787,38 @@ describe('DraftGenerationService', () => {
         additionalInfo: {
           dateFinished: '2024-08-27T00:00:00.000+00:00',
           dateGenerated: '2024-08-27T01:02:03.004+00:00'
+        }
+      } as BuildDto;
+
+      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
+        complete: () => {
+          expect(saveAs).toHaveBeenCalled();
+        }
+      });
+      tick();
+
+      // Setup the HTTP request for 1 John
+      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
+      const req1jn = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm?timestamp=2024-08-27T01:02:03.004Z`
+      );
+      expect(req1jn.request.method).toEqual('GET');
+      req1jn.flush(usfm);
+      tick();
+    }));
+
+    it('should create a zip file containing all of the books with drafts at the generated date using the build scripture range', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        id: projectId,
+        data: createTestProjectProfile({
+          texts: []
+        })
+      } as SFProjectProfileDoc;
+      const lastCompletedBuild: BuildDto = {
+        additionalInfo: {
+          dateFinished: '2024-08-27T00:00:00.000+00:00',
+          dateGenerated: '2024-08-27T01:02:03.004+00:00',
+          translationScriptureRanges: [{ projectId, scriptureRange: '1JN' }]
         }
       } as BuildDto;
 

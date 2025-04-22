@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -19,6 +19,8 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
+import { BuildDto } from '../../../machine-api/build-dto';
+import { booksFromScriptureRange } from '../../../shared/utils';
 import {
   DraftApplyDialogComponent,
   DraftApplyDialogConfig as DraftApplyDialogData,
@@ -45,6 +47,8 @@ export interface BookWithDraft {
   imports: [CommonModule, UICommonModule, RouterModule, TranslocoModule]
 })
 export class DraftPreviewBooksComponent {
+  @Input() build: BuildDto | undefined;
+
   booksWithDrafts$: Observable<BookWithDraft[]> = this.activatedProjectService.changes$.pipe(
     filterNullish(),
     tap(p => (this.projectParatextId = p.data?.paratextId)),
@@ -52,15 +56,32 @@ export class DraftPreviewBooksComponent {
       if (projectDoc?.data == null) {
         return [];
       }
-      const draftBooks = projectDoc.data.texts
-        .map(text => ({
-          bookNumber: text.bookNum,
-          canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
-          chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
-          draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
-        }))
-        .sort((a, b) => a.bookNumber - b.bookNumber)
-        .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
+      let draftBooks: BookWithDraft[];
+      if (this.build == null) {
+        draftBooks = projectDoc.data.texts
+          .map(text => ({
+            bookNumber: text.bookNum,
+            canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
+            chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
+            draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
+          }))
+          .sort((a, b) => a.bookNumber - b.bookNumber)
+          .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
+      } else {
+        draftBooks = this.build.additionalInfo?.translationScriptureRanges
+          .flatMap(range => booksFromScriptureRange(range.scriptureRange))
+          .map(bookNum => {
+            const text: TextInfo | undefined = projectDoc.data?.texts.find(t => t.bookNum === bookNum);
+            return {
+              bookNumber: bookNum,
+              canEdit: text?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write,
+              chaptersWithDrafts: text?.chapters?.map(ch => ch.number) ?? [],
+              draftApplied: text?.chapters?.filter(ch => ch.hasDraft).every(ch => ch.draftApplied) ?? false
+            };
+          })
+          .sort((a, b) => a.bookNumber - b.bookNumber)
+          .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
+      }
       return draftBooks;
     })
   );
@@ -175,7 +196,7 @@ export class DraftPreviewBooksComponent {
 
   navigate(book: BookWithDraft): void {
     this.router.navigate(this.linkForBookAndChapter(book.bookNumber, book.chaptersWithDrafts[0]), {
-      queryParams: { 'draft-active': true }
+      queryParams: { 'draft-active': true, 'draft-timestamp': this.build?.additionalInfo?.dateGenerated }
     });
   }
 
@@ -191,8 +212,12 @@ export class DraftPreviewBooksComponent {
     draftTextDocId: TextDocId,
     targetTextDocId: TextDocId
   ): Promise<boolean> {
+    let timestamp: Date | undefined = undefined;
+    if (this.build?.additionalInfo?.dateGenerated != null) {
+      timestamp = new Date(this.build.additionalInfo.dateGenerated);
+    }
     return await this.draftHandlingService
-      .getAndApplyDraftAsync(project, draftTextDocId, targetTextDocId)
+      .getAndApplyDraftAsync(project, draftTextDocId, targetTextDocId, timestamp)
       .then(result => {
         this.updateProgress(result ? targetTextDocId.chapterNum : undefined);
         return result;

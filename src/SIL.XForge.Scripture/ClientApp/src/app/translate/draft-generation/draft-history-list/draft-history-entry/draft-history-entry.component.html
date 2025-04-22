@@ -19,11 +19,9 @@
         <ng-container *ngIf="canDownloadBuild">
           <p>{{ t("click_book_to_preview") }}</p>
           <p class="book-buttons">
-            @for (bookId of bookIds; track bookId) {
-              <a mat-stroked-button>{{ i18n.localizeBook(bookId) }}</a>
-            }
+            <app-draft-preview-books [build]="entry"></app-draft-preview-books>
           </p>
-          <app-draft-download-button [build]="entry" [flat]="true" />
+          <app-draft-download-button [build]="entry" [flat]="true"></app-draft-download-button>
         </ng-container>
         <p>
           <a
