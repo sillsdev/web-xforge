@@ -5381,9 +5381,9 @@ public class SFProjectServiceTests
                 .Returns(true);
 
             ParatextService
-                .IsResource(Arg.Any<string>())
+                .IsResource(Arg.Any<string?>())
                 .Returns(callInfo =>
-                    callInfo.ArgAt<string>(0).Length == SFInstallableDblResource.ResourceIdentifierLength
+                    callInfo.ArgAt<string?>(0)?.Length == SFInstallableDblResource.ResourceIdentifierLength
                 );
 
             Service = new SFProjectService(

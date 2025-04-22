@@ -150,13 +150,20 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             // This will make the source project appear after the target, if it needs to be created
             if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
             {
+                // Get the resources if the source is a resource
+                IReadOnlyList<ParatextResource> resources = [];
+                if (_paratextService.IsResource(settings.SourceParatextId))
+                {
+                    resources = await _paratextService.GetResourcesAsync(curUserId);
+                }
+
                 TranslateSource source = await GetTranslateSourceAsync(
                     curUserId,
                     projectDoc.Id,
                     settings.SourceParatextId,
                     syncIfCreated: false,
                     ptProjects,
-                    resources: []
+                    resources
                 );
 
                 await projectDoc.SubmitJson0OpAsync(op => UpdateSetting(op, p => p.TranslateConfig.Source, source));
@@ -362,7 +369,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             settings.AdditionalTrainingSourceParatextId == ProjectSettingValueUnset;
 
         // Get the list of projects for setting the source or alternate source
-        IReadOnlyList<ParatextProject> ptProjects = new List<ParatextProject>();
+        IReadOnlyList<ParatextProject> ptProjects = [];
+        IReadOnlyList<ParatextResource> resources = [];
         if (
             (settings.SourceParatextId != null && !unsetSourceProject)
             || (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
@@ -375,10 +383,18 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 throw new DataNotFoundException("The user does not exist.");
 
             ptProjects = await _paratextService.GetProjectsAsync(userSecret);
-        }
 
-        // Create a variable for storing the list of resources between method calls of GetTranslateSourceAsync
-        List<ParatextResource> resources = [];
+            // Only get the resources if at least one of the paratext ids is a resource id
+            if (
+                _paratextService.IsResource(settings.SourceParatextId)
+                || _paratextService.IsResource(settings.AlternateSourceParatextId)
+                || _paratextService.IsResource(settings.AlternateTrainingSourceParatextId)
+                || _paratextService.IsResource(settings.AdditionalTrainingSourceParatextId)
+            )
+            {
+                resources = await _paratextService.GetResourcesAsync(curUserId);
+            }
+        }
 
         // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
         TranslateSource source = null;
@@ -1881,7 +1897,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string paratextId,
         bool syncIfCreated,
         IEnumerable<ParatextProject> ptProjects,
-        List<ParatextResource> resources,
+        IEnumerable<ParatextResource> resources,
         IReadOnlyDictionary<string, string>? userRoles = null
     )
     {
@@ -1889,12 +1905,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string sourceProjectRef;
         if (sourcePTProject == null)
         {
-            // Populate resources if there are none previously specified
-            if (resources.Count == 0)
-            {
-                resources.AddRange(await _paratextService.GetResourcesAsync(curUserId));
-            }
-
             // If it is not a project, see if there is a matching resource
             sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
             if (sourcePTProject == null)

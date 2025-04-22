@@ -25,7 +25,7 @@ public interface IParatextService
     ParatextSettings? GetParatextSettings(UserSecret userSecret, string paratextId);
 
     Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId);
-    bool IsResource(string paratextId);
+    bool IsResource(string? paratextId);
     Task<string> GetResourcePermissionAsync(string paratextId, string userId, CancellationToken token);
     Task<IReadOnlyList<ParatextProjectUser>> GetParatextUsersAsync(
         UserSecret userSecret,

@@ -445,7 +445,9 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary>
     /// Is the PT project referred to by `paratextId` a DBL resource?
     /// </summary>
-    public bool IsResource(string paratextId) =>
+    /// <param name="paratextId">The Paratext identifier</param>
+    /// <returns><c>true</c> if the paratext identifier is a resource; otherwise, <c>false</c>.</returns>
+    public bool IsResource(string? paratextId) =>
         paratextId?.Length == SFInstallableDblResource.ResourceIdentifierLength;
 
     /// <summary>
