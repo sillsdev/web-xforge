@@ -18,6 +18,27 @@
 
   @if (isDraftReady) {
     <div class="toolbar">
+      <mat-form-field class="draft-select" appearance="outline">
+        <mat-select
+          [value]="selectedRevision"
+          (selectionChange)="onSelectionChanged($event)"
+          panelWidth="''"
+          panelClass="draft-select-panel"
+          [disabled]="isSelectDisabled$ | async"
+          hideSingleSelectionIndicator
+        >
+          <mat-select-trigger>
+            {{ selectedRevision ?? "" | revisionFormat }}
+          </mat-select-trigger>
+          @for (r of draftRevisions; track r) {
+            <mat-option [value]="r">
+              <div class="option-content">
+                <span>{{ r | revisionFormat }}</span>
+              </div>
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
       <div class="apply-draft-button-container">
         @if (userAppliedDraft) {
           <span class="draft-indicator">
