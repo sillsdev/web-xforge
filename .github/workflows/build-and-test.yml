@@ -97,6 +97,7 @@ jobs:
       - name: "Test: Backend"
         run: |
           dotnet test \
+            --logger:"junit;LogFileName=junit.xml" \
             -p:CollectCoverage=true \
             -e:CoverletOutputFormat=opencover \
             -e:Exclude=\"[NUnit3.TestAdapter]*,[SIL.XForge.*.Views]*,[SIL.XForge.Tests]*\"
@@ -116,7 +117,12 @@ jobs:
             -targetdir:coverage \
             "-reporttypes:HTML;TeamCitySummary"
       - name: "Coverage: Publish to Codecov"
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: "Test: Publish test results to Codecov"
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 

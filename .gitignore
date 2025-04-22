@@ -30,5 +30,6 @@ tempkey.rsa
 .leu
 coverage/
 coverage.opencover.xml
+junit.xml
 
 appsettings.user.json
