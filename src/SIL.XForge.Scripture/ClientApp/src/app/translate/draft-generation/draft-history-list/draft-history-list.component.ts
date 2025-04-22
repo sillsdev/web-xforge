@@ -18,7 +18,7 @@ import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-
   styleUrl: './draft-history-list.component.scss'
 })
 export class DraftHistoryListComponent {
-  history?: BuildDto[];
+  history: BuildDto[] = [];
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
@@ -33,7 +33,7 @@ export class DraftHistoryListComponent {
   }
 
   get nonActiveBuilds(): BuildDto[] {
-    return this.history?.filter(entry => !activeBuildStates.includes(entry.state)) || [];
+    return this.history.filter(entry => !activeBuildStates.includes(entry.state)) || [];
   }
 
   get latestBuild(): BuildDto | undefined {
@@ -41,21 +41,16 @@ export class DraftHistoryListComponent {
   }
 
   get lastCompletedBuildMessage(): string {
-    if (this.latestBuild == null) return '';
-    const state = this.latestBuild.state.toString();
-    switch (state) {
+    switch (this.latestBuild?.state) {
       case BuildStates.Canceled:
         return this.transloco.translate('draft_history_list.draft_canceled');
       case BuildStates.Completed:
         return this.transloco.translate('draft_history_list.draft_completed');
       case BuildStates.Faulted:
         return this.transloco.translate('draft_history_list.draft_faulted');
-      case BuildStates.Active:
-      case BuildStates.Finishing:
-      case BuildStates.Pending:
-      case BuildStates.Queued:
       default:
-        return state.charAt(0).toUpperCase() + state.slice(1).toLowerCase();
+        // The latest build must abe a build that has finished
+        return '';
     }
   }
 
@@ -64,6 +59,6 @@ export class DraftHistoryListComponent {
   }
 
   get isBuildActive(): boolean {
-    return this.history?.some(entry => activeBuildStates.includes(entry.state)) ?? false;
+    return this.history.some(entry => activeBuildStates.includes(entry.state)) ?? false;
   }
 }

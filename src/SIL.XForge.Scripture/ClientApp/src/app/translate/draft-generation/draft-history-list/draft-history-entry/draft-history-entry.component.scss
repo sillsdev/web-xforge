@@ -45,6 +45,10 @@
   gap: 4px;
 }
 
+.expand-icon {
+  flex-shrink: 0;
+}
+
 .training-data-link {
   display: flex;
   align-items: center;
