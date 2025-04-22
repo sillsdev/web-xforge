@@ -123,12 +123,18 @@ h1 {
 mat-button-toggle-group {
   border: 0;
 }
+
 .save-options {
   background-color: var(--mdc-filled-button-container-color);
   color: var(--mdc-filled-button-label-text-color) !important;
   ::ng-deep .mat-button-toggle-label-content {
     line-height: 36px;
   }
+}
+
+mat-dialog-actions {
+  display: flex;
+  column-gap: 4px;
 }
 
 .close-button {
