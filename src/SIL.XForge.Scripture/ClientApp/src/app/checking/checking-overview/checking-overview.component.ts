@@ -192,6 +192,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       try {
         this.projectDoc = await projectDocPromise;
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+        this.projectUserConfigDoc.submitJson0Op(op => op.set<string>(puc => puc.selectedTask!, 'checking'));
         this.questionsQuery?.dispose();
         this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
           projectId,
