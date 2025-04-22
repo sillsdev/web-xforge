@@ -7,7 +7,7 @@
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
 
-  --sf-quill-background: #{if($is-dark, mat.get-theme-color($theme, neutral, 20), #f5f3ef)};
+  --sf-quill-background: #{if($is-dark, mat.get-theme-color($theme, neutral, 6), #f5f3ef)};
   --sf-quill-highlight-marker-color: #{mat.get-theme-color($theme, tertiary, 80)};
   --sf-quill-highlight-segment-background: #ffeb3b;
   --sf-quill-highlight-segment-color: #{mat.get-theme-color($theme, neutral, 10)};

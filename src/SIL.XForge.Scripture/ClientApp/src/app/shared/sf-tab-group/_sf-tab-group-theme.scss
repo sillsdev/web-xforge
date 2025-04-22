@@ -5,9 +5,9 @@
 
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
-  $background: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 100))};
-  $background-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 10, 98))};
-  $background-hover-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 20, 95))};
+  $background: #{mat.get-theme-color($theme, neutral, if($is-dark, 6, 100))};
+  $background-inactive: #{mat.get-theme-color($theme, neutral, if($is-dark, 12, 98))};
+  $background-hover-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 10, 95))};
   $background-button-hover-inactive: #{mat.get-theme-color($theme, primary, if($is-dark, 30, 90))};
 
   --sf-tab-header-active-tab-accent-color: #{mat.get-theme-color($theme, primary, 20)};
