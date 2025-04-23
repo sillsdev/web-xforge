@@ -333,6 +333,13 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  readonly usfmFormat: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'UsfmFormat',
+    'USFM Format',
+    18,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

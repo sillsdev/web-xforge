@@ -40,7 +40,8 @@ class ParseVersion {
     'Updated Learning Rate For Serval',
     'Dark Mode',
     'Enable Lynx insights',
-    'Preview new draft history interface'
+    'Preview new draft history interface',
+    'USFM Format'
   ];
 
   constructor() {

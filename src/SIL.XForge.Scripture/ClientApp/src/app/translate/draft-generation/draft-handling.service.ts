@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
 import { catchError, Observable, throwError } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -144,25 +145,32 @@ export class DraftHandlingService {
    * Gets the generated draft of a chapter for a book. If unable to get the current draft delta format,
    * it will automatically fallback to attempt to retrieve the legacy draft format.
    * @param textDocId The text document identifier.
-   * @param param1 Whether to get the draft in the legacy format.
+   * @param param1 Whether to get the draft in the legacy format and whether to use the snapshot
+   * stored in the realtime database.
    * @returns The draft data in the current delta operation format or the legacy segment map format.
    */
   getDraft(
     textDocId: TextDocId,
-    { isDraftLegacy, timestamp }: { isDraftLegacy: boolean; timestamp?: Date }
+    { isDraftLegacy, timestamp, config }: { isDraftLegacy: boolean; timestamp?: Date; config?: DraftUsfmConfig }
   ): Observable<DeltaOperation[] | DraftSegmentMap> {
     return isDraftLegacy
       ? // Fetch legacy draft
         this.draftGenerationService.getGeneratedDraft(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
       : // Fetch draft in Delta format (fallback to legacy)
         this.draftGenerationService
-          .getGeneratedDraftDeltaOperations(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, timestamp)
+          .getGeneratedDraftDeltaOperations(
+            textDocId.projectId,
+            textDocId.bookNum,
+            textDocId.chapterNum,
+            timestamp,
+            config
+          )
           .pipe(
             catchError(err => {
               // If the corpus does not support USFM, use the legacy format.
               // The legacy format does not support a timestamp
               if (err.status === 405 && timestamp == null) {
-                return this.getDraft(textDocId, { isDraftLegacy: true, timestamp: undefined });
+                return this.getDraft(textDocId, { isDraftLegacy: true, timestamp: undefined, config });
               }
 
               return throwError(() => err);
