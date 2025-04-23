@@ -26,6 +26,7 @@ import { EventMetric } from '../event-metrics/event-metric';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
+import { DraftUsfmConfig } from './models/draft-usfm-config';
 import { NoteThreadDoc } from './models/note-thread-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
@@ -299,6 +300,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return await this.onlineInvoke<void>('setServalConfig', {
       projectId,
       servalConfig
+    });
+  }
+
+  async onlineSetUsfmConfig(projectId: string, config: DraftUsfmConfig): Promise<void> {
+    return await this.onlineInvoke<void>('setUsfmConfig', {
+      projectId,
+      config
     });
   }
 

@@ -40,6 +40,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private readonly ISyncService _syncService;
     private readonly IParatextService _paratextService;
     private readonly IRepository<UserSecret> _userSecrets;
+    private readonly IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRepository<TranslateMetrics> _translateMetrics;
     private readonly IEmailService _emailService;
     private readonly ISecurityService _securityService;
@@ -75,6 +76,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _syncService = syncService;
         _paratextService = paratextService;
         _userSecrets = userSecrets;
+        _projectSecrets = projectSecrets;
         _translateMetrics = translateMetrics;
         _emailService = emailService;
         _securityService = securityService;
@@ -1229,6 +1231,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
         await projectDoc.SubmitJson0OpAsync(op =>
             op.Set(p => p.TranslateConfig.DraftConfig.ServalConfig, servalConfig)
+        );
+    }
+
+    public async Task SetUsfmConfigAsync(string projectId, DraftUsfmConfig config)
+    {
+        await _projectSecrets.UpdateAsync(
+            p => p.Id == projectId,
+            update => update.Set(p => p.ServalData.DraftUsfmConfig, config)
         );
     }
 

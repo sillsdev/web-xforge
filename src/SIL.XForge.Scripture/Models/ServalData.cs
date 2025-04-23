@@ -141,4 +141,9 @@ public class ServalData
     /// These are shared by translation (SMT) and pre-translation (NMT) translation engines.
     /// </remarks>
     public List<ServalCorpusFile> CorpusFiles { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the configuration for the USFM draft.
+    /// </summary>
+    public DraftUsfmConfig? DraftUsfmConfig { get; set; }
 }

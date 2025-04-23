@@ -528,6 +528,7 @@ public class MachineApiService(
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        bool accessSnapshot,
         CancellationToken cancellationToken
     )
     {
@@ -545,6 +546,7 @@ public class MachineApiService(
             chapterNum,
             isServalAdmin,
             timestamp,
+            accessSnapshot,
             cancellationToken
         );
 
@@ -770,6 +772,7 @@ public class MachineApiService(
             chapterNum,
             isServalAdmin,
             timestamp,
+            true,
             cancellationToken
         );
 
@@ -787,11 +790,22 @@ public class MachineApiService(
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        bool accessSnapshot,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission
         SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        var projectSecretAttempt = await projectSecrets.TryGetAsync(sfProjectId);
+        DraftUsfmConfig usfmConfig;
+        if (projectSecretAttempt.TryResult(out SFProjectSecret projectSecret))
+        {
+            usfmConfig = projectSecret.ServalData?.DraftUsfmConfig ?? new DraftUsfmConfig();
+        }
+        else
+        {
+            throw new DataNotFoundException("The project secret does not exist.");
+        }
 
         // If the user is a serval admin, get the highest ranked user on the project
         string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
@@ -802,7 +816,7 @@ public class MachineApiService(
 
         // First, see if the document exists in the realtime service, if the chapter is not 0
         IDocument<TextDocument>? textDocument = null;
-        if (chapterNum != 0)
+        if (chapterNum != 0 && accessSnapshot)
         {
             textDocument = await connection.FetchAsync<TextDocument>(id);
             if (textDocument.IsLoaded)
@@ -833,13 +847,14 @@ public class MachineApiService(
                 sfProjectId,
                 bookNum,
                 chapterNum,
+                usfmConfig,
                 cancellationToken
             );
             string usx = paratextService.GetBookText(userSecret, project.ParatextId, bookNum, usfm);
             IUsj usj = UsxToUsj.UsxStringToUsj(usx);
 
             // Do not save the USJ if the chapter is 0
-            if (chapterNum != 0)
+            if (chapterNum != 0 && accessSnapshot)
             {
                 await SaveTextDocumentAsync(textDocument!, usj);
             }
@@ -871,6 +886,7 @@ public class MachineApiService(
             chapterNum,
             isServalAdmin,
             timestamp,
+            true,
             cancellationToken
         );
         return UsjToUsx.UsjToUsxString(usj);
@@ -1359,6 +1375,7 @@ public class MachineApiService(
                 sfProjectId,
                 bookNum,
                 chapterNum,
+                projectSecret.ServalData?.DraftUsfmConfig ?? new DraftUsfmConfig(),
                 cancellationToken
             );
 
