@@ -1,0 +1,13 @@
+<ng-container>
+  <h2>Select USFM settings for your draft</h2>
+  <mat-card class="flex-row">
+    <mat-checkbox [(ngModel)]="preserveParagraph">Preserve Paragraphs</mat-checkbox>
+    <mat-checkbox [(ngModel)]="preserveStyles">Preserve Styles</mat-checkbox>
+    <mat-checkbox [(ngModel)]="preserveEmbeds">Preserve Embeds</mat-checkbox>
+  </mat-card>
+
+  <app-book-chapter-chooser></app-book-chapter-chooser>
+
+  <app-editor-draft [projectId]="projectId" [bookNum]="bookNum" [chapter]="chapter" [isRightToLeft]="isRightToLeft">
+  </app-editor-draft>
+</ng-container>
