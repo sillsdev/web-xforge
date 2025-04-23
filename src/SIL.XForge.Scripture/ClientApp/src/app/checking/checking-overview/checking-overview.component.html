@@ -38,11 +38,6 @@
 
   @if (canEditQuestion) {
     <div id="text-with-questions-list">
-      @if (!isOnline) {
-        <app-notice id="warning-some-actions-unavailable-offline" icon="cloud_off" type="warning">{{
-          t("some_actions_unavailable_offline")
-        }}</app-notice>
-      }
       @for (text of texts; track text.bookNum) {
         @if (bookQuestionCount(text) > 0 || bookHasChapterAudio(text)) {
           <mat-expansion-panel [togglePosition]="'before'" class="book-expander">

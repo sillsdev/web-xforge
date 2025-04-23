@@ -293,7 +293,6 @@
     "my_progress": "My progress",
     "project_stats": "Project stats",
     "questions": "Questions",
-    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio.",
     "tooltip_edit": "Edit"
   },
   "checking_questions": {

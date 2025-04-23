@@ -64,10 +64,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     super(noticeService);
   }
 
-  protected get isOnline(): boolean {
-    return this.onlineStatusService.isOnline;
-  }
-
   get showQuestionsLoadingMessage(): boolean {
     return !this.questionsLoaded && this.allQuestionsCount === 0;
   }
