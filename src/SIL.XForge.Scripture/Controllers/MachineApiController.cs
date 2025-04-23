@@ -368,6 +368,7 @@ public class MachineApiController : ControllerBase
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. This cannot be zero.</param>
     /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
+    /// <param name="accessSnapshot">If <c>true</c>, store and access the snapshot from the realtime server.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
@@ -376,11 +377,13 @@ public class MachineApiController : ControllerBase
     /// <response code="409">The engine has not been built on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetPreTranslationDelta)]
+    [HttpGet(MachineApi.GetPreTranslationDeltaAccessSnapshot)]
     public async Task<ActionResult<Snapshot<TextData>>> GetPreTranslationDeltaAsync(
         string sfProjectId,
         int bookNum,
         int chapterNum,
         DateTime? timestamp,
+        bool? accessSnapshot,
         CancellationToken cancellationToken
     )
     {
@@ -394,6 +397,7 @@ public class MachineApiController : ControllerBase
                 chapterNum,
                 isServalAdmin,
                 timestamp ?? DateTime.UtcNow,
+                accessSnapshot ?? true,
                 cancellationToken
             );
             return Ok(delta);
@@ -570,6 +574,7 @@ public class MachineApiController : ControllerBase
                 chapterNum,
                 isServalAdmin,
                 timestamp ?? DateTime.UtcNow,
+                true,
                 cancellationToken
             );
             return Ok(usj);

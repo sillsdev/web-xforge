@@ -149,19 +149,24 @@ export class DraftHandlingService {
    */
   getDraft(
     textDocId: TextDocId,
-    { isDraftLegacy }: { isDraftLegacy: boolean }
+    { isDraftLegacy, accessSnapshot }: { isDraftLegacy: boolean; accessSnapshot: boolean }
   ): Observable<DeltaOperation[] | DraftSegmentMap> {
     return isDraftLegacy
       ? // Fetch legacy draft
         this.draftGenerationService.getGeneratedDraft(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
       : // Fetch draft in USFM format (fallback to legacy)
         this.draftGenerationService
-          .getGeneratedDraftDeltaOperations(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
+          .getGeneratedDraftDeltaOperations(
+            textDocId.projectId,
+            textDocId.bookNum,
+            textDocId.chapterNum,
+            accessSnapshot
+          )
           .pipe(
             catchError(err => {
               // If the corpus does not support USFM
               if (err.status === 405) {
-                return this.getDraft(textDocId, { isDraftLegacy: true });
+                return this.getDraft(textDocId, { isDraftLegacy: true, accessSnapshot });
               }
 
               return throwError(() => err);
@@ -223,7 +228,7 @@ export class DraftHandlingService {
     }
 
     return await new Promise<boolean>(resolve => {
-      this.getDraft(draftTextDocId, { isDraftLegacy: false }).subscribe({
+      this.getDraft(draftTextDocId, { isDraftLegacy: false, accessSnapshot: true }).subscribe({
         next: async draft => {
           let ops: DeltaOperation[] = [];
           if (this.isDraftSegmentMap(draft)) {

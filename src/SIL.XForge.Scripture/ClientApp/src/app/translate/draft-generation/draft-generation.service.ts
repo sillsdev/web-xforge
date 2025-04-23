@@ -179,14 +179,19 @@ export class DraftGenerationService {
    * @returns An array of delta operations or an empty array at if no pre-translations exist.
    * The 405 error that occurs when there is no USFM support is thrown to the caller.
    */
-  getGeneratedDraftDeltaOperations(projectId: string, book: number, chapter: number): Observable<DeltaOperation[]> {
+  getGeneratedDraftDeltaOperations(
+    projectId: string,
+    book: number,
+    chapter: number,
+    accessSnapshot: boolean = true
+  ): Observable<DeltaOperation[]> {
     if (!this.onlineStatusService.isOnline) {
       return of([]);
     }
     return this.httpClient
       .get<
         Snapshot<TextData> | undefined
-      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`)
+      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta/accessSnapshot:${accessSnapshot}`)
       .pipe(
         map(res => res.data?.data.ops ?? []),
         catchError(err => {
