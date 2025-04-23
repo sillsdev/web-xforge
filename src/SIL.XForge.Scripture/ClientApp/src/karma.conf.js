@@ -6,7 +6,7 @@ module.exports = function (config) {
     config.browsers && config.browsers.length === 1 && config.browsers[0] === 'xForgeChromiumHeadless' && !config.watch;
 
   let karmaReporters = ['progress', 'kjhtml'];
-  if (isRunningInTeamCity) karmaReporters = ['teamcity', 'coverage-istanbul'];
+  if (isRunningInTeamCity) karmaReporters = ['teamcity', 'coverage-istanbul', 'junit'];
   // Override reporters with a comma-delimited list of reporters in environment variable KARMA_REPORTERS.
   // For example, KARMA_REPORTERS="mocha,coverage-istanbul" ng test --code-coverage
   if (process.env.KARMA_REPORTERS != null) karmaReporters = process.env.KARMA_REPORTERS.split(',');
@@ -28,6 +28,7 @@ module.exports = function (config) {
     require('karma-coverage-istanbul-reporter'),
     require('karma-teamcity-reporter'),
     require('karma-mocha-reporter'),
+    require('karma-junit-reporter'),
     require('@angular-devkit/build-angular/plugins/karma')
   );
 
@@ -85,6 +86,12 @@ module.exports = function (config) {
     mochaReporter: {
       // https://github.com/litixsoft/karma-mocha-reporter
       output: 'autowatch'
+    },
+    junitReporter: {
+      outputDir: __dirname,
+      outputFile: 'junit.xml',
+      suite: 'karma tests',
+      useBrowserName: false
     },
     logLevel: config.LOG_INFO,
     autoWatch: true,
