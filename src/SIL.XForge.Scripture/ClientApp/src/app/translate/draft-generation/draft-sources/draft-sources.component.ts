@@ -209,9 +209,14 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     return project == null ? '' : projectLabel(project);
   }
 
-  /** Returns all Paratext IDs from a list except the one specified. */
-  otherParatextIds(list: ({ paratextId: string } | undefined)[], id?: string): string[] {
-    return list.filter(p => p != null && p.paratextId !== id).map(p => p!.paratextId);
+  /** Returns all Paratext IDs that should not be selectable as a draft source.
+   * @param draftSources The array of draftSources currently selected (specific to training or drafting).
+   * @param selectedId The currently selected paratextId that should be visible in the list of sources.
+   */
+  getHiddenParatextIds(draftSources: ({ paratextId: string } | undefined)[], selectedId?: string): string[] {
+    return [...draftSources, ...this.trainingTargets]
+      .filter(p => p != null && p.paratextId !== selectedId)
+      .map(p => p!.paratextId);
   }
 
   sourceSelected(
