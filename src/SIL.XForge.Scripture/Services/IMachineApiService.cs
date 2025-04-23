@@ -73,6 +73,7 @@ public interface IMachineApiService
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        bool accessSnapshot,
         CancellationToken cancellationToken
     );
     IAsyncEnumerable<DocumentRevision> GetPreTranslationRevisionsAsync(
@@ -99,6 +100,7 @@ public interface IMachineApiService
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        bool accessSnapshot,
         CancellationToken cancellationToken
     );
     Task<string> GetPreTranslationUsxAsync(

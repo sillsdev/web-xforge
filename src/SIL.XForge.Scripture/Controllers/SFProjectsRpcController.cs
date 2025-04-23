@@ -813,6 +813,31 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> SetUsfmConfig(string projectId, DraftUsfmConfig config)
+    {
+        try
+        {
+            await projectService.SetUsfmConfigAsync(projectId, config);
+            return Ok();
+        }
+        // TODO: Test exceptions
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "SetUsfmConfig" }, { "projectId", projectId } }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> TransceleratorQuestions(string projectId)
     {
         try
