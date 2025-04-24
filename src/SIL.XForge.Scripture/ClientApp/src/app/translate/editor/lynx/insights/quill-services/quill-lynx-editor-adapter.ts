@@ -13,20 +13,20 @@ export class QuillLynxEditorAdapter implements LynxEditor {
     return this.editor;
   }
 
-  insertText(index: number, text: string, formats?: any): void {
-    this.editor.insertText(index, text, formats);
+  insertText(index: number, text: string, formats: Record<string, unknown>, source: EmitterSource): void {
+    this.editor.insertText(index, text, formats, source);
   }
 
-  deleteText(index: number, length: number): void {
-    this.editor.deleteText(index, length);
+  deleteText(index: number, length: number, source: EmitterSource): void {
+    this.editor.deleteText(index, length, source);
   }
 
   getLength(): number {
     return this.editor.getLength();
   }
 
-  formatText(index: number, length: number, formats: any): void {
-    this.editor.formatText(index, length, formats);
+  formatText(index: number, length: number, formats: Record<string, unknown>, source: EmitterSource): void {
+    this.editor.formatText(index, length, formats, source);
   }
 
   setContents(delta: any, source: EmitterSource): void {
@@ -45,8 +45,8 @@ export class QuillLynxEditorAdapter implements LynxEditor {
     return this.editor.getBounds(index, length);
   }
 
-  updateContents(delta: Delta | DeltaOperation[]): void {
-    this.editor.updateContents(delta, 'user');
+  updateContents(delta: Delta | DeltaOperation[], source: EmitterSource): void {
+    this.editor.updateContents(delta, source);
   }
 
   focus(): void {

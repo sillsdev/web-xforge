@@ -304,7 +304,7 @@ export class LynxInsightsPanelComponent implements OnInit {
    * Processes a single insight to extract appropriate text.
    */
   private processInsightText(insight: LynxInsight, textDoc: TextDoc): LynxInsightWithText {
-    const maxLength = this.lynxInsightConfig.panelLinkTextMaxLength;
+    const textGoalLength = this.lynxInsightConfig.panelLinkTextGoalLength;
 
     if (!textDoc.data?.ops?.length) {
       return { ...insight, rangeText: '' };
@@ -317,23 +317,27 @@ export class LynxInsightsPanelComponent implements OnInit {
     const originalText: string = getText(delta, originalRange);
 
     // If original text is long enough, use it directly
-    if (originalText.length >= maxLength * 0.7) {
+    if (originalText.length >= textGoalLength * 0.7) {
       return { ...insight, rangeText: originalText };
     }
 
     // Get expanded text with padding
-    const padding: number = Math.floor((maxLength - originalText.length) / 2);
+    const padding: number = Math.floor((textGoalLength - originalText.length) / 2);
     const expandedStart: number = Math.max(0, originalRange.index - padding);
     const expandedEnd: number = Math.min(delta.length(), originalRange.index + originalRange.length + padding);
     const expandedRange: LynxInsightRange = { index: expandedStart, length: expandedEnd - expandedStart };
 
     const expandedText: string = getText(delta, expandedRange);
 
+    const firstSpace = expandedText.indexOf(' ');
+    const lastSpace = expandedText.lastIndexOf(' ');
+
     // Trim back toward original text stopping at first space (on both ends)
-    const adjustedStart: number = Math.min(originalRange.index, expandedStart + expandedText.indexOf(' '));
+    const adjustedStart: number =
+      firstSpace >= 0 ? Math.min(originalRange.index, expandedStart + firstSpace) : expandedStart;
     const adjustedEnd: number = Math.max(
       originalRange.index + originalRange.length,
-      expandedStart + expandedText.lastIndexOf(' ')
+      lastSpace >= 0 ? expandedStart + lastSpace : expandedEnd
     );
 
     const adjustedExpandedText: string = getText(delta, { index: adjustedStart, length: adjustedEnd - adjustedStart });

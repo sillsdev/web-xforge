@@ -12,12 +12,13 @@
         (click)="onNodeClick(node, $event)"
       >
         <div class="level-ref">
-          <li>
+          <span>
             {{ node.name }}
-          </li>
-          <mat-icon [matTooltip]="t('restore')" (click)="restoreDismissedInsight(node.insight)" class="restore-icon">
+          </span>
+          <!-- TODO: Removed for MVP -->
+          <!-- <mat-icon [matTooltip]="t('restore')" (click)="restoreDismissedInsight(node.insight)" class="restore-icon">
             visibility_on
-          </mat-icon>
+          </mat-icon> -->
         </div>
       </button>
     </mat-tree-node>

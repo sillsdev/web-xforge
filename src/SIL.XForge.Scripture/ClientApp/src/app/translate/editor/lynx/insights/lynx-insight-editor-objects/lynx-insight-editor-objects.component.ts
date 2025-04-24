@@ -182,6 +182,9 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   }
 }
 
+/**
+ * Check if two ranges overlap or are adjacent.
+ */
 function overlaps(x: LynxInsightRange, y: LynxInsightRange): boolean {
   return x.index <= y.index + y.length && y.index <= x.index + x.length;
 }
