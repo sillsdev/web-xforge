@@ -1,12 +1,6 @@
-import {
-  CdkScrollable,
-  Overlay,
-  OverlayConfig,
-  OverlayRef,
-  PositionStrategy,
-  ScrollDispatcher
-} from '@angular/cdk/overlay';
+import { CdkScrollable, Overlay, OverlayConfig, OverlayRef, PositionStrategy } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
+import { ScrollDispatcher } from '@angular/cdk/scrolling';
 import { Injectable, NgZone } from '@angular/core';
 import { asyncScheduler, observeOn, Subject, take, takeUntil } from 'rxjs';
 import { LynxEditor } from './lynx-editor';
@@ -102,6 +96,11 @@ export class LynxInsightOverlayService {
       this.openRef.closed$.next();
       this.openRef?.closed$.complete(); // Need null safe operator in case 'closed$.next()' triggers a 'close()' call
       this.openRef = undefined;
+
+      if (this.scrollableContainer != null) {
+        this.scrollDispatcher.deregister(this.scrollableContainer);
+        this.scrollableContainer = undefined;
+      }
     }
   }
 

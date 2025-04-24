@@ -46,7 +46,7 @@ export class QuillInsightRenderService extends InsightRenderService {
     const formats: StringMap = {};
 
     for (const type of LynxInsightTypes) {
-      formats[`${this.prefix}-${type}`] = false;
+      formats[`${this.prefix}-${type}`] = null;
     }
 
     editor.formatText(0, editor.getLength(), formats);
