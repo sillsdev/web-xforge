@@ -59,10 +59,6 @@ export class QuillEditorSegmentService extends EditorSegmentService {
           if (rangeEnd > segmentRange.index) {
             segmentRefs.push(ref);
           }
-
-          if (rangeEnd <= segEnd) {
-            break;
-          }
         }
       }
     }
