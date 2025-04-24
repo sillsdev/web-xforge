@@ -2277,6 +2277,74 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task UpdateSettingsAsync_ChangeAllDraftSources_CreatesResourceProject()
+    {
+        var env = new TestEnvironment();
+        const string newResourceParatextId = "resource_project";
+        env.ParatextService.GetResourcePermissionAsync(newResourceParatextId, Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(TextInfoPermission.Read));
+
+        // Ensure that the new project does not exist
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newResourceParatextId),
+            Is.False
+        );
+
+        // SUT
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings
+            {
+                AdditionalTrainingSourceParatextId = newResourceParatextId,
+                AlternateSourceParatextId = newResourceParatextId,
+                AlternateTrainingSourceParatextId = newResourceParatextId,
+            }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AdditionalTrainingSource?.ProjectRef, Is.Not.Null);
+        Assert.That(
+            project.TranslateConfig.DraftConfig.AdditionalTrainingSource?.ParatextId,
+            Is.EqualTo(newResourceParatextId)
+        );
+        Assert.That(project.TranslateConfig.DraftConfig.AdditionalTrainingSource?.Name, Is.EqualTo("ResourceProject"));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef, Is.Not.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.EqualTo(newResourceParatextId));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.Name, Is.EqualTo("ResourceProject"));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ProjectRef, Is.Not.Null);
+        Assert.That(
+            project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ParatextId,
+            Is.EqualTo(newResourceParatextId)
+        );
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.Name, Is.EqualTo("ResourceProject"));
+
+        SFProject alternateSourceProject = env.GetProject(
+            project.TranslateConfig.DraftConfig.AlternateSource!.ProjectRef
+        );
+        Assert.That(alternateSourceProject.ParatextId, Is.EqualTo(newResourceParatextId));
+        Assert.That(alternateSourceProject.Name, Is.EqualTo("ResourceProject"));
+
+        await env
+            .MachineProjectService.DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env
+            .MachineProjectService.DidNotReceive()
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+
+        // Check that the project was created
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newResourceParatextId),
+            Is.True
+        );
+
+        // Ensure we only queried the list of resources once
+        await env.ParatextService.Received(1).GetResourcesAsync(User01);
+    }
+
+    [Test]
     public async Task UpdateSettingsAsync_ChangeAlternateSource_CannotUseTargetProject()
     {
         var env = new TestEnvironment();
@@ -5313,9 +5381,9 @@ public class SFProjectServiceTests
                 .Returns(true);
 
             ParatextService
-                .IsResource(Arg.Any<string>())
+                .IsResource(Arg.Any<string?>())
                 .Returns(callInfo =>
-                    callInfo.ArgAt<string>(0).Length == SFInstallableDblResource.ResourceIdentifierLength
+                    callInfo.ArgAt<string?>(0)?.Length == SFInstallableDblResource.ResourceIdentifierLength
                 );
 
             Service = new SFProjectService(

@@ -150,12 +150,20 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             // This will make the source project appear after the target, if it needs to be created
             if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
             {
+                // Get the resources if the source is a resource
+                IReadOnlyList<ParatextResource> resources = [];
+                if (_paratextService.IsResource(settings.SourceParatextId))
+                {
+                    resources = await _paratextService.GetResourcesAsync(curUserId);
+                }
+
                 TranslateSource source = await GetTranslateSourceAsync(
                     curUserId,
                     projectDoc.Id,
                     settings.SourceParatextId,
                     syncIfCreated: false,
-                    ptProjects
+                    ptProjects,
+                    resources
                 );
 
                 await projectDoc.SubmitJson0OpAsync(op => UpdateSetting(op, p => p.TranslateConfig.Source, source));
@@ -361,7 +369,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             settings.AdditionalTrainingSourceParatextId == ProjectSettingValueUnset;
 
         // Get the list of projects for setting the source or alternate source
-        IReadOnlyList<ParatextProject> ptProjects = new List<ParatextProject>();
+        IReadOnlyList<ParatextProject> ptProjects = [];
+        IReadOnlyList<ParatextResource> resources = [];
         if (
             (settings.SourceParatextId != null && !unsetSourceProject)
             || (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
@@ -374,6 +383,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 throw new DataNotFoundException("The user does not exist.");
 
             ptProjects = await _paratextService.GetProjectsAsync(userSecret);
+
+            // Only get the resources if at least one of the paratext ids is a resource id
+            if (
+                _paratextService.IsResource(settings.SourceParatextId)
+                || _paratextService.IsResource(settings.AlternateSourceParatextId)
+                || _paratextService.IsResource(settings.AlternateTrainingSourceParatextId)
+                || _paratextService.IsResource(settings.AdditionalTrainingSourceParatextId)
+            )
+            {
+                resources = await _paratextService.GetResourcesAsync(curUserId);
+            }
         }
 
         // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
@@ -386,6 +406,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 settings.SourceParatextId,
                 syncIfCreated: false,
                 ptProjects,
+                resources,
                 projectDoc.Data.UserRoles
             );
             if (source.ProjectRef == projectId)
@@ -405,6 +426,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 settings.AlternateSourceParatextId,
                 syncIfCreated: true,
                 ptProjects,
+                resources,
                 projectDoc.Data.UserRoles
             );
             if (alternateSource.ProjectRef == projectId)
@@ -424,6 +446,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 settings.AlternateTrainingSourceParatextId,
                 syncIfCreated: true,
                 ptProjects,
+                resources,
                 projectDoc.Data.UserRoles
             );
             if (alternateTrainingSource.ProjectRef == projectId)
@@ -443,6 +466,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 settings.AdditionalTrainingSourceParatextId,
                 syncIfCreated: true,
                 ptProjects,
+                resources,
                 projectDoc.Data.UserRoles
             );
             if (additionalTrainingSource.ProjectRef == projectId)
@@ -1856,13 +1880,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     }
 
     /// <summary>
-    /// Gets the translate source asynchronously.
+    /// Gets the translation source asynchronously.
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="paratextId">The paratext identifier.</param>
     /// <param name="syncIfCreated">If <c>true</c> sync the project if it is created.</param>
     /// <param name="ptProjects">The paratext projects.</param>
+    /// <param name="resources">The paratext resources.</param>
     /// <param name="userRoles">The ids and roles of the users who will need to access the source.</param>
     /// <returns>The <see cref="TranslateSource"/> object for the specified resource.</returns>
     /// <exception cref="DataNotFoundException">The source paratext project does not exist.</exception>
@@ -1872,6 +1897,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string paratextId,
         bool syncIfCreated,
         IEnumerable<ParatextProject> ptProjects,
+        IEnumerable<ParatextResource> resources,
         IReadOnlyDictionary<string, string>? userRoles = null
     )
     {
@@ -1880,7 +1906,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (sourcePTProject == null)
         {
             // If it is not a project, see if there is a matching resource
-            IReadOnlyList<ParatextResource> resources = await _paratextService.GetResourcesAsync(curUserId);
             sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
             if (sourcePTProject == null)
             {
@@ -1889,7 +1914,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // Get the users who will access this source resource or project
-        IEnumerable<string> userIds = userRoles != null ? userRoles.Keys : new string[] { curUserId };
+        IEnumerable<string> userIds = userRoles != null ? userRoles.Keys : [curUserId];
 
         // Get the project reference
         SFProject sourceProject = RealtimeService
@@ -1903,7 +1928,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
         else
         {
-            sourceProjectRef = await CreateResourceProjectAsync(curUserId, paratextId, addUser: false);
+            sourceProjectRef = await CreateResourceProjectInternalAsync(curUserId, sourcePTProject);
             projectCreated = true;
         }
 
