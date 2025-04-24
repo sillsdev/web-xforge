@@ -8,7 +8,7 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { createTestProjectUserConfig } from '../../../../../../../../RealtimeServer/scriptureforge/models/sf-project-user-config-test-data';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
-import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig } from './lynx-insight';
+import { LynxInsight } from './lynx-insight';
 import { LynxInsightFilterService } from './lynx-insight-filter.service';
 import { LynxInsightStateService } from './lynx-insight-state.service';
 import { LynxWorkspaceService } from './lynx-workspace.service';
@@ -36,19 +36,6 @@ describe('LynxInsightStateService', () => {
   const mockActivatedProjectUserConfigService = mock<ActivatedProjectUserConfigService>();
   const mockLynxWorkspaceService = mock<LynxWorkspaceService>();
   const mockProjectUserConfigDoc = mock(SFProjectUserConfigDoc);
-
-  const defaultConfig: LynxInsightConfig = {
-    filter: {
-      types: ['info', 'warning', 'error'],
-      scope: 'chapter',
-      includeDismissed: false
-    },
-    sortOrder: 'severity',
-    queryParamName: 'insight',
-    panelLinkTextMaxLength: 30,
-    panelLinkTextMinLength: 15,
-    actionOverlayApplyPrimaryActionChord: { altKey: true, shiftKey: true, key: 'Enter' }
-  };
 
   let service: LynxInsightStateService;
 
@@ -86,8 +73,7 @@ describe('LynxInsightStateService', () => {
       { provide: LynxInsightFilterService, useMock: mockInsightFilterService },
       { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },
       { provide: ActivatedProjectUserConfigService, useMock: mockActivatedProjectUserConfigService },
-      { provide: LynxWorkspaceService, useMock: mockLynxWorkspaceService },
-      { provide: EDITOR_INSIGHT_DEFAULTS, useValue: defaultConfig }
+      { provide: LynxWorkspaceService, useMock: mockLynxWorkspaceService }
     ]
   }));
 

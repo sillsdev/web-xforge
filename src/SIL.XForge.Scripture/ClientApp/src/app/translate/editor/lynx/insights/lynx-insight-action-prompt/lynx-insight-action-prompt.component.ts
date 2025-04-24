@@ -1,7 +1,19 @@
 import { Directionality } from '@angular/cdk/bidi';
 import { Component, DestroyRef, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
 import { Bounds } from 'quill';
-import { combineLatest, debounceTime, EMPTY, filter, fromEvent, iif, map, startWith, switchMap, tap } from 'rxjs';
+import {
+  combineLatest,
+  debounceTime,
+  EMPTY,
+  filter,
+  fromEvent,
+  iif,
+  map,
+  Observable,
+  startWith,
+  switchMap,
+  tap
+} from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory } from '../lynx-editor';
@@ -47,8 +59,9 @@ export class LynxInsightActionPromptComponent implements OnInit {
     // Adjust prompt vertical position based on line-height
     this.yOffsetAdjustment = -this.getLineHeight() / 2;
 
-    combineLatest([
-      this.editorReadyService.listenEditorReadyState(this.lynxEditor.getEditor()).pipe(
+    const activeInsights$: Observable<LynxInsight[]> = this.editorReadyService
+      .listenEditorReadyState(this.lynxEditor.getEditor())
+      .pipe(
         filter(loaded => loaded),
         switchMap(() => this.editorInsightState.displayState$),
         map(displayState =>
@@ -57,28 +70,23 @@ export class LynxInsightActionPromptComponent implements OnInit {
             .filter((insight): insight is LynxInsight => insight != null)
         ),
         tap(activeInsights => {
+          // Keep local copy for click handler
           this.activeInsights = activeInsights;
         })
-      ),
-      fromEvent(window, 'resize').pipe(debounceTime(200), startWith(undefined)),
-      iif(
-        () => this.lynxEditor?.getScrollingContainer() != null,
-        fromEvent(this.lynxEditor.getScrollingContainer(), 'scroll').pipe(startWith(undefined)),
-        EMPTY
-      )
-    ])
+      );
+
+    const windowResize$ = fromEvent(window, 'resize').pipe(debounceTime(100), startWith(undefined));
+
+    const editorScroll$ = iif(
+      () => this.lynxEditor?.getScrollingContainer() != null,
+      fromEvent(this.lynxEditor.getScrollingContainer(), 'scroll').pipe(startWith(undefined)),
+      EMPTY
+    );
+
+    combineLatest([activeInsights$, windowResize$, editorScroll$])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        const offsetBounds: Bounds | undefined = this.getPromptOffset();
-
-        if (offsetBounds != null) {
-          const boundsEnd: number = this.isLtr ? offsetBounds.right : offsetBounds.left;
-          this.setHostStyle('top', `${offsetBounds.top + this.yOffsetAdjustment}px`);
-          this.setHostStyle('left', `${boundsEnd + this.xOffsetAdjustment}px`);
-          this.setHostStyle('display', 'flex');
-        } else {
-          this.setHostStyle('display', 'none');
-        }
+        this.updatePosition();
       });
   }
 
@@ -92,6 +100,19 @@ export class LynxInsightActionPromptComponent implements OnInit {
 
     // Toggle action menu
     this.editorInsightState.toggleDisplayState(['actionOverlayActive']);
+  }
+
+  private updatePosition(): void {
+    const offsetBounds: Bounds | undefined = this.getPromptOffset();
+
+    if (offsetBounds != null) {
+      const boundsEnd: number = this.isLtr ? offsetBounds.right : offsetBounds.left;
+      this.setHostStyle('top', `${offsetBounds.top + this.yOffsetAdjustment}px`);
+      this.setHostStyle('left', `${boundsEnd + this.xOffsetAdjustment}px`);
+      this.setHostStyle('display', 'flex');
+    } else {
+      this.setHostStyle('display', 'none');
+    }
   }
 
   private getPromptOffset(): Bounds | undefined {

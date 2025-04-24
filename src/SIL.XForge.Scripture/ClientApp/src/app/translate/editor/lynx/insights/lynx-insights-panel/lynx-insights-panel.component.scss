@@ -73,6 +73,17 @@ $restoreActionColor: #5485e7;
   display: flex;
   align-items: center;
   gap: 1rem;
+
+  > span:first-child {
+    display: flex;
+    align-items: center;
+
+    &::before {
+      content: '•';
+      margin-right: 0.6em;
+      font-size: 1.5em;
+    }
+  }
 }
 
 .level-code {

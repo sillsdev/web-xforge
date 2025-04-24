@@ -38,9 +38,9 @@ export class LynxInsightStateService {
 
   // Stored filter and order are loaded from project user config
   private filterSource$ = new BehaviorSubject<LynxInsightFilter>(this.defaults.filter);
-  readonly filter$ = this.filterSource$.pipe(distinctUntilChanged());
+  readonly filter$ = this.filterSource$.pipe(distinctUntilChanged(isEqual), shareReplay(1));
   private orderBySource$ = new BehaviorSubject<LynxInsightSortOrder>(this.defaults.sortOrder);
-  readonly orderBy$ = this.orderBySource$.pipe(distinctUntilChanged());
+  readonly orderBy$ = this.orderBySource$.pipe(distinctUntilChanged(isEqual), shareReplay(1));
 
   private readonly dismissedInsightIdsSource$ = new BehaviorSubject<string[]>([]);
   readonly dismissedInsightIds$ = this.dismissedInsightIdsSource$.pipe(distinctUntilChanged(), shareReplay(1));

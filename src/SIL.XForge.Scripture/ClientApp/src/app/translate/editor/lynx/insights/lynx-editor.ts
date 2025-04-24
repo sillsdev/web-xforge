@@ -1,20 +1,20 @@
 import { Injectable } from '@angular/core';
-import Quill, { Delta, EmitterSource, Op } from 'quill';
+import Quill, { Delta, Op } from 'quill';
 import { QuillLynxEditorAdapter } from './quill-services/quill-lynx-editor-adapter';
 
 export type LynxableEditor = Quill; // Add future editor as union type
 
 export interface LynxEditor {
   getEditor(): LynxableEditor;
-  insertText(index: number, text: string, formats?: any): void;
-  deleteText(index: number, length: number): void;
+  insertText(index: number, text: string, formats: any, source: any): void;
+  deleteText(index: number, length: number, source: any): void;
   getLength(): number;
-  formatText(index: number, length: number, formats: any): void;
-  setContents(delta: any, source: EmitterSource): void;
-  setSelection(index: number, length: number, source: EmitterSource): void;
+  formatText(index: number, length: number, formats: any, source: any): void;
+  setContents(delta: any, source: any): void;
+  setSelection(index: number, length: number, source: any): void;
   getScrollingContainer(): Element;
   getBounds(index: number, length: number): any;
-  updateContents(delta: Delta | Op[]): void;
+  updateContents(delta: Delta | Op[], source: any): void;
   focus(): void;
   getRoot(): HTMLElement;
 }
