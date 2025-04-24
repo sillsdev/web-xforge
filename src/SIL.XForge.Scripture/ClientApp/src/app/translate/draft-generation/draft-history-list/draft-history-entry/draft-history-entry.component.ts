@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTableModule } from '@angular/material/table';
 import { TranslocoModule } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
+import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
@@ -19,10 +22,23 @@ const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: str
   FINISHING: { icons: 'hourglass_empty', text: 'draft_pending', color: 'grey' }
 };
 
+interface TrainingDataRow {
+  bookNames: string[];
+  source: string;
+  target: string;
+}
+
 @Component({
   selector: 'app-draft-history-entry',
   standalone: true,
-  imports: [CommonModule, DraftDownloadButtonComponent, DraftPreviewBooksComponent, TranslocoModule, UICommonModule],
+  imports: [
+    CommonModule,
+    DraftDownloadButtonComponent,
+    DraftPreviewBooksComponent,
+    MatIconModule,
+    MatTableModule,
+    TranslocoModule
+  ],
   templateUrl: './draft-history-entry.component.html',
   styleUrl: './draft-history-entry.component.scss'
 })
@@ -43,6 +59,47 @@ export class DraftHistoryEntryComponent {
         }
       });
     }
+
+    // Clear the data for the table
+    this._sourceLanguage = undefined;
+    this._targetLanguage = undefined;
+    this._trainingData = [];
+
+    // Get the training data
+    const trainingScriptureRanges = this.entry?.additionalInfo?.trainingScriptureRanges ?? [];
+    Promise.all(
+      trainingScriptureRanges.map(async r => {
+        // The engine ID is the target project ID
+        let target: SFProjectProfileDoc | undefined = undefined;
+        if (this.entry?.engine.id != null) {
+          target = await this.projectService.getProfile(this.entry?.engine.id);
+        }
+
+        // Get the target language, if it is not already set
+        this._targetLanguage ??= target?.data?.writingSystem.tag;
+
+        // Get the source project
+        const source = await this.projectService.getProfile(r.projectId);
+
+        // Get the source language, if it is not already set
+        this._sourceLanguage ??= source?.data?.writingSystem.tag;
+
+        // Return the data for this training range
+        return {
+          bookNames: r.scriptureRange.split(';').map(id => this.i18n.localizeBook(id)),
+          source: source?.data?.shortName ?? '',
+          target: target?.data?.shortName ?? ''
+        } as TrainingDataRow;
+      })
+    ).then(trainingData => {
+      // Set the training data for the table
+      this._trainingData = trainingData;
+
+      // If we can only show training data, expand the training data
+      if (!this.canDownloadBuild && this.hasTrainingData) {
+        this.trainingDataOpen = true;
+      }
+    });
   }
   get entry(): BuildDto | undefined {
     return this._entry;
@@ -67,6 +124,33 @@ export class DraftHistoryEntryComponent {
     return this.i18n.formatDate(new Date(this._entry?.additionalInfo?.dateRequested));
   }
 
+  get columnsToDisplay(): string[] {
+    return ['bookNames', 'source', 'target'];
+  }
+
+  get hasDetails(): boolean {
+    return this.hasTrainingData || this.canDownloadBuild;
+  }
+
+  get hasTrainingData(): boolean {
+    return this._trainingData.length > 0;
+  }
+
+  private _sourceLanguage?: string = undefined;
+  get sourceLanguage(): string {
+    return this._sourceLanguage ?? '';
+  }
+
+  private _targetLanguage?: string = undefined;
+  get targetLanguage(): string {
+    return this._targetLanguage ?? '';
+  }
+
+  private _trainingData: TrainingDataRow[] = [];
+  get trainingData(): TrainingDataRow[] {
+    return this._trainingData;
+  }
+
   @Input() canDownloadBuild = false;
 
   detailsOpen = false;
@@ -74,6 +158,7 @@ export class DraftHistoryEntryComponent {
 
   constructor(
     readonly i18n: I18nService,
+    private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {}
 
