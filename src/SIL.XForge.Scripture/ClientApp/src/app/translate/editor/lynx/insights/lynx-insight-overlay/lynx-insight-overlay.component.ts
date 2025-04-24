@@ -114,7 +114,7 @@ export class LynxInsightOverlayComponent implements OnInit {
       return;
     }
 
-    this.editor.updateContents(action.ops);
+    this.editor.updateContents(action.ops, 'user');
 
     if (this.focusedInsight == null) {
       throw new Error('No focused insight');

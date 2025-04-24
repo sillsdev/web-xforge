@@ -20,7 +20,7 @@ import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
-import { LynxInsight } from './lynx-insight';
+import { LynxInsight, LynxInsightAction } from './lynx-insight';
 import { LynxWorkspaceService, TextDocReader } from './lynx-workspace.service';
 
 describe('LynxWorkspaceService', () => {
@@ -460,57 +460,64 @@ describe('LynxWorkspaceService', () => {
   });
 
   describe('getOnTypeEdits', () => {
-    it('should return edits for trigger characters', fakeAsync(async () => {
+    it('should return edits for trigger characters', fakeAsync(() => {
       const env = new TestEnvironment();
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello,');
+      let result: Delta[] = [];
 
       when(mockWorkspace.getOnTypeEdits(anything(), anything(), anything())).thenResolve([
         { retain: 5 },
         { insert: ' ' }
       ]);
 
-      const result = await env.service.getOnTypeEdits(delta);
+      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      tick();
 
       expect(result.length).toBe(1);
       expect(result[0] instanceof Delta).toBe(true);
       expect(result[0].ops).toEqual([{ retain: 5 }, { insert: ' ' }]);
     }));
 
-    it('should handle multiple trigger characters', fakeAsync(async () => {
+    it('should handle multiple trigger characters', fakeAsync(() => {
       const env = new TestEnvironment();
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const delta = new Delta().insert('Hello, world.');
+      let result: Delta[] = [];
 
       when(mockWorkspace.getOnTypeEdits(anything(), anything(), ',')).thenResolve([{ retain: 6 }, { insert: ' ' }]);
       when(mockWorkspace.getOnTypeEdits(anything(), anything(), '.')).thenResolve([{ retain: 13 }, { insert: ' ' }]);
 
-      const result = await env.service.getOnTypeEdits(delta);
+      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      tick();
 
       expect(result.length).toBe(2);
       expect(result[0].ops).toEqual([{ retain: 13 }, { insert: ' ' }]);
       expect(result[1].ops).toEqual([{ retain: 6 }, { insert: ' ' }]);
     }));
 
-    it('should handle null document when getting on-type edits', fakeAsync(async () => {
+    it('should handle null document when getting on-type edits', fakeAsync(() => {
       const env = new TestEnvironment();
       env.service['textDocId'] = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       when(mockDocumentManager.get(anything())).thenReturn(Promise.resolve(undefined));
       const delta = new Delta().insert('Hello,');
+      let result: Delta[] = [];
 
-      const result = await env.service.getOnTypeEdits(delta);
+      env.service.getOnTypeEdits(delta).then(res => (result = res));
+      tick();
 
       expect(result).toEqual([]);
     }));
   });
 
   describe('getActions', () => {
-    it('should get actions for an insight', fakeAsync(async () => {
+    it('should get actions for an insight', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.init();
       const insight = env.createTestInsight();
+      let actions: LynxInsightAction[] = [];
 
-      const actions = await env.service.getActions(insight);
+      env.service.getActions(insight).then(res => (actions = res));
+      tick();
 
       expect(actions.length).toBe(1);
       expect(actions[0].label).toBe('Fix issue');
@@ -518,12 +525,14 @@ describe('LynxWorkspaceService', () => {
       expect(actions[0].ops).toEqual([{ retain: 0 }, { insert: 'corrected' }, { delete: 10 }]);
     }));
 
-    it('should handle null document when getting actions', fakeAsync(async () => {
+    it('should handle null document when getting actions', fakeAsync(() => {
       const env = new TestEnvironment();
       when(mockDocumentManager.get(anything())).thenReturn(Promise.resolve(undefined));
       const insight = env.createTestInsight();
+      let actions: LynxInsightAction[] = [];
 
-      const actions = await env.service.getActions(insight);
+      env.service.getActions(insight).then(res => (actions = res));
+      tick();
 
       expect(actions).toEqual([]);
     }));
