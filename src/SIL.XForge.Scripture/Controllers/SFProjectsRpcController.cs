@@ -817,10 +817,9 @@ public class SFProjectsRpcController(
     {
         try
         {
-            await projectService.SetUsfmConfigAsync(projectId, config);
+            await projectService.SetUsfmConfigAsync(UserId, projectId, config);
             return Ok();
         }
-        // TODO: Test exceptions
         catch (ForbiddenException)
         {
             return ForbiddenError();

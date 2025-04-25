@@ -796,16 +796,6 @@ public class MachineApiService(
     {
         // Ensure that the user has permission
         SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
-        var projectSecretAttempt = await projectSecrets.TryGetAsync(sfProjectId);
-        DraftUsfmConfig usfmConfig;
-        if (projectSecretAttempt.TryResult(out SFProjectSecret projectSecret))
-        {
-            usfmConfig = projectSecret.ServalData?.DraftUsfmConfig ?? new DraftUsfmConfig();
-        }
-        else
-        {
-            throw new DataNotFoundException("The project secret does not exist.");
-        }
 
         // If the user is a serval admin, get the highest ranked user on the project
         string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
@@ -847,7 +837,7 @@ public class MachineApiService(
                 sfProjectId,
                 bookNum,
                 chapterNum,
-                usfmConfig,
+                new DraftUsfmConfig(),
                 cancellationToken
             );
             string usx = paratextService.GetBookText(userSecret, project.ParatextId, bookNum, usfm);
@@ -1375,7 +1365,7 @@ public class MachineApiService(
                 sfProjectId,
                 bookNum,
                 chapterNum,
-                projectSecret.ServalData?.DraftUsfmConfig ?? new DraftUsfmConfig(),
+                new DraftUsfmConfig(),
                 cancellationToken
             );
 

@@ -13,6 +13,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -26,7 +27,6 @@ import { EventMetric } from '../event-metrics/event-metric';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
-import { DraftUsfmConfig } from './models/draft-usfm-config';
 import { NoteThreadDoc } from './models/note-thread-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';

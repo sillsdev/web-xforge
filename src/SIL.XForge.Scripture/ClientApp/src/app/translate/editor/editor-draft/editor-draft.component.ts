@@ -9,7 +9,6 @@ import {
   distinctUntilChanged,
   EMPTY,
   filter,
-  firstValueFrom,
   from,
   map,
   Observable,
@@ -29,11 +28,9 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { isString } from '../../../../type-utils';
-import { DraftUsfmConfig } from '../../../core/models/draft-usfm-config';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
-import { DraftFormatDialogComponent } from '../../draft-generation/draft-format-dialog/draft-format-dialog.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 @Component({
@@ -189,16 +186,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         );
       }
     }
-  }
-
-  async updateDraftSettings(): Promise<void> {
-    if (!this.onlineStatusService.isOnline) return;
-    const dialogRef = this.dialogService.openMatDialog(DraftFormatDialogComponent);
-    const result: DraftUsfmConfig | undefined = await firstValueFrom(dialogRef.afterClosed());
-    if (result == null) return;
-    console.log(result);
-    await this.projectService.onlineSetUsfmConfig(this.projectId!, result);
-    this.inputChanged$.next();
   }
 
   private setInitialState(): void {
