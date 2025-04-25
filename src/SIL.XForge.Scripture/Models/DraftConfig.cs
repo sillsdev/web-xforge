@@ -19,4 +19,5 @@ public class DraftConfig
     public string? LastSelectedTranslationScriptureRange { get; set; }
     public IList<ProjectScriptureRange> LastSelectedTranslationScriptureRanges { get; set; } = [];
     public string? ServalConfig { get; set; }
+    public DraftUsfmConfig? UsfmConfig { get; set; }
 }

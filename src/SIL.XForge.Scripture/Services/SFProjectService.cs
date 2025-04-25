@@ -1234,12 +1234,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
-    public async Task SetUsfmConfigAsync(string projectId, DraftUsfmConfig config)
+    public async Task SetUsfmConfigAsync(string curUserId, string projectId, DraftUsfmConfig config)
     {
-        await _projectSecrets.UpdateAsync(
-            p => p.Id == projectId,
-            update => update.Set(p => p.ServalData.DraftUsfmConfig, config)
-        );
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!HasParatextRole(projectDoc.Data, curUserId))
+            throw new ForbiddenException();
+        await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.TranslateConfig.DraftConfig.UsfmConfig, config));
     }
 
     protected override async Task AddUserToProjectAsync(

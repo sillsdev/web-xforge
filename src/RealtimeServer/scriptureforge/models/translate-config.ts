@@ -42,6 +42,12 @@ export interface ProjectScriptureRange {
   scriptureRange: string;
 }
 
+export interface DraftUsfmConfig {
+  preserveParagraphMarkers: boolean;
+  preserveStyleMarkers: boolean;
+  preserveEmbedMarkers: boolean;
+}
+
 export interface DraftConfig {
   additionalTrainingData: boolean;
   additionalTrainingSourceEnabled: boolean;
@@ -58,6 +64,7 @@ export interface DraftConfig {
   lastSelectedTranslationScriptureRange?: string;
   lastSelectedTranslationScriptureRanges?: ProjectScriptureRange[];
   servalConfig?: string;
+  usfmConfig?: DraftUsfmConfig;
 }
 
 export interface TranslateConfig {
