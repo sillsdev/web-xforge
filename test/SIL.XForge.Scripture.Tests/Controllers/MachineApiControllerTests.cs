@@ -904,6 +904,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new BrokenCircuitException());
@@ -914,6 +915,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            true,
             CancellationToken.None
         );
 
@@ -934,6 +936,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new ForbiddenException());
@@ -944,6 +947,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            true,
             CancellationToken.None
         );
 
@@ -962,6 +966,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new DataNotFoundException(string.Empty));
@@ -972,6 +977,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            true,
             CancellationToken.None
         );
 
@@ -990,6 +996,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new InvalidOperationException());
@@ -1000,6 +1007,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            true,
             CancellationToken.None
         );
 
@@ -1018,6 +1026,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new NotSupportedException());
@@ -1028,6 +1037,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            true,
             CancellationToken.None
         );
 
@@ -1047,6 +1057,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Returns(Task.FromResult(new Snapshot<TextData>()));
@@ -1057,10 +1068,38 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            true,
             CancellationToken.None
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPretranslationDeltaAsync_SuccessIgnoreSnapshot()
+    {
+        var env = new TestEnvironment();
+        bool accessSnapshot = false;
+        env.MachineApiService.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                Arg.Any<DateTime>(),
+                accessSnapshot,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(new Snapshot<TextData>()));
+        var result = await env.Controller.GetPreTranslationDeltaAsync(
+            Project01,
+            40,
+            1,
+            null,
+            accessSnapshot,
+            CancellationToken.None
+        );
+        Assert.IsInstanceOf<OkObjectResult>(result.Result);
     }
 
     [Test]
@@ -1370,6 +1409,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new BrokenCircuitException());
@@ -1400,6 +1440,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new ForbiddenException());
@@ -1428,6 +1469,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new DataNotFoundException(string.Empty));
@@ -1456,6 +1498,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new InvalidOperationException());
@@ -1484,6 +1527,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Throws(new NotSupportedException());
@@ -1513,6 +1557,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                true,
                 CancellationToken.None
             )
             .Returns(Task.FromResult<IUsj>(new Usj()));

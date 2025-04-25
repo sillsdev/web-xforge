@@ -71,7 +71,9 @@ describe('DraftHandlingService', () => {
       when(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
       ).thenReturn(of(draftOps));
-      service.getDraft(textDocId, { isDraftLegacy: false }).subscribe(draftData => expect(draftData).toEqual(draftOps));
+      service
+        .getDraft(textDocId, { isDraftLegacy: false, accessSnapshot: true })
+        .subscribe(draftData => expect(draftData).toEqual(draftOps));
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedDraftGenerationService.getGeneratedDraft('project01', 1, 1)).never();
     });
@@ -87,7 +89,9 @@ describe('DraftHandlingService', () => {
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
       ).thenReturn(throwError(() => ({ status: 405 })));
       when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of(draft));
-      service.getDraft(textDocId, { isDraftLegacy: false }).subscribe(draftData => expect(draftData).toEqual(draft));
+      service
+        .getDraft(textDocId, { isDraftLegacy: false, accessSnapshot: true })
+        .subscribe(draftData => expect(draftData).toEqual(draft));
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedDraftGenerationService.getGeneratedDraft('project01', 1, 1)).once();
     });

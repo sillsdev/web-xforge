@@ -1,13 +1,26 @@
 <ng-container>
   <h2>Select USFM settings for your draft</h2>
-  <mat-card class="flex-row">
-    <mat-checkbox [(ngModel)]="preserveParagraph">Preserve Paragraphs</mat-checkbox>
-    <mat-checkbox [(ngModel)]="preserveStyles">Preserve Styles</mat-checkbox>
-    <mat-checkbox [(ngModel)]="preserveEmbeds">Preserve Embeds</mat-checkbox>
-  </mat-card>
-
-  <app-book-chapter-chooser></app-book-chapter-chooser>
-
-  <app-editor-draft [projectId]="projectId" [bookNum]="bookNum" [chapter]="chapter" [isRightToLeft]="isRightToLeft">
-  </app-editor-draft>
+  <div class="format-container">
+    <div class="format-options">
+      <form [formGroup]="usfmFormatForm" (change)="formatUpdated()">
+        <mat-card class="options">
+          <mat-checkbox formControlName="preserveParagraphs">Preserve Paragraphs</mat-checkbox>
+          <mat-checkbox formControlName="preserveStyles">Preserve Styles</mat-checkbox>
+          <mat-checkbox formControlName="preserveEmbeds">Preserve Embeds</mat-checkbox>
+        </mat-card>
+      </form>
+      <div class="actions">
+        <button mat-flat-button class="finished" color="primary" (click)="finished()">Finished</button>
+      </div>
+    </div>
+    <div>
+      <app-book-chapter-chooser
+        [books]="booksWithDrafts"
+        [book]="bookNum"
+        [(chapter)]="chapterNum"
+        [chapters]="chapters"
+      ></app-book-chapter-chooser>
+      <app-text [isReadOnly]="true" [isRightToLeft]="isRightToLeft"> </app-text>
+    </div>
+  </div>
 </ng-container>

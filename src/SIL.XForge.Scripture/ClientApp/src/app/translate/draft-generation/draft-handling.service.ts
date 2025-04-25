@@ -144,7 +144,8 @@ export class DraftHandlingService {
    * Gets the generated draft of a chapter for a book. If unable to get the current draft delta format,
    * it will automatically fallback to attempt to retrieve the legacy draft format.
    * @param textDocId The text document identifier.
-   * @param param1 Whether to get the draft in the legacy format.
+   * @param param1 Whether to get the draft in the legacy format and whether to use the snapshot
+   * stored in the realtime database.
    * @returns The draft data in the current delta operation format or the legacy segment map format.
    */
   getDraft(
