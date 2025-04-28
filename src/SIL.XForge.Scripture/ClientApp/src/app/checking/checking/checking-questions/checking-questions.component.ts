@@ -43,6 +43,7 @@ export interface QuestionChangeActionSource {
 export interface QuestionChangedEvent {
   questionDoc: QuestionDoc | undefined;
   actionSource: QuestionChangeActionSource | undefined;
+  clearFilter?: boolean;
 }
 
 // For performance reasons, this component uses the OnPush change detection strategy rather than the default change
@@ -216,7 +217,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
   protected activateFirstUnansweredQuestion(): void {
     if (!this.hasUnansweredQuestion || this._firstUnansweredQuestion == null) return;
-    this.activateQuestion(this._firstUnansweredQuestion.docs[0], { isQuestionListChange: false });
+    this.activateQuestion(this._firstUnansweredQuestion.docs[0], { isQuestionListChange: false }, true);
   }
 
   private get canAddAnswer(): boolean {
@@ -381,7 +382,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     this.changeQuestion(-1);
   }
 
-  activateQuestion(questionDoc: QuestionDoc, actionSource?: QuestionChangeActionSource): void {
+  activateQuestion(questionDoc: QuestionDoc, actionSource?: QuestionChangeActionSource, clearFilter?: boolean): void {
     const verseRef: VerseRefData | undefined = questionDoc.data?.verseRef;
 
     // The reason for the convoluted questionChanged logic is because the change needs to be emitted even if it's the
@@ -397,7 +398,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       this.storeMostRecentQuestion().then(() => {
         // Only emit if not a filter to avoid duplicate emission, as an emit from filter is called elsewhere
         if (!actionSource?.isQuestionListChange) {
-          this.changed.emit({ questionDoc, actionSource });
+          this.changed.emit({ questionDoc, actionSource, clearFilter });
         }
 
         if (questionChanged) {
