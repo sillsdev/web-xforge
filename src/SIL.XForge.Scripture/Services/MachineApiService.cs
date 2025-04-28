@@ -1235,7 +1235,9 @@ public class MachineApiService(
         }
 
         // Run the training after the sync has completed
-        jobId = backgroundJobClient.ContinueJobWith<IMachineProjectService>(
+        // NOTE: This must be MachineProjectService, not IMachineProjectService
+        //       so that the interceptor functions for BuildProjectAsync().
+        jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
             jobId,
             r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
         );
