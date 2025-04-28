@@ -27,6 +27,7 @@ using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
 using ServalOptions = SIL.XForge.Configuration.ServalOptions;
 
 namespace SIL.XForge.Scripture.Services;
@@ -1549,6 +1550,48 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetPreTranslationDeltaAsync_SuccessIgnoreSnapshot()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
+        Delta expected = new Delta([token]);
+        env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
+        bool accessSnapshot = false;
+
+        // SUT
+        Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            false,
+            DateTime.UtcNow,
+            accessSnapshot,
+            CancellationToken.None
+        );
+        Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
+        Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual.Id);
+        Attempt<TextDocument> attempt = await env.RealtimeService.GetRepository<TextDocument>().TryGetAsync(actual.Id);
+        Assert.False(attempt.Success);
+        SFProject project = env.Projects.Get(Project01);
+        DraftUsfmConfig config = project.TranslateConfig.DraftConfig.UsfmConfig;
+        await env
+            .PreTranslationService.Received(1)
+            .GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                1,
+                Arg.Is<DraftUsfmConfig>(d =>
+                    d.PreserveParagraphMarkers == config.PreserveParagraphMarkers
+                    && d.PreserveStyleMarkers == config.PreserveStyleMarkers
+                    && d.PreserveEmbedMarkers == config.PreserveEmbedMarkers
+                ),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
     public async Task GetPreTranslationRevisionsAsync_CancelEnumeration()
     {
         // Set up test environment
@@ -2008,6 +2051,67 @@ public class MachineApiServiceTests
 
         // We compare to a TextDocument, as that is what is returned underneath the IUsj interface
         Assert.That(actual, Is.EqualTo(new TextDocument(id, TestUsj)).UsingPropertiesComparer());
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsjAsync_SuccessIgnoreSnapshot()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        string id = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
+        env.PreTranslationService.GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                1,
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(TestUsfm));
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Paratext01, 40, TestUsfm).Returns(TestUsx);
+        Usj usj = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content =
+            [
+                new UsjMarker
+                {
+                    Type = "book",
+                    Marker = "id",
+                    Code = "MAT",
+                },
+                new UsjMarker
+                {
+                    Type = "chapter",
+                    Marker = "c",
+                    Number = "2",
+                },
+                new UsjMarker
+                {
+                    Type = "verse",
+                    Marker = "v",
+                    Number = "1",
+                },
+                "Original usj content",
+            ],
+        };
+        // Add a default document snapshot
+        env.TextDocuments.Add(new TextDocument(id, usj));
+        bool accessSnapshot = false;
+
+        // SUT
+        IUsj actual = await env.Service.GetPreTranslationUsjAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            false,
+            DateTime.UtcNow,
+            accessSnapshot,
+            CancellationToken.None
+        );
+
+        Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
     }
 
     [Test]
@@ -3550,6 +3654,18 @@ public class MachineApiServiceTests
                             },
                         ],
                         UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
+                        TranslateConfig = new TranslateConfig
+                        {
+                            DraftConfig = new DraftConfig
+                            {
+                                UsfmConfig = new DraftUsfmConfig
+                                {
+                                    PreserveParagraphMarkers = false,
+                                    PreserveStyleMarkers = false,
+                                    PreserveEmbedMarkers = true,
+                                },
+                            },
+                        },
                     },
                     new SFProject
                     {
