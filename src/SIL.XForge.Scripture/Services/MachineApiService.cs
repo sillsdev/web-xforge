@@ -830,20 +830,22 @@ public class MachineApiService(
             throw new DataNotFoundException("The user does not exist.");
         }
 
-        // There is no snapshot, so retrieve the draft from Serval, and save it to the realtime server
+        DraftUsfmConfig config = project.TranslateConfig.DraftConfig.UsfmConfig ?? new DraftUsfmConfig();
+
+        // There is no snapshot or the snapshot is being ignored, so retrieve the draft from Serval
         try
         {
             string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
                 sfProjectId,
                 bookNum,
                 chapterNum,
-                new DraftUsfmConfig(),
+                config,
                 cancellationToken
             );
             string usx = paratextService.GetBookText(userSecret, project.ParatextId, bookNum, usfm);
             IUsj usj = UsxToUsj.UsxStringToUsj(usx);
 
-            // Do not save the USJ if the chapter is 0
+            // Do not save the USJ if the chapter is 0 or accessing the snapshot is ignored
             if (chapterNum != 0 && accessSnapshot)
             {
                 await SaveTextDocumentAsync(textDocument!, usj);
