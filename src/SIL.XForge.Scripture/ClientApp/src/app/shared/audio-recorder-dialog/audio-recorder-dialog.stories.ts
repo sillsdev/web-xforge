@@ -70,7 +70,8 @@ export default {
     moduleMetadata({}),
     (story, context) => {
       context.args.data = {
-        countdown: context.args.countdown
+        countdown: context.args.countdown,
+        requireSave: true
       } as AudioRecorderDialogData;
       when(mockedNavigator.mediaDevices).thenReturn({
         getUserMedia: (_: MediaStreamConstraints): Promise<MediaStream> => {
