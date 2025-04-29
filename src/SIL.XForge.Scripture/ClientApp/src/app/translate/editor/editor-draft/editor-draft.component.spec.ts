@@ -149,6 +149,63 @@ describe('EditorDraftComponent', () => {
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
 
+  it('should support a timestamp earlier than the oldest draft', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(draftDelta.ops!)));
+    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
+
+    // Set the date to a time before the earliest draft
+    fixture.componentInstance.timestamp = new Date('2024-03-22T03:02:01Z');
+
+    // SUT
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
+    expect(component.draftCheckState).toEqual('draft-present');
+    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+  }));
+
+  it('should support a timestamp close to the oldest draft', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(draftDelta.ops!)));
+    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
+
+    // Set the date to a time just before the earliest draft
+    // This will account for the delay in storing the draft
+    const timestamp = new Date(draftHistory[0].timestamp);
+    timestamp.setMinutes(timestamp.getMinutes() - 10);
+    fixture.componentInstance.timestamp = timestamp;
+
+    // SUT
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
+    expect(component.draftCheckState).toEqual('draft-present');
+    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+  }));
+
   it('should return ops and update the editor when no revision', fakeAsync(() => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
