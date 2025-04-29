@@ -109,6 +109,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.buildRequestedByUserName).toBe('user-display-name');
       expect(component.buildRequestedByDate).toBe('formatted-date');
       expect(component.canDownloadBuild).toBe(true);
+      expect(component.columnsToDisplay).toEqual(['bookNames', 'source', 'target']);
       expect(component.hasDetails).toBe(true);
       expect(component.entry).toBe(entry);
       expect(component.sourceLanguage).toBe('fr');
@@ -120,6 +121,52 @@ describe('DraftHistoryEntryComponent', () => {
           target: 'tar'
         }
       ]);
+      expect(component.trainingDataOpen).toBe(false);
+    }));
+
+    it('should handle builds where the draft cannot be downloaded yet', fakeAsync(() => {
+      when(mockedI18nService.localizeBook('GEN')).thenReturn('Genesis');
+      when(mockedI18nService.localizeBook('EXO')).thenReturn('Exodus');
+      const targetProjectDoc = {
+        id: 'project01'
+      } as SFProjectProfileDoc;
+      when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+      const sourceProjectDoc = {
+        id: 'project02'
+      } as SFProjectProfileDoc;
+      when(mockedSFProjectService.getProfile('project02')).thenResolve(sourceProjectDoc);
+      const entry = {
+        engine: {
+          id: 'project01'
+        },
+        additionalInfo: {
+          trainingScriptureRanges: [{ projectId: 'project02', scriptureRange: 'EXO' }],
+          translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN' }]
+        }
+      } as BuildDto;
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      expect(component.bookNames).toEqual(['Genesis']);
+      expect(component.buildRequestedByUserName).toBeUndefined();
+      expect(component.buildRequestedByDate).toBe('');
+      expect(component.canDownloadBuild).toBe(false);
+      expect(component.columnsToDisplay).toEqual(['bookNames', 'source', 'target']);
+      expect(component.hasDetails).toBe(true);
+      expect(component.entry).toBe(entry);
+      expect(component.sourceLanguage).toBe('');
+      expect(component.targetLanguage).toBe('');
+      expect(component.trainingData).toEqual([
+        {
+          bookNames: ['Exodus'],
+          source: '',
+          target: ''
+        }
+      ]);
+      expect(component.trainingDataOpen).toBe(true);
     }));
 
     it('should handle builds with additional info referencing a deleted user', fakeAsync(() => {
