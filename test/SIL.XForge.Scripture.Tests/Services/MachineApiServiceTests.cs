@@ -1473,7 +1473,7 @@ public class MachineApiServiceTests
                     1,
                     false,
                     DateTime.UtcNow,
-                    true,
+                    null,
                     CancellationToken.None
                 )
         );
@@ -1495,7 +1495,7 @@ public class MachineApiServiceTests
                     0,
                     false,
                     DateTime.UtcNow,
-                    true,
+                    null,
                     CancellationToken.None
                 )
         );
@@ -1518,7 +1518,7 @@ public class MachineApiServiceTests
             1,
             true,
             DateTime.UtcNow,
-            true,
+            null,
             CancellationToken.None
         );
         Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
@@ -1542,7 +1542,7 @@ public class MachineApiServiceTests
             1,
             false,
             DateTime.UtcNow,
-            true,
+            null,
             CancellationToken.None
         );
         Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
@@ -1550,14 +1550,19 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetPreTranslationDeltaAsync_SuccessIgnoreSnapshot()
+    public async Task GetPreTranslationDeltaAsync_SuccessSpecificConfig()
     {
         // Set up test environment
         var env = new TestEnvironment();
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
-        bool accessSnapshot = false;
+        DraftUsfmConfig config = new DraftUsfmConfig
+        {
+            PreserveParagraphMarkers = true,
+            PreserveStyleMarkers = true,
+            PreserveEmbedMarkers = true,
+        };
 
         // SUT
         Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
@@ -1567,15 +1572,13 @@ public class MachineApiServiceTests
             1,
             false,
             DateTime.UtcNow,
-            accessSnapshot,
+            config,
             CancellationToken.None
         );
         Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
         Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual.Id);
         Attempt<TextDocument> attempt = await env.RealtimeService.GetRepository<TextDocument>().TryGetAsync(actual.Id);
         Assert.False(attempt.Success);
-        SFProject project = env.Projects.Get(Project01);
-        DraftUsfmConfig config = project.TranslateConfig.DraftConfig.UsfmConfig;
         await env
             .PreTranslationService.Received(1)
             .GetPreTranslationUsfmAsync(
@@ -1752,6 +1755,7 @@ public class MachineApiServiceTests
                     1,
                     false,
                     DateTime.UtcNow,
+                    null,
                     CancellationToken.None
                 )
         );
@@ -1774,6 +1778,7 @@ public class MachineApiServiceTests
                     1,
                     false,
                     DateTime.UtcNow,
+                    null,
                     CancellationToken.None
                 )
         );
@@ -1796,6 +1801,7 @@ public class MachineApiServiceTests
             1,
             true,
             DateTime.UtcNow,
+            null,
             CancellationToken.None
         );
         Assert.AreEqual(expected, usfm);
@@ -1818,9 +1824,53 @@ public class MachineApiServiceTests
             1,
             false,
             DateTime.UtcNow,
+            null,
             CancellationToken.None
         );
         Assert.AreEqual(expected, usfm);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_SuccessSpecificConfig()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string expected = "\\c 1 \\v1 Verse 1";
+        env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
+            .Returns(expected);
+
+        var config = new DraftUsfmConfig
+        {
+            PreserveParagraphMarkers = true,
+            PreserveStyleMarkers = true,
+            PreserveEmbedMarkers = true,
+        };
+
+        // SUT
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            false,
+            DateTime.UtcNow,
+            config,
+            CancellationToken.None
+        );
+        Assert.AreEqual(expected, usfm);
+        await env
+            .PreTranslationService.Received(1)
+            .GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                1,
+                Arg.Is<DraftUsfmConfig>(d =>
+                    d.PreserveParagraphMarkers == config.PreserveParagraphMarkers
+                    && d.PreserveStyleMarkers == config.PreserveStyleMarkers
+                    && d.PreserveEmbedMarkers == config.PreserveEmbedMarkers
+                ),
+                CancellationToken.None
+            );
     }
 
     [Test]
@@ -1847,7 +1897,7 @@ public class MachineApiServiceTests
                     1,
                     false,
                     DateTime.UtcNow,
-                    true,
+                    null,
                     CancellationToken.None
                 )
         );
@@ -1876,7 +1926,7 @@ public class MachineApiServiceTests
             0,
             false,
             DateTime.UtcNow,
-            true,
+            null,
             CancellationToken.None
         );
         Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
@@ -1887,11 +1937,16 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetPreTranslationUsjAsync_DoesNotSaveIfIgnoreSnapshot()
+    public async Task GetPreTranslationUsjAsync_DoesNotSaveIfSpecificConfig()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        bool accessSnapshot = false;
+        var config = new DraftUsfmConfig
+        {
+            PreserveParagraphMarkers = true,
+            PreserveStyleMarkers = true,
+            PreserveEmbedMarkers = true,
+        };
         env.PreTranslationService.GetPreTranslationUsfmAsync(
                 Project01,
                 40,
@@ -1910,7 +1965,7 @@ public class MachineApiServiceTests
             1,
             false,
             DateTime.UtcNow,
-            accessSnapshot,
+            config,
             CancellationToken.None
         );
         Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
@@ -1937,7 +1992,7 @@ public class MachineApiServiceTests
                     1,
                     false,
                     DateTime.UtcNow,
-                    true,
+                    null,
                     CancellationToken.None
                 )
         );
@@ -1961,7 +2016,7 @@ public class MachineApiServiceTests
                     1,
                     false,
                     DateTime.MinValue,
-                    true,
+                    null,
                     CancellationToken.None
                 )
         );
@@ -1990,7 +2045,7 @@ public class MachineApiServiceTests
             1,
             false,
             DateTime.UtcNow,
-            true,
+            null,
             CancellationToken.None
         );
         Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
@@ -2023,7 +2078,7 @@ public class MachineApiServiceTests
             1,
             true,
             DateTime.UtcNow,
-            true,
+            null,
             CancellationToken.None
         );
         Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
@@ -2045,7 +2100,7 @@ public class MachineApiServiceTests
             1,
             false,
             DateTime.UtcNow,
-            true,
+            null,
             CancellationToken.None
         );
 
@@ -2054,7 +2109,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetPreTranslationUsjAsync_SuccessIgnoreSnapshot()
+    public async Task GetPreTranslationUsjAsync_SuccessSpecificConfig()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2097,7 +2152,12 @@ public class MachineApiServiceTests
         };
         // Add a default document snapshot
         env.TextDocuments.Add(new TextDocument(id, usj));
-        bool accessSnapshot = false;
+        var config = new DraftUsfmConfig
+        {
+            PreserveParagraphMarkers = true,
+            PreserveStyleMarkers = true,
+            PreserveEmbedMarkers = true,
+        };
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
@@ -2107,11 +2167,25 @@ public class MachineApiServiceTests
             1,
             false,
             DateTime.UtcNow,
-            accessSnapshot,
+            config,
             CancellationToken.None
         );
 
         Assert.That(actual, Is.EqualTo(TestUsj).UsingPropertiesComparer());
+
+        await env
+            .PreTranslationService.Received(1)
+            .GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                1,
+                Arg.Is<DraftUsfmConfig>(d =>
+                    d.PreserveParagraphMarkers == config.PreserveParagraphMarkers
+                    && d.PreserveStyleMarkers == config.PreserveStyleMarkers
+                    && d.PreserveEmbedMarkers == config.PreserveEmbedMarkers
+                ),
+                CancellationToken.None
+            );
     }
 
     [Test]
@@ -2138,6 +2212,7 @@ public class MachineApiServiceTests
                     1,
                     false,
                     DateTime.UtcNow,
+                    null,
                     CancellationToken.None
                 )
         );
@@ -2160,6 +2235,7 @@ public class MachineApiServiceTests
                     1,
                     false,
                     DateTime.UtcNow,
+                    null,
                     CancellationToken.None
                 )
         );
@@ -2193,6 +2269,7 @@ public class MachineApiServiceTests
             1,
             true,
             DateTime.UtcNow,
+            null,
             CancellationToken.None
         );
         Assert.AreEqual(expected, actual);
@@ -2226,9 +2303,63 @@ public class MachineApiServiceTests
             1,
             false,
             DateTime.UtcNow,
+            null,
             CancellationToken.None
         );
         Assert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsxAsync_SuccessSpecificConfig()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string usfm = "\\c 1 \\v1 Verse 1";
+        const string usx =
+            "<usx version=\"3.0\"><book code=\"MAT\" style=\"id\"></book><chapter number=\"1\" style=\"c\" />"
+            + "<verse number=\"1\" style=\"v\" />Verse 1</usx>";
+        env.PreTranslationService.GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                1,
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(usfm));
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
+        string expected = UsjToUsx.UsjToUsxString(TestUsj);
+        var config = new DraftUsfmConfig
+        {
+            PreserveParagraphMarkers = true,
+            PreserveStyleMarkers = true,
+            PreserveEmbedMarkers = true,
+        };
+
+        // SUT
+        string actual = await env.Service.GetPreTranslationUsxAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            false,
+            DateTime.UtcNow,
+            config,
+            CancellationToken.None
+        );
+        Assert.AreEqual(expected, actual);
+        await env
+            .PreTranslationService.Received(1)
+            .GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                1,
+                Arg.Is<DraftUsfmConfig>(d =>
+                    d.PreserveParagraphMarkers == config.PreserveParagraphMarkers
+                    && d.PreserveStyleMarkers == config.PreserveStyleMarkers
+                    && d.PreserveEmbedMarkers == config.PreserveEmbedMarkers
+                ),
+                CancellationToken.None
+            );
     }
 
     [Test]

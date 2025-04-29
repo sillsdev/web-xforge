@@ -4,6 +4,7 @@ import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
 import { EMPTY, firstValueFrom, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
@@ -183,15 +184,21 @@ export class DraftGenerationService {
     projectId: string,
     book: number,
     chapter: number,
-    accessSnapshot: boolean = true
+    usfmConfig?: DraftUsfmConfig
   ): Observable<DeltaOperation[]> {
     if (!this.onlineStatusService.isOnline) {
       return of([]);
     }
+    let queryParams = '';
+    if (usfmConfig != null) {
+      queryParams =
+        `?preserveParagraphs=${usfmConfig.preserveParagraphMarkers}` +
+        `&preserveStyles=${usfmConfig.preserveStyleMarkers}&preserveEmbeds=${usfmConfig.preserveEmbedMarkers}`;
+    }
     return this.httpClient
       .get<
         Snapshot<TextData> | undefined
-      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta/accessSnapshot:${accessSnapshot}`)
+      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta${queryParams}`)
       .pipe(
         map(res => res.data?.data.ops ?? []),
         catchError(err => {
