@@ -54,7 +54,7 @@
   --sf-language-font-family: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
 
   a:not(.mdc-button):not(.mat-mdc-menu-item) {
-    color: mat.get-theme-color($theme, primary, if($is-dark, 80, 40));
+    color: mat.get-theme-color($theme, primary, 50);
     &:hover {
       color: mat.get-theme-color($theme, primary, 60);
     }
