@@ -319,6 +319,13 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  readonly newDraftHistory: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'NewDraftHistory',
+    'Preview new draft history interface',
+    16,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

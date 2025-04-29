@@ -17,6 +17,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -152,6 +153,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
+    protected readonly featureFlags: FeatureFlagService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
