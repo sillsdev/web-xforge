@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
 import { catchError, Observable, throwError } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -150,24 +151,19 @@ export class DraftHandlingService {
    */
   getDraft(
     textDocId: TextDocId,
-    { isDraftLegacy, accessSnapshot }: { isDraftLegacy: boolean; accessSnapshot: boolean }
+    { isDraftLegacy, config }: { isDraftLegacy: boolean; config?: DraftUsfmConfig }
   ): Observable<DeltaOperation[] | DraftSegmentMap> {
     return isDraftLegacy
       ? // Fetch legacy draft
         this.draftGenerationService.getGeneratedDraft(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
       : // Fetch draft in USFM format (fallback to legacy)
         this.draftGenerationService
-          .getGeneratedDraftDeltaOperations(
-            textDocId.projectId,
-            textDocId.bookNum,
-            textDocId.chapterNum,
-            accessSnapshot
-          )
+          .getGeneratedDraftDeltaOperations(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, config)
           .pipe(
             catchError(err => {
               // If the corpus does not support USFM
               if (err.status === 405) {
-                return this.getDraft(textDocId, { isDraftLegacy: true, accessSnapshot });
+                return this.getDraft(textDocId, { isDraftLegacy: true, config });
               }
 
               return throwError(() => err);
@@ -229,7 +225,7 @@ export class DraftHandlingService {
     }
 
     return await new Promise<boolean>(resolve => {
-      this.getDraft(draftTextDocId, { isDraftLegacy: false, accessSnapshot: true }).subscribe({
+      this.getDraft(draftTextDocId, { isDraftLegacy: false }).subscribe({
         next: async draft => {
           let ops: DeltaOperation[] = [];
           if (this.isDraftSegmentMap(draft)) {

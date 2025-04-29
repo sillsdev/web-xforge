@@ -1,8 +1,11 @@
 <ng-container>
   <h2>Select USFM settings for your draft</h2>
+  @if (!isOnline) {
+    <p class="offline-message">Please connect to the internet to change draft USFM configurations</p>
+  }
   <div class="format-container">
     <div class="format-options">
-      <form [formGroup]="usfmFormatForm" (change)="formatUpdated()">
+      <form [formGroup]="usfmFormatForm" (change)="reloadText()">
         <mat-card class="options">
           <mat-checkbox formControlName="preserveParagraphs">Preserve Paragraphs</mat-checkbox>
           <mat-checkbox formControlName="preserveStyles">Preserve Styles</mat-checkbox>
@@ -10,17 +13,20 @@
         </mat-card>
       </form>
       <div class="actions">
-        <button mat-flat-button class="finished" color="primary" (click)="finished()">Finished</button>
+        <button mat-button class="cancel" (click)="cancel()">Cancel</button>
+        <button mat-flat-button class="save" color="primary" (click)="saveChanges()">Save changes</button>
       </div>
     </div>
     <div>
       <app-book-chapter-chooser
         [books]="booksWithDrafts"
         [book]="bookNum"
+        (bookChange)="bookChanged($event)"
         [(chapter)]="chapterNum"
         [chapters]="chapters"
+        (chapterChange)="chapterChanged($event)"
       ></app-book-chapter-chooser>
-      <app-text [isReadOnly]="true" [isRightToLeft]="isRightToLeft"> </app-text>
+      <app-text [isReadOnly]="true" [isRightToLeft]="isRightToLeft"></app-text>
     </div>
   </div>
 </ng-container>

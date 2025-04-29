@@ -117,7 +117,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         switchMap(() =>
           combineLatest([
             this.getTargetOps(),
-            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false, accessSnapshot: false })
+            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false })
           ])
         ),
         tap(([_, draft]) => {

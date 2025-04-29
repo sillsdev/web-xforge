@@ -73,7 +73,7 @@ public interface IMachineApiService
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
-        bool accessSnapshot,
+        DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     );
     IAsyncEnumerable<DocumentRevision> GetPreTranslationRevisionsAsync(
@@ -91,6 +91,7 @@ public interface IMachineApiService
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     );
     Task<IUsj> GetPreTranslationUsjAsync(
@@ -100,7 +101,7 @@ public interface IMachineApiService
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
-        bool accessSnapshot,
+        DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     );
     Task<string> GetPreTranslationUsxAsync(
@@ -110,6 +111,7 @@ public interface IMachineApiService
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     );
     Task<WordGraph> GetWordGraphAsync(
