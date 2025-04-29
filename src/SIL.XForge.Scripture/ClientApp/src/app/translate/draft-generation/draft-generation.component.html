@@ -261,7 +261,7 @@
                   <app-working-animated-indicator></app-working-animated-indicator>
                 </section>
               }
-              @if (isDraftComplete(draftJob) || hasAnyCompletedBuild) {
+              @if ((isDraftComplete(draftJob) || hasAnyCompletedBuild) && !featureFlags.newDraftHistory.enabled) {
                 <section class="draft-complete">
                   <mat-card class="preview-card">
                     <mat-card-header>
@@ -333,6 +333,10 @@
       }
     </section>
 
+    @if (featureFlags.newDraftHistory.enabled) {
+      <app-draft-history-list></app-draft-history-list>
+    }
+
     @if (canShowAdditionalInfo(draftJob)) {
       <section>
         <mat-expansion-panel class="diagnostics-info">
@@ -363,5 +367,3 @@
     }
   }
 </ng-container>
-
-<app-draft-history-list></app-draft-history-list>

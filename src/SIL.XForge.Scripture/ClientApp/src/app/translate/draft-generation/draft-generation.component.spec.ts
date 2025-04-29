@@ -13,6 +13,7 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -51,6 +52,7 @@ describe('DraftGenerationComponent', () => {
   let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockProgressService: jasmine.SpyObj<ProgressService>;
+  let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -98,7 +100,8 @@ describe('DraftGenerationComponent', () => {
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
           { provide: PreTranslationSignupUrlService, useValue: mockPreTranslationSignupUrlService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },
-          { provide: ProgressService, useValue: mockProgressService }
+          { provide: ProgressService, useValue: mockProgressService },
+          { provide: FeatureFlagService, useValue: mockFeatureFlagService }
         ]
       });
 
@@ -156,6 +159,9 @@ describe('DraftGenerationComponent', () => {
       when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
       mockTrainingDataService = jasmine.createSpyObj<TrainingDataService>(['queryTrainingDataAsync']);
       mockTrainingDataService.queryTrainingDataAsync.and.returnValue(Promise.resolve(instance(mockTrainingDataQuery)));
+      mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>({
+        newDraftHistory: createTestFeatureFlag(false)
+      });
     }
 
     static initProject(currentUserId: string, preTranslate: boolean = true): void {
@@ -1416,6 +1422,7 @@ describe('DraftGenerationComponent', () => {
 
     it('button should display if there is a completed build while a build is queued', () => {
       const env = new TestEnvironment();
+      env.setup();
       env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
       env.component.lastCompletedBuild = { ...buildDto, state: BuildStates.Completed };
       env.component.hasDraftBooksAvailable = true;
