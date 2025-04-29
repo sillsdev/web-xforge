@@ -1,6 +1,9 @@
 @use 'sass:color';
 @use 'sass:list';
+@use 'sass:map';
+@use '@angular/material' as mat;
 @use 'src/variables' as sfColors;
+@use 'src/themes/default' as default;
 
 // prettier-ignore
 $colors: (
@@ -17,6 +20,27 @@ $colors: (
 // Helper function just to clean up the syntax
 @function scaleLightness($color, $lightness) {
   @return color.scale($color, $lightness: $lightness);
+}
+
+@function create-dark-palette($base-color) {
+  @return (
+    0: scaleLightness($base-color, -95%),
+    10: scaleLightness($base-color, -90%),
+    20: scaleLightness($base-color, -80%),
+    25: scaleLightness($base-color, -75%),
+    30: scaleLightness($base-color, -70%),
+    35: scaleLightness($base-color, -65%),
+    40: scaleLightness($base-color, -60%),
+    50: scaleLightness($base-color, -50%),
+    60: scaleLightness($base-color, -40%),
+    70: scaleLightness($base-color, -30%),
+    80: scaleLightness($base-color, -25%),
+    90: scaleLightness($base-color, -10%),
+    95: scaleLightness($base-color, -5%),
+    98: scaleLightness($base-color, -2%),
+    99: scaleLightness($base-color, -1%),
+    100: $base-color
+  );
 }
 
 :host {
@@ -59,6 +83,20 @@ $colors: (
       --notice-color-button-bg-alt: #{scaleLightness($colorLight, 20%)};
       --notice-color-button-hover-bg-alt: #{scaleLightness($colorLight, 80%)};
       --notice-color-button-text-alt: #{scaleLightness($colorLight, -60%)};
+
+      // prettier-ignore
+      &.mode-fill-dark,
+      &.mode-fill-light {
+        $_notice_theme: mat.define-theme(
+          (
+            color: (
+                primary: map.merge(create-dark-palette($colorLight), default.$rest)
+              )
+          )
+        );
+
+        @include mat.checkbox-color($_notice_theme);
+      }
     }
   }
 
