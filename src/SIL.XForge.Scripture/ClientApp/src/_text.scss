@@ -23,6 +23,9 @@
   --sf-usx-verse-background: #{mat.get-theme-color($theme, neutral, 95)};
   --sf-usx-readonly-verse-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 80, 10))};
   --sf-usx-readonly-verse-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 30, 95))};
+
+  --sf-text-color: #{if($is-dark, black, rgba(0, 0, 0, 0.8))};
+  --sf-text-background: #{if($is-dark, mat.get-theme-color($theme, neutral-variant, 80), white)};
 }
 
 @mixin theme($theme) {
@@ -231,8 +234,8 @@ quill-editor.rtl {
 
         box-decoration-break: clone;
 
-        color: rgba(0, 0, 0, 0.8);
-        background-color: white;
+        color: var(--sf-text-color);
+        background-color: var(--sf-text-background);
       }
     }
 
