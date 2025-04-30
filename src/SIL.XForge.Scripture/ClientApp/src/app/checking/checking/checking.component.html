@@ -42,8 +42,10 @@
         <button mat-button [matMenuTriggerFor]="questionFilterMenu" class="active-question-scope-button">
           <mat-icon [ngClass]="{ 'material-icons-outlined': !isQuestionFilterApplied }">filter_alt</mat-icon>
           {{ t(questionScopes.get(activeQuestionScope ?? "all")!) }}
-          <span class="divider">|</span>
-          {{ t(appliedQuestionFilterKey ?? "question_filter_none") }}
+          @if (appliedQuestionFilterKey !== "question_filter_none" && appliedQuestionFilterKey !== undefined) {
+            <span class="divider">|</span>
+            {{ t(appliedQuestionFilterKey) }}
+          }
         </button>
       </header>
       <div class="panel-content">
@@ -56,7 +58,6 @@
           [projectProfileDoc]="projectDoc"
           [questionDocs]="visibleQuestions"
           [routeBookChapter]="routeBookChapter"
-          [isFiltered]="isQuestionFilterApplied"
         ></app-checking-questions>
       </div>
     </div>

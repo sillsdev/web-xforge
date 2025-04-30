@@ -912,7 +912,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   // if click question in question list
-  questionChanged({ questionDoc, actionSource }: QuestionChangedEvent): void {
+  questionChanged({ questionDoc, actionSource, clearFilter }: QuestionChangedEvent): void {
     if (this.questionsList == null) {
       return;
     }
@@ -920,6 +920,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     // Hide the mobile question overlay unless question changed is due to a filter action (list change)
     if (!actionSource?.isQuestionListChange) {
       this.setQuestionsOverlayVisibility(false);
+    }
+
+    if (clearFilter) {
+      this.resetFilter();
     }
 
     if (questionDoc != null) {
