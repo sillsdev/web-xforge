@@ -4,7 +4,7 @@
 
 // Styles for angular material components. Refer to https://material.angular.io/guide/theming
 // Note: Color palettes are generated from primary: #BECC63, secondary: #9BA26D, tertiary: #F3D479
-$_palettes: (
+$palettes: (
   primary: (
     0: #000000,
     10: #2b0053,
@@ -98,7 +98,7 @@ $_palettes: (
     50: #7d7483,
     60: #978d9e,
     70: #b2a7b8,
-    80: #cec3d4,
+    80: #cfc7d3,
     90: #eadef1,
     95: #f9edff,
     98: #fff7ff,
@@ -124,14 +124,14 @@ $_palettes: (
     100: #ffffff
   )
 );
-$_rest: (
-  secondary: map.get($_palettes, secondary),
-  neutral: map.get($_palettes, neutral),
-  neutral-variant: map.get($_palettes, neutral-variant),
-  error: map.get($_palettes, error)
+$rest: (
+  secondary: map.get($palettes, secondary),
+  neutral: map.get($palettes, neutral),
+  neutral-variant: map.get($palettes, neutral-variant),
+  error: map.get($palettes, error)
 );
-$_primary: map.merge(map.get($_palettes, primary), $_rest);
-$_tertiary: map.merge(map.get($_palettes, tertiary), $_rest);
+$_primary: map.merge(map.get($palettes, primary), $rest);
+$_tertiary: map.merge(map.get($palettes, tertiary), $rest);
 
 $default-theme: mat.define-theme(
   (

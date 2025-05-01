@@ -1,129 +1,144 @@
+@use '@angular/material' as mat;
 @import 'src/variables';
 
-.title {
-  margin-bottom: 20px;
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --sf-list-item-hover-color: #{if($is-dark, mat.get-theme-color($theme, neutral, 17), lighten($sf_grey, 75%))};
 }
 
-mat-card {
-  min-height: 278px;
-  padding: 0;
-  mat-card-actions {
-    margin: 0;
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
   }
 }
 
-.card-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 20px 40px;
-  padding-block-end: 10px;
-}
-
-.translation-suggestions-info {
-  color: $lighterTextColor;
-  padding: 16px;
-}
-
-.books-card {
-  width: 18rem;
-
-  .progress-header {
-    display: flex;
-    place-content: center space-between;
+:host {
+  .title {
+    margin-bottom: 20px;
   }
 
-  .books-card-title ::ng-deep {
-    margin-top: 4px;
-    padding: 0 16px;
-    > .mat-mdc-card-header-text {
-      width: 100%;
-      mat-card-title {
-        margin-block: 8px;
-      }
-    }
-  }
-
-  mat-list {
-    overflow-y: auto;
-    mat-list-item {
-      cursor: pointer;
-      &:hover {
-        background-color: lighten($sf_grey, 75%);
-      }
-      .mat-icon {
-        color: rgba(0, 0, 0, 0.6);
-        margin-block: 0;
-        margin-inline: 16px;
-        align-self: center;
-      }
-    }
-  }
-}
-
-.progress {
-  display: flex !important;
-  align-self: center !important;
-  width: 32px;
-  height: 32px;
-}
-
-.engine-card {
-  width: 16rem;
-  overflow: hidden;
-
-  mat-card-header {
-    padding: 0 16px;
-  }
-
-  .engine-card-title {
-    margin-block: 8px;
-  }
-
-  .engine-card-content {
-    display: flex;
-    flex-direction: column;
+  mat-card {
+    min-height: 278px;
     padding: 0;
-    font-size: 14px;
+    mat-card-actions {
+      margin: 0;
+    }
+  }
 
-    .engine-card-quality {
+  .card-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 20px 40px;
+    padding-block-end: 10px;
+  }
+
+  .translation-suggestions-info {
+    color: $lighterTextColor;
+    padding: 16px;
+  }
+
+  .books-card {
+    width: 18rem;
+
+    .progress-header {
+      display: flex;
+      place-content: center space-between;
+    }
+
+    .books-card-title ::ng-deep {
+      margin-top: 4px;
+      padding: 0 16px;
+      > .mat-mdc-card-header-text {
+        width: 100%;
+        mat-card-title {
+          margin-block: 8px;
+        }
+      }
+    }
+
+    mat-list {
+      overflow-y: auto;
+      mat-list-item {
+        cursor: pointer;
+        &:hover {
+          background-color: var(--sf-list-item-hover-color);
+        }
+        .mat-icon {
+          color: rgba(0, 0, 0, 0.6);
+          margin-block: 0;
+          margin-inline: 16px;
+          align-self: center;
+        }
+      }
+    }
+  }
+
+  .progress {
+    display: flex !important;
+    align-self: center !important;
+    width: 32px;
+    height: 32px;
+  }
+
+  .engine-card {
+    width: 16rem;
+    overflow: hidden;
+
+    mat-card-header {
+      padding: 0 16px;
+    }
+
+    .engine-card-title {
+      margin-block: 8px;
+    }
+
+    .engine-card-content {
       display: flex;
       flex-direction: column;
-      align-self: stretch;
-      background-color: $greenLight;
-      padding: 26px 16px 15px 16px;
+      padding: 0;
+      font-size: 14px;
 
-      .engine-card-quality-stars {
-        align-self: center;
-        mat-icon {
-          font-size: 3.5em;
-          height: unset;
-          width: unset;
+      .engine-card-quality {
+        display: flex;
+        flex-direction: column;
+        align-self: stretch;
+        background-color: $greenLight;
+        padding: 26px 16px 15px 16px;
+
+        .engine-card-quality-stars {
+          align-self: center;
+          mat-icon {
+            font-size: 3.5em;
+            height: unset;
+            width: unset;
+          }
+
+          // the half star icon doesn't render reversed in RTL, so render the stars LTR and then rotate them
+          direction: ltr;
         }
 
-        // the half star icon doesn't render reversed in RTL, so render the stars LTR and then rotate them
-        direction: ltr;
+        .engine-card-quality-subtitle {
+          align-self: flex-end;
+          padding-right: 28px;
+        }
       }
 
-      .engine-card-quality-subtitle {
-        align-self: flex-end;
-        padding-right: 28px;
-      }
-    }
+      .engine-card-segments {
+        align-self: center;
+        padding: 15px 16px;
 
-    .engine-card-segments {
-      align-self: center;
-      padding: 15px 16px;
-
-      .engine-card-segments-count {
-        font-size: 2.25em;
-        margin-right: 8px;
+        .engine-card-segments-count {
+          font-size: 2.25em;
+          margin-right: 8px;
+        }
       }
     }
-  }
 
-  .mat-card-actions {
-    margin: 0;
-    padding: 8px;
+    .mat-card-actions {
+      margin: 0;
+      padding: 8px;
+    }
   }
 }

@@ -1,5 +1,3 @@
-@use 'src/variables';
-
 :host {
   display: flex;
   flex-direction: column;
@@ -17,7 +15,7 @@ app-notice {
 .toolbar {
   position: sticky;
   top: 0;
-  background: #fff;
+  background: var(--sf-tab-toolbar-background-color);
   z-index: 1;
   display: flex; //fill vertical space
 }
@@ -31,7 +29,7 @@ app-notice {
 }
 
 .draft-indicator {
-  color: variables.$greenDark;
+  color: var(--sf-draft-applied-color);
   font-style: italic;
   font-size: 18px;
   font-weight: 400;

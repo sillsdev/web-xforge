@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'language_codes_confirmation'">
   @if (showSourceLanguagesDifferError) {
-    <app-notice mode="fill-dark" type="error">
+    <app-notice mode="fill-light" type="error">
       <h3>{{ t("all_sources_must_be_same_language") }}</h3>
       {{ t("sources_in_following_languages") }}
       <ul>
