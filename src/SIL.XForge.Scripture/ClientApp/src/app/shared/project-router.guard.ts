@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, CanDeactivate, Router, RouterStateSnapshot } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -166,5 +166,29 @@ export class TranslateAuthGuard extends RouterGuard {
     }
     this.router.navigate(['/projects', projectDoc.id], { replaceUrl: true });
     return false;
+  }
+}
+
+export interface DeactivateAllowed {
+  deactivationPrompt: string;
+
+  promptUserToDeactivate(): boolean;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DraftNavigationAuthGuard extends RouterGuard implements CanDeactivate<DeactivateAllowed> {
+  constructor(authGuard: AuthGuard, projectService: SFProjectService) {
+    super(authGuard, projectService);
+  }
+
+  canDeactivate(component: DeactivateAllowed): boolean {
+    if (!component.promptUserToDeactivate()) return true;
+    return confirm(component.deactivationPrompt);
+  }
+
+  check(_: SFProjectProfileDoc): boolean {
+    return true;
   }
 }
