@@ -4,7 +4,7 @@
   $is-dark: mat.get-theme-type($theme) == dark;
 
   --sf-note-dialog-reference-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 30, 98))};
-  --sf-note-dialog-reference-text-color: #{mat.get-theme-color($theme, tertiary, if($is-dark, 80, 70))};
+  --sf-note-dialog-reference-text-color: #{mat.get-theme-color($theme, tertiary, if($is-dark, 80, 50))};
 }
 
 @mixin theme($theme) {
