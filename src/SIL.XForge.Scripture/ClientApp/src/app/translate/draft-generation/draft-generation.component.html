@@ -300,6 +300,10 @@
                           }
                           <span>{{ t("download_draft") }}</span>
                         </button>
+                        <button mat-button [routerLink]="['format']">
+                          <mat-icon>settings</mat-icon>
+                          {{ t("format_usfm") }}
+                        </button>
                       }
                     </mat-card-actions>
                   </mat-card>
@@ -336,10 +340,6 @@
             <mat-icon>settings</mat-icon>
             {{ t("configure_sources") }}
           </button>
-          <button mat-button [routerLink]="['format']">
-            <mat-icon>settings</mat-icon>
-            Format USFM
-          </button>
         }
       } @else if (hasConfigureSourcePermission) {
         <!-- Show Configure sources button when we don't have permission to the current sources and when there is not a
@@ -352,10 +352,6 @@
             <button mat-button data-test-id="configure-button" color="primary" [routerLink]="['sources']">
               <mat-icon>settings</mat-icon>
               {{ t("configure_sources") }}
-            </button>
-            <button mat-button [routerLink]="['format']">
-              <mat-icon>settings</mat-icon>
-              Format USFM
             </button>
           }
         }

@@ -189,6 +189,7 @@
     "draft_queued_detail_multiple": "The translation draft generation is number {{ count }} in the queue, and will begin once the server is finished with other projects. Please check back later.",
     "draft_queued_detail": "Generation of the translation draft has been queued, and will begin once the server is finished with another project. Please check back later.",
     "draft_queued_header": "Draft queued",
+    "format_usfm": "Format USFM",
     "generate_back_translation_drafts_header": "Generate back translation drafts",
     "generate_draft_button": "Generate draft",
     "generate_forward_translation_drafts_header": "Generate translation drafts",
@@ -307,6 +308,18 @@
     "target_language_data": "Target language data",
     "training_language_model": "Training the language model",
     "unknown_language_code": "unknown"
+  },
+  "draft_usfm_format": {
+    "cancel": "Cancel",
+    "connect_to_the_internet": "Please connect to the internet to change draft the USFM format",
+    "embed_marker_description": "Keep notes (eg. footnotes) from the translation source",
+    "paragraph_marker_description": "Keep paragraphs from the translation source",
+    "style_marker_description": "Keep text styles from the translation source",
+    "preserve_embeds": "Preserve embeds markers",
+    "preserve_paragraphs": "Preserve paragraph markers",
+    "preserve_styles": "Preserve style markers",
+    "save_changes": "Save changes",
+    "usfm_format_title": "Select the USFM format to apply to your draft"
   },
   "editor": {
     "add_comment": "Add Comment",

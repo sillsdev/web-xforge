@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, EventEmitter, ViewChild } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { Router } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -10,7 +14,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -22,7 +25,16 @@ import { DraftHandlingService } from '../draft-handling.service';
 @Component({
   selector: 'app-draft-usfm-format',
   standalone: true,
-  imports: [UICommonModule, CommonModule, SharedModule],
+  imports: [
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    SharedModule,
+    TranslocoModule
+  ],
   templateUrl: './draft-usfm-format.component.html',
   styleUrl: './draft-usfm-format.component.scss'
 })
