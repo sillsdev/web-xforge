@@ -580,7 +580,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             };
           } else {
             const suggestedBookChapter: BookChapter = await this.getSuggestedNavBookChapter(routeBookNum);
-
             this.navigateBookChapter(
               routeProjectId,
               routeScope!,
@@ -603,11 +602,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           if (
             routeProjectId !== prevProjectId ||
             routeScope !== prevScope ||
-            (routeScope !== 'all' && routeBookNum !== prevBookNum) ||
-            (routeScope === 'chapter' && (routeChapter == null ? undefined : parseInt(routeChapter)) !== prevChapterNum)
+            routeBookNum !== prevBookNum ||
+            (routeChapter == null ? undefined : parseInt(routeChapter)) !== prevChapterNum
           ) {
             this.cleanup();
-
             this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
               routeProjectId,
               {
@@ -733,7 +731,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((state: BreakpointState) => {
         this.calculateScriptureSliderPosition();
-
         // `questionsPanel` is undefined until ngAfterViewInit, but setting `isQuestionListPermanent`
         // here causes `ExpressionChangedAfterItHasBeenCheckedError`, so wrap in setTimeout
         setTimeout(() => {
@@ -746,7 +743,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       .observe(this.mediaBreakpointService.width('<', Breakpoint.MD))
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((state: BreakpointState) => {
-        this.isScreenSmall = state.matches;
+        // setting isScreenSmall causes `ExpressionChangedAfterItHasBeenCheckedError`, so wrap in setTimeout
+        setTimeout(() => (this.isScreenSmall = state.matches));
       });
   }
 
@@ -900,11 +898,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   onBookSelect(book: number): void {
     const navChapterNum: number = this.projectDoc!.data!.texts.find(t => t.bookNum === book)?.chapters[0].number ?? 1;
-    this.navigateBookChapter(this.projectDoc!.id, this.activeQuestionScope!, book, navChapterNum);
+    this.navigateBookChapter(this.projectDoc!.id, 'all', book, navChapterNum);
   }
 
   onChapterSelect(chapter: number): void {
-    this.navigateBookChapter(this.projectDoc!.id, this.activeQuestionScope!, this.book!, chapter);
+    this.navigateBookChapter(this.projectDoc!.id, 'all', this.book!, chapter);
   }
 
   questionUpdated(_questionDoc: QuestionDoc): void {
@@ -940,9 +938,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       }
 
       // Ensure navigation is set to book/chapter of selected question
-      if (this.navigateQuestionChapter(questionDoc)) {
-        return;
-      }
+      this.navigateQuestionChapter(questionDoc);
     }
   }
 
@@ -1098,12 +1094,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       if (withFilterReset) {
         this.resetFilter();
       }
-
-      this.questionsList?.activateQuestion(questionDoc);
     } else if (withFilterReset) {
       // Reset filter, but don't update visible questions yet if navigating
       this.activeQuestionFilter = QuestionFilter.None;
     }
+    this.questionsList?.activateQuestion(questionDoc);
   }
 
   /**
