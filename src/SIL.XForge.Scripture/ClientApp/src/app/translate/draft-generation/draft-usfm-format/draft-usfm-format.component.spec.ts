@@ -174,7 +174,7 @@ class TestEnvironment {
   }
 
   get offlineMessage(): HTMLElement | null {
-    return this.fixture.nativeElement.querySelector('.offline-message');
+    return this.fixture.nativeElement.querySelector('.offline-text');
   }
 
   setupProject(config?: DraftUsfmConfig): void {

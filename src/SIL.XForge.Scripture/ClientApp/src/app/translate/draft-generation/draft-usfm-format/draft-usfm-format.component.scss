@@ -1,7 +1,15 @@
+@use 'src/breakpoints';
+@use 'src/variables';
+
 .format-container {
   display: flex;
   flex-direction: row;
   column-gap: 8px;
+
+  @include breakpoints.media-breakpoint-down(lg) {
+    flex-direction: column;
+    row-gap: 8px;
+  }
 
   .format-options {
     display: flex;
@@ -11,10 +19,29 @@
 }
 
 .options {
-  width: 300px;
+  width: 360px;
+
+  .format-options {
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+  }
+
+  span {
+    display: block;
+  }
+
+  .description {
+    color: gray;
+    font-size: smaller;
+  }
 }
 
 .actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.isLoading {
+  display: none;
 }
