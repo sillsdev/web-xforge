@@ -1,20 +1,31 @@
-<ng-container>
-  <h2>Select USFM settings for your draft</h2>
+<ng-container *transloco="let t; read: 'draft_usfm_format'">
+  <h2>{{ t("usfm_format_title") }}</h2>
   @if (!isOnline) {
-    <p class="offline-message">Please connect to the internet to change draft USFM configurations</p>
+    <p class="offline-text">{{ t("connect_to_the_internet") }}</p>
   }
   <div class="format-container">
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">
         <mat-card class="options">
-          <mat-checkbox formControlName="preserveParagraphs">Preserve Paragraphs</mat-checkbox>
-          <mat-checkbox formControlName="preserveStyles">Preserve Styles</mat-checkbox>
-          <mat-checkbox formControlName="preserveEmbeds">Preserve Embeds</mat-checkbox>
+          <mat-card-content class="format-options">
+            <mat-checkbox formControlName="preserveParagraphs">
+              <span>{{ t("preserve_paragraphs") }}</span>
+              <span class="description">{{ t("paragraph_marker_description") }}</span>
+            </mat-checkbox>
+            <mat-checkbox formControlName="preserveStyles">
+              <span>{{ t("preserve_styles") }}</span>
+              <span class="description">{{ t("style_marker_description") }}</span>
+            </mat-checkbox>
+            <mat-checkbox formControlName="preserveEmbeds">
+              <span>{{ t("preserve_embeds") }}</span>
+              <span class="description">{{ t("embed_marker_description") }}</span>
+            </mat-checkbox>
+          </mat-card-content>
         </mat-card>
       </form>
       <div class="actions">
-        <button mat-button class="cancel" (click)="cancel()">Cancel</button>
-        <button mat-flat-button class="save" color="primary" (click)="saveChanges()">Save changes</button>
+        <button mat-button class="cancel" (click)="cancel()">{{ t("cancel") }}</button>
+        <button mat-flat-button class="save" color="primary" (click)="saveChanges()">{{ t("save_changes") }}</button>
       </div>
     </div>
     <div>
@@ -26,7 +37,12 @@
         [chapters]="chapters"
         (chapterChange)="chapterChanged($event)"
       ></app-book-chapter-chooser>
-      <app-text [isReadOnly]="true" [isRightToLeft]="isRightToLeft"></app-text>
+      <app-text
+        [isReadOnly]="true"
+        [subscribeToUpdates]="false"
+        [isRightToLeft]="isRightToLeft"
+        [ngClass]="{ isLoading: isLoadingData }"
+      ></app-text>
     </div>
   </div>
 </ng-container>
