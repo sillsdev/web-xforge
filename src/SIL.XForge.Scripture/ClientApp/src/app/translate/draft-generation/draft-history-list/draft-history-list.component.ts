@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { take } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { activeBuildStates } from '../draft-generation';
@@ -22,14 +22,20 @@ export class DraftHistoryListComponent {
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
+    destroyRef: DestroyRef,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly transloco: TranslocoService
   ) {
-    this.activatedProject.projectId$.pipe(filterNullish(), take(1)).subscribe(projectId => {
-      this.draftGenerationService.getBuildHistory(projectId).subscribe(result => {
-        this.history = result?.reverse() ?? [];
+    this.activatedProject.projectId$
+      .pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1))
+      .subscribe(projectId => {
+        this.draftGenerationService
+          .getBuildHistory(projectId)
+          .pipe(quietTakeUntilDestroyed(destroyRef))
+          .subscribe(result => {
+            this.history = result?.reverse() ?? [];
+          });
       });
-    });
   }
 
   get nonActiveBuilds(): BuildDto[] {
@@ -49,7 +55,7 @@ export class DraftHistoryListComponent {
       case BuildStates.Faulted:
         return this.transloco.translate('draft_history_list.draft_faulted');
       default:
-        // The latest build must abe a build that has finished
+        // The latest build must be a build that has finished
         return '';
     }
   }

@@ -118,7 +118,7 @@ public class MachineApiService(
         }
 
         // Get the translation engine id
-        string translationEngineId = GetTranslationId(projectSecret, preTranslate: true);
+        string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate: true);
 
         try
         {
@@ -344,17 +344,37 @@ public class MachineApiService(
                 // Fallback for builds previous to the event metric being recorded:
                 //  - As there is no event metric, get the translation scripture range from the pre-translation corpus
                 //  - We cannot accurately determine the source projects, so do not record the training scripture ranges.
-                PretranslateCorpus corpus = translationBuild.Pretranslate?.FirstOrDefault();
-                if (corpus is not null)
+
+                // Get the translation scripture range
+                PretranslateCorpus translationCorpus = translationBuild.Pretranslate?.FirstOrDefault();
+                if (translationCorpus is not null)
                 {
 #pragma warning disable CS0612 // Type or member is obsolete
                     string scriptureRange =
-                        corpus.SourceFilters?.FirstOrDefault()?.ScriptureRange ?? corpus.ScriptureRange;
+                        translationCorpus.SourceFilters?.FirstOrDefault()?.ScriptureRange
+                        ?? translationCorpus.ScriptureRange;
 #pragma warning restore CS0612 // Type or member is obsolete
                     if (!string.IsNullOrWhiteSpace(scriptureRange))
                     {
                         buildDto.AdditionalInfo!.TranslationScriptureRanges.Add(
                             new ProjectScriptureRange { ProjectId = sfProjectId, ScriptureRange = scriptureRange }
+                        );
+                    }
+                }
+
+                // Get the training scripture range
+                TrainingCorpus trainingCorpus = translationBuild.TrainOn?.FirstOrDefault();
+                if (trainingCorpus is not null)
+                {
+#pragma warning disable CS0612 // Type or member is obsolete
+                    string scriptureRange =
+                        trainingCorpus.SourceFilters?.FirstOrDefault()?.ScriptureRange ?? trainingCorpus.ScriptureRange;
+#pragma warning restore CS0612 // Type or member is obsolete
+                    if (!string.IsNullOrWhiteSpace(scriptureRange))
+                    {
+                        // We do not accurately know the training, project, so leave it blank
+                        buildDto.AdditionalInfo!.TrainingScriptureRanges.Add(
+                            new ProjectScriptureRange { ProjectId = string.Empty, ScriptureRange = scriptureRange }
                         );
                     }
                 }
@@ -1055,7 +1075,7 @@ public class MachineApiService(
             if (projectSecret.ServalData?.PreTranslationsRetrieved ?? true)
             {
                 // Get the last completed build
-                string translationEngineId = GetTranslationId(projectSecret, preTranslate: true);
+                string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate: true);
                 TranslationBuild? translationBuild = (
                     await translationEnginesClient.GetAllBuildsAsync(translationEngineId, cancellationToken)
                 )
@@ -1517,8 +1537,9 @@ public class MachineApiService(
     /// </summary>
     /// <param name="translationBuild">The translation build from Serval.</param>
     /// <returns>The build DTO.</returns>
-    private static ServalBuildDto CreateDto(TranslationBuild translationBuild) =>
-        new ServalBuildDto
+    private static ServalBuildDto CreateDto(TranslationBuild translationBuild)
+    {
+        var buildDto = new ServalBuildDto
         {
             Id = translationBuild.Id,
             Revision = translationBuild.Revision,
@@ -1558,6 +1579,16 @@ public class MachineApiService(
             },
         };
 
+        // Create an initial value for the date requested, based on the object id from Mongo
+        // This will be overwritten with the value from the EventMetric, if that exists
+        if (ObjectId.TryParse(translationBuild.Id, out ObjectId objectId))
+        {
+            buildDto.AdditionalInfo!.DateRequested = new DateTimeOffset(objectId.CreationTime, TimeSpan.Zero);
+        }
+
+        return buildDto;
+    }
+
     private static ServalEngineDto CreateDto(TranslationEngine translationEngine) =>
         new ServalEngineDto
         {
@@ -1592,7 +1623,7 @@ public class MachineApiService(
             .Key;
     }
 
-    private static string GetTranslationId(
+    private static string GetTranslationEngineId(
         SFProjectSecret projectSecret,
         bool preTranslate,
         bool returnEmptyStringIfMissing = false
@@ -1786,6 +1817,6 @@ public class MachineApiService(
                 : throw new DataNotFoundException("The project secret is missing");
         }
 
-        return GetTranslationId(projectSecret, preTranslate, returnEmptyStringIfMissing);
+        return GetTranslationEngineId(projectSecret, preTranslate, returnEmptyStringIfMissing);
     }
 }

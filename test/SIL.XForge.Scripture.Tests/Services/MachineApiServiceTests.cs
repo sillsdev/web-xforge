@@ -424,6 +424,8 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+        ObjectId buildObjectId = new ObjectId();
+        string buildId = buildObjectId.ToString();
         const string message = "Finalizing";
         const double percentCompleted = 0.95;
         const int revision = 553;
@@ -443,7 +445,7 @@ public class MachineApiServiceTests
         TranslationBuild translationBuild = new TranslationBuild
         {
             Url = "https://example.com",
-            Id = Build01,
+            Id = buildId,
             Engine = { Id = engineId, Url = "https://example.com" },
             Message = message,
             PercentCompleted = percentCompleted,
@@ -500,7 +502,7 @@ public class MachineApiServiceTests
         ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
-            Build01,
+            buildId,
             minRevision: null,
             preTranslate: false,
             isServalAdmin: false,
@@ -511,8 +513,12 @@ public class MachineApiServiceTests
         TestEnvironment.AssertCoreBuildProperties(translationBuild, actual);
         Assert.AreEqual(queueDepth, actual!.QueueDepth);
         Assert.IsNotNull(actual.AdditionalInfo);
-        Assert.AreEqual(Build01, actual.AdditionalInfo!.BuildId);
+        Assert.AreEqual(buildId, actual.AdditionalInfo!.BuildId);
         Assert.AreEqual(dateFinished, actual.AdditionalInfo.DateFinished);
+        Assert.AreEqual(
+            new DateTimeOffset(buildObjectId.CreationTime, TimeSpan.Zero),
+            actual.AdditionalInfo!.DateRequested
+        );
         Assert.AreEqual(step, actual.AdditionalInfo.Step);
         Assert.AreEqual(engineId, actual.AdditionalInfo.TranslationEngineId);
         Assert.IsNotNull(actual.AdditionalInfo.CorporaIds);
@@ -834,9 +840,11 @@ public class MachineApiServiceTests
         TranslationBuild translationBuild = env.ConfigureTranslationBuild();
 
         // Add additional build properties
-        const string scriptureRange = "GEN;EXO";
+        const string translationScriptureRange = "GEN;EXO";
+        const string trainingScriptureRange = "LEV;NUM";
 #pragma warning disable CS0612 // Type or member is obsolete
-        translationBuild.Pretranslate = [new PretranslateCorpus { ScriptureRange = scriptureRange }];
+        translationBuild.Pretranslate = [new PretranslateCorpus { ScriptureRange = translationScriptureRange }];
+        translationBuild.TrainOn = [new TrainingCorpus { ScriptureRange = trainingScriptureRange }];
 #pragma warning restore CS0612 // Type or member is obsolete
 
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -855,7 +863,14 @@ public class MachineApiServiceTests
         TestEnvironment.AssertCoreBuildProperties(translationBuild, builds[0]);
         Assert.NotNull(builds[0].AdditionalInfo);
         Assert.AreEqual(Project01, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ProjectId);
-        Assert.AreEqual(scriptureRange, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange);
+        Assert.AreEqual(
+            translationScriptureRange,
+            builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange
+        );
+        Assert.AreEqual(
+            trainingScriptureRange,
+            builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
+        );
     }
 
     [Test]
@@ -866,10 +881,21 @@ public class MachineApiServiceTests
         TranslationBuild translationBuild = env.ConfigureTranslationBuild();
 
         // Add additional build properties
-        const string scriptureRange = "GEN;EXO";
+        const string translationScriptureRange = "GEN;EXO";
+        const string trainingScriptureRange = "LEV;NUM";
         translationBuild.Pretranslate =
         [
-            new PretranslateCorpus { SourceFilters = [new ParallelCorpusFilter { ScriptureRange = scriptureRange }] },
+            new PretranslateCorpus
+            {
+                SourceFilters = [new ParallelCorpusFilter { ScriptureRange = translationScriptureRange }],
+            },
+        ];
+        translationBuild.TrainOn =
+        [
+            new TrainingCorpus
+            {
+                SourceFilters = [new ParallelCorpusFilter { ScriptureRange = trainingScriptureRange }],
+            },
         ];
 
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -888,7 +914,14 @@ public class MachineApiServiceTests
         TestEnvironment.AssertCoreBuildProperties(translationBuild, builds[0]);
         Assert.NotNull(builds[0].AdditionalInfo);
         Assert.AreEqual(Project01, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ProjectId);
-        Assert.AreEqual(scriptureRange, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange);
+        Assert.AreEqual(
+            translationScriptureRange,
+            builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange
+        );
+        Assert.AreEqual(
+            trainingScriptureRange,
+            builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
+        );
     }
 
     [Test]
@@ -1653,7 +1686,6 @@ public class MachineApiServiceTests
                     ]
                 )
             );
-        List<DocumentRevision> revisions = [];
 
         // SUT
         IReadOnlyList<DocumentRevision> revisions = await env.Service.GetPreTranslationRevisionsAsync(
@@ -3623,7 +3655,7 @@ public class MachineApiServiceTests
                 .CancelBuildAsync(TranslationEngine01, CancellationToken.None)
                 .Returns(Task.FromResult(translationBuild));
             TranslationEnginesClient
-                .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None)
+                .GetBuildAsync(TranslationEngine01, translationBuild.Id, minRevision: null, CancellationToken.None)
                 .Returns(Task.FromResult(translationBuild));
             TranslationEnginesClient
                 .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
@@ -3718,14 +3750,14 @@ public class MachineApiServiceTests
 
         public static void AssertCoreBuildProperties(TranslationBuild translationBuild, ServalBuildDto? actual)
         {
-            const string buildDtoId = $"{Project01}.{Build01}";
+            string buildDtoId = $"{Project01}.{translationBuild.Id}";
             Assert.IsNotNull(actual);
             Assert.AreEqual(translationBuild.Message, actual!.Message);
             Assert.AreEqual(translationBuild.PercentCompleted, actual.PercentCompleted);
             Assert.AreEqual(translationBuild.Revision, actual.Revision);
             Assert.AreEqual(translationBuild.State.ToString().ToUpperInvariant(), actual.State);
             Assert.AreEqual(buildDtoId, actual.Id);
-            Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01, translationBuild.Id), actual.Href);
             Assert.AreEqual(Project01, actual.Engine.Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
         }

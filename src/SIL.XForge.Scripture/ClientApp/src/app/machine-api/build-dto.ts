@@ -16,8 +16,8 @@ export interface ServalBuildAdditionalInfo {
   buildId: string;
   corporaIds?: string[];
   dateFinished?: string;
-  dateRequested?: string;
   dateGenerated?: string;
+  dateRequested?: string;
   parallelCorporaIds?: string[];
   step: number;
   trainingScriptureRanges: ProjectScriptureRange[];

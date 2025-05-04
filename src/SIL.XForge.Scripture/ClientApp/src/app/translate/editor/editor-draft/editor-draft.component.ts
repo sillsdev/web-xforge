@@ -26,6 +26,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -86,6 +87,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftHandlingService: DraftHandlingService,
+    readonly featureFlags: FeatureFlagService,
     readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -256,7 +258,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
   }
 
-  findClosestRevision(date: Date, revisions: Revision[]): Revision {
+  private findClosestRevision(date: Date, revisions: Revision[]): Revision {
     const targetTime: number = date.getTime();
     const oneHour: number = 60 * 60 * 1000;
 
