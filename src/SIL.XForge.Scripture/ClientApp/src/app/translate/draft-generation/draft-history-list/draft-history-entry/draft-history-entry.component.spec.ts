@@ -1,17 +1,22 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
+import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
+import { DraftGenerationService } from '../../draft-generation.service';
 import { DraftHistoryEntryComponent } from './draft-history-entry.component';
 
+const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedI18nService = mock(I18nService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -21,8 +26,9 @@ describe('DraftHistoryEntryComponent', () => {
   let fixture: ComponentFixture<DraftHistoryEntryComponent>;
 
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule],
+    imports: [NoopAnimationsModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService }
@@ -37,24 +43,6 @@ describe('DraftHistoryEntryComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-  });
-
-  it('forceDetailsOpen should set detailsOpen', () => {
-    expect(component.detailsOpen).toBe(false);
-    component.forceDetailsOpen = true;
-    expect(component.detailsOpen).toBe(true);
-    expect(component.forceDetailsOpen).toBe(true);
-    component.forceDetailsOpen = false;
-    expect(component.detailsOpen).toBe(true);
-    expect(component.forceDetailsOpen).toBe(false);
-  });
-
-  it('headerClicked should toggle detailsOpen', () => {
-    expect(component.detailsOpen).toBe(false);
-    component.headerClicked();
-    expect(component.detailsOpen).toBe(true);
-    component.headerClicked();
-    expect(component.detailsOpen).toBe(false);
   });
 
   describe('entry', () => {
@@ -114,14 +102,14 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.entry).toBe(entry);
       expect(component.sourceLanguage).toBe('fr');
       expect(component.targetLanguage).toBe('en');
-      expect(component.trainingData).toEqual([
+      expect(component.trainingConfiguration).toEqual([
         {
           bookNames: ['Exodus'],
           source: 'src',
           target: 'tar'
         }
       ]);
-      expect(component.trainingDataOpen).toBe(false);
+      expect(component.trainingConfigurationOpen).toBe(false);
     }));
 
     it('should handle builds where the draft cannot be downloaded yet', fakeAsync(() => {
@@ -159,14 +147,14 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.entry).toBe(entry);
       expect(component.sourceLanguage).toBe('');
       expect(component.targetLanguage).toBe('');
-      expect(component.trainingData).toEqual([
+      expect(component.trainingConfiguration).toEqual([
         {
           bookNames: ['Exodus'],
           source: '',
           target: ''
         }
       ]);
-      expect(component.trainingDataOpen).toBe(true);
+      expect(component.trainingConfigurationOpen).toBe(true);
     }));
 
     it('should handle builds with additional info referencing a deleted user', fakeAsync(() => {
@@ -233,11 +221,11 @@ describe('DraftHistoryEntryComponent', () => {
 
   describe('getStatus', () => {
     it('should handle known build state strings', () => {
-      expect(component.getStatus(BuildStates.Active)).not.toBeUndefined();
+      expect(component.getStatus(BuildStates.Active)).toBeDefined();
     });
 
     it('should handle unknown build state strings', () => {
-      expect(component.getStatus('unknown build state' as BuildStates)).not.toBeUndefined();
+      expect(component.getStatus('unknown build state' as BuildStates)).toBeDefined();
     });
   });
 });

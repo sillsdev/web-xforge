@@ -314,12 +314,13 @@ export class DraftGenerationService {
       const usfmFiles: Promise<void>[] = [];
 
       // Build the list of book numbers, first checking the build, then the project document if that is null
-      const books: number[] =
+      const books = new Set<number>(
         lastCompletedBuild?.additionalInfo?.translationScriptureRanges?.flatMap(range =>
           booksFromScriptureRange(range.scriptureRange)
-        ) ?? projectDoc.data.texts.filter(text => text.chapters.some(c => c.hasDraft)).map(text => text.bookNum);
+        ) ?? projectDoc.data.texts.filter(text => text.chapters.some(c => c.hasDraft)).map(text => text.bookNum)
+      );
 
-      const zipProgress: DraftZipProgress = { current: 0, total: books.length };
+      const zipProgress: DraftZipProgress = { current: 0, total: books.size };
       observer.next(zipProgress);
 
       // Get the date the draft was generated and written to Scripture Forge

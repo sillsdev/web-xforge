@@ -256,7 +256,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
   }
 
-  findClosestRevision(date: Date, revisions: Revision[]): Revision {
+  private findClosestRevision(date: Date, revisions: Revision[]): Revision {
     const targetTime: number = date.getTime();
     const oneHour: number = 60 * 60 * 1000;
 
