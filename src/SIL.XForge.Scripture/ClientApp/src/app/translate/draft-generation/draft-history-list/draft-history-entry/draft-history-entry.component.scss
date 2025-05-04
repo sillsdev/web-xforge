@@ -1,37 +1,24 @@
-:host {
-  background-color: var(--draft-history-entry-details-background-color);
-  border-radius: 8px;
-  > * {
-    padding: 8px 16px;
-    border-radius: 8px;
-  }
+mat-expansion-panel-header {
+  padding: 8px 16px;
 }
 
-.draft-entry-heading {
-  background-color: var(--draft-history-entry-heading-background-color);
+mat-panel-title {
   display: flex;
-  align-items: center;
-  gap: 1em;
-  &.expandable {
-    cursor: pointer;
-  }
-  &.expandable:hover {
-    background-color: var(--draft-history-entry-heading-background-hover-color);
-  }
-}
-
-.drafted-books {
-  font-size: 1.1em;
-}
-
-.spacer {
+  align-items: flex-start;
+  flex-direction: column;
   flex-grow: 1;
 }
 
-.entry-description {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+mat-panel-description {
+  flex-grow: 0;
+}
+
+.drafted-books {
+  color: var(
+    --mat-expansion-header-text-color,
+    var(--mat-app-on-surface)
+  ); /* Keep the text color, even when disabled */
+  font-size: 1.1em;
 }
 
 .date {
@@ -49,7 +36,7 @@
   flex-shrink: 0;
 }
 
-.training-data-link {
+.training-configuration-link {
   display: flex;
   align-items: center;
 }
@@ -61,4 +48,17 @@ strong {
 .book-buttons {
   display: flex;
   gap: 4px;
+}
+
+/* Color classes for the status icon */
+.grey {
+  color: var(--draft-history-entry-grey-color);
+}
+
+.green {
+  color: var(--draft-history-entry-green-color);
+}
+
+.red {
+  color: var(--draft-history-entry-red-color);
 }

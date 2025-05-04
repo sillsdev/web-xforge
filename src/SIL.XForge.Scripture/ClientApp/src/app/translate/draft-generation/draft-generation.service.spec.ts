@@ -168,7 +168,7 @@ describe('DraftGenerationService', () => {
     it('should return undefined for a 401 error', fakeAsync(() => {
       // SUT
       service.getBuildHistory(projectId).subscribe(result => {
-        expect(result).toEqual(undefined);
+        expect(result).toBeUndefined();
         verify(mockNoticeService.showError(anything())).once();
       });
       tick();
@@ -185,7 +185,7 @@ describe('DraftGenerationService', () => {
     it('should return undefined for a 404 error', fakeAsync(() => {
       // SUT
       service.getBuildHistory(projectId).subscribe(result => {
-        expect(result).toEqual(undefined);
+        expect(result).toBeUndefined();
         verify(mockNoticeService.showError(anything())).never();
       });
       tick();
@@ -617,7 +617,7 @@ describe('DraftGenerationService', () => {
 
       // SUT
       service.getGeneratedDraftHistory(projectId, book, chapter).subscribe(result => {
-        expect(result).toEqual(undefined);
+        expect(result).toBeUndefined();
         verify(mockNoticeService.showError(anything())).once();
       });
       tick();
@@ -637,7 +637,7 @@ describe('DraftGenerationService', () => {
 
       // SUT
       service.getGeneratedDraftHistory(projectId, book, chapter).subscribe(result => {
-        expect(result).toEqual(undefined);
+        expect(result).toBeUndefined();
         verify(mockNoticeService.showError(anything())).never();
       });
       tick();
@@ -658,7 +658,7 @@ describe('DraftGenerationService', () => {
 
       // SUT
       service.getGeneratedDraftHistory(projectId, book, chapter).subscribe(result => {
-        expect(result).toEqual(undefined);
+        expect(result).toBeUndefined();
       });
       tick();
     }));

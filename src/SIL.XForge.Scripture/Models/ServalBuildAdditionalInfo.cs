@@ -8,8 +8,8 @@ public class ServalBuildAdditionalInfo
     public string BuildId { get; init; } = string.Empty;
     public IEnumerable<string>? CorporaIds { get; init; }
     public DateTimeOffset? DateFinished { get; init; }
-    public DateTimeOffset? DateRequested { get; set; }
     public DateTimeOffset? DateGenerated { get; set; }
+    public DateTimeOffset? DateRequested { get; set; }
     public IEnumerable<string>? ParallelCorporaIds { get; init; }
     public string? RequestedByUserId { get; set; }
     public int Step { get; init; }
