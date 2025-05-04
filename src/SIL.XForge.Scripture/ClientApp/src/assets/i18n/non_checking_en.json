@@ -270,13 +270,13 @@
     "draft_faulted": "Failed",
     "draft_pending": "Pending",
     "draft_unknown": "Unknown",
-    "hide_model_training_data": "Hide model training data",
-    "show_model_training_data": "Show model training data",
-    "training_data_configuration": "The language model was trained on this configuration"
+    "hide_model_training_configuration": "Hide model training configuration",
+    "show_model_training_configuration": "Show model training configuration",
+    "training_model_description": "The language model was trained on this configuration"
   },
   "draft_history_list": {
-    "draft_canceled": "Your draft was canceled",
-    "draft_completed": "Your draft is ready",
+    "draft_canceled": "The draft was canceled",
+    "draft_completed": "The draft is ready",
     "draft_faulted": "The draft failed",
     "previously_generated_drafts": "Previously generated drafts"
   },

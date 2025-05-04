@@ -1,4 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject, of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -21,7 +22,7 @@ const mockedUserService = mock(UserService);
 
 describe('DraftHistoryListComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [NoopAnimationsModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
@@ -116,7 +117,7 @@ describe('DraftHistoryListComponent', () => {
 
     constructor(buildHistory: BuildDto[] | undefined) {
       when(mockedActivatedProjectService.projectId$).thenReturn(of('project01'));
-      when(mockedActivatedProjectService.changes$).thenReturn(of(undefined));
+      when(mockedActivatedProjectService.changes$).thenReturn(of(undefined)); // Required for DraftPreviewBooksComponent
       when(mockedDraftGenerationService.getBuildHistory('project01')).thenReturn(new BehaviorSubject(buildHistory));
 
       this.fixture = TestBed.createComponent(DraftHistoryListComponent);

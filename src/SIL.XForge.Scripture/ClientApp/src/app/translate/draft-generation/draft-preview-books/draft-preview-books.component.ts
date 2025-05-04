@@ -68,6 +68,7 @@ export class DraftPreviewBooksComponent {
           .sort((a, b) => a.bookNumber - b.bookNumber)
           .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
       } else {
+        // TODO: Support books from multiple translation projects
         draftBooks = this.build.additionalInfo?.translationScriptureRanges
           .flatMap(range => booksFromScriptureRange(range.scriptureRange))
           .map(bookNum => {

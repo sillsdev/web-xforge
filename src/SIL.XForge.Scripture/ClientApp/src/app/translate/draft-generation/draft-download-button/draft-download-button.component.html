@@ -1,26 +1,49 @@
 <ng-container *transloco="let t; read: 'draft_generation'">
-  <button
-    mat-button
-    type="button"
-    (click)="downloadDraft()"
-    [disabled]="downloadProgress > 0"
-    data-test-id="download-button"
-    color="primary"
-    [ngClass]="flat ? 'mat-mdc-unelevated-button' : ''"
-  >
-    @if (downloadProgress === 0) {
-      <mat-icon [ngClass]="flat ? '' : 'material-icons-outlined'">cloud_download</mat-icon>
-    } @else if (downloadProgress > 0) {
-      <mat-icon>
-        <mat-spinner
-          diameter="18"
-          [value]="downloadProgress"
-          mode="determinate"
-          color="accent"
-          data-test-id="download-spinner"
-        ></mat-spinner>
-      </mat-icon>
-    }
-    <span>{{ t("download_draft") }}</span>
-  </button>
+  @if (flat) {
+    <button
+      mat-flat-button
+      (click)="downloadDraft()"
+      [disabled]="downloadProgress > 0"
+      data-test-id="download-button"
+      color="primary"
+    >
+      @if (downloadProgress === 0) {
+        <mat-icon class="material-icons-outlined">cloud_download</mat-icon>
+      } @else if (downloadProgress > 0) {
+        <mat-icon>
+          <mat-spinner
+            diameter="18"
+            [value]="downloadProgress"
+            mode="determinate"
+            color="accent"
+            data-test-id="download-spinner"
+          ></mat-spinner>
+        </mat-icon>
+      }
+      {{ t("download_draft") }}
+    </button>
+  } @else {
+    <button
+      mat-button
+      (click)="downloadDraft()"
+      [disabled]="downloadProgress > 0"
+      data-test-id="download-button"
+      color="primary"
+    >
+      @if (downloadProgress === 0) {
+        <mat-icon>cloud_download</mat-icon>
+      } @else if (downloadProgress > 0) {
+        <mat-icon>
+          <mat-spinner
+            diameter="18"
+            [value]="downloadProgress"
+            mode="determinate"
+            color="accent"
+            data-test-id="download-spinner"
+          ></mat-spinner>
+        </mat-icon>
+      }
+      {{ t("download_draft") }}
+    </button>
+  }
 </ng-container>

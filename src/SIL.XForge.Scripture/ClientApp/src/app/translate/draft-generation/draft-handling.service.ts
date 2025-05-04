@@ -162,7 +162,7 @@ export class DraftHandlingService {
               // If the corpus does not support USFM, use the legacy format.
               // The legacy format does not support a timestamp
               if (err.status === 405 && timestamp == null) {
-                return this.getDraft(textDocId, { isDraftLegacy: true, timestamp });
+                return this.getDraft(textDocId, { isDraftLegacy: true, timestamp: undefined });
               }
 
               return throwError(() => err);
