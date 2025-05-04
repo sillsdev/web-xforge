@@ -48,10 +48,20 @@
                 <div class="note-content" [innerHTML]="noteInfo.content" [ngStyle]="{ fontSize }"></div>
                 @if (noteInfo.editable) {
                   <div class="edit-actions">
-                    <button mat-icon-button class="edit-button" (click)="editNote(noteInfo.note)">
+                    <button
+                      mat-icon-button
+                      class="edit-button"
+                      [matTooltip]="t('edit')"
+                      (click)="editNote(noteInfo.note)"
+                    >
                       <mat-icon>edit</mat-icon>
                     </button>
-                    <button mat-icon-button class="delete-button" (click)="deleteNote(noteInfo.note)">
+                    <button
+                      mat-icon-button
+                      class="delete-button"
+                      [matTooltip]="t('delete')"
+                      (click)="deleteNote(noteInfo.note)"
+                    >
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
