@@ -215,6 +215,7 @@
     "preview_last_draft_detail": "The last draft build did not complete, but you can still view the most recent successful draft.",
     "preview_last_draft_header": "Preview last draft",
     "report_problem": "Report problem",
+    "serval_administration": "Serval administration",
     "sign_up_for_drafting": "Sign up for drafting",
     "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
@@ -270,13 +271,13 @@
     "draft_faulted": "Failed",
     "draft_pending": "Pending",
     "draft_unknown": "Unknown",
-    "hide_model_training_data": "Hide model training data",
-    "show_model_training_data": "Show model training data",
-    "training_data_configuration": "The language model was trained on this configuration"
+    "hide_model_training_configuration": "Hide model training configuration",
+    "show_model_training_configuration": "Show model training configuration",
+    "training_model_description": "The language model was trained on this configuration"
   },
   "draft_history_list": {
-    "draft_canceled": "Your draft was canceled",
-    "draft_completed": "Your draft is ready",
+    "draft_canceled": "The draft was canceled",
+    "draft_completed": "The draft is ready",
     "draft_faulted": "The draft failed",
     "previously_generated_drafts": "Previously generated drafts"
   },

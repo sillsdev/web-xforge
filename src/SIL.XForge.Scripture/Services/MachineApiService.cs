@@ -117,7 +117,7 @@ public class MachineApiService(
         }
 
         // Get the translation engine id
-        string translationEngineId = GetTranslationId(projectSecret, preTranslate: true);
+        string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate: true);
 
         try
         {
@@ -969,7 +969,7 @@ public class MachineApiService(
             if (projectSecret.ServalData?.PreTranslationsRetrieved ?? true)
             {
                 // Get the last completed build
-                string translationEngineId = GetTranslationId(projectSecret, preTranslate: true);
+                string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate: true);
                 TranslationBuild? translationBuild = (
                     await translationEnginesClient.GetAllBuildsAsync(translationEngineId, cancellationToken)
                 )
@@ -1506,7 +1506,7 @@ public class MachineApiService(
             .Key;
     }
 
-    private static string GetTranslationId(
+    private static string GetTranslationEngineId(
         SFProjectSecret projectSecret,
         bool preTranslate,
         bool returnEmptyStringIfMissing = false
@@ -1700,6 +1700,6 @@ public class MachineApiService(
                 : throw new DataNotFoundException("The project secret is missing");
         }
 
-        return GetTranslationId(projectSecret, preTranslate, returnEmptyStringIfMissing);
+        return GetTranslationEngineId(projectSecret, preTranslate, returnEmptyStringIfMissing);
     }
 }

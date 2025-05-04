@@ -3,9 +3,9 @@
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
 
-  --draft-history-entry-heading-background-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 20, 95))};
-  --draft-history-entry-heading-background-hover-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 30, 90))};
-  --draft-history-entry-details-background-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 10, 98))};
+  --draft-history-entry-red-color: #{if($is-dark, red, darkRed)};
+  --draft-history-entry-green-color: #{if($is-dark, lightGreen, darkGreen)};
+  --draft-history-entry-grey-color: lightGrey;
 }
 
 @mixin theme($theme) {
