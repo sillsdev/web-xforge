@@ -1,44 +1,54 @@
 <ng-container *transloco="let t; read: 'draft_history_entry'">
   @if (entry != null) {
-    <div class="draft-entry-heading" (click)="headerClicked()" [class.expandable]="!forceDetailsOpen">
-      <div class="entry-description">
-        <span class="drafted-books">{{ i18n.enumerateList(bookNames) }}</span>
-        <span class="date">{{ formatDate(entry.additionalInfo?.dateFinished) }}</span>
-      </div>
-      <span class="spacer"></span>
-      <span class="status" [style.color]="getStatus(entry.state).color">
-        <mat-icon class="status-icon">{{ getStatus(entry.state).icons }}</mat-icon>
-        {{ t(getStatus(entry.state).text) }}
-      </span>
-      @if (!forceDetailsOpen && hasDetails) {
-        <mat-icon class="expand-icon">expand_{{ detailsOpen ? "less" : "more" }}</mat-icon>
-      }
-    </div>
-    @if (detailsOpen && hasDetails) {
+    <mat-expansion-panel
+      [disabled]="forceDetailsOpen || !hasDetails"
+      [expanded]="forceDetailsOpen"
+      [hideToggle]="forceDetailsOpen || !hasDetails"
+    >
+      <mat-expansion-panel-header [collapsedHeight]="'auto'" [expandedHeight]="'auto'">
+        <mat-panel-title>
+          <span class="drafted-books">{{ i18n.enumerateList(bookNames) }}</span>
+          <span class="date">{{ formatDate(entry.additionalInfo?.dateFinished) }}</span>
+        </mat-panel-title>
+        <mat-panel-description>
+          <span class="status" [ngClass]="getStatus(entry.state).color">
+            <mat-icon class="status-icon">{{ getStatus(entry.state).icons }}</mat-icon>
+            {{ t(getStatus(entry.state).text) }}
+          </span>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
       <div class="draft-entry-body">
-        <ng-container *ngIf="canDownloadBuild">
+        @if (canDownloadBuild) {
           <p>{{ t("click_book_to_preview") }}</p>
           <p class="book-buttons">
-            <app-draft-preview-books [build]="entry"></app-draft-preview-books>
+            <app-draft-preview-books [build]="entry" />
           </p>
-          <app-draft-download-button [build]="entry" [flat]="true"></app-draft-download-button>
-        </ng-container>
-        <ng-container *ngIf="hasTrainingData">
-          <p *ngIf="canDownloadBuild">
-            <a
-              href="javascript:;"
-              (click)="$event.preventDefault(); trainingDataOpen = !trainingDataOpen"
-              class="training-data-link"
-            >
-              <mat-icon>expand_{{ trainingDataOpen ? "less" : "more" }}</mat-icon>
-              {{ t(trainingDataOpen ? "hide_model_training_data" : "show_model_training_data") }}
-            </a>
-          </p>
-          @if (trainingDataOpen) {
-            <p class="training-data">
-              <strong>{{ t("training_data_configuration") }}</strong>
+          <app-draft-download-button [build]="entry" [flat]="true" />
+        }
+        @if (hasTrainingConfiguration) {
+          @if (canDownloadBuild) {
+            <p>
+              <a
+                href="javascript:;"
+                (click)="trainingConfigurationOpen = !trainingConfigurationOpen"
+                class="training-configuration-link"
+              >
+                <mat-icon>expand_{{ trainingConfigurationOpen ? "less" : "more" }}</mat-icon>
+                {{
+                  t(
+                    trainingConfigurationOpen
+                      ? "hide_model_training_configuration"
+                      : "show_model_training_configuration"
+                  )
+                }}
+              </a>
             </p>
-            <table mat-table [dataSource]="trainingData">
+          }
+          @if (trainingConfigurationOpen) {
+            <p>
+              <strong>{{ t("training_model_description") }}</strong>
+            </p>
+            <table mat-table [dataSource]="trainingConfiguration">
               <ng-container matColumnDef="bookNames">
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let element">{{ i18n.enumerateList(element.bookNames) }}</td>
@@ -59,8 +69,8 @@
               <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
             </table>
           }
-        </ng-container>
+        }
       </div>
-    }
+    </mat-expansion-panel>
   }
 </ng-container>
