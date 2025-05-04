@@ -30,7 +30,7 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
-    public IAsyncEnumerable<ServalBuildDto> GetBuildsAsync(
+    Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
         string curUserId,
         string sfProjectId,
         bool preTranslate,
@@ -75,7 +75,7 @@ public interface IMachineApiService
         DateTime timestamp,
         CancellationToken cancellationToken
     );
-    IAsyncEnumerable<DocumentRevision> GetPreTranslationRevisionsAsync(
+    Task<IReadOnlyList<DocumentRevision>> GetPreTranslationRevisionsAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,

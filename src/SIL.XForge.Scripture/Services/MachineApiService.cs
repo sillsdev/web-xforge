@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -270,14 +269,17 @@ public class MachineApiService(
         return buildDto;
     }
 
-    public async IAsyncEnumerable<ServalBuildDto> GetBuildsAsync(
+    public async Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
         string curUserId,
         string sfProjectId,
         bool preTranslate,
         bool isServalAdmin,
-        [EnumeratorCancellation] CancellationToken cancellationToken
+        CancellationToken cancellationToken
     )
     {
+        // Set up the list of builds to be returned
+        List<ServalBuildDto> builds = [];
+
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
@@ -358,7 +360,7 @@ public class MachineApiService(
             }
 
             // Make sure the DTO conforms to the machine-api URLs
-            yield return UpdateDto(buildDto, sfProjectId);
+            builds.Add(UpdateDto(buildDto, sfProjectId));
         }
 
         // See if any builds are queued at our end
@@ -380,8 +382,10 @@ public class MachineApiService(
                 queuedState = UpdateDto(queuedState, eventMetric);
             }
 
-            yield return queuedState;
+            builds.Add(queuedState);
         }
+
+        return builds;
     }
 
     public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
@@ -697,15 +701,18 @@ public class MachineApiService(
     /// <exception cref="ForbiddenException">
     /// The user does not have permission to access the Serval/Machine API.
     /// </exception>
-    public async IAsyncEnumerable<DocumentRevision> GetPreTranslationRevisionsAsync(
+    public async Task<IReadOnlyList<DocumentRevision>> GetPreTranslationRevisionsAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,
         int chapterNum,
         bool isServalAdmin,
-        [EnumeratorCancellation] CancellationToken cancellationToken
+        CancellationToken cancellationToken
     )
     {
+        // Set up the list of revisions to be returned
+        List<DocumentRevision> revisions = [];
+
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
@@ -724,11 +731,13 @@ public class MachineApiService(
             );
             if (build is not null)
             {
-                yield return new DocumentRevision
-                {
-                    Source = OpSource.Draft,
-                    Timestamp = build.AdditionalInfo?.DateFinished?.UtcDateTime ?? DateTime.UtcNow,
-                };
+                revisions.Add(
+                    new DocumentRevision
+                    {
+                        Source = OpSource.Draft,
+                        Timestamp = build.AdditionalInfo?.DateFinished?.UtcDateTime ?? DateTime.UtcNow,
+                    }
+                );
             }
         }
         else
@@ -743,14 +752,18 @@ public class MachineApiService(
                     break;
                 }
 
-                yield return new DocumentRevision
-                {
-                    Source = op.Metadata.Source ?? OpSource.Draft,
-                    Timestamp = op.Metadata.Timestamp,
-                    UserId = op.Metadata.UserId,
-                };
+                revisions.Add(
+                    new DocumentRevision
+                    {
+                        Source = op.Metadata.Source ?? OpSource.Draft,
+                        Timestamp = op.Metadata.Timestamp,
+                        UserId = op.Metadata.UserId,
+                    }
+                );
             }
         }
+
+        return revisions;
     }
 
     public async Task<string> GetPreTranslationUsfmAsync(
