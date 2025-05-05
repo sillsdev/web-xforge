@@ -485,6 +485,107 @@ export class TextViewModel implements OnDestroy {
     };
   }
 
+  /**
+   * Translates a range from the data model (without note embeds) to the editor (with note embeds).
+   * @param dataRange The range (index, length) in the data model.
+   * @returns The corresponding range in the editor model, or the original range as a fallback.
+   */
+  dataRangeToEditorRange(dataRange: Range): Range {
+    const editor: Quill = this.checkEditor();
+    const editorDelta: Delta = editor.getContents();
+
+    if (editorDelta.ops == null || dataRange.length < 0) {
+      return dataRange; // Return original as fallback
+    }
+
+    const targetStartIndex: number = dataRange.index;
+    const targetEndIndex: number = dataRange.index + dataRange.length;
+    const isZeroLengthRange: boolean = dataRange.length === 0;
+
+    let editorPos: number = 0;
+    let dataPos: number = 0;
+    let startEditorPos: number = -1;
+    let endEditorPos: number = -1;
+
+    // Iterate ops, tracking parallel positions with/without note embeds.
+    // Note embeds advance only editor position.
+    // String inserts and other embeds advance both data and editor positions equally.
+    for (const op of editorDelta.ops) {
+      // Early exit if we've found both positions
+      if (startEditorPos !== -1 && endEditorPos !== -1) {
+        break;
+      }
+
+      if (op.insert == null) {
+        continue;
+      }
+
+      // Note embeds only advance editor position
+      if (op.insert?.['note-thread-embed'] != null) {
+        editorPos++;
+        continue;
+      }
+
+      const isStringInsert: boolean = isString(op.insert);
+      const contentLength: number = isStringInsert ? (op.insert.length as number) : 1;
+
+      // Skip content before target start
+      if (startEditorPos === -1 && dataPos + contentLength <= targetStartIndex) {
+        dataPos += contentLength;
+        editorPos += contentLength;
+        continue;
+      }
+
+      // Skip further processing if this content is after end position
+      if (!isZeroLengthRange && startEditorPos !== -1 && dataPos >= targetEndIndex) {
+        break;
+      }
+
+      // Check for start position
+      if (startEditorPos === -1) {
+        if (!isStringInsert) {
+          // For embeds, only exact position matches
+          if (dataPos === targetStartIndex) {
+            startEditorPos = editorPos;
+          }
+        } else {
+          // For strings, check if position is within string
+          if (dataPos <= targetStartIndex && dataPos + contentLength > targetStartIndex) {
+            startEditorPos = editorPos + (targetStartIndex - dataPos);
+          }
+        }
+
+        if (isZeroLengthRange && startEditorPos !== -1) {
+          return { index: startEditorPos, length: 0 };
+        }
+      }
+
+      // Check for end position
+      if (!isZeroLengthRange && endEditorPos === -1) {
+        if (!isStringInsert) {
+          // For embeds, only exact position matches
+          if (dataPos === targetEndIndex) {
+            endEditorPos = editorPos;
+          }
+        } else {
+          // For strings, check if position is within string
+          if (dataPos < targetEndIndex && dataPos + contentLength >= targetEndIndex) {
+            endEditorPos = editorPos + (targetEndIndex - dataPos);
+          }
+        }
+      }
+
+      // Update positions
+      dataPos += contentLength;
+      editorPos += contentLength;
+    }
+
+    startEditorPos = startEditorPos === -1 ? editorPos : startEditorPos;
+    endEditorPos = endEditorPos === -1 ? editorPos : endEditorPos;
+
+    return { index: startEditorPos, length: endEditorPos - startEditorPos };
+  }
+
   private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
     const embedEditorPositions = this.embedPositions;
     // add up the leading embeds
