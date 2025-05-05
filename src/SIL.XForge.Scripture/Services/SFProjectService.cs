@@ -158,6 +158,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 }
 
                 TranslateSource source = await GetTranslateSourceAsync(
+                    conn,
                     curUserId,
                     projectDoc.Id,
                     settings.SourceParatextId,
@@ -222,6 +223,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         if (addUser)
         {
             // See if the project exists to add the user to it
@@ -233,7 +235,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 // Add the user, if they are not already on the project
                 if (!project.UserRoles.ContainsKey(curUserId))
                 {
-                    await AddUserAsync(curUserId, project.Id, projectRole: null);
+                    await AddUserAsync(conn, curUserId, project.Id, projectRole: null);
                 }
 
                 return project.Id;
@@ -241,10 +243,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // Create the project, as it does not already exist, and add the user if we should
-        string projectId = await CreateResourceProjectInternalAsync(curUserId, ptProject);
+        string projectId = await CreateResourceProjectInternalAsync(conn, ptProject);
         if (addUser)
         {
-            await AddUserAsync(curUserId, projectId, projectRole: null);
+            await AddUserAsync(conn, curUserId, projectId, projectRole: null);
         }
 
         return projectId;
@@ -401,6 +403,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (settings.SourceParatextId != null && !unsetSourceProject)
         {
             source = await GetTranslateSourceAsync(
+                conn,
                 curUserId,
                 projectId,
                 settings.SourceParatextId,
@@ -421,6 +424,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
         {
             alternateSource = await GetTranslateSourceAsync(
+                conn,
                 curUserId,
                 projectId,
                 settings.AlternateSourceParatextId,
@@ -441,6 +445,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (settings.AlternateTrainingSourceParatextId != null && !unsetAlternateTrainingSourceProject)
         {
             alternateTrainingSource = await GetTranslateSourceAsync(
+                conn,
                 curUserId,
                 projectId,
                 settings.AlternateTrainingSourceParatextId,
@@ -461,6 +466,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (settings.AdditionalTrainingSourceParatextId != null && !unsetAdditionalTrainingSourceProject)
         {
             additionalTrainingSource = await GetTranslateSourceAsync(
+                conn,
                 curUserId,
                 projectId,
                 settings.AdditionalTrainingSourceParatextId,
@@ -1839,14 +1845,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <summary>
     /// Asynchronously creates a Scripture Forge project from Paratext resource/project.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="conn">The connection to the realtime server.</param>
     /// <param name="ptProject">The paratext project.</param>
     /// <returns>SF project id of created project</returns>
     /// <remarks>
     /// This method will also work for a source project that has been deleted for some reason.
     /// </remarks>
     /// <exception cref="InvalidOperationException"></exception>
-    private async Task<string> CreateResourceProjectInternalAsync(string curUserId, ParatextProject ptProject)
+    private async Task<string> CreateResourceProjectInternalAsync(IConnection conn, ParatextProject ptProject)
     {
         var project = new SFProject
         {
@@ -1866,7 +1872,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Create the new project using the realtime service
         string projectId = ObjectId.GenerateNewId().ToString();
-        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         if (RealtimeService.QuerySnapshots<SFProject>().Any(sfProject => sfProject.ParatextId == project.ParatextId))
         {
             throw new InvalidOperationException(ErrorAlreadyConnectedKey);
@@ -1882,6 +1887,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <summary>
     /// Gets the translation source asynchronously.
     /// </summary>
+    /// <param name="conn">The connection to the realtime server.</param>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="paratextId">The paratext identifier.</param>
@@ -1892,6 +1898,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <returns>The <see cref="TranslateSource"/> object for the specified resource.</returns>
     /// <exception cref="DataNotFoundException">The source paratext project does not exist.</exception>
     private async Task<TranslateSource> GetTranslateSourceAsync(
+        IConnection conn,
         string curUserId,
         string sfProjectId,
         string paratextId,
@@ -1928,11 +1935,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
         else
         {
-            sourceProjectRef = await CreateResourceProjectInternalAsync(curUserId, sourcePTProject);
+            sourceProjectRef = await CreateResourceProjectInternalAsync(conn, sourcePTProject);
             projectCreated = true;
         }
 
-        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = projectCreated ? null : await GetProjectDocAsync(sourceProjectRef, conn);
         // Add each user in the target project to the source project so they can access it
         foreach (string userId in userIds)
@@ -1942,7 +1948,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 // Add the user to the project, if the user does not have a role in it
                 if (sourceProject == null || !sourceProject.UserRoles.ContainsKey(userId))
                 {
-                    await AddUserAsync(userId, sourceProjectRef, null);
+                    await AddUserAsync(conn, userId, sourceProjectRef, null);
                 }
                 else if (projectDoc != null)
                 {
