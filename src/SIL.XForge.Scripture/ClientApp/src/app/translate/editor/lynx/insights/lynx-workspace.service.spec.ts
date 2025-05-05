@@ -325,13 +325,13 @@ describe('LynxWorkspaceService', () => {
       const insight = env.createTestInsight();
       env.addInsightToService(insight);
 
-      expect(Array.from(env.service.currentInsights.values()).flat().length).toBeGreaterThan(0);
+      expect([...env.service.currentInsights.values()].flat().length).toBeGreaterThan(0);
 
       env.service['projectId'] = 'different-id';
       env.triggerProjectChange('new-project');
       tick();
 
-      expect(Array.from(env.service.currentInsights.values()).flat().length).toBe(0);
+      expect([...env.service.currentInsights.values()].flat().length).toBe(0);
     }));
   });
 
