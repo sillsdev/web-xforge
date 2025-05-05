@@ -157,12 +157,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     resources = await _paratextService.GetResourcesAsync(curUserId);
                 }
 
+                // The project will be synced later, and permissions updated on that subsequent sync
                 TranslateSource source = await GetTranslateSourceAsync(
                     conn,
                     curUserId,
                     projectDoc.Id,
                     settings.SourceParatextId,
                     syncIfCreated: false,
+                    updatePermissions: false,
                     ptProjects,
                     resources
                 );
@@ -408,6 +410,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 projectId,
                 settings.SourceParatextId,
                 syncIfCreated: false,
+                updatePermissions: true,
                 ptProjects,
                 resources,
                 projectDoc.Data.UserRoles
@@ -429,6 +432,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 projectId,
                 settings.AlternateSourceParatextId,
                 syncIfCreated: true,
+                // Only update permissions if this project is different to the preceding project
+                updatePermissions: settings.SourceParatextId != settings.AlternateSourceParatextId,
                 ptProjects,
                 resources,
                 projectDoc.Data.UserRoles
@@ -450,6 +455,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 projectId,
                 settings.AlternateTrainingSourceParatextId,
                 syncIfCreated: true,
+                // Only update permissions if this project is different to the preceding projects
+                updatePermissions: settings.SourceParatextId != settings.AlternateTrainingSourceParatextId
+                    && settings.AlternateSourceParatextId != settings.AlternateTrainingSourceParatextId,
                 ptProjects,
                 resources,
                 projectDoc.Data.UserRoles
@@ -471,6 +479,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 projectId,
                 settings.AdditionalTrainingSourceParatextId,
                 syncIfCreated: true,
+                // Only update permissions if this project is different to the preceding projects
+                updatePermissions: settings.SourceParatextId != settings.AdditionalTrainingSourceParatextId
+                    && settings.AlternateSourceParatextId != settings.AdditionalTrainingSourceParatextId
+                    && settings.AlternateTrainingSourceParatextId != settings.AdditionalTrainingSourceParatextId,
                 ptProjects,
                 resources,
                 projectDoc.Data.UserRoles
@@ -1892,6 +1904,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="paratextId">The paratext identifier.</param>
     /// <param name="syncIfCreated">If <c>true</c> sync the project if it is created.</param>
+    /// <param name="updatePermissions">If <c>true</c> update the project's permissions.</param>
     /// <param name="ptProjects">The paratext projects.</param>
     /// <param name="resources">The paratext resources.</param>
     /// <param name="userRoles">The ids and roles of the users who will need to access the source.</param>
@@ -1903,6 +1916,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string sfProjectId,
         string paratextId,
         bool syncIfCreated,
+        bool updatePermissions,
         IEnumerable<ParatextProject> ptProjects,
         IEnumerable<ParatextResource> resources,
         IReadOnlyDictionary<string, string>? userRoles = null
@@ -1939,7 +1953,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             projectCreated = true;
         }
 
-        IDocument<SFProject> projectDoc = projectCreated ? null : await GetProjectDocAsync(sourceProjectRef, conn);
         // Add each user in the target project to the source project so they can access it
         foreach (string userId in userIds)
         {
@@ -1949,14 +1962,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 if (sourceProject == null || !sourceProject.UserRoles.ContainsKey(userId))
                 {
                     await AddUserAsync(conn, userId, sourceProjectRef, null);
-                }
-                else if (projectDoc != null)
-                {
-                    Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, userId);
-                    if (attempt.Success)
-                    {
-                        await UpdatePermissionsAsync(userId, projectDoc);
-                    }
                 }
             }
             catch (ForbiddenException)
@@ -1979,6 +1984,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 jobId,
                 r => r.UpdateTranslationSourcesAsync(curUserId, sfProjectId)
             );
+        }
+        else if (updatePermissions)
+        {
+            // Update all the permissions for all the users on this project or resource
+            IDocument<SFProject> projectDoc = await GetProjectDocAsync(sourceProjectRef, conn);
+            await UpdatePermissionsAsync(curUserId, projectDoc);
         }
 
         return new TranslateSource
