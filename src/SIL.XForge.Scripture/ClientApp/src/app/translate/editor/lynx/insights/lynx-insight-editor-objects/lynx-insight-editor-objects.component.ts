@@ -4,6 +4,7 @@ import { Delta } from 'quill';
 import { asapScheduler, combineLatest, EMPTY, filter, fromEvent, merge, switchMap, tap } from 'rxjs';
 import { map, observeOn, scan } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { TextViewModel } from '../../../../../shared/text/text-view-model';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxableEditor } from '../lynx-editor';
@@ -24,6 +25,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
 
   @Input() editor?: LynxableEditor;
+  @Input() editorViewModel?: TextViewModel;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -35,7 +37,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    if (this.editor == null) {
+    if (this.editor == null || this.editorViewModel == null) {
       return;
     }
 
@@ -72,7 +74,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
           return merge(
             // Render blots when insights change
             this.insightState.filteredChapterInsights$.pipe(
-              tap(insights => this.insightRenderService.render(insights, this.editor!))
+              tap(insights => this.insightRenderService.render(insights, this.editor!, this.editorViewModel!))
             ),
             // Check display state to render action overlay or cursor active state
             this.insightState.displayState$.pipe(
