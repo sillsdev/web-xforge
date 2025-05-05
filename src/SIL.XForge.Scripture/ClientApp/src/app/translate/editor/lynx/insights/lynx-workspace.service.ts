@@ -207,7 +207,7 @@ export class LynxWorkspaceService {
       }
       this.curInsights.set(event.uri, insights);
     }
-    return Array.from(this.curInsights.values()).flat();
+    return [...this.curInsights.values()].flat();
   }
 
   private async onProjectActivated(projectDoc: SFProjectProfileDoc | undefined): Promise<void> {
@@ -297,7 +297,7 @@ export class TextDocReader implements DocumentReader<Delta> {
   constructor(private readonly projectService: SFProjectService) {}
 
   keys(): Promise<string[]> {
-    return Promise.resolve(Array.from(this.textDocIds));
+    return Promise.resolve([...this.textDocIds]);
   }
 
   async read(uri: string): Promise<DocumentData<Delta>> {
