@@ -213,13 +213,13 @@ export class LynxInsightStateService {
     // Ensure no duplicates
     const dismissedIds = new Set(this.dismissedInsightIdsSource$.value);
     ids.forEach(id => dismissedIds.add(id));
-    this.dismissedInsightIdsSource$.next(Array.from(dismissedIds));
+    this.dismissedInsightIdsSource$.next([...dismissedIds]);
   }
 
   restoreDismissedInsights(ids: string[]): void {
     const dismissedIds = new Set(this.dismissedInsightIdsSource$.value);
     ids.forEach(id => dismissedIds.delete(id));
-    this.dismissedInsightIdsSource$.next(Array.from(dismissedIds));
+    this.dismissedInsightIdsSource$.next([...dismissedIds]);
   }
 
   updateFilter(filter: Partial<LynxInsightFilter>): void {

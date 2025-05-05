@@ -37,6 +37,6 @@ export class QuillFormatRegistryService {
   }
 
   getRegisteredFormats(): string[] {
-    return Array.from(this.registeredFormats);
+    return [...this.registeredFormats];
   }
 }
