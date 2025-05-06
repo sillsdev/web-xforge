@@ -464,6 +464,12 @@
     "sources_in_following_languages": "Currently the source projects are in the following languages:",
     "sources_must_be_same_language": "The training source must be the same language as the drafting source. You can update your source texts on the [link:projectSettingsUrl]settings page[/link]"
   },
+  "lynx_insights_overlay": {
+    "multi_insight_header_select_for_details": "Select for details",
+    "tooltip_actions": "Actions",
+    "tooltip_dismiss": "Dismiss",
+    "tooltip_more_info": "More info"
+  },
   "lynx_insights_panel": {
     "restore": "Restore"
   },

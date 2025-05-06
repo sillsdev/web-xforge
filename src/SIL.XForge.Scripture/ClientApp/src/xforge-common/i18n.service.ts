@@ -234,7 +234,6 @@ export class I18nService {
     return this.transloco.translate(`canon.book_names.${book}`);
   }
 
-  // TODO: write unit test
   localizeBookChapter(book: number | string, chapter: number): string {
     return `${this.localizeBook(book)} ${this.getDirectionMark()}${chapter}`;
   }
