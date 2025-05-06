@@ -457,7 +457,7 @@ jobs:
           dotnet user-secrets set "Paratext:ResourcePasswordHash" "${PARATEXT_RESOURCE_PASSWORD_HASH}"
           dotnet user-secrets set "Paratext:ResourcePasswordBase64" "${PARATEXT_RESOURCE_PASSWORD_BASE64}"
           dotnet user-secrets set "Serval:ClientId" "${SERVAL_CLIENT_ID}"
-          dotnet user-secrets set "Serval:ClientSecret" "${SERVAL_CLIENT_SECRET}",
+          dotnet user-secrets set "Serval:ClientSecret" "${SERVAL_CLIENT_SECRET}"
           base64 --decode - <<< "${E2E_SECRETS_JSON_BASE64}" > ./ClientApp/e2e/secrets.json
 
       - name: Set up Deno
