@@ -14,6 +14,8 @@ import {
 } from "../e2e-utils.ts";
 import secrets from "../secrets.json" with { type: "json" };
 
+// Note: This is one of the first e2e tests written, and therefore may not follow best practices.
+
 export async function runSmokeTests(page: Page, screenshotContext: ScreenshotContext) {
   for (const [role, credentials] of Object.entries(ptUsersByRole)) {
     await joinAsUserAndTraversePages(page, credentials, { ...screenshotContext, role: role as UserRole });
@@ -38,17 +40,19 @@ async function screenshotLanguages(page: Page, context: ScreenshotContext): Prom
     return;
   }
 
-  const changeLanguageButton = await page.locator("header button").first();
-  await changeLanguageButton.click();
-
   const name = context.pageName ?? (await pageName(page));
+  const changeLanguageButton = await page.locator("header button").first();
+
   for (let i = 0; i < preset.locales.length; i++) {
-    if (i !== 0) await changeLanguageButton.click();
     const localeCode = preset.locales[i];
     const locale = locales.find(l => l.tags[0] === localeCode);
     if (locale == null) throw new Error(`Locale not found for code: ${localeCode}`);
-    await page.getByRole("menuitem", { name: locale.localName }).click();
-    await page.waitForTimeout(300);
+
+    if (i !== 0) {
+      await changeLanguageButton.click();
+      await page.getByRole("menuitem", { name: locale.localName }).click();
+      await page.waitForTimeout(300);
+    }
     await screenshot(page, { ...context, pageName: name, locale: localeCode });
   }
 

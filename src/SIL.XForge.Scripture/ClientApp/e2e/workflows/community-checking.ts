@@ -19,6 +19,9 @@ const questionFileData = Deno.readTextFileSync('test_data/tq_JHN.tsv')
   .map(line => line.split('\t'));
 const questionColumn = questionFileData[0].indexOf('Question');
 const answerColumn = questionFileData[0].indexOf('Response');
+if (questionColumn === -1 || answerColumn === -1) {
+  throw new Error('TSV header is missing a required header');
+}
 
 function getAnswer(question: string | null): string {
   return (
@@ -136,8 +139,8 @@ async function joinAsChecker(
   userNumber: number,
   answerCount: number
 ): Promise<void> {
-  const browserContext = await engine.launch({ headless: preset.headless });
-  const page = await browserContext.newPage();
+  const browser = await engine.launch({ headless: preset.headless });
+  const page = await browser.newPage();
 
   try {
     await joinWithLink(page, link, `Community checker test user ${userNumber + 1}`);
@@ -180,7 +183,7 @@ async function joinAsChecker(
       { overrideScreenshotSkipping: true }
     );
   } finally {
-    await browserContext.close();
+    await browser.close();
   }
 }
 
