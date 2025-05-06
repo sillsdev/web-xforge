@@ -120,6 +120,7 @@ app-copyright-banner,
   inset-inline-end: 10px;
   background-color: var(--sf-editor-note-fab-background-color);
   color: var(--sf-editor-note-fab-foreground-color);
+  z-index: 1; // Above lynx status indicator
 }
 
 .fab-bottom-sheet {
