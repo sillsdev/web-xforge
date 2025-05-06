@@ -2,7 +2,7 @@
 import { chromium, firefox, webkit } from "npm:playwright";
 import { logger, preset, ScreenshotContext } from "./e2e-globals.ts";
 import { screenshot } from "./e2e-utils.ts";
-import { numberOfTimesToAttemptTest } from "./pass-probability-ts";
+import { numberOfTimesToAttemptTest } from "./pass-probability.ts";
 import { presets } from "./presets.ts";
 import { tests } from "./test-definitions.ts";
 import testCharacterization from "./test_characterization.json" with { type: "json" };

@@ -3,6 +3,8 @@ import { chromium, devices, expect } from "npm:@playwright/test";
 import { Page } from "npm:playwright";
 import locales from "../../locales.json" with { type: "json" };
 
+// This is a legacy script that is left here for future reference. It works, but is not currently used by the tests.
+
 const typingDelayFactor = 1; // reduce to 0 to speed up typing
 
 // Trick TypeScript into not complaining that the document isn't defined for functions that are actually evaluated in
