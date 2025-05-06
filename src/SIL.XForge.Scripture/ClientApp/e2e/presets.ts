@@ -1,5 +1,5 @@
 import locales from '../../locales.json' with { type: 'json' };
-import { BrowserName, UserRole } from './e2e-globals.ts';
+import type { BrowserName, UserRole } from './e2e-globals.ts';
 import { E2ETestRunLogger } from './e2e-test-run-logger.ts';
 import { Utils } from './e2e-utils.ts';
 
