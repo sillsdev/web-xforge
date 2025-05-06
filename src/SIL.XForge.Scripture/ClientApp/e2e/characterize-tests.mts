@@ -1,8 +1,8 @@
 #!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write --unstable-sloppy-imports
 import { chromium } from "npm:playwright";
 import { preset } from "./e2e-globals.ts";
-import { Utils } from "./e2e-utils.js";
-import { numberOfTimesToAttemptTest } from "./pass-probability-ts";
+import { Utils } from "./e2e-utils.ts";
+import { numberOfTimesToAttemptTest } from "./pass-probability.ts";
 import { ScreenshotContext } from "./presets.ts";
 import { tests } from "./test-definitions.ts";
 
@@ -34,6 +34,8 @@ while (true) {
     console.log(`Saving trace to ${tracePath}`);
     browserContext.tracing.stop({ path: tracePath });
   } finally {
+    await browserContext.close();
+    await browser.close();
     printRetriesForEachTest();
   }
 }
