@@ -129,12 +129,6 @@ h1 {
   font-weight: 400;
   line-height: normal;
 
-  .code {
-    color: $secondaryTextColor;
-    font-size: 0.9em;
-    display: none; // TODO: is code needed for display, and is there a good way to display it?
-  }
-
   .more-info-icon {
     margin-inline-start: auto;
     color: $secondaryTextColor;

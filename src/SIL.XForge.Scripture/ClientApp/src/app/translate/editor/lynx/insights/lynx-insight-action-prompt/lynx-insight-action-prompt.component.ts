@@ -32,7 +32,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
   }
 
   activeInsights: LynxInsight[] = [];
-  isLtr: boolean = this.dir.value === 'ltr';
+  isRtl: boolean = this.dir.value === 'rtl';
 
   // Adjust to move prompt up so less text is hidden
   private readonly defaultLineHeight = 9;
@@ -106,7 +106,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
     const offsetBounds: Bounds | undefined = this.getPromptOffset();
 
     if (offsetBounds != null) {
-      const boundsEnd: number = this.isLtr ? offsetBounds.right : offsetBounds.left;
+      const boundsEnd: number = this.isRtl ? offsetBounds.left : offsetBounds.right;
       this.setHostStyle('top', `${offsetBounds.top + this.yOffsetAdjustment}px`);
       this.setHostStyle('left', `${boundsEnd + this.xOffsetAdjustment}px`);
       this.setHostStyle('display', 'flex');

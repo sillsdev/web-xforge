@@ -80,7 +80,7 @@ describe('LynxInsightFilterService', () => {
     });
 
     it('should return true for project scope regardless of book/chapter', () => {
-      const insight = createMockInsight('warning', 42, 3); // Mark 3
+      const insight = createMockInsight('warning', 42, 3); // Luke 3
       const filter: LynxInsightFilter = {
         types: ['warning'],
         scope: 'project',
@@ -95,7 +95,7 @@ describe('LynxInsightFilterService', () => {
     });
 
     it('should return false for book scope when insight is in different book', () => {
-      const insight = createMockInsight('warning', 42, 3); // Mark 3
+      const insight = createMockInsight('warning', 42, 3); // Luke 3
       const filter: LynxInsightFilter = {
         types: ['warning'],
         scope: 'book',
@@ -175,7 +175,7 @@ describe('LynxInsightFilterService', () => {
     });
 
     it('should return "project" when insight is in different book', () => {
-      const insight = createMockInsight('warning', 42, 1); // Mark 1
+      const insight = createMockInsight('warning', 42, 1); // Luke 1
       const bookChapter: RouteBookChapter = { bookId: 'MAT', chapter: 1 };
 
       const result = service.getScope(insight, bookChapter);
