@@ -13,7 +13,7 @@
       >
         <div class="level-ref">
           <span>
-            {{ node.name }}
+            {{ node.description }}
           </span>
           <!-- TODO: Removed for MVP -->
           <!-- <mat-icon [matTooltip]="t('restore')" (click)="restoreDismissedInsight(node.insight)" class="restore-icon">
@@ -32,10 +32,9 @@
 
         @switch (node.level) {
           @case (0) {
-            <div class="level-code">
-              <mat-icon [svgIcon]="'lynx_' + node.type" [class.dismissed]="node.isDismissed" [class]="node.type" />
+            <div class="level-desc">
+              <mat-icon [svgIcon]="'lynx_' + node.type" [class.dismissed]="node.isDismissed" [ngClass]="node.type" />
               <span class="text">{{ node.description }}</span>
-              <span class="code">({{ node.name }})</span>
               <span class="count">{{ node.count }}</span>
             </div>
           }

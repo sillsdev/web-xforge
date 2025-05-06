@@ -24,7 +24,6 @@ import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightRan
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
 interface InsightPanelNode {
-  name: string;
   description: string;
   type: LynxInsightType;
   children?: InsightPanelNode[];
@@ -36,7 +35,6 @@ interface InsightPanelNode {
 
 interface InsightPanelFlatNode {
   expandable: boolean;
-  name: string;
   description: string;
   type: string;
   level: number;
@@ -72,7 +70,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     )
   );
 
-  // Preserve expand/collapse state when tree reloads due to insights$ update: code -> expanded
+  // Preserve expand/collapse state when tree reloads due to insights$ update: description -> expanded
   expandCollapseState = new Map<string, boolean>();
 
   orderBy?: LynxInsightSortOrder;
@@ -122,7 +120,7 @@ export class LynxInsightsPanelComponent implements OnInit {
   onNodeClick(node: InsightPanelFlatNode, event: MouseEvent): void {
     if (node.expandable) {
       // Store expand/collapse state
-      this.expandCollapseState.set(node.name, this.treeControl.isExpanded(node));
+      this.expandCollapseState.set(node.description, this.treeControl.isExpanded(node));
     } else if (node.insight != null) {
       // Stop bubble to user event service, which will clear display state
       event.stopPropagation();
@@ -150,7 +148,6 @@ export class LynxInsightsPanelComponent implements OnInit {
   private flattenTransformer(node: InsightPanelNode, level: number): InsightPanelFlatNode {
     return {
       expandable: !!node.children && node.children.length > 0,
-      name: node.name,
       description: node.description,
       type: node.type,
       level: level,
@@ -161,7 +158,7 @@ export class LynxInsightsPanelComponent implements OnInit {
   }
 
   /**
-   * Groups insights by code and flattens them into InsightPanelNode.
+   * Groups insights by description and flattens them into InsightPanelNode.
    */
   private flattenGrouping(
     insights: LynxInsightWithText[],
@@ -172,18 +169,17 @@ export class LynxInsightsPanelComponent implements OnInit {
     const dismissedIdSet: Set<string> = new Set(dismissedIds);
 
     for (const [_desc, byDescGroup] of Object.entries(groupBy(insights, 'description'))) {
-      let codeNodeContainsAllDismissed = true;
+      let descGroupNodeContainsAllDismissed = true;
       const groupRepresentative: LynxInsightWithText = byDescGroup[0];
 
       const children: InsightPanelNode[] = byDescGroup.map(insight => {
         const isDismissed: boolean = dismissedIdSet.has(insight.id);
         if (!isDismissed) {
-          codeNodeContainsAllDismissed = false;
+          descGroupNodeContainsAllDismissed = false;
         }
 
         return {
-          name: this.getLinkText(insight),
-          description: insight.description,
+          description: this.getLinkText(insight),
           type: insight.type,
           insight,
           range: insight.range,
@@ -191,17 +187,16 @@ export class LynxInsightsPanelComponent implements OnInit {
         };
       });
 
-      const codeNode: InsightPanelNode = {
-        name: groupRepresentative.code,
+      const descGroupNode: InsightPanelNode = {
         description: groupRepresentative.description,
         type: groupRepresentative.type,
         children,
         count: byDescGroup.length,
         range: groupRepresentative.range,
-        isDismissed: codeNodeContainsAllDismissed
+        isDismissed: descGroupNodeContainsAllDismissed
       };
 
-      flattenedInsightNodes.push(codeNode);
+      flattenedInsightNodes.push(descGroupNode);
     }
 
     this.sortNodes(flattenedInsightNodes, orderBy);
@@ -215,7 +210,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     }
 
     for (const node of this.treeControl.dataNodes) {
-      if (node.level === 0 && this.expandCollapseState.get(node.name)) {
+      if (node.level === 0 && this.expandCollapseState.get(node.description)) {
         this.treeControl.expand(node);
       } else {
         this.treeControl.collapse(node);
@@ -361,7 +356,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     const editorSegments = this.textDocSegments.get(textDocIdStr);
 
     if (editorSegments == null) {
-      return '...'; // TODO: better default text
+      return '…'; // '\u2026'
     }
 
     const linkItems: string[] = [];
