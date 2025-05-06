@@ -41,7 +41,8 @@ function shutDownServer() {
 
 function startServer() {
   cd "${SCRIPT_DIR}/../.."
-  local DOTNET_LOG="$(mktemp)"
+  local DOTNET_LOG
+  DOTNET_LOG="$(mktemp)"
   output "Logging dotnet output to ${DOTNET_LOG}"
   export ASPNETCORE_ENVIRONMENT="Development"
   nohup dotnet run &>"${DOTNET_LOG}" &

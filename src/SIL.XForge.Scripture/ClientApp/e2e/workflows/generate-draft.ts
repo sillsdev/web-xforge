@@ -63,7 +63,7 @@ export async function generateDraft(
   await user.type('dhh94');
   await user.click(page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }));
   await user.click(page.getByRole('button', { name: 'Next' }));
-  await user.check(page.getByRole('checkbox', { name: 'All the language codes are' }));
+  await user.check(page.getByRole('checkbox', { name: 'All the language codes are correct' }));
   await screenshot(page, { pageName: 'configure_sources_final', ...context });
   await user.click(page.getByRole('button', { name: 'Save & sync' }));
   await user.click(page.getByRole('button', { name: 'Close' }));
@@ -127,13 +127,14 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'generate_draft_initializing', ...context });
   await expect(page.getByRole('heading', { name: 'Draft queued' })).toBeVisible({ timeout: 60_000 });
   await screenshot(page, { pageName: 'generate_draft_queued', ...context });
-  await expect(page.getByRole('heading', { name: 'Draft in progress' })).toBeVisible({ timeout: 2 * 60_000 });
+  // Wait for the draft to start - timeout is long because there can be another job in the queue
+  await expect(page.getByRole('heading', { name: 'Draft in progress' })).toBeVisible({ timeout: 15 * 60_000 });
   console.log('UI shows draft in progress after', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
   await screenshot(page, { pageName: 'generate_draft_in_progress', ...context });
 
   // Make sure the progress is changing
   let progress: number | null = null;
-  let letLastProgressChange: number | null = null;
+  let lastProgressChange: number | null = null;
   while (true) {
     // Use allTextContents so it won't crash if the element disappears before we can read it
     // FIXME Sometimes fails with "Execution context was destroyed, most likely because of a navigation"
@@ -142,12 +143,12 @@ export async function generateDraft(
 
     const currentProgress = Number.parseInt(currentProgressText);
     if (progress !== currentProgress) {
-      letLastProgressChange = Date.now();
+      lastProgressChange = Date.now();
       progress = currentProgress;
     }
     // If the progress hasn't changed in a while, throw an error
     const progressChangeTimeoutMinutes = 3;
-    if (letLastProgressChange != null && Date.now() - letLastProgressChange > 60_000 * progressChangeTimeoutMinutes) {
+    if (lastProgressChange != null && Date.now() - lastProgressChange > 60_000 * progressChangeTimeoutMinutes) {
       throw new Error(
         `Draft progress stalled at ${progress}% and unchanged in ${progressChangeTimeoutMinutes} minutes.`
       );

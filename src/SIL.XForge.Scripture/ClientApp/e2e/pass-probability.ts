@@ -1,11 +1,11 @@
-import testCharacterization from "./test_characterization.json" with { type: "json" };
+import testCharacterization from './test_characterization.json' with { type: 'json' };
 
 function probabilityOfRegressionGivenPreviousFailureRates(
   initialRuns: number,
   initialFailures: number,
   newFailures: number
 ): number {
-  if (initialFailures > initialRuns) throw new Error("initialFailures must be less than or equal to initialRuns");
+  if (initialFailures > initialRuns) throw new Error('initialFailures must be less than or equal to initialRuns');
 
   // Adding 1 to both the numerator and denominator provides a better estimate of the actual failure rate.
   // If you read explanations of Bayesian statistics, you'll see 1 added when calculating a prior. Just to be clear, I
@@ -40,6 +40,7 @@ function numberOfRunsNeededToAchieveDesiredProbabilityOfRegression(
   desiredProbabilityOfRegression: number
 ): number {
   for (let i = 1; ; i++) {
+    if (i > 100) throw new Error('Number of runs needed to achieve desired probability of regression is too high');
     if (
       probabilityOfRegressionGivenPreviousFailureRates(initialRuns, initialFailures, i) > desiredProbabilityOfRegression
     ) {
