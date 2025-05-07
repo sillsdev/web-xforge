@@ -1,4 +1,4 @@
-import { Db, IndexSpecification } from 'mongodb';
+import { CreateIndexesOptions, Db, IndexSpecification } from 'mongodb';
 import { ConnectSession } from '../connect-session';
 import { Migration, MigrationConstructor } from '../migration';
 import { ValidationSchema } from '../models/validation-schema';
@@ -70,7 +70,7 @@ export abstract class DocService<T = any> {
   }
 
   abstract get collection(): string;
-  protected abstract get indexPaths(): (string | IndexSpecification)[];
+  protected abstract get indexPaths(): (string | IndexSpecification | [string, CreateIndexesOptions])[];
   validationSchema: ValidationSchema | undefined = undefined;
 
   init(server: RealtimeServer): void {
@@ -96,6 +96,8 @@ export abstract class DocService<T = any> {
       const collection = db.collection(this.collection);
       if (typeof path === 'string') {
         await collection.createIndex({ [path]: 1 });
+      } else if (Array.isArray(path)) {
+        await collection.createIndex({ [path[0]]: 1 }, path[1] as CreateIndexesOptions);
       } else {
         await collection.createIndex(path);
       }

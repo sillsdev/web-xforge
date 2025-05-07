@@ -35,13 +35,16 @@ function getKeyRange(filter: PropertyFilter): IDBKeyRange | undefined {
 function createObjectStore(
   db: IDBDatabase,
   collection: string,
-  indexPaths?: (string | { [x: string]: number | string })[]
+  indexPaths?: (string | { [x: string]: number | string } | [string, unknown])[]
 ): void {
   const objectStore = db.createObjectStore(collection, { keyPath: 'id' });
   if (indexPaths != null) {
     for (const path of indexPaths) {
       if (typeof path === 'string') {
         objectStore.createIndex(path, `data.${path}`);
+      } else if (Array.isArray(path)) {
+        // Index options are not supported in IndexedDB, so we ignore them.
+        objectStore.createIndex(path[0], `data.${path[0]}`);
       } else {
         objectStore.createIndex(
           Object.keys(path).join('_'),
