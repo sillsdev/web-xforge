@@ -1,17 +1,14 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
@@ -19,7 +16,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -27,8 +24,6 @@ import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
-import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { CheckingUtils } from '../checking.utils';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import {
@@ -37,7 +32,6 @@ import {
 } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-
 @Component({
   selector: 'app-checking-overview',
   templateUrl: './checking-overview.component.html',
@@ -55,10 +49,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly dialogService: DialogService,
-    readonly featureFlags: FeatureFlagService,
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -66,15 +59,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly permissions: PermissionsService,
-    private readonly chapterAudioDialogService: ChapterAudioDialogService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly l10nNumberPipe: L10nNumberPipe
   ) {
     super(noticeService);
-  }
-
-  protected get isOnline(): boolean {
-    return this.onlineStatusService.isOnline;
   }
 
   get showQuestionsLoadingMessage(): boolean {
@@ -168,18 +156,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create);
   }
 
-  get canCreateScriptureAudio(): boolean {
-    const project: Readonly<SFProjectProfile | undefined> = this.projectDoc?.data;
-    const userId: string = this.userService.currentUserId;
-    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
-  }
-
-  get canDeleteScriptureAudio(): boolean {
-    const project = this.projectDoc?.data;
-    const userId = this.userService.currentUserId;
-    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Delete);
-  }
-
   get canEditQuestion(): boolean {
     const project = this.projectDoc?.data;
     const userId = this.userService.currentUserId;
@@ -210,7 +186,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       }),
       map(params => params['projectId'] as string)
     );
-    projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
+    projectId$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       this.loadingStarted();
       this.projectId = projectId;
       try {
@@ -220,7 +196,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           this.userService.currentUserId,
           new DocSubscription('CheckingOverviewComponent', this.destroyRef)
         );
-        this.projectUserConfigDoc.submitJson0Op(op => op.set<string>(puc => puc.selectedTask!, 'checking'));
         this.questionsQuery?.dispose();
         this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
           projectId,
@@ -255,27 +230,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   ngOnDestroy(): void {
     this.dataChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
-  }
-
-  async deleteChapterAudio(text: TextInfo, chapter: Chapter): Promise<void> {
-    if (this.projectId == null) {
-      return;
-    }
-    if (
-      await this.dialogService.confirm(
-        this.i18n.translate('checking_overview.confirm_delete_chapter_audio', {
-          book: this.getBookName(text),
-          chapter: chapter.number
-        }),
-        'checking_overview.delete'
-      )
-    ) {
-      if (!this.isOnline) {
-        this.noticeService.showError(translate('app.action_not_available_offline'));
-        return;
-      }
-      await this.projectService.onlineDeleteAudioTimingData(this.projectId, text.bookNum, chapter.number);
-    }
   }
 
   getRouterLink(bookId: string): string[] {
@@ -352,21 +306,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       }
     }
     return count;
-  }
-
-  async chapterAudioDialog(text: TextInfo, chapter: Chapter): Promise<void> {
-    if (this.projectId == null || this.textsByBookId == null) {
-      return;
-    }
-
-    const dialogConfig: ChapterAudioDialogData = {
-      projectId: this.projectId,
-      textsByBookId: this.textsByBookId,
-      questionsSorted: this.allPublishedQuestions,
-      currentBook: text.bookNum,
-      currentChapter: chapter.number
-    };
-    await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
 
   answerCountLabel(count?: number): string {

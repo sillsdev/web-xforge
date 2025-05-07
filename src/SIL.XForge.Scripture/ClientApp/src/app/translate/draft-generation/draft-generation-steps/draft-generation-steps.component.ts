@@ -1,5 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -15,8 +14,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
@@ -27,14 +25,12 @@ import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.comp
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataService } from '../training-data/training-data.service';
-
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
-  trainingScriptureRange?: string;
   trainingScriptureRanges: ProjectScriptureRange[];
-  translationScriptureRange?: string;
   translationScriptureRanges?: ProjectScriptureRange[];
   fastTraining: boolean;
+  useEcho: boolean;
 }
 
 export interface Book {
@@ -72,7 +68,8 @@ export class DraftGenerationStepsComponent implements OnInit {
   @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
 
-  availableTranslateBooks: Book[] = [];
+  allAvailableTranslateBooks: Book[] = []; // A flattened instance of the values from availableTranslateBooks
+  availableTranslateBooks: { [projectRef: string]: Book[] } = {};
   availableTrainingBooks: { [projectRef: string]: Book[] } = {}; //books in both source and target
   availableTrainingFiles: Readonly<TrainingData>[] = [];
 
@@ -92,15 +89,16 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   trainingDataFilesAvailable = false;
   fastTraining: boolean = false;
+  useEcho: boolean = false;
 
   expandUnusableTranslateBooks = false;
   expandUnusableTrainingBooks = false;
   isStepsCompleted = false;
 
-  protected languagesVerified = false;
   protected nextClickedOnLanguageVerification = false;
   protected hasLoaded = false;
 
+  protected draftingSources: DraftSource[] = [];
   protected trainingSources: DraftSource[] = [];
   protected trainingTargets: DraftSource[] = [];
   protected translatedBooksWithNoSource: number[] = [];
@@ -112,7 +110,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   private isTrainingDataInitialized: boolean = false;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     protected readonly activatedProject: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
     protected readonly featureFlags: FeatureFlagService,
@@ -127,7 +125,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   ngOnInit(): void {
     combineLatest([this.draftSourcesService.getDraftProjectSources(), this.activatedProject.projectId$])
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
+        quietTakeUntilDestroyed(this.destroyRef),
         filter(([{ trainingTargets, draftingSources }], projectId) => {
           this.setProjectDisplayNames(trainingTargets[0], draftingSources[0]);
           return trainingTargets[0] != null && draftingSources[0] != null && projectId != null;
@@ -145,9 +143,11 @@ export class DraftGenerationStepsComponent implements OnInit {
             (await this.nllbLanguageService.isNllbLanguageAsync(target.writingSystem.tag)) &&
             (await this.nllbLanguageService.isNllbLanguageAsync(draftingSource.writingSystem.tag));
 
+          this.draftingSources = draftingSources.filter(s => s !== undefined) ?? [];
           this.trainingSources = trainingSources.filter(s => s !== undefined) ?? [];
           this.trainingTargets = trainingTargets.filter(t => t !== undefined) ?? [];
 
+          // TODO: When implementing multiple drafting sources, this will need to be updated to handle multiple sources
           const draftingSourceBooks = new Set<number>();
           for (const text of draftingSource.texts) {
             draftingSourceBooks.add(text.bookNum);
@@ -158,7 +158,10 @@ export class DraftGenerationStepsComponent implements OnInit {
             trainingSources[1]?.texts.map(t => t.bookNum)
           );
 
-          this.availableTranslateBooks = [];
+          for (const source of this.draftingSources) {
+            this.availableTranslateBooks[source?.projectRef] = [];
+          }
+
           this.availableTrainingBooks[projectId!] = [];
           for (const source of this.trainingSources) {
             this.availableTrainingBooks[source?.projectRef] = [];
@@ -178,8 +181,11 @@ export class DraftGenerationStepsComponent implements OnInit {
             }
 
             // Translate books
+            // TODO: When implementing multiple drafting sources, this should be updated to handle multiple sources
             if (draftingSourceBooks.has(bookNum)) {
-              this.availableTranslateBooks.push({ number: bookNum, selected: false });
+              const book: Book = { number: bookNum, selected: false };
+              this.availableTranslateBooks[draftingSources[0]!.projectRef].push(book);
+              this.allAvailableTranslateBooks.push(book);
             } else {
               this.unusableTranslateSourceBooks.push(bookNum);
             }
@@ -225,7 +231,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
     // Get the training data files for the project
     this.activatedProject.projectDoc$
-      .pipe(takeUntilDestroyed(this.destroyRef), filterNullish())
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), filterNullish())
       .subscribe(async projectDoc => {
         this.isTrainingDataInitialized = false;
         // Query for all training data files in the project
@@ -240,11 +246,11 @@ export class DraftGenerationStepsComponent implements OnInit {
           this.trainingDataQuery.remoteChanges$,
           this.trainingDataQuery.remoteDocChanges$
         )
-          .pipe(takeUntilDestroyed(this.destroyRef))
+          .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
           .subscribe(() => this.trainingDataQueryUpdate$.next());
       });
 
-    this.trainingDataQueryUpdate$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.trainingDataQueryUpdate$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.availableTrainingFiles = [];
       if (this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.additionalTrainingData) {
         this.availableTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
@@ -284,11 +290,30 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   private _booksToTranslate?: Book[];
   booksToTranslate(): Book[] {
-    const value = this.availableTranslateBooks?.filter(b => b.selected) ?? [];
+    const value =
+      Object.values(this.availableTranslateBooks)
+        .flat()
+        .filter(b => b.selected) ?? [];
     if (this._booksToTranslate?.toString() !== value?.toString()) {
       this._booksToTranslate = value;
     }
     return this._booksToTranslate;
+  }
+
+  private _selectedTranslateBooks: { [projectRef: string]: Book[] } = {};
+  selectedTranslateBooksByProj(projectRef?: string): Book[] {
+    if (projectRef == null) return [];
+    const value = this.availableTranslateBooks[projectRef]?.filter(b => b.selected) ?? [];
+    if (this._selectedTranslateBooks[projectRef]?.toString() !== value?.toString()) {
+      this._selectedTranslateBooks[projectRef] = value;
+    }
+
+    return this._selectedTranslateBooks[projectRef];
+  }
+
+  selectableTranslateBooksByProj(projectRef?: string): Book[] {
+    if (this.activatedProject.projectId == null || projectRef == null) return [];
+    return this.availableTranslateBooks[projectRef] ?? [];
   }
 
   selectedTranslateBooksAsString(): string {
@@ -354,7 +379,7 @@ export class DraftGenerationStepsComponent implements OnInit {
     const booksInTargetAndSource = this.availableTrainingBooks[projectRef] ?? [];
     //filter out selected books to draft
     const booksNotBeingTranslated = booksInTargetAndSource.filter(
-      b => this.availableTranslateBooks.find(x => x.number === b.number)?.selected === false
+      b => this.allAvailableTranslateBooks.find(x => x.number === b.number)?.selected === false
     );
 
     let value: Book[];
@@ -424,8 +449,8 @@ export class DraftGenerationStepsComponent implements OnInit {
     this.clearErrorMessage();
   }
 
-  onTranslateBookSelect(selectedBooks: number[]): void {
-    for (const book of this.availableTranslateBooks) {
+  onTranslateBookSelect(selectedBooks: number[], source: TranslateSource): void {
+    for (const book of this.availableTranslateBooks[source.projectRef]) {
       book.selected = selectedBooks.includes(book.number);
     }
     this.clearErrorMessage();
@@ -462,13 +487,23 @@ export class DraftGenerationStepsComponent implements OnInit {
         }
       }
 
+      const translationData: ProjectScriptureRange[] = [];
+      for (const source of this.draftingSources) {
+        const booksForThisSource: Book[] = this.selectedTranslateBooksByProj(source.projectRef);
+        if (booksForThisSource.length > 0) {
+          translationData.push({
+            projectId: source.projectRef,
+            scriptureRange: booksForThisSource.map(b => Canon.bookNumberToId(b.number)).join(';')
+          });
+        }
+      }
+
       this.done.emit({
         trainingScriptureRanges: trainingData,
         trainingDataFiles: this.selectedTrainingFileIds,
-        translationScriptureRange: this.booksToTranslate()
-          .map(b => Canon.bookNumberToId(b.number))
-          .join(';'),
-        fastTraining: this.fastTraining
+        translationScriptureRanges: translationData,
+        fastTraining: this.fastTraining,
+        useEcho: this.useEcho
       });
     }
   }
@@ -482,7 +517,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   private updateSelectedTrainingBooks(): void {
-    const booksForTranslation: number[] = this.availableTranslateBooks.filter(b => b.selected).map(b => b.number);
+    const booksForTranslation: number[] = this.allAvailableTranslateBooks.filter(b => b.selected).map(b => b.number);
     for (const [, trainingBooks] of Object.entries(this.availableTrainingBooks)) {
       // set the selected state of any training book to false if it is selected for translation
       trainingBooks.forEach(b => (b.selected = booksForTranslation.includes(b.number) ? false : b.selected));
@@ -501,14 +536,25 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   private setInitialTranslateBooks(): void {
     // Get the previously selected translation books from the target project
-    const previousTranslationRange: string =
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange ?? '';
-    const previousBooks: Set<number> = new Set<number>(booksFromScriptureRange(previousTranslationRange));
+    const previousTranslation =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges ?? [];
 
-    for (const bookNum of previousBooks) {
-      const book = this.availableTranslateBooks?.find(b => b.number === bookNum);
-      if (book !== undefined) {
-        book.selected = true;
+    // Support old format
+    const oldStyleRange: string | undefined =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange;
+    if (previousTranslation.length === 0 && oldStyleRange !== undefined) {
+      previousTranslation.push({ projectId: this.draftingSources[0].projectRef, scriptureRange: oldStyleRange });
+    }
+
+    for (const range of previousTranslation) {
+      const source = this.draftingSources.find(s => s.projectRef === range.projectId);
+      if (source !== undefined) {
+        for (const bookNum of booksFromScriptureRange(range.scriptureRange)) {
+          const sourceBook = this.availableTranslateBooks[source.projectRef].find(b => b.number === bookNum);
+          if (sourceBook !== undefined) {
+            sourceBook.selected = true;
+          }
+        }
       }
     }
   }

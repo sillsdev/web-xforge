@@ -10,7 +10,7 @@ import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -24,14 +24,17 @@ const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedRouter = mock(Router);
-const mockedFeatureFlags = mock(FeatureFlagService);
 const mockedAuthService = mock(AuthService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 const blankProjectDoc = { id: 'project1', data: createTestProjectProfile() } as SFProjectProfileDoc;
 
 const projectDocWithExistingSources = {
   id: 'project1',
   data: createTestProjectProfile({
+    shortName: 'P_RU',
+    name: 'Russian Project',
+    paratextId: 'project-5',
     translateConfig: {
       translationSuggestionsEnabled: false,
       preTranslate: true,
@@ -75,8 +78,16 @@ const projectDocWithExistingSources = {
 function setUpMocks(args: DraftSourcesComponentStoryState): void {
   when(mockedActivatedProjectService.changes$).thenReturn(of(args.project));
   when(mockedActivatedProjectService.projectDoc).thenReturn(args.project);
-  when(mockedFeatureFlags.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(args.mixedSource));
   when(mockedAuthService.currentUserId).thenReturn('user1');
+
+  when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(args.online));
+  when(mockedOnlineStatusService.isOnline).thenReturn(args.online);
+  when(mockedOnlineStatusService.online).thenReturn(
+    new Promise(resolve => {
+      if (args.online) resolve();
+      // Else, never resolve.
+    })
+  );
 
   const languageCodes = ['en', 'fr', 'es', 'pt', 'de', 'ru', 'zh', 'ar', 'hi', 'bn'];
 
@@ -96,10 +107,21 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
     name: `${languageName(languageCodes[i])} Project`,
     shortName: `P_${languageCodes[i].toUpperCase()}`,
     languageTag: languageCodes[i],
-    projectId: `project-${i}`,
+    projectId: null,
     isConnectable: true,
     isConnected: true
   }));
+
+  // Add a project that has an unknown language code
+  projects.push({
+    paratextId: 'project-00',
+    name: 'UNK',
+    shortName: 'UNK',
+    languageTag: '',
+    projectId: null,
+    isConnectable: true,
+    isConnected: false
+  });
 
   when(mockedParatextService.getResources()).thenResolve(resources);
   when(mockedParatextService.getProjects()).thenResolve(projects);
@@ -109,11 +131,13 @@ function setUpMocks(args: DraftSourcesComponentStoryState): void {
 interface DraftSourcesComponentStoryState {
   project: SFProjectProfileDoc;
   mixedSource: boolean;
+  online: boolean;
 }
 
 const defaultArgs: DraftSourcesComponentStoryState = {
   project: blankProjectDoc,
-  mixedSource: true
+  mixedSource: true,
+  online: true
 };
 
 export default {
@@ -130,8 +154,8 @@ export default {
         { provide: SFProjectService, useValue: instance(mockedProjectService) },
         { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) },
         { provide: Router, useValue: instance(mockedRouter) },
-        { provide: FeatureFlagService, useValue: instance(mockedFeatureFlags) },
         { provide: AuthService, useValue: instance(mockedAuthService) },
+        { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
         defaultTranslocoMarkupTranspilers()
       ]
     })
@@ -204,10 +228,10 @@ export const SelectAllAndSave: Story = {
 
     // Step 2: Reference projects
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
-    // Select a English reference project and expect to see a warning that sources are in different languages
+    // Select a English reference project and expect to see an error that sources are in different languages
     await selectSource(canvasElement, 'R_EN');
-    expect(await warning(canvasElement)).toContain('All source and reference projects should be in the same language');
-    // Switch to a Chinese reference project and expect the warning to disappear
+    expect(await warning(canvasElement)).toContain('All source and reference projects must be in the same language');
+    // Switch to a Chinese reference project and expect the error to disappear
     await clearSource(canvasElement);
     await selectSource(canvasElement, 'R_ZH');
     expect(await warning(canvasElement)).toContain('Incorrect language codes will dramatically reduce draft quality.');
@@ -294,9 +318,9 @@ export const NavigateAllSteps: Story = {
     expect(currentStep(canvasElement)).toBe(2);
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
     expect(currentStep(canvasElement)).toBe(3);
-    await userEvent.click(within(canvasElement).getByRole('button', { name: /Back/ }));
+    await userEvent.click(within(canvasElement).getByRole('button', { name: /Previous/ }));
     expect(currentStep(canvasElement)).toBe(2);
-    await userEvent.click(within(canvasElement).getByRole('button', { name: /Back/ }));
+    await userEvent.click(within(canvasElement).getByRole('button', { name: /Previous/ }));
     expect(currentStep(canvasElement)).toBe(1);
     // Go to each step by clicking on the stepper
     for (let step = 1; step <= 3; step++) {
@@ -356,8 +380,108 @@ export const CannotSelectSameProjectTwiceInOneStep: Story = {
 
     // Verify empty project select is removed when leaving and coming back to step
     await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
-    await userEvent.click(canvas.getByRole('button', { name: /Back/ }));
+    await userEvent.click(canvas.getByRole('button', { name: /Previous/ }));
     expect(canvas.getAllByRole('combobox').length).toBe(1);
     canvas.getByRole('button', { name: /Add another reference project/ });
+  }
+};
+
+export const CannotSelectTargetAsASource: Story = {
+  ...PreExistingSettings,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole('combobox'));
+    // Make sure current target Russian project can't be selected
+    expect(canvas.queryByRole('option', { name: /P_ES/ })).not.toBeNull();
+    expect(canvas.queryByRole('option', { name: /P_RU/ })).toBeNull();
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+
+    await userEvent.click(canvas.getAllByRole('combobox')[0]);
+    // Make sure current target Russian project can't be selected
+    expect(canvas.queryAllByRole('option', { name: /P_ES/ })).not.toBeNull();
+    expect(canvas.queryByRole('option', { name: /P_RU/ })).toBeNull();
+  }
+};
+
+export const LanguageCodesConfirmationAutomaticallyCleared: Story = {
+  ...Default,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await selectSource(canvasElement, 'P_EN');
+
+    await userEvent.click(await canvas.findByRole('checkbox'));
+    expect(await canvas.findByRole('checkbox')).toBeChecked();
+
+    // Clearing the source doesn't clear the checkbox
+    await clearSource(canvasElement);
+    expect(await canvas.findByRole('checkbox')).toBeChecked();
+
+    // Selecting a source does clear the checkbox
+    await selectSource(canvasElement, 'P_EN');
+    expect(await canvas.findByRole('checkbox')).not.toBeChecked();
+  }
+};
+
+export const CannotSaveWithMultipleSourceLanguages: Story = {
+  ...Default,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Select Portuguese along with Spanish on the source side
+    await selectSource(canvasElement, 'P_PT');
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+    await selectSource(canvasElement, 'R_PT');
+    const additionalReferenceButton = canvas.getByRole('button', { name: /Add another reference project/ });
+    await userEvent.click(additionalReferenceButton);
+    await selectSource(canvasElement, 'P_ES', 1);
+
+    // Expect an error with no checkbox to confirm language codes
+    expect(await warning(canvasElement)).toContain('All source and reference projects must be in the same language');
+    expect(canvas.queryByRole('checkbox')).toBeNull();
+
+    // Attempting to save should show an error dialog
+    await userEvent.click(canvas.getByRole('button', { name: /Save & sync/ }));
+    canvas.getByRole('heading', {
+      name: 'All source and reference projects must be in the same language. Please select different source or reference projects.'
+    });
+  }
+};
+
+// See SF-3288
+export const CanHandleBackTranslationProjectsWithUnknownLanguage: Story = {
+  ...Default,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Select a training source that does not have a language code defined
+    await selectSource(canvasElement, 'P_ES');
+    await userEvent.click(canvas.getByRole('button', { name: /Next/ }));
+    await selectSource(canvasElement, 'R_ES');
+    await userEvent.click(canvas.getByRole('button', { name: /Add another reference project/ }));
+    await selectSource(canvasElement, 'UNK', 1);
+
+    expect(await warning(canvasElement)).toContain('Incorrect language codes will dramatically reduce draft quality.');
+    await userEvent.click(await canvas.findByRole('checkbox'));
+  }
+};
+
+// See SF-3271
+export const CannotSaveAndSyncWhenOffline: Story = {
+  args: {
+    project: blankProjectDoc,
+    mixedSource: true,
+    online: false
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const offlineMessage = canvasElement.querySelector('mat-error')?.textContent ?? '';
+    // Offline message is displayed
+    expect(offlineMessage).toContain(
+      'You are offline. Please connect to the internet to save and sync your draft sources.'
+    );
+    // Save button is disabled
+    expect(canvas.getByRole('button', { name: /Save & sync/ })).toBeDisabled();
   }
 };

@@ -381,24 +381,7 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should login with passwordless enabled', fakeAsync(() => {
-    const env = new TestEnvironment();
-    const returnUrl = 'test-returnUrl';
-
-    env.service.logIn({ returnUrl });
-
-    verify(mockedWebAuth.loginWithRedirect(anything())).once();
-    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
-      mockedWebAuth.loginWithRedirect
-    ).last()[0];
-    expect(authOptions).toBeDefined();
-    if (authOptions != null) {
-      expect(authOptions.authorizationParams!.enablePasswordless).toEqual(true);
-      expect(authOptions.authorizationParams!.promptPasswordlessLogin).toBeUndefined();
-    }
-  }));
-
-  it('should login with passwordless enabled and prompt for passwordless login', fakeAsync(() => {
+  it('should prompt for basic login', fakeAsync(() => {
     const env = new TestEnvironment();
     const returnUrl = 'test-returnUrl';
     when(mockedLocationService.pathname).thenReturn('/join/sharekey');
@@ -411,25 +394,28 @@ describe('AuthService', () => {
     ).last()[0];
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
-      expect(authOptions.authorizationParams!.enablePasswordless).toEqual(true);
-      expect(authOptions.authorizationParams!.promptPasswordlessLogin).toEqual(true);
+      expect(authOptions.authorizationParams!.promptBasicLogin).toEqual(true);
     }
   }));
 
-  it('should login with defined logo', fakeAsync(() => {
+  it('should login with appropriate logo', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
+    const sfLogoUrl = 'https://auth0.languagetechnology.org/assets/sf.svg';
+    when(mockedLocationService.hostname).thenReturn('scriptureforge.org');
 
     env.service.logIn({ returnUrl: 'test-returnUrl' });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
-    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
+    let authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
       mockedWebAuth.loginWithRedirect
     ).last()[0];
-    expect(authOptions).toBeDefined();
-    if (authOptions != null) {
-      expect(authOptions.authorizationParams!.logo).toBeDefined();
-    }
+    expect(authOptions!.authorizationParams!.logo).toEqual(sfLogoUrl);
+
+    // a different domain
+    when(mockedLocationService.hostname).thenReturn('other.domain.org');
+    env.service.logIn({ returnUrl: 'test-returnUrl' });
+    authOptions = capture<RedirectLoginOptions | undefined>(mockedWebAuth.loginWithRedirect).last()[0];
+    expect(authOptions!.authorizationParams!.logo).not.toEqual(sfLogoUrl);
   }));
 
   it('should link with Paratext', fakeAsync(() => {
@@ -998,15 +984,13 @@ class TestEnvironment {
   }
 
   setLoginResponse(auth0Response?: AuthDetails | undefined): void {
-    if (auth0Response == null) {
-      auth0Response = {
-        token: this.validToken,
-        idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
-        loginResult: {
-          appState: this._authLoginState
-        }
-      };
-    }
+    auth0Response ??= {
+      token: this.validToken,
+      idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
+      loginResult: {
+        appState: this._authLoginState
+      }
+    };
     this.auth0Response = auth0Response;
     when(mockedWebAuth.getTokenSilently()).thenResolve(this.auth0Response!.token.access_token);
     when(mockedWebAuth.getTokenSilently(anything())).thenResolve(this.auth0Response!.token);

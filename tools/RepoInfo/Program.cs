@@ -80,7 +80,7 @@ if (string.IsNullOrWhiteSpace(assemblyDirectory))
     return;
 }
 
-var hgMerge = Path.Combine(assemblyDirectory, "ParatextMerge.py");
+var hgMerge = Path.Join(assemblyDirectory, "ParatextMerge.py");
 Hg.Default = new Hg(customHgPath, hgMerge, assemblyDirectory);
 
 // Files which we do not calculate the information for
@@ -91,7 +91,7 @@ ScrTextCollection.Implementation = new SFScrTextCollection();
 ScrTextCollection.Initialize(projectPath);
 
 // Get the path to the project settings
-string? settingsPath = Path.Combine(projectPath, "Settings.xml");
+string? settingsPath = Path.Join(projectPath, "Settings.xml");
 if (!File.Exists(settingsPath))
 {
     settingsPath = Directory.EnumerateFiles(projectPath, "*.ssf").FirstOrDefault();
@@ -109,7 +109,7 @@ ProjectSettings settings = new ProjectSettings(reader);
 // Initialize the localizer, and hide its output
 var oldOut = Console.Out;
 Console.SetOut(StreamWriter.Null);
-Localizer.Str(string.Empty);
+Localizer.Str(string.Empty, string.Empty);
 Console.SetOut(oldOut);
 
 // Get the revisions

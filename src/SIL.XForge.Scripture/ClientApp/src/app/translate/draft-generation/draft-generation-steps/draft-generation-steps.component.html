@@ -1,15 +1,12 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
-  @if (availableTranslateBooks.length > 0) {
+  @if (allAvailableTranslateBooks.length > 0) {
     <mat-stepper linear (selectionChange)="onStepChange()" labelPosition="bottom" [disableRipple]="true">
       <!-- Icon overrides -->
       <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
 
-      <mat-step [completed]="languagesVerified">
+      <mat-step [completed]="true">
         <ng-template matStepLabel>{{ t("overview") }}</ng-template>
-        <app-confirm-sources (languageCodesVerified)="languagesVerified = $event"></app-confirm-sources>
-        @if (nextClickedOnLanguageVerification && !languagesVerified) {
-          <app-notice type="error">{{ t("confirm_codes_correct_to_continue") }}</app-notice>
-        }
+        <app-confirm-sources></app-confirm-sources>
         <div class="button-strip">
           <button mat-stroked-button class="backout-button" (click)="cancel.emit()">
             <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
@@ -27,13 +24,16 @@
           {{ t("choose_books_to_translate_header") }}
         </ng-template>
         <h1 class="mat-headline-4">{{ t("choose_books_to_translate_title") }}</h1>
-        <app-book-multi-select
-          [availableBooks]="availableTranslateBooks"
-          [selectedBooks]="booksToTranslate()"
-          [basicMode]="true"
-          (bookSelect)="onTranslateBookSelect($event)"
-          data-test-id="draft-stepper-translate-books"
-        ></app-book-multi-select>
+        @for (source of draftingSources; track source) {
+          <p class="reference-project-label">{{ projectLabel(source) }}</p>
+          <app-book-multi-select
+            [availableBooks]="selectableTranslateBooksByProj(source.projectRef)"
+            [selectedBooks]="selectedTranslateBooksByProj(source.projectRef)"
+            [basicMode]="true"
+            (bookSelect)="onTranslateBookSelect($event, source)"
+            data-test-id="draft-stepper-translate-books"
+          ></app-book-multi-select>
+        }
         @if (unusableTranslateSourceBooks.length) {
           <app-notice icon="info" mode="basic" type="light" class="unusable-translate-books">
             <div class="notice-container">
@@ -144,7 +144,11 @@
             ></app-book-multi-select>
           }
         }
-        @if (!translatedBooksSelectedInTrainingSources) {
+        @if (!isTrainingOptional && selectableTrainingBooksByProj(activatedProject.projectId).length === 0) {
+          <app-notice class="error-no-translated-books" type="error">
+            {{ t("choose_books_for_training_no_books_error") }}
+          </app-notice>
+        } @else if (!translatedBooksSelectedInTrainingSources) {
           <app-notice class="error-translated-books-unselected" type="error">
             {{ t("translated_book_selected_no_training_pair") }}
           </app-notice>
@@ -205,7 +209,7 @@
           </div>
         </mat-step>
       }
-      @if (featureFlags.allowFastTraining.enabled) {
+      @if (featureFlags.showDeveloperTools.enabled) {
         <mat-step [completed]="true">
           <ng-template matStepLabel>
             {{ t("configure_advanced_settings_header") }}
@@ -216,6 +220,12 @@
           </div>
           @if (fastTraining) {
             <app-notice icon="warning" type="warning" class="warning">{{ t("fast_training_warning") }}</app-notice>
+          }
+          <div>
+            <mat-checkbox class="use-echo" [(ngModel)]="useEcho">{{ t("use_echo") }}</mat-checkbox>
+          </div>
+          @if (useEcho) {
+            <app-notice icon="warning" type="warning" class="warning">{{ t("use_echo_warning") }}</app-notice>
           }
           <div class="button-strip">
             <button mat-stroked-button matStepperPrevious>
@@ -304,7 +314,7 @@
     </mat-stepper>
   }
 
-  @if (hasLoaded && availableTranslateBooks.length <= 0) {
+  @if (hasLoaded && allAvailableTranslateBooks.length <= 0) {
     <p>{{ t("no_available_books") }}</p>
   } @else if (!hasLoaded) {
     <div class="loading">

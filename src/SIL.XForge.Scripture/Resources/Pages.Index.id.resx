@@ -118,37 +118,37 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>Alat Pemeriksaan Komunitas kami memfasilitasi kampanye pemeriksaan Kitab Suci secara modular, untuk memberikan umpan balik yang lebih luas kepada komite penerjemahan, dengan lebih cepat.</value>
+    <value>Alat Pemeriksaan Masyarakat kami memfasilitasi kampanye pemeriksaan Alkitab secara modular, untuk memberikan umpan balik yang lebih luas kepada komite penerjemahan, dengan lebih cepat.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
     <value>Proyek-proyek Alkitab melibatkan kelompok-kelompok penutur bahasa yang semakin beragam secara geografis.</value>
   </data>
   <data name="AboutDrafting" xml:space="preserve">
-    <value>2 Utilize advanced Artificial Intelligence to generate preliminary drafts from existing translations. This reduces the workload and speeds up the translation process, giving translators a head start.</value>
+    <value>2 Memanfaatkan Kecerdasan Buatan yang canggih untuk menghasilkan konsep awal dari terjemahan yang ada. Hal ini mengurangi beban kerja dan mempercepat proses penerjemahan, sehingga penerjemah dapat memulai lebih awal.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>Tentang Scripture Forge</value>
   </data>
   <data name="AboutCollaborate" xml:space="preserve">
-    <value>1 Collaborative editing allows teams to draft and edit translations together efficiently. No more worrying about reconciling multiple versions—our platform ensures everyone stays on the same page.</value>
+    <value>1 Penyuntingan kolaboratif memungkinkan tim untuk menyusun dan menyunting terjemahan secara efisien. Tidak perlu lagi khawatir tentang menyesuaikan beberapa versi-platform kami memastikan semua orang tetap berada di halaman yang sama.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Perluas Jangkauan Anda dengan Pemeriksaan Alkitab</value>
   </data>
   <data name="AboutChecking" xml:space="preserve">
-    <value>3 Launch modular Community Checking campaigns to gather extensive feedback quickly. This tool ensures that translations are thorough and accurate by involving community members in the verification process.</value>
+    <value>3 Meluncurkan kampanye Pemeriksaan Masyarakat modular untuk mengumpulkan umpan balik yang luas dengan cepat. Alat ini memastikan bahwa terjemahan dilakukan secara menyeluruh dan akurat dengan melibatkan anggota masyarakat dalam proses verifikasi.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>An online app for team-based translation, featuring AI help and tools for community review</value>
+    <value>Aplikasi daring untuk penerjemahan berbasis tim, dengan bantuan kecerdasan buatan dan alat bantu untuk pemeriksaan masyarakat</value>
   </data>
   <data name="EngageDrafting" xml:space="preserve">
-    <value>Draft Generation</value>
+    <value>Pembuatan Konsep</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
-    <value>Collaborative Editing</value>
+    <value>Penyuntingan Kolaboratif</value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
-    <value>Pemeriksaan Komunitas</value>
+    <value>Pemeriksaan Masyarakat</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Terlibat dengan komunitas bahasa. Berkolaborasi dengan rekan-rekan Anda.</value>

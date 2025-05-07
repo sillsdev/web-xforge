@@ -50,15 +50,15 @@ class Program
         bool doWrite = ((args.Length >= 2 ? args[1] : "") == "write");
 
         string userDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        string helpDir = Path.Combine(userDir, "src", "web-sf-helps", "src");
+        string helpDir = Path.Join(userDir, "src", "web-sf-helps", "src");
         string source = "en";
-        string sourceDir = Path.Combine(helpDir, source);
-        string sourceWhxDir = Path.Combine(sourceDir, "whxdata");
+        string sourceDir = Path.Join(helpDir, source);
+        string sourceWhxDir = Path.Join(sourceDir, "whxdata");
         string parentFolderOfThisFile = Path.GetDirectoryName(Directory.GetCurrentDirectory());
-        string sourceMenuJsonPath = Path.Combine(parentFolderOfThisFile, $"menu_{source}.json");
-        string targetDir = Path.Combine(helpDir, target);
-        string targetWhxDir = Path.Combine(targetDir, "whxdata");
-        string targetMenuJsonPath = Path.Combine(targetDir, $"menu_{target}.json");
+        string sourceMenuJsonPath = Path.Join(parentFolderOfThisFile, $"menu_{source}.json");
+        string targetDir = Path.Join(helpDir, target);
+        string targetWhxDir = Path.Join(targetDir, "whxdata");
+        string targetMenuJsonPath = Path.Join(targetDir, $"menu_{target}.json");
 
         // See https://programmablesearchengine.google.com/ to create an engine for each language.
         // For the new language, copy existing setup from another language, including these 2 settings:
@@ -276,9 +276,9 @@ class Program
                 ExtractXmlElementAttributes(doc, "topic", "name", "url", topicUrlsByName);
                 if (doWrite)
                 {
-                    string idataFilePath = Path.Combine(targetPath, Path.GetFileName(file));
+                    string idataFilePath = Path.Join(targetPath, Path.GetFileName(file));
                     ReplaceTranslationsInFile(idataFilePath, topicTextInIdata, topicUrlsByName.Keys, translations);
-                    string idataNewFilePath = Path.Combine(
+                    string idataNewFilePath = Path.Join(
                         targetPath,
                         Path.GetFileNameWithoutExtension(file) + ".new" + Path.GetExtension(file)
                     );
@@ -327,10 +327,10 @@ class Program
                 ExtractXmlElementAttributes(doc, "item", "name", "url", itemUrlsByName);
                 if (doWrite)
                 {
-                    string tocFilePath = Path.Combine(targetPath, Path.GetFileName(file));
+                    string tocFilePath = Path.Join(targetPath, Path.GetFileName(file));
                     ReplaceTranslationsInFile(tocFilePath, bookTextInToc, bookSrcsByName.Keys, translations);
                     ReplaceTranslationsInFile(tocFilePath, itemTextInToc, itemUrlsByName.Keys, translations);
-                    string tocNewFilePath = Path.Combine(
+                    string tocNewFilePath = Path.Join(
                         targetPath,
                         Path.GetFileNameWithoutExtension(file) + ".new" + Path.GetExtension(file)
                     );
@@ -350,7 +350,7 @@ class Program
     /// </summary>
     static void ReplaceSearch(string targetPath, string searchEngineID, bool doWrite)
     {
-        string file = Path.Combine(targetPath, "index.htm");
+        string file = Path.Join(targetPath, "index.htm");
         var doc = new HtmlDocument();
         doc.Load(file);
         HtmlNode head = doc.DocumentNode.SelectSingleNode("//head");
@@ -388,7 +388,7 @@ class Program
     /// </summary>
     static void RemoveUnusedButtonsAndSearch(string targetPath, bool removeSearchButton, bool doWrite)
     {
-        string file = Path.Combine(targetPath, "index.htm");
+        string file = Path.Join(targetPath, "index.htm");
         var doc = new HtmlDocument();
         doc.Load(file);
         HtmlNode idxButton = doc.DocumentNode.SelectSingleNode("//a[@class='idx']");
@@ -420,7 +420,7 @@ class Program
             string start = "gXMLBuffer =\"";
             result = sr.ReadToEnd();
             if (result.EndsWith(end))
-                result = result.Remove(result.Length - end.Length);
+                result = result[..^end.Length];
             if (result.StartsWith(start))
                 result = result[start.Length..];
             result = result.Replace("\\\"", "\"");

@@ -1,6 +1,5 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationBehaviorOptions, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { SplitComponent } from 'angular-split';
@@ -27,7 +26,8 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -161,7 +161,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private _showScriptureAudioPlayer: boolean = false;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,
@@ -477,7 +477,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   ngOnInit(): void {
     combineLatest([this.activatedRoute.params, this.activatedRoute.queryParams])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([params, queryParams]) => {
         this.loadingStarted();
 
@@ -537,7 +537,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             // Subscribe to the projectDoc now that it is defined
             this.projectRemoteChangesSub?.unsubscribe();
             this.projectRemoteChangesSub = this.projectDoc.remoteChanges$
-              .pipe(takeUntilDestroyed(this.destroyRef))
+              .pipe(quietTakeUntilDestroyed(this.destroyRef))
               .subscribe(() => {
                 if (this.projectDoc != null && this.projectDoc.data != null) {
                   const roles = this.projectDoc.data.userRoles;
@@ -556,7 +556,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 map(() => this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText),
                 startWith(this.projectDoc.data.checkingConfig.hideCommunityCheckingText),
                 distinctUntilChanged(),
-                takeUntilDestroyed(this.destroyRef)
+                quietTakeUntilDestroyed(this.destroyRef)
               )
               .subscribe(() => {
                 if (this.hideChapterText) this.showScriptureAudioPlayer = true;
@@ -565,7 +565,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
             this.projectDeleteSub?.unsubscribe();
             this.projectDeleteSub = this.projectDoc.delete$
-              .pipe(takeUntilDestroyed(this.destroyRef))
+              .pipe(quietTakeUntilDestroyed(this.destroyRef))
               .subscribe(() => this.onRemovedFromProject());
 
             this.projectService
@@ -625,7 +625,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             );
             if (this.projectDoc != null) {
               this.textAudioSub = merge(this.questionsQuery.ready$, this.projectDoc.remoteChanges$)
-                .pipe(takeUntilDestroyed(this.destroyRef))
+                .pipe(quietTakeUntilDestroyed(this.destroyRef))
                 .subscribe(() => this.updateAudioMissingWarning());
             }
 
@@ -633,7 +633,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             this.projectService.queryAudioText(routeProjectId, this.destroyRef).then(query => {
               this.textAudioQuery = query;
               this.audioChangedSub = merge(this.textAudioQuery.remoteChanges$, this.textAudioQuery.localChanges$)
-                .pipe(takeUntilDestroyed(this.destroyRef))
+                .pipe(quietTakeUntilDestroyed(this.destroyRef))
                 .subscribe(() => {
                   if (this.chapterAudioSource === '') {
                     this.hideChapterAudio();
@@ -643,7 +643,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
             // TODO: check for remote changes to file data more generically
             this.questionsRemoteChangesSub = this.questionsQuery.remoteDocChanges$
-              .pipe(takeUntilDestroyed(this.destroyRef))
+              .pipe(quietTakeUntilDestroyed(this.destroyRef))
               .subscribe((qd: QuestionDoc) => {
                 const isActiveQuestionDoc: boolean = qd.id === this.questionsList!.activeQuestionDoc?.id;
 
@@ -693,7 +693,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 // Throttle burst of events, such as when local and remote change events are emitted
                 // at the same time when question is added within scope.
                 throttleTime(100, asyncScheduler, { leading: false, trailing: true }),
-                takeUntilDestroyed(this.destroyRef)
+                quietTakeUntilDestroyed(this.destroyRef)
               )
               .subscribe(() => {
                 this.updateAudioMissingWarning();
@@ -716,14 +716,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     // Get hook on pre-creation of question so that we can check if will be in scope
     // before deciding to update visible questions.
     this.checkingQuestionsService.beforeQuestionCreated$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((data: PreCreationQuestionData) => {
         this.questionToBeCreated = data;
       });
 
     // Pre-creation question object is no longer needed after question is actually created
     this.checkingQuestionsService.afterQuestionCreated$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((data: QuestionDoc) => {
         if (data.id === this.questionToBeCreated?.docId) {
           this.questionToBeCreated = undefined;
@@ -735,7 +735,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     // Allows scrolling to the active question in the question list once it becomes visible
     this.breakpointObserver
       .observe(this.mediaBreakpointService.width('>', Breakpoint.SM, this.questionsPanel?.nativeElement))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((state: BreakpointState) => {
         this.calculateScriptureSliderPosition();
 
@@ -749,7 +749,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     // Allows hiding the prev/next chapter buttons for small screens
     this.breakpointObserver
       .observe(this.mediaBreakpointService.width('<', Breakpoint.MD))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((state: BreakpointState) => {
         this.isScreenSmall = state.matches;
       });
@@ -772,19 +772,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       case 'save':
         let answer = answerAction.answer;
         const dateNow: string = new Date().toJSON();
-        if (answer == null) {
-          answer = {
-            dataId: objectId(),
-            ownerRef: this.userService.currentUserId,
-            text: '',
-            likes: [],
-            dateCreated: dateNow,
-            dateModified: dateNow,
-            deleted: false,
-            comments: [],
-            status: AnswerStatus.None
-          };
-        }
+        answer ??= {
+          dataId: objectId(),
+          ownerRef: this.userService.currentUserId,
+          text: '',
+          likes: [],
+          dateCreated: dateNow,
+          dateModified: dateNow,
+          deleted: false,
+          comments: [],
+          status: AnswerStatus.None
+        };
         answer.text = answerAction.text;
         answer.scriptureText = answerAction.scriptureText;
         answer.verseRef = answerAction.verseRef;
@@ -853,16 +851,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         if (commentAction.answer != null) {
           let comment = commentAction.comment;
           const dateNow: string = new Date().toJSON();
-          if (comment == null) {
-            comment = {
-              dataId: objectId(),
-              ownerRef: this.userService.currentUserId,
-              text: '',
-              dateCreated: dateNow,
-              dateModified: dateNow,
-              deleted: false
-            };
-          }
+          comment ??= {
+            dataId: objectId(),
+            ownerRef: this.userService.currentUserId,
+            text: '',
+            dateCreated: dateNow,
+            dateModified: dateNow,
+            deleted: false
+          };
           comment.text = commentAction.text;
           comment.dateModified = dateNow;
           if (commentAction.audio != null) {
@@ -921,7 +917,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   // if click question in question list
-  questionChanged({ questionDoc, actionSource }: QuestionChangedEvent): void {
+  questionChanged({ questionDoc, actionSource, clearFilter }: QuestionChangedEvent): void {
     if (this.questionsList == null) {
       return;
     }
@@ -929,6 +925,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     // Hide the mobile question overlay unless question changed is due to a filter action (list change)
     if (!actionSource?.isQuestionListChange) {
       this.setQuestionsOverlayVisibility(false);
+    }
+
+    if (clearFilter) {
+      this.resetFilter();
     }
 
     if (questionDoc != null) {
@@ -1323,7 +1323,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     } else {
       questionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
-    questionDoc.updateAnswerFileCache();
+
     this.questionsList.updateElementsRead(questionDoc);
     this.refreshSummary();
   }

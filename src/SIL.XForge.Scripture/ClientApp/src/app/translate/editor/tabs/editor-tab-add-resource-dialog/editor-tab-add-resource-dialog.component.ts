@@ -1,18 +1,16 @@
-import { Component, Inject, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { map, repeat, take, timer } from 'rxjs';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { SelectableProject } from '../../../../core/paratext.service';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { EditorTabAddResourceDialogService } from './editor-tab-add-resource-dialog.service';
-
 export interface EditorTabAddResourceDialogData {
   excludedParatextIds: string[];
 }
@@ -38,7 +36,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
 
   // Placed after 'Loading' when syncing
   animatedEllipsis$ = timer(500, 300).pipe(
-    takeUntilDestroyed(this.destroyRef),
+    quietTakeUntilDestroyed(this.destroyRef),
     map(i => '.'.repeat(i % 4)),
     take(4),
     repeat()
@@ -49,7 +47,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   });
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     readonly onlineStatus: OnlineStatusService,
     private readonly editorTabAddResourceDialogService: EditorTabAddResourceDialogService,
     private readonly projectService: SFProjectService,

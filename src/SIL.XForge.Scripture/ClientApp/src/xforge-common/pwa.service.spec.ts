@@ -106,9 +106,7 @@ Object.defineProperty(mockedWindow, 'preventDefault', {
 });
 Object.defineProperty(mockedWindow, 'addEventListener', {
   value: (eventName: string, listener: EventListenerOrEventListenerObject) => {
-    if (windowEvents[eventName] == null) {
-      windowEvents[eventName] = [];
-    }
+    windowEvents[eventName] ??= [];
     windowEvents[eventName].push(listener);
     return mockedWindow;
   }

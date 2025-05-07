@@ -31,11 +31,6 @@
     >
   </div>
   <div class="admin-tool-control">
-    <a id="view-event-log" mat-flat-button color="primary" [appRouterLink]="draftSourcesLink" [disabled]="!isOnline"
-      >Edit draft sources</a
-    >
-  </div>
-  <div class="admin-tool-control">
     <button
       (click)="downloadDraft()"
       mat-flat-button
@@ -54,13 +49,10 @@
 </div>
 
 <h2>Downloads</h2>
-<app-notice icon="info">
-  <p>The Zip archives contain the Paratext files for the project at the time of last sync.</p>
-  <p>
-    Source projects may be listed here even if they are not currently being used for drafting. For example, if a user
-    selects an alternate source, but then unselects "Use a different source for drafting," the source will still be
-    listed here even though it is not currently set to be used for drafting.
-  </p>
+<app-notice icon="info" mode="fill-dark">
+  The Zip archives contain the Paratext files for the project at the time of last sync. Any edits in Paratext that have
+  not been synced to Scripture Forge will not be included, and
+  <em>any edits made in Scripture Forge</em> since the last sync will not be included
 </app-notice>
 <div class="table-container">
   <table mat-table [dataSource]="rows">
@@ -104,7 +96,14 @@
 <h3>Training data files</h3>
 <p>{{ trainingFiles.join(", ") || "None" }}</p>
 <h3>Translation books</h3>
-<p class="translation-range">{{ translationBooks.join(", ") || "None" }}</p>
+@for (book of translationBooksByProject; track book.source) {
+  <div class="translation">
+    <p>{{ book.source }}</p>
+    <p class="translation-range">{{ book.scriptureRange }}</p>
+  </div>
+} @empty {
+  <p class="translation">None</p>
+}
 
 @if (draftJob$ | async; as draftJob) {
   <h3>Diagnostic Information</h3>

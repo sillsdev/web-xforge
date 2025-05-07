@@ -15,7 +15,7 @@ import {
   Subject,
   tap
 } from 'rxjs';
-import { CommandError } from 'xforge-common/command.service';
+import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
@@ -188,11 +188,12 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       this.revisionSelect.emit({ revision: this.selectedRevision, snapshot: this.selectedSnapshot });
     } catch (err) {
       this.noticeService.showError(translate('history_chooser.revert_error'));
-      if (err instanceof CommandError && err.message.includes('504 Gateway Timeout')) return;
-      this.errorReportingService.silentError(
-        'Error occurred restoring a snapshot',
-        ErrorReportingService.normalizeError(err)
-      );
+      if (!isNetworkError(err)) {
+        this.errorReportingService.silentError(
+          'Error occurred restoring a snapshot',
+          ErrorReportingService.normalizeError(err)
+        );
+      }
     }
   }
 

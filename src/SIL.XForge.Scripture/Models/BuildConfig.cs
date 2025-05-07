@@ -71,7 +71,7 @@ public class BuildConfig
     public string? TranslationScriptureRange { get; set; }
 
     /// <summary>
-    /// Gets or sets the per-project books and chapters to use for training.
+    /// Gets or sets the per-project books and chapters to use for translation.
     /// </summary>
     /// <value>
     /// A list containing the project identifiers and scripture ranges.
@@ -92,4 +92,13 @@ public class BuildConfig
     /// A fast training build will be very inaccurate. Only use this value if you are testing or debugging.
     /// </remarks>
     public bool FastTraining { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value that configures the Serval build to use the Echo translation engine
+    /// </summary>
+    /// <value><c>true</c> if we are using the echo translation engine; otherwise, <c>false</c>.</value>
+    /// <remarks>
+    /// A build made using echo will just echo the source text. Only use this value if you are testing or debugging.
+    /// </remarks>
+    public bool UseEcho { get; set; }
 }

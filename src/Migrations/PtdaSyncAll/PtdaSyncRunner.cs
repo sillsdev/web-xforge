@@ -100,7 +100,7 @@ namespace PtdaSyncAll
             _notesMapper = notesMapper;
         }
 
-        private string WorkingDir => Path.Combine(_siteOptions.Value.SiteDir, "sync");
+        private string WorkingDir => Path.Join(_siteOptions.Value.SiteDir, "sync");
 
         private bool TranslationSuggestionsEnabled => _projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
         private bool CheckingEnabled => _projectDoc.Data.CheckingConfig.CheckingEnabled;
@@ -881,12 +881,12 @@ namespace PtdaSyncAll
                 default:
                     throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(TextType));
             }
-            return Path.Combine(WorkingDir, _projectDoc.Id, textTypeDir);
+            return Path.Join(WorkingDir, _projectDoc.Id, textTypeDir);
         }
 
         private static string GetUsxFileName(string projectPath, int bookNum)
         {
-            return Path.Combine(projectPath, Canon.BookNumberToId(bookNum) + ".xml");
+            return Path.Join(projectPath, Canon.BookNumberToId(bookNum) + ".xml");
         }
 
         private async Task<XElement> LoadXmlFileAsync(string fileName)

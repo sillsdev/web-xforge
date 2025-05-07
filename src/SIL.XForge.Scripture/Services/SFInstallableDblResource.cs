@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using Ionic.Zip;
+using System.Threading.Tasks;
+using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Archiving;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectFileAccess;
-using PtxUtils;
 using PtxUtils.Http;
 using SIL.Extensions;
 using SIL.IO;
@@ -157,12 +157,12 @@ public class SFInstallableDblResource : InstallableResource
             {
                 // First check the resources by ID directory
                 string fileName = Name + "." + DBLEntryUid + ProjectFileManager.resourceFileExtension;
-                string projectPath = Path.Combine(SFScrTextCollection.ResourcesByIdDirectory, fileName);
+                string projectPath = Path.Join(SFScrTextCollection.ResourcesByIdDirectory, fileName);
                 if (!_fileSystemService.FileExists(projectPath))
                 {
                     // If that does not exist, use the resources directory
                     fileName = Name + ProjectFileManager.resourceFileExtension;
-                    projectPath = Path.Combine(ScrTextCollection.ResourcesDirectory, fileName);
+                    projectPath = Path.Join(ScrTextCollection.ResourcesDirectory, fileName);
                 }
 
                 // Generate an ExistingScrText from the p8z file on disk
@@ -376,33 +376,61 @@ public class SFInstallableDblResource : InstallableResource
     /// <remarks>
     /// After the resource is extracted, it can be a source or target.
     /// </remarks>
-    public void ExtractToDirectory(string path)
+    public async Task ExtractToDirectoryAsync(string path)
     {
         // Check parameters
         if (string.IsNullOrWhiteSpace(path))
         {
             throw new ArgumentNullException(nameof(path));
         }
-        else if (string.IsNullOrWhiteSpace(this.DBLEntryUid.Id))
+        else if (string.IsNullOrWhiteSpace(DBLEntryUid.Id))
         {
-            throw new ArgumentNullException(nameof(this.DBLEntryUid.Id));
+            throw new ArgumentNullException(nameof(DBLEntryUid.Id));
         }
-        else if (string.IsNullOrWhiteSpace(this.Name))
+        else if (string.IsNullOrWhiteSpace(Name))
         {
-            throw new ArgumentNullException(nameof(this.Name));
+            throw new ArgumentNullException(nameof(Name));
         }
 
         string resourceFile = ScrTextCollection.GetResourcePath(
-            this.ExistingScrText,
-            this.Name,
-            this.DBLEntryUid,
+            ExistingScrText,
+            Name,
+            DBLEntryUid,
             ProjectFileManager.resourceFileExtension
         );
-        if (RobustFile.Exists(resourceFile))
+        if (_fileSystemService.FileExists(resourceFile))
         {
-            using var zipFile = ZipFile.Read(resourceFile);
-            zipFile.Password = this._passwordProvider?.GetPassword();
-            zipFile.ExtractAll(path, ExtractExistingFileAction.DoNotOverwrite);
+            await using Stream stream = _fileSystemService.OpenFile(
+                resourceFile,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read
+            );
+            using ZipFile zipFile = new ZipFile(stream);
+            zipFile.Password = _passwordProvider?.GetPassword();
+            await ExtractAllAsync(zipFile, path);
+        }
+    }
+
+    private async Task ExtractAllAsync(ZipFile zip, string path)
+    {
+        foreach (ZipEntry entry in zip)
+        {
+            if (!entry.IsFile)
+                continue; // Skip directories
+
+            string entryPath = Path.Join(path, entry.Name);
+
+            if (_fileSystemService.FileExists(entryPath))
+                continue; // Don't overwrite
+
+            // Ensure directories in the ZIP entry are created
+            _fileSystemService.CreateDirectory(Path.GetDirectoryName(entryPath));
+
+            // Extract the file
+            await using Stream zipStream = zip.GetInputStream(entry);
+            await using Stream output = _fileSystemService.CreateFile(entryPath);
+            await zipStream.CopyToAsync(output);
         }
     }
 
@@ -438,7 +466,7 @@ public class SFInstallableDblResource : InstallableResource
         }
 
         sourceDirectory = this.CreateTempSourceDirectory();
-        string filePath = Path.Combine(sourceDirectory, this.Name + ProjectFileManager.resourceFileExtension);
+        string filePath = Path.Join(sourceDirectory, this.Name + ProjectFileManager.resourceFileExtension);
         if (!this.GetFile(filePath))
         {
             if (RobustFile.Exists(filePath))
@@ -475,7 +503,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <returns>
     /// A dictionary where the resource id is the key, and the revision is the value.
     /// </returns>
-    internal static IReadOnlyDictionary<string, int> GetInstalledResourceRevisions()
+    internal static async Task<IReadOnlyDictionary<string, int>> GetInstalledResourceRevisionsAsync()
     {
         // Initialize variables
         Dictionary<string, int> resourceRevisions = [];
@@ -491,7 +519,7 @@ public class SFInstallableDblResource : InstallableResource
         }
         catch (ArgumentNullException)
         {
-            // Path.Combine() in ScrTextCollection will have thrown this error
+            // Path.Join() in ScrTextCollection will have thrown this error
             resourcesDirectory = string.Empty;
             resourcesByIdDirectory = string.Empty;
         }
@@ -510,9 +538,13 @@ public class SFInstallableDblResource : InstallableResource
                 // See if this a zip file, and if it contains the correct ID
                 try
                 {
-                    // This only uses DotNetZip because ParatextData uses DotNetZip
-                    // You could use System.IO.Compression if you wanted to
-                    using var zipFile = ZipFile.Read(resourceFile);
+                    await using var stream = new FileStream(
+                        resourceFile,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.Read
+                    );
+                    using var zipFile = new ZipFile(stream);
                     // Zip files use forward slashes, even on Windows
                     const string idSearchPath = DblFolderName + "/id/";
                     const string revisionSearchPath = DblFolderName + "/revision/";
@@ -524,19 +556,19 @@ public class SFInstallableDblResource : InstallableResource
                         if (
                             string.IsNullOrWhiteSpace(fileId)
                             && !entry.IsDirectory
-                            && entry.FileName.StartsWith(idSearchPath, StringComparison.OrdinalIgnoreCase)
+                            && entry.Name.StartsWith(idSearchPath, StringComparison.OrdinalIgnoreCase)
                         )
                         {
-                            fileId = entry.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
+                            fileId = entry.Name.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
                         }
                         else if (
                             revision == 0
                             && !entry.IsDirectory
-                            && entry.FileName.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase)
+                            && entry.Name.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase)
                         )
                         {
                             string revisionFilename = entry
-                                .FileName.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                                .Name.Split('/', StringSplitOptions.RemoveEmptyEntries)
                                 .Last();
                             if (!int.TryParse(revisionFilename, out revision))
                             {
@@ -738,10 +770,10 @@ public class SFInstallableDblResource : InstallableResource
     /// </returns>
     private string CreateTempSourceDirectory()
     {
-        string dirName = Path.Combine(temporaryDirectoryName, Name + '_' + Path.GetRandomFileName());
+        string dirName = Path.Join(temporaryDirectoryName, Name + '_' + Path.GetRandomFileName());
 
         // This following is an implementation of Paratext.Data.FileUtils.GetTemporaryDirectory(dirName)
-        string path = Path.Combine(Path.GetTempPath(), dirName);
+        string path = Path.Join(Path.GetTempPath(), dirName);
         if (!Directory.Exists(path))
         {
             // If we don't have the file system service, just ignore
@@ -815,51 +847,6 @@ public class SFInstallableDblResource : InstallableResource
             {
                 return langIdDbl;
             }
-        }
-    }
-
-    /// <summary>
-    /// An implementation of the Paratext zipped resource password provider.
-    /// </summary>
-    /// <seealso cref="Paratext.Data.ProjectFileAccess.IZippedResourcePasswordProvider" />
-    private class ParatextZippedResourcePasswordProvider : IZippedResourcePasswordProvider
-    {
-        /// <summary>
-        /// The cached password value.
-        /// </summary>
-        private string cachedValue;
-
-        /// <summary>
-        /// The paratext options.
-        /// </summary>
-        private readonly ParatextOptions _paratextOptions;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ParatextZippedResourcePasswordProvider"/> class.
-        /// </summary>
-        /// <param name="paratextOptions">The paratext options.</param>
-        internal ParatextZippedResourcePasswordProvider(ParatextOptions paratextOptions) =>
-            this._paratextOptions = paratextOptions;
-
-        /// <inheritdoc />
-        public string GetPassword()
-        {
-            // We can handle zip files with no password (for testing)
-            if (
-                this._paratextOptions == null
-                || string.IsNullOrWhiteSpace(this._paratextOptions.ResourcePasswordBase64)
-                || string.IsNullOrWhiteSpace(this._paratextOptions.ResourcePasswordHash)
-            )
-            {
-                return string.Empty;
-            }
-
-            cachedValue ??= StringUtils.DecryptStringFromBase64(
-                this._paratextOptions.ResourcePasswordBase64,
-                this._paratextOptions.ResourcePasswordHash
-            );
-
-            return cachedValue;
         }
     }
 }

@@ -1,11 +1,10 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
@@ -40,8 +39,14 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
     this.doAudioSubscriptions();
   }
 
+  @Input() set showSegment(value: boolean) {
+    this._showSegment = value;
+  }
+
   verseLabel: string = this.emptyVerseLabel;
   audioSource?: string;
+
+  protected _showSegment = false;
 
   private _audioIsAvailable: boolean = false;
   private _timing: AudioTiming[] = [];
@@ -52,7 +57,7 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
 
   constructor(
     readonly i18n: I18nService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {}
 
   ngAfterViewInit(): void {
@@ -65,6 +70,20 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
 
   get isPlaying(): boolean {
     return !!this.audioPlayer?.audio?.isPlaying;
+  }
+
+  get currentSegmentDisplay(): number {
+    // Find the last index where the segment's start time is less than or equal to the current time
+    for (let i = this._timing.length - 1; i >= 0; i--) {
+      if (this._timing[i].from <= (this.audioPlayer?.audio?.currentTime ?? 0)) {
+        return i + 1;
+      }
+    }
+    return 0;
+  }
+
+  get numberOfSegments(): number {
+    return this._timing.length;
   }
 
   private get currentVerseLabel(): string {
@@ -187,7 +206,7 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
         .pipe(
           filter(a => a),
           first(),
-          takeUntilDestroyed(this.destroyRef)
+          quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false })
         )
         .subscribe(() => {
           if (audioPlayer.audio == null) {
@@ -208,7 +227,7 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
       .pipe(
         map(() => this.getCurrentIndexInTimings(audio.currentTime)),
         distinctUntilChanged(),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => {
         if (this._textDocId == null) return;
@@ -239,7 +258,7 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
   private subscribeToAudioFinished(audio: AudioPlayer): void {
     this.finishedSubscription?.unsubscribe();
     this.finishedSubscription = audio.finishedPlaying$
-      .pipe(first(), takeUntilDestroyed(this.destroyRef))
+      .pipe(first(), quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         if (this.canClose) this.close();
       });

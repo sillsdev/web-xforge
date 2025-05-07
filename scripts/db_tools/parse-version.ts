@@ -37,7 +37,8 @@ class ParseVersion {
     'Allow Fast Pre-Translation Training',
     'Upload Paratext Zip Files for Pre-Translation Drafting',
     'Allow mixing in an additional training source',
-    'Updated Learning Rate For Serval'
+    'Updated Learning Rate For Serval',
+    'Dark Mode'
   ];
 
   constructor() {

@@ -1,7 +1,6 @@
 import { DestroyRef, Injectable, Optional } from '@angular/core';
 import { filter, race, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
-import { IDestroyRef } from 'xforge-common/utils';
 import { FileService } from './file.service';
 import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE, RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
@@ -72,9 +71,7 @@ export class RealtimeService {
     } = {};
     for (const [id, doc] of this.docs.entries()) {
       const collection = id.split(':')[0];
-      if (countsByCollection[collection] == null) {
-        countsByCollection[collection] = { docs: 0, subscribers: 0, activeDocSubscriptionsCount: 0 };
-      }
+      countsByCollection[collection] ??= { docs: 0, subscribers: 0, activeDocSubscriptionsCount: 0 };
       countsByCollection[collection].docs++;
       countsByCollection[collection].subscribers += doc.docSubscriptionsCount;
       countsByCollection[collection].activeDocSubscriptionsCount += doc.activeDocSubscriptionsCount;
@@ -186,7 +183,7 @@ export class RealtimeService {
   async subscribeQuery<T extends RealtimeDoc>(
     collection: string,
     parameters: QueryParameters,
-    destroyRef: IDestroyRef
+    destroyRef: DestroyRef
   ): Promise<RealtimeQuery<T>> {
     const query = this.createQuery<T>(collection, parameters);
     return this.manageQuery(
@@ -252,7 +249,7 @@ export class RealtimeService {
    */
   private manageQuery<T extends RealtimeDoc>(
     queryPromise: Promise<RealtimeQuery<T>>,
-    destroyRef: IDestroyRef
+    destroyRef: DestroyRef
   ): Promise<RealtimeQuery<T>> {
     try {
       destroyRef.onDestroy(() =>

@@ -1,17 +1,16 @@
-import { AfterViewInit, Component, Input, OnChanges, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { combineLatest, EMPTY, startWith, Subject, switchMap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { formatFontSizeToRems } from '../../../shared/utils';
-
 @Component({
   selector: 'app-editor-resource',
-  templateUrl: './editor-resource.component.html'
+  templateUrl: './editor-resource.component.html',
+  styleUrl: '../editor.component.scss'
 })
 export class EditorResourceComponent implements AfterViewInit, OnChanges {
   @Input() projectId?: string;
@@ -25,11 +24,14 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
   isRightToLeft = false;
   fontSize?: string;
   font?: string;
+  hasCopyrightBanner: boolean = false;
+  copyrightBanner?: string;
+  copyrightNotice?: string;
 
   inputChanged$ = new Subject<void>();
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly projectService: SFProjectService,
     private readonly fontService: FontService
   ) {}
@@ -45,7 +47,7 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
   private initProjectDetails(): void {
     combineLatest([this.resourceText.editorCreated, this.inputChanged$.pipe(startWith(undefined))])
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
+        quietTakeUntilDestroyed(this.destroyRef),
         switchMap(() => {
           if (this.projectId == null || this.bookNum == null || this.chapter == null) {
             return EMPTY;
@@ -58,6 +60,9 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
         })
       )
       .subscribe((projectDoc: SFProjectProfileDoc) => {
+        this.hasCopyrightBanner = projectDoc.data?.copyrightBanner != null;
+        this.copyrightBanner = projectDoc.data?.copyrightBanner ?? '';
+        this.copyrightNotice = projectDoc.data?.copyrightNotice;
         this.isRightToLeft = projectDoc.data?.isRightToLeft ?? false;
         this.fontSize = formatFontSizeToRems(projectDoc.data?.defaultFontSize);
         this.font = this.fontService.getFontFamilyFromProject(projectDoc);

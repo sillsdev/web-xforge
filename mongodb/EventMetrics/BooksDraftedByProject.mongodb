@@ -1,0 +1,156 @@
+use('xforge')
+
+// Taken from https://github.com/sillsdev/scripture/blob/main/src/canon.ts
+const bookIds = [
+  'GEN',
+  'EXO',
+  'LEV',
+  'NUM',
+  'DEU',
+  'JOS',
+  'JDG',
+  'RUT',
+  '1SA',
+  '2SA', // 10
+
+  '1KI',
+  '2KI',
+  '1CH',
+  '2CH',
+  'EZR',
+  'NEH',
+  'EST',
+  'JOB',
+  'PSA',
+  'PRO', // 20
+
+  'ECC',
+  'SNG',
+  'ISA',
+  'JER',
+  'LAM',
+  'EZK',
+  'DAN',
+  'HOS',
+  'JOL',
+  'AMO', // 30
+
+  'OBA',
+  'JON',
+  'MIC',
+  'NAM',
+  'HAB',
+  'ZEP',
+  'HAG',
+  'ZEC',
+  'MAL',
+  'MAT', // 40
+
+  'MRK',
+  'LUK',
+  'JHN',
+  'ACT',
+  'ROM',
+  '1CO',
+  '2CO',
+  'GAL',
+  'EPH',
+  'PHP', // 50
+
+  'COL',
+  '1TH',
+  '2TH',
+  '1TI',
+  '2TI',
+  'TIT',
+  'PHM',
+  'HEB',
+  'JAS',
+  '1PE', // 60
+
+  '2PE',
+  '1JN',
+  '2JN',
+  '3JN',
+  'JUD',
+  'REV'
+];
+
+const projectsWithDraftedBooks = db.event_metrics.aggregate([
+  {
+    $match: {
+      eventType: 'StartPreTranslationBuildAsync'
+    }
+  },
+  {
+    $project: {
+      projectId: '$projectId',
+      books: { $split: ['$payload.buildConfig.TranslationScriptureRange', ';'] }
+    }
+  },
+  {
+    $group: {
+      _id: '$projectId',
+      books: { $addToSet: '$books' },
+      jobCount: { $sum: 1 }
+    }
+  },
+  {
+    $project: {
+      books: {
+        $reduce: {
+          input: '$books',
+          initialValue: [],
+          in: {
+            $setUnion: ['$$value', '$$this']
+          }
+        }
+      },
+      jobCount: 1
+    }
+  },
+  {
+    $lookup: {
+      from: 'sf_projects',
+      localField: '_id',
+      foreignField: '_id',
+      as: 'project'
+    }
+  }, {
+    $unwind: {
+      path: '$project',
+    }
+  }, {
+    $project: {
+      paratextId: '$project.paratextId',
+      shortName: '$project.shortName',
+      name: '$project.name',
+      language: '$project.writingSystem.tag',
+      books: 1,
+      jobCount: 1
+    }
+  }
+]).toArray();
+
+console.log('Scripture Forge ID\tParatext ID\tLanguage\tShort name\tName\tJobs started\tBook count\tUnique books drafted');
+for (const project of projectsWithDraftedBooks) {
+  const bookIdsDrafted = (project.books ?? []).sort((a, b) => {
+    const aIndex = bookIds.indexOf(a);
+    const bIndex = bookIds.indexOf(b);
+    if (aIndex === -1 || bIndex === -1) {
+      return 0;
+    }
+    return aIndex - bIndex;
+  });
+  const row = [
+    project._id,
+    project.paratextId,
+    project.language,
+    project.shortName,
+    project.name,
+    project.jobCount,
+    bookIdsDrafted.length,
+    bookIdsDrafted.join(', ')
+  ];
+  console.log(row.join('\t'));
+}

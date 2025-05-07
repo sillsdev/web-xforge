@@ -305,7 +305,7 @@ export class I18nService {
   }
 
   enumerateList(list: string[]): string {
-    return new (Intl as any).ListFormat(this.localeCode, { style: 'long', type: 'conjunction' }).format(list) as string;
+    return new (Intl as any).ListFormat(this.localeCode, { style: 'long', type: 'conjunction' }).format(list);
   }
 
   translateTextAroundTemplateTags(key: I18nKey, params: object = {}): TextAroundTemplate | undefined {

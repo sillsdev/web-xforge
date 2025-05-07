@@ -22,7 +22,6 @@ import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/trans
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
@@ -42,6 +41,7 @@ import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { InfoComponent } from '../shared/info/info.component';
+import { NoticeComponent } from '../shared/notice/notice.component';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings.component';
 
@@ -52,7 +52,6 @@ const mockedParatextService = mock(ParatextService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialog = mock(MatDialog);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -70,6 +69,7 @@ describe('SettingsComponent', () => {
       TranslocoMarkupModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
+      NoticeComponent,
       NoopAnimationsModule
     ],
     declarations: [SettingsComponent, WriteStatusComponent, ProjectSelectComponent, InfoComponent],
@@ -81,7 +81,6 @@ describe('SettingsComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useValue: instance(mockedFeatureFlagService) },
       { provide: MatDialog, useMock: mockedDialog }
     ]
   }));
@@ -191,617 +190,6 @@ describe('SettingsComponent', () => {
       expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
     }));
 
-    describe('Alternate Source Dropdown', () => {
-      it('should change alternate source select value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              alternateSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).not.toBeNull();
-        expect(env.alternateSourceSelectValue).toBe('');
-        expect(env.statusDone(env.alternateSourceStatus)).toBeNull();
-
-        env.setAlternateSourceValue('paratextId02');
-
-        expect(env.alternateSourceSelectValue).toContain('ParatextP2');
-        expect(env.statusDone(env.alternateSourceStatus)).not.toBeNull();
-      }));
-
-      it('should display alternate source project even if user is not a member', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              alternateSource: {
-                paratextId: 'paratextId01',
-                projectRef: 'paratext01',
-                name: 'ParatextP1',
-                shortName: 'PT1',
-                writingSystem: {
-                  tag: 'qaa'
-                }
-              },
-              alternateSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        when(mockedParatextService.getProjects()).thenResolve([
-          {
-            paratextId: 'paratextId02',
-            name: 'ParatextP2',
-            shortName: 'PT2',
-            languageTag: 'qaa',
-            isConnectable: true,
-            isConnected: false
-          }
-        ]);
-        when(mockedParatextService.getResources()).thenResolve([]);
-
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).not.toBeNull();
-        expect(env.alternateSourceSelectValue).toBe('ParatextP1');
-        expect(env.alternateSourceSelectProjectsResources.length).toEqual(1);
-        expect(env.alternateSourceSelectProjectsResources[0].name).toBe('ParatextP2');
-      }));
-
-      it('should display projects then resources', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: true,
-            draftConfig: {
-              alternateSourceEnabled: true
-            }
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).not.toBeNull();
-        expect(env.alternateSourceSelectProjectsResources.length).toEqual(5);
-        expect(env.alternateSourceSelectProjectsResources[1].name).toBe('ParatextP2');
-        expect(env.alternateSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
-      }));
-
-      it('should display for back translations for serval administrators', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: false,
-            draftConfig: {
-              alternateSourceEnabled: true
-            },
-            projectType: ProjectType.BackTranslation
-          }
-        });
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).not.toBeNull();
-      }));
-
-      it('should display for forward translations', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: true,
-            draftConfig: {
-              alternateSourceEnabled: true
-            }
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).not.toBeNull();
-      }));
-
-      it('should hide alternate source dropdown when alternate source is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-        expect(env.inputElement(env.alternateSourceCheckbox).checked).toBe(false);
-        expect(env.alternateSourceSelect).toBeNull();
-        env.clickElement(env.inputElement(env.alternateSourceCheckbox));
-        expect(env.inputElement(env.alternateSourceCheckbox).checked).toBe(true);
-        expect(env.alternateSourceSelect).not.toBeNull();
-      }));
-
-      it('should not display for back translations', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: true,
-            draftConfig: {
-              alternateSourceEnabled: true
-            },
-            projectType: ProjectType.BackTranslation
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).toBeNull();
-      }));
-
-      it('should not display when the feature flag is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).toBeNull();
-      }));
-
-      it('should not display for forward translations when not approved', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: false,
-            draftConfig: {
-              alternateSourceEnabled: true
-            }
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).toBeNull();
-      }));
-
-      it('should unset alternate source select value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              alternateSource: {
-                paratextId: 'paratextId01',
-                projectRef: 'paratext01',
-                name: 'ParatextP1',
-                shortName: 'PT1',
-                writingSystem: {
-                  tag: 'qaa'
-                }
-              },
-              alternateSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).not.toBeNull();
-        expect(env.alternateSourceSelectValue).toContain('ParatextP1');
-        expect(env.statusDone(env.alternateSourceStatus)).toBeNull();
-
-        env.resetAlternateSourceProject();
-
-        expect(env.alternateSourceSelectValue).toBe('');
-        expect(env.statusDone(env.alternateSourceStatus)).not.toBeNull();
-      }));
-    });
-
-    describe('Alternate Training Source', () => {
-      it('should change alternate training source select value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              alternateTrainingSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-        expect(env.alternateTrainingSourceSelectValue).toBe('');
-        expect(env.statusDone(env.alternateTrainingSourceStatus)).toBeNull();
-
-        env.setAlternateTrainingSourceValue('paratextId02');
-
-        expect(env.alternateTrainingSourceSelectValue).toContain('ParatextP2');
-        expect(env.statusDone(env.alternateTrainingSourceStatus)).not.toBeNull();
-      }));
-
-      it('should display alternate training source project even if user is not a member', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              alternateTrainingSource: {
-                paratextId: 'paratextId01',
-                projectRef: 'paratext01',
-                name: 'ParatextP1',
-                shortName: 'PT1',
-                writingSystem: {
-                  tag: 'qaa'
-                }
-              },
-              alternateTrainingSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        when(mockedParatextService.getProjects()).thenResolve([
-          {
-            paratextId: 'paratextId02',
-            name: 'ParatextP2',
-            shortName: 'PT2',
-            languageTag: 'qaa',
-            isConnectable: true,
-            isConnected: false
-          }
-        ]);
-        when(mockedParatextService.getResources()).thenResolve([]);
-
-        env.wait();
-        env.wait();
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-        expect(env.alternateTrainingSourceSelectValue).toBe('ParatextP1');
-        expect(env.alternateTrainingSourceSelectProjectsResources.length).toEqual(1);
-        expect(env.alternateTrainingSourceSelectProjectsResources[0].name).toBe('ParatextP2');
-      }));
-
-      it('should display projects then resources', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              alternateTrainingSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(true);
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-        expect(env.alternateTrainingSourceSelectProjectsResources.length).toEqual(5);
-        expect(env.alternateTrainingSourceSelectProjectsResources[1].name).toBe('ParatextP2');
-        expect(env.alternateTrainingSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
-      }));
-
-      it('should display for back translations for serval administrators', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: false,
-            draftConfig: {
-              alternateTrainingSourceEnabled: true
-            },
-            projectType: ProjectType.BackTranslation
-          }
-        });
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-      }));
-
-      it('should display for forward translations', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: true,
-            draftConfig: {
-              alternateTrainingSourceEnabled: true
-            }
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-      }));
-
-      it('should hide alternate training source dropdown when alternate training source is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(false);
-        expect(env.alternateTrainingSourceSelect).toBeNull();
-        env.clickElement(env.inputElement(env.alternateTrainingSourceCheckbox));
-        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(true);
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-      }));
-
-      it('should not display for back translations', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: true,
-            draftConfig: {
-              alternateTrainingSourceEnabled: true
-            },
-            projectType: ProjectType.BackTranslation
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateTrainingSourceSelect).toBeNull();
-      }));
-
-      it('should not display when the feature flag is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
-        env.wait();
-        env.wait();
-        expect(env.alternateTrainingSourceSelect).toBeNull();
-      }));
-
-      it('should not display for forward translations when not approved', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: false,
-            draftConfig: {
-              alternateTrainingSourceEnabled: true
-            }
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateTrainingSourceSelect).toBeNull();
-      }));
-
-      it('should unset alternate training source select value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              alternateTrainingSource: {
-                paratextId: 'paratextId01',
-                projectRef: 'paratext01',
-                name: 'ParatextP1',
-                shortName: 'PT1',
-                writingSystem: {
-                  tag: 'qaa'
-                }
-              },
-              alternateTrainingSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-        expect(env.alternateTrainingSourceSelectValue).toContain('ParatextP1');
-        expect(env.statusDone(env.alternateTrainingSourceStatus)).toBeNull();
-
-        env.resetAlternateTrainingSourceProject();
-
-        expect(env.alternateTrainingSourceSelectValue).toBe('');
-        expect(env.statusDone(env.alternateTrainingSourceStatus)).not.toBeNull();
-      }));
-    });
-
-    describe('Additional Training Sources', () => {
-      it('should change additional training source select value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              additionalTrainingSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.additionalTrainingSourceSelect).not.toBeNull();
-        expect(env.additionalTrainingSourceSelectValue).toBe('');
-        expect(env.statusDone(env.additionalTrainingSourceStatus)).toBeNull();
-
-        env.setAdditionalTrainingSourceValue('paratextId02');
-
-        expect(env.additionalTrainingSourceSelectValue).toContain('ParatextP2');
-        expect(env.statusDone(env.additionalTrainingSourceStatus)).not.toBeNull();
-      }));
-
-      it('should display additional training source project even if user is not a member', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              additionalTrainingSource: {
-                paratextId: 'paratextId01',
-                projectRef: 'paratext01',
-                name: 'ParatextP1',
-                shortName: 'PT1',
-                writingSystem: {
-                  tag: 'qaa'
-                }
-              },
-              additionalTrainingSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        when(mockedParatextService.getProjects()).thenResolve([
-          {
-            paratextId: 'paratextId02',
-            name: 'ParatextP2',
-            shortName: 'PT2',
-            languageTag: 'qaa',
-            isConnectable: true,
-            isConnected: false
-          }
-        ]);
-        when(mockedParatextService.getResources()).thenResolve([]);
-
-        env.wait();
-        env.wait();
-        expect(env.additionalTrainingSourceSelect).not.toBeNull();
-        expect(env.additionalTrainingSourceSelectValue).toBe('ParatextP1');
-        expect(env.additionalTrainingSourceSelectProjectsResources.length).toEqual(1);
-        expect(env.additionalTrainingSourceSelectProjectsResources[0].name).toBe('ParatextP2');
-      }));
-
-      it('should display projects then resources', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              additionalTrainingSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.inputElement(env.additionalTrainingSourceCheckbox).checked).toBe(true);
-        expect(env.additionalTrainingSourceSelect).not.toBeNull();
-        expect(env.additionalTrainingSourceSelectProjectsResources.length).toEqual(5);
-        expect(env.additionalTrainingSourceSelectProjectsResources[1].name).toBe('ParatextP2');
-        expect(env.additionalTrainingSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
-      }));
-
-      it('should display for back translations for serval administrators', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: false,
-            draftConfig: {
-              additionalTrainingSourceEnabled: true
-            },
-            projectType: ProjectType.BackTranslation
-          }
-        });
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.additionalTrainingSourceSelect).not.toBeNull();
-      }));
-
-      it('should display for forward translations', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: true,
-            draftConfig: {
-              additionalTrainingSourceEnabled: true
-            }
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.additionalTrainingSourceSelect).not.toBeNull();
-      }));
-
-      it('should hide additional training source dropdown when additional training source is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-        expect(env.inputElement(env.additionalTrainingSourceCheckbox).checked).toBe(false);
-        expect(env.additionalTrainingSourceSelect).toBeNull();
-        env.clickElement(env.inputElement(env.additionalTrainingSourceCheckbox));
-        expect(env.inputElement(env.additionalTrainingSourceCheckbox).checked).toBe(true);
-        expect(env.additionalTrainingSourceSelect).not.toBeNull();
-      }));
-
-      it('should not display for back translations', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: true,
-            draftConfig: {
-              additionalTrainingSourceEnabled: true
-            },
-            projectType: ProjectType.BackTranslation
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.additionalTrainingSourceSelect).toBeNull();
-      }));
-
-      it('should not display when the nmt drafting feature flag is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
-        env.wait();
-        env.wait();
-        expect(env.additionalTrainingSourceSelect).toBeNull();
-      }));
-
-      it('should not display when the additional training source feature flag is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(false));
-        env.wait();
-        expect(env.additionalTrainingSourceCheckbox).toBeNull();
-      }));
-
-      it('should display when the feature flag is disabled and the additional source is enabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: true,
-            draftConfig: {
-              additionalTrainingSourceEnabled: true
-            }
-          }
-        });
-        when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(false));
-        env.wait();
-        expect(env.additionalTrainingSourceCheckbox).not.toBeNull();
-        expect(env.inputElement(env.additionalTrainingSourceCheckbox).checked).toBe(true);
-      }));
-
-      it('should not display for forward translations when not approved', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            preTranslate: false,
-            draftConfig: {
-              additionalTrainingSourceEnabled: true
-            }
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.additionalTrainingSourceSelect).toBeNull();
-      }));
-
-      it('should unset additional training source select value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              additionalTrainingSource: {
-                paratextId: 'paratextId01',
-                projectRef: 'paratext01',
-                name: 'ParatextP1',
-                shortName: 'PT1',
-                writingSystem: {
-                  tag: 'qaa'
-                }
-              },
-              additionalTrainingSourceEnabled: true
-            },
-            preTranslate: true
-          }
-        });
-        env.wait();
-        env.wait();
-        expect(env.additionalTrainingSourceSelect).not.toBeNull();
-        expect(env.additionalTrainingSourceSelectValue).toContain('ParatextP1');
-        expect(env.statusDone(env.additionalTrainingSourceStatus)).toBeNull();
-
-        env.resetAdditionalTrainingSourceProject();
-
-        expect(env.additionalTrainingSourceSelectValue).toBe('');
-        expect(env.statusDone(env.additionalTrainingSourceStatus)).not.toBeNull();
-      }));
-    });
-
     describe('Additional Training Data', () => {
       it('should update when the additional training data checkbox is ticked', fakeAsync(() => {
         const env = new TestEnvironment();
@@ -867,16 +255,6 @@ describe('SettingsComponent', () => {
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).not.toBeNull();
-      }));
-
-      it('should not display for serval administrators when the feature flag is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-        env.wait();
-        env.wait();
-        expect(env.servalConfigTextArea).toBeNull();
       }));
 
       it('should display for serval administrators on forward translations when not approved', fakeAsync(() => {
@@ -1589,8 +967,6 @@ class TestEnvironment {
         languageTag: 'en'
       }
     ]);
-    when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(true));
-    when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
 
     when(mockedSFProjectService.queryAudioText(anything(), anything())).thenCall(sfProjectId => {
       const queryParams: QueryParameters = {
@@ -1610,30 +986,6 @@ class TestEnvironment {
 
   get translationSuggestionsCheckbox(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checkbox-translation-suggestions'));
-  }
-
-  get alternateSourceSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-project-select#alternateSourceParatextId'));
-  }
-
-  get alternateSourceStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#alternate-source-status'));
-  }
-
-  get alternateTrainingSourceSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-project-select#alternateTrainingSourceParatextId'));
-  }
-
-  get alternateTrainingSourceStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#alternate-training-source-status'));
-  }
-
-  get additionalTrainingSourceSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-project-select#additionalTrainingSourceParatextId'));
-  }
-
-  get additionalTrainingSourceStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#additional-training-source-status'));
   }
 
   get servalConfigTextArea(): DebugElement {
@@ -1693,7 +1045,7 @@ class TestEnvironment {
   }
 
   get dangerZoneTitle(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#danger-zone div');
+    return this.fixture.nativeElement.querySelector('#danger-zone h2');
   }
 
   get projectSyncingMessage(): HTMLElement {
@@ -1734,42 +1086,6 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  get alternateSourceCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checkbox-alternate-source-enabled'));
-  }
-
-  get alternateSourceSelectValue(): string {
-    return this.alternateSourceSelectComponent.paratextIdControl.value?.name || '';
-  }
-
-  get alternateSourceSelectComponent(): ProjectSelectComponent {
-    return this.alternateSourceSelect.componentInstance as ProjectSelectComponent;
-  }
-
-  get alternateSourceSelectProjectsResources(): SelectableProject[] {
-    return (this.alternateSourceSelectComponent.projects || []).concat(
-      this.alternateSourceSelectComponent.resources || []
-    );
-  }
-
-  get additionalTrainingSourceCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checkbox-additional-training-source-enabled'));
-  }
-
-  get additionalTrainingSourceSelectValue(): string {
-    return this.additionalTrainingSourceSelectComponent.paratextIdControl.value?.name || '';
-  }
-
-  get additionalTrainingSourceSelectComponent(): ProjectSelectComponent {
-    return this.additionalTrainingSourceSelect.componentInstance as ProjectSelectComponent;
-  }
-
-  get additionalTrainingSourceSelectProjectsResources(): SelectableProject[] {
-    return (this.additionalTrainingSourceSelectComponent.projects || []).concat(
-      this.additionalTrainingSourceSelectComponent.resources || []
-    );
-  }
-
   get servalConfigTextAreaElement(): HTMLTextAreaElement {
     return this.servalConfigTextArea?.nativeElement as HTMLTextAreaElement;
   }
@@ -1784,24 +1100,6 @@ class TestEnvironment {
 
   get basedOnSelectProjectsResources(): SelectableProject[] {
     return (this.basedOnSelectComponent.projects || []).concat(this.basedOnSelectComponent.resources || []);
-  }
-
-  get alternateTrainingSourceCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checkbox-alternate-training-source-enabled'));
-  }
-
-  get alternateTrainingSourceSelectValue(): string {
-    return this.alternateTrainingSourceSelectComponent.paratextIdControl.value?.name || '';
-  }
-
-  get alternateTrainingSourceSelectComponent(): ProjectSelectComponent {
-    return this.alternateTrainingSourceSelect.componentInstance as ProjectSelectComponent;
-  }
-
-  get alternateTrainingSourceSelectProjectsResources(): SelectableProject[] {
-    return (this.alternateTrainingSourceSelectComponent.projects || []).concat(
-      this.alternateTrainingSourceSelectComponent.resources || []
-    );
   }
 
   get additionalTrainingDataCheckbox(): DebugElement {
@@ -1874,21 +1172,6 @@ class TestEnvironment {
     this.wait();
   }
 
-  resetAlternateSourceProject(): void {
-    this.alternateSourceSelectComponent.paratextIdControl.setValue('');
-    this.wait();
-  }
-
-  resetAlternateTrainingSourceProject(): void {
-    this.alternateTrainingSourceSelectComponent.paratextIdControl.setValue('');
-    this.wait();
-  }
-
-  resetAdditionalTrainingSourceProject(): void {
-    this.additionalTrainingSourceSelectComponent.paratextIdControl.setValue('');
-    this.wait();
-  }
-
   statusNone(element: DebugElement): boolean {
     return element.children.length === 0;
   }
@@ -1901,16 +1184,6 @@ class TestEnvironment {
     return element.nativeElement.querySelector('.error-icon') as HTMLElement;
   }
 
-  setAlternateSourceValue(value: string): void {
-    this.alternateSourceSelectComponent.value = value;
-    this.wait();
-  }
-
-  setAdditionalTrainingSourceValue(value: string): void {
-    this.additionalTrainingSourceSelectComponent.value = value;
-    this.wait();
-  }
-
   setServalConfigValue(value: string): void {
     this.servalConfigTextAreaElement.value = value;
     this.servalConfigTextAreaElement.dispatchEvent(new Event('input'));
@@ -1919,11 +1192,6 @@ class TestEnvironment {
 
   setBasedOnValue(value: string): void {
     this.basedOnSelectComponent.value = value;
-    this.wait();
-  }
-
-  setAlternateTrainingSourceValue(value: string): void {
-    this.alternateTrainingSourceSelectComponent.value = value;
     this.wait();
   }
 

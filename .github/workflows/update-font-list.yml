@@ -1,0 +1,36 @@
+name: Update Font List
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  schedule:
+    - cron: "0 21 * * 5" # Run every Friday
+  workflow_dispatch:
+
+jobs:
+  update-font-list:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run update_font_list.mts
+        run: scripts/update_font_list.mts
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # @v7.0.5
+        with:
+          commit-message: Update list of supported SIL fonts
+          title: Update list of supported SIL fonts
+          body: Automated update of file by GitHub action
+          branch: fonts/update
+          base: master

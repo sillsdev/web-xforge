@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -11,20 +10,19 @@ import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, of, Subscription } from 'rxjs';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
+import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { issuesEmailTemplate, QuietDestroyRef } from 'xforge-common/utils';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -69,26 +67,17 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
   draftJob?: BuildDto;
 
-  projectSettingsUrl?: string;
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
   draftHelp = this.i18n.interpolate('draft_generation.instructions_help');
 
   additionalTrainingSourceLanguage?: string;
-  additionalTrainingSourceLanguageDisplayName?: string;
-
   alternateTrainingSourceLanguage?: string;
-  alternateTrainingSourceLanguageDisplayName?: string;
-
   sourceLanguage?: string;
-  sourceLanguageDisplayName?: string;
-
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
-
   isTargetLanguageSupported = true;
   isBackTranslation = true;
-  isSourceProjectSet = true;
 
   source?: DraftSource;
   trainingSource?: DraftSource;
@@ -131,9 +120,21 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   cancelDialogRef?: MatDialogRef<any>;
 
   readonly draftDurationHours = 2.5;
+  /** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
+  private readonly projectChangeThrottlingMs = 500;
+
+  // TODO: Remove the SF-3219 notice entirely after it has expired
+  readonly improvedDraftGenerationNotice = this.i18n.interpolate('draft_generation.improved_draft_generation_notice');
+
+  // Stop showing the improved draft generation notice 60 days after it went live
+  readonly improvedDraftGenerationNoticeExpired = new Date() > new Date('2025-05-31');
+
+  get showImprovedDraftGenerationNotice(): boolean {
+    return this.draftEnabled && !this.improvedDraftGenerationNoticeExpired;
+  }
 
   get draftEnabled(): boolean {
-    return this.isBackTranslationMode || this.isPreTranslationApproved;
+    return this.isBackTranslation || this.isPreTranslationApproved;
   }
 
   get issueEmail(): string {
@@ -148,14 +149,13 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftSourcesService: DraftSourcesService,
-    private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
   }
@@ -174,26 +174,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get isPreviewSupported(): boolean {
-    return (
-      (!this.isBackTranslationMode || this.isBackTranslation) &&
-      this.isTargetLanguageSupported &&
-      this.isSourceProjectSet &&
-      this.canAccessDraftSourceIfAvailable(this.source) &&
-      (this.isBackTranslationMode || this.isPreTranslationApproved)
-    );
-  }
-
-  /**
-   * True if project is a back translation OR if forward translation drafting feature flag is not set.
-   * If the forward translation feature flag is not set, forward translation projects are treated as invalid
-   * due to failing the back translation project requirement.
-   */
-  get isBackTranslationMode(): boolean {
-    return this.isBackTranslation || !this.isForwardTranslationEnabled;
-  }
-
-  get isForwardTranslationEnabled(): boolean {
-    return this.featureFlags.allowForwardTranslationNmtDrafting.enabled;
+    return this.isTargetLanguageSupported && this.draftEnabled;
   }
 
   get issueMailTo(): string {
@@ -207,7 +188,16 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return this.activatedProject.projectDoc?.data?.sync.lastSyncSuccessful ?? false;
   }
 
-  get isProjectAdmin(): boolean {
+  /** Have drafting sources been adequately configured that a draft can be generated? */
+  get isSourcesConfigurationComplete(): boolean {
+    return this.source != null && (this.trainingSource != null || this.additionalTrainingSource != null);
+  }
+
+  get hasConfigureSourcePermission(): boolean {
+    return this.isProjectAdmin;
+  }
+
+  private get isProjectAdmin(): boolean {
     const userId = this.authService.currentUserId;
     if (userId != null) {
       return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
@@ -222,7 +212,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.route.fragment
       .pipe(
         filter(fragment => fragment === this.supportedLanguagesUrl.fragment),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => {
         const dialogRef = this.dialogService.openMatDialog(SupportedBackTranslationLanguagesDialogComponent);
@@ -234,37 +224,17 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     combineLatest([
       this.activatedProject.changes$.pipe(
+        throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
         filterNullish(),
         tap(projectDoc => {
           const translateConfig = projectDoc.data?.translateConfig;
 
           this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
-          this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
           this.targetLanguage = projectDoc.data?.writingSystem.tag;
-
-          // If an alternate source is specified, that will be used for drafting (not training)
-          if (
-            (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
-            translateConfig?.draftConfig.alternateSource != null
-          ) {
-            this.sourceLanguage = translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
-          } else {
-            this.sourceLanguage = translateConfig?.source?.writingSystem.tag;
-          }
-
-          this.alternateTrainingSourceLanguage =
-            translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
-          this.additionalTrainingSourceLanguage =
-            translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag;
-
           this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
-
-          this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
-
           this.hasDraftBooksAvailable = projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
         })
       ),
-      this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
       this.draftSourcesService.getDraftProjectSources().pipe(
         tap(({ trainingSources, draftingSources }) => {
           this.source = draftingSources[0];
@@ -273,18 +243,19 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         })
       )
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async () => {
         this.isTargetLanguageSupported =
-          !this.isBackTranslationMode || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
+          !this.isBackTranslation || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
 
-        if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
+        if (!this.draftEnabled) {
           this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
         }
       });
 
-    this.activatedProject.projectDoc$
+    this.activatedProject.changes$
       .pipe(
+        throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
@@ -293,32 +264,27 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           }
           return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
         }),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe((build: BuildDto | undefined) => {
         this.lastCompletedBuild = build;
       });
 
-    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isOnline: boolean) => {
-      this.isOnline = isOnline;
+    this.onlineStatusService.onlineStatus$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe((isOnline: boolean) => {
+        this.isOnline = isOnline;
 
-      // Start polling when app goes online
-      if (isOnline) {
-        this.pollBuild();
-      } else {
-        this.loadingFinished();
-      }
-    });
+        // Start polling when app goes online
+        if (isOnline) {
+          this.pollBuild();
+        } else {
+          this.loadingFinished();
+        }
+      });
 
-    this.i18n.locale$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
-      this.sourceLanguageDisplayName = this.i18n.getLanguageDisplayName(this.sourceLanguage);
-      this.alternateTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
-        this.alternateTrainingSourceLanguage
-      );
-      this.additionalTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
-        this.additionalTrainingSourceLanguage
-      );
     });
   }
 
@@ -384,14 +350,17 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
+    const sfProjectId: string | undefined = this.activatedProject.projectId;
+    if (sfProjectId == null) {
+      throw new Error('SF Project ID is not set');
+    }
     this.startBuild({
-      projectId: this.activatedProject.projectId!,
+      projectId: sfProjectId,
       trainingDataFiles: result.trainingDataFiles,
-      trainingScriptureRange: result.trainingScriptureRange,
       trainingScriptureRanges: result.trainingScriptureRanges,
-      translationScriptureRange: result.translationScriptureRange,
       translationScriptureRanges: result.translationScriptureRanges || [],
-      fastTraining: result.fastTraining
+      fastTraining: result.fastTraining,
+      useEcho: result.useEcho
     });
   }
 
@@ -451,12 +420,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   startBuild(buildConfig: BuildConfig): void {
     this.draftGenerationService
       .getBuildProgress(buildConfig.projectId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(job => {
         if (this.isDraftInProgress(job)) {
           this.draftJob = job;
           this.currentPage = 'initial';
-          this.noticeService.show(this.i18n.translateStatic('draft_generation.draft_already_running'));
+          this.dialogService.message('draft_generation.draft_already_running');
           return;
         }
       });
@@ -486,15 +455,16 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
           return of(undefined);
         }),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe((job?: BuildDto) => (this.draftJob = job));
   }
 
   private pollBuild(): void {
     this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.activatedProject.projectDoc$
+    this.jobSubscription = this.activatedProject.changes$
       .pipe(
+        throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
@@ -509,7 +479,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
               )
             );
         }),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe((job?: BuildDto) => {
         this.draftJob = job;
@@ -524,7 +494,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   private cancelBuild(): void {
-    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe(() => {
+    const sfProjectId: string | undefined = this.activatedProject.projectId;
+    if (sfProjectId == null) {
+      throw new Error('SF Project ID is not set');
+    }
+    this.draftGenerationService.cancelBuild(sfProjectId).subscribe(() => {
       // If build is canceled, update job immediately instead of waiting for next poll cycle
       this.pollBuild();
     });
@@ -533,7 +507,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   private hasStartedBuild(projectDoc: SFProjectProfileDoc): boolean {
     return (
       projectDoc.data?.translateConfig.preTranslate === true &&
-      projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange != null
+      (projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRange != null ||
+        projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationScriptureRanges != null)
     );
   }
 }

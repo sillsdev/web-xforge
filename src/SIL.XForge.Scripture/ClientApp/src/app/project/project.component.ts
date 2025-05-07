@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -11,12 +10,11 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../../environments/environment';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
-
 type TaskType = 'translate' | 'checking';
 
 @Component({
@@ -34,7 +32,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly resumeCheckingService: ResumeCheckingService,
     private readonly dialogService: DialogService,
     noticeService: NoticeService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
   }
@@ -57,21 +55,18 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     const userDoc = await this.userService.getCurrentUser(new DocSubscription('ProjectComponent', this.destroyRef));
     const navigateToProject$: Observable<string> = new Observable(subscriber => {
       let projectId: string | undefined;
-      projectId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => {
+      projectId$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(id => {
         projectId = id;
         subscriber.next(projectId);
       });
-      userDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      userDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
         subscriber.next(projectId);
       });
     });
 
-    navigateToProject$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
+    navigateToProject$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
       if (userDoc.data?.sites[environment.siteId].projects?.includes(projectId)) {
         this.navigateToProject(projectId);
-      } else {
-        await this.dialogService.message('app.project_has_been_deleted');
-        this.router.navigateByUrl('/projects', { replaceUrl: true });
       }
     });
   }
@@ -146,7 +141,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
   private async navigateToChecking(projectId: string, task: TaskType = 'checking'): Promise<void> {
     const defaultCheckingLink: string[] = ['/projects', projectId, task];
-    const link = await lastValueFrom(this.resumeCheckingService.checkingLink$.pipe(first()));
+    const link = await lastValueFrom(this.resumeCheckingService.resumeLink$.pipe(first()));
 
     this.router.navigate(link ?? defaultCheckingLink, { replaceUrl: true });
   }

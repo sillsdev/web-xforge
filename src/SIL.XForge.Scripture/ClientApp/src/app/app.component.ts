@@ -1,6 +1,5 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
@@ -34,7 +33,10 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
-import { issuesEmailTemplate, QuietDestroyRef, supportedBrowser } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
+import { ThemeService } from 'xforge-common/theme.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -88,23 +90,24 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
+    private readonly themeService: ThemeService,
     onlineStatusService: OnlineStatusService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
     this.breakpointObserver
       .observe(this.breakpointService.width('>', Breakpoint.LG))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((value: BreakpointState) => (this.isDrawerPermanent = value.matches));
 
     this.breakpointObserver
       .observe(this.breakpointService.width('<', Breakpoint.SM))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((state: BreakpointState) => (this.isScreenTiny = state.matches));
 
     // Check full online status changes
     this.isAppOnline = onlineStatusService.isOnline;
-    onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
+    onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status !== this.isAppOnline) {
         this.isAppOnline = status;
         this.checkDeviceStorage();
@@ -112,7 +115,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     });
 
     // Check browser online status to allow checks with Auth0
-    onlineStatusService.onlineBrowserStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
+    onlineStatusService.onlineBrowserStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(status => {
       // Check authentication when coming back online
       // This is also run on first load when the websocket connects for the first time
       if (status && !this.isAppLoading) {
@@ -120,7 +123,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
     });
 
-    pwaService.hasUpdate$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => (this.hasUpdate = true));
+    pwaService.hasUpdate$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => (this.hasUpdate = true));
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
     if (environment.releaseStage === 'live') {
@@ -128,7 +131,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         filter(e => e instanceof NavigationEnd),
         map(e => e as NavigationEnd)
       );
-      navEndEvent$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(e => {
+      navEndEvent$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(e => {
         if (this.isAppOnline) {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
@@ -235,6 +238,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   async ngOnInit(): Promise<void> {
     await this.authService.loggedIn;
+    this.featureFlags.darkMode.enabled$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(enabled => {
+      this.themeService.setDarkMode(enabled);
+    });
     this.loadingStarted();
     this.currentUserDoc = await this.userService.getCurrentUser(new DocSubscription('AppComponent', this.destroyRef));
     const userData: User | undefined = cloneDeep(this.currentUserDoc.data);
@@ -266,7 +272,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
     // Monitor current project
     this.activatedProjectService.projectDoc$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async (selectedProjectDoc?: SFProjectProfileDoc) => {
         this._selectedProjectDoc = selectedProjectDoc;
         if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
@@ -292,10 +298,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.permissionsChangedSub?.unsubscribe();
         this.permissionsChangedSub = this._selectedProjectDoc?.remoteChanges$.subscribe(() => {
           if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
-            // If the user is in the Serval administration page, do not check access,
-            // as they will be modifying the project's properties
+            // If the user is in the Serval administration area, do not check access, as they will be modifying the
+            // project's properties. We suppress this in the event log, as if a sync occurs while a serval admin is
+            // viewing it, it will result in the project deleted dialog erroneously being shown.
+            const servalAdminAreaRegex = /serval-administration|event-log/;
             if (
-              this.locationService.pathname.includes('serval-administration') &&
+              servalAdminAreaRegex.test(this.locationService.pathname) &&
               this.currentUser?.roles.includes(SystemRole.ServalAdmin)
             ) {
               return;

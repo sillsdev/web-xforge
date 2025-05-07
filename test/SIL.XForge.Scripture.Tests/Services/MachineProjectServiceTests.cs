@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -41,6 +40,7 @@ public class MachineProjectServiceTests
     private const string Project04 = "project04";
     private const string Project05 = "project05";
     private const string User01 = "user01";
+    private const string Build01 = "build01";
     private const string Corpus01 = "corpus01";
     private const string Corpus02 = "corpus02";
     private const string Corpus03 = "corpus03";
@@ -61,39 +61,39 @@ public class MachineProjectServiceTests
     private const string LanguageTag = "he";
 
     [Test]
-    public async Task AddProjectAsync_DoesNotCreateIfLanguageMissing()
+    public async Task AddSmtProjectAsync_DoesNotCreateIfLanguageMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
-        string actual = await env.Service.AddProjectAsync(Project03, preTranslate: false, CancellationToken.None);
+        string actual = await env.Service.AddSmtProjectAsync(Project03, CancellationToken.None);
         Assert.IsEmpty(actual);
     }
 
     [Test]
-    public void AddProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
+    public void AddSmtProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.AddProjectAsync("invalid_project_id", preTranslate: false, CancellationToken.None)
+            () => env.Service.AddSmtProjectAsync("invalid_project_id", CancellationToken.None)
         );
     }
 
     [Test]
-    public async Task AddProjectAsync_Success()
+    public async Task AddSmtProjectAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
         env.Service.Configure()
-            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: true, CancellationToken.None)
+            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: false, useEcho: false, CancellationToken.None)
             .Returns(Task.FromResult(TranslationEngine01));
 
         // SUT
-        string actual = await env.Service.AddProjectAsync(Project01, preTranslate: true, CancellationToken.None);
+        string actual = await env.Service.AddSmtProjectAsync(Project01, CancellationToken.None);
         Assert.AreEqual(TranslationEngine01, actual);
     }
 
@@ -239,6 +239,38 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectForBackgroundJobAsync_InvalidDataException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var ex = new InvalidDataException("Source project language not specified");
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        env.Service.Configure()
+            .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+            .ThrowsAsync(ex);
+
+        // A pre-translation job has been queued
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Error);
+        env.ExceptionHandler.Received(1).ReportException(ex);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationQueuedAt);
+        Assert.AreEqual(ex.Message, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationErrorMessage);
+    }
+
+    [Test]
     public async Task BuildProjectForBackgroundJobAsync_RecordsErrors()
     {
         // Set up test environment
@@ -312,7 +344,7 @@ public class MachineProjectServiceTests
         var buildConfig = new BuildConfig { ProjectId = Project01 };
         env.Service.Configure()
             .BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(Build01));
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
@@ -349,14 +381,16 @@ public class MachineProjectServiceTests
                 Arg.Any<IDocument<SFProject>>(),
                 Arg.Any<SFProjectSecret>(),
                 preTranslate: true,
+                useEcho: false,
                 CancellationToken.None
             )
             .Returns(Task.FromResult(TranslationEngine01));
         env.Service.Configure()
-            .RecreateTranslationEngineIfRequiredAsync(
+            .RecreateOrUpdateTranslationEngineIfRequiredAsync(
                 TranslationEngine01,
                 Arg.Any<SFProject>(),
                 preTranslate: true,
+                useEcho: false,
                 CancellationToken.None
             )
             .Returns(Task.CompletedTask);
@@ -404,14 +438,16 @@ public class MachineProjectServiceTests
                 Arg.Any<IDocument<SFProject>>(),
                 Arg.Any<SFProjectSecret>(),
                 preTranslate: false,
+                useEcho: false,
                 CancellationToken.None
             )
             .Returns(Task.FromResult(TranslationEngine01));
         env.Service.Configure()
-            .RecreateTranslationEngineIfRequiredAsync(
+            .RecreateOrUpdateTranslationEngineIfRequiredAsync(
                 TranslationEngine01,
                 Arg.Any<SFProject>(),
                 preTranslate: false,
+                useEcho: false,
                 CancellationToken.None
             )
             .Returns(Task.CompletedTask);
@@ -467,6 +503,24 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public void BuildProjectAsync_ThrowsExceptionWhenSourceProjectMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<InvalidDataException>(
+            () =>
+                env.Service.BuildProjectAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project04 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
     public async Task BuildProjectAsync_ThrowsExceptionWhenServalDataMissing()
     {
         // Set up test environment
@@ -482,14 +536,16 @@ public class MachineProjectServiceTests
                 Arg.Any<IDocument<SFProject>>(),
                 Arg.Any<SFProjectSecret>(),
                 preTranslate: true,
+                useEcho: false,
                 CancellationToken.None
             )
             .Returns(Task.FromResult(TranslationEngine01));
         env.Service.Configure()
-            .RecreateTranslationEngineIfRequiredAsync(
+            .RecreateOrUpdateTranslationEngineIfRequiredAsync(
                 TranslationEngine01,
                 Arg.Any<SFProject>(),
                 preTranslate: true,
+                useEcho: false,
                 CancellationToken.None
             )
             .Returns(Task.CompletedTask);
@@ -618,7 +674,12 @@ public class MachineProjectServiceTests
         await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
 
         // SUT
-        string actual = await env.Service.CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None);
+        string actual = await env.Service.CreateServalProjectAsync(
+            project,
+            preTranslate: true,
+            useEcho: false,
+            CancellationToken.None
+        );
         Assert.AreEqual(TranslationEngine01, actual);
         await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs().CreateAsync(Arg.Any<TranslationEngineConfig>());
     }
@@ -630,13 +691,18 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
         await env.SetupProjectSecretAsync(Project01, new ServalData());
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns("en");
+        env.Service.Configure().GetTargetLanguage(project, preTranslate: true, useEcho: false).Returns("de");
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
         // SUT
-        string actual = await env.Service.CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None);
+        string actual = await env.Service.CreateServalProjectAsync(
+            project,
+            preTranslate: true,
+            useEcho: false,
+            CancellationToken.None
+        );
         Assert.AreEqual(TranslationEngine01, actual);
         Assert.AreEqual(TranslationEngine01, env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationEngineId);
     }
@@ -648,8 +714,8 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
         await env.SetupProjectSecretAsync(Project01, new ServalData());
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: false).Returns("en");
+        env.Service.Configure().GetTargetLanguage(project, preTranslate: false, useEcho: false).Returns("de");
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
@@ -657,6 +723,7 @@ public class MachineProjectServiceTests
         string actual = await env.Service.CreateServalProjectAsync(
             project,
             preTranslate: false,
+            useEcho: false,
             CancellationToken.None
         );
         Assert.AreEqual(TranslationEngine01, actual);
@@ -675,6 +742,7 @@ public class MachineProjectServiceTests
         string actual = await env.Service.CreateServalProjectAsync(
             project,
             preTranslate: false,
+            useEcho: false,
             CancellationToken.None
         );
         Assert.AreEqual(TranslationEngine01, actual);
@@ -687,13 +755,18 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns("en");
+        env.Service.Configure().GetTargetLanguage(project, preTranslate: true, useEcho: false).Returns("de");
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
         // SUT
-        string actual = await env.Service.CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None);
+        string actual = await env.Service.CreateServalProjectAsync(
+            project,
+            preTranslate: true,
+            useEcho: false,
+            CancellationToken.None
+        );
         Assert.AreEqual(TranslationEngine01, actual);
         Assert.AreEqual(TranslationEngine01, env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationEngineId);
     }
@@ -704,8 +777,8 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: false).Returns("en");
+        env.Service.Configure().GetTargetLanguage(project, preTranslate: false, useEcho: false).Returns("de");
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
@@ -713,6 +786,7 @@ public class MachineProjectServiceTests
         string actual = await env.Service.CreateServalProjectAsync(
             project,
             preTranslate: false,
+            useEcho: false,
             CancellationToken.None
         );
         Assert.AreEqual(TranslationEngine01, actual);
@@ -725,14 +799,20 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         var project = new SFProject { Id = Project01 };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns("en");
+        env.Service.Configure().GetTargetLanguage(project, preTranslate: true, useEcho: false).Returns("de");
         env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>())
             .Returns(Task.FromResult(new TranslationEngine()));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
+            () =>
+                env.Service.CreateServalProjectAsync(
+                    project,
+                    preTranslate: true,
+                    useEcho: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -846,6 +926,7 @@ public class MachineProjectServiceTests
             projectDoc,
             projectSecret,
             preTranslate: true,
+            useEcho: false,
             CancellationToken.None
         );
         Assert.AreEqual(TranslationEngine01, actual);
@@ -876,6 +957,7 @@ public class MachineProjectServiceTests
                     projectDoc,
                     projectSecret,
                     preTranslate: true,
+                    useEcho: false,
                     CancellationToken.None
                 )
         );
@@ -911,6 +993,7 @@ public class MachineProjectServiceTests
                     projectDoc,
                     projectSecret,
                     preTranslate: true,
+                    useEcho: false,
                     CancellationToken.None
                 )
         );
@@ -924,7 +1007,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
         await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
         env.Service.Configure()
-            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: true, CancellationToken.None)
+            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: false, CancellationToken.None)
             .Returns(Task.FromResult(false));
 
         // Retrieve required objects
@@ -935,13 +1018,14 @@ public class MachineProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
+        Assert.ThrowsAsync<InvalidDataException>(
             () =>
                 env.Service.EnsureTranslationEngineExistsAsync(
                     User01,
                     projectDoc,
                     projectSecret,
-                    preTranslate: true,
+                    preTranslate: false,
+                    useEcho: false,
                     CancellationToken.None
                 )
         );
@@ -959,7 +1043,7 @@ public class MachineProjectServiceTests
             .TranslationEngineExistsAsync(Project03, TranslationEngine01, preTranslate: true, CancellationToken.None)
             .Returns(Task.FromResult(false));
         env.Service.Configure()
-            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: true, CancellationToken.None)
+            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: true, useEcho: false, CancellationToken.None)
             .Returns(Task.FromResult(TranslationEngine02));
         env.ParatextService.GetWritingSystem(Arg.Any<UserSecret>(), Paratext01)
             .Returns(new WritingSystem { Tag = sourceLanguage });
@@ -978,11 +1062,49 @@ public class MachineProjectServiceTests
             projectDoc,
             projectSecret,
             preTranslate: true,
+            useEcho: false,
             CancellationToken.None
         );
         Assert.AreEqual(TranslationEngine02, actual);
         Assert.IsNull(env.ProjectSecrets.Get(Project03).ServalData?.PreTranslationEngineId);
         Assert.AreEqual(sourceLanguage, env.Projects.Get(Project03).TranslateConfig.Source?.WritingSystem.Tag);
+        Assert.AreEqual(targetLanguage, env.Projects.Get(Project03).WritingSystem.Tag);
+    }
+
+    [Test]
+    public async Task EnsureTranslationEngineExistsAsync_SetsUpTheProjectAndTranslationEngineForPreTranslationWithNoSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string targetLanguage = "fr";
+        await env.SetupProjectSecretAsync(Project03, new ServalData { PreTranslationEngineId = TranslationEngine01 });
+        env.Service.Configure()
+            .TranslationEngineExistsAsync(Project03, TranslationEngine01, preTranslate: true, CancellationToken.None)
+            .Returns(Task.FromResult(false));
+        env.Service.Configure()
+            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: true, useEcho: false, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine02));
+        env.ParatextService.GetWritingSystem(Arg.Any<UserSecret>(), Paratext03)
+            .Returns(new WritingSystem { Tag = targetLanguage });
+
+        // Retrieve required objects, and remove the source
+        await using IConnection connection = await env.RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = connection.Get<SFProject>(Project03);
+        await projectDoc.FetchAsync();
+        await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.TranslateConfig.Source));
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
+
+        // SUT
+        string actual = await env.Service.EnsureTranslationEngineExistsAsync(
+            User01,
+            projectDoc,
+            projectSecret,
+            preTranslate: true,
+            useEcho: false,
+            CancellationToken.None
+        );
+        Assert.AreEqual(TranslationEngine02, actual);
+        Assert.IsNull(env.ProjectSecrets.Get(Project03).ServalData?.PreTranslationEngineId);
         Assert.AreEqual(targetLanguage, env.Projects.Get(Project03).WritingSystem.Tag);
     }
 
@@ -998,7 +1120,7 @@ public class MachineProjectServiceTests
             .TranslationEngineExistsAsync(Project03, TranslationEngine01, preTranslate: false, CancellationToken.None)
             .Returns(Task.FromResult(false));
         env.Service.Configure()
-            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: false, CancellationToken.None)
+            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: false, useEcho: false, CancellationToken.None)
             .Returns(Task.FromResult(TranslationEngine02));
         env.ParatextService.GetWritingSystem(Arg.Any<UserSecret>(), Paratext01)
             .Returns(new WritingSystem { Tag = sourceLanguage });
@@ -1017,6 +1139,7 @@ public class MachineProjectServiceTests
             projectDoc,
             projectSecret,
             preTranslate: false,
+            useEcho: false,
             CancellationToken.None
         );
         Assert.AreEqual(TranslationEngine02, actual);
@@ -1048,6 +1171,7 @@ public class MachineProjectServiceTests
             projectDoc,
             projectSecret,
             preTranslate: false,
+            useEcho: false,
             CancellationToken.None
         );
         Assert.AreEqual(TranslationEngine01, actual);
@@ -1063,7 +1187,7 @@ public class MachineProjectServiceTests
             .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: true, CancellationToken.None)
             .Returns(Task.FromResult(false));
         env.Service.Configure()
-            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: true, CancellationToken.None)
+            .CreateServalProjectAsync(Arg.Any<SFProject>(), preTranslate: true, useEcho: false, CancellationToken.None)
             .Returns(Task.FromResult<string?>(null));
 
         // Retrieve required objects
@@ -1080,6 +1204,7 @@ public class MachineProjectServiceTests
                     projectDoc,
                     projectSecret,
                     preTranslate: true,
+                    useEcho: false,
                     CancellationToken.None
                 )
         );
@@ -1110,6 +1235,7 @@ public class MachineProjectServiceTests
                     projectDoc,
                     projectSecret,
                     preTranslate: true,
+                    useEcho: false,
                     CancellationToken.None
                 )
         );
@@ -1180,20 +1306,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void GetProjectZipAsync_ThrowsExceptionWhenProjectIsAResource()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
-        MemoryStream outputStream = new MemoryStream();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetProjectZipAsync(Project01, outputStream, CancellationToken.None)
-        );
-    }
-
-    [Test]
     public void GetSourceLanguage_DoesNotUseTheAlternateSourceIfItIsDisabled()
     {
         // Set up test environment
@@ -1217,7 +1329,7 @@ public class MachineProjectServiceTests
         };
 
         // SUT
-        string actual = env.Service.GetSourceLanguage(project);
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
         Assert.AreEqual(sourceWritingSystemTag, actual);
     }
 
@@ -1237,7 +1349,35 @@ public class MachineProjectServiceTests
         };
 
         // SUT
-        string actual = env.Service.GetSourceLanguage(project);
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
+        Assert.AreEqual(sourceWritingSystemTag, actual);
+    }
+
+    [Test]
+    public void GetSourceLanguage_UsesTheAlternateSourceIfPreTranslateIsFalse()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string alternateSourceWritingSystemTag = "alternate_source_writing_system_tag";
+        const string sourceWritingSystemTag = "source_writing_system_tag";
+        var project = new SFProject
+        {
+            TranslateConfig =
+            {
+                DraftConfig = new DraftConfig
+                {
+                    AlternateSourceEnabled = true,
+                    AlternateSource = new TranslateSource
+                    {
+                        WritingSystem = new WritingSystem { Tag = alternateSourceWritingSystemTag },
+                    },
+                },
+                Source = new TranslateSource { WritingSystem = new WritingSystem { Tag = sourceWritingSystemTag } },
+            },
+        };
+
+        // SUT
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: false);
         Assert.AreEqual(sourceWritingSystemTag, actual);
     }
 
@@ -1249,7 +1389,7 @@ public class MachineProjectServiceTests
         var project = new SFProject { TranslateConfig = { Source = null } };
 
         // SUT
-        Assert.Throws<DataNotFoundException>(() => env.Service.GetSourceLanguage(project));
+        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project, preTranslate: true));
     }
 
     [Test]
@@ -1259,7 +1399,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.Throws<DataNotFoundException>(() => env.Service.GetSourceLanguage(null));
+        Assert.Throws<DataNotFoundException>(() => env.Service.GetSourceLanguage(null, preTranslate: true));
     }
 
     [Test]
@@ -1286,7 +1426,7 @@ public class MachineProjectServiceTests
         };
 
         // SUT
-        string actual = env.Service.GetSourceLanguage(project);
+        string actual = env.Service.GetSourceLanguage(project, preTranslate: true);
         Assert.AreEqual(alternateSourceWritingSystemTag, actual);
     }
 
@@ -1301,7 +1441,7 @@ public class MachineProjectServiceTests
         };
 
         // SUT
-        Assert.Throws<ArgumentNullException>(() => env.Service.GetSourceLanguage(project));
+        Assert.Throws<InvalidDataException>(() => env.Service.GetSourceLanguage(project, preTranslate: false));
     }
 
     [Test]
@@ -1318,21 +1458,21 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task GetTargetLanguageAsync_ReturnSourceIfEcho()
+    public void GetTargetLanguage_ReturnSourceIfEcho()
     {
         // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { UseEchoForPreTranslation = true });
+        var env = new TestEnvironment();
         const string sourceWritingSystemTag = "source_writing_system_tag";
         var project = new SFProject();
-        env.Service.Configure().GetSourceLanguage(project).Returns(sourceWritingSystemTag);
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(sourceWritingSystemTag);
 
         // SUT
-        string actual = await env.Service.GetTargetLanguageAsync(project);
+        string actual = env.Service.GetTargetLanguage(project, preTranslate: true, useEcho: true);
         Assert.AreEqual(sourceWritingSystemTag, actual);
     }
 
     [Test]
-    public async Task GetTargetLanguageAsync_Success()
+    public void GetTargetLanguage_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1340,7 +1480,7 @@ public class MachineProjectServiceTests
         var project = new SFProject { WritingSystem = new WritingSystem { Tag = targetWritingSystemTag } };
 
         // SUT
-        string actual = await env.Service.GetTargetLanguageAsync(project);
+        string actual = env.Service.GetTargetLanguage(project, preTranslate: true, useEcho: false);
         Assert.AreEqual(targetWritingSystemTag, actual);
     }
 
@@ -1752,51 +1892,32 @@ public class MachineProjectServiceTests
         );
     }
 
-    [Test]
-    public async Task GetTranslationEngineTypeAsync_Echo()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { UseEchoForPreTranslation = true });
-
-        // SUT
-        var actual = await env.Service.GetTranslationEngineTypeAsync(preTranslate: true);
-        Assert.AreEqual(MachineProjectService.Echo, actual);
-    }
-
-    [Test]
-    public async Task GetTranslationEngineTypeAsync_Nmt()
+    [TestCase(false, false, MachineProjectService.SmtTransfer)]
+    [TestCase(false, true, MachineProjectService.SmtTransfer)]
+    [TestCase(true, false, MachineProjectService.Nmt)]
+    [TestCase(true, true, MachineProjectService.Echo)]
+    public void GetTranslationEngineType(bool preTranslate, bool useEcho, string expected)
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
-        var actual = await env.Service.GetTranslationEngineTypeAsync(preTranslate: true);
-        Assert.AreEqual(MachineProjectService.Nmt, actual);
+        var actual = env.Service.GetTranslationEngineType(preTranslate, useEcho);
+        Assert.AreEqual(expected, actual);
     }
 
     [Test]
-    public async Task GetTranslationEngineTypeAsync_Smt()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        var actual = await env.Service.GetTranslationEngineTypeAsync(preTranslate: false);
-        Assert.AreEqual(MachineProjectService.SmtTransfer, actual);
-    }
-
-    [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_DoNotRecreateIfNoLanguageChanges()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_DoNotRecreateIfNoLanguageChanges()
     {
         // Set up test environment
         var env = new TestEnvironment();
         var project = new SFProject { Id = Project01 };
         const string targetLanguage = "en";
         const string sourceLanguage = "de";
-        env.Service.Configure().GetSourceLanguage(project).Returns(sourceLanguage);
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult(targetLanguage));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(sourceLanguage);
+        env.Service.Configure().GetTargetLanguage(project, preTranslate: true, useEcho: false).Returns(targetLanguage);
         env.Service.Configure()
-            .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
+            .CreateServalProjectAsync(project, preTranslate: true, useEcho: false, CancellationToken.None)
             .Returns(Task.FromResult(string.Empty));
         env.Service.Configure()
             .RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None)
@@ -1809,15 +1930,17 @@ public class MachineProjectServiceTests
                         Id = TranslationEngine01,
                         SourceLanguage = sourceLanguage,
                         TargetLanguage = targetLanguage,
+                        Type = MachineProjectService.Nmt,
                     }
                 )
             );
 
         // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
             TranslationEngine01,
             project,
             preTranslate: true,
+            useEcho: false,
             CancellationToken.None
         );
         await env
@@ -1825,11 +1948,11 @@ public class MachineProjectServiceTests
             .RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None);
         await env
             .Service.DidNotReceiveWithAnyArgs()
-            .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None);
+            .CreateServalProjectAsync(project, preTranslate: true, useEcho: false, CancellationToken.None);
     }
 
     [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_RecreateIfTheSourceLanguageChanges()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_UpdateIfTheSourceLanguageChanges()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1837,14 +1960,8 @@ public class MachineProjectServiceTests
         const string targetLanguage = "en";
         const string oldSourceLanguage = "de";
         const string newSourceLanguage = "fr";
-        env.Service.Configure().GetSourceLanguage(project).Returns(oldSourceLanguage);
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult(targetLanguage));
-        env.Service.Configure()
-            .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
-            .Returns(Task.FromResult(string.Empty));
-        env.Service.Configure()
-            .RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None)
-            .Returns(Task.CompletedTask);
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(oldSourceLanguage);
+        env.Service.Configure().GetTargetLanguage(project, preTranslate: true, useEcho: false).Returns(targetLanguage);
         env.TranslationEnginesClient.GetAsync(TranslationEngine01)
             .Returns(
                 Task.FromResult(
@@ -1853,23 +1970,26 @@ public class MachineProjectServiceTests
                         Id = TranslationEngine01,
                         SourceLanguage = newSourceLanguage,
                         TargetLanguage = targetLanguage,
+                        Type = MachineProjectService.Nmt,
                     }
                 )
             );
 
         // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
             TranslationEngine01,
             project,
             preTranslate: true,
+            useEcho: false,
             CancellationToken.None
         );
-        await env.Service.Received(1).RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None);
-        await env.Service.Received(1).CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None);
+        await env
+            .TranslationEnginesClient.Received(1)
+            .UpdateAsync(TranslationEngine01, Arg.Any<TranslationEngineUpdateConfig>(), CancellationToken.None);
     }
 
     [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_RecreateIfTheTargetLanguageChanges()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_UpdateIfTheTargetLanguageChanges()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1877,10 +1997,80 @@ public class MachineProjectServiceTests
         const string oldTargetLanguage = "en";
         const string newTargetLanguage = "fr";
         const string sourceLanguage = "de";
-        env.Service.Configure().GetSourceLanguage(project).Returns(sourceLanguage);
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult(newTargetLanguage));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(sourceLanguage);
         env.Service.Configure()
-            .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
+            .GetTargetLanguage(project, preTranslate: true, useEcho: false)
+            .Returns(newTargetLanguage);
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine01,
+                        SourceLanguage = sourceLanguage,
+                        TargetLanguage = oldTargetLanguage,
+                        Type = MachineProjectService.Nmt,
+                    }
+                )
+            );
+
+        // SUT
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
+            TranslationEngine01,
+            project,
+            preTranslate: true,
+            useEcho: false,
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(1)
+            .UpdateAsync(TranslationEngine01, Arg.Any<TranslationEngineUpdateConfig>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_RecreatePreTranslationEngineIfNotFound()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
+        var project = new SFProject { Id = Project01 };
+        ServalApiException ex = ServalApiExceptions.NotFound;
+        env.Service.Configure()
+            .CreateServalProjectAsync(project, preTranslate: true, useEcho: false, CancellationToken.None)
+            .Returns(Task.FromResult(string.Empty));
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01).ThrowsAsync(ex);
+
+        // SUT
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
+            TranslationEngine01,
+            project,
+            preTranslate: true,
+            useEcho: false,
+            CancellationToken.None
+        );
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationEngineId);
+        await env
+            .Service.Received(1)
+            .CreateServalProjectAsync(project, preTranslate: true, useEcho: false, CancellationToken.None);
+        env.MockLogger.AssertHasEvent(l => l.Exception == ex && l.LogLevel == LogLevel.Information);
+    }
+
+    [Test]
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_RecreatePreTranslationEngineIfEngineChanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
+        var project = new SFProject { Id = Project01 };
+        const string oldTargetLanguage = "en";
+        const string newTargetLanguage = "fr";
+        const string sourceLanguage = "de";
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(sourceLanguage);
+        env.Service.Configure()
+            .GetTargetLanguage(project, preTranslate: true, useEcho: false)
+            .Returns(newTargetLanguage);
+        env.Service.Configure()
+            .CreateServalProjectAsync(project, preTranslate: true, useEcho: false, CancellationToken.None)
             .Returns(Task.FromResult(string.Empty));
         env.Service.Configure()
             .RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None)
@@ -1893,48 +2083,27 @@ public class MachineProjectServiceTests
                         Id = TranslationEngine01,
                         SourceLanguage = sourceLanguage,
                         TargetLanguage = oldTargetLanguage,
+                        Type = MachineProjectService.Nmt,
                     }
                 )
             );
 
         // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
             TranslationEngine01,
             project,
             preTranslate: true,
+            useEcho: true,
             CancellationToken.None
         );
         await env.Service.Received(1).RemoveProjectAsync(Project01, preTranslate: true, CancellationToken.None);
-        await env.Service.Received(1).CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None);
+        await env
+            .Service.Received(1)
+            .CreateServalProjectAsync(project, preTranslate: true, useEcho: true, CancellationToken.None);
     }
 
     [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_RecreatePreTranslationEngineIfNotFound()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
-        var project = new SFProject { Id = Project01 };
-        ServalApiException ex = ServalApiExceptions.NotFound;
-        env.Service.Configure()
-            .CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None)
-            .Returns(Task.FromResult(string.Empty));
-        env.TranslationEnginesClient.GetAsync(TranslationEngine01).ThrowsAsync(ex);
-
-        // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
-            TranslationEngine01,
-            project,
-            preTranslate: true,
-            CancellationToken.None
-        );
-        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationEngineId);
-        await env.Service.Received(1).CreateServalProjectAsync(project, preTranslate: true, CancellationToken.None);
-        env.MockLogger.AssertHasEvent(l => l.Exception == ex && l.LogLevel == LogLevel.Information);
-    }
-
-    [Test]
-    public async Task RecreateTranslationEngineIfRequiredAsync_RecreateSmtTranslationEngineIfNotFound()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_RecreateSmtTranslationEngineIfNotFound()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1942,19 +2111,22 @@ public class MachineProjectServiceTests
         var project = new SFProject { Id = Project01 };
         ServalApiException ex = ServalApiExceptions.NotFound;
         env.Service.Configure()
-            .CreateServalProjectAsync(project, preTranslate: false, CancellationToken.None)
+            .CreateServalProjectAsync(project, preTranslate: false, useEcho: false, CancellationToken.None)
             .Returns(Task.FromResult(string.Empty));
         env.TranslationEnginesClient.GetAsync(TranslationEngine01).ThrowsAsync(ex);
 
         // SUT
-        await env.Service.RecreateTranslationEngineIfRequiredAsync(
+        await env.Service.RecreateOrUpdateTranslationEngineIfRequiredAsync(
             TranslationEngine01,
             project,
             preTranslate: false,
+            useEcho: false,
             CancellationToken.None
         );
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationEngineId);
-        await env.Service.Received(1).CreateServalProjectAsync(project, preTranslate: false, CancellationToken.None);
+        await env
+            .Service.Received(1)
+            .CreateServalProjectAsync(project, preTranslate: false, useEcho: false, CancellationToken.None);
         env.MockLogger.AssertHasEvent(l => l.Exception == ex && l.LogLevel == LogLevel.Information);
     }
 
@@ -2568,8 +2740,8 @@ public class MachineProjectServiceTests
             SourceCorpusId = Corpus01,
             TargetCorpusId = Corpus02,
         };
-        env.Service.Configure().GetSourceLanguage(project).Returns("en");
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns("en");
+        env.Service.Configure().GetTargetLanguage(project, preTranslate: true, useEcho: false).Returns("de");
         env.Service.Configure()
             .CreateOrUpdateParallelCorpusAsync(
                 TranslationEngine01,
@@ -2624,8 +2796,8 @@ public class MachineProjectServiceTests
         var project = new SFProject { Id = Project01 };
         var buildConfig = new BuildConfig { TrainingDataFiles = [Data01] };
         var additionalTrainingData = new ServalAdditionalTrainingData();
-        env.Service.Configure().GetSourceLanguage(project).Returns(sourceLanguage);
-        env.Service.Configure().GetTargetLanguageAsync(project).Returns(Task.FromResult("de"));
+        env.Service.Configure().GetSourceLanguage(project, preTranslate: true).Returns(sourceLanguage);
+        env.Service.Configure().GetTargetLanguage(project, preTranslate: true, useEcho: false).Returns("de");
         env.Service.Configure()
             .CreateOrUpdateParallelCorpusAsync(
                 TranslationEngine01,
@@ -2772,7 +2944,11 @@ public class MachineProjectServiceTests
             op =>
             {
                 op.Set(p => p.WritingSystem.Tag, "fr");
-                op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, "fr_be");
+                if (options.Source)
+                {
+                    op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, "fr_be");
+                }
+
                 if (options.AlternateSource)
                 {
                     op.Set(p => p.TranslateConfig.DraftConfig.AlternateSource.WritingSystem.Tag, "fr_ca");
@@ -2877,19 +3053,40 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenSourceMissing()
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenSourceMissingForSmt()
     {
         // Set up test environment
         var env = new TestEnvironment();
         await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
+        await env.SetupProjectSecretAsync(Project01, new ServalData { TranslationEngineId = TranslationEngine01 });
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
+        Assert.ThrowsAsync<InvalidDataException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
                     User01,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenNoSourceOrAlternateSourceForNmt()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
+        await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
+
+        // SUT
+        Assert.ThrowsAsync<InvalidDataException>(
+            () =>
+                env.Service.SyncProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: true,
                     CancellationToken.None
                 )
         );
@@ -3615,19 +3812,27 @@ public class MachineProjectServiceTests
             bool[] boolValues = [false, true];
             foreach (bool preTranslate in boolValues)
             {
-                foreach (bool alternateSource in boolValues)
+                foreach (bool source in boolValues)
                 {
-                    foreach (bool alternateTrainingSource in boolValues)
+                    foreach (bool alternateSource in boolValues)
                     {
-                        foreach (bool additionalTrainingSource in boolValues)
+                        foreach (bool alternateTrainingSource in boolValues)
                         {
-                            yield return new TestEnvironmentOptions
+                            foreach (bool additionalTrainingSource in boolValues)
                             {
-                                AlternateSource = alternateSource,
-                                AlternateTrainingSource = alternateTrainingSource,
-                                AdditionalTrainingSource = additionalTrainingSource,
-                                PreTranslate = preTranslate,
-                            };
+                                var options = new TestEnvironmentOptions
+                                {
+                                    AlternateSource = alternateSource,
+                                    AlternateTrainingSource = alternateTrainingSource,
+                                    AdditionalTrainingSource = additionalTrainingSource,
+                                    PreTranslate = preTranslate,
+                                    Source = source,
+                                };
+                                if (options.WillSucceed)
+                                {
+                                    yield return options;
+                                }
+                            }
                         }
                     }
                 }
@@ -3638,6 +3843,7 @@ public class MachineProjectServiceTests
                     AlternateTrainingSource = true,
                     AlternateTrainingSourceAndSourceAreTheSame = true,
                     PreTranslate = preTranslate,
+                    Source = true,
                 };
             }
         }
@@ -3653,7 +3859,16 @@ public class MachineProjectServiceTests
         public bool HasTranslationEngineForSmt { get; init; }
         public bool LegacyCorpora { get; init; }
         public bool PreTranslate { get; init; }
-        public bool UseEchoForPreTranslation { get; init; }
+        public bool Source { get; init; }
+
+        /// <summary>
+        /// Determines if the test has the minimum required configuration to succeed.
+        /// </summary>
+        public bool WillSucceed => AlternateSourceOrSourceAndNmt || SourceAndSmt;
+
+        private bool AlternateSourceOrSourceAndNmt => (AlternateSource || Source) && PreTranslate;
+
+        private bool SourceAndSmt => Source && !PreTranslate;
     }
 
     private class TestEnvironment
@@ -3710,6 +3925,9 @@ public class MachineProjectServiceTests
                         }
                     )
                 );
+            TranslationEnginesClient
+                .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+                .Returns(Task.FromResult(new TranslationBuild { Id = Build01 }));
             CorporaClient
                 .CreateAsync(Arg.Any<CorpusConfig>(), CancellationToken.None)
                 .Returns(Task.FromResult(new Corpus { Id = Corpus01 }));
@@ -3722,20 +3940,15 @@ public class MachineProjectServiceTests
                 .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
                 .Returns(new ParatextSettings { IsRightToLeft = true, LanguageTag = LanguageTag });
 
-            FeatureManager = Substitute.For<IFeatureManager>();
-            FeatureManager
-                .IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation)
-                .Returns(Task.FromResult(options.UseEchoForPreTranslation));
-
             FileSystemService = Substitute.For<IFileSystemService>();
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
             FileSystemService
                 .EnumerateFiles(Arg.Any<string>())
-                .Returns(callInfo => [Path.Combine(callInfo.ArgAt<string>(0), "file")]);
+                .Returns(callInfo => [Path.Join(callInfo.ArgAt<string>(0), "file")]);
             FileSystemService
                 .OpenFile(Arg.Any<string>(), FileMode.Open)
                 .Returns(callInfo => new MemoryStream(
-                    Encoding.UTF8.GetBytes(Path.Combine(callInfo.ArgAt<string>(0) + "_file_contents"))
+                    Encoding.UTF8.GetBytes(Path.Join(callInfo.ArgAt<string>(0) + "_file_contents"))
                 ));
 
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
@@ -3788,6 +4001,7 @@ public class MachineProjectServiceTests
                         },
                     },
                     new SFProjectSecret { Id = Project03 },
+                    new SFProjectSecret { Id = Project04 },
                 ]
             );
 
@@ -3829,12 +4043,14 @@ public class MachineProjectServiceTests
                         TranslateConfig = new TranslateConfig
                         {
                             TranslationSuggestionsEnabled = true,
-                            Source = new TranslateSource
-                            {
-                                ProjectRef = Project01,
-                                ParatextId = Paratext01,
-                                WritingSystem = new WritingSystem { Tag = "en" },
-                            },
+                            Source = options.Source
+                                ? new TranslateSource
+                                {
+                                    ProjectRef = Project01,
+                                    ParatextId = Paratext01,
+                                    WritingSystem = new WritingSystem { Tag = "en" },
+                                }
+                                : null,
                             DraftConfig = new DraftConfig
                             {
                                 AlternateSourceEnabled = options.AlternateSource,
@@ -3890,6 +4106,16 @@ public class MachineProjectServiceTests
                             Source = new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 },
                         },
                     },
+                    new SFProject
+                    {
+                        Id = Project04,
+                        Name = "project04",
+                        ShortName = "P04",
+                        ParatextId = Paratext04,
+                        CheckingConfig = new CheckingConfig(),
+                        UserRoles = [],
+                        TranslateConfig = new TranslateConfig { PreTranslate = true },
+                    },
                 ]
             );
 
@@ -3905,7 +4131,6 @@ public class MachineProjectServiceTests
                 CorporaClient,
                 DataFilesClient,
                 ExceptionHandler,
-                FeatureManager,
                 FileSystemService,
                 MockLogger,
                 ParatextService,
@@ -3921,7 +4146,6 @@ public class MachineProjectServiceTests
         public MachineProjectService Service { get; }
         public ICorporaClient CorporaClient { get; }
         public IDataFilesClient DataFilesClient { get; }
-        public IFeatureManager FeatureManager { get; }
         public IFileSystemService FileSystemService { get; }
         public IParatextService ParatextService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
@@ -3946,7 +4170,7 @@ public class MachineProjectServiceTests
             bool createsServalCorpora
         )
         {
-            int numberOfServalCorpusFiles = 2;
+            int numberOfServalCorpusFiles = 1;
 
             // Target
             await CorporaClient
@@ -3955,33 +4179,44 @@ public class MachineProjectServiceTests
             Assert.AreEqual(options.PreTranslate ? 2 : 1, actual.Count(s => s.ProjectId == Project02));
 
             // Source
-            await CorporaClient
-                .Received(createsServalCorpora ? 1 : 0)
-                .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project01}"));
-
-            // See how many times the source corpus was used in the parallel corpora
-            int expected = options switch
+            if (options.Source)
             {
-                { PreTranslate: false } => 1,
+                await CorporaClient
+                    .Received(createsServalCorpora ? 1 : 0)
+                    .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project01}"));
+                numberOfServalCorpusFiles++;
+
+                // See how many times the source corpus was used in the parallel corpora
+                int expected = options switch
                 {
-                    PreTranslate: true,
-                    AlternateTrainingSource: true,
-                    AlternateTrainingSourceAndSourceAreTheSame: true
-                } => 2,
-                { PreTranslate: true, AlternateTrainingSource: true, AlternateSource: true } => 0,
-                { PreTranslate: true, AlternateTrainingSource: true } => 1,
-                { PreTranslate: true, AlternateSource: true } => 1,
-                { PreTranslate: true } => 2,
-            };
-            Assert.AreEqual(expected, actual.Count(s => s.ProjectId == Project01));
+                    { PreTranslate: false } => 1,
+                    {
+                        PreTranslate: true,
+                        AlternateTrainingSource: true,
+                        AlternateTrainingSourceAndSourceAreTheSame: true,
+                    } => 2,
+                    { PreTranslate: true, AlternateTrainingSource: true, AlternateSource: true } => 0,
+                    { PreTranslate: true, AlternateTrainingSource: true } => 1,
+                    { PreTranslate: true, AlternateSource: true } => 1,
+                    { PreTranslate: true } => 2,
+                };
+                Assert.AreEqual(expected, actual.Count(s => s.ProjectId == Project01));
+            }
 
             // Alternate Source
             if (options.AlternateSource)
             {
+                int expected = options switch
+                {
+                    { PreTranslate: false } => 0,
+                    { PreTranslate: true, AlternateTrainingSource: true } => 1,
+                    { PreTranslate: true, Source: true } => 1,
+                    { PreTranslate: true } => 2,
+                };
                 await CorporaClient
                     .Received(createsServalCorpora ? 1 : 0)
                     .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project03}"));
-                Assert.AreEqual(options.PreTranslate ? 1 : 0, actual.Count(s => s.ProjectId == Project03));
+                Assert.AreEqual(expected, actual.Count(s => s.ProjectId == Project03));
                 numberOfServalCorpusFiles++;
             }
 

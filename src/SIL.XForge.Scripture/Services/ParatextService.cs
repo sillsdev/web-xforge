@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using IdentityModel;
+using Duende.IdentityModel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -171,7 +171,7 @@ public class ParatextService : DisposableBase, IParatextService
         // Stop ParatextData.dll Trace output from appearing on the server.
         System.Diagnostics.Trace.Listeners.Clear();
 
-        SyncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
+        SyncDir = Path.Join(_siteOptions.Value.SiteDir, "sync");
         if (!_fileSystemService.DirectoryExists(SyncDir))
             _fileSystemService.CreateDirectory(SyncDir);
         // Disable caching VersionedText instances since multiple repos may exist on SF server with the same GUID
@@ -274,7 +274,7 @@ public class ParatextService : DisposableBase, IParatextService
                         + $"{paratextId}"
                 );
             }
-            EnsureProjectReposExists(userSecret, ptProject, source);
+            await EnsureProjectReposExistsAsync(userSecret, ptProject, source);
             if (ptProject is not ParatextResource)
             {
                 StartProgressReporting(progress);
@@ -288,6 +288,7 @@ public class ParatextService : DisposableBase, IParatextService
                 SharedProject sharedProj = CreateSharedProject(
                     paratextId,
                     ptProject.ShortName,
+                    username,
                     scrText,
                     sendReceiveRepository
                 );
@@ -444,7 +445,9 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary>
     /// Is the PT project referred to by `paratextId` a DBL resource?
     /// </summary>
-    public bool IsResource(string paratextId) =>
+    /// <param name="paratextId">The Paratext identifier</param>
+    /// <returns><c>true</c> if the paratext identifier is a resource; otherwise, <c>false</c>.</returns>
+    public bool IsResource(string? paratextId) =>
         paratextId?.Length == SFInstallableDblResource.ResourceIdentifierLength;
 
     /// <summary>
@@ -846,7 +849,7 @@ public class ParatextService : DisposableBase, IParatextService
         else
         {
             // Get the scripture text so we can retrieve the permissions from the XML
-            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), sfProject.ParatextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, sfProject.ParatextId);
 
             // Calculate the project and resource permissions
             foreach (string uid in sfProject.UserRoles.Keys)
@@ -855,7 +858,7 @@ public class ParatextService : DisposableBase, IParatextService
                 if (
                     !ptUsernameMapping.TryGetValue(uid, out string userName)
                     || string.IsNullOrWhiteSpace(userName)
-                    || scrText.Permissions.GetRole(userName) == UserRoles.None
+                    || scrText!.Permissions.GetRole(userName) == UserRoles.None
                 )
                 {
                     permissions.Add(uid, TextInfoPermission.None);
@@ -863,39 +866,46 @@ public class ParatextService : DisposableBase, IParatextService
                 else
                 {
                     string textInfoPermission = TextInfoPermission.Read;
-                    if (book == 0)
+
+                    // Observers and Consultants can have EditAllBooks set to true,
+                    // so we must check whether the role is read-only.
+                    // NOTE: We check for UserRoles.None in the block above.
+                    if (scrText.Permissions.GetRole(userName) is not (UserRoles.Observer or UserRoles.Consultant))
                     {
-                        // Project level
-                        if (scrText.Permissions.CanEditAllBooks(userName))
+                        if (book == 0)
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Project level
+                            if (scrText.Permissions.CanEditAllBooks(userName))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
-                    }
-                    else if (chapter == 0)
-                    {
-                        // Book level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
-                            PermissionSet.Merged,
-                            userName
-                        );
-                        // Check if they can edit all books or the specified book
-                        if (scrText.Permissions.CanEditAllBooks(userName) || editable.Contains(book))
+                        else if (chapter == 0)
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Book level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
+                                PermissionSet.Merged,
+                                userName
+                            );
+                            // Check if they can edit all books or the specified book
+                            if (scrText.Permissions.CanEditAllBooks(userName) || editable.Contains(book))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
-                    }
-                    else
-                    {
-                        // Chapter level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(
-                            book,
-                            scrText.Settings.Versification,
-                            userName,
-                            PermissionSet.Merged
-                        );
-                        if (editable?.Contains(chapter) ?? false)
+                        else
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Chapter level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(
+                                book,
+                                scrText.Settings.Versification,
+                                userName,
+                                PermissionSet.Merged
+                            );
+                            if (editable?.Contains(chapter) ?? false)
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
                     }
 
@@ -1755,8 +1765,8 @@ public class ParatextService : DisposableBase, IParatextService
         // BackupProject and RestoreProject implementations in Paratext.Data.Repository.VersionedText.
         try
         {
-            string directory = Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups");
-            string path = Path.Combine(directory, scrText.Guid + ".bndl");
+            string directory = Path.Join(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups");
+            string path = Path.Join(directory, scrText.Guid + ".bndl");
             string tempPath = path + "_temp";
             _fileSystemService.CreateDirectory(directory);
 
@@ -1813,7 +1823,7 @@ public class ParatextService : DisposableBase, IParatextService
         if (BackupExistsInternal(scrText))
         {
             string source = scrText.Directory;
-            string destination = Path.Combine(
+            string destination = Path.Join(
                 Paratext.Data.ScrTextCollection.SettingsDirectory,
                 "_Backups",
                 scrText.Guid.ToString()
@@ -2297,7 +2307,7 @@ public class ParatextService : DisposableBase, IParatextService
     {
         try
         {
-            string path = Path.Combine(
+            string path = Path.Join(
                 Paratext.Data.ScrTextCollection.SettingsDirectory,
                 "_Backups",
                 $"{scrText.Guid}.bndl"
@@ -2449,7 +2459,7 @@ public class ParatextService : DisposableBase, IParatextService
             _logger.LogError(msg);
             throw new InvalidOperationException(msg);
         }
-        var hgMerge = Path.Combine(AssemblyDirectory, "ParatextMerge.py");
+        var hgMerge = Path.Join(AssemblyDirectory, "ParatextMerge.py");
         _hgHelper.SetDefault(new Hg(customHgPath, hgMerge, AssemblyDirectory));
     }
 
@@ -2459,8 +2469,8 @@ public class ParatextService : DisposableBase, IParatextService
         string[] resources = ["usfm.sty", "revisionStyle.sty", "revisionTemplate.tem", "usfm_mod.sty", "usfm_sb.sty"];
         foreach (string resource in resources)
         {
-            string target = Path.Combine(SyncDir, resource);
-            string source = Path.Combine(AssemblyDirectory, resource);
+            string target = Path.Join(SyncDir, resource);
+            string source = Path.Join(AssemblyDirectory, resource);
             if (!File.Exists(target))
             {
                 _logger.LogInformation($"Installing missing {target}");
@@ -2472,7 +2482,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary>
     /// Ensure the target project repository exists on the local SF server, cloning if necessary.
     /// </summary>
-    private void EnsureProjectReposExists(
+    private async Task EnsureProjectReposExistsAsync(
         UserSecret userSecret,
         ParatextProject target,
         IInternetSharedRepositorySource repositorySource
@@ -2484,7 +2494,7 @@ public class ParatextService : DisposableBase, IParatextService
         if (target is ParatextResource resource)
         {
             // If the target is a resource, install it
-            InstallResource(username, resource, target.ParatextId, targetNeedsCloned);
+            await InstallResourceAsync(username, resource, target.ParatextId, targetNeedsCloned);
         }
         else if (targetNeedsCloned)
         {
@@ -2507,7 +2517,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <remarks>
     ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
     /// </remarks>
-    private void InstallResource(
+    private async Task InstallResourceAsync(
         string username,
         ParatextResource resource,
         string targetParatextId,
@@ -2545,7 +2555,7 @@ public class ParatextService : DisposableBase, IParatextService
             {
                 string path = LocalProjectDir(targetParatextId);
                 _fileSystemService.CreateDirectory(path);
-                resource.InstallableResource.ExtractToDirectory(path);
+                await resource.InstallableResource.ExtractToDirectoryAsync(path);
                 MigrateResourceIfRequired(username, targetParatextId, overrideLanguageId);
             }
         }
@@ -2632,8 +2642,8 @@ public class ParatextService : DisposableBase, IParatextService
         // If the publisher updates this resource, this file will be overwritten with the fully migrated language file,
         // stopping this migration from running in the future and negating its need.
         string path = LocalProjectDir(paratextId);
-        string oldLdmlFile = Path.Combine(path, "ldml.xml");
-        string newLdmlFile = Path.Combine(path, scrText.Settings.LdmlFileName);
+        string oldLdmlFile = Path.Join(path, "ldml.xml");
+        string newLdmlFile = Path.Join(path, scrText.Settings.LdmlFileName);
         if (_fileSystemService.FileExists(oldLdmlFile) && !_fileSystemService.FileExists(newLdmlFile))
         {
             _fileSystemService.MoveFile(oldLdmlFile, newLdmlFile);
@@ -2644,11 +2654,23 @@ public class ParatextService : DisposableBase, IParatextService
     private static SharedProject CreateSharedProject(
         string paratextId,
         string proj,
+        string username,
         ScrText scrText,
-        SharedRepository sharedRepository
+        SharedRepository? sharedRepository
     )
     {
-        // Previously we used the CreateSharedProject method of SharingLogic but it would
+        // Default to the local permissions
+        PermissionManager permissions = scrText.Permissions;
+
+        // Unless we have permissions from the registry
+        if (sharedRepository?.SourceUsers is not null)
+        {
+            // The shared repository permissions will use the user configured in Paratext,
+            // so we need to override it with the user that is running the sync.
+            permissions = new ParatextRegistryPermissionManager(username, sharedRepository.SourceUsers);
+        }
+
+        // Previously we used the CreateSharedProject method of SharingLogic, but it would
         // result in null if the user did not have a license to the repo which happens
         // if the project is derived from another. This ensures the SharedProject is available.
         // We must set the ScrText property of the SharedProject to indicate that the project is available locally
@@ -2658,7 +2680,7 @@ public class ParatextService : DisposableBase, IParatextService
             Repository = sharedRepository,
             SendReceiveId = HexId.FromStr(paratextId),
             ScrText = scrText,
-            Permissions = scrText.Permissions,
+            Permissions = permissions,
         };
     }
 
@@ -2669,7 +2691,7 @@ public class ParatextService : DisposableBase, IParatextService
         // Historically, SF used both "target" and "source" projects in adjacent directories. Then
         // moved to just using "target".
         string subDirForMainProject = "target";
-        return Path.Combine(SyncDir, paratextId, subDirForMainProject);
+        return Path.Join(SyncDir, paratextId, subDirForMainProject);
     }
 
     private void CloneProjectRepo(IInternetSharedRepositorySource source, string paratextId, SharedRepository repo)
@@ -2791,6 +2813,7 @@ public class ParatextService : DisposableBase, IParatextService
         catch (Exception e)
         {
             _logger.LogError(e, "Exception while updating notes: {0}", e.Message);
+            throw;
         }
 
         return syncMetricInfo;
@@ -2800,7 +2823,7 @@ public class ParatextService : DisposableBase, IParatextService
     {
         CommentList userComments = [.. commentManager.AllComments.Where(comment => comment.User == username)];
         string fileName = commentManager.GetUserFileName(username);
-        string path = Path.Combine(commentManager.ScrText.Directory, fileName);
+        string path = Path.Join(commentManager.ScrText.Directory, fileName);
         using Stream stream = _fileSystemService.CreateFile(path);
         _fileSystemService.WriteXmlFile(stream, userComments);
     }
@@ -2882,7 +2905,8 @@ public class ParatextService : DisposableBase, IParatextService
             _exceptionHandler,
             _dblServerUri
         );
-        IReadOnlyDictionary<string, int> resourceRevisions = SFInstallableDblResource.GetInstalledResourceRevisions();
+        IReadOnlyDictionary<string, int> resourceRevisions =
+            await SFInstallableDblResource.GetInstalledResourceRevisionsAsync();
         return resources
             .OrderBy(r => r.FullName)
             .Select(r =>

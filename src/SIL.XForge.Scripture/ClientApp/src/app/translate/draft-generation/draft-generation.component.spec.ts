@@ -13,7 +13,6 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -34,11 +33,11 @@ import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHandlingService } from './draft-handling.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
+import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
 describe('DraftGenerationComponent', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
-  let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
   let mockDraftSourcesService: jasmine.SpyObj<DraftSourcesService>;
@@ -49,6 +48,7 @@ describe('DraftGenerationComponent', () => {
   let mockTextDocService: jasmine.SpyObj<TextDocService>;
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
+  let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockProgressService: jasmine.SpyObj<ProgressService>;
 
@@ -85,7 +85,6 @@ describe('DraftGenerationComponent', () => {
         imports: [TestOnlineStatusModule.forRoot(), RouterModule.forRoot([]), TestTranslocoModule],
         providers: [
           { provide: AuthService, useValue: mockAuthService },
-          { provide: FeatureFlagService, useValue: mockFeatureFlagService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: DraftSourcesService, useValue: mockDraftSourcesService },
           { provide: DraftHandlingService, useValue: mockDraftHandlingService },
@@ -97,6 +96,7 @@ describe('DraftGenerationComponent', () => {
           { provide: NoticeService, useValue: mockNoticeService },
           { provide: NllbLanguageService, useValue: mockNllbLanguageService },
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+          { provide: PreTranslationSignupUrlService, useValue: mockPreTranslationSignupUrlService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },
           { provide: ProgressService, useValue: mockProgressService }
         ]
@@ -110,14 +110,7 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
-      mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-        'FeatureFlagService',
-        {},
-        {
-          allowForwardTranslationNmtDrafting: createTestFeatureFlag(false)
-        }
-      );
-      mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
+      mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog', 'message']);
       mockNoticeService = jasmine.createSpyObj<NoticeService>([
         'loadingStarted',
         'loadingFinished',
@@ -144,13 +137,15 @@ describe('DraftGenerationComponent', () => {
       mockDraftSourcesService = jasmine.createSpyObj<DraftSourcesService>(['getDraftProjectSources']);
       mockDraftSourcesService.getDraftProjectSources.and.returnValue(
         of({
-          draftingSources: [undefined],
-          trainingSources: [undefined, undefined],
-          trainingTargets: [undefined]
+          draftingSources: [],
+          trainingSources: [],
+          trainingTargets: []
         } as DraftSourcesAsArrays)
       );
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
+      mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
+      mockPreTranslationSignupUrlService.generateSignupUrl.and.returnValue(Promise.resolve(''));
 
       const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
       when(mockTrainingDataQuery.localChanges$).thenReturn(of());
@@ -178,8 +173,6 @@ describe('DraftGenerationComponent', () => {
               }
             },
             draftConfig: {
-              lastSelectedTrainingBooks: preTranslate ? [1] : [],
-              lastSelectedTranslationBooks: preTranslate ? [2] : [],
               lastSelectedTrainingScriptureRange: preTranslate ? 'GEN' : undefined,
               lastSelectedTranslationScriptureRange: preTranslate ? 'EXO' : undefined
             }
@@ -214,12 +207,20 @@ describe('DraftGenerationComponent', () => {
       });
     }
 
+    get configureDraftButton(): HTMLElement | null {
+      return this.getElementByTestId('configure-button');
+    }
+
     get downloadButton(): HTMLElement | null {
       return this.getElementByTestId('download-button');
     }
 
     get downloadSpinner(): HTMLElement | null {
       return this.getElementByTestId('download-spinner');
+    }
+
+    get improvedDraftGenerationNotice(): HTMLElement | null {
+      return this.getElementByTestId('improved-draft-generation-notice');
     }
 
     get offlineTextElement(): HTMLElement | null {
@@ -248,8 +249,13 @@ describe('DraftGenerationComponent', () => {
       expect(mockDraftGenerationService.pollBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(true);
-      expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.targetLanguage).toBe('en');
+      expect(env.configureDraftButton).not.toBeNull();
+    });
+
+    it('should not show configure drafting source button for translators', () => {
+      const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
+      expect(env.configureDraftButton).toBeNull();
     });
 
     it('does not subscribe to build when project does not have drafting enabled', () => {
@@ -265,8 +271,9 @@ describe('DraftGenerationComponent', () => {
             tag: 'xyz'
           },
           translateConfig: {
-            projectType: ProjectType.Standard
-          }
+            projectType: ProjectType.BackTranslation
+          },
+          userRoles: { user01: SFProjectRole.ParatextAdministrator }
         })
       } as SFProjectProfileDoc;
       const env = new TestEnvironment(() => {
@@ -281,9 +288,47 @@ describe('DraftGenerationComponent', () => {
       env.fixture.detectChanges();
       tick();
 
-      expect(env.component.isBackTranslation).toBe(false);
+      expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
-      expect(env.component.isSourceProjectSet).toBe(false);
+      expect(env.configureDraftButton).not.toBeNull();
+    }));
+  });
+
+  describe('Improved draft generation notice', () => {
+    // Do not run this test after April 1 2025
+    const shouldRunTest = new Date() < new Date('2025-04-01');
+    (shouldRunTest ? it : xit)(
+      'should show notice if back translation or pre-translate approved',
+      fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.component.isBackTranslation = true;
+        env.component.isPreTranslationApproved = false;
+        env.fixture.detectChanges();
+        tick();
+
+        expect(env.component.isBackTranslation).toBe(true);
+        expect(env.component.isPreTranslationApproved).toBe(false);
+        expect(env.improvedDraftGenerationNotice).not.toBeNull();
+
+        env.component.isBackTranslation = false;
+        env.component.isPreTranslationApproved = true;
+        env.fixture.detectChanges();
+        tick();
+
+        expect(env.component.isBackTranslation).toBe(false);
+        expect(env.component.isPreTranslationApproved).toBe(true);
+        expect(env.improvedDraftGenerationNotice).not.toBeNull();
+      })
+    );
+
+    it('should not show notice if not back translation nor pre-translate approved.', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.component.isBackTranslation = false;
+      env.component.isPreTranslationApproved = false;
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.improvedDraftGenerationNotice).toBeNull();
     }));
   });
 
@@ -293,6 +338,7 @@ describe('DraftGenerationComponent', () => {
       env.testOnlineStatusService.setIsOnline(false);
       env.fixture.detectChanges();
       expect(env.offlineTextElement).not.toBeNull();
+      expect(env.configureDraftButton).toBeNull();
 
       env.component.currentPage = 'steps';
       env.fixture.detectChanges();
@@ -311,69 +357,6 @@ describe('DraftGenerationComponent', () => {
   });
 
   describe('warnings', () => {
-    it('should not show any warnings if not a back translation nor pre-translate approved', () => {
-      const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-      });
-      env.component.isBackTranslation = false;
-      env.component.isPreTranslationApproved = false;
-
-      // source text is missing
-      env.component.isSourceProjectSet = false;
-      env.component.isTargetLanguageSupported = true;
-      env.fixture.detectChanges();
-      expect(env.getElementByTestId('warning-source-text-missing')).toBeNull();
-
-      // source and target text are the same
-      env.component.isSourceProjectSet = true;
-      env.fixture.detectChanges();
-    });
-    describe('source text missing', () => {
-      it('should show warning with settings link when source text is missing AND target language is supported, user is Paratext Admin', () => {
-        const env = new TestEnvironment(() => TestEnvironment.initProject('user01'));
-        env.component.isSourceProjectSet = false;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.component.isProjectAdmin).toEqual(true);
-        expect(env.getElementByTestId('warning-source-text-missing')).not.toBeNull();
-        expect(env.getElementByKey('draft_generation.info_alert_source_text_not_selected')).not.toBeNull();
-        expect(env.getElementByKey('draft_generation.non_pa_info_alert_source_text_not_selected')).toBeNull();
-      });
-
-      it('should show warning to contact Paratext Admin when source text is missing AND target language is supported, user is Translator', () => {
-        const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
-        env.component.isSourceProjectSet = false;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.component.isProjectAdmin).toBe(false);
-        expect(env.getElementByTestId('warning-source-text-missing')).not.toBeNull();
-        expect(env.getElementByKey('draft_generation.info_alert_source_text_not_selected')).toBeNull();
-        expect(env.getElementByKey('draft_generation.non_pa_info_alert_source_text_not_selected')).not.toBeNull();
-      });
-
-      it('should not show warning when target language is not supported', () => {
-        const env = new TestEnvironment();
-        env.component.isSourceProjectSet = false;
-        env.component.isTargetLanguageSupported = false;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-source-text-missing')).toBeNull();
-      });
-
-      it('should not show warning when source text is not missing', () => {
-        const env = new TestEnvironment();
-        env.component.isSourceProjectSet = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-source-text-missing')).toBeNull();
-      });
-    });
-
     describe('user must have access to source project', () => {
       it('should show warning when no access to source project', () => {
         const env = new TestEnvironment(() => {
@@ -392,13 +375,12 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              trainingSources: [{} as DraftSource],
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
         env.component.isPreTranslationApproved = true;
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         expect(env.getElementByTestId('warning-source-no-access')).not.toBeNull();
       });
@@ -420,21 +402,13 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              trainingSources: [],
+              trainingTargets: []
             } as DraftSourcesAsArrays)
-          );
-          mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-            'FeatureFlagService',
-            {},
-            {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-            }
           );
         });
         env.component.isBackTranslation = false;
         env.component.isPreTranslationApproved = false;
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
@@ -449,12 +423,11 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              trainingSources: [],
+              trainingTargets: []
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = false;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
@@ -464,20 +437,31 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [
-                {
-                  noAccess: true
-                } as DraftSource
-              ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              draftingSources: [],
+              trainingSources: [{} as DraftSource],
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
+      });
+
+      it('should show warning when source project is not set and user is a translator', () => {
+        const env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              draftingSources: [],
+              trainingSources: [{} as DraftSource],
+              trainingTargets: [{} as DraftSource]
+            } as DraftSourcesAsArrays)
+          );
+          TestEnvironment.initProject('user02');
+        });
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-admin-must-configure-sources')).not.toBeNull();
       });
 
       it('should not show warning when access to source project', () => {
@@ -489,36 +473,34 @@ describe('DraftGenerationComponent', () => {
                   noAccess: false
                 } as DraftSource
               ],
-              trainingSources: [undefined, undefined],
-              trainingTargets: [undefined]
+              trainingSources: [{} as DraftSource],
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
       });
     });
 
-    describe('user must have access to training source project', () => {
+    describe('user must have access to training source project (aka alternate training source project)', () => {
       it('should show warning when no access to training source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [{} as DraftSource],
               trainingSources: [
                 {
                   noAccess: true
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
         env.component.isPreTranslationApproved = true;
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-training-source-no-access')).not.toBeNull();
@@ -528,75 +510,66 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [{} as DraftSource],
               trainingSources: [
                 {
                   noAccess: true
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
-          );
-          mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-            'FeatureFlagService',
-            {},
-            {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-            }
           );
         });
         env.component.isBackTranslation = false;
         env.component.isPreTranslationApproved = false;
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
+        expect(env.getElementByTestId('warning-training-source-no-access')).toBeNull();
       });
 
       it('should not show warning when target language is not supported', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [{} as DraftSource],
               trainingSources: [
                 {
                   noAccess: true
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = false;
         env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
+        expect(env.getElementByTestId('warning-training-source-no-access')).toBeNull();
       });
 
       it('should not show warning when source project is not set', () => {
+        // Because then we merely direct the user to configure sources.
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
                 {
                   noAccess: true
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
+        expect(env.getElementByTestId('warning-training-source-no-access')).toBeNull();
       });
 
-      it('should not show warning when no access to source project', () => {
+      it('should show warning even when no access to alternate source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
@@ -611,80 +584,54 @@ describe('DraftGenerationComponent', () => {
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
-      });
-
-      it('should not show warning when no access to alternate source project', () => {
-        const env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              draftingSources: [
-                {
-                  noAccess: true
-                } as DraftSource
-              ],
-              trainingSources: [
-                {
-                  noAccess: true
-                } as DraftSource,
-                undefined
-              ],
-              trainingTargets: [undefined]
-            } as DraftSourcesAsArrays)
-          );
-        });
-        env.component.isSourceProjectSet = true;
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
+        expect(env.getElementByTestId('warning-training-source-no-access')).not.toBeNull();
       });
 
       it('should not show warning when access to alternate training source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [{} as DraftSource],
               trainingSources: [
                 {
-                  noAccess: true
+                  noAccess: false
                 } as DraftSource,
                 undefined
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBeNull();
+        expect(env.getElementByTestId('warning-training-source-no-access')).toBeNull();
       });
     });
 
     describe('user must have access to additional training source project', () => {
+      // i.e. in addition to the "alternate training source project".
+
       it('should show warning when no access to additional training source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [{} as DraftSource],
               trainingSources: [
-                undefined,
+                {} as DraftSource,
                 {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).not.toBeNull();
@@ -694,27 +641,19 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [{} as DraftSource],
               trainingSources: [
-                undefined,
+                {} as DraftSource,
                 {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
-          );
-          mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-            'FeatureFlagService',
-            {},
-            {
-              allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-            }
           );
         });
         env.component.isBackTranslation = false;
         env.component.isPreTranslationApproved = false;
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
@@ -724,45 +663,44 @@ describe('DraftGenerationComponent', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [{} as DraftSource],
               trainingSources: [
-                undefined,
+                {} as DraftSource,
                 {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = false;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
       });
 
       it('should not show warning when source project is not set', () => {
+        // Because we merely direct the user to configure sources.
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [],
               trainingSources: [
-                undefined,
+                {} as DraftSource,
                 {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
       });
 
-      it('should not show warning when no access to source project', () => {
+      it('should show warning even when no access to source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
@@ -772,26 +710,25 @@ describe('DraftGenerationComponent', () => {
                 } as DraftSource
               ],
               trainingSources: [
-                undefined,
+                {} as DraftSource,
                 {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).not.toBeNull();
       });
 
-      it('should not show warning when no access to training source project', () => {
+      it('should show warning even when no access to training source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [{} as DraftSource],
               trainingSources: [
                 {
                   noAccess: true
@@ -800,32 +737,30 @@ describe('DraftGenerationComponent', () => {
                   noAccess: true
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).not.toBeNull();
       });
 
       it('should not show warning when access to additional training source project', () => {
         const env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
             of({
-              draftingSources: [undefined],
+              draftingSources: [{} as DraftSource],
               trainingSources: [
-                undefined,
+                {} as DraftSource,
                 {
                   noAccess: false
                 } as DraftSource
               ],
-              trainingTargets: [undefined]
+              trainingTargets: [{} as DraftSource]
             } as DraftSourcesAsArrays)
           );
         });
-        env.component.isSourceProjectSet = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-mix-source-no-access')).toBeNull();
@@ -885,59 +820,32 @@ describe('DraftGenerationComponent', () => {
 
   describe('getInfoAlert', () => {
     it('should show "approval needed" info alert when isPreTranslationApproved is false and project is not in back translation mode', () => {
-      const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-      });
+      const env = new TestEnvironment();
       env.component.isBackTranslation = false;
       env.component.isTargetLanguageSupported = true;
-      env.component.isSourceProjectSet = false;
       env.component.isPreTranslationApproved = false;
       env.fixture.detectChanges();
-      expect(env.component.isBackTranslationMode).toBe(false);
+      expect(env.component.isBackTranslation).toBe(false);
       expect(env.getElementByTestId('approval-needed')).not.toBeNull();
     });
 
     it('should not show "approval needed" info alert when isPreTranslationApproved is true', () => {
-      const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-      });
+      const env = new TestEnvironment();
       env.component.isBackTranslation = false;
       env.component.isTargetLanguageSupported = true;
-      env.component.isSourceProjectSet = false;
       env.component.isPreTranslationApproved = true;
       env.fixture.detectChanges();
-      expect(env.component.isBackTranslationMode).toBe(false);
+      expect(env.component.isBackTranslation).toBe(false);
       expect(env.getElementByTestId('approval-needed')).toBeNull();
     });
 
     it('should not show "approval needed" info alert when project is in back translation mode', () => {
-      const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-      });
+      const env = new TestEnvironment();
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
-      env.component.isSourceProjectSet = false;
       env.component.isPreTranslationApproved = true;
       env.fixture.detectChanges();
-      expect(env.component.isBackTranslationMode).toBe(true);
+      expect(env.component.isBackTranslation).toBe(true);
       expect(env.getElementByTestId('approval-needed')).toBeNull();
     });
   });
@@ -961,14 +869,6 @@ describe('DraftGenerationComponent', () => {
         })
       } as SFProjectProfileDoc;
       const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -977,7 +877,6 @@ describe('DraftGenerationComponent', () => {
           changes$: of(projectDoc)
         });
       });
-      expect(env.component.isForwardTranslationEnabled).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(true);
     });
 
@@ -999,14 +898,6 @@ describe('DraftGenerationComponent', () => {
         })
       } as SFProjectProfileDoc;
       const env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
-          }
-        );
-
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
@@ -1017,8 +908,7 @@ describe('DraftGenerationComponent', () => {
       });
       env.fixture.detectChanges();
       tick();
-      expect(env.component.isForwardTranslationEnabled).toBe(true);
-      expect(env.component.isBackTranslationMode).toBe(true);
+      expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
     }));
   });
@@ -1062,6 +952,7 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
+        useEcho: false,
         projectId: projectId
       });
       env.fixture.detectChanges();
@@ -1071,7 +962,8 @@ describe('DraftGenerationComponent', () => {
         trainingDataFiles: [],
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
-        fastTraining: false
+        fastTraining: false,
+        useEcho: false
       });
       env.startedOrActiveBuild$.next(buildDto);
       env.fixture.detectChanges();
@@ -1089,6 +981,7 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
+        useEcho: false,
         projectId: projectId
       });
       env.fixture.detectChanges();
@@ -1096,7 +989,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.currentPage).toBe('initial');
       expect(env.component['draftJob']).not.toBeNull();
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
-      expect(mockNoticeService.show).toHaveBeenCalledTimes(1);
+      expect(mockDialogService.message).toHaveBeenCalledTimes(1);
     });
 
     it('should not attempt "cancel dialog" close for queued build', () => {
@@ -1110,6 +1003,7 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
+        useEcho: false,
         projectId: projectId
       });
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Queued });
@@ -1118,7 +1012,8 @@ describe('DraftGenerationComponent', () => {
         trainingDataFiles: [],
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
-        fastTraining: false
+        fastTraining: false,
+        useEcho: false
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -1135,6 +1030,7 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
+        useEcho: false,
         projectId: projectId
       });
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Pending });
@@ -1143,7 +1039,8 @@ describe('DraftGenerationComponent', () => {
         trainingDataFiles: [],
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
-        fastTraining: false
+        fastTraining: false,
+        useEcho: false
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -1160,6 +1057,7 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
+        useEcho: false,
         projectId: projectId
       });
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Active });
@@ -1168,7 +1066,8 @@ describe('DraftGenerationComponent', () => {
         trainingDataFiles: [],
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
-        fastTraining: false
+        fastTraining: false,
+        useEcho: false
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -1186,6 +1085,7 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
+        useEcho: false,
         projectId: projectId
       });
       env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Canceled });
@@ -1194,7 +1094,8 @@ describe('DraftGenerationComponent', () => {
         trainingDataFiles: [],
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
-        fastTraining: false
+        fastTraining: false,
+        useEcho: false
       });
       verify(mockDialogRef.close()).once();
     });
@@ -1254,6 +1155,7 @@ describe('DraftGenerationComponent', () => {
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
         fastTraining: false,
+        useEcho: false,
         projectId: projectId
       });
       tick();
@@ -1263,7 +1165,8 @@ describe('DraftGenerationComponent', () => {
         trainingDataFiles: [],
         trainingScriptureRanges: [],
         translationScriptureRanges: [],
-        fastTraining: false
+        fastTraining: false,
+        useEcho: false
       });
       expect(mockAuthService.requestParatextCredentialUpdate).toHaveBeenCalled();
     }));
@@ -1549,13 +1452,13 @@ describe('DraftGenerationComponent', () => {
       expect(env.downloadButton).toBeNull();
     });
 
-    it('button should display if the project updates the hasDraft field', () => {
+    it('button should display if the project updates the hasDraft field', fakeAsync(() => {
       // Setup the project and subject
       const projectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile({
           translateConfig: {
             preTranslate: true,
-            projectType: ProjectType.BackTranslation,
+            projectType: ProjectType.Standard,
             source: {
               projectRef: 'testSourceProjectId',
               writingSystem: {
@@ -1563,7 +1466,13 @@ describe('DraftGenerationComponent', () => {
               }
             }
           },
-          texts: [{ bookNum: 1, chapters: [{ number: 1, hasDraft: false }] }]
+          texts: [
+            {
+              bookNum: 1,
+              chapters: [{ number: 1, hasDraft: false }],
+              permissions: { user01: TextInfoPermission.Write }
+            }
+          ]
         })
       } as SFProjectProfileDoc;
       const projectSubject = new BehaviorSubject<SFProjectProfileDoc>(projectDoc);
@@ -1575,6 +1484,8 @@ describe('DraftGenerationComponent', () => {
       const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
           projectDoc: projectDoc,
+          projectId: projectId,
+          projectId$: of(projectId),
           projectDoc$: projectObservable,
           changes$: projectObservable
         });
@@ -1582,6 +1493,7 @@ describe('DraftGenerationComponent', () => {
         mockDraftGenerationService.pollBuildProgress.and.returnValue(buildObservable);
         mockDraftGenerationService.getLastCompletedBuild.and.returnValue(buildObservable);
       });
+      tick(500);
       env.fixture.detectChanges();
 
       // Verify the button is not visible
@@ -1592,12 +1504,12 @@ describe('DraftGenerationComponent', () => {
       projectDoc.data!.translateConfig.draftConfig.lastSelectedTranslationScriptureRange = 'GEN';
       projectSubject.next(projectDoc);
       buildSubject.next({ ...buildDto, state: BuildStates.Completed });
-
+      tick(500);
       env.fixture.detectChanges();
 
       // Verify the button is visible
       expect(env.downloadButton).not.toBeNull();
-    });
+    }));
 
     it('button should start the download', () => {
       const env = new TestEnvironment();

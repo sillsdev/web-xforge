@@ -35,16 +35,16 @@ describe('DraftSourcesService', () => {
   describe('getDraftProjectSources', () => {
     it('should pass undefined properties if no projects loaded', done => {
       when(mockActivatedProjectService.projectId).thenReturn(undefined);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
+      when(mockActivatedProjectService.changes$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({ data: undefined } as SFProjectProfileDoc)
       );
 
       // SUT
       service.getDraftProjectSources().subscribe(result => {
         expect(result).toEqual({
-          trainingSources: [undefined, undefined],
-          trainingTargets: [undefined],
-          draftingSources: [undefined]
+          trainingSources: [],
+          trainingTargets: [],
+          draftingSources: []
         } as DraftSourcesAsArrays);
         done();
       });
@@ -100,7 +100,7 @@ describe('DraftSourcesService', () => {
           }
         }
       });
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
+      when(mockActivatedProjectService.changes$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           id: 'project01',
           data: targetProject
@@ -206,7 +206,7 @@ describe('DraftSourcesService', () => {
           tag: 'en_UK'
         }
       });
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
+      when(mockActivatedProjectService.changes$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           id: 'project01',
           data: targetProject
@@ -271,7 +271,7 @@ describe('DraftSourcesService', () => {
           }
         }
       });
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
+      when(mockActivatedProjectService.changes$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           id: 'project01',
           data: targetProject
@@ -292,7 +292,7 @@ describe('DraftSourcesService', () => {
           }
         }
       });
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
+      when(mockActivatedProjectService.changes$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           id: 'project01',
           data: targetProject
@@ -321,7 +321,7 @@ describe('DraftSourcesService', () => {
           }
         }
       });
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
+      when(mockActivatedProjectService.changes$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           id: 'project01',
           data: targetProject
@@ -342,7 +342,7 @@ describe('DraftSourcesService', () => {
           }
         }
       });
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
+      when(mockActivatedProjectService.changes$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           id: 'project01',
           data: targetProject
@@ -371,7 +371,7 @@ describe('DraftSourcesService', () => {
           }
         }
       });
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
+      when(mockActivatedProjectService.changes$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           id: 'project01',
           data: targetProject
@@ -392,7 +392,7 @@ describe('DraftSourcesService', () => {
           }
         }
       });
-      when(mockActivatedProjectService.projectDoc$).thenReturn(
+      when(mockActivatedProjectService.changes$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           id: 'project01',
           data: targetProject
@@ -408,9 +408,9 @@ describe('DraftSourcesService', () => {
 
   function expectTargetOnly(targetProject: DraftSource, result: DraftSourcesAsArrays): void {
     expect(result).toEqual({
-      trainingSources: [undefined, undefined],
+      trainingSources: [],
       trainingTargets: [targetProject],
-      draftingSources: [undefined]
+      draftingSources: []
     } as DraftSourcesAsArrays);
   }
 });

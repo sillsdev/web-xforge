@@ -54,14 +54,14 @@ public class ParatextController : ControllerBase
     }
 
     /// <summary>
-    /// Download a project as a Paratext zip file.
+    /// Download a project or resource as a Paratext zip file.
     /// </summary>
     /// <param name="projectId">The Scripture Forge project identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The zip data for the project, if present in Scripture Forge.</returns>
     /// <response code="200">The zip file was successfully downloaded.</response>
     /// <response code="403">The user is not a system administrator or serval administrator.</response>
-    /// <response code="404">The project does not exist, is a resource, or could not be found on disk.</response>
+    /// <response code="404">The project does not exist, or could not be found on disk.</response>
     [HttpGet("projects/{projectId}/download")]
     [ProducesResponseType(typeof(FileStreamResult), 200)]
     public async Task<ActionResult> DownloadProjectAsync(string projectId, CancellationToken cancellationToken)

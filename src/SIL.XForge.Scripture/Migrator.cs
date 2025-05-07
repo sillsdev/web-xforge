@@ -15,14 +15,7 @@ public static class Migrator
         string version = Product.Version;
         string projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-        string migratorPath = Path.Combine(
-            projectPath,
-            "RealtimeServer",
-            "lib",
-            "cjs",
-            "scriptureforge",
-            "migrator.js"
-        );
+        string migratorPath = Path.Join(projectPath, "RealtimeServer", "lib", "cjs", "scriptureforge", "migrator.js");
 
         var startInfo = new ProcessStartInfo
         {

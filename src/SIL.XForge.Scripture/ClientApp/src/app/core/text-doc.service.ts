@@ -74,9 +74,7 @@ export class TextDocService {
       throw new Error(`Text Doc already exists for ${textDocId}`);
     }
 
-    if (data == null) {
-      data = { ops: [] };
-    }
+    data ??= { ops: [] };
     textDoc = await this.realtimeService.create(TextDoc.COLLECTION, textDocId.toString(), data, subscriber, type.uri);
     return textDoc;
   }

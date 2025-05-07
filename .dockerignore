@@ -20,11 +20,10 @@
 **/dist
 **/docker-compose*
 **/Dockerfile*
-**/lib
 **/node_modules
 **/npm-debug.log
 **/obj
-**/RealtimeServer/lib/
+*/src/RealtimeServer/lib/
 **/secrets.dev.yaml
 **/tmp
 **/values.dev.yaml

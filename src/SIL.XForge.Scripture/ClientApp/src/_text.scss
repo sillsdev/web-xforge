@@ -1,7 +1,38 @@
 @use 'src/variables';
 @use 'src/breakpoints';
+@use '@angular/material' as mat;
 @import 'quill/dist/quill.snow.css';
 @import 'usx';
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --sf-quill-background: #{if($is-dark, mat.get-theme-color($theme, neutral, 6), #f5f3ef)};
+  --sf-quill-highlight-marker-color: #{mat.get-theme-color($theme, tertiary, 80)};
+  --sf-quill-highlight-segment-background: #ffeb3b;
+  --sf-quill-highlight-segment-color: #{mat.get-theme-color($theme, neutral, 10)};
+  --sf-quill-question-count-background: #{mat.get-theme-color($theme, primary, 50)};
+  --sf-quill-question-count-color: #{mat.get-theme-color($theme, primary, 98)};
+  --sf-quill-insert-segment-background: #cce8cc;
+  --sf-quill-insert-segment-color: #{mat.get-theme-color($theme, neutral, 10)};
+  --sf-quill-delete-segment-background: #e8cccc;
+  --sf-quill-delete-segment-color: #{mat.get-theme-color($theme, neutral, 10)};
+
+  --sf-usx-chapter-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 70, 40))};
+  --sf-usx-verse-color: #{mat.get-theme-color($theme, neutral, 10)};
+  --sf-usx-verse-background: #{mat.get-theme-color($theme, neutral, 95)};
+  --sf-usx-readonly-verse-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 80, 10))};
+  --sf-usx-readonly-verse-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 30, 95))};
+
+  --sf-text-color: #{if($is-dark, black, rgba(0, 0, 0, 0.8))};
+  --sf-text-background: #{if($is-dark, mat.get-theme-color($theme, neutral-variant, 80), white)};
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}
 
 quill-editor {
   height: 100%;
@@ -18,7 +49,7 @@ quill-editor {
 }
 
 .ql-container.ql-snow {
-  border: 1px solid variables.$border-color;
+  border: 1px solid var(--sf-border-color);
 }
 
 .has-draft {
@@ -38,16 +69,19 @@ quill-editor {
     }
 
     .highlight-segment {
-      background-color: #ffeb3b;
+      background-color: var(--sf-quill-highlight-segment-background);
+      color: var(--sf-quill-highlight-segment-color);
     }
 
     .insert-segment {
-      background-color: #cce8cc;
+      background-color: var(--sf-quill-insert-segment-background);
+      color: var(--sf-quill-insert-segment-color);
       padding: 0;
     }
 
     .delete-segment {
-      background-color: #e8cccc;
+      background-color: var(--sf-quill-delete-segment-background);
+      color: var(--sf-quill-delete-segment-color);
       padding: 0;
       text-decoration: line-through;
 
@@ -77,8 +111,8 @@ quill-editor {
           display: flex;
           align-content: center;
           justify-content: center;
-          background: variables.$questions;
-          color: #fff;
+          background: var(--sf-quill-question-count-background);
+          color: var(--sf-quill-question-count-color);
           font-weight: bold;
           position: absolute;
           top: 0.2em;
@@ -186,7 +220,7 @@ quill-editor.rtl {
 
 .template-editor > .ql-container {
   > .ql-editor {
-    background-color: #f5f3ef;
+    background-color: var(--sf-quill-background);
 
     usx-para,
     p {
@@ -200,8 +234,8 @@ quill-editor.rtl {
 
         box-decoration-break: clone;
 
-        color: rgba(0, 0, 0, 0.8);
-        background-color: white;
+        color: var(--sf-text-color);
+        background-color: var(--sf-text-background);
       }
     }
 
@@ -217,9 +251,9 @@ quill-editor.rtl {
   > .highlight-marker {
     width: 0;
     height: 0;
-    border-left: 4px solid #a9ca25;
+    border-left: 4px solid var(--sf-quill-highlight-marker-color);
     position: absolute;
-    top: 0px;
+    top: 0;
     left: 6px;
   }
 }
@@ -235,7 +269,7 @@ quill-editor.rtl {
   }
 
   .highlight-para > usx-para-contents {
-    box-shadow: 1px 1px 0px 1px #ede6de;
+    box-shadow: 1px 1px 0 1px #ede6de;
   }
 }
 

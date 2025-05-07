@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!--
+    This is for compatibility between ICU4C (a dependency of ParatextData) and .NET 8.0 see:
+    https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/8.0/rid-graph
+    -->
+    <UseRidGraph>true</UseRidGraph>
+    <UserSecretsId>4d0606c3-0fc7-4d76-b43b-236485004e81</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ParatextData.Tests" Version="9.5.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SIL.Converters.Usj\SIL.Converters.Usj.csproj" />
+    <ProjectReference Include="..\..\src\SIL.XForge.Scripture\SIL.XForge.Scripture.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="usfm.sty">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="usx-sf.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

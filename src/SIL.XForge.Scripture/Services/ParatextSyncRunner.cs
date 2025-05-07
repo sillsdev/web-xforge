@@ -143,7 +143,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex that
     /// restricts the execution of this method as a background job to one instance at a time.
     /// </remarks>
-    [Mutex]
     public async Task RunAsync(
         string projectSFId,
         string userId,
@@ -340,11 +339,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     // NOTE: The following additions/removals not included in the transaction
 
                     // Add new PT users who are in the target project, but not the source project
-                    List<string> usersToAdd = _projectDoc
-                        .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
-                        .Select(u => u.Key)
-                        .Except(sourceProject.Data.UserRoles.Keys)
-                        .ToList();
+                    List<string> usersToAdd =
+                    [
+                        .. _projectDoc
+                            .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
+                            .Select(u => u.Key)
+                            .Except(sourceProject.Data.UserRoles.Keys),
+                    ];
                     foreach (string uid in usersToAdd)
                     {
                         // As resource projects do not have administrators, we connect as the user we are to add
@@ -361,11 +362,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     }
 
                     // Remove PT users who are in the target project, and no longer have access to the resource
-                    List<string> usersToCheck = _projectDoc
-                        .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
-                        .Select(u => u.Key)
-                        .Except(usersToAdd)
-                        .ToList();
+                    List<string> usersToCheck =
+                    [
+                        .. _projectDoc
+                            .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
+                            .Select(u => u.Key)
+                            .Except(usersToAdd),
+                    ];
                     foreach (string uid in usersToCheck)
                     {
                         string permission = await _paratextService.GetResourcePermissionAsync(
@@ -506,11 +509,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
     )
     {
         // Get the Text Data
-        List<string> textIds = _projectDoc
-            .Data.Texts.SelectMany(t =>
+        List<string> textIds =
+        [
+            .. _projectDoc.Data.Texts.SelectMany(t =>
                 t.Chapters.Select(c => TextData.GetTextDocId(_projectDoc.Id, t.BookNum, c.Number))
-            )
-            .ToList();
+            ),
+        ];
         IReadOnlyCollection<IDocument<TextData>> textDocs = await _conn.GetAndFetchDocsAsync<TextData>(textIds);
 
         // Get the Note Threads
@@ -563,9 +567,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
                 }
 
-                List<IDocument<NoteThread>> noteThreadDocs = noteDocs
-                    .Where(n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null)
-                    .ToList();
+                List<IDocument<NoteThread>> noteThreadDocs =
+                [
+                    .. noteDocs.Where(n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null),
+                ];
                 noteThreadDocsByBook[text.BookNum] = noteThreadDocs;
             }
         }
@@ -579,9 +584,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 await UpdateTranslateNoteTag(paratextId);
 
             // Only update Paratext if there are editable notes
-            List<IDocument<NoteThread>> editableNotes = noteDocs
-                .Where(nt => nt.Data.Notes.Any(n => n.Editable == true) && nt.Data?.BiblicalTermId == null)
-                .ToList();
+            List<IDocument<NoteThread>> editableNotes =
+            [
+                .. noteDocs.Where(nt => nt.Data.Notes.Any(n => n.Editable == true) && nt.Data?.BiblicalTermId == null),
+            ];
             if (editableNotes.Count > 0)
             {
                 int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
@@ -1533,10 +1539,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 _syncMetrics.Notes.Added++;
             }
 
-            List<int> removedIndices = change
-                .NoteIdsRemoved.Select(id => threadDoc.Data.Notes.FindIndex(n => n.DataId == id))
-                .Where(index => index >= 0)
-                .ToList();
+            List<int> removedIndices =
+            [
+                .. change
+                    .NoteIdsRemoved.Select(id => threadDoc.Data.Notes.FindIndex(n => n.DataId == id))
+                    .Where(index => index >= 0),
+            ];
             // Go through the indices in reverse order so subsequent removal indices are not affected
             removedIndices.Sort((a, b) => b.CompareTo(a));
             foreach (int index in removedIndices)
@@ -1630,7 +1638,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             .Select(n => n.Id);
         // Make a record of the note thread doc ids to return since they are removed
         // from noteThreadDocIds after the docs are deleted.
-        List<string> deletedNoteThreadDocIds = new List<string>(noteThreadDocIds);
+        List<string> deletedNoteThreadDocIds = [.. noteThreadDocIds];
 
         var tasks = new List<Task>();
         foreach (string noteThreadDocId in deletedNoteThreadDocIds)

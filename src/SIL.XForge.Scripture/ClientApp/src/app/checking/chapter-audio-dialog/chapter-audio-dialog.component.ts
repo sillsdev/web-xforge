@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AfterViewInit, Component, DestroyRef, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Canon } from '@sillsdev/scripture';
 import { cloneDeep, reject } from 'lodash-es';
@@ -15,9 +14,11 @@ import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { objectId, QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
+import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
@@ -46,15 +47,19 @@ export interface ChapterAudioDialogResult {
   styleUrls: ['./chapter-audio-dialog.component.scss']
 })
 export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;
+  @ViewChild('dropzone') dropzone!: ElementRef<HTMLElement>;
   @ViewChild('fileDropzone') fileDropzone?: ElementRef<HTMLInputElement>;
   @ViewChild('chapterAudio') chapterAudio?: SingleButtonAudioPlayerComponent;
-  private audio?: AudioAttachment;
+
+  protected readonly textDocId: TextDocId;
+  protected audio?: AudioAttachment;
+  protected timing_processed: AudioTiming[] = [];
+  protected showDragDropOverlay: boolean = false;
+
   private _book: number = this.books[0];
   private _chapter: number = 1;
   private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
   private timing: AudioTiming[] = [];
-  private timing_processed: AudioTiming[] = [];
   private _editState: boolean = false;
   private _selectionHasAudioAlready: boolean = false;
   private _audioLength: number = 0;
@@ -65,7 +70,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   private _loadingAudio: boolean = false;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: ChapterAudioDialogData,
     private readonly csvService: CsvService,
@@ -77,6 +82,8 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     protected readonly externalUrlService: ExternalUrlService
   ) {
     this.getStartingLocation();
+
+    this.textDocId = new TextDocId(this.data.projectId, this.book, this.chapter, 'target');
   }
 
   get isAudioInvalid(): boolean {
@@ -89,10 +96,6 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
 
   get audioBlob(): string | undefined {
     return this._audioBlob;
-  }
-
-  get selectionHasAudioAlready(): boolean {
-    return this._selectionHasAudioAlready;
   }
 
   get book(): number {
@@ -129,7 +132,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     return text.chapters.map(c => c.number);
   }
 
-  get hasTimingBeenUploaded(): boolean {
+  get isTimingUploaded(): boolean {
     return this.timing_processed.length > 0;
   }
 
@@ -137,7 +140,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     return this.timingErrorMessageKey !== '';
   }
 
-  get hasAudioBeenUploaded(): boolean {
+  get isAudioUploaded(): boolean {
     return this.audio?.blob != null && this.audio?.fileName != null;
   }
 
@@ -181,7 +184,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
       }
       await this.getDuration(audio.url).then(l => {
         this._audioLength = l;
-        if (this.hasTimingBeenUploaded) {
+        if (this.isTimingUploaded) {
           this.validateTimingEntries(this._audioLength);
         }
       });
@@ -194,7 +197,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
 
   deleteAudioData(): void {
     this.audio = undefined;
-    this.fileDropzone!.nativeElement.value = '';
+    if (this.fileDropzone) this.fileDropzone.nativeElement.value = '';
   }
 
   deleteTimingData(): void {
@@ -209,19 +212,36 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.dropzone?.nativeElement.addEventListener('dragover', _ => {
-      this.dropzone?.nativeElement.classList.add('dragover');
+    this.dropzone.nativeElement.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      this.showDragDropOverlay = true;
     });
-    this.dropzone?.nativeElement.addEventListener('dragleave', _ => {
-      this.dropzone?.nativeElement.classList.remove('dragover');
+
+    this.dropzone.nativeElement.addEventListener('dragleave', e => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // When leaving the browser window, relatedTarget will be null.
+      // It could also be an element that's not in the dropzone.
+      const relatedTarget = e.relatedTarget as Node;
+      if (relatedTarget === null || !this.dropzone.nativeElement.contains(relatedTarget)) {
+        this.showDragDropOverlay = false;
+      }
     });
-    this.dropzone?.nativeElement.addEventListener('drop', (e: DragEvent) => {
-      this.dropzone?.nativeElement.classList.remove('dragover');
+
+    this.dropzone.nativeElement.addEventListener('drop', (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      this.showDragDropOverlay = false;
       if (e?.dataTransfer?.files == null) {
         return;
       }
       this.processUploadedFiles(e.dataTransfer.files);
     });
+
     this.projectService.queryAudioText(this.data.projectId, this.destroyRef).then(query => {
       this.textAudioQuery = query;
       this.populateExistingData();
@@ -257,22 +277,35 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     this.validateTimingEntries(this._audioLength);
   }
 
-  async save(): Promise<void> {
-    const canSave: boolean =
-      this.hasAudioBeenUploaded &&
-      this.hasTimingBeenUploaded &&
+  get allFieldsValid(): boolean {
+    return (
+      this.isAudioUploaded &&
+      this.isTimingUploaded &&
+      !this.hasAudioDataError &&
       !this.hasTimingDataError &&
       this.book != null &&
-      this.chapter != null;
-    if (!this.hasTimingBeenUploaded) {
-      this._timingErrorKey = 'no_timing_data_uploaded';
-    }
-    if (!this.hasAudioBeenUploaded) {
-      this._audioErrorKey = 'no_audio_file_uploaded';
-    }
-    if (!canSave) {
+      this.chapter != null
+    );
+  }
+
+  async save(): Promise<void> {
+    let canSave = false;
+    if (this.allFieldsValid) {
+      canSave = true;
+    } else if (!this.isAudioUploaded && !this.isTimingUploaded && this._selectionHasAudioAlready) {
+      await this.projectService.onlineDeleteAudioTimingData(this.data.projectId, this.book, this.chapter);
+      this.dialogRef.close();
       return;
     }
+
+    if (!this.isTimingUploaded && !canSave) {
+      this._timingErrorKey = 'no_timing_data_uploaded';
+    }
+    if (!this.isAudioUploaded && !canSave) {
+      this._audioErrorKey = 'no_audio_file_uploaded';
+    }
+
+    if (!canSave) return;
 
     // Adding chapter audio offline needs a bit more help to work; see SF-2213. Returning may seem unnecessary if we
     // also disable the Save button when offline, but returning could prevent a problem from the unlikely situation of
@@ -472,7 +505,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     this.textAudioQuery.ready$
       .pipe(
         filter(ready => ready),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => {
         const textAudioId: string = getTextAudioId(this.data.projectId, this.book, this.chapter);

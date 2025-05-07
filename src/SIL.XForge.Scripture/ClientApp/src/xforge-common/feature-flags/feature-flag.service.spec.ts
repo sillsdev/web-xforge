@@ -63,9 +63,7 @@ describe('FeatureFlagService', () => {
     verify(mockedAnonymousService.featureFlags()).once();
   }));
 
-  // Disabling test because the feature flag service does not give as a simple way to actually test the state where all
-  // feature flags are off, unless we assume they all default to off (which is not always the case).
-  xit('versionSuffix returns an empty string when no feature flags', fakeAsync(() => {
+  it('versionSuffix returns an empty string when no feature flags', fakeAsync(() => {
     const env = new TestEnvironment({});
     // The first call loads the remote feature flags
     expect(env.service.versionSuffix).toEqual('');

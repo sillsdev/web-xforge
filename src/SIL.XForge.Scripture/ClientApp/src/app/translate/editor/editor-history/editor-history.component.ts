@@ -1,12 +1,21 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { Delta } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
@@ -14,7 +23,6 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { EditorHistoryService } from './editor-history.service';
 import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/history-chooser.component';
-
 @Component({
   selector: 'app-editor-history',
   templateUrl: './editor-history.component.html',
@@ -37,7 +45,7 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
   projectDoc: SFProjectProfileDoc | undefined;
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly editorHistoryService: EditorHistoryService,
     readonly fontService: FontService,
     private readonly i18nService: I18nService,
@@ -58,7 +66,7 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
   ngOnInit(): void {
     // When the locale changes, emit the loaded Revision again, as the date formatting will need to update
     this.i18nService.locale$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.revisionSelect.emit(this.loadedRevision));
   }
 
@@ -80,7 +88,7 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
       ),
       this.historyChooser.showDiffChange.pipe(startWith(this.historyChooser.showDiff))
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([e, showDiff]: [RevisionSelectEvent, boolean]) => {
         const snapshotContents: Delta = new Delta(e.snapshot?.data.ops);
         this.snapshotText?.setContents(snapshotContents, 'api');

@@ -19,7 +19,7 @@ public class SFScrTextCollection : ScrTextCollection
     /// <summary>
     /// The location where resources reside if there is more than one resource with the same short name.
     /// </summary>
-    public static string ResourcesByIdDirectory => Path.Combine(SettingsDirectory, "_resourcesById");
+    public static string ResourcesByIdDirectory => Path.Join(SettingsDirectory, "_resourcesById");
 
     /// <summary>
     /// Adds a ScrText to the internal index. This should only be used for testing purposes!

@@ -94,6 +94,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
 import { SFTabsModule, TabFactoryService, TabGroup, TabMenuService } from '../../shared/sf-tab-group';
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
@@ -151,6 +152,7 @@ describe('EditorComponent', () => {
     declarations: [EditorComponent, SuggestionsComponent, TrainingProgressComponent, EditorDraftComponent],
     imports: [
       BiblicalTermsComponent,
+      CopyrightBannerComponent,
       NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
       SharedModule,
@@ -3447,7 +3449,7 @@ describe('EditorComponent', () => {
 
       // Set window size to be narrow to test scrolling
       const contentContainer: HTMLElement = document.getElementsByClassName('content')[0] as HTMLElement;
-      Object.assign(contentContainer.style, { width: '360px', height: '300px' });
+      Object.assign(contentContainer.style, { width: '680px', height: '300px' });
 
       // Verse near bottom of scroll container
       const segmentRef = 'verse_1_6';
@@ -3704,26 +3706,6 @@ describe('EditorComponent', () => {
       expect(env.copyrightBanner).not.toBeNull();
       env.dispose();
     }));
-
-    it('shows the copyright notice dialog', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig, copyrightBanner: 'banner text' });
-      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
-      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
-      env.wait();
-
-      // SUT
-      const dialogMessage = spyOn((env.component as any).dialogService, 'openGenericDialog').and.callThrough();
-      env.setupDialogRef();
-
-      expect(env.copyrightBanner).not.toBeNull();
-      env.copyrightMoreInfo.nativeElement.click();
-      tick();
-      env.fixture.detectChanges();
-      expect(dialogMessage).toHaveBeenCalledTimes(1);
-
-      env.dispose();
-    }));
   });
 
   it('sets book and chapter according to route', fakeAsync(() => {
@@ -3938,7 +3920,7 @@ describe('EditorComponent', () => {
     });
 
     describe('updateAutoDraftTabVisibility', () => {
-      it('should add auto draft tab to source when available and "showSource" is true', fakeAsync(() => {
+      it('should add the draft preview tab to source when available and "showSource" is true', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
@@ -3956,7 +3938,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should add auto draft tab to target when available and "showSource" is false', fakeAsync(() => {
+      it('should add draft preview tab to target when available and "showSource" is false', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
@@ -3974,7 +3956,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should hide source auto draft tab when switching to chapter with no draft', fakeAsync(() => {
+      it('should hide source draft preview tab when switching to chapter with no draft', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
@@ -3995,7 +3977,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should hide auto draft tab when user is commenter', fakeAsync(() => {
+      it('should hide the draft preview tab when user is commenter', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
@@ -4010,7 +3992,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should hide target auto draft tab when switching to chapter with no draft', fakeAsync(() => {
+      it('should hide the target draft preview tab when switching to chapter with no draft', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
@@ -4636,15 +4618,11 @@ class TestEnvironment {
   }
 
   get copyrightBanner(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.copyright-banner'));
+    return this.fixture.debugElement.query(By.css('app-copyright-banner'));
   }
 
   get showWritingSystemWarningBanner(): DebugElement {
     return this.fixture.debugElement.query(By.css('.writing-system-warning-banner'));
-  }
-
-  get copyrightMoreInfo(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.copyright-banner .copyright-more-info'));
   }
 
   get isSourceAreaHidden(): boolean {
@@ -5242,15 +5220,9 @@ class TestEnvironment {
   }
 
   private addProjectUserConfig(userConfig: SFProjectUserConfig): void {
-    if (userConfig.translationSuggestionsEnabled == null) {
-      userConfig.translationSuggestionsEnabled = true;
-    }
-    if (userConfig.numSuggestions == null) {
-      userConfig.numSuggestions = 1;
-    }
-    if (userConfig.confidenceThreshold == null) {
-      userConfig.confidenceThreshold = 0.2;
-    }
+    userConfig.translationSuggestionsEnabled ??= true;
+    userConfig.numSuggestions ??= 1;
+    userConfig.confidenceThreshold ??= 0.2;
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: getSFProjectUserConfigDocId('project01', userConfig.ownerRef),
       data: userConfig

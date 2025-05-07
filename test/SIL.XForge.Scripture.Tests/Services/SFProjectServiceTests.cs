@@ -49,6 +49,7 @@ public class SFProjectServiceTests
     private const string LinkExpiredUser = "linkexpireduser";
     private const string SiteId = "xf";
     private const string PTProjectIdNotYetInSF = "paratext_notYetInSF";
+    private const string EventType01 = "eventType01";
     private const string Role01 = "role01";
     private static readonly string[] Permissions =
     [
@@ -1892,7 +1893,7 @@ public class SFProjectServiceTests
         Assert.That(project03.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(source.UserRoles.ContainsKey(User03), Is.False, "setup");
         User user = env.GetUser(User03);
-        Assert.That(user.Sites[SiteId].Projects, Is.Empty);
+        Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project01 }));
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
@@ -1902,7 +1903,7 @@ public class SFProjectServiceTests
         Assert.That(project03.UserRoles.ContainsKey(User03));
         Assert.That(source.UserRoles.ContainsKey(User03));
         user = env.GetUser(User03);
-        Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project03, SourceOnly }));
+        Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project01, Project03, SourceOnly }));
     }
 
     [Test]
@@ -2276,6 +2277,74 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task UpdateSettingsAsync_ChangeAllDraftSources_CreatesResourceProject()
+    {
+        var env = new TestEnvironment();
+        const string newResourceParatextId = "resource_project";
+        env.ParatextService.GetResourcePermissionAsync(newResourceParatextId, Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(TextInfoPermission.Read));
+
+        // Ensure that the new project does not exist
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newResourceParatextId),
+            Is.False
+        );
+
+        // SUT
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings
+            {
+                AdditionalTrainingSourceParatextId = newResourceParatextId,
+                AlternateSourceParatextId = newResourceParatextId,
+                AlternateTrainingSourceParatextId = newResourceParatextId,
+            }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AdditionalTrainingSource?.ProjectRef, Is.Not.Null);
+        Assert.That(
+            project.TranslateConfig.DraftConfig.AdditionalTrainingSource?.ParatextId,
+            Is.EqualTo(newResourceParatextId)
+        );
+        Assert.That(project.TranslateConfig.DraftConfig.AdditionalTrainingSource?.Name, Is.EqualTo("ResourceProject"));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef, Is.Not.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.EqualTo(newResourceParatextId));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.Name, Is.EqualTo("ResourceProject"));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ProjectRef, Is.Not.Null);
+        Assert.That(
+            project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ParatextId,
+            Is.EqualTo(newResourceParatextId)
+        );
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.Name, Is.EqualTo("ResourceProject"));
+
+        SFProject alternateSourceProject = env.GetProject(
+            project.TranslateConfig.DraftConfig.AlternateSource!.ProjectRef
+        );
+        Assert.That(alternateSourceProject.ParatextId, Is.EqualTo(newResourceParatextId));
+        Assert.That(alternateSourceProject.Name, Is.EqualTo("ResourceProject"));
+
+        await env
+            .MachineProjectService.DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env
+            .MachineProjectService.DidNotReceive()
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+
+        // Check that the project was created
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newResourceParatextId),
+            Is.True
+        );
+
+        // Ensure we only queried the list of resources once
+        await env.ParatextService.Received(1).GetResourcesAsync(User01);
+    }
+
+    [Test]
     public async Task UpdateSettingsAsync_ChangeAlternateSource_CannotUseTargetProject()
     {
         var env = new TestEnvironment();
@@ -2298,7 +2367,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2337,7 +2406,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
 
@@ -2371,7 +2440,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2409,7 +2478,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
 
@@ -2441,7 +2510,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2483,7 +2552,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
 
@@ -2513,7 +2582,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2536,7 +2605,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2559,7 +2628,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2654,9 +2723,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.Received()
             .RemoveProjectAsync(Project01, preTranslate: false, CancellationToken.None);
-        await env
-            .MachineProjectService.Received()
-            .AddProjectAsync(Project01, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received().AddSmtProjectAsync(Project01, CancellationToken.None);
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2680,7 +2747,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2701,9 +2768,7 @@ public class SFProjectServiceTests
         await env
             .MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.Received()
-            .AddProjectAsync(Project03, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received().AddSmtProjectAsync(Project03, CancellationToken.None);
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2730,7 +2795,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Project01, preTranslate: false, CancellationToken.None);
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2749,7 +2814,7 @@ public class SFProjectServiceTests
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env
             .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2813,7 +2878,7 @@ public class SFProjectServiceTests
     public async Task DeleteProjectAsync_Success()
     {
         var env = new TestEnvironment();
-        string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
+        string ptProjectDir = Path.Join("xforge", "sync", "paratext_" + Project01);
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.True, "setup");
 
@@ -2844,7 +2909,7 @@ public class SFProjectServiceTests
         env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
 
-        ptProjectDir = Path.Combine("xforge", "sync", "pt_source_no_suggestions");
+        ptProjectDir = Path.Join("xforge", "sync", "pt_source_no_suggestions");
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.GetProject(Project03).TranslateConfig.Source, Is.Not.Null);
 
@@ -2966,7 +3031,7 @@ public class SFProjectServiceTests
             )
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
         SFProject existingSfProject = env.GetProject(Project01);
-        string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
+        string ptProjectDir = Path.Join("xforge", "sync", "paratext_" + Project01);
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.True, "setup");
         InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(
@@ -4249,6 +4314,8 @@ public class SFProjectServiceTests
                     User01,
                     systemRoles: [SystemRole.User],
                     Project01,
+                    scopes: null,
+                    eventTypes: null,
                     pageIndex: -1,
                     pageSize: 0
                 )
@@ -4267,6 +4334,8 @@ public class SFProjectServiceTests
                     User01,
                     systemRoles: [SystemRole.User],
                     Project01,
+                    scopes: null,
+                    eventTypes: null,
                     pageIndex: 0,
                     pageSize: 0
                 )
@@ -4285,6 +4354,8 @@ public class SFProjectServiceTests
                     User01,
                     systemRoles: [SystemRole.User],
                     projectId: "invalid_project",
+                    scopes: null,
+                    eventTypes: null,
                     pageIndex: 0,
                     pageSize: 10
                 )
@@ -4296,18 +4367,35 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
-        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                scopes: Arg.Is<EventScope[]?>(s => s[0] == EventScope.Checking),
+                eventTypes: Arg.Is<string[]?>(s => s[0] == EventType01),
+                pageIndex: 0,
+                pageSize: 10
+            )
+            .Returns(expected);
 
         // SUT
         QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             User01,
             systemRoles: [SystemRole.User],
             Project01,
+            scopes: [EventScope.Checking],
+            eventTypes: [EventType01],
             pageIndex: 0,
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
-        await env.EventMetricService.Received().GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10);
+        await env
+            .EventMetricService.Received()
+            .GetEventMetricsAsync(
+                Project01,
+                scopes: Arg.Is<EventScope[]?>(s => s[0] == EventScope.Checking),
+                eventTypes: Arg.Is<string[]?>(s => s[0] == EventType01),
+                pageIndex: 0,
+                pageSize: 10
+            );
     }
 
     [Test]
@@ -4315,18 +4403,29 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
-        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                pageIndex: 0,
+                pageSize: 10
+            )
+            .Returns(expected);
 
         // SUT
         QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             User06,
             systemRoles: [SystemRole.ServalAdmin],
             Project01,
+            scopes: null,
+            eventTypes: null,
             pageIndex: 0,
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
-        await env.EventMetricService.Received().GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10);
+        await env
+            .EventMetricService.Received()
+            .GetEventMetricsAsync(Project01, scopes: null, eventTypes: null, pageIndex: 0, pageSize: 10);
     }
 
     [Test]
@@ -4334,18 +4433,29 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         var expected = new QueryResults<EventMetric> { Results = [new EventMetric()], UnpagedCount = 1 };
-        env.EventMetricService.GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10).Returns(expected);
+        env.EventMetricService.GetEventMetricsAsync(
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                pageIndex: 0,
+                pageSize: 10
+            )
+            .Returns(expected);
 
         // SUT
         QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
             User06,
             systemRoles: [SystemRole.SystemAdmin],
             Project01,
+            scopes: null,
+            eventTypes: null,
             pageIndex: 0,
             pageSize: 10
         );
         Assert.AreEqual(expected, actual);
-        await env.EventMetricService.Received().GetEventMetricsAsync(Project01, pageIndex: 0, pageSize: 10);
+        await env
+            .EventMetricService.Received()
+            .GetEventMetricsAsync(Project01, scopes: null, eventTypes: null, pageIndex: 0, pageSize: 10);
     }
 
     [Test]
@@ -4360,6 +4470,8 @@ public class SFProjectServiceTests
                     User05,
                     systemRoles: [SystemRole.User],
                     Project01,
+                    scopes: null,
+                    eventTypes: null,
                     pageIndex: 0,
                     pageSize: 10
                 )
@@ -4367,7 +4479,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task SyncUserRoleAsync_Success()
+    public async Task SyncUserRoleAsync_DowngradesRole()
     {
         var env = new TestEnvironment();
         var user = env.GetProject(Project01).UserRoles[User01];
@@ -4379,6 +4491,7 @@ public class SFProjectServiceTests
         await env.Service.SyncUserRoleAsync(User01, Project01);
         user = env.GetProject(Project01).UserRoles[User01];
         Assert.AreEqual(SFProjectRole.Translator, user);
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -4392,6 +4505,22 @@ public class SFProjectServiceTests
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Failure(SFProjectRole.Translator)));
         Assert.ThrowsAsync<ForbiddenException>(async () => await env.Service.SyncUserRoleAsync(User01, Project01));
+    }
+
+    [Test]
+    public async Task SyncUserRoleAsync_UpgradesRole()
+    {
+        var env = new TestEnvironment();
+        var user = env.GetProject(Project01).UserRoles[User03];
+        Assert.AreEqual(SFProjectRole.Consultant, user);
+
+        // SUT
+        env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
+        await env.Service.SyncUserRoleAsync(User03, Project01);
+        user = env.GetProject(Project01).UserRoles[User03];
+        Assert.AreEqual(SFProjectRole.Translator, user);
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     private class TestEnvironment
@@ -4440,7 +4569,13 @@ public class SFProjectServiceTests
                             Email = "user03@example.com",
                             ParatextId = "pt-user03",
                             Roles = [SystemRole.User],
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
+                            Sites = new Dictionary<string, Site>
+                            {
+                                {
+                                    SiteId,
+                                    new Site { Projects = [Project01] }
+                                },
+                            },
                         },
                         new User
                         {
@@ -4529,6 +4664,7 @@ public class SFProjectServiceTests
                             {
                                 { User01, SFProjectRole.Administrator },
                                 { User02, SFProjectRole.CommunityChecker },
+                                { User03, SFProjectRole.Consultant },
                                 { User05, SFProjectRole.Translator },
                                 { User06, SFProjectRole.Viewer },
                             },
@@ -4812,6 +4948,7 @@ public class SFProjectServiceTests
                     [
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User03) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User06) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
@@ -5244,9 +5381,9 @@ public class SFProjectServiceTests
                 .Returns(true);
 
             ParatextService
-                .IsResource(Arg.Any<string>())
+                .IsResource(Arg.Any<string?>())
                 .Returns(callInfo =>
-                    callInfo.ArgAt<string>(0).Length == SFInstallableDblResource.ResourceIdentifierLength
+                    callInfo.ArgAt<string?>(0)?.Length == SFInstallableDblResource.ResourceIdentifierLength
                 );
 
             Service = new SFProjectService(

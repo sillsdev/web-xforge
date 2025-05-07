@@ -160,9 +160,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
    * @returns {Promise<void>} Resolves when successfully subscribed to remote changes.
    */
   async subscribe(): Promise<void> {
-    if (this.subscribePromise == null) {
-      this.subscribePromise = this.subscribeToChanges();
-    }
+    this.subscribePromise ??= this.subscribeToChanges();
     return this.subscribePromise;
   }
 
@@ -309,9 +307,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   }
 
   private async loadOfflineData(): Promise<void> {
-    if (this.loadOfflineDataPromise == null) {
-      this.loadOfflineDataPromise = this.loadFromOfflineStore();
-    }
+    this.loadOfflineDataPromise ??= this.loadFromOfflineStore();
     return this.loadOfflineDataPromise;
   }
 

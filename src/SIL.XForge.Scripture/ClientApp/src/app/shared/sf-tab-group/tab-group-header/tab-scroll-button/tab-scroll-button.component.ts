@@ -1,9 +1,7 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, EventEmitter, HostBinding, Inject, Input, OnInit, Output } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, HostBinding, Inject, Input, OnInit, Output } from '@angular/core';
 import { BehaviorSubject, distinctUntilChanged, fromEvent, merge } from 'rxjs';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 @Component({
   selector: 'app-tab-scroll-button',
   templateUrl: './tab-scroll-button.component.html',
@@ -22,20 +20,20 @@ export class TabScrollButtonComponent implements OnInit {
   scroll$ = new BehaviorSubject(false);
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     @Inject(DOCUMENT) private readonly document: Document
   ) {}
 
   ngOnInit(): void {
     // Stop button scrolling on mouseup or when mouse leaves the document
     merge(fromEvent(this.document, 'mouseup'), fromEvent(this.document, 'mouseleave'))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.isMouseDown = false;
         this.scroll$.next(false);
       });
 
-    this.scroll$.pipe(takeUntilDestroyed(this.destroyRef), distinctUntilChanged()).subscribe(scroll => {
+    this.scroll$.pipe(quietTakeUntilDestroyed(this.destroyRef), distinctUntilChanged()).subscribe(scroll => {
       if (scroll) {
         this.scrollStart.emit();
       } else {

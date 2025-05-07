@@ -92,14 +92,10 @@
               @case ("project-source") {
                 <div class="project-tab-container">
                   @if (hasSourceCopyrightBanner) {
-                    <app-notice icon="copyright" type="warning" class="copyright-banner">
-                      <div>
-                        {{ sourceCopyrightBanner }}
-                        <span class="copyright-more-info" (click)="showCopyrightNotice('source')">{{
-                          t("more_info")
-                        }}</span>
-                      </div>
-                    </app-notice>
+                    <app-copyright-banner
+                      [notice]="sourceCopyrightNotice"
+                      [banner]="sourceCopyrightBanner"
+                    ></app-copyright-banner>
                   }
                   <div class="text-container">
                     <app-text
@@ -119,50 +115,46 @@
               @case ("project-target") {
                 <div class="project-tab-container">
                   @if (writingSystemWarningBanner) {
-                    <app-notice icon="warning" type="warning" class="writing-system-warning-banner">
+                    <app-notice mode="fill-dark" icon="warning" type="warning" class="writing-system-warning-banner">
                       <span [innerHtml]="writingSystemWarningMessage"></span>
                     </app-notice>
                   }
                   @if (hasTargetCopyrightBanner) {
-                    <app-notice icon="copyright" type="warning" class="copyright-banner">
-                      <div>
-                        {{ targetCopyrightBanner }}
-                        <span class="copyright-more-info" (click)="showCopyrightNotice('target')">{{
-                          t("more_info")
-                        }}</span>
-                      </div>
-                    </app-notice>
+                    <app-copyright-banner
+                      [notice]="targetCopyrightNotice"
+                      [banner]="targetCopyrightBanner"
+                    ></app-copyright-banner>
                   }
                   @if (!isUsfmValid && hasEditRight && invalidTags().length === 0) {
-                    <app-notice type="warning" icon="warning" class="formatting-invalid-warning">
+                    <app-notice mode="fill-dark" type="warning" icon="warning" class="formatting-invalid-warning">
                       {{ t("cannot_edit_chapter_formatting_invalid") }}
                     </app-notice>
                   }
                   @if (!isUsfmValid && hasEditRight && invalidTags().length > 0) {
-                    <app-notice type="warning" icon="warning" class="formatting-invalid-warning">
+                    <app-notice mode="fill-dark" type="warning" icon="warning" class="formatting-invalid-warning">
                       <span
                         [innerHTML]="t('cannot_edit_chapter_unsupported_usfm', { tags: invalidTags().join(', ') })"
                       ></span>
                     </app-notice>
                   }
                   @if (!dataInSync && hasEditRight) {
-                    <app-notice type="warning" icon="warning" class="out-of-sync-warning">
+                    <app-notice mode="fill-dark" type="warning" icon="warning" class="out-of-sync-warning">
                       {{ t("project_data_out_of_sync") }}
                     </app-notice>
                   }
                   @if (target.areOpsCorrupted && hasEditRight) {
-                    <app-notice type="error" icon="error" class="doc-corrupted-warning">
+                    <app-notice mode="fill-dark" type="error" icon="error" class="doc-corrupted-warning">
                       {{ t("text_doc_corrupted") }}
                       <span [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></span>
                     </app-notice>
                   }
                   @if (projectTextNotEditable && hasEditRight) {
-                    <app-notice type="info" icon="info" class="project-text-not-editable">
+                    <app-notice mode="fill-dark" type="info" icon="info" class="project-text-not-editable">
                       {{ t("project_text_not_editable") }}
                     </app-notice>
                   }
                   @if (showNoEditPermissionMessage) {
-                    <app-notice type="info" icon="info" class="no-edit-permission-message">
+                    <app-notice mode="fill-dark" type="info" icon="info" class="no-edit-permission-message">
                       {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
                     </app-notice>
                   }

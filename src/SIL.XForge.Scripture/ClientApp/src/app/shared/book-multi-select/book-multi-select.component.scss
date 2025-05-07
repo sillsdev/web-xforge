@@ -12,17 +12,7 @@
 
 .book-multi-select {
   .mat-mdc-standard-chip {
-    position: relative;
-    display: inline-block;
     overflow: hidden;
-    border-radius: 4px;
-  }
-
-  .mat-mdc-standard-chip {
-    &.mat-mdc-chip-selected,
-    &.mat-mdc-chip-highlighted {
-      --mdc-chip-elevated-selected-container-color: #4a79c9;
-    }
   }
 
   .border-fill {
@@ -30,7 +20,7 @@
     bottom: 0;
     left: 0;
     height: 3px;
-    background: black;
+    background: var(--sf-book-border-fill);
   }
 }
 

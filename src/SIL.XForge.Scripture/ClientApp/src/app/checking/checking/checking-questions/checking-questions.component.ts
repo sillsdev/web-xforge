@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -12,7 +13,6 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatListItem } from '@angular/material/list';
 import { sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -22,17 +22,19 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { merge, Subject, Subscription } from 'rxjs';
+import { debounceTime, finalize } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { BookChapter, bookChapterMatchesVerseRef, CheckingUtils } from '../../checking.utils';
+import { CheckingQuestionsService } from '../checking-questions.service';
 
 export interface QuestionChangeActionSource {
   /** True during events due to a questions doc change such as with a filter. */
@@ -41,6 +43,7 @@ export interface QuestionChangeActionSource {
 export interface QuestionChangedEvent {
   questionDoc: QuestionDoc | undefined;
   actionSource: QuestionChangeActionSource | undefined;
+  clearFilter?: boolean;
 }
 
 // For performance reasons, this component uses the OnPush change detection strategy rather than the default change
@@ -63,7 +66,6 @@ export interface QuestionChangedEvent {
 export class CheckingQuestionsComponent implements OnInit, OnChanges {
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionChangedEvent>();
-  @Input() isFiltered: boolean = false;
 
   /** The book/chapter from the route.  Stored question activation is constrained to this book/chapter. */
   @Input() routeBookChapter?: BookChapter;
@@ -76,12 +78,24 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       return;
     }
     this.projectProfileDocChangesSubscription = projectProfileDoc.changes$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.changeDetector.markForCheck();
         this.setProjectAdmin();
       });
     this.setProjectAdmin();
+
+    this.questionsService
+      .queryFirstUnansweredQuestion(projectProfileDoc.id, this.userService.currentUserId, this.destroyRef)
+      .then(query => {
+        this._firstUnansweredQuestion = query;
+        merge(query.ready$, query.localChanges$, query.remoteChanges$, query.remoteDocChanges$)
+          .pipe(quietTakeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            this.changeDetector.markForCheck();
+          }),
+          finalize(() => query.dispose());
+      });
   }
 
   @Input()
@@ -90,7 +104,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     this._projectUserConfigDoc = projectUserConfigDoc;
     if (projectUserConfigDoc != null) {
       this.projectUserConfigDocChangesSubscription = projectUserConfigDoc.changes$
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(() => {
           this.changeDetector.markForCheck();
         });
@@ -127,21 +141,25 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
   private projectProfileDocChangesSubscription?: Subscription;
   private projectUserConfigDocChangesSubscription?: Subscription;
+  private _firstUnansweredQuestion?: RealtimeQuery<QuestionDoc>;
 
   constructor(
+    private readonly questionsService: CheckingQuestionsService,
     private readonly userService: UserService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly projectService: SFProjectService,
     private readonly i18n: I18nService,
-    private destroyRef: QuietDestroyRef
+    private readonly destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
-    this.activeQuestionDoc$.pipe(debounceTime(2000), takeUntilDestroyed(this.destroyRef)).subscribe(questionDoc => {
-      this.updateElementsRead(questionDoc);
-    });
+    this.activeQuestionDoc$
+      .pipe(debounceTime(2000), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(questionDoc => {
+        this.updateElementsRead(questionDoc);
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -190,6 +208,16 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
   get questionDocs(): Readonly<QuestionDoc[]> {
     return this._questionDocs;
+  }
+
+  get hasUnansweredQuestion(): boolean {
+    if (this._firstUnansweredQuestion === undefined) return false;
+    return this._firstUnansweredQuestion.count > 0;
+  }
+
+  protected activateFirstUnansweredQuestion(): void {
+    if (!this.hasUnansweredQuestion || this._firstUnansweredQuestion == null) return;
+    this.activateQuestion(this._firstUnansweredQuestion.docs[0], { isQuestionListChange: false }, true);
   }
 
   private get canAddAnswer(): boolean {
@@ -271,12 +299,10 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
     // No stored question, so use first question within route book/chapter if available.
     // Otherwise use first question.
-    if (questionToActivate == null) {
-      questionToActivate =
-        this.questionDocs.find(
-          qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
-        ) ?? this.questionDocs[0];
-    }
+    questionToActivate ??=
+      this.questionDocs.find(
+        qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
+      ) ?? this.questionDocs[0];
 
     if (questionToActivate != null) {
       this.activateQuestion(questionToActivate, actionSource);
@@ -356,7 +382,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     this.changeQuestion(-1);
   }
 
-  activateQuestion(questionDoc: QuestionDoc, actionSource?: QuestionChangeActionSource): void {
+  activateQuestion(questionDoc: QuestionDoc, actionSource?: QuestionChangeActionSource, clearFilter?: boolean): void {
     const verseRef: VerseRefData | undefined = questionDoc.data?.verseRef;
 
     // The reason for the convoluted questionChanged logic is because the change needs to be emitted even if it's the
@@ -369,10 +395,10 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     this.activeQuestionDoc = questionDoc;
 
     if (verseRef != null) {
-      this.storeMostRecentQuestion(verseRef.bookNum, verseRef.chapterNum).then(() => {
+      this.storeMostRecentQuestion().then(() => {
         // Only emit if not a filter to avoid duplicate emission, as an emit from filter is called elsewhere
         if (!actionSource?.isQuestionListChange) {
-          this.changed.emit({ questionDoc, actionSource });
+          this.changed.emit({ questionDoc, actionSource, clearFilter });
         }
 
         if (questionChanged) {
@@ -427,7 +453,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     });
   }
 
-  private async storeMostRecentQuestion(bookNum: number, chapterNum: number): Promise<void> {
+  private async storeMostRecentQuestion(): Promise<void> {
     if (this._projectUserConfigDoc != null && this._projectUserConfigDoc.data != null) {
       const activeQuestionDoc = this.activeQuestionDoc;
       if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
@@ -442,10 +468,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
           );
         }
         await this._projectUserConfigDoc.submitJson0Op(op => {
-          op.set<string>(puc => puc.selectedTask!, 'checking');
           op.set(puc => puc.selectedQuestionRef!, activeQuestionDoc.id);
-          op.set(puc => puc.selectedBookNum!, bookNum);
-          op.set(puc => puc.selectedChapterNum!, chapterNum);
           op.unset(puc => puc.selectedSegment);
           op.unset(puc => puc.selectedSegmentChecksum!);
         });

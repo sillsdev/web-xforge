@@ -64,6 +64,7 @@ COPY src/SIL.XForge.Scripture/version.json /src/SIL.XForge.Scripture/version.jso
 COPY src/SIL.XForge.Scripture/fonts.json /src/SIL.XForge.Scripture/fonts.json
 COPY src/SIL.XForge.Scripture/ClientApp/ /src/SIL.XForge.Scripture/ClientApp/
 # Build the .NET Backend
+COPY src/SIL.Converters.Usj/ /src/SIL.Converters.Usj/
 COPY src/SIL.XForge/ /src/SIL.XForge/
 COPY src/SIL.XForge.Scripture/ /src/SIL.XForge.Scripture/
 WORKDIR /src/SIL.XForge.Scripture

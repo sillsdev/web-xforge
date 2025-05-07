@@ -1,5 +1,16 @@
 @use 'src/breakpoints';
 
+p.mat-hint {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-block-start: 0;
+  @include breakpoints.media-breakpoint-down(sm) {
+    flex-direction: column;
+  }
+}
+
 .invite-forms {
   display: flex;
   flex-direction: column;
@@ -9,7 +20,7 @@
 form {
   display: flex;
   width: 100%;
-  column-gap: 20px;
+  gap: 20px;
   @include breakpoints.media-breakpoint-down(sm) {
     flex-direction: column;
   }
@@ -43,6 +54,10 @@ form {
   flex-direction: column;
   app-share-button {
     align-self: flex-end;
+  }
+
+  p {
+    margin-top: 0;
   }
 }
 

@@ -1910,9 +1910,7 @@ class TestEnvironment {
         displayName: remotePresenceId
       }
     };
-    if (range == null) {
-      range = mock<QuillRange>();
-    }
+    range ??= mock<QuillRange>();
     // Write the presence right into the area that would be being provided by the sharedb.
     this.remoteChannelPresences[remotePresenceId] = presenceData;
     this.remoteDocPresences[remotePresenceId] = range;

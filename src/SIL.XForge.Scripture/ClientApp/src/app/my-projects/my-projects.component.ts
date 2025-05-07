@@ -1,6 +1,5 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
@@ -13,7 +12,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -22,7 +21,6 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
-
 /** Presents user with list of available projects to open or connect to. */
 @Component({
   selector: 'app-my-projects',
@@ -56,7 +54,7 @@ export class MyProjectsComponent implements OnInit {
     private readonly permissions: PermissionsService,
     private readonly noticeService: NoticeService,
     private readonly router: Router,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {}
 
   /** If we are aware of any SF or PT projects that the user can access. */
@@ -84,7 +82,7 @@ export class MyProjectsComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     await this.loadUser();
     this.userProjectsService.projectDocs$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((projects?: SFProjectProfileDoc[]) => {
         if (projects == null) return;
         this.userConnectedProjects = projects.filter(

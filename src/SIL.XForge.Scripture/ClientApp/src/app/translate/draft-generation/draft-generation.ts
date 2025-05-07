@@ -8,11 +8,10 @@ import { BuildStates } from '../../machine-api/build-states';
 export interface BuildConfig {
   projectId: string;
   trainingDataFiles: string[];
-  trainingScriptureRange?: string;
   trainingScriptureRanges: ProjectScriptureRange[];
-  translationScriptureRange?: string;
   translationScriptureRanges: ProjectScriptureRange[];
   fastTraining: boolean;
+  useEcho: boolean;
 }
 
 /**

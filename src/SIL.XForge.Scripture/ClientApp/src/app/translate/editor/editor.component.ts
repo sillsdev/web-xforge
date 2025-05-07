@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Inject,
   OnDestroy,
@@ -13,7 +14,6 @@ import {
   ViewChild,
   ViewChildren
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UntypedFormControl, Validators } from '@angular/forms';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -63,7 +63,6 @@ import {
   lastValueFrom,
   merge,
   Observable,
-  of,
   Subject,
   Subscription,
   timer
@@ -84,16 +83,9 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { stripHtml } from 'xforge-common/util/string-util';
-import {
-  browserLinks,
-  getLinkHTML,
-  isBlink,
-  issuesEmailTemplate,
-  objectId,
-  QuietDestroyRef
-} from 'xforge-common/utils';
+import { browserLinks, getLinkHTML, isBlink, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
@@ -206,6 +198,7 @@ const UNSUPPORTED_LANGUAGE_CODES = [
   selector: 'app-editor',
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.scss'],
+
   providers: [
     TabStateService<EditorTabGroupType, EditorTabInfo>,
     { provide: TabFactoryService, useClass: EditorTabFactoryService },
@@ -301,7 +294,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly editorTabPersistenceService: EditorTabPersistenceService,
     private readonly textDocService: TextDocService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
     private readonly permissionsService: PermissionsService
@@ -313,7 +306,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     this.segmentUpdated$ = new Subject<void>();
     this.segmentUpdated$
-      .pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT), takeUntilDestroyed(this.destroyRef))
+      .pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT), quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateSuggestions());
     this.mobileNoteControl.setValidators([Validators.required, XFValidators.someNonWhitespace]);
   }
@@ -621,12 +614,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.sourceProjectDoc?.data?.copyrightBanner ?? '';
   }
 
+  get sourceCopyrightNotice(): string | undefined {
+    return this.sourceProjectDoc?.data?.copyrightNotice;
+  }
+
   get hasTargetCopyrightBanner(): boolean {
     return this.projectDoc?.data?.copyrightBanner != null;
   }
 
   get targetCopyrightBanner(): string {
     return this.projectDoc?.data?.copyrightBanner ?? '';
+  }
+
+  get targetCopyrightNotice(): string | undefined {
+    return this.projectDoc?.data?.copyrightNotice;
   }
 
   get sourceLabel(): string | undefined {
@@ -674,7 +675,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   ngOnInit(): void {
     this.activatedProject.projectDoc$
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
+        quietTakeUntilDestroyed(this.destroyRef),
         filterNullish(),
         switchMap(doc => this.initEditorTabs(doc))
       )
@@ -683,7 +684,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngAfterViewInit(): void {
     fromEvent(window, 'resize')
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.positionInsertNoteFab();
       });
@@ -692,7 +693,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
       this.targetTextComponent!.changes
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([params, components]) => {
         this.target = components.first;
         this.showSuggestions = false;
@@ -830,7 +831,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     // Throttle bursts of sync scroll requests
     this.syncScrollRequested$
-      .pipe(takeUntilDestroyed(this.destroyRef), throttleTime(100, asyncScheduler, { leading: true, trailing: true }))
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        throttleTime(100, asyncScheduler, { leading: true, trailing: true })
+      )
       .subscribe(() => {
         this.syncScroll();
       });
@@ -841,7 +845,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.tabStateInitialized$.pipe(filter(initialized => initialized)),
       this.targetEditorLoaded$.pipe(take(1))
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(([breakpointState]) => {
         if (breakpointState.matches && this.showSource) {
           this.tabState.consolidateTabGroups('target');
@@ -903,9 +907,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             await this.trainSegment(prevSegment, this.sourceProjectId);
           }
           await this.projectUserConfigDoc.submitJson0Op(op => {
-            op.set<string>(puc => puc.selectedTask!, 'translate');
-            op.set(puc => puc.selectedBookNum!, this.text!.bookNum);
-            op.set(puc => puc.selectedChapterNum!, this._chapter);
             op.set(puc => puc.selectedSegment, this.target!.segmentRef);
             op.set(puc => puc.selectedSegmentChecksum!, this.target!.segmentChecksum);
           });
@@ -1214,34 +1215,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   onViewerClicked(viewer: MultiCursorViewer): void {
     this.target!.scrollToViewer(viewer);
-  }
-
-  showCopyrightNotice(textType: TextType): void {
-    let copyrightNotice: string =
-      textType === 'source'
-        ? (this.sourceProjectDoc?.data?.copyrightNotice ?? '')
-        : (this.projectDoc?.data?.copyrightNotice ?? '');
-
-    // If we do not have a copyright notice, just use the copyright banner
-    if (copyrightNotice === '') {
-      copyrightNotice = textType === 'source' ? this.sourceCopyrightBanner : this.targetCopyrightBanner;
-    }
-
-    copyrightNotice = copyrightNotice.trim();
-    if (copyrightNotice[0] !== '<') {
-      // If copyright is plain text, remove the first line and add paragraph markers.
-      const lines: string[] = copyrightNotice.split('\n');
-      copyrightNotice = '<p>' + lines.slice(1).join('</p><p>') + '</p>';
-    } else {
-      // Just remove the first paragraph that contains the notification.
-      copyrightNotice = copyrightNotice.replace(/^<p>.*?<\/p>/, '');
-    }
-
-    // Show the copyright notice
-    this.dialogService.openGenericDialog({
-      message: of(stripHtml(copyrightNotice)),
-      options: [{ value: undefined, label: this.i18n.translate('dialog.close'), highlight: true }]
-    });
   }
 
   async onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): Promise<void> {
@@ -1942,7 +1915,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         segment,
         Array.from(elements).map((element: Element) =>
           fromEvent<MouseEvent>(element, 'click')
-            .pipe(takeUntilDestroyed(this.destroyRef))
+            .pipe(quietTakeUntilDestroyed(this.destroyRef))
             .subscribe(event => {
               if (this.bookNum == null) {
                 return;
@@ -1974,7 +1947,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
       this.selectionClickSubs.push(
         fromEvent<MouseEvent>(segmentElement, 'click')
-          .pipe(takeUntilDestroyed(this.destroyRef))
+          .pipe(quietTakeUntilDestroyed(this.destroyRef))
           .subscribe(event => {
             if (this.bookNum == null || this.target == null) return;
             const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this.bookNum);
@@ -2010,7 +1983,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.noteThreadQuery.remoteChanges$,
       this.noteThreadQuery.remoteDocChanges$
     )
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.toggleNoteThreadVerses(false);
         this.toggleNoteThreadVerses(true);
@@ -2568,7 +2541,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private subscribeScroll(scrollContainer: Element): void {
     this.scrollSubscription?.unsubscribe();
     this.scrollSubscription = fromEvent(scrollContainer, 'scroll')
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.keepInsertNoteFabInView(scrollContainer);
       });

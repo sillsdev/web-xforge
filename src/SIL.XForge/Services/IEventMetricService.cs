@@ -8,12 +8,18 @@ namespace SIL.XForge.Services;
 
 public interface IEventMetricService
 {
-    Task<QueryResults<EventMetric>> GetEventMetricsAsync(string? projectId, int pageIndex, int pageSize);
+    Task<QueryResults<EventMetric>> GetEventMetricsAsync(
+        string? projectId,
+        EventScope[]? scopes,
+        string[]? eventTypes,
+        int pageIndex = 0,
+        int pageSize = int.MaxValue
+    );
     Task SaveEventMetricAsync(
         string? projectId,
         string? userId,
         string eventType,
-        EventScope eventScope,
+        EventScope scope,
         Dictionary<string, object> argumentsWithNames,
         object? result,
         Exception? exception

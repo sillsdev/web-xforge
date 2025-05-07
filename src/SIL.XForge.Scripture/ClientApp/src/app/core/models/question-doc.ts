@@ -99,6 +99,5 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
       }
     }
     await super.updateOfflineData(force);
-    await this.updateFileCache();
   }
 }

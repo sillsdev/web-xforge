@@ -54,7 +54,7 @@ public class TransceleratorService : ITransceleratorService
 
     public IEnumerable<string> QuestionFiles(string paratextId)
     {
-        string pathToFiles = Path.Combine(
+        string pathToFiles = Path.Join(
             _siteOptions.Value.SiteDir,
             "sync",
             paratextId,

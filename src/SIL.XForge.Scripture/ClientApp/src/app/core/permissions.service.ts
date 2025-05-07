@@ -5,6 +5,7 @@ import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scripture
 import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
@@ -53,9 +54,9 @@ export class PermissionsService {
   }
 
   async userHasParatextRoleOnProject(projectId: string): Promise<boolean> {
-    const currentUserDoc = await this.userService.getCurrentUser(FETCH_WITHOUT_SUBSCRIBE);
-    const currentProject = await this.projectService.get(projectId, FETCH_WITHOUT_SUBSCRIBE);
-    return isParatextRole(currentProject?.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
+    const currentUserDoc: UserDoc = await this.userService.getCurrentUser(FETCH_WITHOUT_SUBSCRIBE);
+    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId, FETCH_WITHOUT_SUBSCRIBE);
+    return isParatextRole(projectDoc.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
   }
 
   async canAccessText(textDocId: TextDocId): Promise<boolean> {

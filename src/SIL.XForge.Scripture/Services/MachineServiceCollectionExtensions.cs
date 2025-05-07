@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http;
 using Duende.IdentityModel.Client;
@@ -7,6 +6,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Polly;
+using Polly.CircuitBreaker;
+using Polly.Retry;
+using Polly.Timeout;
 using Serval.Client;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture.Models;
@@ -14,7 +16,6 @@ using SIL.XForge.Scripture.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-[ExcludeFromCodeCoverage(Justification = "This logic will only work in a valid ASP.NET Core Context")]
 public static class MachineServiceCollectionExtensions
 {
     public static IServiceCollection AddSFMachine(
@@ -59,7 +60,8 @@ public static class MachineServiceCollectionExtensions
             .AddHttpClient(MachineApi.HttpClientName)
             .SetHandlerLifetime(TimeSpan.FromMinutes(5))
             .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy());
+            .AddPolicyHandler(GetCircuitBreakerPolicy())
+            .AddPolicyHandler(GetTimeoutPolicy());
         services.AddSingleton<ITranslationEnginesClient, TranslationEnginesClient>(sp =>
         {
             // Instantiate the translation engines client with our named HTTP client
@@ -95,15 +97,20 @@ public static class MachineServiceCollectionExtensions
         return services;
     }
 
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy() =>
+    private static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicy() =>
         Policy<HttpResponseMessage>
             .Handle<HttpRequestException>()
             .OrResult(r => r.StatusCode >= HttpStatusCode.InternalServerError)
             .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-    private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy() =>
+    private static AsyncCircuitBreakerPolicy<HttpResponseMessage> GetCircuitBreakerPolicy() =>
         Policy<HttpResponseMessage>
             .Handle<HttpRequestException>()
             .OrResult(r => r.StatusCode >= HttpStatusCode.InternalServerError)
             .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
+
+    private static AsyncTimeoutPolicy<HttpResponseMessage> GetTimeoutPolicy() =>
+        // NOTE: The Serval Get Build endpoint has a long polling timeout of 40 seconds,
+        // so ensure any timeout values support this
+        Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromMinutes(5), TimeoutStrategy.Pessimistic);
 }

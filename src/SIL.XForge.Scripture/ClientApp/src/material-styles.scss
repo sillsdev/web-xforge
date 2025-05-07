@@ -1,219 +1,117 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
-@use 'sass:color';
-@use 'variables' as *;
+@use 'src/app/my-projects/my-projects-theme' as sf-my-projects;
+@use 'src/app/app-theme' as sf-app;
+@use 'src/app/checking/checking/checking-theme' as sf-checking;
+@use 'src/app/checking/checking/checking-answers/checking-answers-theme' as sf-checking-answer;
+@use 'src/app/checking/checking/checking-answers/checking-comments/checking-comments-theme' as sf-checking-comments;
+@use 'src/app/checking/checking/checking-questions/checking-questions-theme' as sf-checking-questions;
+@use 'src/app/navigation/navigation-theme' as sf-navigation;
 @use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
+@use 'src/app/shared/book-multi-select/book-multi-select-theme' as sf-book-multi-select;
+@use 'src/app/translate/draft-generation/draft-generation-steps/draft-generation-steps-theme' as
+  sf-draft-generation-steps;
+@use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
+@use 'src/app/translate/draft-generation/draft-sources/draft-sources-theme' as sf-draft-sources;
+@use 'src/app/translate/editor/editor-theme' as sf-editor;
+@use 'src/app/translate/editor/note-dialog/note-dialog-theme' as sf-note-dialog;
+@use 'src/app/translate/editor/editor-draft/editor-draft-theme' as sf-editor-draft;
+@use 'src/app/translate/biblical-terms/biblical-terms-theme' as sf-biblical-terms;
+@use 'src/app/translate/translate-overview/translate-overview.component' as sf-translate-overview;
 
-@include mat.all-component-typographies();
-@include mat.core();
+@use 'text' as sf-text;
 
-$mat-sf-purple: (
-  200: $purpleLight,
-  500: $purpleMedium,
-  800: $purpleDark,
-  contrast: (
-    200: rgba(black, 0.87),
-    500: white,
-    800: white
-  )
-);
+@mixin theme($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
 
-$mat-sf-grey: (
-  100: color.scale($greyLight, $lightness: 10%),
-  200: $greyLight,
-  300: color.scale($greyLight, $lightness: -10%),
-  400: color.scale($greyDark, $lightness: 30%),
-  500: color.scale($greyDark, $lightness: 20%),
-  600: color.scale($greyDark, $lightness: 10%),
-  700: color.scale($greyDark, $lightness: 5%),
-  800: $greyDark,
-  900: color.scale($greyDark, $lightness: -5%),
-  contrast: (
-    200: rgba(black, 0.87),
-    800: white
-  )
-);
+  // Global styles
+  @include mat.system-level-colors($theme);
 
-$mat-sf-green: (
-  200: #dcedc8,
-  300: color.scale($greenLight, $lightness: 30%),
-  400: color.scale($greenLight, $lightness: 15%),
-  500: $greenLight,
-  600: color.scale($greenDark, $lightness: 20%),
-  700: color.scale($greenDark, $lightness: 10%),
-  800: $greenDark,
-  900: color.scale($greenDark, $lightness: -5%),
-  contrast: (
-    200: rgba(black, 0.87),
-    500: rgba(black, 0.87),
-    800: white
-  )
-);
+  // Custom components
+  @include sf-app.theme($theme);
+  @include sf-book-multi-select.theme($theme);
+  @include sf-biblical-terms.theme($theme);
+  @include sf-checking.theme($theme);
+  @include sf-checking-answer.theme($theme);
+  @include sf-checking-comments.theme($theme);
+  @include sf-checking-questions.theme($theme);
+  @include sf-confirm-sources.theme($theme);
+  @include sf-draft-generation-steps.theme($theme);
+  @include sf-draft-sources.theme($theme);
+  @include sf-editor.theme($theme);
+  @include sf-editor-draft.theme($theme);
+  @include sf-my-projects.theme($theme);
+  @include sf-navigation.theme($theme);
+  @include sf-note-dialog.theme($theme);
+  @include sf-tab-group.theme($theme);
+  @include sf-text.theme($theme);
+  @include sf-translate-overview.theme($theme);
 
-$mat-sf-blue: (
-  500: $blueMedium,
-  contrast: (
-    500: white
-  )
-);
+  // Custom variables
+  --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
+  --sf-border-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 60, 90))};
+  --sf-error-foreground: #{mat.get-theme-color($theme, error, if($is-dark, 80, 40))};
+  --sf-language-font-family: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
 
-$mat-sf-orange: (
-  500: $orange,
-  contrast: (
-    500: white
-  )
-);
-
-$mat-sf-error: (
-  100: $errorColor,
-  500: $errorColor,
-  700: $errorColor,
-  contrast: (
-    100: white,
-    500: white,
-    700: white
-  )
-);
-
-// Styles for angular material components. Refer to https://material.angular.io/guide/theming
-$matGreyPalette: mat.m2-define-palette($mat-sf-grey, 800);
-$matGreenLightPalette: mat.m2-define-palette($mat-sf-green, 500, 200);
-$matErrorPalette: mat.m2-define-palette($mat-sf-error, 500);
-
-$app-typography: mat.m2-define-typography-config(
-  $body-1: mat.m2-define-typography-level(16px, 1.2em)
-);
-
-$dialog-typography: mat.m2-define-typography-config(
-  $body-1: mat.m2-define-typography-level(14px, 1.5em)
-);
-
-$material-app-theme: mat.m2-define-light-theme(
-  (
-    color: (
-      primary: $matGreyPalette,
-      accent: $matGreenLightPalette,
-      warn: $matErrorPalette
-    ),
-    typography: $app-typography
-  )
-);
-
-// A Material input uses the accent color for the asterisk, but light green is an odd color to use there.
-// This theme uses the error color for accent and can be applied only where needed.
-$material-theme-accent-error: mat.m2-define-light-theme(
-  (
-    color: (
-      primary: $matGreyPalette,
-      accent: $matErrorPalette,
-      warn: $matErrorPalette
-    )
-  )
-);
-
-@include mat.core-theme($material-app-theme);
-@include mat.autocomplete-theme($material-app-theme);
-@include mat.badge-theme($material-app-theme);
-@include mat.bottom-sheet-theme($material-app-theme);
-@include mat.icon-button-theme($material-app-theme);
-@include mat.button-theme($material-app-theme);
-@include mat.button-toggle-theme($material-app-theme);
-@include mat.icon-button-density(-2);
-@include mat.card-theme($material-app-theme);
-@include mat.checkbox-theme($material-app-theme);
-@include mat.chips-theme($material-app-theme);
-@include mat.dialog-theme($material-app-theme);
-@include mat.dialog-typography($dialog-typography);
-@include mat.divider-theme($material-app-theme);
-@include mat.expansion-theme($material-app-theme);
-@include mat.fab-theme($material-app-theme);
-@include mat.form-field-theme($material-theme-accent-error);
-@include mat.icon-theme($material-app-theme);
-@include mat.input-theme($material-app-theme);
-@include mat.list-theme($material-app-theme);
-@include mat.menu-theme($material-app-theme);
-@include mat.paginator-theme($material-app-theme);
-@include mat.progress-bar-theme($material-app-theme);
-@include mat.progress-spinner-theme($material-app-theme);
-@include mat.radio-theme($material-app-theme);
-@include mat.select-theme($material-app-theme);
-@include mat.sidenav-theme($material-app-theme);
-@include mat.slide-toggle-theme($material-app-theme);
-@include mat.slider-theme($material-app-theme);
-@include mat.snack-bar-theme($material-app-theme);
-@include mat.stepper-theme($material-app-theme);
-@include mat.table-theme($material-app-theme);
-@include mat.tabs-theme($material-app-theme);
-@include mat.toolbar-theme($material-app-theme);
-@include mat.tooltip-theme($material-app-theme);
-@include mat.option-theme($material-app-theme);
-
-// Other components that appear to not be used at this time
-
-// @include mat.grid-list-theme($material-app-theme);
-// @include mat.sort-theme($material-app-theme);
-// @include mat.tree-theme($material-app-theme);
-
-// Use theme with custom components
-@include sf-tab-group.theme($material-app-theme);
-
-// Remove letter spacing (added by Material v15+) that may not work with some language scripts (e.g. Arabic).
-// TODO: Add to this list as needed as we migrate to Material v15+
-html,
-.mdc-tab,
-.mdc-button,
-.mat-mdc-menu-item-text {
-  letter-spacing: initial;
-  --mat-menu-item-label-text-tracking: initial;
-  --mdc-text-button-label-text-tracking: initial;
-  --mdc-filled-button-label-text-tracking: initial;
-}
-
-mat-list-item {
-  --mdc-list-list-item-label-text-tracking: initial;
-}
-
-.card-outline {
-  @include mat.elevation(0);
-  border: 1px solid #e0e0e0;
-}
-
-// Workaround for compatibility between mat-card and mat-elevation class
-// https://github.com/angular/components/issues/26094#issuecomment-1490245622
-@for $i from 0 through 24 {
-  .mat-mdc-card.mat-elevation-z#{$i} {
-    @include mat.elevation($i);
-  }
-}
-
-// Restore the tab header underline from Material pre-v15
-.mat-mdc-tab-header {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-mat-card-title {
-  --mat-card-title-text-size: 24px;
-}
-
-.mat-mdc-dialog-actions {
-  padding: 16px 24px !important;
-}
-
-.mat-mdc-dialog-container {
-  --mdc-dialog-supporting-text-color: rgba(0, 0, 0, 0.9);
-}
-
-@mixin dense_mat_select() {
-  ::ng-deep {
-    height: 36px;
-    .mat-mdc-form-field-infix {
-      min-height: initial;
-      padding-top: 7px;
-      padding-bottom: 5px;
-      width: initial;
-      min-width: 25px; // prevent weird transparent gap between content and scrollbar in Chromium
+  a:not(.mdc-button):not(.mat-mdc-menu-item) {
+    color: mat.get-theme-color($theme, primary, 50);
+    &:hover {
+      color: mat.get-theme-color($theme, primary, 60);
     }
-    .mat-mdc-select-arrow-wrapper {
-      margin-inline-start: 5px;
+    &:visited {
+      color: mat.get-theme-color($theme, primary, 60);
+    }
+    &:visited:hover {
+      color: mat.get-theme-color($theme, primary, 70);
+    }
+  }
+
+  // Overwrite component styles
+  @include mat.card-overrides(
+    (
+      title-text-size: 24px
+    )
+  );
+
+  @include mat.dialog-overrides(
+    (
+      container-max-width: initial,
+      container-color: mat.get-theme-color($theme, neutral, if($is-dark, 20, 100))
+    )
+  );
+
+  @include mat.expansion-overrides(
+    (
+      container-background-color: mat.get-theme-color($theme, neutral, if($is-dark, 20, 98))
+    )
+  );
+
+  @include mat.sidenav-overrides(
+    (
+      container-width: auto,
+      container-background-color: mat.get-theme-color($theme, neutral, if($is-dark, 10, 98))
+    )
+  );
+
+  @include mat.stepper-overrides(
+    (
+      container-color: transparent
+    )
+  );
+
+  @include mat.toolbar-overrides(
+    (
+      container-background-color: mat.get-theme-color($theme, primary, 10),
+      container-text-color: mat.get-theme-color($theme, primary, 100)
+    )
+  );
+  @if not $is-dark {
+    mat-toolbar {
+      @include mat.icon-overrides(
+        (
+          color: mat.get-theme-color($theme, primary, 100)
+        )
+      );
     }
   }
 }

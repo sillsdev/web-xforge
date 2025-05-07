@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -11,8 +10,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
@@ -25,7 +23,6 @@ import { DraftGenerationService } from '../translate/draft-generation/draft-gene
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import { ServalAdministrationService } from './serval-administration.service';
-
 interface Row {
   id: string;
   type: string;
@@ -68,7 +65,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
   trainingBooksByProject: ProjectAndRange[] = [];
   trainingFiles: string[] = [];
-  translationBooks: string[] = [];
+  translationBooksByProject: ProjectAndRange[] = [];
 
   downloadBooksProgress: number = 0;
   downloadBooksTotal: number = 0;
@@ -85,7 +82,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly servalAdministrationService: ServalAdministrationService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
   }
@@ -174,9 +171,25 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             }
           }
           this.trainingFiles = draftConfig.lastSelectedTrainingDataFiles;
-          this.translationBooks = booksFromScriptureRange(draftConfig.lastSelectedTranslationScriptureRange ?? '').map(
-            bookNum => Canon.bookNumberToEnglishName(bookNum)
-          );
+          this.translationBooksByProject = [];
+          if (draftConfig.lastSelectedTranslationScriptureRange != null) {
+            this.translationBooksByProject.push({
+              source: 'Source 1',
+              scriptureRange: booksFromScriptureRange(draftConfig.lastSelectedTranslationScriptureRange ?? '')
+                .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
+                .join(', ')
+            });
+          } else if (draftConfig.lastSelectedTranslationScriptureRanges != null) {
+            let sourceCount = 1;
+            for (const range of draftConfig.lastSelectedTranslationScriptureRanges) {
+              this.translationBooksByProject.push({
+                source: `Source ${sourceCount++}`,
+                scriptureRange: booksFromScriptureRange(range.scriptureRange)
+                  .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
+                  .join(', ')
+              });
+            }
+          }
 
           this.draftConfig = draftConfig;
           this.draftJob$ = SFProjectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
@@ -188,7 +201,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             return of(undefined);
           }
         }),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe((build: BuildDto | undefined) => {
         this.lastCompletedBuild = build;

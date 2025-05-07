@@ -1,13 +1,11 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { slice } from 'lodash-es';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { combineLatest } from 'rxjs';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 export interface MultiCursorViewer extends UserProfile {
   cursorColor: string;
   activeInEditor: boolean;
@@ -27,7 +25,7 @@ export class MultiViewerComponent implements OnInit {
   constructor(
     private readonly breakpointObserver: BreakpointObserver,
     private readonly breakpointService: MediaBreakpointService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {}
 
   get avatarViewers(): MultiCursorViewer[] {
@@ -45,7 +43,7 @@ export class MultiViewerComponent implements OnInit {
       this.breakpointObserver.observe(this.breakpointService.width('>', Breakpoint.SM)),
       this.breakpointObserver.observe(this.breakpointService.width('<=', Breakpoint.XS))
     ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(([bigger, xs]) => {
         // initialize to 3, but if > SM then set to 6, else if <= XS then set to 1
         this.maxAvatars = bigger.matches ? 6 : xs.matches ? 1 : 3;

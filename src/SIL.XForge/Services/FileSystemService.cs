@@ -14,6 +14,20 @@ public class FileSystemService : IFileSystemService
 
     public Stream OpenFile(string path, FileMode mode) => File.Open(path, mode);
 
+    /// <summary>
+    /// Open a file with the specified mode, access, and share options.
+    /// </summary>
+    /// <param name="path">The path to the file.</param>
+    /// <param name="mode">The file access mode.</param>
+    /// <param name="access">The file access mode.</param>
+    /// <param name="share">The access other threads have to the file.</param>
+    /// <returns>The file stream.</returns>
+    /// <remarks>
+    /// When opening resources, specify <see cref="FileAccess.Read"/> to avoid file locks.
+    /// </remarks>
+    public Stream OpenFile(string path, FileMode mode, FileAccess access, FileShare share) =>
+        File.Open(path, mode, access, share);
+
     public string FileReadText(string path) => File.ReadAllText(path);
 
     public void DeleteFile(string path) => File.Delete(path);

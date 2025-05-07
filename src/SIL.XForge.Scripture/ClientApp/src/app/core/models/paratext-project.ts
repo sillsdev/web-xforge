@@ -4,7 +4,8 @@ export interface ParatextProject {
   name: string;
   shortName: string;
   languageTag: string;
-  projectId?: string;
+  /** SF project id */
+  projectId?: string | null;
   isConnectable: boolean;
   isConnected: boolean;
   hasUserRoleChanged?: boolean;

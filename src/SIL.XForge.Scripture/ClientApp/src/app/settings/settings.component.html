@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'settings'">
   <div class="container">
-    <div class="mat-headline-4">{{ t("settings") }}</div>
+    <h1>{{ t("settings") }}</h1>
     @if (!isAppOnline) {
       <span class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
     }
@@ -111,108 +111,29 @@
               <mat-card-title>{{ t("pre_translation_drafting") }}</mat-card-title>
               <div>
                 @if (mainSettingsLoaded) {
-                  <div class="tool-setting">
-                    <div class="tool-setting-field checkbox-field">
-                      <mat-checkbox formControlName="alternateSourceEnabled" id="checkbox-alternate-source-enabled">{{
-                        t("enable_alternate_source")
-                      }}</mat-checkbox>
-                      <app-info [text]="t('pre_translation_alternate_source_info')"></app-info>
-                      <app-write-status
-                        [state]="getControlState('alternateSourceEnabled')"
-                        [formGroup]="form"
-                        id="alternate-source-enabled-status"
-                      ></app-write-status>
-                    </div>
-                  </div>
-                  @if (isAlternateSourceEnabled) {
-                    <div class="tool-setting-field">
-                      <app-project-select
-                        id="alternateSourceParatextId"
-                        formControlName="alternateSourceParatextId"
-                        [placeholder]="t('pre_translation_source_text_placeholder')"
-                        [projects]="projects"
-                        [resources]="resources"
-                        [nonSelectableProjects]="nonSelectableProjects"
-                        [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                        [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
-                      ></app-project-select>
-                      <app-write-status
-                        [state]="getControlState('alternateSourceParatextId')"
-                        [formGroup]="form"
-                        id="alternate-source-status"
-                      ></app-write-status>
-                    </div>
+                  @if (showDraftGenerationSettingsMovedMessage) {
+                    <ng-template #templateDraftSettingsRelocatedMessage>
+                      @for (part of draftSettingsRelocatedMessage | async; track part) {
+                        <!-- To not have whitespace around the text, -->
+                        <!-- prettier-ignore -->
+                        @if (part.id == null) {{{ part.text }}}
+                        @else if (part.id === 1) {
+                          <a [appRouterLink]="['/projects', projectId, 'draft-generation']">{{ part.text }}</a>
+                        }
+                      }
+                    </ng-template>
+
+                    @if (showHighlightedDraftGenerationSettingsMovedMessage) {
+                      <app-notice icon="info" mode="fill-dark">
+                        <ng-container *ngTemplateOutlet="templateDraftSettingsRelocatedMessage"></ng-container>
+                      </app-notice>
+                    } @else {
+                      <p class="helper-text">
+                        <ng-container *ngTemplateOutlet="templateDraftSettingsRelocatedMessage"></ng-container>
+                      </p>
+                    }
                   }
-                  <div class="tool-setting">
-                    <div class="tool-setting-field checkbox-field">
-                      <mat-checkbox
-                        formControlName="alternateTrainingSourceEnabled"
-                        id="checkbox-alternate-training-source-enabled"
-                        >{{ t("enable_alternate_training_source") }}</mat-checkbox
-                      >
-                      <app-info [text]="t('pre_translation_alternate_training_source_info')"></app-info>
-                      <app-write-status
-                        [state]="getControlState('alternateTrainingSourceEnabled')"
-                        [formGroup]="form"
-                        id="alternate-training-source-enabled-status"
-                      ></app-write-status>
-                    </div>
-                  </div>
-                  @if (isAlternateTrainingSourceEnabled) {
-                    <div class="tool-setting-field">
-                      <app-project-select
-                        id="alternateTrainingSourceParatextId"
-                        formControlName="alternateTrainingSourceParatextId"
-                        [placeholder]="t('pre_translation_alternate_training_source_text_placeholder')"
-                        [projects]="projects"
-                        [resources]="resources"
-                        [nonSelectableProjects]="nonSelectableProjects"
-                        [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                        [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
-                      ></app-project-select>
-                      <app-write-status
-                        [state]="getControlState('alternateTrainingSourceParatextId')"
-                        [formGroup]="form"
-                        id="alternate-training-source-status"
-                      ></app-write-status>
-                    </div>
-                  }
-                  @if (isAdditionalTrainingSourceEnabled || featureFlags.allowAdditionalTrainingSource.enabled) {
-                    <div class="tool-setting">
-                      <div class="tool-setting-field checkbox-field">
-                        <mat-checkbox
-                          formControlName="additionalTrainingSourceEnabled"
-                          id="checkbox-additional-training-source-enabled"
-                          >{{ t("enable_additional_training_source") }}</mat-checkbox
-                        >
-                        <app-info [text]="t('pre_translation_additional_training_source_info')"></app-info>
-                        <app-write-status
-                          [state]="getControlState('additionalTrainingSourceEnabled')"
-                          [formGroup]="form"
-                          id="additional-training-source-enabled-status"
-                        ></app-write-status>
-                      </div>
-                    </div>
-                  }
-                  @if (isAdditionalTrainingSourceEnabled) {
-                    <div class="tool-setting-field">
-                      <app-project-select
-                        id="additionalTrainingSourceParatextId"
-                        formControlName="additionalTrainingSourceParatextId"
-                        [placeholder]="t('pre_translation_additional_training_source_text_placeholder')"
-                        [projects]="projects"
-                        [resources]="resources"
-                        [nonSelectableProjects]="nonSelectableProjects"
-                        [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                        [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
-                      ></app-project-select>
-                      <app-write-status
-                        [state]="getControlState('additionalTrainingSourceParatextId')"
-                        [formGroup]="form"
-                        id="additional-training-source-status"
-                      ></app-write-status>
-                    </div>
-                  }
+
                   <div class="tool-setting">
                     <div class="tool-setting-field checkbox-field">
                       <mat-checkbox
@@ -402,7 +323,7 @@
     </div>
 
     <div id="danger-zone">
-      <div class="mat-headline-6">{{ t("danger_zone") }}</div>
+      <h2>{{ t("danger_zone") }}</h2>
       <mat-card class="card-content" id="delete-project">
         <h4>{{ t("delete_this_project") }}</h4>
         @if (isActiveSourceProject) {
@@ -425,7 +346,6 @@
           id="delete-btn"
           mat-flat-button
           type="button"
-          color="warn"
           (click)="openDeleteProjectDialog()"
           [class.enabled]="!deleteButtonDisabled"
           [disabled]="deleteButtonDisabled"

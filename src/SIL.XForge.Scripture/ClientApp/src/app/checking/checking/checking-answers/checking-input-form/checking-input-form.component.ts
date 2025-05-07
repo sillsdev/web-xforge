@@ -1,6 +1,5 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -9,7 +8,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextsByBookId } from '../../../../core/models/texts-by-book-id';
 import {
@@ -20,7 +19,6 @@ import {
 import { CheckingUtils } from '../../../checking.utils';
 import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
 import { AudioAttachment } from '../../checking-audio-player/checking-audio-player.component';
-
 export interface CheckingInput {
   text?: string;
   audio?: AudioAttachment;
@@ -64,11 +62,11 @@ export class CheckingInputFormComponent {
     private readonly i18n: I18nService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     this.breakpointObserver
       .observe(this.mediaBreakpointService.width('<', Breakpoint.MD))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((state: BreakpointState) => {
         this.isScreenSmall = state.matches;
       });

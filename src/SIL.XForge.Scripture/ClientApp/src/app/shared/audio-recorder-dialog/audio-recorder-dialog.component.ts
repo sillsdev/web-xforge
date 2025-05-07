@@ -1,10 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Inject,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { TranslocoModule, translate } from '@ngneat/transloco';
-import { Observable, Subscription, interval, timer } from 'rxjs';
+import { translate, TranslocoModule } from '@ngneat/transloco';
+import { interval, Observable, Subscription, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -14,7 +23,8 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { QuietDestroyRef, audioRecordingMimeType, objectId } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { audioRecordingMimeType, objectId } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { SharedModule } from '../shared.module';
 
@@ -27,6 +37,7 @@ export interface AudioAttachment {
 
 export interface AudioRecorderDialogData {
   countdown?: boolean;
+  requireSave?: boolean;
   audio?: AudioAttachment;
 }
 
@@ -58,6 +69,8 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
   countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
 
+  protected _requireSave: boolean;
+
   private destroyed = false;
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
@@ -77,9 +90,10 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly dialogService: DialogService,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly destroyRef: DestroyRef
   ) {
     this.showCountdown = data?.countdown ?? false;
+    this._requireSave = data?.requireSave ?? false;
     if (data?.audio != null) {
       this.audio = data.audio;
     }
@@ -115,11 +129,11 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
   }
 
   registerOnChange(fn: ((value: AudioAttachment) => void) | undefined): void {
-    this.status.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fn);
+    this.status.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(fn);
   }
 
   registerOnTouched(fn: ((value: AudioAttachment) => void) | undefined): void {
-    this._onTouched.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fn);
+    this._onTouched.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(fn);
   }
 
   processAudio(): void {
@@ -196,10 +210,13 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     this.audio = { status: 'stopped' };
     // Additional promise for when the audio has been processed and is available
     await new Promise<void>(resolve => {
-      const statusPromise = this.status.subscribe((status: AudioAttachment) => {
-        if (status.status === 'processed') {
+      const statusPromise = this.status.subscribe((audio: AudioAttachment) => {
+        if (audio.status === 'processed') {
           statusPromise.unsubscribe();
           resolve();
+          if (!this._requireSave) {
+            this.saveRecording();
+          }
         }
       });
     });
@@ -259,7 +276,7 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     };
 
     const refreshRate: Observable<number> = interval(150);
-    this.refreshWaveformSub = refreshRate.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(_ => drawWaveForm());
+    this.refreshWaveformSub = refreshRate.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(_ => drawWaveForm());
   }
 
   private initCanvasContext(): void {

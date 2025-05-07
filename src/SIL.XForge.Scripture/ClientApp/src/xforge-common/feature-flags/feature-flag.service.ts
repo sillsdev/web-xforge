@@ -1,10 +1,8 @@
-import { Injectable } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef, Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
-
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 export interface FeatureFlag {
   readonly key: string;
   readonly description: string;
@@ -36,10 +34,10 @@ export class FeatureFlagStore implements IFeatureFlagStore {
   constructor(
     private readonly anonymousService: AnonymousService,
     private readonly onlineStatusService: OnlineStatusService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {
     // Cause the flags to be reloaded when coming online
-    onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
+    onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status) this.remoteFlagCacheExpiry = new Date();
     });
   }
@@ -223,25 +221,25 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly showNmtDrafting: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  private readonly showNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
     'SHOW_NMT_DRAFTING',
     'Show NMT drafting',
     2,
-    new StaticFeatureFlagStore(true, { readonly: true })
+    this.featureFlagStore
   );
 
-  readonly allowForwardTranslationNmtDrafting: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  private readonly allowForwardTranslationNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
     'ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING',
     'Allow Forward Translation NMT drafting',
     3,
-    new StaticFeatureFlagStore(true, { readonly: true })
+    this.featureFlagStore
   );
 
-  private readonly scriptureAudio: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  private readonly scriptureAudio: FeatureFlag = new ServerOnlyFeatureFlag(
     'SCRIPTURE_AUDIO',
     'Scripture audio',
     4,
-    new StaticFeatureFlagStore(true, { readonly: true })
+    this.featureFlagStore
   );
 
   readonly preventOpSubmission: ObservableFeatureFlag = new FeatureFlagFromStorage(
@@ -281,12 +279,12 @@ export class FeatureFlagService {
 
   private readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
     'UseEchoForPreTranslation',
-    'Use Echo for Pre-Translation Drafting',
+    'Allow Echo for Pre-Translation Drafting',
     10,
     this.featureFlagStore
   );
 
-  readonly allowFastTraining: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  private readonly allowFastTraining: FeatureFlag = new ServerOnlyFeatureFlag(
     'ALLOW_FAST_TRAINING',
     'Allow Fast Pre-Translation Training',
     11,
@@ -300,7 +298,7 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly allowAdditionalTrainingSource: FeatureFlag = new FeatureFlagFromStorage(
+  private readonly allowAdditionalTrainingSource: FeatureFlag = new ServerOnlyFeatureFlag(
     'AllowAdditionalTrainingSource',
     'Allow mixing in an additional training source',
     13,
@@ -311,6 +309,13 @@ export class FeatureFlagService {
     'UpdatedLearningRateForServal',
     'Updated Learning Rate For Serval',
     14,
+    this.featureFlagStore
+  );
+
+  readonly darkMode: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'DarkMode',
+    'Dark mode',
+    15,
     this.featureFlagStore
   );
 

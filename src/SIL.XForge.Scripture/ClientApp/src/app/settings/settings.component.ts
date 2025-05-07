@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,7 +16,6 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
@@ -25,14 +23,13 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { getQuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
-
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
 @Component({
   selector: 'app-settings',
@@ -43,12 +40,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new FormControl(false);
   sourceParatextId = new FormControl<string | undefined>(undefined);
   biblicalTermsEnabled = new FormControl(false);
-  alternateSourceEnabled = new FormControl(false);
-  alternateSourceParatextId = new FormControl<string | undefined>(undefined);
-  alternateTrainingSourceEnabled = new FormControl(false);
-  alternateTrainingSourceParatextId = new FormControl<string | undefined>(undefined);
-  additionalTrainingSourceEnabled = new FormControl(false);
-  additionalTrainingSourceParatextId = new FormControl<string | undefined>(undefined);
   additionalTrainingData = new FormControl(false);
   servalConfig = new FormControl<string | undefined>(undefined);
   checkingEnabled = new FormControl(false);
@@ -68,12 +59,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
     biblicalTermsEnabled: this.biblicalTermsEnabled,
-    alternateSourceEnabled: this.alternateSourceEnabled,
-    alternateSourceParatextId: this.alternateSourceParatextId,
-    alternateTrainingSourceEnabled: this.alternateTrainingSourceEnabled,
-    alternateTrainingSourceParatextId: this.alternateTrainingSourceParatextId,
-    additionalTrainingSourceEnabled: this.additionalTrainingSourceEnabled,
-    additionalTrainingSourceParatextId: this.additionalTrainingSourceParatextId,
     additionalTrainingData: this.additionalTrainingData,
     servalConfig: this.servalConfig,
     checkingEnabled: this.checkingEnabled,
@@ -95,6 +80,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   resourceLoadingFailed = false;
   mainSettingsLoaded = false;
 
+  draftSettingsRelocatedMessage = this.i18n.interpolate('settings.draft_settings_on_generate_page');
+  /** Temporary messages. The logic and messages for 'draft generation settings moved' can be removed once they
+   * expire. */
+  showHighlightedDraftGenerationSettingsMovedMessage: boolean = new Date() < new Date('2025-07-01 00:00:00 UTC');
+  showDraftGenerationSettingsMovedMessage: boolean = new Date() < new Date('2025-10-01 00:00:00 UTC');
+
   private static readonly projectSettingValueUnset = 'unset';
   private paratextUsername: string | undefined;
   private projectDoc?: SFProjectDoc;
@@ -102,7 +93,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   private controlStates = new Map<keyof SFProjectSettings, ElementState>();
   private previousFormValues: SFProjectSettings = {};
   private _isAppOnline: boolean = false;
-  private destroyRef = getQuietDestroyRef();
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -115,9 +105,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     readonly i18n: I18nService,
     readonly authService: AuthService,
-    readonly featureFlags: FeatureFlagService,
     readonly externalUrls: ExternalUrlService,
-    private readonly activatedProjectService: ActivatedProjectService
+    private readonly activatedProjectService: ActivatedProjectService,
+    private destroyRef: DestroyRef
   ) {
     super(noticeService);
     this.loading = true;
@@ -143,21 +133,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this.checkingEnabled.value ?? false;
   }
 
-  get isAlternateSourceEnabled(): boolean {
-    return this.alternateSourceEnabled.value ?? false;
-  }
-
-  get isAlternateTrainingSourceEnabled(): boolean {
-    return this.alternateTrainingSourceEnabled.value ?? false;
-  }
-
-  get isAdditionalTrainingSourceEnabled(): boolean {
-    return this.additionalTrainingSourceEnabled.value ?? false;
-  }
-
   get showPreTranslationSettings(): boolean {
     const translateConfig = this.projectDoc?.data?.translateConfig;
-    if (translateConfig == null || !this.featureFlags.showNmtDrafting.enabled) {
+    if (translateConfig == null) {
       return false;
     } else if (this.authService.currentUserRoles.includes(SystemRole.ServalAdmin)) {
       return true;
@@ -205,7 +183,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       map(params => params['projectId'] as string)
     );
     combineLatest([this.onlineStatusService.onlineStatus$, projectId$])
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([isOnline, projectId]) => {
         this.isAppOnline = isOnline;
         if (isOnline && this.projects == null) {
@@ -225,7 +203,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             if (this.projectDoc != null) {
               this.updateSettingsInfo();
               this.updateNonSelectableProjects();
-              this.projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+              this.projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
                 this.updateNonSelectableProjects();
                 this.setIndividualControlDisabledStates();
               });
@@ -380,55 +358,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
-    if (this.settingChanged(newValue, 'alternateSourceEnabled')) {
-      this.updateSetting(newValue, 'alternateSourceEnabled');
-    }
-
-    // Check if the pre-translation alternate source project needs to be updated
-    if (this.settingChanged(newValue, 'alternateSourceParatextId')) {
-      const settings: SFProjectSettings = {
-        alternateSourceParatextId: newValue.alternateSourceParatextId ?? SettingsComponent.projectSettingValueUnset
-      };
-      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
-      this.checkUpdateStatus('alternateSourceParatextId', updateTaskPromise);
-      this.previousFormValues = newValue;
-      return;
-    }
-
-    if (this.settingChanged(newValue, 'alternateTrainingSourceEnabled')) {
-      this.updateSetting(newValue, 'alternateTrainingSourceEnabled');
-    }
-
     if (this.settingChanged(newValue, 'additionalTrainingData')) {
       this.updateSetting(newValue, 'additionalTrainingData');
-    }
-
-    // Check if the pre-translation alternate training source project needs to be updated
-    if (this.settingChanged(newValue, 'alternateTrainingSourceParatextId')) {
-      const settings: SFProjectSettings = {
-        alternateTrainingSourceParatextId:
-          newValue.alternateTrainingSourceParatextId ?? SettingsComponent.projectSettingValueUnset
-      };
-      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
-      this.checkUpdateStatus('alternateTrainingSourceParatextId', updateTaskPromise);
-      this.previousFormValues = newValue;
-      return;
-    }
-
-    if (this.settingChanged(newValue, 'additionalTrainingSourceEnabled', false)) {
-      this.updateSetting(newValue, 'additionalTrainingSourceEnabled');
-    }
-
-    // Check if the pre-translation additional training sources project needs to be updated
-    if (this.settingChanged(newValue, 'additionalTrainingSourceParatextId')) {
-      const settings: SFProjectSettings = {
-        additionalTrainingSourceParatextId:
-          newValue.additionalTrainingSourceParatextId ?? SettingsComponent.projectSettingValueUnset
-      };
-      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
-      this.checkUpdateStatus('additionalTrainingSourceParatextId', updateTaskPromise);
-      this.previousFormValues = newValue;
-      return;
     }
 
     this.updateCheckingConfig(newValue);
@@ -515,14 +446,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
       biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
-      alternateSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled,
-      alternateSourceParatextId: this.projectDoc.data.translateConfig.draftConfig?.alternateSource?.paratextId,
-      alternateTrainingSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled,
-      alternateTrainingSourceParatextId:
-        this.projectDoc.data.translateConfig.draftConfig?.alternateTrainingSource?.paratextId,
-      additionalTrainingSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled,
-      additionalTrainingSourceParatextId:
-        this.projectDoc.data.translateConfig.draftConfig?.additionalTrainingSource?.paratextId,
       additionalTrainingData: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingData,
       servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
@@ -569,12 +492,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
-    this.controlStates.set('alternateSourceEnabled', ElementState.InSync);
-    this.controlStates.set('alternateSourceParatextId', ElementState.InSync);
-    this.controlStates.set('alternateTrainingSourceEnabled', ElementState.InSync);
-    this.controlStates.set('alternateTrainingSourceParatextId', ElementState.InSync);
-    this.controlStates.set('additionalTrainingSourceEnabled', ElementState.InSync);
-    this.controlStates.set('additionalTrainingSourceParatextId', ElementState.InSync);
     this.controlStates.set('additionalTrainingData', ElementState.InSync);
     this.controlStates.set('servalConfig', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);

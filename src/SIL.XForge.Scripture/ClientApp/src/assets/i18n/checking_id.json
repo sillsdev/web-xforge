@@ -2,9 +2,9 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
     "mic_not_found": "Mikrofon tidak ditemukan. Sambungkan mikrofon ke perangkat Anda.",
-    "record": "Record",
-    "re_record": "Rekam ulang",
-    "save": "Simpan Jawaban",
+    "record": "Rekam",
+    "re_record": "Rekam-ulang",
+    "save": "Simpan",
     "stop_recording": "Hentikan Perekaman"
   },
   "app": {
@@ -13,7 +13,7 @@
     "announcements": "Pengumuman",
     "cannot_change_password": "Tidak dapat mengganti kata kunci saat ini. Coba lagi nanti atau laporkan masalah dalam menu Bantuan.",
     "change_password": "Ganti kata kunci",
-    "community_checking": "Pemeriksaan Komunitas",
+    "community_checking": "Pemeriksaan Masyarakat",
     "community_support": "Dukungan Komunitas",
     "help": "Bantuan",
     "install_on_device": "Instal di perangkat",
@@ -38,9 +38,9 @@
     "update_is_available": "Pembaruan telah tersedia. Silakan muat ulang halaman."
   },
   "attach_audio": {
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
-    "tooltip_upload": "Upload audio"
+    "tooltip_record": "Rekam suara",
+    "tooltip_stop": "Berhenti merekam",
+    "tooltip_upload": "Unggah suara"
   },
   "canon": {
     "book_names": {
@@ -218,24 +218,29 @@
     "save_answer": "Simpan Jawaban",
     "select_verses": "Pilih ayat-ayat",
     "show_more_unread": "tampilkan {{ count }} lebih banyak jawaban yang belum dibaca",
-    "tooltip_status_export": "Ekspor ke Paratext jika dikonfigurasi di Pengaturan",
+    "tooltip_status_export": "Ekspor ke Paratext jika dikelola di Pengaturan",
     "tooltip_status_resolve": "Tandai jawaban sebagai terselesaikan",
     "your_answer": "Jawaban Anda"
   },
   "chapter_audio_dialog": {
     "audio": "Suara",
     "audio_already_exists": "Berkas suara sudah tersedia untuk pilihan ini.",
-    "audio_file_less_than_one_hundred_mb": "Hanya file audio di bawah 95MB",
-    "browse_files": "Telusuri Berkas",
+    "audio_file_less_than_one_hundred_mb": "Hanya berkas audio di bawah 95MB",
+    "browse_files": "Telusuri",
+    "browse_files_tooltip": "Unggah file audio dan file waktu",
     "cancel": "Batal",
-    "chapter_audio": "Pasal Audio",
-    "drag_and_drop_files": "Seret dan letakkan berkas suara dan pengaturan waktu di sini",
-    "drag_and_drop_or_browse": "ATAU",
+    "delete": "Menghapus Audio...",
+    "delete_audio": "Menghapus Audio",
+    "delete_both": "Hapus keduanya",
+    "delete_timing": "Hapus file Waktu",
+    "drag_and_drop_files": "Letakkan file audio dan file waktu di sini untuk mengunggah",
+    "drag_and_drop_overlay": "Letakkan file untuk mengunggah",
+    "drag_and_drop_or_browse": "atau",
     "from_timing_past_to_timing": "Satu atau lebih nilai akhir berakhir sebelum nilai awalnya.",
     "help": "Bantuan",
     "no_audio_file_uploaded": "Tidak ada berkas suara yang diunggah",
     "no_timing_data_uploaded": "Tidak ada data waktu yang diunggah",
-    "not_upload_audio_offline": "File audio tidak dapat diunggah tanpa terhubung ke internet.",
+    "not_upload_audio_offline": "Berkas audio tidak dapat diunggah tanpa terhubung ke internet.",
     "save": "Simpan",
     "segments_found": "{{ segments }} segmen yang ditemukan",
     "timing": "Waktu",
@@ -243,27 +248,28 @@
     "unrecognized_time_format": "Format waktu yang tidak dikenali",
     "unrecognized_timing_file_format": "Format file waktu yang tidak dikenali",
     "upload": "Unggah",
-    "upload_failed": "File audio tidak dapat diunggah. Silakan coba lagi atau gunakan file lain.",
-    "upload_timing_file": "Unggah File Pengaturan Waktu",
+    "upload_failed": "Berkas audio tidak dapat diunggah. Silakan coba lagi atau gunakan file lain.",
+    "upload_timing_file": "Unggah berkas data Waktu",
     "uploading": "Mengunggah...",
-    "zero_segments": "Nol segmen ditemukan."
+    "zero_segments": "Segmen tidak ditemukan."
   },
   "checking_audio_player": {
     "audio_unavailable": "Audio tidak tersedia.",
     "audio_cannot_be_accessed": "Terjadi kesalahan saat mencoba mengakses file audio. Jika hal ini terus berlanjut, silakan unggah file baru.",
     "audio_cannot_be_played": "Audio ini tidak dapat diputar saat Anda luring karena belum diunduh. Sambungkan ke internet untuk memutar.",
-    "audio_cannot_be_previewed": "Audio dalam format yang tidak dapat dipratinjau. Simpan perubahan apa pun dan sambungkan ke internet untuk memainkannya."
+    "audio_cannot_be_previewed": "Audio dalam format yang tidak dapat dipratinjau. Simpan perubahan apa pun dan sambungkan ke internet untuk memainkannya.",
+    "segment": "Segmen"
   },
   "checking_audio_recorder": {
     "delete": "Menghapus Rekaman",
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
     "mic_not_found": "Mikrofon tidak ditemukan. Sambungkan mikrofon ke perangkat Anda.",
-    "not_available": "Browser/Peramban Anda saat ini tidak mendukung perekaman audio. Coba gunakan browser/peramban lain yang mendukung.",
+    "not_available": "Peramban Anda saat ini tidak mendukung perekaman audio. Coba gunakan peramban lain yang mendukung.",
     "record_audio": "Rekam Audio",
     "stop_recording": "Hentikan Perekaman"
   },
   "checking_input_form": {
-    "attach": "Attach Scripture",
+    "attach": "Melampirkan Alkitab",
     "cancel": "Batal",
     "save": "Simpan Jawaban",
     "your_answer": "Jawaban Anda",
@@ -287,7 +293,7 @@
     "my_progress": "Kemajuan Saya",
     "project_stats": "Statistik proyek",
     "questions": "Pertanyaan",
-    "some_actions_unavailable_offline": "Beberapa tindakan tidak tersedia saat luring dan memerlukan hubungan ke internet, seperti mengunggah atau menghapus pasal berkas suara.",
+    "some_actions_unavailable_offline": "Beberapa tindakan tidak tersedia saat luring dan memerlukan hubungan ke internet, seperti mengunggah atau menghapus berkas suara pasal.",
     "tooltip_edit": "Sunting"
   },
   "checking_questions": {
@@ -301,13 +307,13 @@
   "edit_name_dialog": {
     "cancel": "Batal",
     "confirm_name": "Pastikan nama yang akan dilihat orang lain di proyek ini ketika Anda memposting jawaban dan komentar",
-    "confirm_your_name": "Memastikan Nama Anda",
-    "confirm": "Pastikan",
-    "connect_to_edit_name": "Harap sambungkan ke internet untuk menyunting nama Anda",
+    "confirm_your_name": "Konfirmasikan nama Anda",
+    "confirm": "Konfirmasikan",
+    "connect_to_edit_name": "Harap hubungkan ke internet untuk menyunting nama Anda",
     "enter_name": "Silahkan masukkan nama Anda",
     "update_your_name": "Perbarui nama Anda",
     "update": "Pembaruan",
-    "your_name": "Nama Anda"
+    "your_name": "Nama"
   },
   "error": {
     "chrome": "Chrome",
@@ -325,7 +331,7 @@
     "error_occurred_login": "Terjadi kesalahan saat masuk.",
     "failed_to_retrieve_suggestions": "Tidak bisa mendapatkan saran terjemahan.",
     "failed_to_update_avatar": "Gambar avatar Anda tidak dapat diperbarui.",
-    "suggestion_engine_requires_retrain": "Tidak bisa mendapatkan saran terjemahan. Harap latih kembali saran di halaman Ikhtisar.",
+    "suggestion_engine_requires_retrain": "Tidak bisa mendapatkan saran terjemahan. Harap latih kembali saran di halaman Ringkasan.",
     "go_to_retrain": "Buka Ringkasan",
     "try_again": "Coba Lagi"
   },
@@ -345,10 +351,10 @@
   },
   "global_notices": {
     "close": "Tutup",
-    "hour_range": "{{ min }} to {{ max }} hours",
+    "hour_range": "{{ min }} ke {{ max }} jam",
     "learn_more": "Pelajari lebih lanjut",
-    "minute_range": "{{ min }} to {{ max }} minutes",
-    "upcoming_maintenance": "Scripture Forge will be down for maintenance for about {{ duration }} starting at {{ startTime }}."
+    "minute_range": "{{ min }} ke {{ max }} menit",
+    "upcoming_maintenance": "Scripture Forge akan berhenti beroperasi untuk pemeliharaan selama sekitar {{ duration }} mulai dari {{ startTime }}."
   },
   "issue_email": {
     "heading": "Tolong jelaskan masalahnya.",
@@ -367,7 +373,7 @@
     "please_connect_to_use_link": "Silakan terhubung ke internet untuk bergabung dengan proyek menggunakan tautan.",
     "project_link_is_invalid": "Tautan proyek telah kedaluwarsa. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
     "role_not_found": "Peran yang Anda tugaskan pada proyek ini sudah tidak tersedia lagi. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
-    "your_name": "Nama Anda"
+    "your_name": "Nama"
   },
   "dialog": {
     "cancel": "Batal",
@@ -377,13 +383,13 @@
     "access_another_project": "Jika Anda tidak melihat proyek yang Anda harapkan, Anda mungkin perlu menerima undangan ke proyek tersebut. Atau, jika Anda menggunakan Paratext, Anda bisa keluar dan masuk kembali menggunakan 'Masuk dengan Paratext', dan terhubung ke proyek Paratext Anda.",
     "connect_a_project_to_get_started": "Hubungkan proyek untuk memulai",
     "connected": "Terhubung",
-    "contact_admin_update_role": "Please contact your project administrator to sync this project.",
+    "contact_admin_update_role": "Silakan hubungi administrator proyek Anda untuk menyinkronkan proyek ini.",
     "dbl_resource": "Sumber Digital Bible Library",
     "dbl_resources": "Sumber Digital Bible Library",
-    "drafting": "Draf",
+    "drafting": "Pembuatan konsep",
     "failed_to_connect_to_pt_server": "Ada masalah saat menghubungkan ke Paratext untuk mendapatkan proyek Anda. Silakan coba lagi nanti. Jika masalah masih berlanjut setelah beberapa jam, silakan laporkan masalah tersebut untuk mendapatkan bantuan.",
     "failed_to_join_project": "Gagal bergabung dengan proyek. Periksa koneksi internet Anda dan coba lagi nanti.",
-    "failed_to_update_user_role": "Failed to update paratext role. Please contact your project administrator.",
+    "failed_to_update_user_role": "Gagal memperbarui peran Paratext. Silakan hubungi administrator proyek Anda.",
     "join": "Gabung",
     "loading_more_pt_projects": "Memuat proyek Paratext tambahan ...",
     "looking_for_another_project": "Mencari proyek lain?",
@@ -392,14 +398,14 @@
     "not_admin_cannot_connect_project": "Untuk bergabung dengan proyek ini di Scripture Forge, mintalah administrator proyek Paratext untuk menghubungkan proyek ini di Scripture Forge.",
     "not_connected": "Tidak terhubung",
     "offline": "Anda harus terhubung ke internet untuk memulai sebuah proyek.",
-    "offline_update": "You will need to connect to the internet to update your project.",
+    "offline_update": "Anda harus terhubung ke internet untuk memperbarui proyek Anda.",
     "offline-accessible": "Akses Luring",
     "open": "Buka",
     "problem_getting_pt_list": "Ada masalah dalam mendapatkan daftar proyek Paratext yang tersedia untuk disambungkan. Jika hal ini terus terjadi, dan keluar dan masuk kembali tidak menyelesaikan masalah, silakan laporkan masalah ini untuk mendapatkan bantuan.",
-    "update_role": "Update role",
-    "updated_roles": "Updated roles",
-    "update_paratext_role": "Your role on this project has changed in Paratext.",
-    "user_role_updated": "Your role on this project has been updated successfully."
+    "update_role": "Perbarui Peran",
+    "updated_roles": "Perbarui Peran",
+    "update_paratext_role": "Peran Anda dalam proyek ini telah berubah di Paratext.",
+    "user_role_updated": "Peran Anda dalam proyek ini telah berhasil diperbarui."
   },
   "roles": {
     "sf_community_checker": "Masyarakat Pemeriksa"
@@ -427,7 +433,7 @@
     "invite_people": "Undang orang",
     "invite_people_intro": "Anda dapat mengundang orang-orang di luar Paratext untuk membantu berkontribusi pada proyek Anda.",
     "link_copied": "Tautan telah disalin ke Papan-klip",
-    "link_sharing": "Tautan juga dapat dibagikan kepada pengguna tanpa alamat email melalui platform media sosial atau pesan SMS.",
+    "link_sharing": "Tautan juga dapat dibagikan kepada pengguna tanpa alamat email melalui platform media sosial.",
     "not_inviting_already_member": "Tidak mengundang: Pengguna sudah menjadi anggota proyek ini",
     "resend": "Kirim ulang",
     "send_a_link": "Kirim tautan",
@@ -467,11 +473,11 @@
     "will_expire_in": "Tautan akan kedaluwarsa dalam [b]{{ count }} hari[/b]"
   },
   "supported_browsers_dialog": {
-    "audio_recording_not_supported": "Perekaman audio tidak didukung di browser/peramban ini.",
+    "audio_recording_not_supported": "Perekaman audio tidak didukung di peramban ini.",
     "dismiss": "Hentikan",
     "browser_unsupported": "Peramban ini tidak didukung",
     "safari_for_audio_on_ios": "Perekaman audio pada iPhone dan iPad hanya berfungsi di Safari.",
-    "some_features_may_not_work": "Beberapa fitur situs web ini mungkin tidak berfungsi dengan baik pada browser/peramban Anda.",
+    "some_features_may_not_work": "Beberapa fitur situs web ini mungkin tidak berfungsi dengan baik pada peramban Anda.",
     "upgrade_chrome_firefox": "{{ newLine }}Kami menyarankan untuk meningkatkan ke versi terbaru {{ chromeLink }} atau {{ firefoxLink }}.",
     "upgrade_safari": "{{ newLine }}Kami merekomendasikan untuk meningkatkan ke versi terbaru {{ safariLink }}."
   },
@@ -480,7 +486,7 @@
     "book_is_empty": "Kitab masih kosong. Tambahkan pasal di Paratext.",
     "loading": "Memuat...",
     "not_available_offline": "Teks ini tidak tersedia secara luring. Sambungkan ke Internet untuk melihat teks.",
-    "permission_denied": "You do not have permission to view this text. Please contact the project's administrator to get permission."
+    "permission_denied": "Anda tidak memiliki izin untuk melihat teks ini. Silakan hubungi administrator proyek untuk mendapatkan izin."
   },
   "text_chooser_dialog": {
     "cancel": "Batal",

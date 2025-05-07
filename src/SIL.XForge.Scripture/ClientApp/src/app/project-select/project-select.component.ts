@@ -1,16 +1,14 @@
-import { Component, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ValidatorFn } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { translate } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';
-
 // A value accessor is necessary in order to create a custom form control
 export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,
@@ -25,8 +23,8 @@ export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   styleUrls: ['project-select.component.scss'],
   providers: [PROJECT_SELECT_VALUE_ACCESSOR]
 })
-export class ProjectSelectComponent implements ControlValueAccessor {
-  @Output() valueChange: EventEmitter<string> = new EventEmitter<string>(true);
+export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
+  @Output() valueChange: EventEmitter<string | undefined> = new EventEmitter<string | undefined>(true);
   @Output() projectSelect = new EventEmitter<SelectableProject>();
 
   @Input() placeholder = '';
@@ -60,15 +58,19 @@ export class ProjectSelectComponent implements ControlValueAccessor {
 
   projectLabel = projectLabel;
 
-  constructor(private destroyRef: QuietDestroyRef) {
+  constructor(private destroyRef: DestroyRef) {
     this.paratextIdControl.valueChanges
-      .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-      .subscribe((value: SelectableProject) => {
-        this.valueChange.next(value.paratextId);
-
-        if (value instanceof Object) {
-          this.projectSelect.emit(value);
+      .pipe(distinctUntilChanged(), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe((value: SelectableProject | string) => {
+        // When the user clears the input box, or is typing the name of a project, `value` comes in as a string. When
+        // the user selects a project from the list, `value` comes in as a SelectableProject.
+        if (typeof value === 'string') {
+          this.valueChange.next(undefined);
+          return;
         }
+
+        this.valueChange.next(value.paratextId);
+        this.projectSelect.emit(value);
       });
 
     this.projects$
@@ -79,7 +81,7 @@ export class ProjectSelectComponent implements ControlValueAccessor {
             typeof this.paratextIdControl.value === 'string' &&
             p[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
         ),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(projects => this.paratextIdControl.setValue(projects[0]));
     this.resources$
@@ -90,7 +92,7 @@ export class ProjectSelectComponent implements ControlValueAccessor {
             typeof this.paratextIdControl.value === 'string' &&
             r[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
         ),
-        takeUntilDestroyed(this.destroyRef)
+        quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(resources => this.paratextIdControl.setValue(resources[0]));
   }
@@ -152,12 +154,21 @@ export class ProjectSelectComponent implements ControlValueAccessor {
     this.value = value;
   }
 
+  destroyed = false;
+  ngOnDestroy(): void {
+    this.destroyed = true;
+  }
+
   registerOnChange(fn: any): void {
-    this.valueChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fn);
+    // Angular calls registerOnChange during tear-down to "remove" the callback. Make this a noop to prevent NG0911
+    // https://angular.dev/api/forms/ControlValueAccessor#registerOnChange
+    if (!this.destroyed) this.valueChange.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(fn);
   }
 
   registerOnTouched(fn: any): void {
-    this.valueChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fn);
+    // Angular calls registerOnTouched during tear-down to "remove" the callback. Make this a noop to prevent NG0911
+    // https://angular.dev/api/forms/ControlValueAccessor#registerOnTouched
+    if (!this.destroyed) this.valueChange.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(fn);
   }
 
   autocompleteOpened(): void {

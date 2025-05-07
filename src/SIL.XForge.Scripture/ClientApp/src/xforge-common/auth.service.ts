@@ -78,8 +78,7 @@ interface xForgeAuth0Parameters extends AuthorizationParams {
   logo?: string;
   login_hint?: string;
   language?: string;
-  enablePasswordless?: boolean;
-  promptPasswordlessLogin?: boolean;
+  promptBasicLogin?: boolean;
 }
 
 @Injectable({
@@ -244,19 +243,23 @@ export class AuthService {
     const state: AuthState = { returnUrl };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const ui_locales: string = language;
+    const sfHosts = ['scriptureforge.org', 'qa.scriptureforge.org', 'localhost'];
+    const useBranding: boolean = sfHosts.includes(this.locationService.hostname);
+
     const auth0Parameters: xForgeAuth0Parameters = {
       ui_locales: language,
-      enablePasswordless: true,
       language,
       login_hint: ui_locales,
-      logo: 'https://auth0.languagetechnology.org/assets/sf.svg'
+      logo: useBranding
+        ? 'https://auth0.languagetechnology.org/assets/sf.svg'
+        : 'https://auth0.languagetechnology.org/assets/sd.svg'
     };
 
     if (signUp || this.isJoining) {
       if (signUp) auth0Parameters.mode = 'signUp';
       auth0Parameters.login_hint = locale ?? ui_locales;
       if (this.isJoining) {
-        auth0Parameters.promptPasswordlessLogin = true;
+        auth0Parameters.promptBasicLogin = true;
       }
     }
     const authOptions: RedirectLoginOptions = {
@@ -539,7 +542,10 @@ export class AuthService {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
       } catch (err) {
-        console.error(err);
+        // Display error dialog to pause login loop.
+        // Error details will be sent to Bugsnag and logged to the console.
+        await this.handleLoginError('handleOnlineAuth', err);
+
         return false;
       }
     }
@@ -560,9 +566,7 @@ export class AuthService {
   }
 
   private isCallbackUrl(callbackUrl: string | undefined = undefined): boolean {
-    if (callbackUrl == null) {
-      callbackUrl = this.locationService.href;
-    }
+    callbackUrl ??= this.locationService.href;
     if (!callbackUrl.includes('://')) {
       callbackUrl = this.locationService.origin + callbackUrl;
     }
@@ -600,67 +604,63 @@ export class AuthService {
   }
 
   private async renewTokens(): Promise<void> {
-    if (this.renewTokenPromise == null) {
-      this.renewTokenPromise = new Promise<void>(async (resolve, reject) => {
-        let success = false;
-        try {
-          const authResult = await this.checkSession();
-          if (
-            authResult != null &&
-            authResult.access_token != null &&
-            authResult.id_token != null &&
-            authResult.expires_in != null
-          ) {
-            await this.localLogIn(authResult.access_token, authResult.id_token, authResult.expires_in);
-            success = true;
-            resolve();
-          }
-        } catch (err) {
-          console.error('Error while renewing access token:', err);
-          this.reportingService.silentError(
-            'Error while renewing access token',
-            ErrorReportingService.normalizeError(err)
-          );
-          success = false;
+    this.renewTokenPromise ??= new Promise<void>(async (resolve, reject) => {
+      let success = false;
+      try {
+        const authResult = await this.checkSession();
+        if (
+          authResult != null &&
+          authResult.access_token != null &&
+          authResult.id_token != null &&
+          authResult.expires_in != null
+        ) {
+          await this.localLogIn(authResult.access_token, authResult.id_token, authResult.expires_in);
+          success = true;
+          resolve();
         }
-        if (!success) {
-          reject();
-        }
+      } catch (err) {
+        console.error('Error while renewing access token:', err);
+        this.reportingService.silentError(
+          'Error while renewing access token',
+          ErrorReportingService.normalizeError(err)
+        );
+        success = false;
+      }
+      if (!success) {
+        reject();
+      }
+    })
+      .catch(() => {
+        this.logIn({ returnUrl: this.locationService.pathname + this.locationService.search });
       })
-        .catch(() => {
-          this.logIn({ returnUrl: this.locationService.pathname + this.locationService.search });
-        })
-        .then(() => {
-          this.renewTokenPromise = undefined;
-        });
-    }
+      .then(() => {
+        this.renewTokenPromise = undefined;
+      });
     return this.renewTokenPromise;
   }
 
   private async checkSession(retryUponTimeout: boolean = true): Promise<GetTokenSilentlyVerboseResponse | null> {
-    if (this.checkSessionPromise == null) {
-      this.checkSessionPromise = new Promise<GetTokenSilentlyVerboseResponse | null>(async (resolve, reject) => {
-        try {
-          const tokenResponse = await this.getTokenDetails();
-          resolve(tokenResponse);
-        } catch (err) {
-          if (
-            hasPropWithValue(err, 'error', 'login_required') ||
-            hasPropWithValue(err, 'error', 'missing_refresh_token')
-          ) {
-            resolve(null);
-          } else if (retryUponTimeout && hasPropWithValue(err, 'error', 'timeout')) {
-            this.checkSessionPromise = undefined;
-            this.checkSession(false).then(resolve).catch(reject);
-          } else {
-            reject(err);
-          }
+    this.checkSessionPromise ??= new Promise<GetTokenSilentlyVerboseResponse | null>(async (resolve, reject) => {
+      try {
+        const tokenResponse = await this.getTokenDetails();
+        resolve(tokenResponse);
+      } catch (err) {
+        if (
+          hasPropWithValue(err, 'error', 'login_required') ||
+          hasPropWithValue(err, 'error', 'missing_refresh_token')
+        ) {
+          resolve(null);
+        } else if (retryUponTimeout && hasPropWithValue(err, 'error', 'timeout')) {
+          this.checkSessionPromise = undefined;
+          this.checkSession(false).then(resolve).catch(reject);
+        } else {
+          reject(err);
         }
-      }).finally(() => {
-        this.checkSessionPromise = undefined;
-      });
-    }
-    return this.checkSessionPromise;
+      }
+    }).finally(() => {
+      this.checkSessionPromise = undefined;
+    });
+    return await this.checkSessionPromise;
   }
 
   private async localLogIn(accessToken: string, idToken: string, expiresIn: number): Promise<void> {

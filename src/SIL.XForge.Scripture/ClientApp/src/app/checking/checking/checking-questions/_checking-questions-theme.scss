@@ -1,0 +1,25 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  --sf-community-checking-badge-background-color: #{mat.get-theme-color($theme, tertiary, if($is-dark, 60, 20))};
+  --sf-community-checking-badge-text-color: #{mat.get-theme-color($theme, primary, 98)};
+  --sf-community-checking-badge-text-size: 9px;
+  --sf-community-checking-question-list-hover-background: #{mat.get-theme-color($theme, primary, if($is-dark, 10, 95))};
+  --sf-community-checking-question-list-selected-background: #{mat.get-theme-color(
+      $theme,
+      primary,
+      if($is-dark, 20, 30)
+    )};
+  --sf-community-checking-answered-question-color: #{mat.get-theme-color($theme, tertiary, if($is-dark, 60, 80))};
+  --sf-community-checking-new-comment-icon-color: #{mat.get-theme-color($theme, primary, if($is-dark, 40, 80))};
+  --sf-community-checking-question-unread-background: #{mat.get-theme-color($theme, neutral, if($is-dark, 10, 98))};
+  --sf-community-checking-question-list-divider-color: #{mat.get-theme-color($theme, neutral, if($is-dark, 80, 70))}1f;
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

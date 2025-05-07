@@ -1,8 +1,7 @@
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef, Injectable } from '@angular/core';
 import { lastValueFrom, Observable, Subject } from 'rxjs';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -21,7 +20,6 @@ import { OnlineStatusService } from './online-status.service';
 import { RealtimeService } from './realtime.service';
 import { TypeRegistry } from './type-registry';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
-
 /**
  * Formats the name of a file stored on the server into a URL that a http client can use to request the data.
  */
@@ -58,7 +56,7 @@ export class FileService {
     private readonly authService: AuthService,
     private readonly commandService: CommandService,
     private readonly dialogService: DialogService,
-    private destroyRef: QuietDestroyRef
+    private destroyRef: DestroyRef
   ) {}
 
   get fileSyncComplete$(): Observable<void> {
@@ -67,7 +65,7 @@ export class FileService {
 
   init(realtimeService: RealtimeService): void {
     this.realtimeService = realtimeService;
-    this.onlineStatusService.onlineStatus$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       if (isOnline) {
         this.syncFiles();
       }

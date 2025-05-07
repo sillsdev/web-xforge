@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, EventEmitter } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRippleModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
@@ -13,17 +13,18 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { hasData, notNull } from '../../../../type-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { DeactivateAllowed } from '../../../shared/project-router.guard';
 import { projectLabel } from '../../../shared/utils';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
 import {
@@ -32,7 +33,6 @@ import {
   translateSourceToSelectableProjectWithLanguageTag
 } from '../draft-utils';
 import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
-
 /** Status for a project, which may or may not be at SF. */
 export interface ProjectStatus {
   shortName: string;
@@ -47,6 +47,7 @@ export interface ProjectStatus {
   standalone: true,
   imports: [
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
     XForgeCommonModule,
     MatRippleModule,
@@ -60,7 +61,7 @@ export interface ProjectStatus {
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
 })
-export class DraftSourcesComponent extends DataLoadingComponent {
+export class DraftSourcesComponent extends DataLoadingComponent implements DeactivateAllowed {
   /** Indicator that a project setting change is for clearing a value. */
   static readonly projectSettingValueUnset = 'unset';
 
@@ -79,8 +80,10 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   // Projects that can be an already selected value, but not necessarily given as an option in the menu
   nonSelectableProjects: SelectableProject[] = [];
 
-  languageCodesConfirmed = false;
+  languageCodeConfirmationMessageIfUserTriesToContinue: I18nKeyForComponent<'draft_sources'> | null = null;
+  clearLanguageCodeConfirmationCheckbox = new EventEmitter<void>();
   changesMade = false;
+  deactivationPrompt: string = this.i18n.translateStatic('draft_sources.discard_changes_confirmation');
 
   /** Whether some projects are syncing currently. */
   syncStatus: Map<string, ProjectStatus> = new Map<string, ProjectStatus>();
@@ -92,19 +95,19 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly paratextService: ParatextService,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
     private readonly userProjectsService: SFUserProjectsService,
     private readonly router: Router,
-    private readonly featureFlags: FeatureFlagService,
+    private readonly onlineStatus: OnlineStatusService,
     readonly i18n: I18nService,
     noticeService: NoticeService
   ) {
     super(noticeService);
 
-    this.activatedProjectService.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
+    this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc?.data != null) {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
         if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
@@ -116,10 +119,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
         this.trainingTargets = trainingTargets;
         this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
 
-        this.nonSelectableProjects = [
-          ...this.trainingSources.filter(s => s != null),
-          ...this.draftingSources.filter(s => s != null)
-        ];
+        this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
         if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
@@ -127,7 +127,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     });
 
     this.userProjectsService.projectDocs$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((projects?: SFProjectProfileDoc[]) => {
         if (projects == null) return;
         this.userConnectedProjectsAndResources = projects.filter(project => project.data != null);
@@ -136,18 +136,22 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     this.loadProjects();
   }
 
+  get appOnline(): boolean {
+    return this.onlineStatus.isOnline;
+  }
+
   get loading(): boolean {
     return !this.isLoaded;
   }
 
   get referenceLanguageDisplayName(): string {
-    const uniqueTags = Array.from(new Set(this.trainingSources.filter(s => s != null).map(p => p.languageTag)));
+    const uniqueTags = Array.from(new Set(this.trainingSources.filter(notNull).map(p => p.languageTag)));
     const displayNames = uniqueTags.map(tag => this.i18n.getLanguageDisplayName(tag) ?? tag);
     return this.i18n.enumerateList(displayNames);
   }
 
   get sourceLanguageDisplayName(): string | undefined {
-    const definedSources = this.draftingSources.filter(s => s != null);
+    const definedSources = this.draftingSources.filter(notNull);
 
     if (definedSources.length > 1) throw new Error('Multiple drafting sources not supported');
     else if (definedSources.length < 1) return undefined;
@@ -165,15 +169,15 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   }
 
   get sourceSubtitle(): string {
-    return this.i18n.enumerateList(this.draftingSources.filter(s => s != null).map(s => s.shortName) ?? []);
+    return this.i18n.enumerateList(this.draftingSources.filter(notNull).map(s => s.shortName) ?? []);
   }
 
   get referencesSubtitle(): string {
-    return this.i18n.enumerateList(this.trainingSources.filter(s => s != null).map(r => r.shortName) ?? []);
+    return this.i18n.enumerateList(this.trainingSources.filter(notNull).map(r => r.shortName) ?? []);
   }
 
   get targetSubtitle(): string {
-    return this.i18n.enumerateList(this.trainingTargets.filter(s => s != null).map(t => t.shortName) ?? []);
+    return this.i18n.enumerateList(this.trainingTargets.filter(notNull).map(t => t.shortName) ?? []);
   }
 
   parentheses(value?: string): string {
@@ -195,10 +199,10 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
   get draftSourcesAsArray(): DraftSourcesAsSelectableProjectArrays {
     return {
-      draftingSources: this.draftingSources.filter(s => s != null),
-      trainingSources: this.trainingSources.filter(s => s != null),
+      draftingSources: this.draftingSources.filter(notNull),
+      trainingSources: this.trainingSources.filter(notNull),
       trainingTargets: this.trainingTargets
-        .filter(s => s != null)
+        .filter(notNull)
         .map(t => translateSourceToSelectableProjectWithLanguageTag(t))
     };
   }
@@ -207,9 +211,14 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     return project == null ? '' : projectLabel(project);
   }
 
-  /** Returns all Paratext IDs from a list except the one specified. */
-  otherParatextIds(list: ({ paratextId: string } | undefined)[], id?: string): string[] {
-    return list.filter(p => p != null && p.paratextId !== id).map(p => p!.paratextId);
+  /** Returns all Paratext IDs that should not be selectable as a draft source.
+   * @param draftSources The array of draftSources currently selected (specific to training or drafting).
+   * @param selectedId The currently selected paratextId that should be visible in the list of sources.
+   */
+  getHiddenParatextIds(draftSources: ({ paratextId: string } | undefined)[], selectedId?: string): string[] {
+    return [...draftSources, ...this.trainingTargets]
+      .filter(p => p != null && p.paratextId !== selectedId)
+      .map(p => p!.paratextId);
   }
 
   sourceSelected(
@@ -234,7 +243,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
 
     if (selectedProject != null) {
       array[index] = selectedProject;
-      this.languageCodesConfirmed = false;
+      this.clearLanguageCodeConfirmationCheckbox.emit();
     } else {
       array[index] = undefined;
       // When the user clears a project select, if there are now multiple blank project selects, remove the first one
@@ -257,16 +266,8 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     }
   }
 
-  confirmationChanged(event: MatCheckboxChange): void {
-    this.languageCodesConfirmed = event.checked;
-  }
-
   get allowAddingATrainingSource(): boolean {
-    return (
-      this.featureFlags.allowAdditionalTrainingSource.enabled &&
-      this.trainingSources.length < 2 &&
-      this.trainingSources.every(s => s != null)
-    );
+    return this.trainingSources.length < 2 && this.trainingSources.every(notNull);
   }
 
   get allProjectsSavedAndSynced(): boolean {
@@ -289,42 +290,43 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     }
   }
 
+  promptUserToDeactivate(): boolean {
+    return this.changesMade;
+  }
+
   navigateToDrafting(): void {
     this.router.navigate(['/projects', this.activatedProjectService.projectId, 'draft-generation']);
   }
 
   async save(): Promise<void> {
-    if (this.activatedProjectService.projectDoc == null) throw new Error('Project doc is null');
-    if (this.activatedProjectService.projectDoc.data == null) throw new Error('Project doc data is null');
-    const currentSFProjectId = this.activatedProjectService.projectDoc.id;
-    if (currentSFProjectId == null) throw new Error('Project ID is null');
+    const currentProjectDoc: SFProjectProfileDoc | undefined = this.activatedProjectService.projectDoc;
+    if (!hasData(currentProjectDoc)) throw new Error('Project doc or data is null');
 
-    const definedSources = this.draftingSources.filter(s => s != null);
-    const definedReferences = this.trainingSources.filter(s => s != null);
+    const definedSources: SelectableProjectWithLanguageCode[] = this.draftingSources.filter(notNull);
+    const definedReferences: SelectableProjectWithLanguageCode[] = this.trainingSources.filter(notNull);
 
     let messageKey: I18nKeyForComponent<'draft_sources'> | undefined;
-    if (definedSources.length === 0 && definedReferences.length === 0)
+    if (definedSources.length === 0 && definedReferences.length === 0) {
       messageKey = 'select_at_least_one_source_and_reference';
-    else if (definedSources.length === 0) messageKey = 'select_at_least_one_source';
+    } else if (definedSources.length === 0) messageKey = 'select_at_least_one_source';
     else if (definedReferences.length === 0) messageKey = 'select_at_least_one_reference';
-    else if (!this.languageCodesConfirmed) messageKey = 'confirm_language_codes';
-
+    else if (this.languageCodeConfirmationMessageIfUserTriesToContinue) {
+      messageKey = this.languageCodeConfirmationMessageIfUserTriesToContinue;
+    }
     if (messageKey) {
       this.dialogService.message(this.i18n.translate(`draft_sources.${messageKey}`));
       return;
     }
 
-    const currentProjectParatextId: string = this.activatedProjectService.projectDoc.data.paratextId;
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
-      this.trainingSources as [SelectableProject, SelectableProject?],
-      this.draftingSources as [SelectableProject?],
-      this.trainingTargets as [SFProjectProfile],
-      currentProjectParatextId
+      definedReferences,
+      definedSources,
+      this.trainingTargets,
+      currentProjectDoc.data.paratextId
     );
-    const projectSettingsChange: SFProjectSettings = sourcesSettingsChange;
     await this.checkUpdateStatus(
       'projectSettings',
-      this.projectService.onlineUpdateSettings(currentSFProjectId, projectSettingsChange)
+      this.projectService.onlineUpdateSettings(currentProjectDoc.id, sourcesSettingsChange)
     );
     this.monitorSyncStatus();
   }
@@ -337,6 +339,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     } catch (error) {
       console.error('Error updating project settings', error);
       this.controlStates.set(setting, ElementState.Error);
+      throw error;
     }
   }
 
@@ -373,7 +376,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
           };
 
           updateSyncStatusForProject(projectDoc);
-          projectDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+          projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
             updateSyncStatusForProject(projectDoc);
           });
         }
@@ -397,11 +400,11 @@ export interface DraftSourcesSettingsChange {
 
 /** Convert some arrays of drafting sources to a settings object that can be applied to a SF project. */
 export function sourceArraysToSettingsChange(
-  trainingSources: [SelectableProject?, SelectableProject?],
+  trainingSources: SelectableProject[],
   /** It may not make sense for drafting to have no drafting source. But for specifying project settings, allow an
    * empty setting for drafting source. */
-  draftingSources: [SelectableProject?],
-  trainingTargets: [SelectableProject?],
+  draftingSources: SelectableProject[],
+  trainingTargets: SelectableProject[],
   currentProjectParatextId: string
 ): DraftSourcesSettingsChange {
   // Extra precaution on array lengths for now in case the type system is being bypassed.

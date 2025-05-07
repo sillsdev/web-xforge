@@ -25,7 +25,7 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { of } from 'rxjs';
-import { anything, capture, instance, mock, reset, resetCalls, verify, when } from 'ts-mockito';
+import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -473,7 +473,6 @@ describe('CheckingOverviewComponent', () => {
       // ARCHIVE QUESTIONS IN A CHAPTER
 
       // archive questions from the only chapter of the first book
-      env.clickElement(env.questionButtonsMenu[1]);
       env.clickElement(env.questionArchiveButtons[1]);
       // now there should be just one book with published questions
       expect(env.textRows.length).toEqual(1);
@@ -529,21 +528,6 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('Chapter Audio', () => {
-    it('has add audio menu options for chapters without audio', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
-      env.waitForQuestions();
-      const bookIndex = 1;
-      const chapterIndex = 2;
-
-      env.clickExpanderAtRow(bookIndex);
-      expect(env.textRows.length).toBe(4);
-      expect(env.checkChapterHasAudio(chapterIndex)).toBeFalse();
-
-      env.clickElement(env.questionButtonsMenu[chapterIndex]);
-      expect(env.audioAddButtons[chapterIndex]).not.toBeNull();
-      env.clickElement(env.questionButtonsMenu[chapterIndex]);
-    }));
-
     it('show audio icon on chapter heading', fakeAsync(() => {
       const env = new TestEnvironment(true, true);
       env.waitForQuestions();
@@ -563,9 +547,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.questionEditButtons.length).toEqual(1);
 
       // Archive questions in John
-      env.clickElement(env.questionButtonsMenu[johnIndex]);
       env.clickElement(env.questionArchiveButtons[johnIndex]);
-      env.clickElement(env.questionButtonsMenu[johnIndex]);
 
       // Chapter should still be visible as it has audio
       expect(env.questionEditButtons.length).toEqual(0);
@@ -602,125 +584,7 @@ describe('CheckingOverviewComponent', () => {
 
       discardPeriodicTasks();
     }));
-
-    it('can delete chapter audio ', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
-      env.waitForQuestions();
-      const johnIndex = 2;
-      const johnChapter1Index = 3;
-      const johnChapter2Index = 4;
-
-      // Archive all questions in John
-      env.clickExpanderAtRow(johnIndex);
-      expect(env.textRows.length).toBe(5);
-      env.clickElement(env.questionArchiveButtons[johnIndex]);
-      expect(env.questionArchiveButtons[johnIndex]).toBeNull();
-      expect(env.textRows.length).toBe(5);
-      expect(env.checkChapterHasAudio(johnChapter1Index)).toBeTrue();
-      expect(env.checkChapterHasAudio(johnChapter2Index)).toBeTrue();
-
-      // Remove audio from both chapter 1 & 2
-      env.clickElement(env.questionButtonsMenu[johnChapter2Index]);
-      env.clickElement(env.audioDeleteButtons[johnChapter2Index]);
-      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
-      env.clickElement(env.audioDeleteButtons[johnChapter1Index]);
-      env.waitForProjectDocChanges();
-
-      // Only MAT and LUK should be left
-      expect(env.textRows.length).toBe(2);
-    }));
-
-    it('disable delete chapter audio when offline and show explanation ', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
-      env.waitForQuestions();
-      const johnIndex = 2;
-      const johnChapter1Index = 3;
-      env.clickExpanderAtRow(johnIndex);
-
-      env.onlineStatus = true;
-      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
-      // SUT 1
-      expect(env.audioDeleteButtons[johnChapter1Index].nativeElement.disabled)
-        .withContext('delete button should be enabled when online')
-        .toBeFalse();
-      expect(env.warningSomeActionsUnavailableOffline).withContext('should not show message when online').toBeNull();
-      // Click again to close the overlay menu.
-      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
-      env.waitForProjectDocChanges();
-
-      env.onlineStatus = false;
-      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
-      // SUT 2
-      expect(env.audioDeleteButtons[johnChapter1Index].nativeElement.disabled)
-        .withContext('delete button should be disabled when offline')
-        .toBeTrue();
-      expect(env.warningSomeActionsUnavailableOffline).withContext('should show message when offline').not.toBeNull();
-      // Click again to close the overlay menu.
-      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
-      env.waitForProjectDocChanges();
-    }));
-
-    it('does not try to delete chapter audio if offline', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
-      env.waitForQuestions();
-      const johnIndex = 2;
-      const johnChapter1Index = 3;
-      const johnChapter2Index = 4;
-      env.clickExpanderAtRow(johnIndex);
-
-      env.clickElement(env.questionButtonsMenu[johnChapter2Index]);
-      when(mockedDialogService.confirm(anything(), anything())).thenCall(() => {
-        env.onlineStatus = true;
-        return of(true);
-      });
-      // SUT 1
-      env.clickElement(env.audioDeleteButtons[johnChapter2Index]);
-      verify(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).once();
-      verify(mockedNoticeService.showError(anything())).never();
-      reset(mockedProjectService);
-      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
-      when(mockedDialogService.confirm(anything(), anything())).thenCall(() => {
-        // When the user clicks the button to delete chapter audio, they are presented with a confirmation dialog.
-        // Suppose the user goes offline after the dialog loads, but before they confirm.
-        env.onlineStatus = false;
-        return of(true);
-      });
-      // SUT 2
-      // When this happens, don't let the delete proceed, and show an error.
-      env.clickElement(env.audioDeleteButtons[johnChapter1Index]);
-      verify(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).never();
-      verify(mockedNoticeService.showError(anything())).once();
-      env.waitForProjectDocChanges();
-      expect().nothing();
-    }));
-
-    it('can open chapter audio to edit ', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
-      env.waitForQuestions();
-      const johnIndex = 2;
-      const johnChapter1Index = 3;
-
-      env.clickExpanderAtRow(johnIndex);
-      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
-      env.clickElement(env.audioEditButtons[johnChapter1Index]);
-
-      verify(mockedChapterAudioDialogService.openDialog(anything())).once();
-      const [config] = capture(mockedChapterAudioDialogService.openDialog).last();
-      expect(config.projectId).toEqual('project01');
-      expect(config.currentBook).toEqual(43);
-      expect(config.currentChapter).toEqual(1);
-    }));
   });
-
-  it('should set selectedTask on init', fakeAsync(async () => {
-    const env = new TestEnvironment();
-    env.waitForQuestions();
-    const config = await instance(mockedProjectService).getUserConfig(
-      'project01',
-      instance(mockedUserService).currentUserId
-    );
-    expect(config.data?.selectedTask).toEqual('checking');
-  }));
 
   it('should handle question in a book that does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -1155,12 +1019,6 @@ class TestEnvironment {
   get questionArchiveButtons(): DebugElement[] {
     const ret: DebugElement[] = [];
     this.textRows.forEach(e => ret.push(e.query(By.css('.archive-btn'))));
-    return ret;
-  }
-
-  get questionButtonsMenu(): DebugElement[] {
-    const ret: DebugElement[] = [];
-    this.textRows.forEach(e => ret.push(e.query(By.css('.chapter-menu-button'))));
     return ret;
   }
 

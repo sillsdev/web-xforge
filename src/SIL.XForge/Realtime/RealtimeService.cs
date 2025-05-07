@@ -289,7 +289,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
     }
 
     private void SetPingServiceSchedule(string schedule = "* * * * *") =>
-        _recurringJobManager.AddOrUpdate("ping_service", () => CheckIfRunning(), schedule);
+        _recurringJobManager.AddOrUpdate<IRealtimeService>("ping_service", s => s.CheckIfRunning(), schedule);
 
     private object CreateOptions()
     {

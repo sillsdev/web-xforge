@@ -1,29 +1,25 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef } from '@angular/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import {
   DraftSourcesAsSelectableProjectArrays,
   draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays,
   projectToDraftSources
 } from '../draft-utils';
-import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
 
 @Component({
   selector: 'app-confirm-sources',
   standalone: true,
-  imports: [TranslocoModule, MatCheckboxModule, MatIconModule, LanguageCodesConfirmationComponent],
+  imports: [TranslocoModule, MatCheckboxModule, MatIconModule],
   templateUrl: './confirm-sources.component.html',
   styleUrl: './confirm-sources.component.scss'
 })
 export class ConfirmSourcesComponent {
-  @Output() languageCodesVerified = new EventEmitter<boolean>(false);
-
   draftSources: DraftSourcesAsSelectableProjectArrays = {
     trainingSources: [],
     trainingTargets: [],
@@ -31,11 +27,11 @@ export class ConfirmSourcesComponent {
   };
 
   constructor(
-    private readonly destroyRef: QuietDestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly i18nService: I18nService,
     private readonly activatedProject: ActivatedProjectService
   ) {
-    this.activatedProject.projectDoc$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
+    this.activatedProject.projectDoc$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc?.data != null) {
         this.draftSources = draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays(
           projectToDraftSources(projectDoc?.data)
@@ -72,12 +68,8 @@ export class ConfirmSourcesComponent {
     return this.i18nService.enumerateList(this.draftingSources.filter(p => p != null).map(p => p.shortName));
   }
 
-  confirmationChanged(checked: boolean): void {
-    this.languageCodesVerified.emit(checked);
-  }
-
-  displayNameForProjectsLanguages(projects: { languageTag: string }[]): string {
-    const uniqueTags = Array.from(new Set(projects.filter(p => p != null).map(p => p.languageTag)));
+  displayNameForProjectsLanguages(projects: { languageTag?: string }[]): string {
+    const uniqueTags = [...new Set(projects.map(p => p.languageTag).filter(t => t != null))];
     const displayNames = uniqueTags.map(tag => this.i18nService.getLanguageDisplayName(tag) ?? tag);
     return this.i18nService.enumerateList(displayNames);
   }

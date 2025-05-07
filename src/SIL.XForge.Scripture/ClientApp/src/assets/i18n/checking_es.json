@@ -1,7 +1,7 @@
 {
   "audio_recorder_dialog": {
     "mic_access_denied": "El acceso a su micrófono fue denegado. Por favor, habilite el micrófono desde su navegador.",
-    "mic_not_found": "No se ha encontrado ningún micrófono. Por favor, conecta un micrófono a tu dispositivo.",
+    "mic_not_found": "No se ha encontrado ningún micrófono. Por favor, conecte un micrófono a su dispositivo.",
     "record": "Grabar",
     "re_record": "Regrabar",
     "save": "Guardar respuesta",
@@ -226,11 +226,16 @@
     "audio": "Audio",
     "audio_already_exists": "Ya existe audio para esta selección.",
     "audio_file_less_than_one_hundred_mb": "Solo archivos de audio menores de 95 MB",
-    "browse_files": "Examinar archivos",
+    "browse_files": "Navegar",
+    "browse_files_tooltip": "Cargar archivos de audio y de tiempo",
     "cancel": "Cancelar",
-    "chapter_audio": "Audio del capítulo",
-    "drag_and_drop_files": "Arrastre y suelte aquí los archivos de audio y sincronización",
-    "drag_and_drop_or_browse": "O",
+    "delete": "Eliminar Audio...",
+    "delete_audio": "Eliminar Audio",
+    "delete_both": "Eliminar ambos",
+    "delete_timing": "Eliminar Tiempo",
+    "drag_and_drop_files": "Suelte aquí los archivos de audio y tiempo para cargarlos",
+    "drag_and_drop_overlay": "Suelta los archivos para subirlos",
+    "drag_and_drop_or_browse": "o",
     "from_timing_past_to_timing": "Uno o más valores finales terminan antes que sus valores iniciales.",
     "help": "Ayuda",
     "no_audio_file_uploaded": "No se ha cargado ningún archivo de audio",
@@ -252,7 +257,8 @@
     "audio_unavailable": "El audio no está disponible.",
     "audio_cannot_be_accessed": "Hubo un error al intentar acceder al archivo de audio. Si esto persiste, por favor carga un nuevo archivo.",
     "audio_cannot_be_played": "Este audio no puede ser reproducido mientras esté fuera de línea porque no ha sido descargado. Conéctese a Internet para reproducirlo.",
-    "audio_cannot_be_previewed": "El audio está en un formato que no se puede previsualizar. Guarda cualquier cambio y conéctate a Internet para reproducirlo."
+    "audio_cannot_be_previewed": "El audio está en un formato que no se puede previsualizar. Guarda cualquier cambio y conéctate a Internet para reproducirlo.",
+    "segment": "Segmento"
   },
   "checking_audio_recorder": {
     "delete": "Eliminar grabación",
@@ -427,7 +433,7 @@
     "invite_people": "Invitar a otras personas",
     "invite_people_intro": "Puedes invitar a personas ajenas a Paratext a contribuir a tu proyecto.",
     "link_copied": "Enlace copiado al portapapeles",
-    "link_sharing": "Los enlaces también pueden compartirse con usuarios sin dirección de correo electrónico a través de plataformas de redes sociales o mensajes SMS.",
+    "link_sharing": "Los enlaces también pueden compartirse con usuarios sin dirección de correo electrónico a través de plataformas de redes sociales.",
     "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
     "resend": "Reenviar",
     "send_a_link": "Enviar un enlace",

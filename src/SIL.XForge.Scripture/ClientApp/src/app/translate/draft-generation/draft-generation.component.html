@@ -1,17 +1,27 @@
 <ng-container *transloco="let t; read: 'draft_generation'">
   @if (currentPage === "initial") {
-    @if (isBackTranslationMode) {
-      <h1 class="mat-headline-4">{{ t("generate_back_translation_drafts_header") }}</h1>
+    @if (isBackTranslation) {
+      <h1>{{ t("generate_back_translation_drafts_header") }}</h1>
     } @else {
-      <h1 class="mat-headline-4">
+      <h1>
         {{ t("generate_forward_translation_drafts_header") }}
       </h1>
     }
-
+    @if (showImprovedDraftGenerationNotice) {
+      <app-notice type="primary" mode="fill-dark" icon="bolt" data-test-id="improved-draft-generation-notice">
+        @for (portion of improvedDraftGenerationNotice | async; track $index) {
+          @if (portion.id === 1) {
+            <a href="mailto:{{ issueEmail }}" target="_blank" rel="noreferrer">{{ portion.text }}</a>
+          } @else if (portion.id == null) {
+            {{ portion.text }}
+          }
+        }
+      </app-notice>
+    }
     <section>
       @if (isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
         <div class="drafting-instructions">
-          @if (isBackTranslationMode) {
+          @if (isBackTranslation) {
             <div>
               <p>
                 <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
@@ -50,7 +60,7 @@
         </div>
       }
 
-      @if (isBackTranslationMode && !isTargetLanguageSupported) {
+      @if (isBackTranslation && !isTargetLanguageSupported) {
         <app-notice type="warning" class="requirements">
           <p>
             <transloco
@@ -72,20 +82,14 @@
         </app-notice>
       }
 
-      <!-- Only show warnings if target language is supported -->
-      @if (draftEnabled && isTargetLanguageSupported) {
-        @if (!isSourceProjectSet) {
-          <app-notice type="warning" icon="warning" data-test-id="warning-source-text-missing">
-            @if (isProjectAdmin) {
-              <transloco
-                key="draft_generation.info_alert_source_text_not_selected"
-                [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-              ></transloco>
-            } @else {
-              <transloco key="draft_generation.non_pa_info_alert_source_text_not_selected"></transloco>
-            }
-          </app-notice>
-        } @else if (!canAccessDraftSourceIfAvailable(source)) {
+      @if (draftEnabled && !hasConfigureSourcePermission && !isSourcesConfigurationComplete) {
+        <app-notice type="warning" icon="warning" data-test-id="warning-admin-must-configure-sources">
+          <span>{{ t("info_alert_please_have_admin_configure_sources") }}</span>
+        </app-notice>
+      }
+      <!-- Only show warnings if target language is supported and sources have been configured -->
+      @else if (draftEnabled && isTargetLanguageSupported && isSourcesConfigurationComplete) {
+        @if (!canAccessDraftSourceIfAvailable(source)) {
           <app-notice type="warning" icon="warning" data-test-id="warning-source-no-access">
             <transloco
               key="draft_generation.info_alert_no_source_access"
@@ -95,7 +99,8 @@
               }"
             ></transloco>
           </app-notice>
-        } @else if (!canAccessDraftSourceIfAvailable(trainingSource)) {
+        }
+        @if (!canAccessDraftSourceIfAvailable(trainingSource)) {
           <app-notice type="warning" icon="warning" data-test-id="warning-training-source-no-access">
             <transloco
               key="draft_generation.info_alert_no_training_source_access"
@@ -105,7 +110,8 @@
               }"
             ></transloco>
           </app-notice>
-        } @else if (!canAccessDraftSourceIfAvailable(additionalTrainingSource)) {
+        }
+        @if (!canAccessDraftSourceIfAvailable(additionalTrainingSource)) {
           <app-notice type="warning" icon="warning" data-test-id="warning-mix-source-no-access">
             <transloco
               key="draft_generation.info_alert_no_additional_training_source_access"
@@ -154,7 +160,7 @@
                       }"
                     ></transloco
                   ></span>
-                  <a mat-button target="_blank" [href]="issueMailTo">
+                  <a mat-flat-button target="_blank" [href]="issueMailTo">
                     {{ t("report_problem") }}
                   </a>
                 </div>
@@ -182,11 +188,24 @@
               </section>
             }
             @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
-              <section>
-                <button mat-flat-button color="primary" (click)="generateDraft()">
-                  <mat-icon>auto_awesome</mat-icon>
-                  {{ t("generate_draft_button") }}
-                </button>
+              <section class="action-button-strip">
+                @if (isSourcesConfigurationComplete) {
+                  <button mat-flat-button color="primary" (click)="generateDraft()">
+                    <mat-icon>auto_awesome</mat-icon>
+                    {{ t("generate_draft_button") }}
+                  </button>
+                  @if (hasConfigureSourcePermission) {
+                    <button mat-button data-test-id="configure-button" [routerLink]="['sources']">
+                      <mat-icon>settings</mat-icon>
+                      {{ t("configure_sources") }}
+                    </button>
+                  }
+                } @else if (hasConfigureSourcePermission) {
+                  <button mat-flat-button data-test-id="configure-button" color="primary" [routerLink]="['sources']">
+                    <mat-icon>settings</mat-icon>
+                    {{ t("configure_sources") }}
+                  </button>
+                }
               </section>
             }
           }
@@ -282,12 +301,6 @@
                           <span>{{ t("download_draft") }}</span>
                         </button>
                       }
-                      @if (isGenerationSupported && !isDraftInProgress(draftJob)) {
-                        <button mat-button type="button" (click)="generateDraft({ withConfirm: true })">
-                          <mat-icon>add</mat-icon>
-                          {{ t("generate_new_draft") }}
-                        </button>
-                      }
                     </mat-card-actions>
                   </mat-card>
                 </section>
@@ -297,10 +310,54 @@
         </div>
       }
     }
+
+    <!-- Without more change to the structure of the template, and with apology for how this is done, conditionally show
+    generate-draft and configure-sources action buttons. -->
+    <section class="action-button-strip">
+      <!-- Show "New draft" button here when viewing the Preview card, when appropriate. Using the same if conditions.
+      -->
+      @if (
+        isOnline &&
+        isDraftJobFetched &&
+        isPreviewSupported &&
+        draftJob != null &&
+        (isDraftComplete(draftJob) || hasAnyCompletedBuild) &&
+        isGenerationSupported &&
+        !isDraftInProgress(draftJob) &&
+        hasAnyCompletedBuild &&
+        isSourcesConfigurationComplete
+      ) {
+        <button mat-flat-button color="primary" type="button" (click)="generateDraft({ withConfirm: true })">
+          <mat-icon>add</mat-icon>
+          {{ t("generate_new_draft") }}
+        </button>
+        @if (hasConfigureSourcePermission) {
+          <button mat-button data-test-id="configure-button" [routerLink]="['sources']">
+            <mat-icon>settings</mat-icon>
+            {{ t("configure_sources") }}
+          </button>
+        }
+      } @else if (hasConfigureSourcePermission) {
+        <!-- Show Configure sources button when we don't have permission to the current sources and when there is not a
+        prior draft job. But don't show it if it's already been shown above or if the user is not signed up for
+        drafting.
+
+        This first check regards what leads up to the first configure button. -->
+        @if (!isGenerationSupported || isDraftInProgress(draftJob) || hasAnyCompletedBuild) {
+          @if (draftEnabled && isOnline) {
+            <button mat-button data-test-id="configure-button" color="primary" [routerLink]="['sources']">
+              <mat-icon>settings</mat-icon>
+              {{ t("configure_sources") }}
+            </button>
+          }
+        }
+      }
+    </section>
+
     @if (canShowAdditionalInfo(draftJob)) {
       <section>
         <mat-expansion-panel class="diagnostics-info">
-          <mat-expansion-panel-header><h3>Diagnostic Information</h3></mat-expansion-panel-header>
+          <mat-expansion-panel-header>Diagnostic Information</mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <app-draft-information [draftJob]="draftJob"></app-draft-information>
           </ng-template>
@@ -310,7 +367,7 @@
     @if (isServalAdmin()) {
       <section>
         <mat-expansion-panel class="serval-administration">
-          <mat-expansion-panel-header><h3>Serval Administration</h3></mat-expansion-panel-header>
+          <mat-expansion-panel-header>Serval Administration</mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <app-serval-project [showProjectTitle]="false"></app-serval-project>
           </ng-template>

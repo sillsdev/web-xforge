@@ -56,7 +56,7 @@
   margin-bottom: 10px;
   border-width: 1px;
   border-style: solid;
-  border-color: vars.$border-color;
+  border-color: var(--sf-border-color);
   padding: 5px 10px;
   grid-column: 1 / span 2;
   display: flex;
@@ -76,7 +76,7 @@
 }
 
 .toolbar-separator {
-  border-left: 1px solid vars.$border-color;
+  border-left: 1px solid var(--sf-border-color);
   margin: 6px 4px;
   width: 0;
 }
@@ -101,12 +101,13 @@ app-text {
   overflow: hidden;
 }
 
+app-copyright-banner,
 .formatting-invalid-warning,
 .out-of-sync-warning,
 .doc-corrupted-warning,
 .project-text-not-editable,
 .no-edit-permission-message {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .both-editors-wrapper {
@@ -117,7 +118,8 @@ app-text {
   position: absolute;
   visibility: hidden;
   inset-inline-end: 10px;
-  background-color: vars.$greenLight;
+  background-color: var(--sf-editor-note-fab-background-color);
+  color: var(--sf-editor-note-fab-foreground-color);
 }
 
 .fab-bottom-sheet {
@@ -136,18 +138,6 @@ app-text {
   }
 }
 
-.copyright-banner {
-  margin-bottom: 10px;
-}
-
-.copyright-more-info {
-  cursor: pointer;
-  font-weight: bold;
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
 .reverse-columns {
   #source-text-area {
     grid-column-start: 2;
@@ -162,16 +152,13 @@ app-text {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-
-  app-notice {
-    margin: 1em;
-  }
 }
 
 .text-container {
   display: flex;
   position: relative;
   height: 100%;
+  overflow: hidden;
 }
 
 .text-area {

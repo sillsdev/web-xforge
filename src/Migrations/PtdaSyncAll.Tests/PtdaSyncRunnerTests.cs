@@ -1061,12 +1061,12 @@ namespace PtdaSyncAll
 
             public static string GetUsxFileName(TextType textType, string bookId)
             {
-                return Path.Combine(GetProjectPath(textType), bookId + ".xml");
+                return Path.Join(GetProjectPath(textType), bookId + ".xml");
             }
 
             public static string GetProjectPath(TextType textType)
             {
-                return Path.Combine("scriptureforge", "sync", "project01", GetParatextProject(textType));
+                return Path.Join("scriptureforge", "sync", "project01", GetParatextProject(textType));
             }
 
             public Task SetUserRole(string userId, string role)

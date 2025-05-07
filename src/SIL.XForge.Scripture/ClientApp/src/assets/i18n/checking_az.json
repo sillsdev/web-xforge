@@ -3,7 +3,7 @@
     "mic_access_denied": "Mikrofonunuza giriş rədd edildi. Zəhmət olmasa, brauzerinizdən mikrofonu işə salın.",
     "mic_not_found": "Mikrofon tapılmadı. Mikrofonu cihazınıza qoşun.",
     "record": "Səs yazmaq",
-    "re_record": "Re-record",
+    "re_record": "Yənidən yazın",
     "save": "Cavabınızı saxlamaq",
     "stop_recording": "Səs yazmanı dayandırmaq"
   },
@@ -16,7 +16,7 @@
     "community_checking": "Dil daşıyıcıları tərəfindən yoxlanma",
     "community_support": "İcmai dəstəyi",
     "help": "Kömək",
-    "install_on_device": "Install on device",
+    "install_on_device": "Cihazında quraşdırın",
     "language": "Dil",
     "log_out": "Çıxış",
     "logged_in_as": "Bu adla daxil oldu.",
@@ -38,9 +38,9 @@
     "update_is_available": "Yeniləmə mümkündür Xahiş edirəm səhifəni yeniləyin."
   },
   "attach_audio": {
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
-    "tooltip_upload": "Upload audio"
+    "tooltip_record": "Səs yazın",
+    "tooltip_stop": "Səsyazmanı dayandır",
+    "tooltip_upload": "Səs yüklə"
   },
   "canon": {
     "book_names": {
@@ -175,16 +175,16 @@
   },
   "checking": {
     "filter_questions": "Sualları süzgəcdən keçirmək",
-    "input_required_before_saving": "Provide text or audio before saving",
-    "manage_audio": "Manage audio",
+    "input_required_before_saving": "Yadda saxlamaqdan əvvəl mətn və ya səs təqdim edin",
+    "manage_audio": "Səsi idarə et",
     "me": "Mən",
     "next": "Növbəti",
-    "play_chapter": "Play chapter",
+    "play_chapter": "Fəsil üzrə oyna",
     "previous": "Əvvəlki",
     "questions": "Suallar",
-    "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
-    "question_filter_none": "Show all",
-    "question_filter_exportable": "Answers flagged for review",
+    "question_does_not_have_audio": "Bu fəsil üçün heç bir audio yazı yüklənməyib. Audio yükləmək üçün layihə administratoru ilə əlaqə saxlayın.",
+    "question_filter_none": "Hamısını göstər",
+    "question_filter_exportable": "Cavablar nəzərdən keçirilmək üçün işarələnib",
     "question_filter_has_answers": "Has answers",
     "question_filter_answered": "Answered",
     "question_filter_no_answers": "No answers",
@@ -213,8 +213,8 @@
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "Hələ Kəlam seçilməyib. ",
     "record_question": "Record question",
-    "resolve": "Resolve",
-    "resolved": "Resolved",
+    "resolve": "Həll et",
+    "resolved": "Həll edildi",
     "save_answer": "Cavabınızı saxlamaq",
     "select_verses": "Ayələri seçmək",
     "show_more_unread": "Oxunmamış başqa cavabları {{ count }} göstərmək",
@@ -226,11 +226,16 @@
     "audio": "Səs",
     "audio_already_exists": "Audio already exists for this selection.",
     "audio_file_less_than_one_hundred_mb": "Audio files under 95MB only",
-    "browse_files": "Browse Files",
+    "browse_files": "Browse",
+    "browse_files_tooltip": "Upload audio and timing files",
     "cancel": "Ləğv etmək",
-    "chapter_audio": "Chapter Audio",
-    "drag_and_drop_files": "Drag and drop audio and timing files here",
-    "drag_and_drop_or_browse": "VƏ YA",
+    "delete": "Delete Audio...",
+    "delete_audio": "Delete Audio",
+    "delete_both": "Delete Both",
+    "delete_timing": "Delete Timing",
+    "drag_and_drop_files": "Drop audio and timing files here to upload",
+    "drag_and_drop_overlay": "Drop files to upload",
+    "drag_and_drop_or_browse": "və ya",
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "help": "Kömək",
     "no_audio_file_uploaded": "No audio file uploaded",
@@ -252,7 +257,8 @@
     "audio_unavailable": "Səs faylı mövcud deyil.",
     "audio_cannot_be_accessed": "Səs faylına daxil olmaq istəyərkən xəta oldu. Bu davam edərsə, xahiş edirik yeni fayl yükləyin.",
     "audio_cannot_be_played": "Bu səs faylı İnternetə qoşulmayan vaxtınızda səslənmir, çünki yüklənməyib. İfadə etmək üçün İnternetə qoşulun.",
-    "audio_cannot_be_previewed": "Səs faylı önbaxış edilə bilməyən formatdadır. Hər hansı bir dəyişikliyi saxlayın və səsi çalmaq üçün internetə qoşulun."
+    "audio_cannot_be_previewed": "Səs faylı önbaxış edilə bilməyən formatdadır. Hər hansı bir dəyişikliyi saxlayın və səsi çalmaq üçün internetə qoşulun.",
+    "segment": "Segment"
   },
   "checking_audio_recorder": {
     "delete": "Səs yazını silmək",
@@ -291,11 +297,11 @@
     "tooltip_edit": "Düzəliş etmək"
   },
   "checking_questions": {
-    "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
+    "listen_to_question": "{{ referenceForDisplay }} üçün suala qulaq asın",
     "loading": "Yüklənir...",
     "no_questions_found_filtered": "No questions found to match your filter",
     "no_questions_found_unfiltered": "No questions found",
-    "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
+    "scripture_audio_label": "Aşağıdakı suala cavab vermək üçün {{ referenceForDisplay }}-a qulaq asın.",
     "view_answers": "View answers"
   },
   "edit_name_dialog": {
@@ -427,7 +433,7 @@
     "invite_people": "Başqalarını dəvət edin.",
     "invite_people_intro": "You can invite people outside of Paratext to help contribute to your project.",
     "link_copied": "Keçid mübadilə buferinə nüsxələndi. ",
-    "link_sharing": "Links can also be shared to users without an email address via social media platforms or SMS messages.",
+    "link_sharing": "Links can also be shared to users without an email address via social media platforms.",
     "not_inviting_already_member": "Dəvət olunmur: İstifadəçi artıq bu layihənin üzvüdür. ",
     "resend": "Yenidən göndərmək",
     "send_a_link": "Send a link",

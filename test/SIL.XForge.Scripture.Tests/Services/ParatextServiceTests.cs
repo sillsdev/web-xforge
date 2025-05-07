@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -398,7 +399,7 @@ public class ParatextServiceTests
     {
         var env = new TestEnvironment();
         const int lengthOfDblResourceId = 16;
-        string id = "1234567890abcdef";
+        const string id = "1234567890abcdef";
         Assert.That(id.Length, Is.EqualTo(lengthOfDblResourceId), "setup. Use an ID of DBL-Resource-ID-length.");
         // SUT
         Assert.That(env.Service.IsResource(id), Is.True);
@@ -430,7 +431,7 @@ public class ParatextServiceTests
             { env.User01, SFProjectRole.Administrator },
             { env.User02, SFProjectRole.CommunityChecker },
         };
-        var ptUsernameMapping = new Dictionary<string, string>()
+        var ptUsernameMapping = new Dictionary<string, string>
         {
             { env.User01, env.Username01 },
             { env.User02, env.Username02 },
@@ -452,7 +453,7 @@ public class ParatextServiceTests
         var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
         SFProject project = projects.First();
 
-        var ptUsernameMapping = new Dictionary<string, string>() { { env.User01, env.Username01 } };
+        var ptUsernameMapping = new Dictionary<string, string> { { env.User01, env.Username01 } };
         ScrText scrText = env.GetScrText(new SFParatextUser(env.Username01), project.ParatextId);
         scrText.Permissions.SetPermission(env.Username01, 0, PermissionSet.Manual, true);
         // Give User01 automatic permission to Mark but not Matthew
@@ -474,6 +475,38 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetPermissionsAsync_AllBooksAndAutomaticBooks_IsConsultant()
+    {
+        // Set up environment
+        var env = new TestEnvironment();
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up mock project
+        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+        SFProject project = projects.First();
+
+        var ptUsernameMapping = new Dictionary<string, string> { { env.User01, env.Username01 } };
+        ScrText scrText = env.GetScrText(new SFParatextUser(env.Username01), project.ParatextId);
+        // Give User01 automatic permission to all books
+        scrText.Permissions.SetPermission(env.Username01, 0, PermissionSet.Automatic, true);
+        // Make User01 a consultant
+        scrText.Permissions.ChangeUserRole(env.Username01, UserRoles.Consultant);
+        env.MockScrTextCollection.FindById(env.Username01, project.ParatextId).Returns(scrText);
+
+        // SUT
+        Dictionary<string, string> permissions = await env.Service.GetPermissionsAsync(
+            user01Secret,
+            project,
+            ptUsernameMapping,
+            40
+        );
+
+        // Ensure the user has read only access to Matthew and Mark
+        string[] expected = [TextInfoPermission.Read, TextInfoPermission.None, TextInfoPermission.None];
+        Assert.That(permissions.Values, Is.EquivalentTo(expected));
+    }
+
+    [Test]
     public async Task GetPermissionsAsync_AutomaticBooks_HasBookLevelPermission()
     {
         // Set up environment
@@ -484,7 +517,7 @@ public class ParatextServiceTests
         var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
         SFProject project = projects.First();
 
-        var ptUsernameMapping = new Dictionary<string, string>() { { env.User01, env.Username01 } };
+        var ptUsernameMapping = new Dictionary<string, string> { { env.User01, env.Username01 } };
         ScrText scrText = env.GetScrText(new SFParatextUser(env.Username01), project.ParatextId);
         scrText.Permissions.SetPermission(env.Username01, 0, PermissionSet.Manual, false);
         // Give automatic permission to User01 to Mark but not Matthew
@@ -857,6 +890,31 @@ public class ParatextServiceTests
 
         // PT username is not written to server logs
         env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
+    }
+
+    [Test]
+    public void PutNotes_RethrowsErrors()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        DateTime date = DateTime.Now; // This must be consistent as it is a part of the comment id
+
+        // Configure the Paratext data helper to throw an error
+        var exception = new UnauthorizedAccessException();
+        env.MockParatextDataHelper.When(pd => pd.CommitVersionedText(Arg.Any<ScrText>(), Arg.Any<string>()))
+            .Throws(exception);
+
+        // Add new comment
+        const string threadId = "Answer_0123";
+        const string content = "Content for comment to update.";
+        const string verseRef = "RUT 1:1";
+        XElement updateNotesXml = TestEnvironment.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef);
+        Assert.Throws<UnauthorizedAccessException>(() => env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml));
+
+        // Ensure that the error has logged too
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == exception);
     }
 
     [Test]
@@ -1518,11 +1576,11 @@ public class ParatextServiceTests
         var associatedPtUser = new SFParatextUser(env.Username01);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-        string threadId = "thread1";
-        string text1 = "Text in first verse ";
-        string text2 = "text after ";
-        string selected = "stanza";
-        string text3 = " break";
+        const string threadId = "thread1";
+        const string text1 = "Text in first verse ";
+        const string text2 = "text after ";
+        const string selected = "stanza";
+        const string text3 = " break";
 
         var comment = new Paratext.Data.ProjectComments.Comment(associatedPtUser)
         {
@@ -1533,7 +1591,7 @@ public class ParatextServiceTests
             ContextAfter = text3,
             StartPosition = text1.Length + text2.Length,
             Contents = null,
-            Date = $"2019-12-31T08:00:00.0000000+00:00",
+            Date = "2019-12-31T08:00:00.0000000+00:00",
             Deleted = false,
             Status = NoteStatus.Todo,
             Type = NoteType.Normal,
@@ -1546,7 +1604,12 @@ public class ParatextServiceTests
         {
             IEnumerable<IDocument<NoteThread>> noteThreadDocs = Array.Empty<IDocument<NoteThread>>();
             Dictionary<int, ChapterDelta> chapterDeltas = [];
-            string chapterText =
+            // These deltas represent the following USFM:
+            // \c 1
+            // \q
+            // \v 1 Text in first verse
+            // \b text after stanza break
+            const string chapterText =
                 "[ { \"insert\": { \"chapter\": { \"style\": \"c\", \"number\": \"1\" } } }, "
                 + "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"q_1\" } },"
                 + "{ \"insert\": { \"verse\": { \"style\": \"v\", \"number\": \"1\" } } }, "
@@ -1554,12 +1617,12 @@ public class ParatextServiceTests
                 + text1
                 + "\", \"attributes\": { \"segment\": \"verse_1_1\" } }, "
                 + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"q\" } } }, "
-                + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"b\" } } }, "
                 + "{ \"insert\": \""
                 + text2
                 + selected
                 + text3
-                + "\", \"attributes\": { \"segment\": \"verse_1_1/q_1\" } } ]";
+                + "\", \"attributes\": { \"segment\": \"verse_1_1/b_1\" } }, "
+                + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"b\" } } } ]";
             var delta = new Delta(JToken.Parse(chapterText));
             ChapterDelta chapterDelta = new ChapterDelta(1, 1, true, delta);
             chapterDeltas.Add(1, chapterDelta);
@@ -4137,7 +4200,7 @@ public class ParatextServiceTests
         MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
         env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(null, scrText);
 
-        string clonePath = Path.Combine(env.SyncDir, ptProjectId, "target");
+        string clonePath = Path.Join(env.SyncDir, ptProjectId, "target");
         env.MockFileSystemService.DirectoryExists(clonePath).Returns(false);
 
         // SUT
@@ -4207,7 +4270,7 @@ public class ParatextServiceTests
 
         // Replaces obsolete source project if the source project has been changed
         string newSourceProjectId = env.PTProjectIds[env.Project03].Id;
-        string sourcePath = Path.Combine(env.SyncDir, newSourceProjectId, "target");
+        string sourcePath = Path.Join(env.SyncDir, newSourceProjectId, "target");
 
         // Only set the new source ScrText when it is "cloned" to the filesystem
         env.MockFileSystemService.When(fs => fs.CreateDirectory(sourcePath))
@@ -4313,6 +4376,16 @@ public class ParatextServiceTests
             )
             .Returns(resourceScrText);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(true);
+        await using var zipStream = await TestEnvironment.CreateZipStubAsync();
+        env.MockFileSystemService.OpenFile(
+                Arg.Is<string>(p => p.EndsWith(".p8z")),
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read
+            )
+            .Returns(zipStream);
+        await using var stream = new MemoryStream();
+        env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
         // Set up the Resource ScrText when it is installed on disk
         using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
@@ -4363,6 +4436,16 @@ public class ParatextServiceTests
             )
             .Returns(resourceScrText);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(true);
+        await using var zipStream = await TestEnvironment.CreateZipStubAsync();
+        env.MockFileSystemService.OpenFile(
+                Arg.Is<string>(p => p.EndsWith(".p8z")),
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read
+            )
+            .Returns(zipStream);
+        await using var stream = new MemoryStream();
+        env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
         // Set up the Resource ScrText when it is installed on disk
         using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
@@ -4426,6 +4509,16 @@ public class ParatextServiceTests
         bool resourceDownloaded = false;
         env.MockFileSystemService.When(f => f.CreateDirectory(Arg.Any<string>())).Do(_ => resourceDownloaded = true);
         env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(_ => resourceDownloaded);
+        await using var zipStream = await TestEnvironment.CreateZipStubAsync();
+        env.MockFileSystemService.OpenFile(
+                Arg.Is<string>(p => p.EndsWith(".p8z")),
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read
+            )
+            .Returns(zipStream);
+        await using var stream = new MemoryStream();
+        env.MockFileSystemService.CreateFile(Arg.Any<string>()).Returns(stream);
 
         // Set up the Resource ScrText when it is installed on disk
         using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
@@ -4976,7 +5069,7 @@ public class ParatextServiceTests
         Assert.IsTrue(result);
         env.MockHgWrapper.ReceivedWithAnyArgs().RestoreRepository(default, default);
         env.MockHgWrapper.ReceivedWithAnyArgs().MarkSharedChangeSetsPublic(default);
-        string projectRepository = Path.Combine(scrtextDir, "_Backups", ptProjectId);
+        string projectRepository = Path.Join(scrtextDir, "_Backups", ptProjectId);
         string restoredRepository = projectRepository + "_Restored";
         // Removes leftover folders from a failed previous restore
         env.MockFileSystemService.Received().DeleteDirectory(projectRepository);
@@ -5295,7 +5388,7 @@ public class ParatextServiceTests
         string projectPTId = env.SetupProject(env.Project01, associatedPtUser);
         string rev = "some-desired-revision";
         env.MockHgWrapper.GetRepoRevision(
-                Arg.Is<string>((string repoPath) => repoPath.EndsWith(Path.Combine(projectPTId, "target")))
+                Arg.Is<string>((string repoPath) => repoPath.EndsWith(Path.Join(projectPTId, "target")))
             )
             .Returns(rev);
         // SUT
@@ -6988,7 +7081,7 @@ public class ParatextServiceTests
             RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(projects));
             MockFileSystemService
                 .DirectoryExists(
-                    Arg.Is<string>((string path) => path.EndsWith(Path.Combine(PTProjectIds[Project01].Id, "target")))
+                    Arg.Is<string>((string path) => path.EndsWith(Path.Join(PTProjectIds[Project01].Id, "target")))
                 )
                 .Returns(true);
         }
@@ -7238,6 +7331,23 @@ public class ParatextServiceTests
         public static async Task<IDocument<NoteThread>> GetNoteThreadDocAsync(IConnection connection, string dataId) =>
             await connection.FetchAsync<NoteThread>("project01:" + dataId);
 
+        public static async Task<Stream> CreateZipStubAsync()
+        {
+            var outputMemStream = new MemoryStream();
+            await using (var zipStream = new ZipOutputStream(outputMemStream))
+            {
+                ZipEntry newEntry = new ZipEntry("test.txt");
+                await zipStream.PutNextEntryAsync(newEntry);
+                await zipStream.CloseEntryAsync(CancellationToken.None);
+
+                // Stop ZipStream.Dispose() from also closing the underlying stream.
+                zipStream.IsStreamOwner = false;
+            }
+
+            outputMemStream.Position = 0;
+            return outputMemStream;
+        }
+
         public string SetupProject(string baseId, ParatextUser associatedPtUser, bool hasEditPermission = true)
         {
             string ptProjectId = PTProjectIds[baseId].Id;
@@ -7370,7 +7480,7 @@ public class ParatextServiceTests
             string zipLanguageCode = "eng"
         )
         {
-            string scrTextDir = Path.Combine(SyncDir, $"{shortName}.p8z");
+            string scrTextDir = Path.Join(SyncDir, $"{shortName}.p8z");
             ProjectName projectName = new ProjectName { ProjectPath = scrTextDir, ShortName = shortName };
             var scrText = new MockResourceScrText(
                 projectName,
@@ -7382,14 +7492,14 @@ public class ParatextServiceTests
             };
             scrText.Settings.LanguageID = LanguageId.English;
             scrText.ZipFile.AddFile(
-                Path.Combine(ZippedProjectFileManagerBase.DBLFolderName, "language", "iso", zipLanguageCode)
+                Path.Join(ZippedProjectFileManagerBase.DBLFolderName, "language", "iso", zipLanguageCode)
             );
             return scrText;
         }
 
         public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId, bool hasEditPermission = true)
         {
-            string scrTextDir = Path.Combine(SyncDir, projectId, "target");
+            string scrTextDir = Path.Join(SyncDir, projectId, "target");
             ProjectName projectName = new ProjectName { ProjectPath = scrTextDir, ShortName = "Proj" };
             var scrText = new MockScrText(associatedPtUser, projectName) { CachedGuid = HexId.FromStr(projectId) };
             scrText.Permissions.CreateFirstAdminUser();

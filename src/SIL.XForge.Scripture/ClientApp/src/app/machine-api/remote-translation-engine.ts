@@ -140,12 +140,10 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   listenForTrainingStatus(): Observable<ProgressStatus> {
-    if (this.trainingStatus$ == null) {
-      this.trainingStatus$ = this.getEngine(this.projectId).pipe(
-        mergeMap(e => this.pollBuildProgress(e.id, 0)),
-        share()
-      );
-    }
+    this.trainingStatus$ ??= this.getEngine(this.projectId).pipe(
+      mergeMap(e => this.pollBuildProgress(e.id, 0)),
+      share()
+    );
     return this.trainingStatus$;
   }
 

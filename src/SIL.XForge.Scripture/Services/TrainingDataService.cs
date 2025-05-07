@@ -36,6 +36,56 @@ public class TrainingDataService(
         HasHeaderRecord = false,
     };
 
+    /// <summary>
+    /// Converts an Excel file to a two column CSV file.
+    /// </summary>
+    /// <param name="workbook">The Excel workbook from NPOI.</param>
+    /// <param name="outputStream">The stream to write the CSV file to. The stream will be left open.</param>
+    /// <returns>An asynchronous task.</returns>
+    /// <exception cref="FormatException">The Excel file does not contain two columns of data</exception>
+    public async Task ConvertExcelToCsvAsync(IWorkbook workbook, Stream outputStream)
+    {
+        // Verify there is a worksheet
+        if (workbook.NumberOfSheets == 0)
+        {
+            throw new FormatException("The Excel file does not contain a worksheet");
+        }
+
+        // Load the Excel file
+        var data = new List<(string, string)>();
+        ISheet sheet = workbook.GetSheetAt(0);
+        for (int rowNum = sheet.FirstRowNum; rowNum <= sheet.LastRowNum; rowNum++)
+        {
+            IRow row = sheet.GetRow(rowNum);
+            if (row is null || row.FirstCellNum == -1 || row.LastCellNum - row.FirstCellNum < 2)
+            {
+                // Skip if there are not two columns of data in this row that are side-by-side
+                continue;
+            }
+
+            string firstColumn =
+                row.GetCell(row.FirstCellNum, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
+            string secondColumn =
+                row.GetCell(row.FirstCellNum + 1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
+            data.Add((firstColumn, secondColumn));
+        }
+
+        if (data.Count == 0)
+        {
+            throw new FormatException("The Excel file does not contain two columns of data");
+        }
+
+        // Write the CSV file
+        await using StreamWriter streamWriter = new StreamWriter(outputStream, leaveOpen: true);
+        await using CsvWriter csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture, leaveOpen: true);
+        foreach ((string first, string second) in data)
+        {
+            csvWriter.WriteField(first);
+            csvWriter.WriteField(second);
+            await csvWriter.NextRecordAsync();
+        }
+    }
+
     public async Task DeleteTrainingDataAsync(string userId, string projectId, string ownerId, string dataId)
     {
         // Validate input
@@ -99,7 +149,7 @@ public class TrainingDataService(
         MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
 
         // Ensure that the training data directory exists
-        string trainingDataDir = Path.Combine(siteOptions.Value.SiteDir, DirectoryName, projectId);
+        string trainingDataDir = Path.Join(siteOptions.Value.SiteDir, DirectoryName, projectId);
         if (!fileSystemService.DirectoryExists(trainingDataDir))
         {
             throw new DataNotFoundException("The training data directory does not exist");
@@ -124,7 +174,7 @@ public class TrainingDataService(
                 fileName = fileName.Split('?').First();
             }
 
-            string path = Path.Combine(trainingDataDir, fileName);
+            string path = Path.Join(trainingDataDir, fileName);
             if (!fileSystemService.FileExists(path))
             {
                 // Skip if the file does not exist
@@ -261,7 +311,8 @@ public class TrainingDataService(
                     // Load the Excel 97-2003 spreadsheet
                     await using Stream fileStream = fileSystemService.OpenFile(path, FileMode.Open);
                     using IWorkbook workbook = new HSSFWorkbook(fileStream);
-                    await ConvertExcelToCsvAsync(workbook, outputPath);
+                    await using Stream outputStream = fileSystemService.CreateFile(outputPath);
+                    await ConvertExcelToCsvAsync(workbook, outputStream);
                 }
                 break;
             case ".XLSX":
@@ -269,62 +320,12 @@ public class TrainingDataService(
                     // Load the Excel 2007+ spreadsheet
                     await using Stream fileStream = fileSystemService.OpenFile(path, FileMode.Open);
                     using IWorkbook workbook = new XSSFWorkbook(fileStream);
-                    await ConvertExcelToCsvAsync(workbook, outputPath);
+                    await using Stream outputStream = fileSystemService.CreateFile(outputPath);
+                    await ConvertExcelToCsvAsync(workbook, outputStream);
                 }
                 break;
             default:
                 throw new FormatException();
-        }
-    }
-
-    /// <summary>
-    /// Converts an Excel file to spreadsheet.
-    /// </summary>
-    /// <param name="workbook">The Excel workbook from NPOI.</param>
-    /// <param name="outputPath">The path to write the CSV file to</param>
-    /// <returns>An asynchronous task.</returns>
-    /// <exception cref="FormatException">The Excel file does not contain two columns of data</exception>
-    private async Task ConvertExcelToCsvAsync(IWorkbook workbook, string outputPath)
-    {
-        // Verify there is a worksheet
-        if (workbook.NumberOfSheets == 0)
-        {
-            throw new FormatException("The Excel file does not contain a worksheet");
-        }
-
-        // Load the Excel file
-        var data = new List<(string, string)>();
-        ISheet sheet = workbook.GetSheetAt(0);
-        for (int rowNum = sheet.FirstRowNum; rowNum <= sheet.LastRowNum; rowNum++)
-        {
-            IRow row = sheet.GetRow(rowNum);
-            if (row is null || row.FirstCellNum == -1 || row.LastCellNum - row.FirstCellNum < 2)
-            {
-                // Skip if there are not two columns of data in this row that are side-by-side
-                continue;
-            }
-
-            string firstColumn =
-                row.GetCell(row.FirstCellNum, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
-            string secondColumn =
-                row.GetCell(row.FirstCellNum + 1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
-            data.Add((firstColumn, secondColumn));
-        }
-
-        if (data.Count == 0)
-        {
-            throw new FormatException("The Excel file does not contain two columns of data");
-        }
-
-        // Write the CSV file
-        await using Stream fileStream = fileSystemService.CreateFile(outputPath);
-        await using StreamWriter streamWriter = new StreamWriter(fileStream);
-        await using CsvWriter csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
-        foreach ((string first, string second) in data)
-        {
-            csvWriter.WriteField(first);
-            csvWriter.WriteField(second);
-            await csvWriter.NextRecordAsync();
         }
     }
 
@@ -346,13 +347,13 @@ public class TrainingDataService(
             .Aggregate(dataId, (current, c) => current.Replace(c.ToString(), string.Empty));
 
         // Ensure that the training data directory exists
-        string trainingDataDir = Path.Combine(siteOptions.Value.SiteDir, DirectoryName, projectId);
+        string trainingDataDir = Path.Join(siteOptions.Value.SiteDir, DirectoryName, projectId);
         if (!fileSystemService.DirectoryExists(trainingDataDir))
         {
             fileSystemService.CreateDirectory(trainingDataDir);
         }
 
         // Return the full path
-        return Path.Combine(trainingDataDir, $"{userId}_{dataId}.csv");
+        return Path.Join(trainingDataDir, $"{userId}_{dataId}.csv");
     }
 }

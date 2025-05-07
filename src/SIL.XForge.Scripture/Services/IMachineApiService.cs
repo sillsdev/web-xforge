@@ -14,14 +14,25 @@ namespace SIL.XForge.Scripture.Services;
 [Intercept(typeof(EventMetricLogger))]
 public interface IMachineApiService
 {
-    [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]
-    Task CancelPreTranslationBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId), captureReturnValue: true)]
+    Task<string?> CancelPreTranslationBuildAsync(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    );
     Task ExecuteWebhookAsync(string json, string signature);
     Task<ServalBuildDto?> GetBuildAsync(
         string curUserId,
         string sfProjectId,
         string buildId,
         long? minRevision,
+        bool preTranslate,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    );
+    public IAsyncEnumerable<ServalBuildDto> GetBuildsAsync(
+        string curUserId,
+        string sfProjectId,
         bool preTranslate,
         bool isServalAdmin,
         CancellationToken cancellationToken
@@ -106,6 +117,8 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
+
+    [Mutex]
     Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]

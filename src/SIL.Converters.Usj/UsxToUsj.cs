@@ -73,7 +73,7 @@ namespace SIL.Converters.Usj
         public static Usj UsxXmlDocumentToUsj(XmlDocument document) => UsxDomToUsj(document?.DocumentElement);
 
         /// <summary>
-        /// Indicates whether a specified string is null, empty, or XML whitespace.
+        /// Indicates whether a specified string is null, empty, or XML whitespace that is not a single space.
         /// </summary>
         /// <param name="value">The string value.</param>
         /// <returns><c>true</c> if the string is null, empty, or XML whitespace.</returns>
@@ -81,7 +81,8 @@ namespace SIL.Converters.Usj
         /// This should be used instead of <see cref="string.IsNullOrWhiteSpace"/> for XML node values.
         /// </remarks>
         private static bool IsNullOrXmlWhitespace(string value) =>
-            string.IsNullOrEmpty(value) || value.All(c => c == '\t' || c == '\n' || c == '\r' || c == ' ');
+            string.IsNullOrEmpty(value)
+            || (value.All(c => c == '\t' || c == '\n' || c == '\r' || c == ' ') && value != " ");
 
         private static (T, bool) UsxDomToUsjRecurse<T>(XmlElement usxElement)
             where T : UsjBase, new()
@@ -145,8 +146,10 @@ namespace SIL.Converters.Usj
             }
 
             if (
-                usxElement.FirstChild?.NodeType == XmlNodeType.Text
-                && !IsNullOrXmlWhitespace(usxElement.FirstChild.Value)
+                (
+                    usxElement.FirstChild?.NodeType == XmlNodeType.Text
+                    || usxElement.FirstChild?.NodeType == XmlNodeType.Whitespace
+                ) && !IsNullOrXmlWhitespace(usxElement.FirstChild.Value)
             )
             {
                 text = usxElement.FirstChild.Value;

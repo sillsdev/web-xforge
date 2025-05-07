@@ -21,7 +21,7 @@
         @case ("initial") {
           <div class="initial-import-screen">
             <div class="card-wrapper">
-              <mat-card>
+              <mat-card class="card">
                 <mat-card-title>{{ t("import_from_transcelerator") }}</mat-card-title>
                 <mat-card-content>
                   @for (i of transceleratorInfo | async; track i) {
@@ -89,7 +89,7 @@
                     mat-flat-button
                     color="primary"
                     ngfSelect
-                    accept=".csv,.tsv"
+                    [accept]="fileExtensions"
                     (fileChange)="fileSelected($event)"
                   >
                     {{ t("import_from_csv_file") }}
@@ -200,6 +200,10 @@
 
         @case ("update_transcelerator") {
           <div>{{ t("update_transcelerator") }}</div>
+        }
+
+        @case ("offline_conversion") {
+          <div>{{ t("cannot_convert_offline") }}</div>
         }
 
         @case ("missing_header_row") {

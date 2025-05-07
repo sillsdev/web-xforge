@@ -530,4 +530,19 @@ public static partial class TestData
           <chapter eid="MRK 1" />
         </usx>
         """;
+
+    /// <summary>
+    /// Mark 1:1 in USX (with a single space in the note that should be preserved).
+    /// </summary>
+    public static readonly string UsxMrk1V1WithSingleSpace = $"""
+        <usx version="{Usx.UsxVersion}">
+          <book code="MRK" style="id" />
+          <chapter number="1" style="c" sid="MRK 1" />
+          <verse number="1" style="v" />In the
+          <note caller="+" style="f" category="dup"> <char style="fr" closed="false">1.1 </char>
+          <char style="ft" closed="false"><char style="xt" closed="false">See 2<char style="xt" closed="false" />
+          </char></char></note> beginning
+          <chapter eid="MRK 1" />
+        </usx>
+        """;
 }
