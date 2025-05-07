@@ -1,10 +1,16 @@
+import { obj } from '../utils/obj-path';
 import { Site } from './site';
 
 export const USER_PROFILES_COLLECTION = 'user_profiles';
 export const USER_PROFILE_INDEX_PATHS: string[] = [];
 
 export const USERS_COLLECTION = 'users';
-export const USER_INDEX_PATHS: string[] = USER_PROFILE_INDEX_PATHS;
+export const USER_INDEX_PATHS = [
+  // Index for ParatextService.GetBiblicalTermsAsync() in .NET
+  obj<User>().pathStr(u => u.email),
+  // Index for SFProjectService.InviteAsync() in .NET
+  obj<User>().pathStr(u => u.paratextId)
+];
 
 export enum AuthType {
   Unknown,

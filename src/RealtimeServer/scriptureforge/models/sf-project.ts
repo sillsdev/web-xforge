@@ -1,3 +1,4 @@
+import { CreateIndexesOptions } from 'mongodb';
 import { Project } from '../../common/models/project';
 import { WritingSystem } from '../../common/models/writing-system';
 import { obj } from '../../common/utils/obj-path';
@@ -13,9 +14,16 @@ export const SF_PROJECT_PROFILES_COLLECTION = 'sf_projects_profile';
 export const SF_PROJECT_PROFILES_INDEX_PATHS: string[] = [];
 
 export const SF_PROJECTS_COLLECTION = 'sf_projects';
-export const SF_PROJECT_INDEX_PATHS: string[] = [
-  obj<SFProject>().pathStr(q => q.name),
-  obj<SFProject>().pathStr(q => q.paratextId)
+export const SF_PROJECT_INDEX_PATHS: (string | [string, CreateIndexesOptions])[] = [
+  obj<SFProject>().pathStr(p => p.name),
+  obj<SFProject>().pathStr(p => p.paratextId),
+  // Index for ParatextService.GetBiblicalTermsAsync() in .NET
+  obj<SFProject>().pathStr(p => p.shortName),
+  // Indexes for SFProjectService.IsSourceProject() in .NET
+  [obj<SFProject>().pathStr(p => p.translateConfig.source!.projectRef), { sparse: true }],
+  [obj<SFProject>().pathStr(p => p.translateConfig.draftConfig.additionalTrainingSource!.projectRef), { sparse: true }],
+  [obj<SFProject>().pathStr(p => p.translateConfig.draftConfig.alternateSource!.projectRef), { sparse: true }],
+  [obj<SFProject>().pathStr(p => p.translateConfig.draftConfig.alternateTrainingSource!.projectRef), { sparse: true }]
 ];
 
 /** Length of id for a DBL resource. */

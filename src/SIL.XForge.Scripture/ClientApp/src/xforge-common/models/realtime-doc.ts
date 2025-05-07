@@ -10,7 +10,7 @@ export interface RealtimeDocConstructor {
   readonly COLLECTION: string;
 
   // string is the legacy one column index format, the associative array corresponds to MongoDB's IndexSpecification
-  readonly INDEX_PATHS: (string | { [x: string]: number | string })[];
+  readonly INDEX_PATHS: (string | { [x: string]: number | string } | [string, unknown])[];
 
   new (realtimeService: RealtimeService, adapter: RealtimeDocAdapter): RealtimeDoc;
 }
