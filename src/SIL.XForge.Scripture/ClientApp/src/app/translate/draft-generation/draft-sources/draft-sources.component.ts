@@ -24,6 +24,7 @@ import { hasData, notNull } from '../../../../type-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { DeactivateAllowed } from '../../../shared/project-router.guard';
 import { projectLabel } from '../../../shared/utils';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
 import {
@@ -60,7 +61,7 @@ export interface ProjectStatus {
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
 })
-export class DraftSourcesComponent extends DataLoadingComponent {
+export class DraftSourcesComponent extends DataLoadingComponent implements DeactivateAllowed {
   /** Indicator that a project setting change is for clearing a value. */
   static readonly projectSettingValueUnset = 'unset';
 
@@ -82,6 +83,7 @@ export class DraftSourcesComponent extends DataLoadingComponent {
   languageCodeConfirmationMessageIfUserTriesToContinue: I18nKeyForComponent<'draft_sources'> | null = null;
   clearLanguageCodeConfirmationCheckbox = new EventEmitter<void>();
   changesMade = false;
+  deactivationPrompt: string = this.i18n.translateStatic('draft_sources.discard_changes_confirmation');
 
   /** Whether some projects are syncing currently. */
   syncStatus: Map<string, ProjectStatus> = new Map<string, ProjectStatus>();
@@ -286,6 +288,10 @@ export class DraftSourcesComponent extends DataLoadingComponent {
     if (leavePage) {
       this.navigateToDrafting();
     }
+  }
+
+  promptUserToDeactivate(): boolean {
+    return this.changesMade;
   }
 
   navigateToDrafting(): void {
