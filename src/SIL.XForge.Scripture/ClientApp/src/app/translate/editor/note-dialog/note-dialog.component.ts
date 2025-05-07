@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
@@ -22,7 +22,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { defaultNoteThreadIcon, NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
@@ -90,7 +89,7 @@ export class NoteDialogComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly dialogService: DialogService,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly destroyRef: DestroyRef
   ) {}
 
   async ngOnInit(): Promise<void> {

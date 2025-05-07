@@ -1,4 +1,13 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -23,7 +32,6 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
 import { ParatextService, Revision } from '../../../../core/paratext.service';
@@ -73,7 +81,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     private readonly errorReportingService: ErrorReportingService,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly destroyRef: DestroyRef
   ) {}
 
   get canRestoreSnapshot(): boolean {

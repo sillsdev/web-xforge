@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -10,7 +10,6 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 
@@ -44,7 +43,7 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
     public readonly i18n: I18nService,
     private readonly onlineService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly destroyRef: DestroyRef
   ) {}
 
   async ngOnInit(): Promise<void> {

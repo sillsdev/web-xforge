@@ -1,8 +1,7 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
-import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
@@ -17,7 +16,7 @@ export class CacheService {
     private readonly projectService: SFProjectService,
     private readonly permissionsService: PermissionsService,
     private readonly currentProject: ActivatedProjectService,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly destroyRef: DestroyRef
   ) {
     currentProject.projectId$.pipe(takeUntilDestroyed(destroyRef)).subscribe(async projectId => {
       if (projectId == null) return;

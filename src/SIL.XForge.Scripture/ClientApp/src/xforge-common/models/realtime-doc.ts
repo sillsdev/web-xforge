@@ -1,9 +1,9 @@
+import { DestroyRef } from '@angular/core';
 import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { PresenceData } from '../../app/shared/text/text.component';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
-import { IDestroyRef } from '../utils';
 import { RealtimeOfflineData } from './realtime-offline-data';
 import { Snapshot } from './snapshot';
 
@@ -42,7 +42,7 @@ export class DocSubscription {
    */
   constructor(
     readonly callerContext: string,
-    destroyRef?: IDestroyRef
+    destroyRef?: DestroyRef
   ) {
     if (destroyRef != null) {
       destroyRef.onDestroy(() => (this.isUnsubscribed = true));

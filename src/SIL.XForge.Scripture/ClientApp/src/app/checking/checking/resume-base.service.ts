@@ -7,6 +7,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 
@@ -85,7 +86,11 @@ export abstract class ResumeBaseService {
   private async updateProjectUserConfig(projectId: string | undefined): Promise<void> {
     this.projectUserConfigDoc = undefined;
     if (projectId != null) {
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(
+        projectId,
+        this.userService.currentUserId,
+        FETCH_WITHOUT_SUBSCRIBE
+      );
       this.projectUserConfigDoc$.next(this.projectUserConfigDoc);
     }
   }

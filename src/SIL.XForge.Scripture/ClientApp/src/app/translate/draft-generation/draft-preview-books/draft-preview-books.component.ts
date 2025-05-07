@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, DestroyRef } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -16,7 +16,6 @@ import { DocSubscription, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/r
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { QuietDestroyRef } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -87,7 +86,7 @@ export class DraftPreviewBooksComponent {
     private readonly textDocService: TextDocService,
     private readonly errorReportingService: ErrorReportingService,
     private readonly router: Router,
-    private readonly destroyRef: QuietDestroyRef
+    private readonly destroyRef: DestroyRef
   ) {}
 
   get numChaptersApplied(): number {
