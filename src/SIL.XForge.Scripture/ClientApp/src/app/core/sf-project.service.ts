@@ -13,6 +13,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -299,6 +300,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return await this.onlineInvoke<void>('setServalConfig', {
       projectId,
       servalConfig
+    });
+  }
+
+  async onlineSetUsfmConfig(projectId: string, config: DraftUsfmConfig): Promise<void> {
+    return await this.onlineInvoke<void>('setUsfmConfig', {
+      projectId,
+      config
     });
   }
 

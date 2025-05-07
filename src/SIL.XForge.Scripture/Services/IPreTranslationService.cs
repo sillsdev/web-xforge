@@ -17,6 +17,7 @@ public interface IPreTranslationService
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        DraftUsfmConfig config,
         CancellationToken cancellationToken
     );
 

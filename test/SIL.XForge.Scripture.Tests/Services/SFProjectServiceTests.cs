@@ -3845,6 +3845,50 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task SetUsfmConfigAsync_UpdatesUsfmConfig()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project01);
+        DraftUsfmConfig config = new DraftUsfmConfig
+        {
+            PreserveParagraphMarkers = true,
+            PreserveStyleMarkers = false,
+            PreserveEmbedMarkers = true,
+        };
+        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveParagraphMarkers, Is.True);
+        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveStyleMarkers, Is.False);
+        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveEmbedMarkers, Is.True);
+
+        // SUT
+        config.PreserveEmbedMarkers = false;
+        await env.Service.SetUsfmConfigAsync(User01, Project01, config);
+        project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveEmbedMarkers, Is.False);
+    }
+
+    [Test]
+    public void SetUsfmConfigAsync_ProjectMustExist()
+    {
+        var env = new TestEnvironment();
+        DraftUsfmConfig config = new DraftUsfmConfig();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.SetUsfmConfigAsync(User01, "invalid_project", config)
+        );
+    }
+
+    [Test]
+    public void SetUsfmConfigAsync_UserIsNotParatext()
+    {
+        var env = new TestEnvironment();
+        DraftUsfmConfig config = new DraftUsfmConfig();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SetUsfmConfigAsync(User02, Project01, config));
+    }
+
+    [Test]
     public void AddChaptersAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();
@@ -4657,7 +4701,11 @@ public class SFProjectServiceTests
                                     ShortName = "RES",
                                     WritingSystem = new WritingSystem { Tag = "qaa" },
                                 },
-                                DraftConfig = new DraftConfig { ServalConfig = "{ existingConfig: true }" },
+                                DraftConfig = new DraftConfig
+                                {
+                                    UsfmConfig = new DraftUsfmConfig(),
+                                    ServalConfig = "{ existingConfig: true }",
+                                },
                             },
                             CheckingConfig = new CheckingConfig { CheckingEnabled = true },
                             UserRoles = new Dictionary<string, string>

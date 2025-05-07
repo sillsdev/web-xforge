@@ -810,6 +810,55 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task SetUsfmConfig_Success()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetUsfmConfigAsync(User01, Project01, Arg.Any<DraftUsfmConfig>())
+            .Returns(Task.FromResult(true));
+        // SUT
+        var result = await env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig());
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+    }
+
+    [Test]
+    public async Task SetUsfmConfig_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetUsfmConfigAsync(User01, Project01, Arg.Any<DraftUsfmConfig>())
+            .Throws(new ForbiddenException());
+        // SUT
+        var result = await env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig());
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetUsfmConfig_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SetUsfmConfigAsync(User01, Project01, Arg.Any<DraftUsfmConfig>())
+            .Throws(new DataNotFoundException(errorMessage));
+        // SUT
+
+        var result = await env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig());
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void SetUsfmConfig_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetUsfmConfigAsync(User01, Project01, Arg.Any<DraftUsfmConfig>())
+            .Throws(new ArgumentNullException());
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig()));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task SetRoleProjectPermissions_Forbidden()
     {
         var env = new TestEnvironment();

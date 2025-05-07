@@ -528,6 +528,7 @@ public class MachineApiService(
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     )
     {
@@ -545,6 +546,7 @@ public class MachineApiService(
             chapterNum,
             isServalAdmin,
             timestamp,
+            draftUsfmConfig,
             cancellationToken
         );
 
@@ -746,6 +748,7 @@ public class MachineApiService(
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     )
     {
@@ -770,6 +773,7 @@ public class MachineApiService(
             chapterNum,
             isServalAdmin,
             timestamp,
+            draftUsfmConfig,
             cancellationToken
         );
 
@@ -787,6 +791,7 @@ public class MachineApiService(
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     )
     {
@@ -802,7 +807,7 @@ public class MachineApiService(
 
         // First, see if the document exists in the realtime service, if the chapter is not 0
         IDocument<TextDocument>? textDocument = null;
-        if (chapterNum != 0)
+        if (chapterNum != 0 && draftUsfmConfig is null)
         {
             textDocument = await connection.FetchAsync<TextDocument>(id);
             if (textDocument.IsLoaded)
@@ -826,20 +831,24 @@ public class MachineApiService(
             throw new DataNotFoundException("The user does not exist.");
         }
 
-        // There is no snapshot, so retrieve the draft from Serval, and save it to the realtime server
+        DraftUsfmConfig config =
+            draftUsfmConfig ?? project.TranslateConfig.DraftConfig.UsfmConfig ?? new DraftUsfmConfig();
+
+        // There is no snapshot or the snapshot is being ignored, so retrieve the draft from Serval
         try
         {
             string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
                 sfProjectId,
                 bookNum,
                 chapterNum,
+                config,
                 cancellationToken
             );
             string usx = paratextService.GetBookText(userSecret, project.ParatextId, bookNum, usfm);
             IUsj usj = UsxToUsj.UsxStringToUsj(usx);
 
-            // Do not save the USJ if the chapter is 0
-            if (chapterNum != 0)
+            // Do not save the USJ if the chapter is 0 or accessing the snapshot is ignored
+            if (chapterNum != 0 && draftUsfmConfig is null)
             {
                 await SaveTextDocumentAsync(textDocument!, usj);
             }
@@ -860,6 +869,7 @@ public class MachineApiService(
         int chapterNum,
         bool isServalAdmin,
         DateTime timestamp,
+        DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     )
     {
@@ -871,6 +881,7 @@ public class MachineApiService(
             chapterNum,
             isServalAdmin,
             timestamp,
+            draftUsfmConfig,
             cancellationToken
         );
         return UsjToUsx.UsjToUsxString(usj);
@@ -1359,6 +1370,7 @@ public class MachineApiService(
                 sfProjectId,
                 bookNum,
                 chapterNum,
+                projectDoc.Data.TranslateConfig.DraftConfig.UsfmConfig ?? new DraftUsfmConfig(),
                 cancellationToken
             );
 

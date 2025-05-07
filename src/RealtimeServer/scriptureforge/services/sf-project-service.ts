@@ -307,6 +307,21 @@ export class SFProjectService extends ProjectService<SFProject> {
               },
               servalConfig: {
                 bsonType: 'string'
+              },
+              usfmFormat: {
+                bsonType: 'object',
+                properties: {
+                  preserveParagraphMarkers: {
+                    bsonType: 'bool'
+                  },
+                  preserveStyleMarkers: {
+                    bsonType: 'bool'
+                  },
+                  preserveEmbedMarkers: {
+                    bsonType: 'bool'
+                  }
+                },
+                additionalProperties: false
               }
             },
             additionalProperties: false

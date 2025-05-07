@@ -62,6 +62,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
     DraftPreviewBooksComponent,
     DraftApplyProgressDialogComponent,
     FontUnsupportedMessageComponent
-  ]
+  ],
+  exports: [EditorDraftComponent]
 })
 export class TranslateModule {}
