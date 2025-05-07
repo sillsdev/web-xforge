@@ -291,7 +291,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Deact
   }
 
   promptUserToDeactivate(): boolean {
-    return this.changesMade;
+    return this.changesMade && !this.allProjectsSavedAndSynced;
   }
 
   navigateToDrafting(): void {
