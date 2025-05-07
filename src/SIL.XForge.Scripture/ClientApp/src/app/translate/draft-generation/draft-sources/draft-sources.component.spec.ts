@@ -96,6 +96,7 @@ describe('DraftSourcesComponent', () => {
       tick();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
+      expect(env.component.promptUserToDeactivate()).toBe(true);
 
       // Suppose the user loads up the sources configuration page, changes no projects, and clicks Save. The settings
       // change request will just correspond to what the project already has for its settings.
@@ -119,6 +120,7 @@ describe('DraftSourcesComponent', () => {
         mockedSFProjectService.onlineUpdateSettings
       ).last()[1];
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+      expect(env.component.promptUserToDeactivate()).toBe(false);
     }));
 
     it('clearing second training source works', fakeAsync(() => {
@@ -126,6 +128,7 @@ describe('DraftSourcesComponent', () => {
       tick();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
+      expect(env.component.promptUserToDeactivate()).toBe(true);
 
       // Suppose the user loads up the page, clears the second training/reference project box, and clicks Save. The
       // settings change request will show a requested change for unsetting the additional-training-source.
@@ -156,6 +159,7 @@ describe('DraftSourcesComponent', () => {
         mockedSFProjectService.onlineUpdateSettings
       ).last()[1];
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+      expect(env.component.promptUserToDeactivate()).toBe(false);
     }));
 
     it('clearing first training source works', fakeAsync(() => {
@@ -163,6 +167,7 @@ describe('DraftSourcesComponent', () => {
       tick();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
+      expect(env.component.promptUserToDeactivate()).toBe(true);
 
       // Suppose the user comes to the page, leaves the second reference/training project selection alone, and clears
       // the first reference/training project selection. Let's respond by clearing the additional-training-source, and
@@ -195,6 +200,7 @@ describe('DraftSourcesComponent', () => {
         mockedSFProjectService.onlineUpdateSettings
       ).last()[1];
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+      expect(env.component.promptUserToDeactivate()).toBe(false);
     }));
   });
 
