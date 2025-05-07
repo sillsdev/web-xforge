@@ -16,5 +16,8 @@ export const environment = {
   realtimeUrl: '/',
   authDomain: 'sil-appbuilder.auth0.com',
   authClientId: 'aoAGb9Yx1H5WIsvCW6JJCteJhSa37ftH',
-  offlineDBVersion: 8
+  offlineDBVersion: 8,
+  googleTagManagerId: 'GTM-P2DF8SLM',
+  googleTagManagerAuth: 'AC1M72Jw4UydK-bnFoT0Cw',
+  googleTagManagerPreview: 'env-8'
 };
