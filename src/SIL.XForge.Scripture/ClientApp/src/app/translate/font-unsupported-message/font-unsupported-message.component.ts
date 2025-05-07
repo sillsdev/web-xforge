@@ -48,9 +48,13 @@ export class FontUnsupportedMessageComponent {
   }
 
   get fallbackFont(): string {
+    // This is not entirely correct logic. What it doesn't handle is when the selected font isn't a Graphite font, but
+    // the default font for the writing system is a Graphite font. That would require a different message this component
+    // doesn't currently display, stating that the selected font is not supported, but it will fall back to one font in
+    // browsers that support Graphite, and another font in browsers that don't.
     return this.fontService.isGraphiteFont(this.selectedFont ?? '')
       ? this.fontService.nonGraphiteFallback(this.selectedFont ?? '')
-      : this.fontService.fontFallback(this.selectedFont ?? '');
+      : this.fontService.getFontFamilyFromProject(this.projectDoc);
   }
 
   get warningI18nKey(): I18nKey {

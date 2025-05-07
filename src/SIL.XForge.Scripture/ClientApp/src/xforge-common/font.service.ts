@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import FONT_FACE_DEFINITIONS from '../../../fonts.json';
+import WRITING_SYSTEM_FONT_MAP from '../../../writing_system_font_map.json';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { DOCUMENT } from './browser-globals';
 import { isGecko } from './utils';
@@ -50,10 +51,96 @@ export const NON_GRAPHITE_FALLBACKS: { [key: string]: string } = {
   'Awami Nastaliq': 'Scheherazade New'
 };
 
+interface FontResolution {
+  resolution:
+    | 'specified_font'
+    | 'near_match_specified_font'
+    | 'writing_system_default'
+    | 'non_graphite_fallback'
+    | 'default_font';
+  family: string;
+  url: string;
+  requestedFont: string | undefined;
+}
+
+export interface ProjectFontSpecification {
+  writingSystem?: SFProjectProfile['writingSystem'];
+  defaultFont?: SFProjectProfile['defaultFont'];
+}
+
+export class FontResolver {
+  resolveFont(project: ProjectFontSpecification): FontResolution {
+    const resolution = this.internalResolveFont(project);
+
+    if (!GRAPHITE_SUPPORTED && NON_GRAPHITE_FALLBACKS[resolution.family] != null) {
+      const fallbackFamily = NON_GRAPHITE_FALLBACKS[resolution.family];
+      return {
+        requestedFont: project.defaultFont,
+        resolution: 'non_graphite_fallback',
+        family: fallbackFamily,
+        url: FONT_FACE_DEFINITIONS[fallbackFamily]
+      };
+    } else return resolution;
+  }
+
+  private internalResolveFont(project: ProjectFontSpecification): FontResolution {
+    const requestedFont = project?.defaultFont;
+
+    // Method 1: Attempt to use the specified font
+
+    if (requestedFont != null && FONT_FACE_DEFINITIONS[requestedFont] != null) {
+      return {
+        requestedFont,
+        resolution: 'specified_font',
+        family: requestedFont,
+        url: FONT_FACE_DEFINITIONS[requestedFont]
+      };
+    }
+
+    // Method 2: Attempt to use a near match to the specified font
+
+    const fallbackFamily = requestedFont == null ? null : FONT_FACE_FALLBACKS[requestedFont];
+    if (fallbackFamily != null) {
+      return {
+        requestedFont,
+        resolution: 'near_match_specified_font',
+        family: fallbackFamily,
+        url: FONT_FACE_DEFINITIONS[fallbackFamily]
+      };
+    }
+
+    // Method 3: Use the default font for the writing system and region
+
+    const script = project.writingSystem?.script ?? project.writingSystem?.tag?.split('-')[1];
+    const region = project.writingSystem?.tag?.split('-')[2];
+    const scriptAndRegion = script == null || region == null ? null : `${script}-${region}`;
+    const scriptDefaultFont =
+      WRITING_SYSTEM_FONT_MAP[scriptAndRegion ?? ''] ?? WRITING_SYSTEM_FONT_MAP[script ?? ''] ?? null;
+    if (scriptDefaultFont != null) {
+      return {
+        requestedFont,
+        resolution: 'writing_system_default',
+        family: scriptDefaultFont,
+        url: FONT_FACE_DEFINITIONS[scriptDefaultFont]
+      };
+    }
+
+    // Method 4: Use a fallback font
+
+    return {
+      requestedFont,
+      resolution: 'default_font',
+      family: DEFAULT_FONT_FAMILY,
+      url: FONT_FACE_DEFINITIONS[DEFAULT_FONT_FAMILY]
+    };
+  }
+}
+
+const fontResolver = new FontResolver();
+
 @Injectable({ providedIn: 'root' })
 export class FontService {
-  // Map of project font names to CSS font families
-  private loadedFontFamilies: Map<string, string> = new Map();
+  private loadedFontFamilies = new Set<string>();
   // Requested font families that are unsupported (so we can log the warning only the first time they are encountered)
   private unsupportedFontFamilies = new Set<string>();
 
@@ -63,24 +150,27 @@ export class FontService {
     return fontFamily in FONT_FACE_DEFINITIONS;
   }
 
-  fontFallback(fontFamily: string): string {
-    return FONT_FACE_FALLBACKS[fontFamily] ?? DEFAULT_FONT_FAMILY;
-  }
-
   /**
    * Gets a CSS font family name for a given project or project document.
    *
    * @param {SFProjectProfileDoc | SFProjectProfile | undefined} project The project.
    * @returns The CSS font family name.
    */
-  getFontFamilyFromProject(project: SFProjectProfileDoc | SFProjectProfile | undefined): string {
-    if (project != null && 'data' in project) {
-      project = project.data;
+  getFontFamilyFromProject(project: SFProjectProfileDoc | ProjectFontSpecification | undefined): string {
+    if (project != null && 'data' in project) project = project.data;
+
+    const resolution = fontResolver.resolveFont(project ?? {});
+
+    if (!this.loadedFontFamilies.has(resolution.family)) {
+      this.addFontFamilyToDocument(resolution.family, resolution.url);
+      this.loadedFontFamilies.add(resolution.family);
     }
 
-    // Property 'defaultFont' does not exist on type 'SFProjectProfileDoc'
-    // SFProjectProfileDoc ultimately extends SFProjectProfile, which has the defaultFont property
-    return this.getCSSFontName(project?.defaultFont);
+    if (project != null && resolution.resolution !== 'specified_font') {
+      this.warnUnsupportedFont(resolution.requestedFont ?? '<UNKNOWN FONT>');
+    }
+
+    return resolution.family;
   }
 
   isGraphiteFont(fontFamily: string): boolean {
@@ -89,34 +179,6 @@ export class FontService {
 
   nonGraphiteFallback(fontFamily: string): string {
     return NON_GRAPHITE_FALLBACKS[fontFamily];
-  }
-
-  /**
-   * Gets a CSS font family name for a given project's specified font. These may or may not be the same. If the
-   * specified font has not yet been loaded, it is loaded.
-   * @param projectFont The font specified in the project settings.
-   * @returns A font family that can be used in CSS to specify the font.
-   */
-  getCSSFontName(projectFont: string | undefined): string {
-    if (projectFont == null || projectFont === '') {
-      projectFont = DEFAULT_FONT_FAMILY;
-    } else if (FONT_FACE_DEFINITIONS[projectFont] == null && FONT_FACE_FALLBACKS[projectFont] != null) {
-      projectFont = FONT_FACE_FALLBACKS[projectFont];
-    } else if (!GRAPHITE_SUPPORTED && NON_GRAPHITE_FALLBACKS[projectFont] != null) {
-      projectFont = NON_GRAPHITE_FALLBACKS[projectFont];
-    } else if (FONT_FACE_DEFINITIONS[projectFont] == null) {
-      this.warnUnsupportedFont(projectFont);
-      projectFont = DEFAULT_FONT_FAMILY;
-    }
-
-    if (this.loadedFontFamilies.has(projectFont)) {
-      return this.loadedFontFamilies.get(projectFont)!;
-    }
-
-    const fontUrl = FONT_FACE_DEFINITIONS[projectFont];
-    this.addFontFamilyToDocument(projectFont, fontUrl);
-    this.loadedFontFamilies.set(projectFont, projectFont);
-    return projectFont;
   }
 
   private warnUnsupportedFont(font: string): void {

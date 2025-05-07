@@ -4,6 +4,7 @@
   "angularKarmaTestExplorer.projectRootPath": "src/SIL.XForge.Scripture/ClientApp",
   "csharp.format.enable": true,
   "cSpell.words": [
+    "Andika",
     "appbuilder",
     "attributors",
     "backout",
@@ -12,6 +13,7 @@
     "bugsnag",
     "caniuse",
     "cdnjs",
+    "Charis",
     "combobox",
     "commenters",
     "compodoc",
@@ -36,6 +38,7 @@
     "ngsw",
     "Nllb",
     "noopener",
+    "noto",
     "nums",
     "objectid",
     "openid",
