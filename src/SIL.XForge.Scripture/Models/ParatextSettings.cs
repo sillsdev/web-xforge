@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SIL.Scripture;
 
 namespace SIL.XForge.Scripture.Models;
 
@@ -37,4 +38,5 @@ public class ParatextSettings
     public string? BaseProjectParatextId { get; init; }
     public string? CopyrightBanner { get; init; }
     public string? CopyrightNotice { get; init; }
+    public ScrVers? Versification { get; init; }
 }
