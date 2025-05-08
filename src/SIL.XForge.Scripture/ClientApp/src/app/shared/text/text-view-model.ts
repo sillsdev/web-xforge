@@ -6,6 +6,7 @@ import { DeltaOperation, StringMap } from 'rich-text';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
+import { LynxRangeConverter } from '../../translate/editor/lynx/insights/lynx-editor';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
 import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
@@ -121,7 +122,7 @@ class SegmentInfo {
  * See text.component.spec.ts for some unit tests.
  */
 @Injectable()
-export class TextViewModel implements OnDestroy {
+export class TextViewModel implements OnDestroy, LynxRangeConverter {
   editor?: Quill;
 
   private readonly _segments: Map<string, Range> = new Map<string, Range>();
@@ -485,11 +486,6 @@ export class TextViewModel implements OnDestroy {
     };
   }
 
-  /**
-   * Translates a range from the data model (without note embeds) to the editor (with note embeds).
-   * @param dataRange The range (index, length) in the data model.
-   * @returns The corresponding range in the editor model, or the original range as a fallback.
-   */
   dataRangeToEditorRange(dataRange: Range): Range {
     const editor: Quill = this.checkEditor();
     const editorDelta: Delta = editor.getContents();
