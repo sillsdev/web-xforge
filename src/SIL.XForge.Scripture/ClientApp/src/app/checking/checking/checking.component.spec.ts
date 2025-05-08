@@ -155,7 +155,7 @@ describe('CheckingComponent', () => {
       ngfModule,
       NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
-      SharedModule,
+      SharedModule.forRoot(),
       UICommonModule,
       OwnerComponent,
       TestTranslocoModule,

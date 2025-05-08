@@ -35,7 +35,7 @@ describe('ShareControlComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       NoopAnimationsModule,
       TestOnlineStatusModule.forRoot(),
-      SharedModule
+      SharedModule.forRoot()
     ],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },

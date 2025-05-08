@@ -3,9 +3,10 @@ import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import { DeltaOperation, StringMap } from 'rich-text';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
+import { LynxRangeConverter } from '../../translate/editor/lynx/insights/lynx-editor';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
 import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
@@ -121,7 +122,7 @@ class SegmentInfo {
  * See text.component.spec.ts for some unit tests.
  */
 @Injectable()
-export class TextViewModel implements OnDestroy {
+export class TextViewModel implements OnDestroy, LynxRangeConverter {
   editor?: Quill;
 
   private readonly _segments: Map<string, Range> = new Map<string, Range>();
@@ -134,6 +135,8 @@ export class TextViewModel implements OnDestroy {
    * These elements are in addition to the text data i.e. Note threads
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
+
+  segments$ = new BehaviorSubject<ReadonlyMap<string, Range>>(this._segments);
 
   get segments(): IterableIterator<[string, Range]> {
     return this._segments.entries();
@@ -483,6 +486,102 @@ export class TextViewModel implements OnDestroy {
     };
   }
 
+  dataRangeToEditorRange(dataRange: Range): Range {
+    const editor: Quill = this.checkEditor();
+    const editorDelta: Delta = editor.getContents();
+
+    if (editorDelta.ops == null || dataRange.length < 0) {
+      return dataRange; // Return original as fallback
+    }
+
+    const targetStartIndex: number = dataRange.index;
+    const targetEndIndex: number = dataRange.index + dataRange.length;
+    const isZeroLengthRange: boolean = dataRange.length === 0;
+
+    let editorPos: number = 0;
+    let dataPos: number = 0;
+    let startEditorPos: number = -1;
+    let endEditorPos: number = -1;
+
+    // Iterate ops, tracking parallel positions with/without note embeds.
+    // Note embeds advance only editor position.
+    // String inserts and other embeds advance both data and editor positions equally.
+    for (const op of editorDelta.ops) {
+      // Early exit if we've found both positions
+      if (startEditorPos !== -1 && endEditorPos !== -1) {
+        break;
+      }
+
+      if (op.insert == null) {
+        continue;
+      }
+
+      // Note embeds only advance editor position
+      if (op.insert?.['note-thread-embed'] != null) {
+        editorPos++;
+        continue;
+      }
+
+      const isStringInsert: boolean = isString(op.insert);
+      const contentLength: number = isStringInsert ? (op.insert.length as number) : 1;
+
+      // Skip content before target start
+      if (startEditorPos === -1 && dataPos + contentLength <= targetStartIndex) {
+        dataPos += contentLength;
+        editorPos += contentLength;
+        continue;
+      }
+
+      // Skip further processing if this content is after end position
+      if (!isZeroLengthRange && startEditorPos !== -1 && dataPos >= targetEndIndex) {
+        break;
+      }
+
+      // Check for start position
+      if (startEditorPos === -1) {
+        if (!isStringInsert) {
+          // For embeds, only exact position matches
+          if (dataPos === targetStartIndex) {
+            startEditorPos = editorPos;
+          }
+        } else {
+          // For strings, check if position is within string
+          if (dataPos <= targetStartIndex && dataPos + contentLength > targetStartIndex) {
+            startEditorPos = editorPos + (targetStartIndex - dataPos);
+          }
+        }
+
+        if (isZeroLengthRange && startEditorPos !== -1) {
+          return { index: startEditorPos, length: 0 };
+        }
+      }
+
+      // Check for end position
+      if (!isZeroLengthRange && endEditorPos === -1) {
+        if (!isStringInsert) {
+          // For embeds, only exact position matches
+          if (dataPos === targetEndIndex) {
+            endEditorPos = editorPos;
+          }
+        } else {
+          // For strings, check if position is within string
+          if (dataPos < targetEndIndex && dataPos + contentLength >= targetEndIndex) {
+            endEditorPos = editorPos + (targetEndIndex - dataPos);
+          }
+        }
+      }
+
+      // Update positions
+      dataPos += contentLength;
+      editorPos += contentLength;
+    }
+
+    startEditorPos = startEditorPos === -1 ? editorPos : startEditorPos;
+    endEditorPos = endEditorPos === -1 ? editorPos : endEditorPos;
+
+    return { index: startEditorPos, length: endEditorPos - startEditorPos };
+  }
+
   private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
     const embedEditorPositions = this.embedPositions;
     // add up the leading embeds
@@ -499,21 +598,25 @@ export class TextViewModel implements OnDestroy {
       for (const op of delta.ops) {
         const modelOp: DeltaOperation = cloneDeep(op);
         for (const attr of [
-          'insert-segment',
-          'delete-segment',
-          'highlight-segment',
-          'highlight-para',
-          'para-contents',
-          'question-segment',
-          'question-count',
-          'note-thread-segment',
-          'note-thread-count',
-          'text-anchor',
           'commenter-selection',
-          'initial',
-          'direction-segment',
+          'delete-segment',
           'direction-block',
-          'style-description'
+          'direction-segment',
+          'draft',
+          'highlight-para',
+          'highlight-segment',
+          'initial',
+          'insert-segment',
+          'lynx-insight-error',
+          'lynx-insight-info',
+          'lynx-insight-warning',
+          'note-thread-count',
+          'note-thread-segment',
+          'para-contents',
+          'question-count',
+          'question-segment',
+          'style-description',
+          'text-anchor'
         ]) {
           removeAttribute(modelOp, attr);
         }
@@ -659,6 +762,8 @@ export class TextViewModel implements OnDestroy {
       }
       convertDelta.retain(len, attrs);
     }
+
+    this.segments$.next(this._segments);
 
     return convertDelta.compose(fixDelta).chop();
   }

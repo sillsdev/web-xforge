@@ -23,6 +23,7 @@ import {
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import userEvent, { UserEvent } from '@testing-library/user-event';
+import { AngularSplitModule } from 'angular-split';
 import { cloneDeep, merge } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
@@ -105,6 +106,9 @@ import { DraftGenerationService } from '../draft-generation/draft-generation.ser
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
+import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
+import { LynxInsightsModule } from './lynx/insights/lynx-insights.module';
+import { LynxWorkspaceService } from './lynx/insights/lynx-workspace.service';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
@@ -125,6 +129,8 @@ const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedParatextService = mock(ParatextService);
 const mockedPermissionsService = mock(PermissionsService);
+const mockedLynxWorkspaceService = mock(LynxWorkspaceService);
+const mockedLynxInsightStateService = mock(LynxInsightStateService);
 
 class MockComponent {}
 
@@ -155,13 +161,15 @@ describe('EditorComponent', () => {
       CopyrightBannerComponent,
       NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
-      SharedModule,
+      SharedModule.forRoot(),
       UICommonModule,
       TestTranslocoModule,
       TranslocoMarkupModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      SFTabsModule
+      SFTabsModule,
+      LynxInsightsModule.forRoot(),
+      AngularSplitModule
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
@@ -181,7 +189,9 @@ describe('EditorComponent', () => {
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: TabFactoryService, useValue: EditorTabFactoryService },
       { provide: TabMenuService, useValue: EditorTabMenuService },
-      { provide: PermissionsService, useMock: mockedPermissionsService }
+      { provide: PermissionsService, useMock: mockedPermissionsService },
+      { provide: LynxWorkspaceService, useMock: mockedLynxWorkspaceService },
+      { provide: LynxInsightStateService, useMock: mockedLynxInsightStateService }
     ]
   }));
 

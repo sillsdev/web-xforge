@@ -41,6 +41,7 @@ import { GlobalNoticesComponent } from './shared/global-notices/global-notices.c
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
 import { SyncComponent } from './sync/sync.component';
+import { LynxInsightsModule } from './translate/editor/lynx/insights/lynx-insights.module';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
 
@@ -78,11 +79,12 @@ import { UsersModule } from './users/users.module';
     TranslocoModule,
     TranslocoMarkupModule,
     AppRoutingModule,
-    SharedModule,
+    SharedModule.forRoot(),
     AvatarComponent,
     MatRipple,
     GlobalNoticesComponent,
-    QuillModule.forRoot()
+    QuillModule.forRoot(),
+    LynxInsightsModule.forRoot()
   ],
   providers: [
     { provide: APP_ID, useValue: 'ng-cli-universal' },

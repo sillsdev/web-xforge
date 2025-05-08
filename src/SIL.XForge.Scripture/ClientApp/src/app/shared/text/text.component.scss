@@ -1,3 +1,57 @@
+$local-cursor-color: black;
+
 quill-editor {
   display: block;
+
+  &.custom-local-cursor {
+    caret-color: transparent; // Hide the default text caret
+
+    ::ng-deep {
+      .ql-cursor.local-cursor {
+        .ql-cursor-caret-container {
+          pointer-events: none; // Needed to prevent cursor from interfering with insight hover style
+        }
+
+        .ql-cursor-caret {
+          width: 1px;
+          background-color: $local-cursor-color;
+        }
+
+        .ql-cursor-flag {
+          display: none;
+        }
+
+        &.hidden {
+          display: none;
+        }
+
+        // Hide cursor when editor loses focus
+        visibility: hidden;
+      }
+    }
+  }
+
+  // When editor has focus, show cursor and enable blinking animation for non-moving cursor
+  &:focus-within.custom-local-cursor {
+    ::ng-deep {
+      .ql-cursor.local-cursor {
+        visibility: visible;
+
+        // Blink caret if caret is not moving
+        &:not(.moving) {
+          animation: local-cursor-blink 1s steps(1) infinite;
+        }
+      }
+    }
+  }
+}
+
+@keyframes local-cursor-blink {
+  0%,
+  100% {
+    visibility: visible;
+  }
+  50% {
+    visibility: hidden;
+  }
 }

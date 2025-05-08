@@ -5,6 +5,8 @@
 @use 'src/xforge-common/media-breakpoints/css-vars';
 @use 'src/breakpoints';
 
+@use 'app/translate/editor/lynx/insights/lynx-insights';
+
 @import 'fonts';
 @import 'text';
 

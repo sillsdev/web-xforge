@@ -234,13 +234,17 @@ export class I18nService {
     return this.transloco.translate(`canon.book_names.${book}`);
   }
 
+  localizeBookChapter(book: number | string, chapter: number): string {
+    return `${this.localizeBook(book)} ${this.getDirectionMark()}${chapter}`;
+  }
+
   localizeReference(verse: VerseRef): string {
     // Add RTL mark before colon and hyphen characters, if in a RTL script.
     // See https://software.sil.org/arabicfonts/support/faq/ for description of this solution, under the section
     // "How do I get correct display for “Chapter:Verse” references using a regular “Roman” colon?"
     // In addition to suggested solution, direction mark is added before chapter number for the case
     // where non-localized book names are in a rtl environment so the chapter number displays with the verse.
-    const directionMark = this.locale.direction === 'ltr' ? '' : '\u200F';
+    const directionMark = this.getDirectionMark();
     // TODO Some ranges use a comma (and possibly other characters?) as a separator
     const range = verse.verse.split('-').join(directionMark + '-');
     return `${this.localizeBook(verse.bookNum)} ${directionMark}${verse.chapterNum}${directionMark}:${range}`;
@@ -423,6 +427,10 @@ export class I18nService {
    */
   getPluralRule(number: number): Intl.LDMLPluralRule {
     return new Intl.PluralRules(this.locale.canonicalTag).select(number);
+  }
+
+  private getDirectionMark(): string {
+    return this.locale.direction === 'rtl' ? '\u200F' : '';
   }
 
   private getTranslation(key: I18nKey): string {

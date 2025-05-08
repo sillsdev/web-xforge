@@ -1,25 +1,28 @@
+import { TestBed } from '@angular/core/testing';
 import Quill from 'quill';
+import QuillCursors from 'quill-cursors';
 import QuillInlineBlot from 'quill/blots/inline';
 import QuillScrollBlot from 'quill/blots/scroll';
+import { SharedModule } from '../../shared.module';
 import { DragAndDrop } from '../drag-and-drop';
 import { DisableHtmlClipboard } from './quill-clipboard';
-import {
-  CheckingQuestionSegmentClass,
-  DeleteSegmentClass,
-  HighlightParaClass,
-  HighlightSegmentClass,
-  InsertSegmentClass
-} from './quill-formats/quill-attributors';
-import { ChapterEmbed, NotNormalizedText, ParaBlock } from './quill-formats/quill-blots';
+import { QuillFormatRegistryService } from './quill-format-registry.service';
+import { ChapterEmbed, NotNormalizedText, ParaBlock, ScrollBlot } from './quill-formats/quill-blots';
 import { FixSelectionHistory } from './quill-history';
-import { registerScripture } from './quill-registrations';
+import { registerScriptureFormats } from './quill-registrations';
 
 describe('QuillRegistrations', () => {
   let quillRegisterSpy: jasmine.Spy;
   let originalOrder: string[];
   let originalChildren: any[];
+  let formatRegistry: QuillFormatRegistryService;
 
   beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [SharedModule.forRoot()],
+      providers: [QuillFormatRegistryService]
+    });
+    formatRegistry = TestBed.inject(QuillFormatRegistryService);
     quillRegisterSpy = spyOn(Quill, 'register');
     originalOrder = [...QuillInlineBlot.order];
     originalChildren = [...QuillScrollBlot.allowedChildren];
@@ -31,47 +34,55 @@ describe('QuillRegistrations', () => {
   });
 
   it('should register all formats', () => {
-    const formatNames = registerScripture();
+    registerScriptureFormats(formatRegistry);
 
-    // Verify all expected formats are registered
-    expect(formatNames).toContain('verse');
-    expect(formatNames).toContain('blank');
-    expect(formatNames).toContain('empty');
-    expect(formatNames).toContain('note');
-    expect(formatNames).toContain('note-thread-embed');
-    expect(formatNames).toContain('optbreak');
-    expect(formatNames).toContain('figure');
-    expect(formatNames).toContain('unmatched');
-    expect(formatNames).toContain('chapter');
-    expect(formatNames).toContain('char');
-    expect(formatNames).toContain('ref');
-    expect(formatNames).toContain('para-contents');
-    expect(formatNames).toContain('segment');
-    expect(formatNames).toContain('text-anchor');
-    expect(formatNames).toContain('para');
-  });
+    // Blots
+    const registeredFormats = formatRegistry.getRegisteredFormats();
+    expect(registeredFormats).toContain('verse');
+    expect(registeredFormats).toContain('blank');
+    expect(registeredFormats).toContain('empty');
+    expect(registeredFormats).toContain('note');
+    expect(registeredFormats).toContain('note-thread-embed');
+    expect(registeredFormats).toContain('optbreak');
+    expect(registeredFormats).toContain('figure');
+    expect(registeredFormats).toContain('unmatched');
+    expect(registeredFormats).toContain('chapter');
+    expect(registeredFormats).toContain('char');
+    expect(registeredFormats).toContain('ref');
+    expect(registeredFormats).toContain('para-contents');
+    expect(registeredFormats).toContain('segment');
+    expect(registeredFormats).toContain('text-anchor');
+    expect(registeredFormats).toContain('para');
 
-  it('should register attributors', () => {
-    registerScripture();
-
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/insert-segment', InsertSegmentClass);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/delete-segment', DeleteSegmentClass);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/highlight-segment', HighlightSegmentClass);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/highlight-para', HighlightParaClass);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('formats/question-segment', CheckingQuestionSegmentClass);
+    // Attributors
+    expect(registeredFormats).toContain('insert-segment');
+    expect(registeredFormats).toContain('delete-segment');
+    expect(registeredFormats).toContain('highlight-segment');
+    expect(registeredFormats).toContain('highlight-para');
+    expect(registeredFormats).toContain('question-segment');
+    expect(registeredFormats).toContain('note-thread-segment');
+    expect(registeredFormats).toContain('note-thread-highlight');
+    expect(registeredFormats).toContain('commenter-selection');
+    expect(registeredFormats).toContain('invalid-block');
+    expect(registeredFormats).toContain('invalid-inline');
+    expect(registeredFormats).toContain('draft');
+    expect(registeredFormats).toContain('question-count');
+    expect(registeredFormats).toContain('style-description');
   });
 
   it('should register core modules', () => {
-    registerScripture();
+    registerScriptureFormats(formatRegistry);
 
+    expect(quillRegisterSpy).toHaveBeenCalledWith('blots/scroll', ScrollBlot, true);
     expect(quillRegisterSpy).toHaveBeenCalledWith('blots/text', NotNormalizedText, true);
     expect(quillRegisterSpy).toHaveBeenCalledWith('modules/clipboard', DisableHtmlClipboard, true);
+    expect(quillRegisterSpy).toHaveBeenCalledWith('modules/cursors', QuillCursors, true);
     expect(quillRegisterSpy).toHaveBeenCalledWith('modules/history', FixSelectionHistory, true);
-    expect(quillRegisterSpy).toHaveBeenCalledWith('modules/dragAndDrop', DragAndDrop);
+    expect(quillRegisterSpy).toHaveBeenCalledWith('modules/dragAndDrop', DragAndDrop, true);
   });
 
   it('should update QuillInlineBlot order', () => {
-    registerScripture();
+    registerScriptureFormats(formatRegistry);
 
     const orderItems = ['text-anchor', 'char', 'segment', 'para-contents'];
 
@@ -93,7 +104,7 @@ describe('QuillRegistrations', () => {
   });
 
   it('should update QuillScrollBlot allowed children', () => {
-    registerScripture();
+    registerScriptureFormats(formatRegistry);
 
     expect(QuillScrollBlot.allowedChildren).toContain(ParaBlock);
     expect(QuillScrollBlot.allowedChildren).toContain(ChapterEmbed);

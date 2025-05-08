@@ -1,10 +1,11 @@
-import { Attributor, Formattable } from 'parchment';
+import { Attributor } from 'parchment';
 import Quill from 'quill';
 import QuillCursors from 'quill-cursors';
 import QuillInlineBlot from 'quill/blots/inline';
 import QuillScrollBlot from 'quill/blots/scroll';
 import { DragAndDrop } from '../drag-and-drop';
 import { DisableHtmlClipboard } from './quill-clipboard';
+import { FormattableBlotClass, QuillFormatRegistryService } from './quill-format-registry.service';
 import {
   CheckingQuestionCountAttribute,
   CheckingQuestionSegmentClass,
@@ -16,7 +17,6 @@ import {
   InsertSegmentClass,
   InvalidBlockClass,
   InvalidInlineClass,
-  isAttributor,
   NoteThreadHighlightClass,
   NoteThreadSegmentClass,
   ParaStyleDescriptionAttribute
@@ -43,12 +43,7 @@ import {
 } from './quill-formats/quill-blots';
 import { FixSelectionHistory } from './quill-history';
 
-interface FormattableBlotClass {
-  new (...args: any[]): Formattable;
-  blotName: string;
-}
-
-export function registerScripture(): string[] {
+export function registerScriptureFormats(formatRegistry: QuillFormatRegistryService): void {
   const formats: (FormattableBlotClass | Attributor)[] = [
     // Embed Blots
     VerseEmbed,
@@ -96,20 +91,13 @@ export function registerScripture(): string[] {
 
   QuillScrollBlot.allowedChildren.push(...[ParaBlock, ChapterEmbed]);
 
-  const formatNames = formats.map(format => {
-    const isAttr = isAttributor(format);
-    const prefix = isAttr ? 'formats' : 'blots';
-    const name = isAttr ? format.attrName : format.blotName;
-    Quill.register(`${prefix}/${name}`, format);
-    return name;
-  });
+  // Register formats through the registry service
+  formatRegistry.registerFormats(formats);
 
   Quill.register('blots/scroll', ScrollBlot, true);
   Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
-  Quill.register('modules/cursors', QuillCursors);
+  Quill.register('modules/cursors', QuillCursors, true);
   Quill.register('modules/history', FixSelectionHistory, true);
-  Quill.register('modules/dragAndDrop', DragAndDrop);
-
-  return formatNames;
+  Quill.register('modules/dragAndDrop', DragAndDrop, true);
 }

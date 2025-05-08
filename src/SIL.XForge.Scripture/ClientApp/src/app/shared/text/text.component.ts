@@ -3,12 +3,10 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
-  ElementRef,
   EventEmitter,
   Input,
   OnDestroy,
-  Output,
-  ViewChild
+  Output
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -45,8 +43,7 @@ import {
   getVerseStrFromSegmentRef,
   VERSE_REGEX
 } from '../utils';
-
-import { registerScripture } from './quill-editor-registration/quill-registrations';
+import { QuillFormatRegistryService } from './quill-editor-registration/quill-format-registry.service';
 import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { Segment } from './segment';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
@@ -55,8 +52,6 @@ import { EditorRange, TextViewModel } from './text-view-model';
 // When a user is active in the editor a timer starts to mark them as inactive for remote presences
 export const PRESENCE_EDITOR_ACTIVE_TIMEOUT = 3500;
 export const EDITOR_READY_TIMEOUT = 100;
-
-const USX_FORMATS = registerScripture();
 
 export interface TextUpdatedEvent {
   delta?: Delta;
@@ -101,22 +96,22 @@ export interface EmbedsByVerse {
   providers: [TextViewModel] // New instance for each text component
 })
 export class TextComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
   @Input() enablePresence: boolean = false;
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
   @Input() subscribeToUpdates = true;
   @Input() selectableVerses: boolean = false;
+  @Input() showInsights: boolean = false;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
-  @Output() loaded = new EventEmitter(true);
+  @Output() loaded = new EventEmitter<boolean>(true);
   @Output() focused = new EventEmitter<boolean>(true);
   @Output() presenceChange = new EventEmitter<RemotePresences | undefined>(true);
   @Output() editorCreated = new EventEmitter<void>();
 
   lang: string = '';
   // only use USX formats and not default Quill formats
-  readonly allowedFormats: string[] = USX_FORMATS;
+  readonly allowedFormats: string[] = this.quillFormatRegistry.getRegisteredFormats();
   // allow for different CSS based on the browser engine
   readonly browserEngine: string = getBrowserEngine();
   readonly cursorColor: string;
@@ -259,6 +254,8 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private isDestroyed: boolean = false;
   private localPresenceChannel?: LocalPresence<PresenceData>;
   private localPresenceDoc?: LocalPresence<Range | null>;
+  private localCursorElement?: HTMLElement | null;
+  private localCursorMovingTimeout?: any;
   private readonly presenceId: string = objectId();
   /** The ShareDB presence information for the TextDoc that the quill is bound to. */
   private presenceDoc?: Presence<Range>;
@@ -268,15 +265,16 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private onPresenceChannelReceive = (_presenceId: string, _presenceData: PresenceData | null): void => {};
 
   constructor(
+    private readonly destroyRef: DestroyRef,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly transloco: TranslocoService,
     private readonly userService: UserService,
-    private readonly viewModel: TextViewModel,
+    readonly viewModel: TextViewModel,
     private readonly textDocService: TextDocService,
-    private destroyRef: DestroyRef
+    private readonly quillFormatRegistry: QuillFormatRegistryService
   ) {
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
     if (localCursorColor == null) {
@@ -514,11 +512,19 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
       this.changeDetector.detectChanges();
+
       if (!isOnline && this._editor != null) {
-        const cursors: QuillCursors = this._editor.getModule('cursors') as QuillCursors;
-        cursors.clearCursors();
+        this.clearCursors(false); // Don't clear the local cursor
       }
     });
+
+    // Listening to document 'selectionchange' event allows local cursor to change position on mousedown,
+    // as opposed to quill 'onSelectionChange' event that doesn't fire until mouseup.
+    fromEvent<MouseEvent>(document, 'selectionchange')
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.updateLocalCursor();
+      });
   }
 
   ngOnDestroy(): void {
@@ -816,11 +822,12 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       const isUserEdit: boolean = source === 'user';
       this.update(delta, preDeltaSegmentCache, preDeltaEmbedCache, isUserEdit);
     }
+
+    this.updateLocalCursor();
   }
 
   async onSelectionChanged(range: Range | null): Promise<void> {
     this.update();
-
     this.submitLocalPresenceDoc(range);
   }
 
@@ -1077,7 +1084,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       this.bindQuill();
     });
 
-    this.loaded.emit();
+    this.loaded.emit(true);
     this.applyEditorStyles();
     // These refer to footnotes, cross-references, and end notes and not actual notes
     const elements = this.editor?.container.querySelectorAll('usx-note');
@@ -1103,18 +1110,100 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         )
       );
     }
+
+    this.createLocalCursor();
+  }
+
+  private createLocalCursor(): void {
+    if (this.editor != null) {
+      const cursors: QuillCursors = this.editor.getModule('cursors') as QuillCursors;
+      cursors.createCursor(this.presenceId, '', '');
+
+      this.localCursorElement = document.querySelector(`#ql-cursor-${this.presenceId}`);
+
+      // Add a specific class to the local cursor
+      if (this.localCursorElement != null) {
+        this.localCursorElement.classList.add('local-cursor');
+      }
+    }
+  }
+
+  private updateLocalCursor(): void {
+    if (this._editor == null || this._isReadOnly || !this.showInsights || this.localCursorElement == null) {
+      return;
+    }
+
+    const sel: Selection | null = window.getSelection();
+    if (sel == null) {
+      return;
+    }
+
+    const selRangeLength: number = sel.focusOffset - sel.anchorOffset;
+
+    if (selRangeLength !== 0) {
+      // Hide the local cursor when there is a selection
+      this.localCursorElement.classList.add('hidden');
+    } else {
+      this.localCursorElement.classList.remove('hidden');
+      const blot = this._editor.scroll.find(sel.anchorNode);
+
+      if (blot == null) {
+        return;
+      }
+
+      const index: number = this._editor.getIndex(blot) + sel.anchorOffset;
+      this.moveLocalCursor(index);
+    }
+  }
+
+  private moveLocalCursor(index: number): void {
+    if (this._editor == null || this._isReadOnly || this.localCursorElement == null) {
+      return;
+    }
+
+    const cursors: QuillCursors = this._editor.getModule('cursors') as QuillCursors;
+    cursors.moveCursor(this.presenceId, { index, length: 0 });
+
+    // Set 'moving' class on caret that clears after a period of non-movement
+    this.localCursorElement.classList.add('moving');
+
+    if (this.localCursorMovingTimeout != null) {
+      clearTimeout(this.localCursorMovingTimeout);
+    }
+
+    this.localCursorMovingTimeout = setTimeout(() => {
+      this.localCursorElement?.classList.remove('moving');
+    }, 200);
+  }
+
+  private clearCursors(includeLocal: boolean): void {
+    if (this.editor != null) {
+      const cursors: QuillCursors = this.editor.getModule('cursors') as QuillCursors;
+
+      if (includeLocal) {
+        cursors.clearCursors();
+      } else {
+        cursors.cursors().forEach(cursor => {
+          if (cursor.id !== this.presenceId) {
+            cursors.removeCursor(cursor.id);
+          }
+        });
+      }
+    }
   }
 
   private async dismissPresences(): Promise<void> {
     if (!this.isPresenceEnabled) {
       return;
     }
+
     await this.submitLocalPresenceChannel(null);
     await this.submitLocalPresenceDoc(null);
+
     if (this.editor != null) {
-      const cursors: QuillCursors = this.editor.getModule('cursors') as QuillCursors;
-      cursors.clearCursors();
+      this.clearCursors(true);
     }
+
     this.presenceChannel?.unsubscribe(error => {
       if (error) throw error;
     });
