@@ -13,7 +13,7 @@ public class LynxInsightUserData
 public class LynxInsightPanelUserData
 {
     public bool IsOpen { get; set; }
-    public LynxInsightFilter Filter { get; set; }
+    public LynxInsightFilter Filter { get; set; } = new();
     public LynxInsightSortOrder SortOrder { get; set; }
 }
 
