@@ -185,7 +185,7 @@ public class MachineApiController : ControllerBase
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetBuilds)]
-    public ActionResult<IAsyncEnumerable<ServalBuildDto>> GetBuildsAsync(
+    public async Task<ActionResult<IReadOnlyList<ServalBuildDto>>> GetBuildsAsync(
         string sfProjectId,
         [FromQuery] bool preTranslate,
         CancellationToken cancellationToken
@@ -195,7 +195,7 @@ public class MachineApiController : ControllerBase
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             return Ok(
-                _machineApiService.GetBuildsAsync(
+                await _machineApiService.GetBuildsAsync(
                     _userAccessor.UserId,
                     sfProjectId,
                     preTranslate,
@@ -284,7 +284,7 @@ public class MachineApiController : ControllerBase
                 cancellationToken
             );
 
-            // A null means no build is running
+            // A null means no build has run
             if (build is null)
             {
                 return NoContent();
@@ -438,7 +438,7 @@ public class MachineApiController : ControllerBase
     /// <response code="403">The user does not have permission to access the draft.</response>
     /// <response code="404">The draft does not exist.</response>
     [HttpGet(MachineApi.GetPreTranslationHistory)]
-    public ActionResult<IAsyncEnumerable<DocumentRevision>> GetPreTranslationRevisionsAsync(
+    public async Task<ActionResult<IReadOnlyList<DocumentRevision>>> GetPreTranslationRevisionsAsync(
         string sfProjectId,
         int bookNum,
         int chapterNum,
@@ -449,7 +449,7 @@ public class MachineApiController : ControllerBase
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             return Ok(
-                _machineApiService.GetPreTranslationRevisionsAsync(
+                await _machineApiService.GetPreTranslationRevisionsAsync(
                     _userAccessor.UserId,
                     sfProjectId,
                     bookNum,

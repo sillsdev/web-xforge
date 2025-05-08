@@ -518,7 +518,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
-    public void GetBuildsAsync_MachineApiDown()
+    public async Task GetBuildsAsync_MachineApiDown()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -532,7 +532,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<IAsyncEnumerable<ServalBuildDto>> actual = env.Controller.GetBuildsAsync(
+        ActionResult<IReadOnlyList<ServalBuildDto>> actual = await env.Controller.GetBuildsAsync(
             Project01,
             preTranslate: true,
             CancellationToken.None
@@ -544,7 +544,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
-    public void GetBuildsAsync_NoPermission()
+    public async Task GetBuildsAsync_NoPermission()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -558,7 +558,7 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<IAsyncEnumerable<ServalBuildDto>> actual = env.Controller.GetBuildsAsync(
+        ActionResult<IReadOnlyList<ServalBuildDto>> actual = await env.Controller.GetBuildsAsync(
             Project01,
             preTranslate: true,
             CancellationToken.None
@@ -568,7 +568,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
-    public void GetBuildsAsync_NoProject()
+    public async Task GetBuildsAsync_NoProject()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -582,7 +582,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<IAsyncEnumerable<ServalBuildDto>> actual = env.Controller.GetBuildsAsync(
+        ActionResult<IReadOnlyList<ServalBuildDto>> actual = await env.Controller.GetBuildsAsync(
             Project01,
             preTranslate: true,
             CancellationToken.None
@@ -603,10 +603,10 @@ public class MachineApiControllerTests
                 isServalAdmin: false,
                 CancellationToken.None
             )
-            .Returns(env.ServalBuilds());
+            .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([env.TestBuild]));
 
         // SUT
-        ActionResult<IAsyncEnumerable<ServalBuildDto>> actual = env.Controller.GetBuildsAsync(
+        ActionResult<IReadOnlyList<ServalBuildDto>> actual = await env.Controller.GetBuildsAsync(
             Project01,
             preTranslate: true,
             CancellationToken.None
@@ -614,8 +614,7 @@ public class MachineApiControllerTests
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         bool buildsExist = false;
-        var builds = (IAsyncEnumerable<ServalBuildDto>)((OkObjectResult)actual.Result!).Value!;
-        await foreach (ServalBuildDto build in builds)
+        foreach (ServalBuildDto build in (IReadOnlyList<ServalBuildDto>)((OkObjectResult)actual.Result!).Value!)
         {
             buildsExist = true;
             Assert.AreEqual(env.TestBuild, build);
@@ -1064,7 +1063,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
-    public void GetPreTranslationRevisionsAsync_MachineApiDown()
+    public async Task GetPreTranslationRevisionsAsync_MachineApiDown()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1072,7 +1071,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<IAsyncEnumerable<DocumentRevision>> actual = env.Controller.GetPreTranslationRevisionsAsync(
+        ActionResult<IReadOnlyList<DocumentRevision>> actual = await env.Controller.GetPreTranslationRevisionsAsync(
             Project01,
             40,
             1,
@@ -1085,7 +1084,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
-    public void GetPreTranslationRevisionsAsync_NoPermission()
+    public async Task GetPreTranslationRevisionsAsync_NoPermission()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1093,7 +1092,7 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<IAsyncEnumerable<DocumentRevision>> actual = env.Controller.GetPreTranslationRevisionsAsync(
+        ActionResult<IReadOnlyList<DocumentRevision>> actual = await env.Controller.GetPreTranslationRevisionsAsync(
             Project01,
             40,
             1,
@@ -1104,7 +1103,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
-    public void GetPreTranslationRevisionsAsync_NoProject()
+    public async Task GetPreTranslationRevisionsAsync_NoProject()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1112,7 +1111,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<IAsyncEnumerable<DocumentRevision>> actual = env.Controller.GetPreTranslationRevisionsAsync(
+        ActionResult<IReadOnlyList<DocumentRevision>> actual = await env.Controller.GetPreTranslationRevisionsAsync(
             Project01,
             40,
             1,
@@ -1128,10 +1127,10 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetPreTranslationRevisionsAsync(User01, Project01, 40, 1, false, CancellationToken.None)
-            .Returns(env.RevisionHistory());
+            .Returns(Task.FromResult<IReadOnlyList<DocumentRevision>>([env.TestRevision]));
 
         // SUT
-        ActionResult<IAsyncEnumerable<DocumentRevision>> actual = env.Controller.GetPreTranslationRevisionsAsync(
+        ActionResult<IReadOnlyList<DocumentRevision>> actual = await env.Controller.GetPreTranslationRevisionsAsync(
             Project01,
             40,
             1,
@@ -1140,8 +1139,7 @@ public class MachineApiControllerTests
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         bool revisionsExist = false;
-        var revisions = (IAsyncEnumerable<DocumentRevision>)((OkObjectResult)actual.Result!).Value!;
-        await foreach (DocumentRevision revision in revisions)
+        foreach (DocumentRevision revision in (IReadOnlyList<DocumentRevision>)((OkObjectResult)actual.Result!).Value!)
         {
             revisionsExist = true;
             Assert.AreEqual(env.TestRevision, revision);
@@ -2252,17 +2250,5 @@ public class MachineApiControllerTests
         public IExceptionHandler ExceptionHandler { get; }
         public IMachineApiService MachineApiService { get; }
         public IUserAccessor UserAccessor { get; }
-
-        public async IAsyncEnumerable<DocumentRevision> RevisionHistory()
-        {
-            yield return TestRevision;
-            await Task.CompletedTask;
-        }
-
-        public async IAsyncEnumerable<ServalBuildDto> ServalBuilds()
-        {
-            yield return TestBuild;
-            await Task.CompletedTask;
-        }
     }
 }

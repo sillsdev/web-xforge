@@ -1,0 +1,13 @@
+<ng-container *transloco="let t; read: 'draft_history_list'">
+  @if (latestBuild != null) {
+    <h2>{{ lastCompletedBuildMessage }}</h2>
+    <app-draft-history-entry [entry]="latestBuild" [forceDetailsOpen]="true" [canDownloadBuild]="true" />
+  }
+
+  @if (historicalBuilds.length > 0) {
+    <h2>{{ t("previously_generated_drafts") }}</h2>
+    @for (entry of historicalBuilds; track entry.id) {
+      <app-draft-history-entry [entry]="entry" />
+    }
+  }
+</ng-container>

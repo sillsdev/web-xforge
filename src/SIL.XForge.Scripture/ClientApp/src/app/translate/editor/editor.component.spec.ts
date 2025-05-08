@@ -104,6 +104,7 @@ import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.compone
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
+import { HistoryRevisionFormatPipe } from './editor-history/history-chooser/history-revision-format.pipe';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -149,7 +150,13 @@ class MockConsole {
 
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [EditorComponent, SuggestionsComponent, TrainingProgressComponent, EditorDraftComponent],
+    declarations: [
+      EditorComponent,
+      SuggestionsComponent,
+      TrainingProgressComponent,
+      EditorDraftComponent,
+      HistoryRevisionFormatPipe
+    ],
     imports: [
       BiblicalTermsComponent,
       CopyrightBannerComponent,
@@ -4029,7 +4036,9 @@ describe('EditorComponent', () => {
 
       it('should select the draft tab if url query param is set', fakeAsync(() => {
         const env = new TestEnvironment();
-        when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: { 'draft-active': 'true' } } as any);
+        when(mockedActivatedRoute.snapshot).thenReturn({
+          queryParams: { 'draft-active': 'true', 'draft-timestamp': new Date().toISOString() }
+        } as any);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
@@ -4474,9 +4483,10 @@ class TestEnvironment {
     });
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
     when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
-    when(mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
-      of([])
-    );
+    when(
+      mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything(), anything())
+    ).thenReturn(of([]));
+    when(mockedDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
 
