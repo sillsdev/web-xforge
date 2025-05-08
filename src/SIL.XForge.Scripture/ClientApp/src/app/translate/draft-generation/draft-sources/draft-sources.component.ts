@@ -329,9 +329,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
       await updatePromise;
       this.controlStates.set(setting, ElementState.Submitted);
     } catch (error) {
-      console.error('Error updating project settings', error);
       this.controlStates.set(setting, ElementState.Error);
       if (isNetworkError(error)) return;
+      console.error('Error updating project settings', error);
       throw error;
     }
   }
