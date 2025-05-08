@@ -3,8 +3,8 @@ import Quill, { Delta } from 'quill';
 import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { StringMap } from 'rich-text';
 import { take, takeUntil } from 'rxjs';
-import { TextViewModel } from '../../../../../shared/text/text-view-model';
 import { InsightRenderService } from '../base-services/insight-render.service';
+import { LynxRangeConverter } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
@@ -31,13 +31,13 @@ export class QuillInsightRenderService extends InsightRenderService {
   /**
    * Renders the insights in the editor, applying formatting, action menus, and attention (opacity overlay).
    */
-  render(insights: LynxInsight[], editor: Quill | undefined, editorViewModel: TextViewModel): void {
+  render(insights: LynxInsight[], editor: Quill | undefined, rangeConverter: LynxRangeConverter): void {
     // Ensure text is more than just '\n'
     if (editor == null || editor.getLength() <= 1) {
       return;
     }
 
-    this.refreshInsightFormatting(insights, editor, editorViewModel);
+    this.refreshInsightFormatting(insights, editor, rangeConverter);
   }
 
   /**
@@ -57,13 +57,13 @@ export class QuillInsightRenderService extends InsightRenderService {
    * Creates a delta with all the insights' formatting applied, and sets the editor contents to that delta.
    * This avoids multiple calls to quill `formatText`, which will re-render the DOM after each call.
    */
-  private refreshInsightFormatting(insights: LynxInsight[], editor: Quill, editorViewModel: TextViewModel): void {
+  private refreshInsightFormatting(insights: LynxInsight[], editor: Quill, rangeConverter: LynxRangeConverter): void {
     // Group insights by type and range
     const insightsByTypeAndRange = new Map<string, Map<string, LynxInsight[]>>();
 
     for (const insight of insights) {
       // Translate dataRange to editorRange (adjust for note embeds)
-      const editorRange = editorViewModel.dataRangeToEditorRange(insight.range);
+      const editorRange = rangeConverter.dataRangeToEditorRange(insight.range);
 
       const typeKey = `${this.prefix}-${insight.type}`;
       const rangeKey = `${editorRange.index}:${editorRange.length}`;
