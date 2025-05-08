@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import Quill, { Delta, Op } from 'quill';
+import Quill, { Delta, Op, Range } from 'quill';
 import { QuillLynxEditorAdapter } from './quill-services/quill-lynx-editor-adapter';
 
 export type LynxableEditor = Quill; // Add future editor as union type
@@ -17,6 +17,17 @@ export interface LynxEditor {
   updateContents(delta: Delta | Op[], source: any): void;
   focus(): void;
   getRoot(): HTMLElement;
+}
+
+export interface LynxRangeConverter {
+  /**
+   * Translates a range from the data model to the editor.
+   * Useful when embeds that are present only in the editor model may affect
+   * the insight ranges determined from the data model.
+   * @param dataRange The range (index, length) in the data model.
+   * @returns The corresponding range in the editor model, or the original range as a fallback.
+   */
+  dataRangeToEditorRange(dataRange: Range): Range;
 }
 
 @Injectable({ providedIn: 'root' })
