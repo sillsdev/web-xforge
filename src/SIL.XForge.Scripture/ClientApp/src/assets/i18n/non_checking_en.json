@@ -279,7 +279,6 @@
     "draft_source": "Draft source",
     "generate_draft_from_language_model": "Generate draft from language model",
     "language_code": "Language code: ",
-    "leave_and_discard": "Leave & discard changes",
     "next": "Next",
     "offline_message": "You are offline. Please connect to the internet to save and sync your draft sources.",
     "overview_reference": "Reference",
@@ -303,7 +302,6 @@
     "state_sync_failed": "There was an error syncing",
     "state_sync_successful": "Sync successful",
     "state_syncing": "Syncing",
-    "stay_on_page": "Stay on page",
     "target_language_data": "Target language data",
     "training_language_model": "Training the language model",
     "unknown_language_code": "unknown"

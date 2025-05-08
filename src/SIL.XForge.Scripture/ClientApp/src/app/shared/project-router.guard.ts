@@ -169,23 +169,23 @@ export class TranslateAuthGuard extends RouterGuard {
   }
 }
 
-export interface DeactivateAllowed {
-  deactivationPrompt: string;
+export interface ConfirmOnLeave {
+  confirmOnLeavePrompt: string;
 
-  promptUserToDeactivate(): boolean;
+  needsConfirmation(): boolean;
 }
 
 @Injectable({
   providedIn: 'root'
 })
-export class DraftNavigationAuthGuard extends RouterGuard implements CanDeactivate<DeactivateAllowed> {
+export class DraftNavigationAuthGuard extends RouterGuard implements CanDeactivate<ConfirmOnLeave> {
   constructor(authGuard: AuthGuard, projectService: SFProjectService) {
     super(authGuard, projectService);
   }
 
-  canDeactivate(component: DeactivateAllowed): boolean {
-    if (!component.promptUserToDeactivate()) return true;
-    return confirm(component.deactivationPrompt);
+  canDeactivate(component: ConfirmOnLeave): boolean {
+    if (!component.needsConfirmation()) return true;
+    return confirm(component.confirmOnLeavePrompt);
   }
 
   check(_: SFProjectProfileDoc): boolean {

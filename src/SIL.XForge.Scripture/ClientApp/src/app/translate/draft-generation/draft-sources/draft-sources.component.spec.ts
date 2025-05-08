@@ -6,10 +6,11 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -95,9 +96,8 @@ describe('DraftSourcesComponent', () => {
       const env = new TestEnvironment();
       tick();
       env.fixture.detectChanges();
+      expect(env.component['changesMade']).toBe(false);
       env.clickLanguageCodesConfirmationCheckbox();
-      expect(env.component.promptUserToDeactivate()).toBe(true);
-
       // Suppose the user loads up the sources configuration page, changes no projects, and clicks Save. The settings
       // change request will just correspond to what the project already has for its settings.
       const expectedSettingsChangeRequest: SFProjectSettings = {
@@ -120,7 +120,7 @@ describe('DraftSourcesComponent', () => {
         mockedSFProjectService.onlineUpdateSettings
       ).last()[1];
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
-      expect(env.component.promptUserToDeactivate()).toBe(false);
+      expect(env.component.needsConfirmation()).toBe(false);
     }));
 
     it('clearing second training source works', fakeAsync(() => {
@@ -128,7 +128,7 @@ describe('DraftSourcesComponent', () => {
       tick();
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
-      expect(env.component.promptUserToDeactivate()).toBe(true);
+      expect(env.component['changesMade']).toBe(false);
 
       // Suppose the user loads up the page, clears the second training/reference project box, and clicks Save. The
       // settings change request will show a requested change for unsetting the additional-training-source.
@@ -148,8 +148,10 @@ describe('DraftSourcesComponent', () => {
       env.component.trainingSources.pop();
       // Confirm that we have 1 training source.
       expect(env.component.trainingSources.length).toEqual(1);
+      env.component['changesMade'] = true;
       env.fixture.detectChanges();
       tick();
+      expect(env.component.needsConfirmation()).toBe(true);
 
       // SUT
       env.component.save();
@@ -159,15 +161,15 @@ describe('DraftSourcesComponent', () => {
         mockedSFProjectService.onlineUpdateSettings
       ).last()[1];
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
-      expect(env.component.promptUserToDeactivate()).toBe(false);
+      expect(env.component.needsConfirmation()).toBe(false);
     }));
 
     it('clearing first training source works', fakeAsync(() => {
       const env = new TestEnvironment();
       tick();
       env.fixture.detectChanges();
+      expect(env.component['changesMade']).toBe(false);
       env.clickLanguageCodesConfirmationCheckbox();
-      expect(env.component.promptUserToDeactivate()).toBe(true);
 
       // Suppose the user comes to the page, leaves the second reference/training project selection alone, and clears
       // the first reference/training project selection. Let's respond by clearing the additional-training-source, and
@@ -189,8 +191,10 @@ describe('DraftSourcesComponent', () => {
       env.component.trainingSources[0] = undefined;
       // Confirm that we have 1 other training source.
       expect(env.component.trainingSources[1]).not.toBeNull();
+      env.component['changesMade'] = true;
       env.fixture.detectChanges();
       tick();
+      expect(env.component.needsConfirmation()).toBe(true);
 
       // SUT
       env.component.save();
@@ -200,7 +204,35 @@ describe('DraftSourcesComponent', () => {
         mockedSFProjectService.onlineUpdateSettings
       ).last()[1];
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
-      expect(env.component.promptUserToDeactivate()).toBe(false);
+      expect(env.component.needsConfirmation()).toBe(false);
+    }));
+
+    it('fails to save and sync', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.needsConfirmation()).toBe(false);
+      env.clickLanguageCodesConfirmationCheckbox();
+
+      // Remove the second training source.
+      env.component.trainingSources.pop();
+      // Confirm that we have 1 training source.
+      expect(env.component.trainingSources.length).toEqual(1);
+      env.component['changesMade'] = true;
+      env.fixture.detectChanges();
+      tick();
+
+      // Simulate failed response
+      when(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).thenReject(
+        new CommandError(CommandErrorCode.Other, '504 Gateway Timeout')
+      );
+      expect(env.component.needsConfirmation()).toBe(true);
+
+      // SUT
+      env.component.save();
+      tick();
+      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
+      expect(env.component.needsConfirmation()).toBe(false);
     }));
   });
 
@@ -432,6 +464,8 @@ class TestEnvironment {
     OnlineStatusService
   ) as TestOnlineStatusService;
 
+  private projectsLoaded$: Subject<void> = new Subject<void>();
+
   constructor() {
     const userSFProjectsAndResourcesCount: number = 6;
     const userNonSFProjectsCount: number = 3;
@@ -554,9 +588,14 @@ class TestEnvironment {
     sfProject0.translateConfig.translationSuggestionsEnabled = false;
     sfProject0.translateConfig.preTranslate = true;
 
-    when(mockedParatextService.getProjects()).thenResolve(
-      projects.filter(o => o.projectType === 'project').map(o => o.paratextProject)
-    );
+    // Use a promise that resolves after the component is created to simulate the loading of projects
+    // and resources which disables the form
+    const projectPromise = new Promise<ParatextProject[] | undefined>(resolve => {
+      this.projectsLoaded$.subscribe(() =>
+        resolve(projects.filter(o => o.projectType === 'project').map(o => o.paratextProject))
+      );
+    });
+    when(mockedParatextService.getProjects()).thenReturn(projectPromise);
     when(mockedParatextService.getResources()).thenResolve(
       projects.filter(o => o.projectType === 'resource').map(o => o.selectableProjectWithLanguageCode)
     );
@@ -572,6 +611,10 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
     tick();
+
+    this.loadingFinished();
+    tick();
+    this.fixture.detectChanges();
   }
 
   clickLanguageCodesConfirmationCheckbox(): void {
@@ -582,5 +625,9 @@ class TestEnvironment {
     checkbox.nativeElement.click();
     tick();
     this.fixture.detectChanges();
+  }
+
+  private loadingFinished(): void {
+    this.projectsLoaded$.next();
   }
 }

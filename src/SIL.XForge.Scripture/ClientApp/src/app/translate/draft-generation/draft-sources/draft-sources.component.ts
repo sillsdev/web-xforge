@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { isNetworkError } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
@@ -24,7 +25,7 @@ import { hasData, notNull } from '../../../../type-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { DeactivateAllowed } from '../../../shared/project-router.guard';
+import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { projectLabel } from '../../../shared/utils';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
 import {
@@ -61,7 +62,7 @@ export interface ProjectStatus {
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
 })
-export class DraftSourcesComponent extends DataLoadingComponent implements DeactivateAllowed {
+export class DraftSourcesComponent extends DataLoadingComponent implements ConfirmOnLeave {
   /** Indicator that a project setting change is for clearing a value. */
   static readonly projectSettingValueUnset = 'unset';
 
@@ -82,14 +83,15 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Deact
 
   languageCodeConfirmationMessageIfUserTriesToContinue: I18nKeyForComponent<'draft_sources'> | null = null;
   clearLanguageCodeConfirmationCheckbox = new EventEmitter<void>();
-  changesMade = false;
-  deactivationPrompt: string = this.i18n.translateStatic('draft_sources.discard_changes_confirmation');
+  confirmOnLeavePrompt: string = this.i18n.translateStatic('draft_sources.discard_changes_confirmation');
 
   /** Whether some projects are syncing currently. */
   syncStatus: Map<string, ProjectStatus> = new Map<string, ProjectStatus>();
 
   /** SF projects and resources that the current user is on at SF. */
   userConnectedProjectsAndResources: SFProjectProfileDoc[] = [];
+
+  protected changesMade = false;
 
   private controlStates = new Map<string, ElementState>();
 
@@ -118,7 +120,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Deact
 
         this.trainingTargets = trainingTargets;
         this.draftingSources = draftingSources.map(translateSourceToSelectableProjectWithLanguageTag);
-
         this.nonSelectableProjects = [...this.trainingSources.filter(notNull), ...this.draftingSources.filter(notNull)];
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
@@ -277,21 +278,12 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Deact
     );
   }
 
-  async cancel(): Promise<void> {
-    const leavePage =
-      !this.changesMade ||
-      (await this.dialogService.confirm(
-        this.i18n.translate('draft_sources.discard_changes_confirmation'),
-        this.i18n.translate('draft_sources.leave_and_discard'),
-        this.i18n.translate('draft_sources.stay_on_page')
-      ));
-    if (leavePage) {
-      this.navigateToDrafting();
-    }
+  cancel(): void {
+    this.navigateToDrafting();
   }
 
-  promptUserToDeactivate(): boolean {
-    return this.changesMade && !this.allProjectsSavedAndSynced;
+  needsConfirmation(): boolean {
+    return this.changesMade && this.getControlState('projectSettings') == null;
   }
 
   navigateToDrafting(): void {
@@ -339,6 +331,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Deact
     } catch (error) {
       console.error('Error updating project settings', error);
       this.controlStates.set(setting, ElementState.Error);
+      if (isNetworkError(error)) return;
       throw error;
     }
   }

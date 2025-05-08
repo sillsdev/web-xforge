@@ -20,9 +20,9 @@ describe('DraftNavigationAuthGuard', () => {
     // navigate away
     const env = new DraftNavigationTestEnvironment();
     spyOn(window, 'confirm');
-    expect(
-      env.service.canDeactivate({ deactivationPrompt: 'unsaved changed', promptUserToDeactivate: () => false })
-    ).toBe(true);
+    expect(env.service.canDeactivate({ confirmOnLeavePrompt: 'unsaved changed', needsConfirmation: () => false })).toBe(
+      true
+    );
     expect(window.confirm).not.toHaveBeenCalled();
   });
 
@@ -30,9 +30,9 @@ describe('DraftNavigationAuthGuard', () => {
     // navigate away
     const env = new DraftNavigationTestEnvironment();
     spyOn(window, 'confirm').and.returnValue(true);
-    expect(
-      env.service.canDeactivate({ deactivationPrompt: 'unsaved changed', promptUserToDeactivate: () => true })
-    ).toBe(true);
+    expect(env.service.canDeactivate({ confirmOnLeavePrompt: 'unsaved changed', needsConfirmation: () => true })).toBe(
+      true
+    );
     expect(window.confirm).toHaveBeenCalled();
   });
 
@@ -40,9 +40,9 @@ describe('DraftNavigationAuthGuard', () => {
     // navigate away
     const env = new DraftNavigationTestEnvironment();
     spyOn(window, 'confirm').and.returnValue(false);
-    expect(
-      env.service.canDeactivate({ deactivationPrompt: 'unsaved changed', promptUserToDeactivate: () => true })
-    ).toBe(false);
+    expect(env.service.canDeactivate({ confirmOnLeavePrompt: 'unsaved changed', needsConfirmation: () => true })).toBe(
+      false
+    );
     expect(window.confirm).toHaveBeenCalled();
   });
 });
