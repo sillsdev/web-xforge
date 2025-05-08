@@ -300,10 +300,12 @@
                           }
                           <span>{{ t("download_draft") }}</span>
                         </button>
-                        <button mat-button [routerLink]="['format']">
-                          <mat-icon>settings</mat-icon>
-                          {{ t("format_usfm") }}
-                        </button>
+                        @if (featureFlags.usfmFormat.enabled) {
+                          <button mat-button [routerLink]="['format']">
+                            <mat-icon>settings</mat-icon>
+                            {{ t("format_usfm") }}
+                          </button>
+                        }
                       }
                     </mat-card-actions>
                   </mat-card>

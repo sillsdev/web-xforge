@@ -3849,21 +3849,14 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project01);
-        DraftUsfmConfig config = new DraftUsfmConfig
-        {
-            PreserveParagraphMarkers = true,
-            PreserveStyleMarkers = false,
-            PreserveEmbedMarkers = true,
-        };
+        DraftUsfmConfig config = new DraftUsfmConfig { PreserveParagraphMarkers = true };
         Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveParagraphMarkers, Is.True);
-        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveStyleMarkers, Is.False);
-        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveEmbedMarkers, Is.True);
 
         // SUT
-        config.PreserveEmbedMarkers = false;
+        config.PreserveParagraphMarkers = false;
         await env.Service.SetUsfmConfigAsync(User01, Project01, config);
         project = env.GetProject(Project01);
-        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveEmbedMarkers, Is.False);
+        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveParagraphMarkers, Is.False);
     }
 
     [Test]

@@ -680,8 +680,6 @@ public class PreTranslationServiceTests
                     textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
                     template: PretranslationUsfmTemplate.Source,
                     paragraphMarkerBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
-                    styleMarkerBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
-                    embedBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
                     cancellationToken: CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);

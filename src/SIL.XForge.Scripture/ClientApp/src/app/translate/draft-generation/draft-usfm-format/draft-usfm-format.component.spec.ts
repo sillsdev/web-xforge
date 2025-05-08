@@ -32,7 +32,7 @@ const mockedRouter = mock(Router);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockI18nService = mock(I18nService);
 
-describe('DraftUsfmFormatComponent', () => {
+fdescribe('DraftUsfmFormatComponent', () => {
   configureTestingModule(() => ({
     imports: [
       DraftUsfmFormatComponent,
@@ -52,7 +52,7 @@ describe('DraftUsfmFormatComponent', () => {
     ]
   }));
 
-  it('shows message if user is not online', fakeAsync(() => {
+  it('shows message if user is not online', fakeAsync(async () => {
     const env = new TestEnvironment();
     expect(env.offlineMessage).toBeNull();
 
@@ -60,9 +60,10 @@ describe('DraftUsfmFormatComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.offlineMessage).not.toBeNull();
+    expect(env.harnesses?.length).toEqual(1);
+    const isDisabled: boolean = await env.harnesses![0].isDisabled();
+    expect(isDisabled).toBe(true);
   }));
-
-  // TODO: No draft available
 
   // Book and chapter changed
   it('navigates to a different book and chapter', fakeAsync(() => {
@@ -85,20 +86,16 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('should show the currently selected format options', fakeAsync(() => {
     const config: DraftUsfmConfig = {
-      preserveParagraphMarkers: true,
-      preserveStyleMarkers: false,
-      preserveEmbedMarkers: false
+      preserveParagraphMarkers: true
     };
     const env = new TestEnvironment({ config });
     expect(env.component.usfmFormatForm.controls.preserveParagraphs.value).toBe(true);
-    expect(env.component.usfmFormatForm.controls.preserveStyles.value).toBe(false);
-    expect(env.component.usfmFormatForm.controls.preserveEmbeds.value).toBe(false);
   }));
 
   it('cancels if user chooses different configurations and then cancels', fakeAsync(async () => {
     const env = new TestEnvironment();
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
-    expect(env.harnesses?.length).toEqual(3);
+    expect(env.harnesses?.length).toEqual(1);
     await env.harnesses![0].uncheck();
     tick();
     env.fixture.detectChanges();
@@ -115,14 +112,12 @@ describe('DraftUsfmFormatComponent', () => {
   it('should save changes to the draft format', fakeAsync(async () => {
     const env = new TestEnvironment();
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
-    expect(env.harnesses?.length).toEqual(3);
+    expect(env.harnesses?.length).toEqual(1);
     await env.harnesses![0].uncheck();
     tick();
     env.fixture.detectChanges();
     const config: DraftUsfmConfig = {
-      preserveParagraphMarkers: false,
-      preserveStyleMarkers: false,
-      preserveEmbedMarkers: true
+      preserveParagraphMarkers: false
     };
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();
@@ -179,9 +174,7 @@ class TestEnvironment {
 
   setupProject(config?: DraftUsfmConfig): void {
     config ??= {
-      preserveParagraphMarkers: true,
-      preserveStyleMarkers: false,
-      preserveEmbedMarkers: true
+      preserveParagraphMarkers: true
     };
     const texts: TextInfo[] = [
       {

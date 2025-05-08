@@ -46,9 +46,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   chapters: number[] = [];
 
   usfmFormatForm: FormGroup = new FormGroup({
-    preserveParagraphs: new FormControl(),
-    preserveStyles: new FormControl(),
-    preserveEmbeds: new FormControl()
+    preserveParagraphs: new FormControl()
   });
 
   private updateDraftConfig$: Subject<DraftUsfmConfig> = new Subject<DraftUsfmConfig>();
@@ -85,9 +83,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private get currentUsfmFormatConfig(): DraftUsfmConfig {
     return {
-      preserveParagraphMarkers: this.usfmFormatForm.controls.preserveParagraphs.value,
-      preserveStyleMarkers: this.usfmFormatForm.controls.preserveStyles.value,
-      preserveEmbedMarkers: this.usfmFormatForm.controls.preserveEmbeds.value
+      preserveParagraphMarkers: this.usfmFormatForm.controls.preserveParagraphs.value
     };
   }
 
@@ -116,6 +112,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         this.draftText.applyEditorStyles();
         this.loadingFinished();
       });
+
+    this.onlineStatusService.onlineStatus$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(isOnline => (isOnline ? this.usfmFormatForm.enable() : this.usfmFormatForm.disable()));
   }
 
   bookChanged(bookNum: number): void {
@@ -151,15 +151,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     config ??= {
-      preserveParagraphMarkers: true,
-      preserveStyleMarkers: false,
-      preserveEmbedMarkers: true
+      preserveParagraphMarkers: true
     };
 
     this.usfmFormatForm.setValue({
-      preserveParagraphs: config.preserveParagraphMarkers,
-      preserveStyles: config.preserveStyleMarkers,
-      preserveEmbeds: config.preserveEmbedMarkers
+      preserveParagraphs: config.preserveParagraphMarkers
     });
     this.usfmFormatForm.valueChanges.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.reloadText();
