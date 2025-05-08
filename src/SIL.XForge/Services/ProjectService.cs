@@ -46,6 +46,11 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     public async Task AddUserAsync(string curUserId, string projectId, string? projectRole)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        await AddUserAsync(conn, curUserId, projectId, projectRole);
+    }
+
+    protected async Task AddUserAsync(IConnection conn, string curUserId, string projectId, string? projectRole)
+    {
         IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
         IDocument<User> userDoc = await GetUserDocAsync(curUserId, conn);
