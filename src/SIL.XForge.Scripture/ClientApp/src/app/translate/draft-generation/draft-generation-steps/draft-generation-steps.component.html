@@ -23,7 +23,7 @@
         <ng-template matStepLabel>
           {{ t("choose_books_to_translate_header") }}
         </ng-template>
-        <h1 class="mat-headline-4">{{ t("choose_books_to_translate_title") }}</h1>
+        <h1>{{ t("choose_books_to_translate_title") }}</h1>
         @for (source of draftingSources; track source) {
           <p class="reference-project-label">{{ projectLabel(source) }}</p>
           <app-book-multi-select
@@ -90,7 +90,7 @@
         <ng-template matStepLabel>
           {{ t("choose_books_for_training_header") }}
         </ng-template>
-        <h1 class="mat-headline-4">{{ t("choose_books_for_training_title") }}</h1>
+        <h1>{{ t("choose_books_for_training_title") }}</h1>
         <h2>{{ t("translated_books") }}</h2>
         <app-book-multi-select
           [availableBooks]="selectableTrainingBooksByProj(activatedProject.projectId)"
@@ -184,7 +184,7 @@
           <ng-template matStepLabel>
             {{ t("choose_additional_training_data_files_header") }}
           </ng-template>
-          <h1 class="mat-headline-4">{{ t("choose_additional_training_data_files_title") }}</h1>
+          <h1>{{ t("choose_additional_training_data_files_title") }}</h1>
           <app-training-data-multi-select
             [availableTrainingData]="availableTrainingFiles"
             [selectedTrainingDataIds]="selectedTrainingFileIds"
@@ -214,7 +214,7 @@
           <ng-template matStepLabel>
             {{ t("configure_advanced_settings_header") }}
           </ng-template>
-          <h1 class="mat-headline-4">{{ t("configure_advanced_settings_title") }}</h1>
+          <h1>{{ t("configure_advanced_settings_title") }}</h1>
           <div>
             <mat-checkbox class="fast-training" [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
           </div>
@@ -249,7 +249,7 @@
         <ng-template matStepLabel>
           {{ t("summary_header") }}
         </ng-template>
-        <h1 class="mat-headline-4">{{ t("summary_title") }}</h1>
+        <h1>{{ t("summary_title") }}</h1>
 
         <h2>{{ t("summary_training_title") }}</h2>
         <mat-card class="confirm-section mat-elevation-z2">
