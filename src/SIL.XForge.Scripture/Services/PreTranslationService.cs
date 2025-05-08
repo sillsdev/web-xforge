@@ -197,12 +197,6 @@ public class PreTranslationService(
             paragraphMarkerBehavior: config.PreserveParagraphMarkers
                 ? PretranslationUsfmMarkerBehavior.Preserve
                 : PretranslationUsfmMarkerBehavior.Strip,
-            styleMarkerBehavior: config.PreserveStyleMarkers
-                ? PretranslationUsfmMarkerBehavior.Preserve
-                : PretranslationUsfmMarkerBehavior.Strip,
-            embedBehavior: config.PreserveEmbedMarkers
-                ? PretranslationUsfmMarkerBehavior.Preserve
-                : PretranslationUsfmMarkerBehavior.Strip,
             cancellationToken: cancellationToken
         );
 

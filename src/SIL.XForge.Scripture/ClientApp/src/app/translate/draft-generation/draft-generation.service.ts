@@ -191,9 +191,7 @@ export class DraftGenerationService {
     }
     let queryParams = '';
     if (usfmConfig != null) {
-      queryParams =
-        `?preserveParagraphs=${usfmConfig.preserveParagraphMarkers}` +
-        `&preserveStyles=${usfmConfig.preserveStyleMarkers}&preserveEmbeds=${usfmConfig.preserveEmbedMarkers}`;
+      queryParams = `?preserveParagraphs=${usfmConfig.preserveParagraphMarkers}`;
     }
     return this.httpClient
       .get<

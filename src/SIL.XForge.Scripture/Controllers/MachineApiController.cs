@@ -385,8 +385,6 @@ public class MachineApiController : ControllerBase
         int chapterNum,
         [FromQuery] DateTime? timestamp,
         [FromQuery] bool? preserveParagraphs,
-        [FromQuery] bool? preserveStyles,
-        [FromQuery] bool? preserveEmbeds,
         CancellationToken cancellationToken
     )
     {
@@ -394,14 +392,9 @@ public class MachineApiController : ControllerBase
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             DraftUsfmConfig? config = null;
-            if (preserveParagraphs != null || preserveStyles != null || preserveEmbeds != null)
+            if (preserveParagraphs != null)
             {
-                config = new DraftUsfmConfig
-                {
-                    PreserveParagraphMarkers = preserveParagraphs ?? true,
-                    PreserveStyleMarkers = preserveStyles ?? false,
-                    PreserveEmbedMarkers = preserveEmbeds ?? true,
-                };
+                config = new DraftUsfmConfig { PreserveParagraphMarkers = preserveParagraphs ?? true };
             }
             Snapshot<TextData> delta = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,

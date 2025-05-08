@@ -44,8 +44,6 @@ export interface ProjectScriptureRange {
 
 export interface DraftUsfmConfig {
   preserveParagraphMarkers: boolean;
-  preserveStyleMarkers: boolean;
-  preserveEmbedMarkers: boolean;
 }
 
 export interface DraftConfig {
