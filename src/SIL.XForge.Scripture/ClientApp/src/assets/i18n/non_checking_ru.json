@@ -73,10 +73,7 @@
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
     "delete": "Удалить",
-    "delete_chapter_audio": "Delete chapter audio",
-    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "Bulk import",
-    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "Нет архивных вопросов.",
     "no_questions": "Нет опубликованных вопросов. ",
     "question_count_label": "{{ count }} вопросов",
@@ -332,7 +329,7 @@
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "Чтобы сообщить о проблеме, отправьте сообщение по электронной почте {{ issueEmailLink }}.",
     "verse_too_long_for_suggestions": "Этот стих слишком длинный для того, чтобы вносить предложения.",
-    "your_comment": "Ваш комментарий"
+    "your_comment": "Your comment"
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
@@ -474,6 +471,7 @@
     "biblical_term": "Biblical Term",
     "close": "Закрыть",
     "delete": "Удалить",
+    "edit": "Редактировать",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
@@ -487,7 +485,7 @@
     "status_to_do": "To do",
     "team": "(Team)",
     "unassigned": "(Unassigned)",
-    "your_comment": "Ваш комментарий"
+    "your_comment": "Your comment"
   },
   "paginator": {
     "items_per_page": "Элементов на странице",

@@ -293,14 +293,13 @@
     "my_progress": "Kemajuan Saya",
     "project_stats": "Statistik proyek",
     "questions": "Pertanyaan",
-    "some_actions_unavailable_offline": "Beberapa tindakan tidak tersedia saat luring dan memerlukan hubungan ke internet, seperti mengunggah atau menghapus berkas suara pasal.",
     "tooltip_edit": "Sunting"
   },
   "checking_questions": {
+    "go_to": "Pergi ke pertanyaan",
     "listen_to_question": "Dengarkan pertanyaannya untuk {{ referenceForDisplay }}",
     "loading": "Memuat...",
-    "no_questions_found_filtered": "Tidak ada pertanyaan yang ditemukan yang cocok dengan saringan Anda",
-    "no_questions_found_unfiltered": "Tidak ada pertanyaan yang ditemukan",
+    "no_questions_found": "Tidak ada pertanyaan yang ditemukan untuk pengaturan di atas.",
     "scripture_audio_label": "Dengarkan {{ referenceForDisplay }} untuk menjawab pertanyaan berikut ini.",
     "view_answers": "Tampilkan jawaban"
   },

@@ -73,10 +73,7 @@
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
     "delete": "Excluir",
-    "delete_chapter_audio": "Delete chapter audio",
-    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "Importar",
-    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "Não há perguntas arquivadas.",
     "no_questions": "Não há perguntas publicadas. ",
     "question_count_label": "{{ count }} perguntas",
@@ -332,7 +329,7 @@
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "Para relatar um problema, envie um e-mail {{ issueEmailLink }}.",
     "verse_too_long_for_suggestions": "Este versículo é muito longo para gerar sugestões.",
-    "your_comment": "Seu comentário"
+    "your_comment": "Your comment"
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
@@ -474,6 +471,7 @@
     "biblical_term": "Biblical Term",
     "close": "Fechar",
     "delete": "Excluir",
+    "edit": "Editar",
     "hide_changes": "Ocultar alterações",
     "note_reattached": "Nota reanexada",
     "paratext_user": "Atribuído a um usuário do Paratext",
@@ -487,7 +485,7 @@
     "status_to_do": "Pendente",
     "team": "(Equipe)",
     "unassigned": "(Não Atribuído)",
-    "your_comment": "Seu comentário"
+    "your_comment": "Your comment"
   },
   "paginator": {
     "items_per_page": "Itens por página",
