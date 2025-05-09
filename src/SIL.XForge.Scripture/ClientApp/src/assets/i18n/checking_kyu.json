@@ -293,14 +293,13 @@
     "my_progress": "My progress",
     "project_stats": "Project stats",
     "questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤒꤢ꤬ꤟꤢꤩ꤬",
-    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio.",
     "tooltip_edit": "ꤗꤟꤢꤩ꤬ꤚꤛꤢꤕꤟꤥ"
   },
   "checking_questions": {
+    "go_to": "Go to questions",
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
     "loading": "Loading...",
-    "no_questions_found_filtered": "No questions found to match your filter",
-    "no_questions_found_unfiltered": "No questions found",
+    "no_questions_found": "No questions found for the settings above.",
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"
   },

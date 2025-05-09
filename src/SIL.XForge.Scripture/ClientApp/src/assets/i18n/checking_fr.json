@@ -293,14 +293,13 @@
     "my_progress": "Ma progression",
     "project_stats": "Statistiques du projet",
     "questions": "Questions",
-    "some_actions_unavailable_offline": "Certaines actions ne sont pas disponibles en mode déconnecté et nécessitent une connexion à Internet, comme la télétransmission ou la suppression de chapitres audio.",
     "tooltip_edit": "Modifier"
   },
   "checking_questions": {
+    "go_to": "Aller aux questions",
     "listen_to_question": "Écoutez la question pour {{ referenceForDisplay }}",
     "loading": "Chargement...",
-    "no_questions_found_filtered": "Aucune question trouvée correspondant à votre filtre",
-    "no_questions_found_unfiltered": "Aucune question trouvée",
+    "no_questions_found": "Aucune question trouvée pour les paramètres ci-dessus.",
     "scripture_audio_label": "Écoutez {{ referenceForDisplay }} pour répondre à la question qui suit.",
     "view_answers": "Afficher les réponses"
   },

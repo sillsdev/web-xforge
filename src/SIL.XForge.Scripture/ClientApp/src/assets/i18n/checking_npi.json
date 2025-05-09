@@ -293,14 +293,13 @@
     "my_progress": "मेरो प्रगति",
     "project_stats": "प्रोजेक्‍ट तथ्याङ्क",
     "questions": "प्रश्‍नहरू",
-    "some_actions_unavailable_offline": "केही कार्यहरू अफलाइन हुँदा उपलब्ध हुँदैनन् त्यसैले इन्टरनेटमा जोडिनु आवश्यक छ, जस्तै अध्यायको अडियो अपलोड गर्न वा हटाउन।",
     "tooltip_edit": "सम्पादन गर्नुहोस्"
   },
   "checking_questions": {
+    "go_to": "Go to questions",
     "listen_to_question": "{{ referenceForDisplay }} को लागि प्रश्‍न सुन्‍नुहोस्",
     "loading": "लोड हुँदैछ...",
-    "no_questions_found_filtered": "तपाइँको फिल्टरसँग मेल खाने कुनै प्रश्‍नहरू फेला परेनन्",
-    "no_questions_found_unfiltered": "कुनै प्रश्‍न भेटिएन",
+    "no_questions_found": "No questions found for the settings above.",
     "scripture_audio_label": "निम्‍न प्रश्‍नको जवाफ दिन {{ referenceForDisplay }} सुन्नुहोस्।",
     "view_answers": "जवाफहरू हेर्नुहोस्"
   },

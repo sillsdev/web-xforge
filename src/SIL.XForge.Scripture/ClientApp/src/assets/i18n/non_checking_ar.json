@@ -73,10 +73,7 @@
     "confirm_bulk_republish": "هل أنت متأكد من أنك تريد إعادة نشر جميع الأسئلة في {{ scope }}؟",
     "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
     "delete": "حذف",
-    "delete_chapter_audio": "Delete chapter audio",
-    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "تحميل أسئلة مجمعة",
-    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "لا توجد أسئلة محفوظة في الأرشيف.",
     "no_questions": "لا توجد أسئلة منشورة. ",
     "question_count_label": "{{ count }} أسئلة",
@@ -332,7 +329,7 @@
     "text_has_been_deleted": "تمّ حذف الكتاب أو لم يعد الوصول إليه ممكناً.",
     "to_report_issue_email": "للإبلاغ عن مشكلة، أرسِل رسالة إلكترونية إلى {{ issueEmailLink }}.",
     "verse_too_long_for_suggestions": "هذه الآية أطول مما ينبغي ولذا يصعب استحداث اقتراحات.",
-    "your_comment": "تعليقك"
+    "your_comment": "Your comment"
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
@@ -474,6 +471,7 @@
     "biblical_term": "Biblical Term",
     "close": "إغلاق",
     "delete": "حذف",
+    "edit": "تعديل",
     "hide_changes": "إخفاء التغييرات",
     "note_reattached": "تمّت إعادة إرفاق الملاحظة",
     "paratext_user": "تعيين لمستخدم Paratext",
@@ -487,7 +485,7 @@
     "status_to_do": "مهام",
     "team": "(الفريق)",
     "unassigned": "غير محدَّد",
-    "your_comment": "تعليقك"
+    "your_comment": "Your comment"
   },
   "paginator": {
     "items_per_page": "عدد العناصر في الصفحة",
