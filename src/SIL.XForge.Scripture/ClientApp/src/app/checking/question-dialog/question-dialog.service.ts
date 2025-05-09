@@ -8,6 +8,7 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { lastValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -98,6 +99,7 @@ export class QuestionDialogService {
     return await this.checkingQuestionsService.createQuestion(
       config.projectId,
       newQuestion,
+      FETCH_WITHOUT_SUBSCRIBE,
       result.audio.fileName,
       result.audio.blob
     );

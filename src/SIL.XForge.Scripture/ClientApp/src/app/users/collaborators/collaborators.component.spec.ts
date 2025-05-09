@@ -28,6 +28,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
@@ -424,21 +425,25 @@ class TestEnvironment {
     when(mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedUserService.getProfile(anything())).thenCall(userId =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, userId)
+      this.realtimeService.get(UserProfileDoc.COLLECTION, userId, FETCH_WITHOUT_SUBSCRIBE)
     );
     when(mockedUserService.currentUserId).thenReturn('user01');
-    when(mockedProjectService.get(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribe(anything(), anything())).thenCall((projectId, subscription) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, subscription)
     );
-    when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall((projectId, subscriber) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscriber)
     );
     when(
       mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything(), anything(), anything())
     ).thenResolve('linkSharingKey01');
     when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
       (projectId: string, userId: string, permissions: string[]) => {
-        const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
+        const projectDoc: SFProjectDoc = this.realtimeService.get(
+          SFProjectDoc.COLLECTION,
+          projectId,
+          FETCH_WITHOUT_SUBSCRIBE
+        );
         return projectDoc.submitJson0Op(op => op.set(p => p.userPermissions[userId], permissions));
       }
     );
@@ -577,7 +582,11 @@ class TestEnvironment {
   }
 
   updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
-    const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, this.project01Id);
+    const projectDoc: SFProjectDoc = this.realtimeService.get(
+      SFProjectDoc.COLLECTION,
+      this.project01Id,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     return projectDoc.submitJson0Op(op => {
       op.set(p => p.checkingConfig, config);
     });

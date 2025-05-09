@@ -34,6 +34,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../xforge-common/models/realtime-doc';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { TextAudioDoc } from '../core/models/text-audio-doc';
@@ -928,8 +929,8 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     when(mockedSFProjectService.onlineSetServalConfig('project01', anything())).thenResolve();
     when(mockedSFProjectService.onlineSetRoleProjectPermissions('project01', anything(), anything())).thenResolve();
-    when(mockedSFProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.fetch('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01', FETCH_WITHOUT_SUBSCRIBE)
     );
     this.testOnlineStatusService.setIsOnline(hasConnection);
 

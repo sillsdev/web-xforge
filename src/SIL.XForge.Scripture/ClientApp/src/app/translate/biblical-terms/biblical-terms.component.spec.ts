@@ -37,6 +37,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -317,7 +318,7 @@ describe('BiblicalTermsComponent', () => {
 
     const biblicalTerm = env.getBiblicalTermDoc(projectId, biblicalTermId);
     const verseData: VerseRefData = fromVerseRef(new VerseRef(biblicalTerm.data!.references[0]));
-    verify(mockedProjectService.createNoteThread(projectId, anything())).once();
+    verify(mockedProjectService.createNoteThread(projectId, anything(), anything())).once();
     const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
     expect(noteThread.verseRef).toEqual(verseData);
     expect(noteThread.originalSelectedText).toEqual('');
@@ -479,17 +480,22 @@ class TestEnvironment {
       };
       return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters, noopDestroyRef);
     });
-    when(mockedProjectService.getBiblicalTerm(anything())).thenCall(id =>
-      this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id)
+    when(mockedProjectService.getBiblicalTerm(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id, subscriber)
     );
-    when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
-      this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)
+    when(mockedProjectService.getNoteThread(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id, subscriber)
     );
-    when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((projectId, userId) =>
-      this.realtimeService.get(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(projectId, userId))
+    when(mockedProjectService.getUserConfig(anything(), anything(), anything())).thenCall(
+      (projectId, userId, subscriber) =>
+        this.realtimeService.subscribe(
+          SFProjectUserConfigDoc.COLLECTION,
+          getSFProjectUserConfigDocId(projectId, userId),
+          subscriber
+        )
     );
-    when(mockedProjectService.getProfile(anything())).thenCall(sfProjectId =>
-      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId)
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall((sfProjectId, subscriber) =>
+      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId, subscriber)
     );
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
@@ -549,16 +555,28 @@ class TestEnvironment {
   }
 
   getBiblicalTermDoc(projectId: string, dataId: string): BiblicalTermDoc {
-    return this.realtimeService.get(BiblicalTermDoc.COLLECTION, getBiblicalTermDocId(projectId, dataId));
+    return this.realtimeService.get(
+      BiblicalTermDoc.COLLECTION,
+      getBiblicalTermDocId(projectId, dataId),
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   getNoteThreadDoc(projectId: string, threadId: string): NoteThreadDoc {
-    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, getNoteThreadDocId(projectId, threadId));
+    return this.realtimeService.get<NoteThreadDoc>(
+      NoteThreadDoc.COLLECTION,
+      getNoteThreadDocId(projectId, threadId),
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
     const id: string = getSFProjectUserConfigDocId(projectId, userId);
-    return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
+    return this.realtimeService.get<SFProjectUserConfigDoc>(
+      SFProjectUserConfigDoc.COLLECTION,
+      id,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   setLanguage(language: string): void {

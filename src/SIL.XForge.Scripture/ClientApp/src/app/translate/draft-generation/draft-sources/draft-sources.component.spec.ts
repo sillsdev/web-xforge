@@ -20,6 +20,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { hasData, notNull, WithData } from '../../../../type-utils';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../../xforge-common/models/realtime-doc';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectSettings } from '../../../core/models/sf-project-settings';
@@ -461,7 +462,7 @@ class TestEnvironment {
       .map(o => {
         // Run it into and out of realtime service so it has fields like `remoteChanges$`.
         this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, o);
-        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id);
+        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id, FETCH_WITHOUT_SUBSCRIBE);
       })
       .filter(hasData)
       .map(o => ({

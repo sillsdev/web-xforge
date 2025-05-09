@@ -55,6 +55,7 @@ import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforg
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -2949,7 +2950,11 @@ class TestEnvironment {
   }
 
   getQuestionDoc(dataId: string): QuestionDoc {
-    return this.realtimeService.get(QuestionDoc.COLLECTION, getQuestionDocId('project01', dataId));
+    return this.realtimeService.get(
+      QuestionDoc.COLLECTION,
+      getQuestionDocId('project01', dataId),
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   getQuestionText(question: DebugElement): string {
@@ -3206,8 +3211,8 @@ class TestEnvironment {
       }
     ]);
 
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id, subscriber)
     );
     when(mockedProjectService.isProjectAdmin(anything(), anything())).thenResolve(
       user.role === SFProjectRole.ParatextAdministrator
@@ -3239,8 +3244,12 @@ class TestEnvironment {
         data: this.consultantProjectUserConfig
       }
     ]);
-    when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
+    when(mockedProjectService.getUserConfig(anything(), anything(), anything())).thenCall((id, userId, subscriber) =>
+      this.realtimeService.subscribe(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId(id, userId),
+        subscriber
+      )
     );
 
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
@@ -3260,8 +3269,8 @@ class TestEnvironment {
         type: RichText.type.name
       }
     ]);
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
     when(mockedActivatedRoute.params).thenReturn(this.params$);
     when(mockedActivatedRoute.queryParams).thenReturn(this.queryParams$);
@@ -3274,7 +3283,7 @@ class TestEnvironment {
       }
     ]);
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id)
+      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id, FETCH_WITHOUT_SUBSCRIBE)
     );
 
     this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
@@ -3296,7 +3305,7 @@ class TestEnvironment {
       }
     ]);
     when(mockedUserService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
+      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE)
     );
 
     when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(

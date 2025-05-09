@@ -91,12 +91,12 @@ describe('EventMetricsAuthGuard', () => {
       when(mockedAuthService.currentUserRoles).thenReturn([role]);
       when(mockedUserService.currentUserId).thenReturn(user01);
 
-      when(mockedProjectService.getProfile(project01)).thenReturn(
+      when(mockedProjectService.subscribeProfile(project01, anything())).thenReturn(
         Promise.resolve({
           data: createTestProjectProfile({ userRoles: { user01: SFProjectRole.ParatextAdministrator } })
         } as SFProjectProfileDoc)
       );
-      when(mockedProjectService.getProfile(project02)).thenReturn(
+      when(mockedProjectService.subscribeProfile(project02, anything())).thenReturn(
         Promise.resolve({
           data: createTestProjectProfile()
         } as SFProjectProfileDoc)

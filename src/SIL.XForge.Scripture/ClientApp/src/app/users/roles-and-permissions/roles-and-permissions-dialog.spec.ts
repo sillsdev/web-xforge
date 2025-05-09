@@ -31,6 +31,7 @@ import {
   TestTranslocoModule
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -157,7 +158,7 @@ describe('RolesAndPermissionsComponent', () => {
     //prep for role change
     when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall((p, u, r) => {
       rolesByUser[u] = r;
-      const projectDoc: SFProjectDoc = env.realtimeService.get(SFProjectDoc.COLLECTION, p);
+      const projectDoc: SFProjectDoc = env.realtimeService.get(SFProjectDoc.COLLECTION, p, FETCH_WITHOUT_SUBSCRIBE);
       projectDoc.submitJson0Op(op => {
         op.set(p => p.userRoles, rolesByUser);
         op.set(p => p.userPermissions, {
@@ -211,8 +212,8 @@ class TestEnvironment {
 
   constructor() {
     when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline$.asObservable());
-    when(mockedProjectService.get(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribe(anything(), anything())).thenCall((projectId, subscription) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, subscription)
     );
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -239,7 +240,8 @@ class TestEnvironment {
     this.realtimeService
       .subscribe<SFProjectUserConfigDoc>(
         SF_PROJECT_USER_CONFIGS_COLLECTION,
-        getSFProjectUserConfigDocId('project01', userId)
+        getSFProjectUserConfigDocId('project01', userId),
+        FETCH_WITHOUT_SUBSCRIBE
       )
       .then(() => {
         const config: MatDialogConfig<UserData> = {

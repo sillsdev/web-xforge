@@ -13,6 +13,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { NoteThreadDoc, NoteThreadIcon } from './note-thread-doc';
 import { SF_TYPE_REGISTRY } from './sf-type-registry';
 
@@ -264,7 +265,7 @@ class TestEnvironment {
       id: threadId,
       data: thread
     });
-    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId);
+    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId, FETCH_WITHOUT_SUBSCRIBE);
   }
 
   private getNoteThread(notes: Note[]): NoteThread {

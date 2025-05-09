@@ -17,6 +17,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -208,13 +209,13 @@ class TestEnvironment {
       })
     });
     when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', FETCH_WITHOUT_SUBSCRIBE)
     );
-    when(mockedSFProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedSFProjectService.getText(anything(), anything())).thenCall((id, subscribe) =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscribe)
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', FETCH_WITHOUT_SUBSCRIBE)
     );
 
     this.fixture = TestBed.createComponent(CheckingTextComponent);

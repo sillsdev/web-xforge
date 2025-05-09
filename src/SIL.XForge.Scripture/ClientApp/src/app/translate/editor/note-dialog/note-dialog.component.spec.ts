@@ -43,6 +43,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, matDialogCloseDelay } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../../xforge-common/models/realtime-doc';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
@@ -1029,7 +1030,7 @@ class TestEnvironment {
     firstValueFrom(this.dialogRef.afterClosed()).then(result => (this.dialogResult = result));
 
     when(mockedUserService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
+      this.realtimeService.get(UserProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE)
     );
 
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
@@ -1121,12 +1122,16 @@ class TestEnvironment {
 
   getNoteThreadDoc(threadDataId: string): NoteThreadDoc {
     const id: string = getNoteThreadDocId(TestEnvironment.PROJECT01, threadDataId);
-    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id);
+    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
   }
 
   getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
     const id: string = getSFProjectUserConfigDocId(projectId, userId);
-    return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
+    return this.realtimeService.get<SFProjectUserConfigDoc>(
+      SFProjectUserConfigDoc.COLLECTION,
+      id,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   getNoteContent(noteNumber: number): string {

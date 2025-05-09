@@ -18,6 +18,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../xforge-common/models/realtime-doc';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -369,11 +370,11 @@ class TestEnvironment {
         },
         paratextUsers: [{ sfUserId: 'user01', username: 'ptuser01', opaqueUserId: 'opaqueuser01' }]
       });
-      this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject);
+      this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject, FETCH_WITHOUT_SUBSCRIBE);
       return Promise.resolve('project01');
     });
-    when(mockedSFProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.fetch('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01', FETCH_WITHOUT_SUBSCRIBE)
     );
     if (params.paratextId === undefined) {
       when(mockedRouter.getCurrentNavigation()).thenReturn({ extras: {} } as any);
@@ -476,14 +477,22 @@ class TestEnvironment {
   }
 
   setQueuedCount(): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+      SFProjectDoc.COLLECTION,
+      'project01',
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount, 1), false);
     tick();
     this.fixture.detectChanges();
   }
 
   emitSyncComplete(): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+      SFProjectDoc.COLLECTION,
+      'project01',
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(op => {
       op.set<number>(p => p.sync.queuedCount, 0);
       op.set<boolean>(p => p.sync.lastSyncSuccessful!, true);

@@ -26,6 +26,7 @@ import {
   TestTranslocoModule
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -189,7 +190,8 @@ class TestEnvironment {
     this.realtimeService
       .subscribe<SFProjectUserConfigDoc>(
         SF_PROJECT_USER_CONFIGS_COLLECTION,
-        getSFProjectUserConfigDocId('project01', 'user01')
+        getSFProjectUserConfigDocId('project01', 'user01'),
+        FETCH_WITHOUT_SUBSCRIBE
       )
       .then(projectUserConfigDoc => {
         const viewContainerRef = this.fixture.componentInstance.childViewContainer;
@@ -229,13 +231,18 @@ class TestEnvironment {
   }
 
   getProjectProfileDoc(): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+    return this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   getProjectUserConfigDoc(): SFProjectUserConfigDoc {
     return this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'user01')
+      getSFProjectUserConfigDocId('project01', 'user01'),
+      FETCH_WITHOUT_SUBSCRIBE
     );
   }
 

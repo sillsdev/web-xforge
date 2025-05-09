@@ -17,6 +17,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -468,15 +469,15 @@ class TestEnvironment {
       })
     });
 
-    when(mockedSFProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedSFProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString())
+      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, id.toString(), FETCH_WITHOUT_SUBSCRIBE)
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      this.realtimeService.get(UserDoc.COLLECTION, 'user01', FETCH_WITHOUT_SUBSCRIBE)
     );
 
     this.sourceFixture = TestBed.createComponent(TextComponent);

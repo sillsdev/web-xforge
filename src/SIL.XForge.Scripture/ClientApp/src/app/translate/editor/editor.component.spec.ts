@@ -81,6 +81,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { isBlink } from 'xforge-common/utils';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -333,7 +334,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       const sourceId = new TextDocId('project02', 40, 1);
       let resolve: (value: TextDoc | PromiseLike<TextDoc>) => void;
-      when(mockedSFProjectService.getText(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
+      when(mockedSFProjectService.getText(deepEqual(sourceId), anything())).thenReturn(new Promise(r => (resolve = r)));
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
@@ -1242,7 +1243,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      verify(mockedSFProjectService.get('resource01')).never();
+      verify(mockedSFProjectService.subscribe('resource01', anything())).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
@@ -2881,7 +2882,7 @@ describe('EditorComponent', () => {
       const content: string = 'content in the thread';
       env.mockNoteDialogRef.close({ noteContent: content });
       env.wait();
-      verify(mockedSFProjectService.createNoteThread(projectId, anything())).once();
+      verify(mockedSFProjectService.createNoteThread(projectId, anything(), anything())).once();
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
       let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc(projectId, noteThread.dataId);
       expect(noteThreadDoc.data!.notes[0].content).toEqual(content);
@@ -2927,7 +2928,7 @@ describe('EditorComponent', () => {
       const promise = new Promise<TextDoc>(resolve => {
         subject.subscribe(() => resolve(textDoc));
       });
-      when(mockedSFProjectService.getText(anything())).thenReturn(promise);
+      when(mockedSFProjectService.getText(anything(), anything())).thenReturn(promise);
       env.wait();
       env.insertNoteFab.nativeElement.click();
       env.wait();
@@ -2961,7 +2962,7 @@ describe('EditorComponent', () => {
       const noteVerseRef: VerseRef = (config as MatDialogConfig).data!.verseRef;
       expect(noteVerseRef.toString()).toEqual('MAT 1:4');
 
-      verify(mockedSFProjectService.createNoteThread(projectId, anything())).once();
+      verify(mockedSFProjectService.createNoteThread(projectId, anything(), anything())).once();
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
       expect(noteThread.verseRef).toEqual(fromVerseRef(noteVerseRef));
       expect(noteThread.publishedToSF).toBe(true);
@@ -3592,7 +3593,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      verify(mockedSFProjectService.get('resource01')).never();
+      verify(mockedSFProjectService.subscribe('resource01', anything())).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
@@ -4388,28 +4389,32 @@ class TestEnvironment {
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', anything())
     );
     when(mockedSFProjectService.getProfile('project02')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project02')
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project02', anything())
     );
-    when(mockedSFProjectService.tryGetForRole('project01', anything())).thenCall((id, role) =>
-      isParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
+    when(mockedSFProjectService.tryGetForRole('project01', anything(), anything())).thenCall((id, role, subscriber) =>
+      isParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id, subscriber) : undefined
     );
-    when(mockedSFProjectService.getUserConfig('project01', anything())).thenCall((_projectId, userId) =>
-      this.realtimeService.subscribe(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId('project01', userId)
-      )
+    when(mockedSFProjectService.getUserConfig('project01', anything(), anything())).thenCall(
+      (_projectId, userId, subscriber) =>
+        this.realtimeService.subscribe(
+          SFProjectUserConfigDoc.COLLECTION,
+          getSFProjectUserConfigDocId('project01', userId),
+          subscriber
+        )
     );
-    when(mockedSFProjectService.getUserConfig('project02', anything())).thenCall((_projectId, userId) =>
-      this.realtimeService.subscribe(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId('project02', userId)
-      )
+    when(mockedSFProjectService.getUserConfig('project02', anything(), anything())).thenCall(
+      (_projectId, userId, subscriber) =>
+        this.realtimeService.subscribe(
+          SFProjectUserConfigDoc.COLLECTION,
+          getSFProjectUserConfigDocId('project02', userId),
+          subscriber
+        )
     );
-    when(mockedSFProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedSFProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
     when(mockedSFProjectService.queryNoteThreads(anything(), anything(), anything(), anything())).thenCall(
@@ -4444,12 +4449,13 @@ class TestEnvironment {
         noopDestroyRef
       )
     );
-    when(mockedSFProjectService.createNoteThread(anything(), anything())).thenCall(
+    when(mockedSFProjectService.createNoteThread(anything(), anything(), anything())).thenCall(
       (projectId: string, noteThread: NoteThread) => {
         this.realtimeService.create(
           NoteThreadDoc.COLLECTION,
           getNoteThreadDocId(projectId, noteThread.dataId),
-          noteThread
+          noteThread,
+          FETCH_WITHOUT_SUBSCRIBE
         );
         tick();
       }
@@ -4468,7 +4474,7 @@ class TestEnvironment {
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
     this.breakpointObserver.matchedResult = false;
 
-    when(mockedSFProjectService.getNoteThread(anything())).thenCall((id: string) => {
+    when(mockedSFProjectService.getNoteThread(anything(), anything())).thenCall((id: string) => {
       const [projectId, threadId] = id.split(':');
       return this.getNoteThreadDoc(projectId, threadId);
     });
@@ -4646,7 +4652,7 @@ class TestEnvironment {
 
   deleteText(textId: string): void {
     this.ngZone.run(() => {
-      const textDoc = this.realtimeService.get(TextDoc.COLLECTION, textId);
+      const textDoc = this.realtimeService.get(TextDoc.COLLECTION, textId, FETCH_WITHOUT_SUBSCRIBE);
       textDoc.delete();
     });
     this.wait();
@@ -4654,7 +4660,9 @@ class TestEnvironment {
 
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.get(UserDoc.COLLECTION, userId, FETCH_WITHOUT_SUBSCRIBE)
+    );
   }
 
   setParatextReviewerUser(): void {
@@ -4795,12 +4803,17 @@ class TestEnvironment {
   getProjectUserConfigDoc(userId: string = 'user01'): SFProjectUserConfigDoc {
     return this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
-      getSFProjectUserConfigDocId('project01', userId)
+      getSFProjectUserConfigDocId('project01', userId),
+      FETCH_WITHOUT_SUBSCRIBE
     );
   }
 
   getProjectDoc(projectId: string): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    return this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   getSegmentElement(segmentRef: string): HTMLElement | null {
@@ -4808,12 +4821,12 @@ class TestEnvironment {
   }
 
   getTextDoc(textId: TextDocId): TextDoc {
-    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
+    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), FETCH_WITHOUT_SUBSCRIBE);
   }
 
   getNoteThreadDoc(projectId: string, threadDataId: string): NoteThreadDoc {
     const docId: string = projectId + ':' + threadDataId;
-    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId);
+    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, FETCH_WITHOUT_SUBSCRIBE);
   }
 
   getNoteThreadIconElement(segmentRef: string, threadDataId: string): HTMLElement | null {

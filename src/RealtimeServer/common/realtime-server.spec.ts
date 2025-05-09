@@ -43,7 +43,7 @@ describe('RealtimeServer', () => {
     await env.createData();
     when(env.mockedProjectService.schemaVersion).thenReturn(2);
     const mockedMigration = mock<Migration>();
-    when(env.mockedProjectService.getMigration(2)).thenReturn(instance(mockedMigration));
+    when(env.mockedProjectService.subscribeMigration(2)).thenReturn(instance(mockedMigration));
     when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) =>
       submitMigrationOp(2, doc, [{ p: ['test'], oi: 'test_op' }])
     );
@@ -61,7 +61,7 @@ describe('RealtimeServer', () => {
     await env.createData();
     when(env.mockedProjectService.schemaVersion).thenReturn(2);
     const mockedMigration = mock<Migration>();
-    when(env.mockedProjectService.getMigration(2)).thenReturn(instance(mockedMigration));
+    when(env.mockedProjectService.subscribeMigration(2)).thenReturn(instance(mockedMigration));
     when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) => submitMigrationOp(2, doc, []));
 
     await env.server.migrateIfNecessary();

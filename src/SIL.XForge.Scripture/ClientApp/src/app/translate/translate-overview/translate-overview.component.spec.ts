@@ -28,6 +28,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -334,7 +335,9 @@ class TestEnvironment {
 
   setCurrentUser(userId: string = 'user01'): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, userId, FETCH_WITHOUT_SUBSCRIBE)
+    );
   }
 
   wait(): void {
@@ -548,13 +551,21 @@ class TestEnvironment {
     const delta = new Delta();
     delta.insert(`chapter ${chapter}, verse 22.`, { segment: `verse_${chapter}_22` });
 
-    const textDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, getTextDocId('project01', bookNum, chapter));
+    const textDoc = this.realtimeService.get<TextDoc>(
+      TextDoc.COLLECTION,
+      getTextDocId('project01', bookNum, chapter),
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     textDoc.submit({ ops: delta.ops });
     this.waitForProjectDocChanges();
   }
 
   simulateTranslateSuggestionsEnabled(enabled: boolean = true): void {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
       false

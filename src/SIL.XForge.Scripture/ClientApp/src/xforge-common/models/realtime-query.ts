@@ -1,6 +1,7 @@
 import arrayDiff, { InsertDiff, MoveDiff, RemoveDiff } from 'arraydiff';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQueryAdapter } from '../realtime-remote-store';
 import { RealtimeService } from '../realtime.service';
 import { RealtimeDoc } from './realtime-doc';
@@ -143,7 +144,9 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       await this.onChange(true, this.adapter.docIds, this.adapter.count, this.adapter.unpagedCount);
       this._ready$.next(true);
     } else {
-      this._docs = this.adapter.docIds.map(id => this.realtimeService.get<T>(this.collection, id));
+      this._docs = this.adapter.docIds.map(id =>
+        this.realtimeService.get(this.collection, id, new DocSubscription('RealtimeQuery'))
+      );
       this._count = this.adapter.count;
       this._unpagedCount = this.adapter.unpagedCount;
     }
@@ -200,7 +203,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     const newDocs: T[] = [];
     const promises: Promise<void>[] = [];
     for (const docId of docIds) {
-      const newDoc = this.realtimeService.get<T>(this.collection, docId);
+      const newDoc = this.realtimeService.get<T>(this.collection, docId, new DocSubscription('RealtimeQuery'));
       promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);
       const docSubscription = newDoc.remoteChanges$.subscribe(() => {

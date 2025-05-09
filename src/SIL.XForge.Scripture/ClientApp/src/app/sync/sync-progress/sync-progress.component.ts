@@ -5,6 +5,7 @@ import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf
 import { BehaviorSubject, map, merge, Observable } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -108,7 +109,10 @@ export class SyncProgressComponent {
           const role: string = await this.projectService.onlineGetProjectRole(sourceProjectId);
           // Only show progress for the source project when the user has sync
           if (isParatextRole(role)) {
-            this.sourceProjectDoc = await this.projectService.get(sourceProjectId);
+            this.sourceProjectDoc = await this.projectService.subscribe(
+              sourceProjectId,
+              new DocSubscription('SyncProgressComponent', this.destroyRef)
+            );
 
             // Subscribe to SignalR notifications for the source project
             await this.projectNotificationService.subscribeToProject(this.sourceProjectDoc.id);

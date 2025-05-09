@@ -1,7 +1,7 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { DatePipe } from '@angular/common';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { APP_ID, ErrorHandler, NgModule } from '@angular/core';
+import { APP_ID, APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { MatRipple } from '@angular/material/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -37,12 +37,18 @@ import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings/settings.component';
+import { CacheService } from './shared/cache-service/cache.service';
 import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
+
+/** Initialization function for any services that need to be run but are not depended on by any component. */
+function initializeGlobalServicesFactor(_cacheService: CacheService): () => Promise<any> {
+  return () => Promise.resolve();
+}
 
 @NgModule({
   declarations: [
@@ -93,7 +99,13 @@ import { UsersModule } from './users/users.module';
     defaultTranslocoMarkupTranspilers(),
     { provide: ErrorHandler, useClass: ExceptionHandlingService },
     { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
-    provideHttpClient(withInterceptorsFromDi())
+    provideHttpClient(withInterceptorsFromDi()),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeGlobalServicesFactor,
+      deps: [CacheService],
+      multi: true
+    }
   ]
 })
 export class AppModule {}

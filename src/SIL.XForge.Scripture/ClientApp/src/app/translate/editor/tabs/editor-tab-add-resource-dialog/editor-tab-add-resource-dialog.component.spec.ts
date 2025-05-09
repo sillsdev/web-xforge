@@ -252,7 +252,7 @@ class TestEnvironment {
     when(mockSFProjectService.onlineCreateResourceProject(this.paratextId)).thenCall(() =>
       Promise.resolve(this.testProjectDoc.id)
     );
-    when(mockSFProjectService.get(this.projectId)).thenCall(() => Promise.resolve(this.testProjectDoc));
+    when(mockSFProjectService.fetch(this.projectId)).thenCall(() => Promise.resolve(this.testProjectDoc));
     when(mockSFProjectService.onlineSync(this.projectId)).thenReturn(Promise.resolve());
 
     this.fixture = TestBed.createComponent(EditorTabAddResourceDialogComponent);

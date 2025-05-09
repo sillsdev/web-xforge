@@ -24,6 +24,7 @@ import {
   TestTranslocoModule
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../xforge-common/models/realtime-doc';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -211,18 +212,19 @@ class TestEnvironment {
   }
 
   getBiblicalTermDoc(id: string): BiblicalTermDoc {
-    return this.realtimeService.get<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id);
+    return this.realtimeService.get<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
   }
 
   getProjectDoc(id: string): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, id);
+    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
   }
 
   openDialog(biblicalTermId: string, userId: string = 'user01'): void {
     this.realtimeService
       .subscribe<SFProjectUserConfigDoc>(
         SF_PROJECT_USER_CONFIGS_COLLECTION,
-        getSFProjectUserConfigDocId('project01', userId)
+        getSFProjectUserConfigDocId('project01', userId),
+        FETCH_WITHOUT_SUBSCRIBE
       )
       .then(projectUserConfigDoc => {
         const biblicalTermDoc = this.getBiblicalTermDoc(biblicalTermId);

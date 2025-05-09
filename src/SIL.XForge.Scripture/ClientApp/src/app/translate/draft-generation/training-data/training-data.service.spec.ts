@@ -10,6 +10,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
+import { FETCH_WITHOUT_SUBSCRIBE } from '../../../../xforge-common/models/realtime-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { TrainingDataService } from './training-data.service';
 
@@ -70,7 +71,8 @@ describe('TrainingDataService', () => {
 
     const trainingDataDoc = realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data03')
+      getTrainingDataId('project01', 'data03'),
+      FETCH_WITHOUT_SUBSCRIBE
     );
     expect(trainingDataDoc.data).toEqual(newTrainingData);
   }));
@@ -79,7 +81,8 @@ describe('TrainingDataService', () => {
     // Verify the document exists
     const existingTrainingDataDoc = realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data01')
+      getTrainingDataId('project01', 'data01'),
+      FETCH_WITHOUT_SUBSCRIBE
     );
     expect(existingTrainingDataDoc.data?.dataId).toBe('data01');
     expect(existingTrainingDataDoc.data?.projectRef).toBe('project01');
@@ -99,7 +102,8 @@ describe('TrainingDataService', () => {
 
     const trainingDataDoc = realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data01')
+      getTrainingDataId('project01', 'data01'),
+      FETCH_WITHOUT_SUBSCRIBE
     );
     expect(trainingDataDoc.data).toBeUndefined();
     verify(

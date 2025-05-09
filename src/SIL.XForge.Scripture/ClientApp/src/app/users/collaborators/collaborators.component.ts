@@ -10,6 +10,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -142,7 +143,10 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       )
       .subscribe(async projectId => {
         this.loadingStarted();
-        this.projectDoc = await this.projectService.get(projectId);
+        this.projectDoc = await this.projectService.subscribe(
+          projectId,
+          new DocSubscription('CollaboratorsComponent', this.destroyRef)
+        );
         this.loadUsers();
         // TODO Clean up the use of nested subscribe()
         this.projectDoc.remoteChanges$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async () => {
@@ -235,7 +239,11 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     }
 
     const userIds = Object.keys(project.userRoles);
-    const userProfiles = await Promise.all(userIds.map(userId => this.userService.getProfile(userId)));
+    const userProfiles = await Promise.all(
+      userIds.map(userId =>
+        this.userService.subscribeProfile(userId, new DocSubscription('CollaboratorsComponent', this.destroyRef))
+      )
+    );
     const userRows: Row[] = [];
     for (const [index, userId] of userIds.entries()) {
       const userProfile = userProfiles[index];

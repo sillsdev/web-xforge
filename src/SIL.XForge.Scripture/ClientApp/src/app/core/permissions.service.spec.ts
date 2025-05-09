@@ -141,7 +141,7 @@ describe('PermissionsService', () => {
     expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(true);
     env.setCurrentUser('other');
     expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(false);
-    verify(mockedProjectService.getProfile('project01')).twice();
+    verify(mockedProjectService.subscribeProfile('project01', anything())).twice();
   }));
 
   describe('canSync', () => {
@@ -232,12 +232,12 @@ class TestEnvironment {
   constructor(readonly checkingEnabled = true) {
     this.service = TestBed.inject(PermissionsService);
 
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall((id, subscription) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription)
     );
 
-    when(mockedProjectService.get(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+    when(mockedProjectService.subscribe(anything(), anything())).thenCall((id, subscription) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription)
     );
 
     this.setProjectProfile();
@@ -285,7 +285,9 @@ class TestEnvironment {
 
   setCurrentUser(userId: string = 'user01'): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedUserService.getCurrentUser()).thenCall(subscription =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, userId, subscription)
+    );
   }
 
   setupUserData(userId: string = 'user01', projects: string[] = ['project01']): void {
