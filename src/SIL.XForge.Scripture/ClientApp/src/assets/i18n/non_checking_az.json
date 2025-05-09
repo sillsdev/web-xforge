@@ -73,10 +73,7 @@
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
     "delete": "Silmək",
-    "delete_chapter_audio": "Delete chapter audio",
-    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "İdxal",
-    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "Arxivləşdirilmiş suallar yoxdur.",
     "no_questions": "Nəşr edilmiş suallar yoxdur. ",
     "question_count_label": "{{ count }} suallar",
@@ -332,7 +329,7 @@
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "Problemi bildirmək üçün {{ issueEmailLink }}-a e-poçt göndərin.",
     "verse_too_long_for_suggestions": "Bu ayə təkliflər irəli sürmək üçün çox uzundur.",
-    "your_comment": "Sizin rəyiniz"
+    "your_comment": "Your comment"
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
@@ -474,6 +471,7 @@
     "biblical_term": "Biblical Term",
     "close": "Bağla",
     "delete": "Silmək",
+    "edit": "Düzəliş etmək",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
@@ -487,7 +485,7 @@
     "status_to_do": "To do",
     "team": "(Team)",
     "unassigned": "(Unassigned)",
-    "your_comment": "Sizin rəyiniz"
+    "your_comment": "Your comment"
   },
   "paginator": {
     "items_per_page": "Hər səhifə üçün bəndlər",
