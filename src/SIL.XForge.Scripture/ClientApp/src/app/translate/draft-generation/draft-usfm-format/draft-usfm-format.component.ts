@@ -4,14 +4,17 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
-import { TranslocoModule } from '@ngneat/transloco';
+import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, first, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -29,6 +32,8 @@ import { DraftHandlingService } from '../draft-handling.service';
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -44,6 +49,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   booksWithDrafts: number[] = [];
   chapterNum: number = 1;
   chapters: number[] = [];
+  isInitializing: boolean = true;
 
   usfmFormatForm: FormGroup = new FormGroup({
     preserveParagraphs: new FormControl()
@@ -58,6 +64,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private readonly onlineStatusService: OnlineStatusService,
     private readonly servalAdministration: ServalAdministrationService,
     readonly noticeService: NoticeService,
+    readonly i18n: I18nService,
     private readonly router: Router,
     private destroyRef: DestroyRef
   ) {
@@ -110,12 +117,18 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         const draftDelta: Delta = new Delta(this.draftHandlingService.draftDataToOps(ops, []));
         this.draftText.setContents(draftDelta, 'api');
         this.draftText.applyEditorStyles();
+        this.isInitializing = false;
         this.loadingFinished();
       });
 
-    this.onlineStatusService.onlineStatus$
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(isOnline => (isOnline ? this.usfmFormatForm.enable() : this.usfmFormatForm.disable()));
+    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
+      if (isOnline) {
+        this.usfmFormatForm.enable();
+      } else {
+        this.usfmFormatForm.disable();
+        this.isInitializing = true;
+      }
+    });
   }
 
   bookChanged(bookNum: number): void {
@@ -131,7 +144,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     this.reloadText();
   }
 
-  cancel(): void {
+  close(): void {
     this.router.navigate(['projects', this.projectId, 'draft-generation']);
   }
 
@@ -143,10 +156,15 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   async saveChanges(): Promise<void> {
     if (this.projectId == null || !this.isOnline) return;
 
-    await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentUsfmFormatConfig);
-    // not awaited so that the user is directed to the draft generation page
-    this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId);
-    this.router.navigate(['projects', this.projectId, 'draft-generation']);
+    try {
+      await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentUsfmFormatConfig);
+      // not awaited so that the user is directed to the draft generation page
+      this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId).then(() => {
+        this.noticeService.show(translate('draft_usfm_format.changes_have_been_saved'));
+      });
+    } catch {
+      this.noticeService.showError(translate('draft_usfm-format.failed_to_save'));
+    }
   }
 
   private setUsfmConfig(config?: DraftUsfmConfig): void {
