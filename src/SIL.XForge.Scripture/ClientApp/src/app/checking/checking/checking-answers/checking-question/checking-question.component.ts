@@ -225,7 +225,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     const haveListenedToAllVerses = verseRefs.every(v => this._versesListenedTo.has(v.toString()));
 
     // Select a question if there is no audio or if all verses have been played already
-    if (this._scriptureTextAudioData == null || this.scriptureAudioUrl == null || haveListenedToAllVerses) {
+    if (this._scriptureTextAudioData == null || haveListenedToAllVerses) {
       this.selectQuestion();
     } else {
       this.selectScripture();
