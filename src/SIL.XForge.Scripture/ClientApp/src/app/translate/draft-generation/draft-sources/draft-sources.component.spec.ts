@@ -11,6 +11,7 @@ import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -51,6 +52,7 @@ const mockedDraftSourcesService = mock(DraftSourcesService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedSFUserProjectsService = mock(SFUserProjectsService);
 const mockedAuthService = mock(AuthService);
+const mockedDialogService = mock(DialogService);
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
@@ -70,7 +72,8 @@ describe('DraftSourcesComponent', () => {
       { provide: DraftSourcesService, useMock: mockedDraftSourcesService },
       { provide: SFUserProjectsService, useMock: mockedSFUserProjectsService },
       { provide: AuthService, useMock: mockedAuthService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 
@@ -112,6 +115,12 @@ describe('DraftSourcesComponent', () => {
           env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId
       };
 
+      // No unsaved changes
+      env.component.confirmLeave();
+      tick();
+      env.fixture.detectChanges();
+      verify(mockedDialogService.confirm(anything(), anything(), anything())).never();
+
       // SUT
       env.component.save();
       tick();
@@ -148,8 +157,11 @@ describe('DraftSourcesComponent', () => {
       // Confirm that we have 1 training source.
       expect(env.component.trainingSources.length).toEqual(1);
       env.component['changesMade'] = true;
-      env.fixture.detectChanges();
+      // user is prompted if user is navigating away
+      env.component.confirmLeave();
       tick();
+      env.fixture.detectChanges();
+      verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
 
       // SUT
       env.component.save();
@@ -188,7 +200,6 @@ describe('DraftSourcesComponent', () => {
       env.component.trainingSources[0] = undefined;
       // Confirm that we have 1 other training source.
       expect(env.component.trainingSources[1]).not.toBeNull();
-      env.component['changesMade'] = true;
       env.fixture.detectChanges();
       tick();
 
@@ -212,7 +223,6 @@ describe('DraftSourcesComponent', () => {
       env.component.trainingSources.pop();
       // Confirm that we have 1 training source.
       expect(env.component.trainingSources.length).toEqual(1);
-      env.component['changesMade'] = true;
       env.fixture.detectChanges();
       tick();
 
