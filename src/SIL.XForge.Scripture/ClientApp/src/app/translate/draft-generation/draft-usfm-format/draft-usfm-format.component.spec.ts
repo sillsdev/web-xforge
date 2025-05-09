@@ -11,7 +11,10 @@ import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -29,16 +32,17 @@ const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedServalAdministration = mock(ServalAdministrationService);
 const mockedRouter = mock(Router);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockI18nService = mock(I18nService);
+const mockedNoticeService = mock(NoticeService);
 
-fdescribe('DraftUsfmFormatComponent', () => {
+describe('DraftUsfmFormatComponent', () => {
   configureTestingModule(() => ({
     imports: [
       DraftUsfmFormatComponent,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       NoopAnimationsModule,
-      TestTranslocoModule
+      TestTranslocoModule,
+      TestOnlineStatusModule.forRoot()
     ],
     providers: [
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
@@ -47,8 +51,9 @@ fdescribe('DraftUsfmFormatComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministration },
       { provide: Router, useMock: mockedRouter },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
-      { provide: I18nService, useMock: mockI18nService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: I18nService, useMock: mockI18nService },
+      { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
 
@@ -56,7 +61,7 @@ fdescribe('DraftUsfmFormatComponent', () => {
     const env = new TestEnvironment();
     expect(env.offlineMessage).toBeNull();
 
-    when(mockedOnlineStatusService.isOnline).thenReturn(false);
+    env.onlineStatusService.setIsOnline(false);
     tick();
     env.fixture.detectChanges();
     expect(env.offlineMessage).not.toBeNull();
@@ -128,7 +133,7 @@ fdescribe('DraftUsfmFormatComponent', () => {
     env.fixture.detectChanges();
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, deepEqual(config))).once();
     verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(env.projectId)).once();
-    verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).never();
   }));
 });
 
@@ -137,12 +142,13 @@ class TestEnvironment {
   fixture: ComponentFixture<DraftUsfmFormatComponent>;
   harnesses?: MatCheckboxHarness[];
   readonly projectId = 'project01';
+  onlineStatusService: TestOnlineStatusService;
 
   constructor(args: { config?: DraftUsfmConfig } = {}) {
     const userDoc = mock(UserDoc);
+    this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
 
     when(mockedUserService.getCurrentUser()).thenResolve(userDoc);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedDraftHandlingService.getDraft(anything(), anything())).thenReturn(
       of([
         { insert: { chapter: { number: 1 } }, attributes: { style: 'c' } },
@@ -150,7 +156,8 @@ class TestEnvironment {
         { insert: 'Verse 1 text.' }
       ])
     );
-    when(mockedOnlineStatusService.isOnline).thenReturn(true);
+    this.onlineStatusService.setIsOnline(true);
+    when(mockedNoticeService.show(anything())).thenResolve();
     this.setupProject(args.config);
     this.fixture = TestBed.createComponent(DraftUsfmFormatComponent);
     this.component = this.fixture.componentInstance;

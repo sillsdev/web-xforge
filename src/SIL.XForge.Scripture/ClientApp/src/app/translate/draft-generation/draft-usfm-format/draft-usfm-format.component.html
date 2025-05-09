@@ -3,6 +3,10 @@
   @if (!isOnline) {
     <p class="offline-text">{{ t("connect_to_the_internet") }}</p>
   }
+  <button mat-stroked-button class="cancel" (click)="close()">
+    <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
+    >{{ t("back") }}
+  </button>
   <div class="format-container">
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">
@@ -13,14 +17,16 @@
               <span class="description">{{ t("paragraph_marker_description") }}</span>
             </mat-checkbox>
           </mat-card-content>
+          <mat-card-actions align="end">
+            <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
+              <mat-icon>check</mat-icon>
+              {{ t("save_changes") }}
+            </button>
+          </mat-card-actions>
         </mat-card>
       </form>
-      <div class="actions">
-        <button mat-button class="cancel" (click)="cancel()">{{ t("cancel") }}</button>
-        <button mat-flat-button class="save" color="primary" (click)="saveChanges()">{{ t("save_changes") }}</button>
-      </div>
     </div>
-    <div>
+    <div class="text-container">
       <app-book-chapter-chooser
         [books]="booksWithDrafts"
         [book]="bookNum"
@@ -29,12 +35,16 @@
         [chapters]="chapters"
         (chapterChange)="chapterChanged($event)"
       ></app-book-chapter-chooser>
-      <app-text
-        [isReadOnly]="true"
-        [subscribeToUpdates]="false"
-        [isRightToLeft]="isRightToLeft"
-        [ngClass]="{ isLoading: isLoadingData }"
-      ></app-text>
+      <div class="viewer-container">
+        <app-text
+          [isReadOnly]="true"
+          [subscribeToUpdates]="false"
+          [isRightToLeft]="isRightToLeft"
+          [class.initializing]="isInitializing"
+          [class.loading]="isLoadingData"
+          class="viewer"
+        ></app-text>
+      </div>
     </div>
   </div>
 </ng-container>

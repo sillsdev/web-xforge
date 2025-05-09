@@ -369,8 +369,6 @@ public class MachineApiController : ControllerBase
     /// <param name="chapterNum">The chapter number. This cannot be zero.</param>
     /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
     /// <param name="preserveParagraphs">If <c>true</c>, configure the draft delta to preserve paragraph markers.</param>
-    /// <param name="preserveStyles">If <c>true</c>, configure the draft delta to preserve style markers.</param>
-    /// <param name="preserveEmbeds">If <c>true</c>, configure the draft delta to preserve embed markers.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
