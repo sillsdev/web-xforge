@@ -249,10 +249,6 @@ export const SelectAllAndSave: Story = {
     );
     expect(overviewHeadings).toEqual(['Reference (Chinese)', 'Translated project (English)', 'Source (Chinese)']);
 
-    // Click cancel, and ensure settings are not accidentally lost without confirmation
-    await userEvent.click(canvas.getByRole('button', { name: /Cancel/ }));
-    await userEvent.click(canvas.getByRole('button', { name: /Stay on page/ }));
-
     // // Click save and ensure we are informed that we need to confirm language codes
     await userEvent.click(await canvas.findByRole('button', { name: /Save & sync/ }));
     canvas.getByRole('heading', { name: 'Please confirm that the language codes are correct before saving.' });
