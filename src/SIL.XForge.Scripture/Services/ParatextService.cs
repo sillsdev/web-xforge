@@ -2121,7 +2121,9 @@ public class ParatextService : DisposableBase, IParatextService
         foreach (HgRevision revision in revisionCollection)
         {
             // Get the revision summary to see if the book and chapter has changed
-            RevisionChangeInfo revisionSummary = revisionCollection.GetSummaryFor(revision);
+            // Note: revisionCollection.GetSummaryFor(revision) maintains a non-thread safe cache of the revision
+            //       summaries, so we should just instantiate RevisionChangeInfo, as we will not need the cache.
+            RevisionChangeInfo revisionSummary = new RevisionChangeInfo(revisionCollection.VersionedText, revision);
 
             // Skip the revision if this book is not modified
             if (!revisionSummary.HasChangesInBook(bookNum))
