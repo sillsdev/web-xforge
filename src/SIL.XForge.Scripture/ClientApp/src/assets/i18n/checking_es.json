@@ -293,14 +293,13 @@
     "my_progress": "Mi progreso",
     "project_stats": "Estadísticas del proyecto",
     "questions": "Preguntas",
-    "some_actions_unavailable_offline": "Algunas acciones no están disponibles sin conexión y requieren conectarse a Internet, como cargar o borrar el audio de un capítulo.",
     "tooltip_edit": "Editar"
   },
   "checking_questions": {
+    "go_to": "Ir a las preguntas",
     "listen_to_question": "Escucha la pregunta para {{ referenceForDisplay }}",
     "loading": "Cargando...",
-    "no_questions_found_filtered": "No se han encontrado preguntas que coincidan con su filtro",
-    "no_questions_found_unfiltered": "No se han encontrado resultados",
+    "no_questions_found": "No se encontraron preguntas para los ajustes anteriores.",
     "scripture_audio_label": "Escucha {{ referenceForDisplay }} para responder a la pregunta que sigue.",
     "view_answers": "Ver respuestas"
   },

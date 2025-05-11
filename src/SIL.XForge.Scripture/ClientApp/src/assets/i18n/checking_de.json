@@ -293,14 +293,13 @@
     "my_progress": "Mein Fortschritt",
     "project_stats": "Projektstatistiken",
     "questions": "Fragen",
-    "some_actions_unavailable_offline": "Einige Funktionen sind offline nicht verfügbar und erfordern eine Verbindung zum Internet, z. B. das Hochladen oder Löschen von Audio je Kapitel.",
     "tooltip_edit": "Bearbeiten"
   },
   "checking_questions": {
+    "go_to": "Go to questions",
     "listen_to_question": "Anhören der Frage für {{ referenceForDisplay }}",
     "loading": "Wird geladen...",
-    "no_questions_found_filtered": "Keine Fragen gemäss Deinem Filter gefunden",
-    "no_questions_found_unfiltered": "Keine Fragen gefunden",
+    "no_questions_found": "No questions found for the settings above.",
     "scripture_audio_label": "Höre Dir {{ referenceForDisplay }} an, um die folgende Frage zu beantworten.",
     "view_answers": "Antworten ansehen"
   },
