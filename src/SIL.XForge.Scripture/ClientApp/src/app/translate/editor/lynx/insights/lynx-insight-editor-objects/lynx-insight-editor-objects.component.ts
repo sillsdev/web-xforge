@@ -1,4 +1,5 @@
-import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, DestroyRef, Inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { isEqual } from 'lodash-es';
 import { Delta } from 'quill';
 import { asapScheduler, combineLatest, EMPTY, filter, fromEvent, merge, switchMap, tap } from 'rxjs';
@@ -25,19 +26,35 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   @Input() editor?: LynxableEditor;
   @Input() lynxRangeConverter?: LynxRangeConverter;
 
+  private isEditorMouseDown = false;
+
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly insightState: LynxInsightStateService,
     private readonly insightRenderService: InsightRenderService,
     private readonly editorReadyService: EditorReadyService,
     private readonly overlayService: LynxInsightOverlayService,
-    private readonly lynxWorkspaceService: LynxWorkspaceService
+    private readonly lynxWorkspaceService: LynxWorkspaceService,
+    @Inject(DOCUMENT) private readonly document: Document
   ) {}
 
   ngOnInit(): void {
     if (this.editor == null || this.lynxRangeConverter == null) {
       return;
     }
+
+    fromEvent(this.editor.root, 'mousedown')
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.isEditorMouseDown = true;
+      });
+
+    // Catch mouseup event even if mouse is released outside the editor
+    fromEvent(this.document, 'mouseup')
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.isEditorMouseDown = false;
+      });
 
     fromEvent(this.editor, 'text-change')
       .pipe(
@@ -122,8 +139,9 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
     if (this.overlayService.isOpen) {
       return;
     }
+
     const ids = insights
-      .filter(insight => selection != null && overlaps(insight.range, selection))
+      .filter(insight => selection?.length === 0 && overlaps(insight.range, selection))
       .map(insight => insight.id);
 
     const displayStateChanges: Partial<LynxInsightDisplayState> = {
@@ -136,6 +154,12 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   }
 
   private handleMouseOver(target: HTMLElement): void {
+    // During a drag operation, do not update hover states for insights to prevent DOM changes
+    // from interrupting Quill's selection process.
+    if (this.isEditorMouseDown) {
+      return;
+    }
+
     // Clear any 'hover-insight' classes if the target is not an insight element
     if (!target.matches('.' + LynxInsightBlot.superClassName)) {
       this.insightState.updateDisplayState({ cursorActiveInsightIds: [] });
@@ -175,6 +199,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
     if (this.editor == null) {
       return;
     }
+
     const edits = await this.lynxWorkspaceService.getOnTypeEdits(delta);
     for (const edit of edits) {
       this.editor.updateContents(edit, 'user');
