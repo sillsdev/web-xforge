@@ -354,8 +354,7 @@ export const CannotSaveWithoutReferenceProject = {
     await clearSource(canvasElement);
     expect(canvas.getAllByRole('combobox').length).toBe(2);
     await clearSource(canvasElement, 1);
-    // The number of project selects drops to 1 only after both are cleared
-    expect(canvas.getAllByRole('combobox').length).toBe(1);
+    expect(canvas.getAllByRole('combobox').length).toBe(2);
     await userEvent.click(canvas.getByRole('button', { name: /Save & sync/ }));
     canvas.getByRole('heading', { name: 'Please select at least one reference project before saving.' });
   }

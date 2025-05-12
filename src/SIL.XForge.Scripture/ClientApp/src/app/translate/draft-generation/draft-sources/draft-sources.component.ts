@@ -246,11 +246,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Deact
       this.clearLanguageCodeConfirmationCheckbox.emit();
     } else {
       array[index] = undefined;
-      // When the user clears a project select, if there are now multiple blank project selects, remove the first one
-      if (array.filter(s => s == null).length > 1) {
-        const nullIndex = array.findIndex(s => s == null);
-        array.splice(nullIndex, 1);
-      }
     }
   }
 
