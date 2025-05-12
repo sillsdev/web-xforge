@@ -19,6 +19,7 @@ using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Converters.Usj;
+using SIL.Scripture;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
@@ -1335,11 +1336,56 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetLastCompletedPreTranslationBuildAsync_Success()
+    public async Task GetLastCompletedPreTranslationBuildAsync_RetrievePreTranslationStatusAsyncCall_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ConfigureTranslationBuild(CompletedTranslationBuild);
+        const string buildDtoId = $"{Project01}.{Build01}";
+        const string message = "Completed";
+        const double percentCompleted = 0;
+        const int revision = 43;
+        const JobState state = JobState.Completed;
+        env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+            .Returns(new ParatextSettings { Versification = ScrVers.English });
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>(
+                    [
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                            DateFinished = DateTimeOffset.UtcNow,
+                            Pretranslate =
+                            [
+                                new PretranslateCorpus
+                                {
+                                    ParallelCorpus = new ResourceLink
+                                    {
+                                        Id = ParallelCorpusId01,
+                                        Url = "https://example.com",
+                                    },
+                                    SourceFilters =
+                                    [
+                                        new ParallelCorpusFilter
+                                        {
+                                            Corpus = { Id = ParallelCorpusId01, Url = "https://example.com" },
+                                            ScriptureRange = "GEN",
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ]
+                )
+            );
+        SFProject project = env.Projects.Get(Project01);
+        project.Texts[0].Chapters[1].HasDraft = true;
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
@@ -1348,6 +1394,74 @@ public class MachineApiServiceTests
             false,
             CancellationToken.None
         );
+
+        // Verify RetrievePreTranslationStatusAsync was called once
+        await env.Service.Received().RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        Assert.IsNotNull(actual);
+        Assert.AreEqual(message, actual.Message);
+        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+        Assert.AreEqual(revision, actual.Revision);
+        Assert.AreEqual(state.ToString().ToUpperInvariant(), actual.State);
+        Assert.AreEqual(buildDtoId, actual.Id);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
+        Assert.AreEqual(Project01, actual.Engine.Id);
+        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+    }
+
+    [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_NoRetrievePreTranslationStatusAsyncCall_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string message = "Completed";
+        const double percentCompleted = 0;
+        const int revision = 43;
+        const JobState state = JobState.Completed;
+        env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+            .Returns(new ParatextSettings { Versification = ScrVers.English });
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>(
+                    [
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                            DateFinished = DateTimeOffset.UtcNow,
+                            Pretranslate =
+                            [
+                                new PretranslateCorpus
+                                {
+                                    SourceFilters =
+                                    [
+                                        new ParallelCorpusFilter
+                                        {
+                                            Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
+                                            ScriptureRange = "GEN",
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ]
+                )
+            );
+
+        // SUT
+        ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+            User01,
+            Project01,
+            false,
+            CancellationToken.None
+        );
+
+        await env.Service.DidNotReceive().RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
         TestEnvironment.AssertCoreBuildProperties(CompletedTranslationBuild, actual);
     }
@@ -1572,7 +1686,39 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ConfigureTranslationBuild(CompletedTranslationBuild);
+        DateTimeOffset dateFinished = DateTimeOffset.UtcNow;
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>(
+                    [
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Message = "Completed",
+                            PercentCompleted = 0,
+                            Revision = 43,
+                            State = JobState.Completed,
+                            DateFinished = dateFinished,
+                            Pretranslate =
+                            [
+                                new PretranslateCorpus
+                                {
+                                    SourceFilters =
+                                    [
+                                        new ParallelCorpusFilter
+                                        {
+                                            Corpus = new ResourceLink { Id = "corpusId", Url = "https://example.com" },
+                                            ScriptureRange = "GEN",
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ]
+                )
+            );
         List<DocumentRevision> revisions = [];
 
         // SUT
@@ -1592,7 +1738,7 @@ public class MachineApiServiceTests
 
         Assert.AreEqual(1, revisions.Count);
         Assert.AreEqual(revisions[0].Source, OpSource.Draft);
-        Assert.AreEqual(revisions[0].Timestamp, CompletedTranslationBuild.DateFinished!.Value.UtcDateTime);
+        Assert.AreEqual(revisions[0].Timestamp, dateFinished.UtcDateTime);
         Assert.IsNull(revisions[0].UserId);
     }
 
@@ -3437,6 +3583,10 @@ public class MachineApiServiceTests
                     new SFProject
                     {
                         Id = Project01,
+                        TranslateConfig = new TranslateConfig
+                        {
+                            DraftConfig = new DraftConfig { LastSelectedTranslationScriptureRange = "GEN" },
+                        },
                         ParatextId = Paratext01,
                         Texts =
                         [
