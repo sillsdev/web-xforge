@@ -910,15 +910,12 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        bool preserveMarkers = true;
         ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
             null,
-            preserveMarkers,
-            preserveMarkers,
-            preserveMarkers,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -945,15 +942,12 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        bool preserveMarkers = true;
         ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
             null,
-            preserveMarkers,
-            preserveMarkers,
-            preserveMarkers,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -978,15 +972,12 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        bool preserveMarkers = true;
         ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
             null,
-            preserveMarkers,
-            preserveMarkers,
-            preserveMarkers,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -1011,15 +1002,12 @@ public class MachineApiControllerTests
             .Throws(new InvalidOperationException());
 
         // SUT
-        bool preserveMarkers = true;
         ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
             null,
-            preserveMarkers,
-            preserveMarkers,
-            preserveMarkers,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -1044,15 +1032,12 @@ public class MachineApiControllerTests
             .Throws(new NotSupportedException());
 
         // SUT
-        bool preserveMarkers = true;
         ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
             null,
-            preserveMarkers,
-            preserveMarkers,
-            preserveMarkers,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -1078,15 +1063,12 @@ public class MachineApiControllerTests
             .Returns(Task.FromResult(new Snapshot<TextData>()));
 
         // SUT
-        bool preserveMarkers = true;
         ActionResult<Snapshot<TextData>> actual = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
             null,
-            preserveMarkers,
-            preserveMarkers,
-            preserveMarkers,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -1110,15 +1092,12 @@ public class MachineApiControllerTests
             .Returns(Task.FromResult(new Snapshot<TextData>()));
 
         // SUT
-        bool preserveMarkers = true;
         var result = await env.Controller.GetPreTranslationDeltaAsync(
             Project01,
             40,
             1,
             null,
-            preserveMarkers,
-            preserveMarkers,
-            preserveMarkers,
+            preserveParagraphs: true,
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);
