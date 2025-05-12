@@ -16,6 +16,7 @@ import { LocalPresence } from 'sharedb/lib/sharedb';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { MockConsole } from 'xforge-common/mock-console';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -148,8 +149,8 @@ describe('TextComponent', () => {
         id: 'user02',
         data: createTestUser({}, 2)
       });
-      when(mockedUserService.getCurrentUser()).thenCall(() =>
-        env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02')
+      when(mockedUserService.subscribeCurrentUser(anything())).thenCall(subscriber =>
+        env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02', subscriber)
       );
     };
     const env2: TestEnvironment = new TestEnvironment({ callback });
@@ -214,7 +215,7 @@ describe('TextComponent', () => {
 
     let textDocBeingGotten: TextDoc = {} as TextDoc;
     instance(mockedProjectService)
-      .getText(textDocIdWithEmpty.toString())
+      .getText(textDocIdWithEmpty.toString(), FETCH_WITHOUT_SUBSCRIBE)
       .then((value: TextDoc) => {
         textDocBeingGotten = value;
       });
@@ -223,7 +224,7 @@ describe('TextComponent', () => {
     Object.defineProperty(textDocBeingGotten, 'data', {
       get: () => undefined
     });
-    when(mockedProjectService.getText(textDocIdWithEmpty)).thenResolve(textDocBeingGotten);
+    when(mockedProjectService.getText(textDocIdWithEmpty, anything())).thenResolve(textDocBeingGotten);
 
     // The user goes to a location that has an 'empty' textdoc. The placeholder indicates empty.
     env.id = textDocIdWithEmpty;
@@ -546,7 +547,7 @@ describe('TextComponent', () => {
       tick();
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
-      verify(mockedUserService.getCurrentUser()).once();
+      verify(mockedUserService.subscribeCurrentUser(anything())).once();
     }));
 
     it('should not update presence if offline', fakeAsync(() => {
@@ -585,14 +586,14 @@ describe('TextComponent', () => {
       tick();
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
-      verify(mockedUserService.getCurrentUser()).once();
+      verify(mockedUserService.subscribeCurrentUser(anything())).once();
 
       env.component.onSelectionChanged(null as unknown as QuillRange);
 
       tick();
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(2);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(2);
-      verify(mockedUserService.getCurrentUser()).once();
+      verify(mockedUserService.subscribeCurrentUser(anything())).once();
     }));
 
     it('should use "Anonymous" when the displayName is undefined', fakeAsync(() => {
@@ -601,8 +602,8 @@ describe('TextComponent', () => {
           id: 'user02',
           data: createTestUser({ displayName: '', sites: { sf: { projects: ['project01'] } } }, 2)
         });
-        when(mockedUserService.getCurrentUser()).thenCall(() =>
-          env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02')
+        when(mockedUserService.subscribeCurrentUser(anything())).thenCall(subscriber =>
+          env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02', subscriber)
         );
       };
       const env: TestEnvironment = new TestEnvironment({ callback });
@@ -613,7 +614,7 @@ describe('TextComponent', () => {
       env.component.onSelectionChanged({ index: 0, length: 0 });
 
       tick();
-      verify(mockedUserService.getCurrentUser()).once();
+      verify(mockedUserService.subscribeCurrentUser(anything())).once();
       verify(mockedTranslocoService.translate('editor.anonymous')).once();
       expect().nothing();
     }));
@@ -1520,7 +1521,7 @@ describe('TextComponent', () => {
 
   it('should throw error if profile data is null', fakeAsync(() => {
     const env: TestEnvironment = new TestEnvironment();
-    when(mockedProjectService.getProfile(anything())).thenResolve({
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenResolve({
       data: null
     } as unknown as SFProjectProfileDoc);
     env.fixture.detectChanges();
@@ -1731,14 +1732,14 @@ class TestEnvironment {
       )
     });
 
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedProjectService.getText(anything(), anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), FETCH_WITHOUT_SUBSCRIBE)
     );
-    when(mockedProjectService.getProfile(anything())).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', FETCH_WITHOUT_SUBSCRIBE)
     );
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    when(mockedUserService.subscribeCurrentUser(anything())).thenCall(subscriber =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', subscriber)
     );
 
     if (callback != null) {
@@ -1814,7 +1815,7 @@ class TestEnvironment {
   }
 
   getUserDoc(userId: string): UserDoc {
-    return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId);
+    return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId, FETCH_WITHOUT_SUBSCRIBE);
   }
 
   getSegment(segmentRef: string): HTMLElement | null {
@@ -1979,12 +1980,12 @@ class TestEnvironment {
     let resolver: (_: TextDoc) => void = _ => {};
     let textDocBeingGotten: TextDoc = {} as TextDoc;
     instance(mockedProjectService)
-      .getText(textDocId.toString())
+      .getText(textDocId.toString(), FETCH_WITHOUT_SUBSCRIBE)
       .then((value: TextDoc) => {
         textDocBeingGotten = value;
       });
     tick();
-    when(mockedProjectService.getText(textDocId)).thenReturn(
+    when(mockedProjectService.getText(textDocId, anything())).thenReturn(
       new Promise(resolve => {
         // (Don't resolve until we manually cause it.)
         resolver = resolve;

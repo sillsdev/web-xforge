@@ -11,6 +11,7 @@ import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -461,7 +462,7 @@ class TestEnvironment {
       .map(o => {
         // Run it into and out of realtime service so it has fields like `remoteChanges$`.
         this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, o);
-        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id);
+        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id, FETCH_WITHOUT_SUBSCRIBE);
       })
       .filter(hasData)
       .map(o => ({

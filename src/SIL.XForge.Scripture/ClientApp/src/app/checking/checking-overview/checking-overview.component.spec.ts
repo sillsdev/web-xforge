@@ -27,6 +27,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { of } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
@@ -408,7 +409,8 @@ describe('CheckingOverviewComponent', () => {
       const env = new TestEnvironment();
       const questionDoc: QuestionDoc = env.realtimeService.get(
         QuestionDoc.COLLECTION,
-        getQuestionDocId('project01', 'q7Id')
+        getQuestionDocId('project01', 'q7Id'),
+        FETCH_WITHOUT_SUBSCRIBE
       );
       await questionDoc.submitJson0Op(op => {
         op.set(d => d.isArchived, false);
@@ -916,18 +918,26 @@ class TestEnvironment {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall((id, subscription) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription)
     );
-    when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
+    when(mockedProjectService.getUserConfig(anything(), anything(), anything())).thenCall((id, userId, subscriber) =>
+      this.realtimeService.subscribe(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId(id, userId),
+        subscriber
+      )
     );
     when(mockedQuestionsService.queryQuestions('project01', anything(), anything())).thenCall(() =>
       this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}, noopDestroyRef)
     );
     when(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).thenCall(
       (projectId, book, chapter) => {
-        const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+        const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+          SFProjectProfileDoc.COLLECTION,
+          projectId,
+          FETCH_WITHOUT_SUBSCRIBE
+        );
         const textIndex: number = projectDoc.data!.texts.findIndex(t => t.bookNum === book);
         const chapterIndex: number = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
         projectDoc.submitJson0Op(op => op.set(p => p.texts[textIndex].chapters[chapterIndex].hasAudio, false), false);
@@ -1093,7 +1103,11 @@ class TestEnvironment {
   }
 
   setSeeOtherUserResponses(isEnabled: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
       false
@@ -1103,7 +1117,11 @@ class TestEnvironment {
 
   setCheckingEnabled(isEnabled: boolean): void {
     this.ngZone.run(() => {
-      const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+      const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+        SFProjectProfileDoc.COLLECTION,
+        'project01',
+        FETCH_WITHOUT_SUBSCRIBE
+      );
       projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
     });
     this.waitForProjectDocChanges();
@@ -1163,7 +1181,11 @@ class TestEnvironment {
       ],
       permissions: {}
     };
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     const index: number = projectDoc.data!.texts.length - 1;
     projectDoc.submitJson0Op(op => op.insert(p => p.texts, index, text), false);
     this.addQuestion({

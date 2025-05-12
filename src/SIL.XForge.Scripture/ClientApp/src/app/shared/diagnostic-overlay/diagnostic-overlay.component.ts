@@ -39,8 +39,18 @@ export class DiagnosticOverlayComponent {
     }
   }
 
-  get docCountsByCollection(): { [key: string]: { docs: number; subscribers: number; queries: number } } {
+  get docCountsByCollection(): {
+    [key: string]: { docs: number; subscribers: number; activeDocSubscriptionsCount: number };
+  } {
     return this.realtimeService.docsCountByCollection;
+  }
+
+  get queriesByCollection(): { [key: string]: number } {
+    return this.realtimeService.queriesByCollection;
+  }
+
+  get subscriberCountsByContext(): { [key: string]: { [key: string]: { all: number; active: number } } } {
+    return this.realtimeService.subscriberCountsByContext;
   }
 
   get totalDocsCount(): number {

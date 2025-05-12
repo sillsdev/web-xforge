@@ -10,6 +10,7 @@ import {
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -264,7 +265,7 @@ class TestEnvironment {
       id: threadId,
       data: thread
     });
-    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId);
+    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId, FETCH_WITHOUT_SUBSCRIBE);
   }
 
   private getNoteThread(notes: Note[]): NoteThread {

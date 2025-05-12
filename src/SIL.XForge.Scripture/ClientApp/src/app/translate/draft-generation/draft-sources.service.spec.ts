@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -28,6 +28,7 @@ describe('DraftSourcesService', () => {
 
   beforeEach(() => {
     when(mockUserService.getCurrentUser()).thenResolve({ data: undefined } as UserDoc);
+    when(mockUserService.subscribeCurrentUser(anything())).thenResolve({ data: undefined } as UserDoc);
     when(mockActivatedProjectService.projectId).thenReturn('project01');
     service = TestBed.inject(DraftSourcesService);
   });

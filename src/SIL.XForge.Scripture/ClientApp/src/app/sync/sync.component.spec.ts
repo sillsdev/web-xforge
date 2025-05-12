@@ -12,6 +12,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -110,7 +111,7 @@ describe('SyncComponent', () => {
   it('should sync project when the button is clicked', fakeAsync(() => {
     const env = new TestEnvironment();
     const previousLastSyncDate = env.component.lastSyncDate;
-    verify(mockedProjectService.get(env.projectId)).once();
+    verify(mockedProjectService.subscribe(env.projectId, anything())).once();
 
     env.clickElement(env.syncButton);
 
@@ -140,7 +141,7 @@ describe('SyncComponent', () => {
 
   it('should report error if sync has a problem', fakeAsync(() => {
     const env = new TestEnvironment();
-    verify(mockedProjectService.get(env.projectId)).once();
+    verify(mockedProjectService.subscribe(env.projectId, anything())).once();
     env.clickElement(env.syncButton);
     verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
@@ -157,7 +158,7 @@ describe('SyncComponent', () => {
 
   it('should report user permissions error if sync failed for that reason', fakeAsync(() => {
     const env = new TestEnvironment({ lastSyncErrorCode: -1, lastSyncWasSuccessful: false });
-    verify(mockedProjectService.get(env.projectId)).once();
+    verify(mockedProjectService.subscribe(env.projectId, anything())).once();
     env.clickElement(env.syncButton);
     verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
@@ -228,7 +229,7 @@ describe('SyncComponent', () => {
   it('should not report if sync was cancelled', fakeAsync(() => {
     const env = new TestEnvironment();
     const previousLastSyncDate = env.component.lastSyncDate;
-    verify(mockedProjectService.get(env.projectId)).once();
+    verify(mockedProjectService.subscribe(env.projectId, anything())).once();
     env.clickElement(env.syncButton);
     verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
@@ -246,7 +247,7 @@ describe('SyncComponent', () => {
 
   it('should report success if sync was cancelled but had finished', fakeAsync(() => {
     const env = new TestEnvironment();
-    verify(mockedProjectService.get(env.projectId)).once();
+    verify(mockedProjectService.subscribe(env.projectId, anything())).once();
     env.clickElement(env.syncButton);
     verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
@@ -315,8 +316,8 @@ class TestEnvironment {
       })
     });
 
-    when(mockedProjectService.get(anyString())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribe(anyString(), anything())).thenCall(projectId =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, FETCH_WITHOUT_SUBSCRIBE)
     );
 
     this.fixture = TestBed.createComponent(SyncComponent);
@@ -386,13 +387,21 @@ class TestEnvironment {
   }
 
   setQueuedCount(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+      SFProjectDoc.COLLECTION,
+      projectId,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount, 1), false);
     this.fixture.detectChanges();
   }
 
   emitSyncComplete(successful: boolean, projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+      SFProjectDoc.COLLECTION,
+      projectId,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);
       ops.set(p => p.sync.lastSyncSuccessful!, successful);

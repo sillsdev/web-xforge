@@ -14,6 +14,7 @@ import { filter, map, repeat, retry, tap, throttleTime } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -98,7 +99,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(async projectId => {
-        this.projectDoc = await this.projectService.getProfile(projectId);
+        this.projectDoc = await this.projectService.subscribeProfile(
+          projectId,
+          new DocSubscription('TranslateOverviewComponent', this.destroyRef)
+        );
 
         // Update the overview now if we are online, or when we are next online
         this.onlineStatusService.online.then(async () => {

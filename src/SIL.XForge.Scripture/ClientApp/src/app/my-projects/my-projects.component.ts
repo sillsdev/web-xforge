@@ -6,6 +6,7 @@ import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
 import { en } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -148,7 +149,9 @@ export class MyProjectsComponent implements OnInit {
   }
 
   private async loadUser(): Promise<void> {
-    this.user = await this.userService.getCurrentUser();
+    this.user = await this.userService.subscribeCurrentUser(
+      new DocSubscription('MyProjectsComponent', this.destroyRef)
+    );
     this.userIsPTUser = this.user.data != null ? isPTUser(this.user.data) : false;
   }
 

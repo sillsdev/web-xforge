@@ -3,6 +3,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { asyncScheduler, merge, startWith, Subscription, tap, throttleTime } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DocSubscription, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -83,7 +84,10 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
 
   private async initialize(projectId: string): Promise<void> {
     this._canTrainSuggestions = false;
-    this._projectDoc = await this.projectService.getProfile(projectId);
+    this._projectDoc = await this.projectService.subscribeProfile(
+      projectId,
+      new DocSubscription('ProgressService', this.destroyRef)
+    );
 
     // If we are offline, just update the progress with what we have
     if (!this.onlineStatusService.isOnline) {
@@ -94,7 +98,9 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     for (const book of this._projectDoc.data!.texts) {
       for (const chapter of book.chapters) {
         const textDocId = new TextDocId(this._projectDoc.id, book.bookNum, chapter.number, 'target');
-        chapterDocPromises.push(this.projectService.getText(textDocId));
+        chapterDocPromises.push(
+          this.projectService.getText(textDocId, new DocSubscription('ProgressService', this.destroyRef))
+        );
       }
     }
 
@@ -135,7 +141,7 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     let numTranslatedSegments: number = 0;
     for (const chapter of book.text.chapters) {
       const textDocId = new TextDocId(project.id, book.text.bookNum, chapter.number, 'target');
-      const chapterText: TextDoc = await this.projectService.getText(textDocId);
+      const chapterText: TextDoc = await this.projectService.getText(textDocId, FETCH_WITHOUT_SUBSCRIBE);
 
       // Calculate Segment Count
       const { translated, blank } = chapterText.getSegmentCount();
@@ -158,7 +164,10 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         // Only retrieve the source text if the user has permission
         let sourceNonEmptyVerses: string[] = [];
         if (await this.permissionsService.canAccessText(sourceTextDocId)) {
-          const sourceChapterText: TextDoc = await this.projectService.getText(sourceTextDocId);
+          const sourceChapterText: TextDoc = await this.projectService.getText(
+            sourceTextDocId,
+            FETCH_WITHOUT_SUBSCRIBE
+          );
           sourceNonEmptyVerses = sourceChapterText.getNonEmptyVerses();
         }
 

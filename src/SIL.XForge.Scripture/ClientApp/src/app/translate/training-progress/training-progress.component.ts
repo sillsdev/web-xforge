@@ -5,6 +5,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { BehaviorSubject, Subscription, timer } from 'rxjs';
 import { filter, repeat, retry, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -56,7 +57,10 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
       if (this.projectDoc == null || projectId !== this._projectId) {
         this.loadingStarted();
         try {
-          this.projectDoc = await this.projectService.getProfile(projectId);
+          this.projectDoc = await this.projectService.subscribeProfile(
+            projectId,
+            new DocSubscription('TrainingProgressComponent', this.destroyRef)
+          );
           this.setupTranslationEngine();
         } finally {
           this.loadingFinished();
