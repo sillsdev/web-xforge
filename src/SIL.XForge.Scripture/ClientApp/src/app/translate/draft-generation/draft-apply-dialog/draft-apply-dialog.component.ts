@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate, TranslocoModule } from '@ngneat/transloco';
@@ -8,6 +8,7 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { BehaviorSubject, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -81,7 +82,8 @@ export class DraftApplyDialogComponent implements OnInit {
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
     private readonly userService: UserService,
-    private readonly onlineStatusService: OnlineStatusService
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly destroyRef: DestroyRef
   ) {
     this.targetProject$.pipe(filterNullish()).subscribe(async project => {
       const chapters: number = await this.chaptersWithTextAsync(project);
@@ -225,7 +227,10 @@ export class DraftApplyDialogComponent implements OnInit {
   }
 
   private async isNotEmpty(textDocId: TextDocId): Promise<boolean> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId);
+    const textDoc: TextDoc = await this.projectService.getText(
+      textDocId,
+      new DocSubscription('DraftApplyDialogComponent', this.destroyRef)
+    );
     return textDoc.getNonEmptyVerses().length > 0;
   }
 

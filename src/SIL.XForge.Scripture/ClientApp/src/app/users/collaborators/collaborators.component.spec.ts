@@ -18,6 +18,7 @@ import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -423,22 +424,26 @@ class TestEnvironment {
     when(mockedProjectService.onlineInvite(this.project01Id, anything(), anything(), anything())).thenResolve();
     when(mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(mockedNoticeService.show(anything())).thenResolve();
-    when(mockedUserService.getProfile(anything())).thenCall(userId =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, userId)
+    when(mockedUserService.subscribeProfile(anything(), anything())).thenCall((userId, subscription) =>
+      this.realtimeService.get(UserProfileDoc.COLLECTION, userId, subscription)
     );
     when(mockedUserService.currentUserId).thenReturn('user01');
-    when(mockedProjectService.get(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribe(anything(), anything())).thenCall((projectId, subscription) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, subscription)
     );
-    when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall((projectId, subscriber) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscriber)
     );
     when(
       mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything(), anything(), anything())
     ).thenResolve('linkSharingKey01');
     when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
       (projectId: string, userId: string, permissions: string[]) => {
-        const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
+        const projectDoc: SFProjectDoc = this.realtimeService.get(
+          SFProjectDoc.COLLECTION,
+          projectId,
+          FETCH_WITHOUT_SUBSCRIBE
+        );
         return projectDoc.submitJson0Op(op => op.set(p => p.userPermissions[userId], permissions));
       }
     );
@@ -577,7 +582,11 @@ class TestEnvironment {
   }
 
   updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
-    const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, this.project01Id);
+    const projectDoc: SFProjectDoc = this.realtimeService.get(
+      SFProjectDoc.COLLECTION,
+      this.project01Id,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     return projectDoc.submitJson0Op(op => {
       op.set(p => p.checkingConfig, config);
     });

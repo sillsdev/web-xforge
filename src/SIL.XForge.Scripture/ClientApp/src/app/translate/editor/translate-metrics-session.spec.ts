@@ -470,15 +470,14 @@ class TestEnvironment {
       })
     });
 
-    when(mockedSFProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedSFProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
-    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
-    when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString())
+    when(mockedSFProjectService.subscribeProfile(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, id.toString(), subscriber)
     );
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    when(mockedUserService.subscribeCurrentUser(anything())).thenCall(subscriber =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', subscriber)
     );
 
     this.sourceFixture = TestBed.createComponent(TextComponent);

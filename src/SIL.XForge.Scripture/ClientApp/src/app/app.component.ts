@@ -1,5 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
@@ -23,6 +24,7 @@ import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -31,11 +33,10 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
+import { ThemeService } from 'xforge-common/theme.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
-import { ThemeService } from 'xforge-common/theme.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -241,7 +242,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       this.themeService.setDarkMode(enabled);
     });
     this.loadingStarted();
-    this.currentUserDoc = await this.userService.getCurrentUser();
+    this.currentUserDoc = await this.userService.subscribeCurrentUser(
+      new DocSubscription('AppComponent', this.destroyRef)
+    );
     const userData: User | undefined = cloneDeep(this.currentUserDoc.data);
     if (userData != null) {
       const userDataWithId = { ...userData, id: this.currentUserDoc.id };
@@ -280,7 +283,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(
           this._selectedProjectDoc.id,
-          this.currentUserDoc!.id
+          this.currentUserDoc!.id,
+          new DocSubscription('AppComponent', this.destroyRef)
         );
         if (this.selectedProjectDeleteSub != null) {
           this.selectedProjectDeleteSub.unsubscribe();

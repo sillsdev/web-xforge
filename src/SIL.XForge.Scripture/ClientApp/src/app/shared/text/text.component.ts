@@ -23,6 +23,7 @@ import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -283,12 +284,14 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       localStorage.setItem(this.cursorColorStorageKey, localCursorColor);
     }
     this.cursorColor = localCursorColor;
-    this.userService.getCurrentUser().then((userDoc: UserDoc) => {
-      this.currentUserDoc = userDoc;
-      this.currentUserDoc.changes$
-        .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
-        .subscribe(() => this.submitLocalPresenceChannel(true));
-    });
+    this.userService
+      .subscribeCurrentUser(new DocSubscription('TextComponent', this.destroyRef))
+      .then((userDoc: UserDoc) => {
+        this.currentUserDoc = userDoc;
+        this.currentUserDoc.changes$
+          .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
+          .subscribe(() => this.submitLocalPresenceChannel(true));
+      });
   }
 
   @Input() set isReadOnly(value: boolean) {
@@ -970,7 +973,10 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       this.loadingState = 'permission-denied';
       return false;
     }
-    const profile: SFProjectProfileDoc = await this.projectService.getProfile(this.projectId);
+    const profile: SFProjectProfileDoc = await this.projectService.subscribeProfile(
+      this.projectId,
+      new DocSubscription('TextComponent', this.destroyRef)
+    );
     if (profile.data == null) throw new Error('Failed to fetch project profile.');
     if (
       profile.data.texts.some(
@@ -1055,7 +1061,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     // the text in IndexedDB, we will unfortunately briefly show that a book is unavailable offline, before it loads.
     // But if getText does not return, then we are showing a good message.
     this.loadingState = 'offline-or-loading';
-    const textDoc = await this.projectService.getText(this._id);
+    const textDoc = await this.projectService.getText(this._id, new DocSubscription('TextComponent', this.destroyRef));
     this.loadingState = 'loading';
     this.viewModel.bind(this._id, textDoc, this.subscribeToUpdates);
     if (this.viewModel.isEmpty) this.loadingState = 'empty-viewModel';
@@ -1840,7 +1846,9 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (!this.userProjects?.includes(this.projectId)) {
       return;
     }
-    const project = (await this.projectService.getProfile(this.projectId)).data;
+    const project = (
+      await this.projectService.subscribeProfile(this.projectId, new DocSubscription('TextComponent', this.destroyRef))
+    ).data;
     if (project == null) {
       return;
     }

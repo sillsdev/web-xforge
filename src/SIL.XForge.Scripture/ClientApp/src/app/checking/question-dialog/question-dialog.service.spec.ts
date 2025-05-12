@@ -16,6 +16,7 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -59,7 +60,7 @@ describe('QuestionDialogService', () => {
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything(), anything(), undefined, undefined)).once();
     expect().nothing();
   });
 
@@ -67,7 +68,7 @@ describe('QuestionDialogService', () => {
     const env = new TestEnvironment();
     when(env.mockedDialogRef.afterClosed()).thenReturn(of('close'));
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything())).never();
+    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything(), anything())).never();
     expect().nothing();
   });
 
@@ -81,7 +82,7 @@ describe('QuestionDialogService', () => {
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
     env.updateUserRole(SFProjectRole.CommunityChecker);
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything())).never();
+    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything(), anything())).never();
     verify(mockedNoticeService.show('question_dialog.add_question_denied')).once();
     expect().nothing();
   });
@@ -95,7 +96,9 @@ describe('QuestionDialogService', () => {
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything(), 'someFileName.mp3', anything())).once();
+    verify(
+      mockedQuestionsService.createQuestion(env.PROJECT01, anything(), anything(), 'someFileName.mp3', anything())
+    ).once();
     expect().nothing();
   });
 
@@ -197,13 +200,14 @@ class TestEnvironment {
     });
     this.projectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
-      this.PROJECT01
+      this.PROJECT01,
+      FETCH_WITHOUT_SUBSCRIBE
     );
 
     when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedDialogRef));
     when(mockedUserService.currentUserId).thenReturn(this.adminUser.id);
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE)
     );
   }
 
@@ -212,7 +216,11 @@ class TestEnvironment {
       id: getQuestionDocId(this.PROJECT01, question.dataId),
       data: question
     });
-    return this.realtimeService.get(QUESTIONS_COLLECTION, getQuestionDocId(this.PROJECT01, question.dataId));
+    return this.realtimeService.get(
+      QUESTIONS_COLLECTION,
+      getQuestionDocId(this.PROJECT01, question.dataId),
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   getNewQuestion(audioUrl?: string): Question {
@@ -243,7 +251,8 @@ class TestEnvironment {
   updateUserRole(role: string): void {
     const projectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
-      this.PROJECT01
+      this.PROJECT01,
+      FETCH_WITHOUT_SUBSCRIBE
     );
     const userRole = projectProfileDoc.data!.userRoles;
     userRole[this.adminUser.id] = role;

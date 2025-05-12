@@ -40,6 +40,7 @@ import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, wh
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -2949,7 +2950,11 @@ class TestEnvironment {
   }
 
   getQuestionDoc(dataId: string): QuestionDoc {
-    return this.realtimeService.get(QuestionDoc.COLLECTION, getQuestionDocId('project01', dataId));
+    return this.realtimeService.get(
+      QuestionDoc.COLLECTION,
+      getQuestionDocId('project01', dataId),
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   getQuestionText(question: DebugElement): string {
@@ -3206,8 +3211,8 @@ class TestEnvironment {
       }
     ]);
 
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id, subscriber)
     );
     when(mockedProjectService.isProjectAdmin(anything(), anything())).thenResolve(
       user.role === SFProjectRole.ParatextAdministrator
@@ -3239,8 +3244,12 @@ class TestEnvironment {
         data: this.consultantProjectUserConfig
       }
     ]);
-    when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
+    when(mockedProjectService.getUserConfig(anything(), anything(), anything())).thenCall((id, userId, subscriber) =>
+      this.realtimeService.subscribe(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId(id, userId),
+        subscriber
+      )
     );
 
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
@@ -3260,8 +3269,8 @@ class TestEnvironment {
         type: RichText.type.name
       }
     ]);
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
     when(mockedActivatedRoute.params).thenReturn(this.params$);
     when(mockedActivatedRoute.queryParams).thenReturn(this.queryParams$);
@@ -3273,8 +3282,8 @@ class TestEnvironment {
         data: user.user
       }
     ]);
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id)
+    when(mockedUserService.subscribeCurrentUser(anything())).thenCall(subscriber =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id, subscriber)
     );
 
     this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
@@ -3296,7 +3305,7 @@ class TestEnvironment {
       }
     ]);
     when(mockedUserService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
+      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE)
     );
 
     when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(

@@ -611,7 +611,7 @@ class TestEnvironment {
       }
     });
     const userDoc = { id: 'sf-user-id', data: user };
-    when(mockedUserService.getCurrentUser()).thenResolve(userDoc as UserDoc);
+    when(mockedUserService.subscribeCurrentUser(anything())).thenResolve(userDoc as UserDoc);
 
     this.router = TestBed.inject(Router);
     this.fixture = TestBed.createComponent(MyProjectsComponent);

@@ -4,6 +4,7 @@ import { NavigationEnd, Params, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { BehaviorSubject, distinctUntilChanged, filter, map, merge, Observable, of, shareReplay } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -85,7 +86,11 @@ export abstract class ResumeBaseService {
   private async updateProjectUserConfig(projectId: string | undefined): Promise<void> {
     this.projectUserConfigDoc = undefined;
     if (projectId != null) {
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(
+        projectId,
+        this.userService.currentUserId,
+        FETCH_WITHOUT_SUBSCRIBE
+      );
       this.projectUserConfigDoc$.next(this.projectUserConfigDoc);
     }
   }

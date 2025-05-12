@@ -12,6 +12,7 @@ import { CommandService } from './command.service';
 import { DialogService } from './dialog.service';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog/edit-name-dialog.component';
 import { LocalSettingsService } from './local-settings.service';
+import { DocSubscriberInfo, DocSubscription, FETCH_WITHOUT_SUBSCRIBE } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
@@ -65,15 +66,23 @@ export class UserService {
 
   /** Get currently-logged in user. */
   getCurrentUser(): Promise<UserDoc> {
-    return this.get(this.currentUserId);
+    return this.get(this.currentUserId, FETCH_WITHOUT_SUBSCRIBE);
   }
 
-  get(id: string): Promise<UserDoc> {
-    return this.realtimeService.subscribe(UserDoc.COLLECTION, id);
+  subscribeCurrentUser(subscriber: DocSubscriberInfo): Promise<UserDoc> {
+    return this.get(this.currentUserId, subscriber);
+  }
+
+  get(id: string, subscriber: DocSubscriberInfo): Promise<UserDoc> {
+    return this.realtimeService.subscribe(UserDoc.COLLECTION, id, subscriber);
   }
 
   getProfile(id: string): Promise<UserProfileDoc> {
-    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id);
+    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
+  }
+
+  subscribeProfile(id: string, subscriber: DocSubscriberInfo): Promise<UserProfileDoc> {
+    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, subscriber);
   }
 
   async onlineDelete(id: string): Promise<void> {
@@ -106,7 +115,7 @@ export class UserService {
   }
 
   async editDisplayName(isConfirmation: boolean): Promise<void> {
-    const currentUserDoc = await this.getCurrentUser();
+    const currentUserDoc = await this.subscribeCurrentUser(new DocSubscription('UserService'));
     if (currentUserDoc.data == null) {
       return;
     }

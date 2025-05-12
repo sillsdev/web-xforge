@@ -458,8 +458,8 @@ class TestEnvironment {
     when(dialogSpy.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMatDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    when(mockedUserService.subscribeCurrentUser(anything())).thenCall(subscription =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', subscription)
     );
 
     this.fixture.detectChanges();

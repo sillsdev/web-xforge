@@ -72,8 +72,8 @@ function setUpMocks(args: StoryState): void {
 
   const realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, { id: projectId, data: project });
-  when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
-    realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+  when(mockedSFProjectService.subscribeProfile(anything(), anything())).thenCall((id, subscription) =>
+    realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription)
   );
   testActivatedProjectService = TestActivatedProjectService.withProjectId(projectId);
 }

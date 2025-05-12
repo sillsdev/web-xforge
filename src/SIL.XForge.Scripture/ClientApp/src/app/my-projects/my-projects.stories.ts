@@ -241,7 +241,7 @@ const meta: Meta = {
         }
       });
       const userDoc = { id: 'sf-user-id', data: user };
-      when(mockedUserService.getCurrentUser()).thenResolve(userDoc as UserDoc);
+      when(mockedUserService.subscribeCurrentUser(anything())).thenResolve(userDoc as UserDoc);
 
       // For every kind of project scenario,
       for (const scenario of projectScenarios) {

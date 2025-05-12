@@ -16,6 +16,7 @@ import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-au
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
+import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
@@ -73,20 +74,28 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
    * Returns the SF project if the user has a role that allows access (i.e. a paratext role),
    * otherwise returns undefined.
    */
-  async tryGetForRole(id: string, role: string): Promise<SFProjectDoc | undefined> {
+  async tryGetForRole(id: string, role: string, subscriber: DocSubscriberInfo): Promise<SFProjectDoc | undefined> {
     if (SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Project, Operation.View)) {
-      return await this.get(id);
+      return await this.subscribe(id, subscriber);
     }
     return undefined;
   }
 
   /** Returns the project profile with the project data that all project members can access. */
   getProfile(id: string): Promise<SFProjectProfileDoc> {
-    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id);
+    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
   }
 
-  getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
-    return this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId));
+  subscribeProfile(id: string, subscriber: DocSubscriberInfo): Promise<SFProjectProfileDoc> {
+    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscriber);
+  }
+
+  getUserConfig(id: string, userId: string, subscriber: DocSubscriberInfo): Promise<SFProjectUserConfigDoc> {
+    return this.realtimeService.subscribe(
+      SFProjectUserConfigDoc.COLLECTION,
+      getSFProjectUserConfigDocId(id, userId),
+      subscriber
+    );
   }
 
   async isProjectAdmin(projectId: string, userId: string): Promise<boolean> {
@@ -109,21 +118,25 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('addTranslateMetrics', { projectId: id, metrics });
   }
 
-  getText(textId: TextDocId | string): Promise<TextDoc> {
-    return this.realtimeService.subscribe(TextDoc.COLLECTION, textId instanceof TextDocId ? textId.toString() : textId);
+  getText(textId: TextDocId | string, subscriber: DocSubscriberInfo): Promise<TextDoc> {
+    return this.realtimeService.subscribe(
+      TextDoc.COLLECTION,
+      textId instanceof TextDocId ? textId.toString() : textId,
+      subscriber
+    );
   }
 
-  getNoteThread(threadDataId: string): Promise<NoteThreadDoc> {
-    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadDataId);
+  getNoteThread(threadDataId: string, subscriber: DocSubscriberInfo): Promise<NoteThreadDoc> {
+    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadDataId, subscriber);
   }
 
-  getBiblicalTerm(biblicalTermId: string): Promise<BiblicalTermDoc> {
-    return this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, biblicalTermId);
+  getBiblicalTerm(biblicalTermId: string, subscriber: DocSubscriberInfo): Promise<BiblicalTermDoc> {
+    return this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, biblicalTermId, subscriber);
   }
 
-  async createNoteThread(projectId: string, noteThread: NoteThread): Promise<void> {
+  async createNoteThread(projectId: string, noteThread: NoteThread, subscriber: DocSubscriberInfo): Promise<void> {
     const docId: string = getNoteThreadDocId(projectId, noteThread.dataId);
-    await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread);
+    await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread, subscriber);
   }
 
   generateSharingUrl(shareKey: string, localeCode?: string): string {

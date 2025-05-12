@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { combineLatest, EMPTY, startWith, Subject, switchMap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -52,7 +53,10 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
             return EMPTY;
           }
 
-          return this.projectService.getProfile(this.projectId);
+          return this.projectService.subscribeProfile(
+            this.projectId,
+            new DocSubscription('EditorResourceComponent', this.destroyRef)
+          );
         })
       )
       .subscribe((projectDoc: SFProjectProfileDoc) => {

@@ -10,6 +10,7 @@ import { firstValueFrom } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -405,11 +406,12 @@ class TestEnvironment {
         return Promise.resolve(undefined);
       }
     } as Clipboard);
-    when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall((projectId, subscription) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscription)
     );
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenResolve({ data: createTestUser() } as UserDoc);
+    when(mockedUserService.subscribeCurrentUser(anything())).thenResolve({ data: createTestUser() } as UserDoc);
     when(mockedProjectService.onlineGetLinkSharingKey(projectId, anything(), anything(), anything())).thenResolve(
       checkingShareEnabled || translateShareEnabled ? 'linkSharing01' : ''
     );
@@ -493,7 +495,11 @@ class TestEnvironment {
   }
 
   disableCheckingSharing(): void {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(
       op =>
         op.set(p => p.checkingConfig, {

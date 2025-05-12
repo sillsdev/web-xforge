@@ -3,8 +3,9 @@ import { cloneDeep } from 'lodash-es';
 import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { of, Subject } from 'rxjs';
-import { instance, mock, when } from 'ts-mockito';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -81,12 +82,15 @@ class TestEnvironment {
 
     when(this.mockActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(this.mockUserService.currentUserId).thenReturn('user01');
-    when(this.mockProjectService.getUserConfig('project01', 'user01')).thenReturn(Promise.resolve(this.pucDoc));
+    when(this.mockProjectService.getUserConfig('project01', 'user01', anything())).thenReturn(
+      Promise.resolve(this.pucDoc)
+    );
 
     this.service = new EditorTabPersistenceService(
       instance(this.mockActivatedProjectService),
       instance(this.mockUserService),
-      instance(this.mockProjectService)
+      instance(this.mockProjectService),
+      noopDestroyRef
     );
   }
 }

@@ -6,6 +6,7 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -44,7 +45,7 @@ describe('SyncProgressComponent', () => {
   it('does not initialize if projectDoc is undefined', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user01' });
     expect(env.host.projectDoc).toBeUndefined();
-    verify(mockedProjectService.get('sourceProject02')).never();
+    verify(mockedProjectService.subscribe('sourceProject02', anything())).never();
     expect(await env.getMode()).toBe('indeterminate');
   }));
 
@@ -52,7 +53,7 @@ describe('SyncProgressComponent', () => {
     const env = new TestEnvironment({ userId: 'user01' });
     env.setupProjectDoc();
     env.onlineStatus = false;
-    verify(mockedProjectService.get('sourceProject02')).never();
+    verify(mockedProjectService.subscribe('sourceProject02', anything())).never();
     expect(await env.getMode()).toBe('indeterminate');
   }));
 
@@ -115,7 +116,7 @@ describe('SyncProgressComponent', () => {
     env.setupProjectDoc();
     env.updateSyncProgress(0, 'testProject01');
     env.updateSyncProgress(0, 'sourceProject02');
-    verify(mockedProjectService.get('sourceProject02')).never();
+    verify(mockedProjectService.subscribe('sourceProject02', anything())).never();
     env.emitSyncComplete(true, 'sourceProject02');
     env.updateSyncProgress(0.5, 'testProject01');
     expect(await env.getPercent()).toEqual(50);
@@ -128,7 +129,7 @@ describe('SyncProgressComponent', () => {
     when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenReject(new Error('504: Gateway Timeout'));
     env.setupProjectDoc();
     verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
-    verify(mockedProjectService.get('sourceProject02')).never();
+    verify(mockedProjectService.subscribe('sourceProject02', anything())).never();
     verify(mockedErrorReportingService.silentError(anything(), anything())).once();
     expect(env.progressBar).not.toBeNull();
     expect(env.syncStatus).not.toBeNull();
@@ -146,7 +147,7 @@ class HostComponent {
   constructor(private readonly projectService: SFProjectService) {}
 
   setProjectDoc(): void {
-    this.projectService.get('testProject01').then(doc => (this.projectDoc = doc));
+    this.projectService.subscribe('testProject01', FETCH_WITHOUT_SUBSCRIBE).then(doc => (this.projectDoc = doc));
   }
 }
 
@@ -209,11 +210,11 @@ class TestEnvironment {
         )
       });
     }
-    when(mockedProjectService.get('testProject01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testProject01')
+    when(mockedProjectService.subscribe('testProject01', anything())).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testProject01', FETCH_WITHOUT_SUBSCRIBE)
     );
-    when(mockedProjectService.get('sourceProject02')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'sourceProject02')
+    when(mockedProjectService.subscribe('sourceProject02', anything())).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'sourceProject02', FETCH_WITHOUT_SUBSCRIBE)
     );
     when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenResolve(this.userRoleSource[args.userId]);
 
@@ -239,7 +240,11 @@ class TestEnvironment {
   }
 
   updateSyncProgress(percentCompleted: number, projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+      SFProjectDoc.COLLECTION,
+      projectId,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 1);
     }, false);
@@ -251,7 +256,11 @@ class TestEnvironment {
 
   emitSyncComplete(successful: boolean, projectId: string): void {
     this.host.syncProgress.updateProgressState(projectId, new ProgressState(1));
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(
+      SFProjectDoc.COLLECTION,
+      projectId,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);
       ops.set(p => p.sync.lastSyncSuccessful, successful);
@@ -273,7 +282,7 @@ class TestEnvironment {
     this.updateSyncProgress(0, 'testProject01');
     this.updateSyncProgress(0, 'sourceProject02');
     verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
-    verify(mockedProjectService.get('sourceProject02')).once();
+    verify(mockedProjectService.subscribe('sourceProject02', anything())).once();
     expect(this.progressBar).not.toBeNull();
 
     expect(await this.getMode()).toBe('indeterminate');

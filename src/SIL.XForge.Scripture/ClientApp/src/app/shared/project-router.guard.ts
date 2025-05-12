@@ -6,6 +6,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../core/permissions.service';
@@ -26,7 +27,9 @@ export abstract class RouterGuard {
     return this.authGuard.allowTransition().pipe(
       switchMap(isLoggedIn => {
         if (isLoggedIn) {
-          return from(this.projectService.getProfile(projectId)).pipe(map(projectDoc => this.check(projectDoc)));
+          return from(this.projectService.subscribeProfile(projectId, new DocSubscription('ProjectRouterGuard'))).pipe(
+            map(projectDoc => this.check(projectDoc))
+          );
         }
         return of(false);
       })

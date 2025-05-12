@@ -6,6 +6,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
+import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { QueryFilter, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
@@ -33,8 +34,12 @@ export abstract class ProjectService<
 
   protected abstract get collection(): string;
 
-  get(id: string): Promise<TDoc> {
-    return this.realtimeService.subscribe(this.collection, id);
+  fetch(id: string): Promise<TDoc> {
+    return this.realtimeService.subscribe(this.collection, id, FETCH_WITHOUT_SUBSCRIBE);
+  }
+
+  subscribe(id: string, subscriber: DocSubscriberInfo): Promise<TDoc> {
+    return this.realtimeService.subscribe(this.collection, id, subscriber);
   }
 
   onlineQuery(
