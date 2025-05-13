@@ -4,6 +4,7 @@ import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { PresenceData } from '../../app/shared/text/text.component';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
+import { isNG0911Error } from '../util/rxjs-util';
 import { RealtimeOfflineData } from './realtime-offline-data';
 import { Snapshot } from './snapshot';
 
@@ -44,8 +45,10 @@ export class DocSubscription {
     readonly callerContext: string,
     destroyRef?: DestroyRef
   ) {
-    if (destroyRef != null) {
-      destroyRef.onDestroy(() => (this.isUnsubscribed = true));
+    try {
+      destroyRef?.onDestroy(() => (this.isUnsubscribed = true));
+    } catch (error) {
+      if (!isNG0911Error(error)) throw error;
     }
   }
 
