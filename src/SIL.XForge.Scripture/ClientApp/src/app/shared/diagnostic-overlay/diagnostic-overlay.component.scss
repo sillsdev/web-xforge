@@ -11,12 +11,13 @@ $table-border-color: #404040;
   color: $foreground-color;
 
   font-size: 12px;
-  overflow-y: auto;
+  max-height: calc(100vh - 56px);
 }
 
 .wrapper:not(.collapsed) {
-  width: 25vw;
-  min-width: 380px;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
 }
 
 .wrapper.collapsed {
@@ -77,6 +78,12 @@ h3 {
 .nav-and-content-wrapper {
   display: flex;
   gap: 8px;
+  overflow: hidden;
+}
+
+.tab-content {
+  overflow: auto;
+  padding: 8px;
 }
 
 .nav-wrapper {
