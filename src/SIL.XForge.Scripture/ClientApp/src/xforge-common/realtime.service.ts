@@ -2,7 +2,7 @@ import { DestroyRef, Injectable, Optional } from '@angular/core';
 import { filter, race, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
 import { FileService } from './file.service';
-import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE, RealtimeDoc } from './models/realtime-doc';
+import { DocSubscriberInfo, DocSubscription, FETCH_WITHOUT_SUBSCRIBE, RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { OfflineStore } from './offline-store';
 import { QueryParameters } from './query-parameters';
@@ -13,6 +13,10 @@ function getDocKey(collection: string, id: string): string {
   return `${collection}:${id}`;
 }
 
+export function getCollectionFromId(id: string): string {
+  return id.split(':')[0];
+}
+
 /**
  * A no-op DestroyRef that is not associated with any component.
  * This may be useful to satisfy a subscribe query in testing or if a query is not associated with a component.
@@ -20,6 +24,8 @@ function getDocKey(collection: string, id: string): string {
 export const noopDestroyRef: DestroyRef = {
   onDestroy: _callback => () => {}
 };
+
+const NEVER_RESOLVING_DOC_SUBSCRIPTION = new DocSubscription('FETCH_WITHOUT_SUBSCRIBE', noopDestroyRef);
 
 /**
  * The realtime service is responsible for retrieving and mutating realtime data models. This service transparently
@@ -49,6 +55,32 @@ export class RealtimeService {
       const doc: RealtimeDoc | undefined = this.docs.get(getDocKey(collection, docId));
       await doc?.updateOfflineData();
     });
+    this.scheduleNextGarbageCollection();
+  }
+
+  runGarbageCollection(): void {
+    let disposedDocs = 0;
+    const initialDocsCount = this.docs.size;
+    for (const doc of this.docs.values()) {
+      if (doc.activeDocSubscriptionsCount === 0) {
+        void doc.dispose();
+        disposedDocs++;
+      }
+    }
+    const remainingDocsCount = initialDocsCount - disposedDocs;
+    console.log(`Garbage collection: disposed ${disposedDocs} documents. ${remainingDocsCount} documents remaining.`);
+
+    this.scheduleNextGarbageCollection();
+  }
+
+  scheduleNextGarbageCollection(): void {
+    setTimeout(() => {
+      if (window.requestIdleCallback == null) {
+        this.runGarbageCollection();
+      } else {
+        window.requestIdleCallback(() => this.runGarbageCollection(), { timeout: 5000 });
+      }
+    }, 1000);
   }
 
   get totalDocCount(): number {
@@ -70,7 +102,7 @@ export class RealtimeService {
       [key: string]: { docs: number; subscribers: number; activeDocSubscriptionsCount: number };
     } = {};
     for (const [id, doc] of this.docs.entries()) {
-      const collection = id.split(':')[0];
+      const collection = getCollectionFromId(id);
       countsByCollection[collection] ??= { docs: 0, subscribers: 0, activeDocSubscriptionsCount: 0 };
       countsByCollection[collection].docs++;
       countsByCollection[collection].subscribers += doc.docSubscriptionsCount;
@@ -82,7 +114,7 @@ export class RealtimeService {
   get subscriberCountsByContext(): { [key: string]: { [key: string]: { all: number; active: number } } } {
     const countsByContext: { [key: string]: { [key: string]: { all: number; active: number } } } = {};
     for (const [id, doc] of this.docs.entries()) {
-      const collection = id.split(':')[0];
+      const collection = getCollectionFromId(id);
       countsByContext[collection] ??= {};
       for (const subscriber of doc.docSubscriptions) {
         countsByContext[collection][subscriber.callerContext] ??= { all: 0, active: 0 };
@@ -112,7 +144,11 @@ export class RealtimeService {
       }
       this.docs.set(key, doc);
     }
-    if (subscriber !== FETCH_WITHOUT_SUBSCRIBE) doc.addSubscriber(subscriber);
+    if (subscriber !== FETCH_WITHOUT_SUBSCRIBE) {
+      doc.addSubscriber(subscriber);
+    } else {
+      doc.addSubscriber(NEVER_RESOLVING_DOC_SUBSCRIPTION);
+    }
 
     return doc as T;
   }
@@ -137,18 +173,6 @@ export class RealtimeService {
     await doc.subscribe();
     return doc;
   }
-
-  // /**
-  //  * Gets the real-time doc with the specified id without subscribing to remote changes (well, it actually does
-  //  * subscribe to remote changes, but marks it as not needing to be kept around).
-  //  *
-  //  * @param {string} collection The collection name.
-  //  * @param {string} id The id.
-  //  * @returns {Promise<T>} The real-time doc.
-  //  */
-  // async fetch<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
-  //   return await this.subscribe<T>(collection, id, FETCH_WITHOUT_SUBSCRIBE);
-  // }
 
   async onlineFetch<T extends RealtimeDoc>(collection: string, id: string, subscriber: DocSubscriberInfo): Promise<T> {
     const doc = this.get<T>(collection, id, subscriber);

@@ -34,11 +34,11 @@ export class CacheService {
     if (this.docSubscription != null) {
       this.docSubscription.isUnsubscribed = true;
     }
-    for (const text of this.subscribedTexts) {
-      if (text.activeDocSubscriptionsCount === 0) {
-        text.dispose();
-      }
-    }
+    // for (const text of this.subscribedTexts) {
+    //   if (text.activeDocSubscriptionsCount === 0) {
+    //     text.dispose();
+    //   }
+    // }
 
     this.subscribedTexts = [];
   }
