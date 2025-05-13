@@ -61,16 +61,18 @@ export default class SFRealtimeServer extends RealtimeServer {
           return;
         }
         const userId: string = context.agent.connectSession.userId;
-        this.getProject(context.query.projectRef).then(p => {
-          if (
-            p != null &&
-            !SF_PROJECT_RIGHTS.hasRight(p, userId, SFProjectDomain.PTNoteThreads, Operation.View) &&
-            SF_PROJECT_RIGHTS.hasRight(p, userId, SFProjectDomain.SFNoteThreads, Operation.View)
-          ) {
-            context.query = { ...context.query, publishedToSF: true };
-          }
-          next();
-        });
+        this.getProject(context.query.projectRef)
+          .then(p => {
+            if (
+              p != null &&
+              !SF_PROJECT_RIGHTS.hasRight(p, userId, SFProjectDomain.PTNoteThreads, Operation.View) &&
+              SF_PROJECT_RIGHTS.hasRight(p, userId, SFProjectDomain.SFNoteThreads, Operation.View)
+            ) {
+              context.query = { ...context.query, publishedToSF: true };
+            }
+            next();
+          })
+          .catch(err => next(err));
       } else {
         next();
       }
