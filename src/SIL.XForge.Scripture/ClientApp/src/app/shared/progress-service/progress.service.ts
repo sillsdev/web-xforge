@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable, OnDestroy } from '@angular/core';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { asyncScheduler, merge, startWith, Subscription, tap, throttleTime } from 'rxjs';
+import { asyncScheduler, merge, startWith, Subscription, throttleTime } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DocSubscription, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
@@ -58,15 +58,10 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
       .pipe(
         startWith(this.activatedProject.projectDoc),
         filterNullish(),
-        tap(async project => {
-          this.initialize(project.id);
-        }),
         throttleTime(1000, asyncScheduler, { leading: false, trailing: true }),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(project => {
-        this.initialize(project.id);
-      });
+      .subscribe(project => this.initialize(project.id));
   }
 
   get texts(): TextProgress[] {
