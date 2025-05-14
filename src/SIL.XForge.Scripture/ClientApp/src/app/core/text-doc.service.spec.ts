@@ -93,6 +93,96 @@ describe('TextDocService', () => {
     });
   });
 
+  describe('canRestore', () => {
+    it('should return false if the project is undefined', () => {
+      const env = new TestEnvironment();
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(undefined, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return false if user does not have general edit right', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: true,
+        sync: { dataInSync: true },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextObserver }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return false if user does not have chapter edit permission', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: true,
+        sync: { dataInSync: true },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Read } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextAdministrator }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return false if data is not in sync', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: true,
+        sync: { dataInSync: false },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextAdministrator }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return false if editing is disabled', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: false,
+        sync: { dataInSync: true },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextAdministrator }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return true if all conditions are met', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: true,
+        sync: { dataInSync: true },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextAdministrator }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(true);
+    });
+  });
+
   describe('createTextDoc', () => {
     it('should throw error if text doc already exists', fakeAsync(() => {
       const env = new TestEnvironment();
