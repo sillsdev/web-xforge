@@ -18,7 +18,7 @@ import {
   toVerseRef,
   VerseRefData
 } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { BehaviorSubject, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -48,8 +48,6 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       });
     }
   }
-
-  scriptureAudioUrl$: BehaviorSubject<string | undefined> = new BehaviorSubject<string | undefined>(undefined);
 
   private _scriptureAudio?: SingleButtonAudioPlayerComponent;
   private _scriptureTextAudioData?: TextAudio;
@@ -125,6 +123,10 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     return this._questionDoc?.data?.audioUrl;
   }
 
+  get scriptureAudioUrl(): string | undefined {
+    return this._scriptureTextAudioData?.audioUrl;
+  }
+
   private get audioId(): string {
     if (this.projectId == null) {
       return '';
@@ -134,10 +136,6 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       this._questionDoc!.data!.verseRef!.bookNum,
       this._questionDoc!.data!.verseRef!.chapterNum
     );
-  }
-
-  private get scriptureAudioUrl(): string | undefined {
-    return this._scriptureTextAudioData?.audioUrl;
   }
 
   private get startVerse(): number {
@@ -227,7 +225,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     const haveListenedToAllVerses = verseRefs.every(v => this._versesListenedTo.has(v.toString()));
 
     // Select a question if there is no audio or if all verses have been played already
-    if (this._scriptureTextAudioData == null || this.scriptureAudioUrl == null || haveListenedToAllVerses) {
+    if (this._scriptureTextAudioData == null || haveListenedToAllVerses) {
       this.selectQuestion();
     } else {
       this.selectScripture();
@@ -236,7 +234,6 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
   private updateScriptureAudio(): void {
     this._scriptureTextAudioData = this.audioQuery?.docs?.find(t => t.id === this.audioId)?.data;
-    this.scriptureAudioUrl$.next(this.scriptureAudioUrl);
     this.setDefaultFocus();
   }
 
