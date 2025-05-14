@@ -5,14 +5,14 @@ import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import {
-  BehaviorSubject,
-  Observable,
-  Subject,
   asyncScheduler,
+  BehaviorSubject,
   combineLatest,
   map,
+  Observable,
   observeOn,
   startWith,
+  Subject,
   tap
 } from 'rxjs';
 import { isNetworkError } from 'xforge-common/command.service';
@@ -76,7 +76,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   get canRestoreSnapshot(): boolean {
     return (
       this.selectedSnapshot?.data.ops != null &&
-      this.textDocService.canEdit(this.projectDoc?.data, this.bookNum, this.chapter)
+      this.textDocService.canRestore(this.projectDoc?.data, this.bookNum, this.chapter)
     );
   }
 
