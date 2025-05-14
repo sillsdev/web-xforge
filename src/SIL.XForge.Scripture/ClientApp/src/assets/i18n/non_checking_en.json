@@ -317,7 +317,8 @@
     "paragraph_marker_description": "Keep paragraphs from the translation source",
     "preserve_paragraphs": "Preserve paragraph markers",
     "save_changes": "Save",
-    "usfm_format_title": "Select the USFM format to apply to your draft"
+    "usfm_format_title": "Format USFM for drafts",
+    "usfm_format_description": "Select the USFM format to apply to your draft"
   },
   "editor": {
     "add_comment": "Add Comment",

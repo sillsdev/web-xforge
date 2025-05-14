@@ -1,12 +1,15 @@
 <ng-container *transloco="let t; read: 'draft_usfm_format'">
-  <h2>{{ t("usfm_format_title") }}</h2>
+  <h1>{{ t("usfm_format_title") }}</h1>
+  <p>{{ t("usfm_format_description") }}</p>
   @if (!isOnline) {
     <p class="offline-text">{{ t("connect_to_the_internet") }}</p>
   }
-  <button mat-stroked-button class="cancel" (click)="close()">
-    <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
-    >{{ t("back") }}
-  </button>
+  <div>
+    <button mat-stroked-button class="cancel" (click)="close()">
+      <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
+      >{{ t("back") }}
+    </button>
+  </div>
   <div class="format-container">
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">

@@ -126,7 +126,6 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
         this.usfmFormatForm.enable();
       } else {
         this.usfmFormatForm.disable();
-        this.isInitializing = true;
       }
     });
   }
@@ -175,8 +174,14 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     this.usfmFormatForm.setValue({
       preserveParagraphs: config.preserveParagraphMarkers
     });
-    this.usfmFormatForm.valueChanges.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.reloadText();
-    });
+
+    this.usfmFormatForm.valueChanges
+      .pipe(
+        switchMap(() => this.onlineStatusService.onlineStatus$),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(isOnline => {
+        if (isOnline) this.reloadText();
+      });
   }
 }
