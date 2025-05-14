@@ -196,6 +196,26 @@ describe('DraftSourcesComponent', () => {
       ).last()[1];
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
     }));
+
+    it('can edit second source after first is cleared', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      env.clickLanguageCodesConfirmationCheckbox();
+
+      // Remove the first training source.
+      env.component.sourceSelected(env.component.trainingSources, 0, undefined);
+      // Confirm that we have 1 other training source.
+      expect(env.component.trainingSources[1]).not.toBeNull();
+      env.fixture.detectChanges();
+      tick();
+
+      // SUT
+      env.component.sourceSelected(env.component.trainingSources, 1, undefined);
+      env.fixture.detectChanges();
+      tick();
+      expect(env.component.trainingSources.length).toEqual(2);
+    }));
   });
 
   describe('sourceArraysToSettingsChange', () => {
