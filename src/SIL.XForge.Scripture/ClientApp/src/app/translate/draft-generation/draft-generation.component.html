@@ -261,7 +261,7 @@
                   <app-working-animated-indicator></app-working-animated-indicator>
                 </section>
               }
-              @if (isDraftComplete(draftJob) || hasAnyCompletedBuild) {
+              @if ((isDraftComplete(draftJob) || hasAnyCompletedBuild) && !featureFlags.newDraftHistory.enabled) {
                 <section class="draft-complete">
                   <mat-card class="preview-card">
                     <mat-card-header>
@@ -278,28 +278,7 @@
                     </mat-card-content>
                     <mat-card-actions>
                       @if (hasDraftBooksAvailable) {
-                        <button
-                          mat-button
-                          type="button"
-                          (click)="downloadDraft()"
-                          [disabled]="downloadProgress > 0"
-                          data-test-id="download-button"
-                        >
-                          @if (downloadProgress === 0) {
-                            <mat-icon class="material-icons-outlined">cloud_download</mat-icon>
-                          } @else if (downloadProgress > 0) {
-                            <mat-icon>
-                              <mat-spinner
-                                diameter="18"
-                                [value]="downloadProgress"
-                                mode="determinate"
-                                color="accent"
-                                data-test-id="download-spinner"
-                              ></mat-spinner>
-                            </mat-icon>
-                          }
-                          <span>{{ t("download_draft") }}</span>
-                        </button>
+                        <app-draft-download-button [build]="lastCompletedBuild" />
                       }
                     </mat-card-actions>
                   </mat-card>
@@ -353,6 +332,13 @@
         }
       }
     </section>
+
+    @if (featureFlags.newDraftHistory.enabled) {
+      <app-draft-history-list />
+      @if (isServalAdmin()) {
+        <h2>Further information</h2>
+      }
+    }
 
     @if (canShowAdditionalInfo(draftJob)) {
       <section>
