@@ -1,5 +1,7 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, DestroyRef, Inject, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
@@ -31,11 +33,10 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
+import { ThemeService } from 'xforge-common/theme.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
-import { ThemeService } from 'xforge-common/theme.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -73,6 +74,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   constructor(
     private readonly router: Router,
     private readonly authService: AuthService,
+    @Inject(DOCUMENT) private readonly document: Document,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly dialogService: DialogService,
@@ -237,6 +239,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   async ngOnInit(): Promise<void> {
     await this.authService.loggedIn;
+    this.document.title = 'Scripture Forge';
     this.featureFlags.darkMode.enabled$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(enabled => {
       this.themeService.setDarkMode(enabled);
     });
