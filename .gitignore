@@ -33,3 +33,7 @@ coverage.opencover.xml
 junit.xml
 
 appsettings.user.json
+
+# e2e tests
+/src/SIL.XForge.Scripture/ClientApp/e2e/secrets.json
+/src/SIL.XForge.Scripture/ClientApp/e2e/test_output/
