@@ -50,7 +50,7 @@ const mockedDialogService = mock(DialogService);
 describe('TextComponent', () => {
   configureTestingModule(() => ({
     declarations: [HostComponent],
-    imports: [SharedModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [SharedModule.forRoot(), TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },

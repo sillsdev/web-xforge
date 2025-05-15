@@ -192,7 +192,7 @@ const meta: Meta = {
     moduleMetadata({
       imports: [
         UICommonModule,
-        SharedModule,
+        SharedModule.forRoot(),
         RouterModule.forChild([
           { path: 'projects/:projectId', component: EmptyComponent },
           { path: 'connect-project', component: EmptyComponent }

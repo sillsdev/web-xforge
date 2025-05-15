@@ -1,0 +1,75 @@
+<ng-container *transloco="let t; read: 'lynx_insights_overlay'">
+  @if (focusedInsight != null) {
+    <div class="main-section focused" [ngClass]="focusedInsight.type">
+      <h1>
+        <span class="description">{{ focusedInsight.description }}</span>
+
+        @if (focusedInsight.moreInfo != null) {
+          <mat-icon [matTooltip]="t('tooltip_more_info')" class="more-info-icon" (click)="toggleMoreInfo()"
+            >help_outline</mat-icon
+          >
+        }
+      </h1>
+
+      @if (primaryAction != null) {
+        <div class="primary-action">
+          <a (click)="selectAction(primaryAction!)">
+            <mat-icon class="apply-icon">content_paste_go</mat-icon>
+            {{ primaryAction.label }}
+          </a>
+
+          @if (applyActionShortcut) {
+            <span class="shortcut">{{ applyActionShortcut }}</span>
+          }
+        </div>
+      }
+      <div class="secondary-actions">
+        @if (menuActions.length > 0) {
+          <mat-icon [matTooltip]="t('tooltip_actions')" [matMenuTriggerFor]="actionMenu" class="action-menu-trigger">
+            more_horiz
+          </mat-icon>
+        }
+        <!-- TODO: Removed for MVP -->
+        <!-- <mat-icon [matTooltip]="t('tooltip_dismiss')" (click)="dismissInsight(focusedInsight)" class="dismiss-icon">
+        visibility_off
+      </mat-icon> -->
+      </div>
+    </div>
+
+    @if (focusedInsight.moreInfo != null && showMoreInfo) {
+      <div class="more-info-section">
+        {{ focusedInsight.moreInfo }}
+      </div>
+    }
+
+    <mat-menu #actionMenu="matMenu" class="lynx-insight-action-menu">
+      @for (action of menuActions; track action) {
+        <div mat-menu-item (click)="selectAction(action)">
+          <div class="menu-item-wrapper">
+            <h2>{{ action.label }}</h2>
+            <span>{{ action.description }}</span>
+          </div>
+        </div>
+      }
+    </mat-menu>
+  } @else if (insights.length > 1) {
+    <div class="main-section list">
+      <h1>{{ t("multi_insight_header_select_for_details") }}</h1>
+      @for (insight of insights; track insight.id) {
+        <div
+          class="insight-item"
+          [ngClass]="insight.type"
+          (click)="focusInsight(insight)"
+          (mouseover)="highlightInsight(insight)"
+          (mouseout)="highlightInsight(null)"
+        >
+          <mat-icon [svgIcon]="'lynx_' + insight.type" class="severity-icon" />
+          <h1>
+            <span class="description">{{ insight.description }}</span>
+          </h1>
+          <mat-icon class="ellipsis-icon">more_horiz</mat-icon>
+        </div>
+      }
+    </div>
+  }
+</ng-container>

@@ -28,6 +28,7 @@ public class SFProjectUserConfig : ProjectData
     public List<string> AnswerRefsRead { get; set; } = [];
     public List<string> CommentRefsRead { get; set; } = [];
     public List<EditorTabPersistData> EditorTabsOpen { get; set; } = [];
+    public LynxInsightUserData? LynxInsightState { get; set; }
     public string? SelectedQuestionRef { get; set; }
 
     [Obsolete("For backwards compatibility with older frontend clients. Deprecated September 2024.")]

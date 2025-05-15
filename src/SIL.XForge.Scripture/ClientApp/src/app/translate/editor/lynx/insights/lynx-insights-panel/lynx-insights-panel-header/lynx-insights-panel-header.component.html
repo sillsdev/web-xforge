@@ -1,0 +1,56 @@
+<ng-container *transloco="let t; read: 'lynx_insights_panel_header'">
+  <div class="title">
+    {{ t("insights") }}
+    <button mat-button [matMenuTriggerFor]="filterMenu">
+      <mat-icon>visibility</mat-icon>
+      <mat-icon class="menu-arrow">arrow_right</mat-icon>
+    </button>
+  </div>
+  <mat-tab-group
+    mat-stretch-tabs="false"
+    [animationDuration]="100"
+    [selectedIndex]="selectedScopeIndex"
+    (selectedIndexChange)="setScopeIndex($event)"
+  >
+    @for (scope of scopes; track scope) {
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <span class="tab-header-label">
+            {{ t("scope_" + scope) }}
+            <span class="scope-count">{{ scopeCounts?.[scope] }}</span>
+          </span>
+        </ng-template>
+      </mat-tab>
+    }
+  </mat-tab-group>
+
+  <mat-menu #filterMenu="matMenu" class="lynx-problems-panel-filter-menu">
+    <!-- Prevent default menu close on click. Closing on 'Order by' selection is handled manually. -->
+    <div (click)="$event.stopPropagation()">
+      <h2>{{ t("filter_menu_filter_header") }}</h2>
+      @for (insightType of insightTypes; track insightType) {
+        <button
+          mat-menu-item
+          [class.selected]="filter?.types | includes: insightType"
+          (click)="toggleFilterType(insightType)"
+        >
+          <mat-icon>check</mat-icon>
+          <span>{{ t("filter_menu_filter_" + insightType) }}</span>
+        </button>
+      }
+      <!-- TODO: Removed for MVP -->
+      <!-- <button mat-menu-item [class.selected]="filter?.includeDismissed" (click)="toggleFilterDismissed()">
+        <mat-icon>check</mat-icon>
+        <span>{{ t("filter_menu_filter_dismissed") }}</span>
+      </button> -->
+      <mat-divider />
+      <h2>{{ t("filter_menu_sort_header") }}</h2>
+      @for (insightOrder of insightOrders; track insightOrder) {
+        <button mat-menu-item [class.selected]="orderBy === insightOrder" (click)="setOrder(insightOrder)">
+          <mat-icon>check</mat-icon>
+          <span>{{ t("filter_menu_sort_" + insightOrder) }}</span>
+        </button>
+      }
+    </div>
+  </mat-menu>
+</ng-container>

@@ -464,6 +464,29 @@
     "sources_in_following_languages": "Currently the source projects are in the following languages:",
     "sources_must_be_same_language": "The training source must be the same language as the drafting source. You can update your source texts on the [link:projectSettingsUrl]settings page[/link]"
   },
+  "lynx_insights_overlay": {
+    "multi_insight_header_select_for_details": "Select for details",
+    "tooltip_actions": "Actions",
+    "tooltip_dismiss": "Dismiss",
+    "tooltip_more_info": "More info"
+  },
+  "lynx_insights_panel": {
+    "restore": "Restore"
+  },
+  "lynx_insights_panel_header": {
+    "insights": "Insights",
+    "filter_menu_filter_header": "Show",
+    "filter_menu_filter_info": "Notices",
+    "filter_menu_filter_warning": "Warnings",
+    "filter_menu_filter_error": "Errors",
+    "filter_menu_filter_dismissed": "Dismissed",
+    "filter_menu_sort_header": "Order by",
+    "filter_menu_sort_severity": "Severity",
+    "filter_menu_sort_appearance": "Appearance in text",
+    "scope_chapter": "Chapter",
+    "scope_book": "Book",
+    "scope_project": "Project"
+  },
   "multi_viewer": {
     "other_viewers": "{{ count }} other viewers"
   },

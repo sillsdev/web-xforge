@@ -216,6 +216,23 @@ describe('I18nService', () => {
       expect(service.getPluralRule(18)).toEqual('many');
     });
   });
+
+  describe('localizeBookChapter', () => {
+    it('should localize book and chapter references', () => {
+      when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
+
+      const service = getI18nService();
+
+      expect(service.localizeBookChapter(1, 2)).toBe('Genesis 2');
+      expect(service.localizeBookChapter('MRK', 3)).toBe('Mark 3');
+
+      // Test with RTL language
+      service.setLocale('ar');
+      expect(service.localizeBookChapter(1, 2)).toBe('Genesis \u200F2');
+      expect(service.localizeBookChapter('MRK', 3)).toBe('Mark \u200F3');
+    });
+  });
 });
 
 function getI18nService(): I18nService {
