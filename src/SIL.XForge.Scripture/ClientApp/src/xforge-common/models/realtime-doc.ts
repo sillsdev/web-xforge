@@ -1,3 +1,4 @@
+import { DestroyRef } from '@angular/core';
 import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -14,6 +15,53 @@ export interface RealtimeDocConstructor {
 
   new (realtimeService: RealtimeService, adapter: RealtimeDocAdapter): RealtimeDoc;
 }
+
+/**
+ * Represents information about the subscriber to a realtime document.
+ *
+ * This includes:
+ * - The context in which the subscription was created (e.g. component name). This is used for debugging purposes.
+ * - A flag indicating whether the subscriber has unsubscribed.
+ *
+ * In the future this class may be changed to contain a DestroyRef, callback, or some other way of signaling that the
+ * subscriber has unsubscribed.
+ *
+ * In principle a realtime doc can be disposed once every subscriber has unsubscribed. However, some methods only need
+ * a copy of a document at a point in time (e.g. checking permissions) and don't need to be notified of changes. Those
+ * methods can provide a {@link FETCH_WITHOUT_SUBSCRIBE} symbol as the subscriber to indicate that they don't need to be
+ * notified of changes, and the document is fetched and returned without subscribing to changes. Disposing such
+ * documents when they have no subscribers would result in them being repeatedly fetched and disposed, which would be a
+ * serious performance issue.
+ */
+export class DocSubscription {
+  isUnsubscribed: boolean = false;
+
+  /**
+   * Creates a new DocSubscription.
+   * @param callerContext A description of the context in which the subscription was created (e.g. component name).
+   */
+  constructor(
+    readonly callerContext: string,
+    destroyRef?: DestroyRef
+  ) {
+    if (destroyRef != null) {
+      destroyRef.onDestroy(() => (this.isUnsubscribed = true));
+    }
+  }
+
+  /**
+   * Creates a new DocSubscription that represents an unknown subscriber (a temporary solution to track subscribers
+   * that don't yet provide a DestroyRef).
+   */
+  static UnknownSubscriber = new DocSubscription('UnknownSubscriber');
+}
+
+/**
+ * An alternative to a {@link DocSubscription} indicating that the document should be fetched and returned without being
+ * subscribed to. */
+export const FETCH_WITHOUT_SUBSCRIBE = Symbol('FETCH_WITHOUT_SUBSCRIBE');
+
+export type DocSubscriberInfo = DocSubscription | typeof FETCH_WITHOUT_SUBSCRIBE;
 
 /**
  * This is the base class for all real-time data models. This class manages the interaction between offline storage of
@@ -33,6 +81,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   private subscribedState: boolean = false;
   private subscribeQueryCount: number = 0;
   private loadOfflineDataPromise?: Promise<void>;
+  docSubscriptions: DocSubscription[] = [];
 
   constructor(
     protected readonly realtimeService: RealtimeService,
@@ -183,6 +232,22 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     await this.adapter.destroy();
     this.subscribedState = false;
     await this.realtimeService.onLocalDocDispose(this);
+  }
+
+  addSubscriber(docSubscription: DocSubscription): void {
+    this.docSubscriptions.push(docSubscription);
+  }
+
+  get docSubscriptionsCount(): number {
+    return this.docSubscriptions.length;
+  }
+
+  get activeDocSubscriptionsCount(): number {
+    let count = 0;
+    for (const docSubscription of this.docSubscriptions) {
+      if (!docSubscription.isUnsubscribed) count++;
+    }
+    return count;
   }
 
   protected prepareDataForStore(data: T): any {

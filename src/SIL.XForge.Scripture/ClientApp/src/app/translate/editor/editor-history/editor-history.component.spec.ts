@@ -82,7 +82,7 @@ describe('EditorHistoryComponent', () => {
       editor: mockEditor
     });
 
-    when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
+    when(mockSFProjectService.getText(anything(), anything())).thenReturn(Promise.resolve(textDoc));
 
     component.historyChooser = mockHistoryChooserComponent;
     component.snapshotText = mockTextComponent;
@@ -113,7 +113,7 @@ describe('EditorHistoryComponent', () => {
       editor: mockEditor
     });
 
-    when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
+    when(mockSFProjectService.getText(anything(), anything())).thenReturn(Promise.resolve(textDoc));
 
     component.historyChooser = mockHistoryChooserComponent;
     component.snapshotText = mockTextComponent;

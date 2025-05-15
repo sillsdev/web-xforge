@@ -13,6 +13,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -503,7 +504,7 @@ class TestEnvironment {
       .map(o => {
         // Run it into and out of realtime service so it has fields like `remoteChanges$`.
         this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, o);
-        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id);
+        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id, FETCH_WITHOUT_SUBSCRIBE);
       })
       .filter(hasData)
       .map(o => ({

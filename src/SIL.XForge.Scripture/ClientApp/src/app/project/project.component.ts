@@ -7,6 +7,7 @@ import { lastValueFrom, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -51,7 +52,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
     // Can only navigate to the project if the user is on the project
     // Race condition can occur with the user doc sites so listen to remote changes
-    const userDoc = await this.userService.getCurrentUser();
+    const userDoc = await this.userService.subscribeCurrentUser(
+      new DocSubscription('ProjectComponent', this.destroyRef)
+    );
     const navigateToProject$: Observable<string> = new Observable(subscriber => {
       let projectId: string | undefined;
       projectId$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(id => {
@@ -75,8 +78,12 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
     try {
       const [projectUserConfigDoc, projectDoc] = await Promise.all([
-        this.projectService.getUserConfig(projectId, this.userService.currentUserId),
-        this.projectService.getProfile(projectId)
+        this.projectService.getUserConfig(
+          projectId,
+          this.userService.currentUserId,
+          new DocSubscription('ProjectComponent', this.destroyRef)
+        ),
+        this.projectService.subscribeProfile(projectId, new DocSubscription('ProjectComponent', this.destroyRef))
       ]);
 
       const projectUserConfig = projectUserConfigDoc.data;

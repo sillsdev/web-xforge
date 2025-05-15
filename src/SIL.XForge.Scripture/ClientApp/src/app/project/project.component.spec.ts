@@ -16,6 +16,7 @@ import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scripturefo
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -189,8 +190,8 @@ class TestEnvironment {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project1' }));
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedUserService.currentProjectId(anything())).thenReturn('project1');
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    when(mockedUserService.subscribeCurrentUser(anything())).thenCall(subscription =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', subscription)
     );
     when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
     const snapshot = new ActivatedRouteSnapshot();
@@ -276,7 +277,7 @@ class TestEnvironment {
 
   addUserToProject(projectIdSuffix: number): void {
     this.setProjectData({ memberProjectIdSuffixes: [projectIdSuffix] });
-    const userDoc: UserDoc = this.realtimeService.get(UserDoc.COLLECTION, 'user01');
+    const userDoc: UserDoc = this.realtimeService.get(UserDoc.COLLECTION, 'user01', FETCH_WITHOUT_SUBSCRIBE);
     userDoc.submitJson0Op(op => op.set(u => u.sites, { sf: { projects: [`project${projectIdSuffix}`] } }), false);
     tick();
   }

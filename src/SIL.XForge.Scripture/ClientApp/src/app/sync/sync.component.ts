@@ -9,6 +9,7 @@ import { CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -164,7 +165,10 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     );
 
     projectId$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectId => {
-      this.projectDoc = await this.projectService.get(projectId);
+      this.projectDoc = await this.projectService.subscribe(
+        projectId,
+        new DocSubscription('SyncComponent', this.destroyRef)
+      );
       this.checkSyncStatus();
       this.loadingFinished();
 

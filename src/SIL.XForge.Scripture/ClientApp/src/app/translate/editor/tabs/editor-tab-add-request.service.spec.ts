@@ -2,6 +2,7 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -25,7 +26,8 @@ describe('EditorTabAddRequestService', () => {
       instance(dialogService),
       instance(projectService),
       instance(permissionsService),
-      instance(tabStateService)
+      instance(tabStateService),
+      noopDestroyRef
     );
   });
 
@@ -67,8 +69,8 @@ describe('EditorTabAddRequestService', () => {
     const projectDoc2 = createTestProjectDoc(2);
 
     when(tabStateService.tabs$).thenReturn(of([{ projectId: projectDoc1.id }, {}, { projectId: projectDoc2.id }]));
-    when(projectService.get(projectDoc1.id)).thenResolve(projectDoc1);
-    when(projectService.get(projectDoc2.id)).thenResolve(projectDoc2);
+    when(projectService.subscribe(projectDoc1.id, anything())).thenResolve(projectDoc1);
+    when(projectService.subscribe(projectDoc2.id, anything())).thenResolve(projectDoc2);
     when(permissionsService.isUserOnProject(anything())).thenResolve(true);
 
     service['getParatextIdsForOpenTabs']().subscribe(result => {
@@ -82,13 +84,13 @@ describe('EditorTabAddRequestService', () => {
     const projectDoc2 = createTestProjectDoc(2);
 
     when(tabStateService.tabs$).thenReturn(of([{ projectId: projectDoc1.id }, {}, { projectId: projectDoc2.id }]));
-    when(projectService.get(projectDoc1.id)).thenResolve(projectDoc1);
+    when(projectService.subscribe(projectDoc1.id, anything())).thenResolve(projectDoc1);
     when(permissionsService.isUserOnProject(anything())).thenResolve(true);
     when(permissionsService.isUserOnProject(projectDoc2.id)).thenResolve(false);
 
     service['getParatextIdsForOpenTabs']().subscribe(result => {
       expect(result).toEqual([projectDoc1.data!.paratextId]);
-      verify(projectService.get(projectDoc2.id)).never();
+      verify(projectService.subscribe(projectDoc2.id, anything())).never();
       done();
     });
   });

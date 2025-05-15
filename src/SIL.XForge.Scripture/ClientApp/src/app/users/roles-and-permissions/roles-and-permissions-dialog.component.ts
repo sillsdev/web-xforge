@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -8,6 +8,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -41,7 +42,8 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
     public readonly urls: ExternalUrlService,
     public readonly i18n: I18nService,
     private readonly onlineService: OnlineStatusService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -49,7 +51,10 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
       isOnline ? this.form.enable() : this.form.disable();
     });
 
-    this.projectDoc = await this.projectService.get(this.data.projectId);
+    this.projectDoc = await this.projectService.subscribe(
+      this.data.projectId,
+      new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
+    );
     const project: Readonly<SFProject | undefined> = this.projectDoc.data;
 
     if (project === undefined) {
@@ -86,7 +91,10 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
 
     const selectedRole = this.roles.value;
     await this.projectService.onlineUpdateUserRole(this.data.projectId, this.data.userId, selectedRole);
-    this.projectDoc = await this.projectService.get(this.data.projectId);
+    this.projectDoc = await this.projectService.subscribe(
+      this.data.projectId,
+      new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
+    );
 
     const permissions = new Set((this.projectDoc?.data?.userPermissions ?? {})[this.data.userId] ?? []);
 

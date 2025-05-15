@@ -7,6 +7,7 @@ import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { Subject } from 'rxjs';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscriberInfo } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ComparisonOperator, PropertyFilter, QueryParameters, Sort } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -180,6 +181,7 @@ export class CheckingQuestionsService {
   async createQuestion(
     id: string,
     question: Question,
+    subscriber: DocSubscriberInfo,
     audioFileName?: string,
     audioBlob?: Blob
   ): Promise<QuestionDoc | undefined> {
@@ -210,7 +212,7 @@ export class CheckingQuestionsService {
     });
 
     return this.realtimeService
-      .create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question)
+      .create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question, subscriber)
       .then((questionDoc: QuestionDoc) => {
         this.afterQuestionCreated$.next(questionDoc);
         return questionDoc;

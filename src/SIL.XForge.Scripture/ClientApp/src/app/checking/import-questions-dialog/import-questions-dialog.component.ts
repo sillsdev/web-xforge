@@ -11,6 +11,7 @@ import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
@@ -349,7 +350,13 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           transceleratorQuestionId: listItem.question.id
         };
         await this.zone.runOutsideAngular(() =>
-          this.checkingQuestionsService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
+          this.checkingQuestionsService.createQuestion(
+            this.data.projectId,
+            newQuestion,
+            FETCH_WITHOUT_SUBSCRIBE,
+            undefined,
+            undefined
+          )
         );
       } else if (this.questionsDiffer(listItem)) {
         await listItem.sfVersionOfQuestion.submitJson0Op(op =>

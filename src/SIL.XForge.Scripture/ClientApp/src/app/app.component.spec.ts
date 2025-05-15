@@ -25,6 +25,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -678,11 +679,12 @@ class TestEnvironment {
     this.addProjectUserConfig('project01', 'user03');
     this.addProjectUserConfig('project01', 'user04');
 
-    when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    when(mockedSFProjectService.subscribeProfile(anything(), anything())).thenCall((projectId, subscription) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscription)
     );
-    when(mockedSFProjectService.getUserConfig(anything(), anything())).thenCall((projectId, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`)
+    when(mockedSFProjectService.getUserConfig(anything(), anything(), anything())).thenCall(
+      (projectId, userId, subscriber) =>
+        this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`, subscriber)
     );
     when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
 
@@ -793,12 +795,14 @@ class TestEnvironment {
   }
 
   get currentUserDoc(): UserDoc {
-    return this.realtimeService.get(UserDoc.COLLECTION, 'user01');
+    return this.realtimeService.get(UserDoc.COLLECTION, 'user01', FETCH_WITHOUT_SUBSCRIBE);
   }
 
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedUserService.subscribeCurrentUser(anything())).thenCall(subscriber =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, userId, subscriber)
+    );
   }
 
   triggerLogin(): void {
@@ -866,33 +870,49 @@ class TestEnvironment {
       when(mockedUserService.currentProjectId(anything())).thenReturn(undefined);
     }
     this.ngZone.run(() => {
-      const projectDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, projectId);
+      const projectDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, projectId, FETCH_WITHOUT_SUBSCRIBE);
       projectDoc.delete();
     });
     this.wait();
   }
 
   removeUserFromProject(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
     this.wait();
   }
 
   updatePreTranslate(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(op => op.set<boolean>(p => p.translateConfig.preTranslate, true), false);
     this.wait();
   }
 
   addUserToProject(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
     this.wait();
   }
 
   changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      FETCH_WITHOUT_SUBSCRIBE
+    );
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles[userId], role), false);
     this.wait();
   }

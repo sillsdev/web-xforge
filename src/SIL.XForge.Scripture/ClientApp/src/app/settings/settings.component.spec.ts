@@ -928,8 +928,8 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     when(mockedSFProjectService.onlineSetServalConfig('project01', anything())).thenResolve();
     when(mockedSFProjectService.onlineSetRoleProjectPermissions('project01', anything(), anything())).thenResolve();
-    when(mockedSFProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.subscribe('project01', anything())).thenCall((id, subscription) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01', subscription)
     );
     this.testOnlineStatusService.setIsOnline(hasConnection);
 

@@ -14,6 +14,7 @@ import {
   SF_PROJECT_USER_CONFIGS_COLLECTION,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -189,7 +190,8 @@ class TestEnvironment {
     this.realtimeService
       .subscribe<SFProjectUserConfigDoc>(
         SF_PROJECT_USER_CONFIGS_COLLECTION,
-        getSFProjectUserConfigDocId('project01', 'user01')
+        getSFProjectUserConfigDocId('project01', 'user01'),
+        FETCH_WITHOUT_SUBSCRIBE
       )
       .then(projectUserConfigDoc => {
         const viewContainerRef = this.fixture.componentInstance.childViewContainer;
@@ -229,13 +231,18 @@ class TestEnvironment {
   }
 
   getProjectProfileDoc(): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+    return this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      FETCH_WITHOUT_SUBSCRIBE
+    );
   }
 
   getProjectUserConfigDoc(): SFProjectUserConfigDoc {
     return this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'user01')
+      getSFProjectUserConfigDocId('project01', 'user01'),
+      FETCH_WITHOUT_SUBSCRIBE
     );
   }
 

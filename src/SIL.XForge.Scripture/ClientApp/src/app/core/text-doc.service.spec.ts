@@ -7,6 +7,7 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { mock, when } from 'ts-mockito';
+import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -97,7 +98,7 @@ describe('TextDocService', () => {
     it('should throw error if text doc already exists', fakeAsync(() => {
       const env = new TestEnvironment();
       expect(() => {
-        env.textDocService.createTextDoc(env.textDocId, getTextDoc(env.textDocId));
+        env.textDocService.createTextDoc(env.textDocId, FETCH_WITHOUT_SUBSCRIBE, getTextDoc(env.textDocId));
         tick();
       }).toThrowError();
     }));
@@ -105,7 +106,7 @@ describe('TextDocService', () => {
     it('creates the text doc if it does not already exist', fakeAsync(async () => {
       const env = new TestEnvironment();
       const textDocId = new TextDocId('project01', 40, 2);
-      const textDoc = await env.textDocService.createTextDoc(textDocId, getTextDoc(textDocId));
+      const textDoc = await env.textDocService.createTextDoc(textDocId, FETCH_WITHOUT_SUBSCRIBE, getTextDoc(textDocId));
       tick();
 
       expect(textDoc.data).toBeDefined();
@@ -369,13 +370,13 @@ class TestEnvironment {
       type: RichText.type.name
     });
 
-    when(mockProjectService.getText(this.textDocId)).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockProjectService.getText(this.textDocId, FETCH_WITHOUT_SUBSCRIBE)).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), FETCH_WITHOUT_SUBSCRIBE)
     );
     when(mockUserService.currentUserId).thenReturn('user01');
   }
 
   getTextDoc(textId: TextDocId): TextDoc {
-    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
+    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), FETCH_WITHOUT_SUBSCRIBE);
   }
 }

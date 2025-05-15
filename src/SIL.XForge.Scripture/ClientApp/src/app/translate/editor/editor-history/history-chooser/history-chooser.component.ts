@@ -1,23 +1,33 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import {
-  BehaviorSubject,
-  Observable,
-  Subject,
   asyncScheduler,
+  BehaviorSubject,
   combineLatest,
   map,
+  Observable,
   observeOn,
   startWith,
+  Subject,
   tap
 } from 'rxjs';
 import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -70,7 +80,8 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
-    private readonly errorReportingService: ErrorReportingService
+    private readonly errorReportingService: ErrorReportingService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   get canRestoreSnapshot(): boolean {
@@ -108,7 +119,10 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       if (isOnline && this.projectId != null && this.bookNum != null && this.chapter != null) {
         this.loading$.next(true);
         try {
-          this.projectDoc = await this.projectService.getProfile(this.projectId);
+          this.projectDoc = await this.projectService.subscribeProfile(
+            this.projectId,
+            new DocSubscription('HistoryChooserComponent', this.destroyRef)
+          );
           if (this.historyRevisions.length === 0) {
             this.historyRevisions =
               (await this.paratextService.getRevisions(this.projectId, this.bookId, this.chapter)) ?? [];
