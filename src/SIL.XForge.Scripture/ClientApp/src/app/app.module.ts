@@ -5,7 +5,7 @@ import { APP_ID, ErrorHandler, NgModule } from '@angular/core';
 import { MatRipple } from '@angular/material/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { TranslocoModule } from '@ngneat/transloco';
+import { TRANSLOCO_INTERCEPTOR, TranslocoModule } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
 import { QuillModule } from 'ngx-quill';
 import {
@@ -37,6 +37,7 @@ import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings/settings.component';
+import { LtrMarkerInterceptor } from './shared/ltr-marker.interceptor';
 import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
@@ -95,7 +96,8 @@ import { UsersModule } from './users/users.module';
     defaultTranslocoMarkupTranspilers(),
     { provide: ErrorHandler, useClass: ExceptionHandlingService },
     { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
-    provideHttpClient(withInterceptorsFromDi())
+    provideHttpClient(withInterceptorsFromDi()),
+    { provide: TRANSLOCO_INTERCEPTOR, useClass: LtrMarkerInterceptor }
   ]
 })
 export class AppModule {}
