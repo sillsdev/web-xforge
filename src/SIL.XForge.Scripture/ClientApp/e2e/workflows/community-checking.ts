@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { BrowserType, Page } from 'npm:playwright';
 import { expect } from 'npm:playwright/test';
 import { CHECKING_PROJECT_NAME, preset, ScreenshotContext } from '../e2e-globals.ts';
@@ -15,7 +16,7 @@ import {
 import { UserEmulator } from '../user-emulator.mts';
 
 const questionFileData = Deno.readTextFileSync('test_data/tq_JHN.tsv')
-  .split('\n')
+  .split(os.EOL)
   .map(line => line.split('\t'));
 const questionColumn = questionFileData[0].indexOf('Question');
 const answerColumn = questionFileData[0].indexOf('Response');
