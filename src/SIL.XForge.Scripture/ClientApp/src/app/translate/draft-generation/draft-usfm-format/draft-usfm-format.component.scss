@@ -1,0 +1,67 @@
+@use 'src/breakpoints';
+@use 'src/variables';
+
+:host {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.format-container {
+  display: flex;
+  flex-direction: row;
+  column-gap: 8px;
+  height: 100%;
+  margin-top: 8px;
+  overflow: hidden;
+
+  @include breakpoints.media-breakpoint-down(sm) {
+    flex-direction: column;
+    row-gap: 8px;
+  }
+
+  .format-options {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+  }
+}
+
+.options {
+  width: 360px;
+  padding: 8px 0;
+  row-gap: 8px;
+
+  .format-options {
+    display: flex;
+    flex-direction: column;
+  }
+
+  span {
+    display: block;
+  }
+
+  .description {
+    color: var(--sf-draft-usfm-format-description);
+    font-size: smaller;
+  }
+}
+
+.initializing {
+  display: none;
+}
+
+.loading {
+  opacity: 0.5;
+}
+
+.text-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .viewer-container {
+    overflow-y: auto;
+  }
+}

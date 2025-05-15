@@ -170,6 +170,7 @@ public class PreTranslationService(
     /// <param name="sfProjectId">The SF project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. If 0, all chapters in the book are returned.</param>
+    /// <param name="config">The draft USFM configuration.</param>":
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns></returns>
     /// <exception cref="DataNotFoundException">
@@ -179,6 +180,7 @@ public class PreTranslationService(
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        DraftUsfmConfig config,
         CancellationToken cancellationToken
     )
     {
@@ -192,6 +194,9 @@ public class PreTranslationService(
             textId: GetTextId(bookNum),
             textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
             template: PretranslationUsfmTemplate.Source,
+            paragraphMarkerBehavior: config.PreserveParagraphMarkers
+                ? PretranslationUsfmMarkerBehavior.Preserve
+                : PretranslationUsfmMarkerBehavior.Strip,
             cancellationToken: cancellationToken
         );
 

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
 import { catchError, Observable, throwError } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -144,24 +145,25 @@ export class DraftHandlingService {
    * Gets the generated draft of a chapter for a book. If unable to get the current draft delta format,
    * it will automatically fallback to attempt to retrieve the legacy draft format.
    * @param textDocId The text document identifier.
-   * @param param1 Whether to get the draft in the legacy format.
+   * @param param1 Whether to get the draft in the legacy format and whether to use the snapshot
+   * stored in the realtime database.
    * @returns The draft data in the current delta operation format or the legacy segment map format.
    */
   getDraft(
     textDocId: TextDocId,
-    { isDraftLegacy }: { isDraftLegacy: boolean }
+    { isDraftLegacy, config }: { isDraftLegacy: boolean; config?: DraftUsfmConfig }
   ): Observable<DeltaOperation[] | DraftSegmentMap> {
     return isDraftLegacy
       ? // Fetch legacy draft
         this.draftGenerationService.getGeneratedDraft(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
       : // Fetch draft in USFM format (fallback to legacy)
         this.draftGenerationService
-          .getGeneratedDraftDeltaOperations(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
+          .getGeneratedDraftDeltaOperations(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, config)
           .pipe(
             catchError(err => {
               // If the corpus does not support USFM
               if (err.status === 405) {
-                return this.getDraft(textDocId, { isDraftLegacy: true });
+                return this.getDraft(textDocId, { isDraftLegacy: true, config });
               }
 
               return throwError(() => err);

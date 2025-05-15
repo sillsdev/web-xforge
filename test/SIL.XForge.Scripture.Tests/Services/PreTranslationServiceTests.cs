@@ -411,7 +411,13 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 0, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            0,
+            new DraftUsfmConfig(),
+            CancellationToken.None
+        );
         Assert.AreEqual(TestEnvironment.MatthewBookUsfm, usfm);
     }
 
@@ -424,7 +430,13 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            1,
+            new DraftUsfmConfig(),
+            CancellationToken.None
+        );
         Assert.AreEqual(TestEnvironment.MatthewChapterOneUsfm, usfm);
     }
 
@@ -437,7 +449,13 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 2, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            new DraftUsfmConfig(),
+            CancellationToken.None
+        );
         Assert.AreEqual(TestEnvironment.MatthewChapterTwoUsfm, usfm);
     }
 
@@ -450,7 +468,13 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 3, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            3,
+            new DraftUsfmConfig(),
+            CancellationToken.None
+        );
         Assert.IsEmpty(usfm);
     }
 
@@ -655,6 +679,7 @@ public class PreTranslationServiceTests
                     textId: "MAT",
                     textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
                     template: PretranslationUsfmTemplate.Source,
+                    paragraphMarkerBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
                     cancellationToken: CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);

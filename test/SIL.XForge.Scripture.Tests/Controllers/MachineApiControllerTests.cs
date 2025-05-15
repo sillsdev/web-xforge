@@ -904,6 +904,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new BrokenCircuitException());
@@ -914,6 +915,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -934,6 +936,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new ForbiddenException());
@@ -944,6 +947,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -962,6 +966,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new DataNotFoundException(string.Empty));
@@ -972,6 +977,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -990,6 +996,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new InvalidOperationException());
@@ -1000,6 +1007,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -1018,6 +1026,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new NotSupportedException());
@@ -1028,6 +1037,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
@@ -1047,6 +1057,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Returns(Task.FromResult(new Snapshot<TextData>()));
@@ -1057,10 +1068,39 @@ public class MachineApiControllerTests
             40,
             1,
             null,
+            preserveParagraphs: true,
             CancellationToken.None
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPretranslationDeltaAsync_SuccessSpecificConfig()
+    {
+        var env = new TestEnvironment();
+        env.MachineApiService.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(new Snapshot<TextData>()));
+
+        // SUT
+        var result = await env.Controller.GetPreTranslationDeltaAsync(
+            Project01,
+            40,
+            1,
+            null,
+            preserveParagraphs: true,
+            CancellationToken.None
+        );
+        Assert.IsInstanceOf<OkObjectResult>(result.Result);
     }
 
     [Test]
@@ -1162,6 +1202,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new BrokenCircuitException());
@@ -1192,6 +1233,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new ForbiddenException());
@@ -1220,6 +1262,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new DataNotFoundException(string.Empty));
@@ -1248,6 +1291,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new InvalidOperationException());
@@ -1276,6 +1320,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new NotSupportedException());
@@ -1305,6 +1350,7 @@ public class MachineApiControllerTests
                 1,
                 true,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Returns(Task.FromResult(string.Empty));
@@ -1323,7 +1369,16 @@ public class MachineApiControllerTests
 
         await env
             .MachineApiService.Received(1)
-            .GetPreTranslationUsfmAsync(User01, Project01, 40, 1, true, Arg.Any<DateTime>(), CancellationToken.None);
+            .GetPreTranslationUsfmAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                true,
+                Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            );
     }
 
     [Test]
@@ -1338,6 +1393,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Returns(Task.FromResult(string.Empty));
@@ -1355,7 +1411,16 @@ public class MachineApiControllerTests
 
         await env
             .MachineApiService.Received(1)
-            .GetPreTranslationUsfmAsync(User01, Project01, 40, 1, false, Arg.Any<DateTime>(), CancellationToken.None);
+            .GetPreTranslationUsfmAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            );
     }
 
     [Test]
@@ -1370,6 +1435,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new BrokenCircuitException());
@@ -1400,6 +1466,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new ForbiddenException());
@@ -1428,6 +1495,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new DataNotFoundException(string.Empty));
@@ -1456,6 +1524,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new InvalidOperationException());
@@ -1484,6 +1553,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new NotSupportedException());
@@ -1513,6 +1583,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Returns(Task.FromResult<IUsj>(new Usj()));
@@ -1541,6 +1612,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new BrokenCircuitException());
@@ -1571,6 +1643,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new ForbiddenException());
@@ -1599,6 +1672,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new DataNotFoundException(string.Empty));
@@ -1627,6 +1701,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new InvalidOperationException());
@@ -1655,6 +1730,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Throws(new NotSupportedException());
@@ -1684,6 +1760,7 @@ public class MachineApiControllerTests
                 1,
                 false,
                 Arg.Any<DateTime>(),
+                Arg.Any<DraftUsfmConfig>(),
                 CancellationToken.None
             )
             .Returns(Task.FromResult(string.Empty));
