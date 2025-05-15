@@ -64,7 +64,7 @@ export class DonutChartComponent implements AfterViewInit {
   set thickness(value: number) {
     if (this._thickness !== value) {
       this._thickness = value;
-      this.constructSegments();
+      this.animateChange();
     }
   }
 
@@ -76,7 +76,7 @@ export class DonutChartComponent implements AfterViewInit {
   set innerThicknessDelta(value: number) {
     if (this._innerThicknessDelta !== value) {
       this._innerThicknessDelta = value;
-      this.constructSegments();
+      this.animateChange();
     }
   }
 
@@ -88,7 +88,7 @@ export class DonutChartComponent implements AfterViewInit {
   set spacing(value: number) {
     if (this._spacing !== value) {
       this._spacing = value;
-      this.constructSegments();
+      this.animateChange();
     }
   }
 
@@ -105,7 +105,7 @@ export class DonutChartComponent implements AfterViewInit {
         this.oldData = this._data;
       }
       this._data = value;
-      this.constructSegments();
+      this.animateChange();
     }
   }
 
@@ -117,7 +117,7 @@ export class DonutChartComponent implements AfterViewInit {
   set colors(value: string[]) {
     if (!isEqual(this._colors, value)) {
       this._colors = value;
-      this.constructSegments();
+      this.animateChange();
     }
   }
 
@@ -129,7 +129,7 @@ export class DonutChartComponent implements AfterViewInit {
   set backgroundColor(value: string) {
     if (this._backgroundColor !== value) {
       this._backgroundColor = value;
-      this.constructSegments();
+      this.animateChange();
     }
   }
 
@@ -151,11 +151,15 @@ export class DonutChartComponent implements AfterViewInit {
     const deltas = percentages.map((v, i) => v - oldPercentages[i]);
     const duration = this.animationDuration;
 
+    // Capture radius and spacing at the start of the animation
+    const animationRadius = this.radius;
+    const animationSpacing = this.spacing;
+
     // avoid firing change detection for each animation frame
     this.ngZone.runOutsideAngular(() => {
       if (duration === 0) {
         // Animation is disabled
-        this.constructSegments(percentages);
+        this.constructSegments(percentages, animationRadius, animationSpacing);
         return;
       }
 
@@ -165,7 +169,7 @@ export class DonutChartComponent implements AfterViewInit {
       const animate = (): void => {
         const currentTime = Math.min(performance.now() - startTime, duration);
         const curData = deltas.map((v, i) => easeOutQuart(currentTime, oldPercentages[i], v, duration));
-        this.constructSegments(curData);
+        this.constructSegments(curData, animationRadius, animationSpacing);
 
         if (id === this.lastAnimationId && currentTime < duration) {
           requestAnimationFrame(animate);
@@ -176,14 +180,14 @@ export class DonutChartComponent implements AfterViewInit {
     });
   }
 
-  private constructSegments(percentages: number[] = getPercentages(this._data)): void {
+  private constructSegments(percentages: number[], radius: number, spacing: number): void {
     if (this.segmentCircles == null) {
       return;
     }
 
-    const totalLengthWithoutSpacing = 1 - this.spacing * percentages.filter(v => v > 0).length;
-    let start = this.spacing / 2;
-    const circumference = this.radius * 2 * Math.PI;
+    const totalLengthWithoutSpacing = 1 - spacing * percentages.filter(v => v > 0).length;
+    let start = spacing / 2;
+    const circumference = radius * 2 * Math.PI;
     const base = circumference / 100;
     this.segmentCircles.forEach((segmentCircle, i) => {
       let percentage = percentages[i] * totalLengthWithoutSpacing;
@@ -196,7 +200,7 @@ export class DonutChartComponent implements AfterViewInit {
       element.setAttribute('stroke-dashoffset', offset.toString());
       element.setAttribute('stroke-dasharray', `${lengthOnCircle} ${gap}`);
 
-      start += percentage + this.spacing;
+      start += percentage + spacing;
     });
   }
 }
