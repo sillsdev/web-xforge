@@ -16,34 +16,16 @@ describe('DraftNavigationAuthGuard', () => {
     ]
   }));
 
-  it('can navigate away when no changes', () => {
+  it('can navigate away when no changes', async () => {
     // navigate away
     const env = new DraftNavigationTestEnvironment();
-    spyOn(window, 'confirm');
-    expect(
-      env.service.canDeactivate({ deactivationPrompt: 'unsaved changed', promptUserToDeactivate: () => false })
-    ).toBe(true);
-    expect(window.confirm).not.toHaveBeenCalled();
+    expect(await env.service.canDeactivate({ confirmLeave: () => Promise.resolve(true) })).toBe(true);
   });
 
-  it('can shows prompt and navigate away', () => {
+  it('can shows prompt and stay on page', async () => {
     // navigate away
     const env = new DraftNavigationTestEnvironment();
-    spyOn(window, 'confirm').and.returnValue(true);
-    expect(
-      env.service.canDeactivate({ deactivationPrompt: 'unsaved changed', promptUserToDeactivate: () => true })
-    ).toBe(true);
-    expect(window.confirm).toHaveBeenCalled();
-  });
-
-  it('can shows prompt and stay on page', () => {
-    // navigate away
-    const env = new DraftNavigationTestEnvironment();
-    spyOn(window, 'confirm').and.returnValue(false);
-    expect(
-      env.service.canDeactivate({ deactivationPrompt: 'unsaved changed', promptUserToDeactivate: () => true })
-    ).toBe(false);
-    expect(window.confirm).toHaveBeenCalled();
+    expect(await env.service.canDeactivate({ confirmLeave: () => Promise.resolve(false) })).toBe(false);
   });
 });
 
