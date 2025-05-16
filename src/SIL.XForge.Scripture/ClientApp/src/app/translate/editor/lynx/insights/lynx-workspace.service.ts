@@ -15,7 +15,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { concatMap, Observable, Subscription } from 'rxjs';
+import { debounceTime, groupBy, mergeMap, Observable, Subscription, switchMap } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -56,7 +56,13 @@ export class LynxWorkspaceService {
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(bookChapter => this.onBookChapterActivated(bookChapter));
 
-    this.rawInsightSource$ = this.workspace.diagnosticsChanged$.pipe(concatMap(e => this.onDiagnosticsChanged(e)));
+    this.rawInsightSource$ = this.workspace.diagnosticsChanged$.pipe(
+      // Group events by event URI, then switchMap within each group to handle the cancellation and processing
+      // of only the latest event for that URI.
+      groupBy(event => event.uri),
+      mergeMap(group$ => group$.pipe(switchMap(event => this.onDiagnosticsChanged(event)))),
+      debounceTime(10) // Debouncing avoids emitting after each event URI when loading a new project
+    );
   }
 
   get currentInsights(): ReadonlyMap<string, LynxInsight[]> {
@@ -71,11 +77,11 @@ export class LynxWorkspaceService {
   }
 
   async getActions(insight: LynxInsight): Promise<LynxInsightAction[]> {
-    const doc = await this.documentManager.get(insight.textDocId.toString());
+    const doc: ScriptureDeltaDocument | undefined = await this.documentManager.get(insight.textDocId.toString());
     if (doc == null) {
       return [];
     }
-    let severity = DiagnosticSeverity.Information;
+    let severity: DiagnosticSeverity = DiagnosticSeverity.Information;
     switch (insight.type) {
       case 'info':
         severity = DiagnosticSeverity.Information;
@@ -109,11 +115,11 @@ export class LynxWorkspaceService {
   }
 
   async getOnTypeEdits(delta: Delta): Promise<Delta[]> {
-    const curDocUri = this.textDocId?.toString();
+    const curDocUri: string | undefined = this.textDocId?.toString();
     if (curDocUri == null) {
       return [];
     }
-    const ops = delta.ops;
+    const ops: Op[] = delta.ops;
     let offset: number;
     let text: string;
     if (ops.length === 1 && typeof ops[0].insert === 'string') {
@@ -126,17 +132,18 @@ export class LynxWorkspaceService {
       return [];
     }
 
-    const doc = await this.documentManager.get(curDocUri);
+    const doc: ScriptureDeltaDocument | undefined = await this.documentManager.get(curDocUri);
     if (doc == null) {
       return [];
     }
     const edits: Delta[] = [];
     for (const ch of this.workspace.getOnTypeTriggerCharacters()) {
-      let startIndex = 0;
+      let startIndex: number = 0;
       while (startIndex < text.length) {
-        const chIndex = text.indexOf(ch, startIndex);
+        const chIndex: number = text.indexOf(ch, startIndex);
         if (chIndex >= 0) {
-          const chEdits = await this.workspace.getOnTypeEdits(curDocUri, doc.positionAt(offset + chIndex + 1), ch);
+          const position = doc.positionAt(offset + chIndex + 1);
+          const chEdits: Op[] | undefined = await this.workspace.getOnTypeEdits(curDocUri, position, ch);
 
           if (chEdits != null && chEdits.length > 0) {
             edits.push(new Delta(chEdits));
@@ -154,10 +161,10 @@ export class LynxWorkspaceService {
     if (event.diagnostics.length === 0) {
       this.curInsights.delete(event.uri);
     } else {
-      const doc = await this.documentManager.get(event.uri);
+      const doc: ScriptureDeltaDocument | undefined = await this.documentManager.get(event.uri);
       const insights: LynxInsight[] = [];
       if (doc != null) {
-        const textDocIdParts = event.uri.split(':', 3);
+        const textDocIdParts: string[] = event.uri.split(':', 3);
         const textDocId = new TextDocId(
           textDocIdParts[0],
           Canon.bookIdToNumber(textDocIdParts[1]),
@@ -177,12 +184,13 @@ export class LynxWorkspaceService {
               type = 'error';
               break;
           }
-          const start = doc.offsetAt(diagnostic.range.start);
-          const end = doc.offsetAt(diagnostic.range.end);
+          const start: number = doc.offsetAt(diagnostic.range.start);
+          const end: number = doc.offsetAt(diagnostic.range.end);
           const range = { index: start, length: end - start };
 
           // Look for matching existing insight
-          const existingMatchingInsight = (this.curInsights.get(event.uri) || []).find(curInsight => {
+          const currentInsights: LynxInsight[] = this.curInsights.get(event.uri) ?? [];
+          const existingMatchingInsight: LynxInsight | undefined = currentInsights.find(curInsight => {
             return (
               curInsight.code === diagnostic.code.toString() &&
               curInsight.source === diagnostic.source &&
@@ -207,6 +215,7 @@ export class LynxWorkspaceService {
       }
       this.curInsights.set(event.uri, insights);
     }
+
     return [...this.curInsights.values()].flat();
   }
 
@@ -230,7 +239,7 @@ export class LynxWorkspaceService {
         .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(async ops => {
           if (ops.some(op => TEXTS_PATH_TEMPLATE.matches(op.p))) {
-            const oldTextDocIds = this.documentReader.textDocIds;
+            const oldTextDocIds: Set<string> = this.documentReader.textDocIds;
             this.documentReader.textDocIds = getTextDocIds(projectDoc);
             // created texts
             for (const textDocId of setDifference(this.documentReader.textDocIds, oldTextDocIds)) {
@@ -246,7 +255,7 @@ export class LynxWorkspaceService {
   }
 
   private async onBookChapterActivated(bookChapter: RouteBookChapter | undefined): Promise<void> {
-    const textDocId =
+    const textDocId: TextDocId | undefined =
       this.activatedProjectService.projectId == null || bookChapter?.bookId == null || bookChapter.chapter == null
         ? undefined
         : new TextDocId(
@@ -275,7 +284,7 @@ export class LynxWorkspaceService {
         version: textDoc.adapter.version,
         content: textDoc.data as Delta
       });
-      const uri = this.textDocId.toString();
+      const uri: string = this.textDocId.toString();
       this.textDocChangeSubscription = textDoc.changes$
         .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(async changes => {
@@ -312,9 +321,9 @@ export class TextDocReader implements DocumentReader<Delta> {
 
 function getTextDocIds(projectDoc: SFProjectProfileDoc | undefined): Set<string> {
   if (projectDoc == null || projectDoc.data == null) {
-    return new Set();
+    return new Set<string>();
   }
-  return new Set(
+  return new Set<string>(
     projectDoc.data.texts.flatMap(text =>
       text.chapters.map(chapter => getTextDocId(projectDoc.id, text.bookNum, chapter.number))
     )
