@@ -198,6 +198,7 @@ describe('LynxWorkspaceService', () => {
         uri: textDocId.toString(),
         diagnostics
       });
+      tick(10); // 10ms debounce time
     }
 
     setupActiveTextDocId(): void {
@@ -224,14 +225,17 @@ describe('LynxWorkspaceService', () => {
         bookId: Canon.bookNumberToId(BOOK_NUM),
         chapter
       });
+      tick();
     }
 
     triggerProjectChange(id: string): void {
       projectDocTestSubject$.next(this.createMockProjectDoc(id));
+      tick();
     }
 
     triggerLocaleChange(locale: Locale): void {
       localeTestSubject$.next(locale);
+      tick();
     }
 
     /**
@@ -290,7 +294,6 @@ describe('LynxWorkspaceService', () => {
         production: true
       };
       env.triggerLocaleChange(frenchLocale);
-      tick();
 
       verify(mockWorkspace.changeLanguage('fr')).once();
     }));
@@ -303,7 +306,6 @@ describe('LynxWorkspaceService', () => {
       resetCalls(mockDocumentManager);
 
       env.triggerProjectChange(PROJECT_ID);
-      tick();
 
       verify(mockDocumentManager.reset()).once();
     }));
@@ -314,7 +316,6 @@ describe('LynxWorkspaceService', () => {
       resetCalls(mockDocumentManager);
 
       env.triggerProjectChange(PROJECT_ID);
-      tick();
 
       verify(mockDocumentManager.reset()).never();
     }));
@@ -329,7 +330,6 @@ describe('LynxWorkspaceService', () => {
 
       env.service['projectId'] = 'different-id';
       env.triggerProjectChange('new-project');
-      tick();
 
       expect([...env.service.currentInsights.values()].flat().length).toBe(0);
     }));
@@ -343,7 +343,6 @@ describe('LynxWorkspaceService', () => {
       resetCalls(mockDocumentManager);
 
       env.triggerBookChapterChange(CHAPTER_NUM + 1);
-      tick();
 
       verify(mockDocumentManager.fireClosed(anything())).once();
     }));
@@ -356,7 +355,6 @@ describe('LynxWorkspaceService', () => {
       resetCalls(mockDocumentManager);
 
       env.triggerBookChapterChange(CHAPTER_NUM);
-      tick();
 
       verify(mockDocumentManager.fireOpened(anything(), anything())).once();
     }));
@@ -367,14 +365,12 @@ describe('LynxWorkspaceService', () => {
 
       // First activate chapter 1
       env.triggerBookChapterChange(CHAPTER_NUM);
-      tick();
 
       // Verify initial state
       const initialTextDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       expect(env.service['textDocId']?.toString()).toEqual(initialTextDocId.toString());
 
       env.triggerBookChapterChange(CHAPTER_NUM + 1);
-      tick();
 
       const expectedTextDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM + 1);
       expect(env.service['textDocId']?.toString()).toEqual(expectedTextDocId.toString());
@@ -388,7 +384,6 @@ describe('LynxWorkspaceService', () => {
       const { insights, subscription } = env.captureInsights();
 
       env.triggerDiagnostics(['Test message']);
-      tick();
 
       expect(insights.length).toBe(1);
       expect(insights[0].description).toBe('Test message');
@@ -405,19 +400,16 @@ describe('LynxWorkspaceService', () => {
 
       // Info severity
       env.triggerDiagnostics(['Info message'], DiagnosticSeverity.Information);
-      tick();
       expect(insights[0].type).toBe('info');
       expect(insights[0].description).toBe('Info message');
 
       // Warning severity
       env.triggerDiagnostics(['Warning message'], DiagnosticSeverity.Warning);
-      tick();
       expect(insights[0].type).toBe('warning');
       expect(insights[0].description).toBe('Warning message');
 
       // Error severity
       env.triggerDiagnostics(['Error message'], DiagnosticSeverity.Error);
-      tick();
       expect(insights[0].type).toBe('error');
       expect(insights[0].description).toBe('Error message');
 
@@ -430,11 +422,9 @@ describe('LynxWorkspaceService', () => {
       const { insights, subscription } = env.captureInsights();
 
       env.triggerDiagnostics(['Test message']);
-      tick();
       const firstId = insights[0].id;
 
       env.triggerDiagnostics(['Test message']);
-      tick();
 
       expect(insights[0].id).toBe(firstId);
       subscription.unsubscribe();
@@ -447,12 +437,10 @@ describe('LynxWorkspaceService', () => {
 
       // Add initial insights
       env.triggerDiagnostics(['Test message']);
-      tick();
       expect(insights.length).toBe(1);
 
       // Send empty diagnostics
       env.triggerDiagnostics([]);
-      tick();
 
       expect(insights.length).toBe(0);
       subscription.unsubscribe();
