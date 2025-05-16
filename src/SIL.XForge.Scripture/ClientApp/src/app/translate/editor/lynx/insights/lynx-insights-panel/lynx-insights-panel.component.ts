@@ -1,6 +1,5 @@
-import { FlatTreeControl } from '@angular/cdk/tree';
-import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
-import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
+import { AfterViewInit, Component, DestroyRef, Inject, ViewChild } from '@angular/core';
+import { MatTree } from '@angular/material/tree';
 import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { groupBy } from 'lodash-es';
@@ -33,16 +32,6 @@ interface InsightPanelNode {
   isDismissed?: boolean;
 }
 
-interface InsightPanelFlatNode {
-  expandable: boolean;
-  description: string;
-  type: string;
-  level: number;
-  insight?: LynxInsight;
-  count?: number;
-  isDismissed?: boolean;
-}
-
 interface LynxInsightWithText extends LynxInsight {
   rangeText: string;
 }
@@ -52,23 +41,10 @@ interface LynxInsightWithText extends LynxInsight {
   templateUrl: './lynx-insights-panel.component.html',
   styleUrl: './lynx-insights-panel.component.scss'
 })
-export class LynxInsightsPanelComponent implements OnInit {
-  // @Output() insightSelect = new EventEmitter<LynxInsight>();
+export class LynxInsightsPanelComponent implements AfterViewInit {
+  @ViewChild(MatTree) tree?: MatTree<InsightPanelNode>;
 
-  treeControl = new FlatTreeControl<InsightPanelFlatNode>(
-    node => node.level,
-    node => node.expandable
-  );
-
-  dataSource = new MatTreeFlatDataSource(
-    this.treeControl,
-    new MatTreeFlattener(
-      this.flattenTransformer,
-      node => node.level,
-      node => node.expandable,
-      node => node.children
-    )
-  );
+  treeDataSource: InsightPanelNode[] = [];
 
   // Preserve expand/collapse state when tree reloads due to insights$ update: description -> expanded
   expandCollapseState = new Map<string, boolean>();
@@ -91,7 +67,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     @Inject(EDITOR_INSIGHT_DEFAULTS) private readonly lynxInsightConfig: LynxInsightConfig
   ) {}
 
-  ngOnInit(): void {
+  ngAfterViewInit(): void {
     combineLatest([
       this.editorInsightState.filteredInsights$.pipe(switchMap(insights => this.addRangeText(insights))),
       this.editorInsightState.orderBy$.pipe(tap(val => (this.orderBy = val))),
@@ -99,10 +75,10 @@ export class LynxInsightsPanelComponent implements OnInit {
     ])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
-        map(([insights, orderBy, dismissedIds]) => this.flattenGrouping(insights, orderBy, dismissedIds))
+        map(([insights, orderBy, dismissedIds]) => this.buildTreeNodes(insights, orderBy, dismissedIds))
       )
-      .subscribe(flattenedInsightNodes => {
-        this.dataSource.data = flattenedInsightNodes;
+      .subscribe(treeNodes => {
+        this.treeDataSource = treeNodes;
         this.restoreExpandCollapseState();
       });
 
@@ -113,18 +89,17 @@ export class LynxInsightsPanelComponent implements OnInit {
       });
   }
 
-  hasChild(index: number, node: InsightPanelFlatNode): boolean {
-    return node.expandable;
+  // Passed to mat-tree in the template
+  getChildrenAccessor(node: InsightPanelNode): InsightPanelNode[] {
+    return node.children ?? [];
   }
 
-  onNodeClick(node: InsightPanelFlatNode, event: MouseEvent): void {
-    if (node.expandable) {
-      // Store expand/collapse state
-      this.expandCollapseState.set(node.description, this.treeControl.isExpanded(node));
-    } else if (node.insight != null) {
-      // Stop bubble to user event service, which will clear display state
-      event.stopPropagation();
+  // 'when' predicate to determine if the group template should be used
+  isExpandableNodePredicate = (_index: number, node: InsightPanelNode): boolean => this.hasChildren(node);
 
+  // Handle clicks on leaf nodes (insights) to navigate to the chapter of the insight and show the overlay
+  onLeafNodeClick(node: InsightPanelNode): void {
+    if (node.insight != null) {
       const insight: LynxInsight = node.insight;
 
       // Show action menu overlay in editor
@@ -138,34 +113,29 @@ export class LynxInsightsPanelComponent implements OnInit {
     }
   }
 
+  onNodeExpansionChange(node: InsightPanelNode, isExpanded: boolean): void {
+    if (this.hasChildren(node)) {
+      this.expandCollapseState.set(node.description, isExpanded);
+    }
+  }
+
   restoreDismissedInsight(insight: LynxInsight): void {
     this.editorInsightState.restoreDismissedInsights([insight.id]);
   }
 
-  /**
-   * Transforms InsightPanelNode to InsightPanelFlatNode.
-   */
-  private flattenTransformer(node: InsightPanelNode, level: number): InsightPanelFlatNode {
-    return {
-      expandable: !!node.children && node.children.length > 0,
-      description: node.description,
-      type: node.type,
-      level: level,
-      insight: node.insight,
-      count: node.count,
-      isDismissed: node.isDismissed
-    };
+  private hasChildren(node: InsightPanelNode): boolean {
+    return node.children != null && node.children.length > 0;
   }
 
   /**
-   * Groups insights by description and flattens them into InsightPanelNode.
+   * Groups insights by description and prepares them as hierarchical InsightPanelNode.
    */
-  private flattenGrouping(
+  private buildTreeNodes(
     insights: LynxInsightWithText[],
     orderBy: LynxInsightSortOrder,
     dismissedIds: string[]
   ): InsightPanelNode[] {
-    const flattenedInsightNodes: InsightPanelNode[] = [];
+    const groupedNodes: InsightPanelNode[] = [];
     const dismissedIdSet: Set<string> = new Set(dismissedIds);
 
     for (const [_desc, byDescGroup] of Object.entries(groupBy(insights, 'description'))) {
@@ -196,24 +166,28 @@ export class LynxInsightsPanelComponent implements OnInit {
         isDismissed: descGroupNodeContainsAllDismissed
       };
 
-      flattenedInsightNodes.push(descGroupNode);
+      groupedNodes.push(descGroupNode);
     }
 
-    this.sortNodes(flattenedInsightNodes, orderBy);
+    this.sortNodes(groupedNodes, orderBy);
 
-    return flattenedInsightNodes;
+    return groupedNodes;
   }
 
   private restoreExpandCollapseState(): void {
-    if (this.expandCollapseState.size === 0) {
+    if (this.expandCollapseState.size === 0 || this.tree == null) {
       return;
     }
 
-    for (const node of this.treeControl.dataNodes) {
-      if (node.level === 0 && this.expandCollapseState.get(node.description)) {
-        this.treeControl.expand(node);
-      } else {
-        this.treeControl.collapse(node);
+    for (const node of this.treeDataSource) {
+      if (this.hasChildren(node)) {
+        const shouldBeExpanded = this.expandCollapseState.get(node.description);
+
+        if (shouldBeExpanded) {
+          this.tree.expand(node);
+        } else {
+          this.tree.collapse(node);
+        }
       }
     }
   }
