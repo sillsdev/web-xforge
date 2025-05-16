@@ -296,10 +296,10 @@
     "tooltip_edit": "Bearbeiten"
   },
   "checking_questions": {
-    "go_to": "Go to questions",
+    "go_to": "Zu den Fragen",
     "listen_to_question": "Anhören der Frage für {{ referenceForDisplay }}",
     "loading": "Wird geladen...",
-    "no_questions_found": "No questions found for the settings above.",
+    "no_questions_found": "Keine Fragen zu den obigen Einstellungen gefunden.",
     "scripture_audio_label": "Höre Dir {{ referenceForDisplay }} an, um die folgende Frage zu beantworten.",
     "view_answers": "Antworten ansehen"
   },
