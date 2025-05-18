@@ -31,10 +31,7 @@ type BooleanProp<T> = { [K in keyof T]: T[K] extends boolean | undefined ? K : n
   providedIn: 'root'
 })
 export class LynxInsightStateService {
-  private rawInsights$: Observable<LynxInsight[]> = this.lynxWorkspaceService.rawInsightSource$.pipe(
-    distinctUntilChanged(isEqual),
-    shareReplay(1)
-  );
+  private rawInsights$: Observable<LynxInsight[]> = this.lynxWorkspaceService.rawInsightSource$.pipe(shareReplay(1));
 
   // Stored filter and order are loaded from project user config
   private filterSource$ = new BehaviorSubject<LynxInsightFilter>(this.defaults.filter);
