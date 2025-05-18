@@ -30,7 +30,7 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
-    public IAsyncEnumerable<ServalBuildDto> GetBuildsAsync(
+    Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
         string curUserId,
         string sfProjectId,
         bool preTranslate,
@@ -75,7 +75,7 @@ public interface IMachineApiService
         DateTime timestamp,
         CancellationToken cancellationToken
     );
-    IAsyncEnumerable<DocumentRevision> GetPreTranslationRevisionsAsync(
+    Task<IReadOnlyList<DocumentRevision>> GetPreTranslationRevisionsAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,
@@ -119,7 +119,8 @@ public interface IMachineApiService
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
 
     [Mutex]
-    Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
+    [LogEventMetric(EventScope.Drafting, projectId: nameof(sfProjectId), captureReturnValue: true)]
+    Task<string> RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]
     Task StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);

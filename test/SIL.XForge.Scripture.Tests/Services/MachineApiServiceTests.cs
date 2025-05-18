@@ -424,6 +424,8 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+        ObjectId buildObjectId = new ObjectId();
+        string buildId = buildObjectId.ToString();
         const string message = "Finalizing";
         const double percentCompleted = 0.95;
         const int revision = 553;
@@ -443,7 +445,7 @@ public class MachineApiServiceTests
         TranslationBuild translationBuild = new TranslationBuild
         {
             Url = "https://example.com",
-            Id = Build01,
+            Id = buildId,
             Engine = { Id = engineId, Url = "https://example.com" },
             Message = message,
             PercentCompleted = percentCompleted,
@@ -500,7 +502,7 @@ public class MachineApiServiceTests
         ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
-            Build01,
+            buildId,
             minRevision: null,
             preTranslate: false,
             isServalAdmin: false,
@@ -511,8 +513,12 @@ public class MachineApiServiceTests
         TestEnvironment.AssertCoreBuildProperties(translationBuild, actual);
         Assert.AreEqual(queueDepth, actual!.QueueDepth);
         Assert.IsNotNull(actual.AdditionalInfo);
-        Assert.AreEqual(Build01, actual.AdditionalInfo!.BuildId);
+        Assert.AreEqual(buildId, actual.AdditionalInfo!.BuildId);
         Assert.AreEqual(dateFinished, actual.AdditionalInfo.DateFinished);
+        Assert.AreEqual(
+            new DateTimeOffset(buildObjectId.CreationTime, TimeSpan.Zero),
+            actual.AdditionalInfo!.DateRequested
+        );
         Assert.AreEqual(step, actual.AdditionalInfo.Step);
         Assert.AreEqual(engineId, actual.AdditionalInfo.TranslationEngineId);
         Assert.IsNotNull(actual.AdditionalInfo.CorporaIds);
@@ -533,18 +539,16 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(async () =>
-        {
-            await foreach (
-                ServalBuildDto _ in env.Service.GetBuildsAsync(
+        Assert.ThrowsAsync<ForbiddenException>(
+            () =>
+                env.Service.GetBuildsAsync(
                     User02,
                     Project01,
                     preTranslate: false,
                     isServalAdmin: false,
                     CancellationToken.None
                 )
-            ) { }
-        });
+        );
     }
 
     [Test]
@@ -554,18 +558,16 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(async () =>
-        {
-            await foreach (
-                ServalBuildDto _ in env.Service.GetBuildsAsync(
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.GetBuildsAsync(
                     User01,
                     "invalid_project_id",
                     preTranslate: false,
                     isServalAdmin: false,
                     CancellationToken.None
                 )
-            ) { }
-        });
+        );
     }
 
     [Test]
@@ -575,18 +577,16 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(async () =>
-        {
-            await foreach (
-                ServalBuildDto _ in env.Service.GetBuildsAsync(
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.GetBuildsAsync(
                     User01,
                     Project03,
                     preTranslate: false,
                     isServalAdmin: false,
                     CancellationToken.None
                 )
-            ) { }
-        });
+        );
     }
 
     [Test]
@@ -599,21 +599,15 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
-        List<ServalBuildDto> builds = [];
 
         // SUT
-        await foreach (
-            ServalBuildDto build in env.Service.GetBuildsAsync(
-                User02,
-                Project01,
-                preTranslate: true,
-                isServalAdmin: true,
-                CancellationToken.None
-            )
-        )
-        {
-            builds.Add(build);
-        }
+        IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
+            User02,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(1, builds.Count);
         Assert.AreEqual(MachineApiService.BuildStateQueued, builds[0].State);
@@ -627,6 +621,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const string trainingScriptureRange = "GEN;EXO";
         const string translationScriptureRange = "LEV;NUM";
+        DateTime requestedDateTime = DateTime.UtcNow;
         await env.QueueBuildAsync(preTranslate: true);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
@@ -658,31 +653,29 @@ public class MachineApiServiceTests
                                 },
                                 ProjectId = Project01,
                                 Scope = EventScope.Drafting,
+                                TimeStamp = requestedDateTime,
+                                UserId = User01,
                             },
                         ],
                         UnpagedCount = 1,
                     }
                 )
             );
-        List<ServalBuildDto> builds = [];
 
         // SUT
-        await foreach (
-            ServalBuildDto build in env.Service.GetBuildsAsync(
-                User02,
-                Project01,
-                preTranslate: true,
-                isServalAdmin: true,
-                CancellationToken.None
-            )
-        )
-        {
-            builds.Add(build);
-        }
+        IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
+            User02,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(1, builds.Count);
         Assert.AreEqual(MachineApiService.BuildStateQueued, builds[0].State);
         Assert.AreEqual(Project01, builds[0].Id);
+        Assert.AreEqual(new DateTimeOffset(requestedDateTime, TimeSpan.Zero), builds[0].AdditionalInfo?.DateRequested);
+        Assert.AreEqual(User01, builds[0].AdditionalInfo?.RequestedByUserId);
         Assert.IsEmpty(builds[0].AdditionalInfo?.TrainingScriptureRanges.First().ProjectId);
         Assert.AreEqual(
             trainingScriptureRange,
@@ -703,21 +696,15 @@ public class MachineApiServiceTests
         env.ConfigureTranslationBuild();
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
-        List<ServalBuildDto> builds = [];
 
         // SUT
-        await foreach (
-            ServalBuildDto build in env.Service.GetBuildsAsync(
-                User02,
-                Project01,
-                preTranslate: true,
-                isServalAdmin: true,
-                CancellationToken.None
-            )
-        )
-        {
-            builds.Add(build);
-        }
+        IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
+            User02,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(1, builds.Count);
     }
@@ -731,18 +718,16 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.NotFound);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(async () =>
-        {
-            await foreach (
-                ServalBuildDto _ in env.Service.GetBuildsAsync(
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.GetBuildsAsync(
                     User01,
                     Project01,
                     preTranslate: false,
                     isServalAdmin: false,
                     CancellationToken.None
                 )
-            ) { }
-        });
+        );
     }
 
     [Test]
@@ -753,21 +738,15 @@ public class MachineApiServiceTests
         TranslationBuild translationBuild = env.ConfigureTranslationBuild();
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
-        List<ServalBuildDto> builds = [];
 
         // SUT
-        await foreach (
-            ServalBuildDto build in env.Service.GetBuildsAsync(
-                User02,
-                Project01,
-                preTranslate: true,
-                isServalAdmin: true,
-                CancellationToken.None
-            )
-        )
-        {
-            builds.Add(build);
-        }
+        IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
+            User02,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(1, builds.Count);
         TestEnvironment.AssertCoreBuildProperties(translationBuild, builds[0]);
@@ -775,7 +754,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetBuildsAsync_SuccessWithEventMetric()
+    public async Task GetBuildsAsync_SuccessWithEventMetrics()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -825,26 +804,28 @@ public class MachineApiServiceTests
                                 Result = new BsonString(Build01),
                                 Scope = EventScope.Drafting,
                             },
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineApiService.RetrievePreTranslationStatusAsync),
+                                Payload = { { "sfProjectId", Project01 } },
+                                ProjectId = Project01,
+                                Result = new BsonString(Build01),
+                                Scope = EventScope.Drafting,
+                            },
                         ],
                         UnpagedCount = 1,
                     }
                 )
             );
-        List<ServalBuildDto> builds = [];
 
         // SUT
-        await foreach (
-            ServalBuildDto build in env.Service.GetBuildsAsync(
-                User02,
-                Project01,
-                preTranslate: true,
-                isServalAdmin: true,
-                CancellationToken.None
-            )
-        )
-        {
-            builds.Add(build);
-        }
+        IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
+            User02,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(1, builds.Count);
         TestEnvironment.AssertCoreBuildProperties(translationBuild, builds[0]);
@@ -859,34 +840,37 @@ public class MachineApiServiceTests
         TranslationBuild translationBuild = env.ConfigureTranslationBuild();
 
         // Add additional build properties
-        const string scriptureRange = "GEN;EXO";
+        const string translationScriptureRange = "GEN;EXO";
+        const string trainingScriptureRange = "LEV;NUM";
 #pragma warning disable CS0612 // Type or member is obsolete
-        translationBuild.Pretranslate = [new PretranslateCorpus { ScriptureRange = scriptureRange }];
+        translationBuild.Pretranslate = [new PretranslateCorpus { ScriptureRange = translationScriptureRange }];
+        translationBuild.TrainOn = [new TrainingCorpus { ScriptureRange = trainingScriptureRange }];
 #pragma warning restore CS0612 // Type or member is obsolete
 
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
-        List<ServalBuildDto> builds = [];
 
         // SUT
-        await foreach (
-            ServalBuildDto build in env.Service.GetBuildsAsync(
-                User02,
-                Project01,
-                preTranslate: true,
-                isServalAdmin: true,
-                CancellationToken.None
-            )
-        )
-        {
-            builds.Add(build);
-        }
+        IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
+            User02,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(1, builds.Count);
         TestEnvironment.AssertCoreBuildProperties(translationBuild, builds[0]);
         Assert.NotNull(builds[0].AdditionalInfo);
         Assert.AreEqual(Project01, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ProjectId);
-        Assert.AreEqual(scriptureRange, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange);
+        Assert.AreEqual(
+            translationScriptureRange,
+            builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange
+        );
+        Assert.AreEqual(
+            trainingScriptureRange,
+            builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
+        );
     }
 
     [Test]
@@ -897,35 +881,47 @@ public class MachineApiServiceTests
         TranslationBuild translationBuild = env.ConfigureTranslationBuild();
 
         // Add additional build properties
-        const string scriptureRange = "GEN;EXO";
+        const string translationScriptureRange = "GEN;EXO";
+        const string trainingScriptureRange = "LEV;NUM";
         translationBuild.Pretranslate =
         [
-            new PretranslateCorpus { SourceFilters = [new ParallelCorpusFilter { ScriptureRange = scriptureRange }] },
+            new PretranslateCorpus
+            {
+                SourceFilters = [new ParallelCorpusFilter { ScriptureRange = translationScriptureRange }],
+            },
+        ];
+        translationBuild.TrainOn =
+        [
+            new TrainingCorpus
+            {
+                SourceFilters = [new ParallelCorpusFilter { ScriptureRange = trainingScriptureRange }],
+            },
         ];
 
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
-        List<ServalBuildDto> builds = [];
 
         // SUT
-        await foreach (
-            ServalBuildDto build in env.Service.GetBuildsAsync(
-                User02,
-                Project01,
-                preTranslate: true,
-                isServalAdmin: true,
-                CancellationToken.None
-            )
-        )
-        {
-            builds.Add(build);
-        }
+        IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
+            User02,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(1, builds.Count);
         TestEnvironment.AssertCoreBuildProperties(translationBuild, builds[0]);
         Assert.NotNull(builds[0].AdditionalInfo);
         Assert.AreEqual(Project01, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ProjectId);
-        Assert.AreEqual(scriptureRange, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange);
+        Assert.AreEqual(
+            translationScriptureRange,
+            builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange
+        );
+        Assert.AreEqual(
+            trainingScriptureRange,
+            builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
+        );
     }
 
     [Test]
@@ -1653,35 +1649,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetPreTranslationRevisionsAsync_CancelEnumeration()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        string textDocumentId = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
-        env.SetupTextDocument(textDocumentId, 40, alreadyExists: true);
-        using var cancellationTokenSource = new CancellationTokenSource();
-        List<DocumentRevision> revisions = [];
-
-        // SUT
-        await foreach (
-            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User01,
-                Project01,
-                40,
-                1,
-                isServalAdmin: false,
-                cancellationTokenSource.Token
-            )
-        )
-        {
-            await cancellationTokenSource.CancelAsync();
-            revisions.Add(revision);
-        }
-
-        Assert.AreEqual(1, revisions.Count);
-    }
-
-    [Test]
     public async Task GetPreTranslationRevisionsAsync_NoOps()
     {
         // Set up test environment
@@ -1719,22 +1686,16 @@ public class MachineApiServiceTests
                     ]
                 )
             );
-        List<DocumentRevision> revisions = [];
 
         // SUT
-        await foreach (
-            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User01,
-                Project01,
-                40,
-                1,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
-        )
-        {
-            revisions.Add(revision);
-        }
+        IReadOnlyList<DocumentRevision> revisions = await env.Service.GetPreTranslationRevisionsAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(1, revisions.Count);
         Assert.AreEqual(revisions[0].Source, OpSource.Draft);
@@ -1747,22 +1708,16 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        List<DocumentRevision> revisions = [];
 
         // SUT
-        await foreach (
-            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User01,
-                Project01,
-                40,
-                1,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
-        )
-        {
-            revisions.Add(revision);
-        }
+        IReadOnlyList<DocumentRevision> revisions = await env.Service.GetPreTranslationRevisionsAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
 
         Assert.IsEmpty(revisions);
     }
@@ -1774,22 +1729,16 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         string textDocumentId = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
         env.SetupTextDocument(textDocumentId, 40, alreadyExists: true);
-        List<DocumentRevision> revisions = [];
 
         // SUT
-        await foreach (
-            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User02,
-                Project01,
-                40,
-                1,
-                isServalAdmin: true,
-                CancellationToken.None
-            )
-        )
-        {
-            revisions.Add(revision);
-        }
+        IReadOnlyList<DocumentRevision> revisions = await env.Service.GetPreTranslationRevisionsAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(2, revisions.Count);
     }
@@ -1801,22 +1750,16 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         string textDocumentId = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
         env.SetupTextDocument(textDocumentId, 40, alreadyExists: true);
-        List<DocumentRevision> revisions = [];
 
         // SUT
-        await foreach (
-            DocumentRevision revision in env.Service.GetPreTranslationRevisionsAsync(
-                User01,
-                Project01,
-                40,
-                1,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
-        )
-        {
-            revisions.Add(revision);
-        }
+        IReadOnlyList<DocumentRevision> revisions = await env.Service.GetPreTranslationRevisionsAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(2, revisions.Count);
     }
@@ -3712,7 +3655,7 @@ public class MachineApiServiceTests
                 .CancelBuildAsync(TranslationEngine01, CancellationToken.None)
                 .Returns(Task.FromResult(translationBuild));
             TranslationEnginesClient
-                .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None)
+                .GetBuildAsync(TranslationEngine01, translationBuild.Id, minRevision: null, CancellationToken.None)
                 .Returns(Task.FromResult(translationBuild));
             TranslationEnginesClient
                 .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
@@ -3807,14 +3750,14 @@ public class MachineApiServiceTests
 
         public static void AssertCoreBuildProperties(TranslationBuild translationBuild, ServalBuildDto? actual)
         {
-            const string buildDtoId = $"{Project01}.{Build01}";
+            string buildDtoId = $"{Project01}.{translationBuild.Id}";
             Assert.IsNotNull(actual);
             Assert.AreEqual(translationBuild.Message, actual!.Message);
             Assert.AreEqual(translationBuild.PercentCompleted, actual.PercentCompleted);
             Assert.AreEqual(translationBuild.Revision, actual.Revision);
             Assert.AreEqual(translationBuild.State.ToString().ToUpperInvariant(), actual.State);
             Assert.AreEqual(buildDtoId, actual.Id);
-            Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01, translationBuild.Id), actual.Href);
             Assert.AreEqual(Project01, actual.Engine.Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
         }

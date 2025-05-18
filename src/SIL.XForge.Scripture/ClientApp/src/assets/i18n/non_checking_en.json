@@ -261,6 +261,25 @@
     "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
     "use_echo": "Use Echo Translation Engine"
   },
+  "draft_history_entry": {
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
+    "download_zip": "Download draft as ZIP file",
+    "draft_active": "Running",
+    "draft_canceled": "Canceled",
+    "draft_completed": "Completed",
+    "draft_faulted": "Failed",
+    "draft_pending": "Pending",
+    "draft_unknown": "Unknown",
+    "hide_model_training_configuration": "Hide model training configuration",
+    "show_model_training_configuration": "Show model training configuration",
+    "training_model_description": "The language model was trained on this configuration"
+  },
+  "draft_history_list": {
+    "draft_canceled": "The draft was canceled",
+    "draft_completed": "The draft is ready",
+    "draft_faulted": "The draft failed",
+    "previously_generated_drafts": "Previously generated drafts"
+  },
   "draft_preview_books": {
     "add_to_project": "Add to project",
     "add_to_different_project": "Add to a different project",

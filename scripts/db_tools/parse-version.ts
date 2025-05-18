@@ -39,7 +39,8 @@ class ParseVersion {
     'Allow mixing in an additional training source',
     'Updated Learning Rate For Serval',
     'Dark Mode',
-    'Enable Lynx insights'
+    'Enable Lynx insights',
+    'Preview new draft history interface'
   ];
 
   constructor() {

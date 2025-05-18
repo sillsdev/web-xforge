@@ -1,0 +1,64 @@
+mat-expansion-panel-header {
+  padding: 8px 16px;
+}
+
+mat-panel-title {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+mat-panel-description {
+  flex-grow: 0;
+}
+
+.drafted-books {
+  color: var(
+    --mat-expansion-header-text-color,
+    var(--mat-app-on-surface)
+  ); /* Keep the text color, even when disabled */
+  font-size: 1.1em;
+}
+
+.date {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.expand-icon {
+  flex-shrink: 0;
+}
+
+.training-configuration-link {
+  display: flex;
+  align-items: center;
+}
+
+strong {
+  font-weight: 500;
+}
+
+.book-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+/* Color classes for the status icon */
+.grey {
+  color: var(--draft-history-entry-grey-color);
+}
+
+.green {
+  color: var(--draft-history-entry-green-color);
+}
+
+.red {
+  color: var(--draft-history-entry-red-color);
+}

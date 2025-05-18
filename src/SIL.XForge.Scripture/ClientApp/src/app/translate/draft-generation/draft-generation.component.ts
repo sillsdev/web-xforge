@@ -17,6 +17,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -32,12 +33,14 @@ import { ServalProjectComponent } from '../../serval-administration/serval-proje
 import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
-import { activeBuildStates, BuildConfig, DraftZipProgress } from './draft-generation';
+import { DraftDownloadButtonComponent } from './draft-download-button/draft-download-button.component';
+import { activeBuildStates, BuildConfig } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
   DraftGenerationStepsResult
 } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
+import { DraftHistoryListComponent } from './draft-history-list/draft-history-list.component';
 import { DraftInformationComponent } from './draft-information/draft-information.component';
 import { DraftPreviewBooksComponent } from './draft-preview-books/draft-preview-books.component';
 import { DraftSource, DraftSourcesService } from './draft-sources.service';
@@ -60,7 +63,9 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     DraftGenerationStepsComponent,
     DraftInformationComponent,
     ServalProjectComponent,
-    DraftPreviewBooksComponent
+    DraftDownloadButtonComponent,
+    DraftPreviewBooksComponent,
+    DraftHistoryListComponent
   ]
 })
 export class DraftGenerationComponent extends DataLoadingComponent implements OnInit {
@@ -84,7 +89,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   additionalTrainingSource?: DraftSource;
 
   jobSubscription?: Subscription;
-  zipSubscription?: Subscription;
   isOnline = true;
 
   currentPage: 'initial' | 'steps' = 'initial';
@@ -107,12 +111,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
    * Determines if there are draft books available for download.
    */
   hasDraftBooksAvailable = false;
-
-  /**
-   * Tracks how many books have been downloaded for the zip file.
-   */
-  downloadBooksProgress: number = 0;
-  downloadBooksTotal: number = 0;
 
   isPreTranslationApproved = false;
   signupFormUrl?: string;
@@ -155,14 +153,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
+    protected readonly featureFlags: FeatureFlagService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService);
-  }
-
-  get downloadProgress(): number {
-    if (this.downloadBooksTotal === 0) return 0;
-    return (this.downloadBooksProgress / this.downloadBooksTotal) * 100;
   }
 
   get hasAnyCompletedBuild(): boolean {
@@ -312,19 +306,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.currentPage = 'steps';
   }
 
-  downloadDraft(): void {
-    this.zipSubscription?.unsubscribe();
-    this.zipSubscription = this.draftGenerationService
-      .downloadGeneratedDraftZip(this.activatedProject.projectDoc, this.lastCompletedBuild)
-      .subscribe({
-        next: (draftZipProgress: DraftZipProgress) => {
-          this.downloadBooksProgress = draftZipProgress.current;
-          this.downloadBooksTotal = draftZipProgress.total;
-        },
-        error: (error: Error) => this.noticeService.showError(error.message)
-      });
-  }
-
   async cancel(): Promise<void> {
     const { dialogRef, result } = this.dialogService.openGenericDialog({
       title: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_title'),
@@ -378,7 +359,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   isDraftInProgress(job?: BuildDto): boolean {
-    return activeBuildStates.includes(job?.state as BuildStates);
+    return job != null && activeBuildStates.includes(job.state);
   }
 
   isSyncing(): boolean {
@@ -386,23 +367,23 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   isDraftQueued(job?: BuildDto): boolean {
-    return [BuildStates.Queued, BuildStates.Pending].includes(job?.state as BuildStates);
+    return job != null && [BuildStates.Queued, BuildStates.Pending].includes(job.state);
   }
 
   isDraftActive(job?: BuildDto): boolean {
-    return (job?.state as BuildStates) === BuildStates.Active;
+    return job?.state === BuildStates.Active;
   }
 
   isDraftFinishing(job?: BuildDto): boolean {
-    return (job?.state as BuildStates) === BuildStates.Finishing;
+    return job?.state === BuildStates.Finishing;
   }
 
   isDraftComplete(job?: BuildDto): boolean {
-    return (job?.state as BuildStates) === BuildStates.Completed;
+    return job?.state === BuildStates.Completed;
   }
 
   isDraftFaulted(job?: BuildDto): boolean {
-    return (job?.state as BuildStates) === BuildStates.Faulted;
+    return job?.state === BuildStates.Faulted;
   }
 
   isServalAdmin(): boolean {

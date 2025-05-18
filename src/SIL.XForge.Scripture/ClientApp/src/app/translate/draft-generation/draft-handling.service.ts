@@ -149,19 +149,20 @@ export class DraftHandlingService {
    */
   getDraft(
     textDocId: TextDocId,
-    { isDraftLegacy }: { isDraftLegacy: boolean }
+    { isDraftLegacy, timestamp }: { isDraftLegacy: boolean; timestamp?: Date }
   ): Observable<DeltaOperation[] | DraftSegmentMap> {
     return isDraftLegacy
       ? // Fetch legacy draft
         this.draftGenerationService.getGeneratedDraft(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
-      : // Fetch draft in USFM format (fallback to legacy)
+      : // Fetch draft in Delta format (fallback to legacy)
         this.draftGenerationService
-          .getGeneratedDraftDeltaOperations(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
+          .getGeneratedDraftDeltaOperations(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, timestamp)
           .pipe(
             catchError(err => {
-              // If the corpus does not support USFM
-              if (err.status === 405) {
-                return this.getDraft(textDocId, { isDraftLegacy: true });
+              // If the corpus does not support USFM, use the legacy format.
+              // The legacy format does not support a timestamp
+              if (err.status === 405 && timestamp == null) {
+                return this.getDraft(textDocId, { isDraftLegacy: true, timestamp: undefined });
               }
 
               return throwError(() => err);
@@ -216,14 +217,15 @@ export class DraftHandlingService {
   async getAndApplyDraftAsync(
     project: SFProjectProfile,
     draftTextDocId: TextDocId,
-    targetTextDocId: TextDocId
+    targetTextDocId: TextDocId,
+    timestamp?: Date
   ): Promise<boolean> {
     if (!this.textDocService.canEdit(project, draftTextDocId.bookNum, draftTextDocId.chapterNum)) {
       return false;
     }
 
     return await new Promise<boolean>(resolve => {
-      this.getDraft(draftTextDocId, { isDraftLegacy: false }).subscribe({
+      this.getDraft(draftTextDocId, { isDraftLegacy: false, timestamp }).subscribe({
         next: async draft => {
           let ops: DeltaOperation[] = [];
           if (this.isDraftSegmentMap(draft)) {
