@@ -329,7 +329,7 @@
     "text_has_been_deleted": "Das Buch wurde gelöscht oder ist nicht mehr zugänglich.",
     "to_report_issue_email": "Um ein Problem zu melden, sende eine E-Mail an {{ issueEmailLink }}.",
     "verse_too_long_for_suggestions": "Dieser Vers ist zu lang, um Vorschläge zu generieren.",
-    "your_comment": "Your comment"
+    "your_comment": "Dein Kommentar"
   },
   "editor_draft_tab": {
     "apply_to_project": "Zum Projekt hinzufügen",
@@ -485,7 +485,7 @@
     "status_to_do": "Noch zu erledigen",
     "team": "(Team)",
     "unassigned": "(Nicht zugewiesen)",
-    "your_comment": "Your comment"
+    "your_comment": "Dein Kommentar"
   },
   "paginator": {
     "items_per_page": "Elemente pro Seite",
