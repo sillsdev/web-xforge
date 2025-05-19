@@ -233,8 +233,8 @@ public class MongoRepositoryTests
             .ThrowsAsync(ex);
 
         // SUT
-        Assert.ThrowsAsync<DuplicateKeyException>(
-            () => env.Service.UpdateAsync(e => e.Id == "123", u => u.Set(e => e.Id, "124"), upsert: false)
+        Assert.ThrowsAsync<DuplicateKeyException>(() =>
+            env.Service.UpdateAsync(e => e.Id == "123", u => u.Set(e => e.Id, "124"), upsert: false)
         );
     }
 
@@ -252,8 +252,8 @@ public class MongoRepositoryTests
             .ThrowsAsync(ex);
 
         // SUT
-        Assert.ThrowsAsync<MongoWriteException>(
-            () => env.Service.UpdateAsync(e => e.Id == "123", u => u.Set(e => e.Id, "124"), upsert: false)
+        Assert.ThrowsAsync<MongoWriteException>(() =>
+            env.Service.UpdateAsync(e => e.Id == "123", u => u.Set(e => e.Id, "124"), upsert: false)
         );
     }
 

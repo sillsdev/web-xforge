@@ -47,7 +47,7 @@ public static class NotesFormatter
     /// This is the inverse of <see cref="FormatNotes"/>, except the thread type is not parsed from the XML.
     /// </remarks>
     public static List<List<Comment>> ParseNotes(XElement noteXml, ParatextUser ptUser) =>
-        noteXml.Elements("thread").Select(threadElem => ParseThread(threadElem, ptUser)).ToList();
+        [.. noteXml.Elements("thread").Select(threadElem => ParseThread(threadElem, ptUser))];
 
     #endregion
 
@@ -186,7 +186,7 @@ public static class NotesFormatter
         comment.ExternalUser = commentElem.Attribute("extUser")?.Value;
         comment.Deleted = commentElem.Attribute("deleted")?.Value == "true";
         if (commentElem.Elements("tagAdded").Any())
-            comment.TagsAdded = commentElem.Elements("tagAdded").Select(t => t.Value).ToArray();
+            comment.TagsAdded = [.. commentElem.Elements("tagAdded").Select(t => t.Value)];
         ParseContents(commentElem.Element("content"), comment);
     }
 

@@ -30,8 +30,8 @@ public class SharingLogicWrapperTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.Throws<CannotConnectException>(
-            () => env.Service.HandleErrors(() => throw new CannotConnectException(), throwExceptions: true)
+        Assert.Throws<CannotConnectException>(() =>
+            env.Service.HandleErrors(() => throw new CannotConnectException(), throwExceptions: true)
         );
     }
 
@@ -77,14 +77,13 @@ public class SharingLogicWrapperTests
         sharedProject.Permissions.CreateUser(ParatextUser01);
 
         // SUT
-        Assert.Throws<InvalidOperationException>(
-            () =>
-                env.Service.ShareChanges(
-                    sharedProjects: [sharedProject],
-                    new SharedRepositorySource(),
-                    out List<SendReceiveResult> _,
-                    reviewProjects: []
-                )
+        Assert.Throws<InvalidOperationException>(() =>
+            env.Service.ShareChanges(
+                sharedProjects: [sharedProject],
+                new SharedRepositorySource(),
+                out List<SendReceiveResult> _,
+                reviewProjects: []
+            )
         );
     }
 

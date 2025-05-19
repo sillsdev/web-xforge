@@ -583,16 +583,15 @@ namespace PtdaSyncAll
             string matFilename = TestEnvironment.GetUsxFileName(TextType.Target, "MAT");
             // SUT
             string exceptionMessage = Assert
-                .ThrowsAsync<Exception>(
-                    () =>
-                        env.Runner.SyncBookUsxAsync(
-                            matBookTextInfo,
-                            TextType.Target,
-                            "project01",
-                            matFilename,
-                            false,
-                            chaptersToInclude
-                        )
+                .ThrowsAsync<Exception>(() =>
+                    env.Runner.SyncBookUsxAsync(
+                        matBookTextInfo,
+                        TextType.Target,
+                        "project01",
+                        matFilename,
+                        false,
+                        chaptersToInclude
+                    )
                 )
                 .Message;
             Assert.That(exceptionMessage, Does.Contain("invalid"));

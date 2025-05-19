@@ -428,8 +428,6 @@ public static partial class TestData
     /// <summary>
     /// Genesis 1:1 in USX (with blank verses).
     /// </summary>
-
-
     public static readonly string UsxGen1V1WithBlankVerses = $"""
         <usx version="{Usx.UsxVersion}">
           <book code="GEN" style="id" />

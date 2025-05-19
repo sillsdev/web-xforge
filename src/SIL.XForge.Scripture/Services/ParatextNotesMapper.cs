@@ -50,10 +50,7 @@ public class ParatextNotesMapper(
         ];
 
         // Populate the list with all Paratext users belonging to the project and who can write notes
-        _ptProjectUsersWhoCanWriteNotes = users
-            .Where(u => ptRolesCanWriteNote.Contains(u.Role))
-            .Select(u => u.Id)
-            .ToHashSet();
+        _ptProjectUsersWhoCanWriteNotes = [.. users.Where(u => ptRolesCanWriteNote.Contains(u.Role)).Select(u => u.Id)];
     }
 
     public async Task<XElement> GetNotesChangelistAsync(

@@ -27,14 +27,8 @@ public class JwtTokenHelperTests
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
-        Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () =>
-                env.Service.RefreshAccessTokenAsync(
-                    new ParatextOptions(),
-                    new Tokens(),
-                    httpClient,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            env.Service.RefreshAccessTokenAsync(new ParatextOptions(), new Tokens(), httpClient, CancellationToken.None)
         );
     }
 
@@ -139,14 +133,8 @@ public class JwtTokenHelperTests
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
-        Assert.ThrowsAsync<HttpRequestException>(
-            () =>
-                env.Service.RefreshAccessTokenAsync(
-                    new ParatextOptions(),
-                    new Tokens(),
-                    httpClient,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<HttpRequestException>(() =>
+            env.Service.RefreshAccessTokenAsync(new ParatextOptions(), new Tokens(), httpClient, CancellationToken.None)
         );
     }
 

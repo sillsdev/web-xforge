@@ -1,2 +1,2 @@
 "*.{ts,js,json,css,scss,less,html,md,yml}": "prettier --write"
-"*.cs": ["dotnet format analyzers --include", "dotnet format style --include", "dotnet csharpier"]
+"*.cs": ["dotnet format analyzers --include", "dotnet format style --include", "dotnet csharpier format"]
