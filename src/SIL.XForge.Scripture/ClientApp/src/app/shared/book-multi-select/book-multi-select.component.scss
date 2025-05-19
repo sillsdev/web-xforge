@@ -10,6 +10,11 @@
   }
 }
 
+.flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .book-multi-select {
   .mat-mdc-standard-chip {
     overflow: hidden;
