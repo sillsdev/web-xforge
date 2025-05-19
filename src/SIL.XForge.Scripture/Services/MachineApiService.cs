@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -36,6 +37,7 @@ public class MachineApiService(
     IDeltaUsxMapper deltaUsxMapper,
     IEventMetricService eventMetricService,
     IExceptionHandler exceptionHandler,
+    IHubContext<NotificationHub, INotifier> hubContext,
     ILogger<MachineApiService> logger,
     IParatextService paratextService,
     IPreTranslationService preTranslationService,
@@ -170,15 +172,6 @@ public class MachineApiService(
         };
         var delivery = JsonConvert.DeserializeAnonymousType(json, anonymousType);
 
-        // We only support translation build finished events for completed builds
-        if (
-            delivery.Event != nameof(WebhookEvent.TranslationBuildFinished)
-            || delivery.Payload.BuildState != nameof(JobState.Completed)
-        )
-        {
-            return;
-        }
-
         // Retrieve the translation engine id from the delivery
         string translationEngineId = delivery.Payload?.Engine?.Id;
         if (string.IsNullOrWhiteSpace(translationEngineId))
@@ -204,11 +197,22 @@ public class MachineApiService(
             return;
         }
 
+        // Notify any SignalR clients subscribed to the project
+        string buildId = delivery.Payload.Build.Id;
+        string buildState = delivery.Payload.BuildState;
+        await hubContext.NotifyBuildProgress(projectId, new ServalBuildState { BuildId = buildId, State = buildState });
+
+        // We only support translation build finished events for completed builds
+        if (delivery.Event != nameof(WebhookEvent.TranslationBuildFinished) || buildState != nameof(JobState.Completed))
+        {
+            return;
+        }
+
         // Record that the webhook was run successfully
         var arguments = new Dictionary<string, object>
         {
-            { "buildId", delivery.Payload.Build.Id },
-            { "buildState", delivery.Payload.BuildState },
+            { "buildId", buildId },
+            { "buildState", buildState },
             { "event", delivery.Event },
             { "translationEngineId", delivery.Payload.Engine.Id },
         };
@@ -218,7 +222,7 @@ public class MachineApiService(
             nameof(ExecuteWebhookAsync),
             EventScope.Drafting,
             arguments,
-            result: delivery.Payload.Build.Id,
+            result: buildId,
             exception: null
         );
 
@@ -1109,6 +1113,16 @@ public class MachineApiService(
                 await projectSecrets.UpdateAsync(
                     sfProjectId,
                     u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true)
+                );
+
+                // Notify any SignalR clients subscribed to the project
+                await hubContext.NotifyBuildProgress(
+                    sfProjectId,
+                    new ServalBuildState
+                    {
+                        BuildId = translationBuild?.Id,
+                        State = nameof(ServalData.PreTranslationsRetrieved),
+                    }
                 );
 
                 // Return the build id
