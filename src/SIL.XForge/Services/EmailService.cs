@@ -9,25 +9,16 @@ using SIL.XForge.Configuration;
 
 namespace SIL.XForge.Services;
 
-public class EmailService : IEmailService
+public class EmailService(IOptions<SiteOptions> options, ILogger<EmailService> logger) : IEmailService
 {
-    private readonly IOptions<SiteOptions> _options;
-    private readonly ILogger<EmailService> _logger;
-
-    public EmailService(IOptions<SiteOptions> options, ILogger<EmailService> logger)
-    {
-        _options = options;
-        _logger = logger;
-    }
-
     public async Task SendEmailAsync(string email, string subject, string body)
     {
-        SiteOptions siteOptions = _options.Value;
+        SiteOptions siteOptions = options.Value;
         string fromAddress = siteOptions.EmailFromAddress;
         string title = siteOptions.Name;
         using var mimeMessage = new MimeMessage();
         mimeMessage.From.Add(new MailboxAddress(title, fromAddress));
-        mimeMessage.To.Add(new MailboxAddress("", email));
+        mimeMessage.To.Add(new MailboxAddress(string.Empty, email));
         mimeMessage.Subject = subject;
 
         var bodyBuilder = new BodyBuilder { HtmlBody = body };
@@ -44,6 +35,21 @@ public class EmailService : IEmailService
             await client.SendAsync(mimeMessage);
             await client.DisconnectAsync(true);
         }
-        _logger.LogInformation("Email Sent\n{0}", mimeMessage.ToString());
+
+        logger.LogInformation("Email Sent\n{mimeMessage}", mimeMessage.ToString());
+    }
+
+    public bool ValidateEmail(string? email)
+    {
+        try
+        {
+            // The Address property setter called by the constructor performs the validation logic.
+            _ = new MailboxAddress(string.Empty, email);
+            return true;
+        }
+        catch (Exception e) when (e is ArgumentNullException or ParseException)
+        {
+            return false;
+        }
     }
 }

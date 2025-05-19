@@ -14,6 +14,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest } from 'rxjs';
+import { CommandError } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -50,6 +51,7 @@ export class ShareControlComponent extends ShareBaseComponent {
 
   private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  readonly invalidEmailAddress: string = 'invalid-email-address';
 
   constructor(
     readonly i18n: I18nService,
@@ -146,20 +148,32 @@ export class ShareControlComponent extends ShareBaseComponent {
     }
 
     this.isSubmitted = true;
-    const response = await this.projectService.onlineInvite(
-      this._projectId,
-      this.email.value,
-      this.localeControl.value,
-      this.shareRole
-    );
-    this.isSubmitted = false;
-    this.isAlreadyInvited = false;
     let message: string;
-    if (response === this.alreadyProjectMemberResponse) {
-      message = translate('share_control.not_inviting_already_member');
-    } else {
-      message = translate('share_control.invitation_sent', { email: this.sendInviteForm.value.email });
-      this.invited.emit();
+    try {
+      const response = await this.projectService.onlineInvite(
+        this._projectId,
+        this.email.value,
+        this.localeControl.value,
+        this.shareRole
+      );
+
+      this.isSubmitted = false;
+      this.isAlreadyInvited = false;
+
+      if (response === this.alreadyProjectMemberResponse) {
+        message = translate('share_control.not_inviting_already_member');
+      } else {
+        message = translate('share_control.invitation_sent', { email: this.sendInviteForm.value.email });
+        this.invited.emit();
+      }
+    } catch (err) {
+      if (err instanceof CommandError && err.message.includes(this.invalidEmailAddress)) {
+        this.isSubmitted = false;
+        this.isAlreadyInvited = false;
+        message = translate('share_control.not_inviting_email_invalid');
+      } else {
+        throw err;
+      }
     }
 
     this.noticeService.show(message);
