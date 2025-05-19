@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -3498,6 +3499,7 @@ public class MachineApiServiceTests
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             EventMetricService = Substitute.For<IEventMetricService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
+            var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
             MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
@@ -3603,6 +3605,7 @@ public class MachineApiServiceTests
                 DeltaUsxMapper,
                 EventMetricService,
                 ExceptionHandler,
+                hubContext,
                 MockLogger,
                 ParatextService,
                 PreTranslationService,

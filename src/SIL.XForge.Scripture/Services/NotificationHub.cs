@@ -9,6 +9,19 @@ namespace SIL.XForge.Scripture.Services;
 public class NotificationHub : Hub<INotifier>, INotifier
 {
     /// <summary>
+    /// Notifies subscribers to a project of draft build progress.
+    /// </summary>
+    /// <param name="projectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildState">The build state from Serval.</param>
+    /// <returns>The asynchronous task.</returns>
+    /// <remarks>
+    /// This will currently be emitted on the TranslationBuildStarted and TranslationBuildFinished webhooks,
+    /// and when the draft pre-translations have been retrieved.
+    /// </remarks>
+    public async Task NotifyBuildProgress(string projectId, ServalBuildState buildState) =>
+        await Clients.Group(projectId).NotifyBuildProgress(projectId, buildState);
+
+    /// <summary>
     /// Notifies subscribers to a project of sync progress.
     /// </summary>
     /// <param name="projectId">The Scripture Forge project identifier.</param>
