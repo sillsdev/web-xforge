@@ -179,8 +179,8 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).SyncDisabled, Is.False);
         // SUT
-        Assert.DoesNotThrowAsync(
-            () => env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" })
+        Assert.DoesNotThrowAsync(() =>
+            env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" })
         );
     }
 
@@ -190,8 +190,8 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).SyncDisabled, Is.False);
         // SUT
-        Assert.ThrowsAsync<ArgumentException>(
-            async () => await env.Service.SyncAsync(new SyncConfig { ProjectId = Project04, UserId = "userid" })
+        Assert.ThrowsAsync<ArgumentException>(async () =>
+            await env.Service.SyncAsync(new SyncConfig { ProjectId = Project04, UserId = "userid" })
         );
     }
 
@@ -538,8 +538,8 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).SyncDisabled, Is.True, "setup");
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SyncAsync(new SyncConfig { ProjectId = Project02, UserId = "userid" })
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.SyncAsync(new SyncConfig { ProjectId = Project02, UserId = "userid" })
         );
     }
 

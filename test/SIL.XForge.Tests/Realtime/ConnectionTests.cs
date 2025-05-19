@@ -247,8 +247,8 @@ public class ConnectionTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.Throws<ArgumentException>(
-            () => env.Service.ExcludePropertyFromTransaction<TestProject>(op => op.SyncDisabled)
+        Assert.Throws<ArgumentException>(() =>
+            env.Service.ExcludePropertyFromTransaction<TestProject>(op => op.SyncDisabled)
         );
     }
 

@@ -3893,16 +3893,15 @@ public class ParatextServiceTests
             },
         };
         // The comment thread must exist if the Note Thread is not new
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.UpdateParatextCommentsAsync(
-                    userSecret,
-                    paratextId,
-                    new[] { noteThreadDoc },
-                    env.usernames,
-                    ptProjectUsers,
-                    env.TagCount
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdateParatextCommentsAsync(
+                userSecret,
+                paratextId,
+                new[] { noteThreadDoc },
+                env.usernames,
+                ptProjectUsers,
+                env.TagCount
+            )
         );
     }
 
@@ -3989,21 +3988,20 @@ public class ParatextServiceTests
     {
         var env = new TestEnvironment();
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Service.SendReceiveAsync(null, null, null, default, Substitute.For<SyncMetrics>())
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Service.SendReceiveAsync(null, null, null, default, Substitute.For<SyncMetrics>())
         );
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () =>
-                env.Service.SendReceiveAsync(
-                    null,
-                    env.PTProjectIds[env.Project01].Id,
-                    null,
-                    default,
-                    Substitute.For<SyncMetrics>()
-                )
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Service.SendReceiveAsync(
+                null,
+                env.PTProjectIds[env.Project01].Id,
+                null,
+                default,
+                Substitute.For<SyncMetrics>()
+            )
         );
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Service.SendReceiveAsync(user01Secret, null, null, default, Substitute.For<SyncMetrics>())
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Service.SendReceiveAsync(user01Secret, null, null, default, Substitute.For<SyncMetrics>())
         );
     }
 
@@ -4026,15 +4024,15 @@ public class ParatextServiceTests
             )
             .Returns(false);
 
-        InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
+        InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
 
         // Check exception is thrown if errors occurred, even if share changes succeeded
         env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
-        ex = Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
+        ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
     }
@@ -4049,9 +4047,8 @@ public class ParatextServiceTests
 
         env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
 
-        ArgumentException ex = Assert.ThrowsAsync<ArgumentException>(
-            () =>
-                env.Service.SendReceiveAsync(user01Secret, "badProjectId", null, default, Substitute.For<SyncMetrics>())
+        ArgumentException ex = Assert.ThrowsAsync<ArgumentException>(() =>
+            env.Service.SendReceiveAsync(user01Secret, "badProjectId", null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("PT projects with the following PT ids were requested"));
     }
@@ -4085,15 +4082,15 @@ public class ParatextServiceTests
                 return true;
             });
 
-        InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
+        InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
 
         // Check exception is thrown if errors occurred, even if share changes succeeded
         env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
-        ex = Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
+        ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
     }
@@ -4125,15 +4122,14 @@ public class ParatextServiceTests
 
         // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
         // SUT 2
-        ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(
-            () =>
-                env.Service.SendReceiveAsync(
-                    user01Secret,
-                    "unknownPtProjectId8",
-                    null,
-                    default,
-                    Substitute.For<SyncMetrics>()
-                )
+        ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
+            env.Service.SendReceiveAsync(
+                user01Secret,
+                "unknownPtProjectId8",
+                null,
+                default,
+                Substitute.For<SyncMetrics>()
+            )
         );
         Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
         env.MockSharingLogicWrapper.DidNotReceive()
@@ -4169,15 +4165,14 @@ public class ParatextServiceTests
 
         // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
         // SUT 2
-        ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(
-            () =>
-                env.Service.SendReceiveAsync(
-                    user01Secret,
-                    "unknownPtProjectId8",
-                    null,
-                    default,
-                    Substitute.For<SyncMetrics>()
-                )
+        ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
+            env.Service.SendReceiveAsync(
+                user01Secret,
+                "unknownPtProjectId8",
+                null,
+                default,
+                Substitute.For<SyncMetrics>()
+            )
         );
         Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
         env.MockSharingLogicWrapper.DidNotReceive()
@@ -4317,8 +4312,8 @@ public class ParatextServiceTests
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
         string resourceId = "test_resource_id"; // A missing or invalid resource or project
         await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
-        Assert.ThrowsAsync<ArgumentException>(
-            () => env.Service.SendReceiveAsync(user01Secret, resourceId, null, default, Substitute.For<SyncMetrics>())
+        Assert.ThrowsAsync<ArgumentException>(() =>
+            env.Service.SendReceiveAsync(user01Secret, resourceId, null, default, Substitute.For<SyncMetrics>())
         );
     }
 
@@ -4639,8 +4634,8 @@ public class ParatextServiceTests
         SFProject project = projects.First();
         Assert.That(project.UserRoles.Count, Is.EqualTo(3), "setup");
         env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
-        Assert.ThrowsAsync<ForbiddenException>(
-            async () => await env.Service.GetParatextUsersAsync(userSecret, project, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(async () =>
+            await env.Service.GetParatextUsersAsync(userSecret, project, CancellationToken.None)
         );
     }
 
@@ -4758,8 +4753,8 @@ public class ParatextServiceTests
             .Returns(x => throw HttpException.Create(new WebException("401: Unauthorized"), (HttpWebRequest)null));
 
         // SUT
-        Assert.ThrowsAsync<HttpException>(
-            () => env.Service.GetParatextUsersAsync(userSecret, project, CancellationToken.None)
+        Assert.ThrowsAsync<HttpException>(() =>
+            env.Service.GetParatextUsersAsync(userSecret, project, CancellationToken.None)
         );
 
         // Various pieces of significant data are reported when a 401 Unauthorized goes thru.
@@ -4792,8 +4787,8 @@ public class ParatextServiceTests
 
         env.MakeRegistryClientReturn(env.UnauthorizedHttpResponseMessage);
         // One SUT
-        HttpRequestException exc = Assert.ThrowsAsync<HttpRequestException>(
-            () => env.Service.IsRegisteredAsync(userSecret, "some-project-pt-id", CancellationToken.None)
+        HttpRequestException exc = Assert.ThrowsAsync<HttpRequestException>(() =>
+            env.Service.IsRegisteredAsync(userSecret, "some-project-pt-id", CancellationToken.None)
         );
         Assert.That(exc.Message, Contains.Substring("Unauthorized"), "relevant error info should be coming thru");
     }
@@ -5411,13 +5406,12 @@ public class ParatextServiceTests
         string wrongRev = "not-the-rev-we-wanted";
         env.MockHgWrapper.GetRepoRevision(Arg.Any<string>()).Returns(wrongRev);
         // SUT
-        Assert.Throws<Exception>(
-            () =>
-                env.Service.SetRepoToRevision(
-                    TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01),
-                    projectPTId,
-                    rev
-                )
+        Assert.Throws<Exception>(() =>
+            env.Service.SetRepoToRevision(
+                TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01),
+                projectPTId,
+                rev
+            )
         );
         env.MockHgWrapper.Received().Update(Arg.Any<string>(), rev);
         env.MockHgWrapper.Received().GetRepoRevision(Arg.Any<string>());
@@ -5599,8 +5593,7 @@ public class ParatextServiceTests
         string paratextId = env.PTProjectIds[env.Project01].ToString();
 
         // SUT
-        Assert.Throws<ForbiddenException>(
-            () => env.Service.ConvertUsxToUsfm(userSecret, paratextId, 8, env.RuthBookUsx)
+        Assert.Throws<ForbiddenException>(() => env.Service.ConvertUsxToUsfm(userSecret, paratextId, 8, env.RuthBookUsx)
         );
     }
 
@@ -5612,8 +5605,8 @@ public class ParatextServiceTests
         const string paratextId = "invalid_paratext_id";
 
         // SUT
-        Assert.Throws<DataNotFoundException>(
-            () => env.Service.ConvertUsxToUsfm(userSecret, paratextId, 8, env.RuthBookUsx)
+        Assert.Throws<DataNotFoundException>(() =>
+            env.Service.ConvertUsxToUsfm(userSecret, paratextId, 8, env.RuthBookUsx)
         );
     }
 
@@ -5960,8 +5953,8 @@ public class ParatextServiceTests
         env.AddProjectRepository(project);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
         );
     }
 
@@ -5972,8 +5965,8 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetSnapshotAsync(userSecret, "invalid_project_id", "MAT", 1, DateTime.UtcNow)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetSnapshotAsync(userSecret, "invalid_project_id", "MAT", 1, DateTime.UtcNow)
         );
     }
 
@@ -5987,8 +5980,8 @@ public class ParatextServiceTests
         env.AddProjectRepository(project);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
         );
     }
 
@@ -6010,8 +6003,8 @@ public class ParatextServiceTests
         env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).Returns(_ => scrText);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetSnapshotAsync(userSecret, project.Id, "RUT", 1, DateTime.MinValue)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetSnapshotAsync(userSecret, project.Id, "RUT", 1, DateTime.MinValue)
         );
     }
 
@@ -6025,8 +6018,8 @@ public class ParatextServiceTests
         env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetDeltaFromUsfmAsync(env.User01, "invalid_project_id", env.RuthBookUsfm, 8)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetDeltaFromUsfmAsync(env.User01, "invalid_project_id", env.RuthBookUsfm, 8)
         );
     }
 
@@ -6040,8 +6033,8 @@ public class ParatextServiceTests
         env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetDeltaFromUsfmAsync("invalid_user_id", project.Id, env.RuthBookUsfm, 8)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetDeltaFromUsfmAsync("invalid_user_id", project.Id, env.RuthBookUsfm, 8)
         );
     }
 

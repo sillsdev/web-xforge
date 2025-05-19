@@ -115,8 +115,8 @@ public class PreTranslationServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationParametersAsync("invalid_project_id")
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetPreTranslationParametersAsync("invalid_project_id")
         );
     }
 
@@ -461,8 +461,8 @@ public class PreTranslationServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationStatusAsync("invalid_project_id", CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdatePreTranslationStatusAsync("invalid_project_id", CancellationToken.None)
         );
     }
 

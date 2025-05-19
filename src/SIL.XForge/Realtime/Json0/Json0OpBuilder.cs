@@ -193,5 +193,5 @@ public class Json0OpBuilder<T>
     }
 
     private static List<object> CreateJson0Path(IEnumerable<object> path) =>
-        path.Select(i => (i is string str) ? str.ToCamelCase() : i).ToList();
+        [.. path.Select(i => (i is string str) ? str.ToCamelCase() : i)];
 }

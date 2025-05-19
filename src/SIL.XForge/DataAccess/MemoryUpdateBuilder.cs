@@ -83,7 +83,7 @@ public class MemoryUpdateBuilder<T> : IUpdateBuilder<T>
     {
         Func<T, IEnumerable<TItem>> getCollection = field.Compile();
         IEnumerable<TItem> collection = getCollection(_entity);
-        TItem[] toRemove = collection.Where(predicate.Compile()).ToArray();
+        TItem[] toRemove = [.. collection.Where(predicate.Compile())];
         MethodInfo removeMethod = collection.GetType().GetMethod("Remove");
         foreach (TItem item in toRemove)
             removeMethod.Invoke(collection, [item]);

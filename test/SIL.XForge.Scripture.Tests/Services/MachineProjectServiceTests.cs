@@ -78,8 +78,8 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.AddSmtProjectAsync("invalid_project_id", CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.AddSmtProjectAsync("invalid_project_id", CancellationToken.None)
         );
     }
 
@@ -472,14 +472,13 @@ public class MachineProjectServiceTests
         await env.Projects.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.BuildProjectAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.BuildProjectAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                preTranslate: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -491,14 +490,13 @@ public class MachineProjectServiceTests
         await env.ProjectSecrets.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.BuildProjectAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.BuildProjectAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                preTranslate: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -509,14 +507,13 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<InvalidDataException>(
-            () =>
-                env.Service.BuildProjectAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project04 },
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<InvalidDataException>(() =>
+            env.Service.BuildProjectAsync(
+                User01,
+                new BuildConfig { ProjectId = Project04 },
+                preTranslate: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -554,8 +551,8 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.BuildProjectAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
         );
     }
 
@@ -805,14 +802,8 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult(new TranslationEngine()));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.CreateServalProjectAsync(
-                    project,
-                    preTranslate: true,
-                    useEcho: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.CreateServalProjectAsync(project, preTranslate: true, useEcho: false, CancellationToken.None)
         );
     }
 
@@ -842,8 +833,8 @@ public class MachineProjectServiceTests
         MemoryStream outputStream = new MemoryStream();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CreateZipFileFromParatextDirectoryAsync(Project01, outputStream, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.CreateZipFileFromParatextDirectoryAsync(Project01, outputStream, CancellationToken.None)
         );
     }
 
@@ -950,16 +941,15 @@ public class MachineProjectServiceTests
         await projectDoc.DeleteAsync();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.EnsureTranslationEngineExistsAsync(
-                    User01,
-                    projectDoc,
-                    projectSecret,
-                    preTranslate: true,
-                    useEcho: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.EnsureTranslationEngineExistsAsync(
+                User01,
+                projectDoc,
+                projectSecret,
+                preTranslate: true,
+                useEcho: false,
+                CancellationToken.None
+            )
         );
         env.ParatextService.DidNotReceiveWithAnyArgs().GetWritingSystem(Arg.Any<UserSecret>(), Arg.Any<string>());
     }
@@ -986,16 +976,15 @@ public class MachineProjectServiceTests
             .AndDoes(_ => projectDoc.DeleteAsync());
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.EnsureTranslationEngineExistsAsync(
-                    User01,
-                    projectDoc,
-                    projectSecret,
-                    preTranslate: true,
-                    useEcho: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.EnsureTranslationEngineExistsAsync(
+                User01,
+                projectDoc,
+                projectSecret,
+                preTranslate: true,
+                useEcho: false,
+                CancellationToken.None
+            )
         );
         env.ParatextService.Received(1).GetWritingSystem(Arg.Any<UserSecret>(), Arg.Any<string>());
     }
@@ -1018,16 +1007,15 @@ public class MachineProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
         // SUT
-        Assert.ThrowsAsync<InvalidDataException>(
-            () =>
-                env.Service.EnsureTranslationEngineExistsAsync(
-                    User01,
-                    projectDoc,
-                    projectSecret,
-                    preTranslate: false,
-                    useEcho: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<InvalidDataException>(() =>
+            env.Service.EnsureTranslationEngineExistsAsync(
+                User01,
+                projectDoc,
+                projectSecret,
+                preTranslate: false,
+                useEcho: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1197,16 +1185,15 @@ public class MachineProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.EnsureTranslationEngineExistsAsync(
-                    User01,
-                    projectDoc,
-                    projectSecret,
-                    preTranslate: true,
-                    useEcho: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.EnsureTranslationEngineExistsAsync(
+                User01,
+                projectDoc,
+                projectSecret,
+                preTranslate: true,
+                useEcho: false,
+                CancellationToken.None
+            )
         );
         env.ParatextService.DidNotReceiveWithAnyArgs().GetWritingSystem(Arg.Any<UserSecret>(), Arg.Any<string>());
     }
@@ -1228,16 +1215,15 @@ public class MachineProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.EnsureTranslationEngineExistsAsync(
-                    "invalid_user_id",
-                    projectDoc,
-                    projectSecret,
-                    preTranslate: true,
-                    useEcho: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.EnsureTranslationEngineExistsAsync(
+                "invalid_user_id",
+                projectDoc,
+                projectSecret,
+                preTranslate: true,
+                useEcho: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1300,8 +1286,8 @@ public class MachineProjectServiceTests
         MemoryStream outputStream = new MemoryStream();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetProjectZipAsync("invalid_project_id", outputStream, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetProjectZipAsync("invalid_project_id", outputStream, CancellationToken.None)
         );
     }
 
@@ -2244,13 +2230,8 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.RemoveLegacyServalDataAsync(
-                    "invalid_project_id",
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.RemoveLegacyServalDataAsync("invalid_project_id", preTranslate: false, CancellationToken.None)
         );
     }
 
@@ -2597,8 +2578,8 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.RemoveProjectAsync("invalid_project_id", preTranslate: false, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.RemoveProjectAsync("invalid_project_id", preTranslate: false, CancellationToken.None)
         );
     }
 
@@ -2984,14 +2965,13 @@ public class MachineProjectServiceTests
         await env.ProjectSecrets.UpdateAsync(Project01, op => op.Set(p => p.ServalData, new ServalData()));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.SyncProjectCorporaAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    preTranslate: true,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.SyncProjectCorporaAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                preTranslate: true,
+                CancellationToken.None
+            )
         );
     }
 
@@ -3003,14 +2983,13 @@ public class MachineProjectServiceTests
         await env.Projects.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.SyncProjectCorporaAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.SyncProjectCorporaAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                preTranslate: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -3022,14 +3001,13 @@ public class MachineProjectServiceTests
         await env.ProjectSecrets.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.SyncProjectCorporaAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.SyncProjectCorporaAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                preTranslate: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -3041,14 +3019,13 @@ public class MachineProjectServiceTests
         await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.SyncProjectCorporaAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.SyncProjectCorporaAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                preTranslate: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -3061,14 +3038,13 @@ public class MachineProjectServiceTests
         await env.SetupProjectSecretAsync(Project01, new ServalData { TranslationEngineId = TranslationEngine01 });
 
         // SUT
-        Assert.ThrowsAsync<InvalidDataException>(
-            () =>
-                env.Service.SyncProjectCorporaAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<InvalidDataException>(() =>
+            env.Service.SyncProjectCorporaAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                preTranslate: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -3081,14 +3057,13 @@ public class MachineProjectServiceTests
         await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
 
         // SUT
-        Assert.ThrowsAsync<InvalidDataException>(
-            () =>
-                env.Service.SyncProjectCorporaAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    preTranslate: true,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<InvalidDataException>(() =>
+            env.Service.SyncProjectCorporaAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                preTranslate: true,
+                CancellationToken.None
+            )
         );
     }
 
@@ -3100,14 +3075,13 @@ public class MachineProjectServiceTests
         await env.ProjectSecrets.UpdateAsync(Project01, op => op.Set(p => p.ServalData, new ServalData()));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.SyncProjectCorporaAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.SyncProjectCorporaAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                preTranslate: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -3307,14 +3281,13 @@ public class MachineProjectServiceTests
             .Throws(ServalApiExceptions.InternalServerError);
 
         // SUT
-        Assert.ThrowsAsync<ServalApiException>(
-            () =>
-                env.Service.TranslationEngineExistsAsync(
-                    Project01,
-                    TranslationEngine01,
-                    preTranslate: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<ServalApiException>(() =>
+            env.Service.TranslationEngineExistsAsync(
+                Project01,
+                TranslationEngine01,
+                preTranslate: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -3336,8 +3309,8 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdateTranslationSourcesAsync(User01, "invalid_project_id")
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdateTranslationSourcesAsync(User01, "invalid_project_id")
         );
     }
 
@@ -3348,8 +3321,8 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdateTranslationSourcesAsync("invalid_user_id", Project01)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdateTranslationSourcesAsync("invalid_user_id", Project01)
         );
     }
 

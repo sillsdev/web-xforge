@@ -110,8 +110,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User02, Project01, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.CancelPreTranslationBuildAsync(User02, Project01, CancellationToken.None)
         );
     }
 
@@ -122,8 +122,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, "invalid_project_id", CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.CancelPreTranslationBuildAsync(User01, "invalid_project_id", CancellationToken.None)
         );
     }
 
@@ -136,8 +136,8 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.NotSupported);
 
         // SUT
-        Assert.ThrowsAsync<NotSupportedException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        Assert.ThrowsAsync<NotSupportedException>(() =>
+            env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
         );
     }
 
@@ -148,8 +148,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, Project03, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.CancelPreTranslationBuildAsync(User01, Project03, CancellationToken.None)
         );
     }
 
@@ -162,8 +162,8 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(preTranslate: true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
         );
 
         env.BackgroundJobClient.Received(1).ChangeState(JobId, Arg.Any<DeletedState>(), null); // Same as Delete()
@@ -277,17 +277,16 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.NotFound);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetBuildAsync(
-                    User01,
-                    Project01,
-                    Build01,
-                    minRevision,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -320,17 +319,16 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.GetBuildAsync(
-                    User02,
-                    Project01,
-                    Build01,
-                    minRevision: null,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetBuildAsync(
+                User02,
+                Project01,
+                Build01,
+                minRevision: null,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -341,17 +339,16 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetBuildAsync(
-                    User01,
-                    "invalid_project_id",
-                    Build01,
-                    minRevision: null,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildAsync(
+                User01,
+                "invalid_project_id",
+                Build01,
+                minRevision: null,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -362,17 +359,16 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetBuildAsync(
-                    User01,
-                    Project03,
-                    Build01,
-                    minRevision: null,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildAsync(
+                User01,
+                Project03,
+                Build01,
+                minRevision: null,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -539,15 +535,14 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.GetBuildsAsync(
-                    User02,
-                    Project01,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetBuildsAsync(
+                User02,
+                Project01,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -558,15 +553,14 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetBuildsAsync(
-                    User01,
-                    "invalid_project_id",
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildsAsync(
+                User01,
+                "invalid_project_id",
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -577,15 +571,14 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetBuildsAsync(
-                    User01,
-                    Project03,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildsAsync(
+                User01,
+                Project03,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -718,15 +711,14 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.NotFound);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetBuildsAsync(
-                    User01,
-                    Project01,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildsAsync(
+                User01,
+                Project01,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -934,16 +926,15 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.NoContent);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetCurrentBuildAsync(
-                    User01,
-                    Project01,
-                    minRevision,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetCurrentBuildAsync(
+                User01,
+                Project01,
+                minRevision,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -975,16 +966,15 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.GetCurrentBuildAsync(
-                    User02,
-                    Project01,
-                    minRevision: null,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetCurrentBuildAsync(
+                User02,
+                Project01,
+                minRevision: null,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -995,16 +985,15 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetCurrentBuildAsync(
-                    User01,
-                    "invalid_project_id",
-                    minRevision: null,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetCurrentBuildAsync(
+                User01,
+                "invalid_project_id",
+                minRevision: null,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1015,16 +1004,15 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetCurrentBuildAsync(
-                    User01,
-                    Project03,
-                    minRevision: null,
-                    preTranslate: false,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetCurrentBuildAsync(
+                User01,
+                Project03,
+                minRevision: null,
+                preTranslate: false,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1109,16 +1097,15 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetCurrentBuildAsync(
-                    User01,
-                    Project01,
-                    minRevision: null,
-                    preTranslate: true,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetCurrentBuildAsync(
+                User01,
+                Project01,
+                minRevision: null,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1129,8 +1116,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetEngineAsync(User02, Project01, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetEngineAsync(User02, Project01, CancellationToken.None)
         );
     }
 
@@ -1141,8 +1128,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetEngineAsync(User01, "invalid_project_id", CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetEngineAsync(User01, "invalid_project_id", CancellationToken.None)
         );
     }
 
@@ -1155,8 +1142,8 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
         );
     }
 
@@ -1167,8 +1154,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetEngineAsync(User01, Project03, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetEngineAsync(User01, Project03, CancellationToken.None)
         );
     }
 
@@ -1181,8 +1168,8 @@ public class MachineApiServiceTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
+        Assert.ThrowsAsync<BrokenCircuitException>(() =>
+            env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
         );
     }
 
@@ -1264,8 +1251,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User02, Project01, false, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetLastCompletedPreTranslationBuildAsync(User02, Project01, false, CancellationToken.None)
         );
     }
 
@@ -1276,14 +1263,13 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetLastCompletedPreTranslationBuildAsync(
-                    User01,
-                    "invalid_project_id",
-                    false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetLastCompletedPreTranslationBuildAsync(
+                User01,
+                "invalid_project_id",
+                false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1294,8 +1280,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project03, false, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project03, false, CancellationToken.None)
         );
     }
 
@@ -1307,8 +1293,8 @@ public class MachineApiServiceTests
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01).Throws(new BrokenCircuitException());
 
         // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
+        Assert.ThrowsAsync<BrokenCircuitException>(() =>
+            env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
         );
     }
 
@@ -1471,8 +1457,8 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.EngineNotBuilt);
 
         // SUT
-        Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
         );
     }
 
@@ -1485,8 +1471,8 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.NotAuthenticated);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
         );
     }
 
@@ -1497,8 +1483,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetPreTranslationAsync(User02, Project01, 40, 1, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetPreTranslationAsync(User02, Project01, 40, 1, CancellationToken.None)
         );
     }
 
@@ -1509,8 +1495,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationAsync(User01, "invalid_project_id", 40, 1, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetPreTranslationAsync(User01, "invalid_project_id", 40, 1, CancellationToken.None)
         );
     }
 
@@ -1523,8 +1509,8 @@ public class MachineApiServiceTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+        Assert.ThrowsAsync<BrokenCircuitException>(() =>
+            env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
         );
     }
 
@@ -1567,17 +1553,16 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.InvalidCorpus);
 
         // SUT
-        Assert.ThrowsAsync<NotSupportedException>(
-            () =>
-                env.Service.GetPreTranslationDeltaAsync(
-                    User01,
-                    Project01,
-                    40,
-                    1,
-                    false,
-                    DateTime.UtcNow,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<NotSupportedException>(() =>
+            env.Service.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                DateTime.UtcNow,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1588,17 +1573,16 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetPreTranslationDeltaAsync(
-                    User01,
-                    Project01,
-                    40,
-                    0,
-                    false,
-                    DateTime.UtcNow,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetPreTranslationDeltaAsync(
+                User01,
+                Project01,
+                40,
+                0,
+                false,
+                DateTime.UtcNow,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1773,17 +1757,16 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.InvalidCorpus);
 
         // SUT
-        Assert.ThrowsAsync<NotSupportedException>(
-            () =>
-                env.Service.GetPreTranslationUsfmAsync(
-                    User01,
-                    Project01,
-                    40,
-                    1,
-                    false,
-                    DateTime.UtcNow,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<NotSupportedException>(() =>
+            env.Service.GetPreTranslationUsfmAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                DateTime.UtcNow,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1795,17 +1778,16 @@ public class MachineApiServiceTests
         await env.UserSecrets.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetPreTranslationUsfmAsync(
-                    User01,
-                    Project01,
-                    40,
-                    1,
-                    false,
-                    DateTime.UtcNow,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetPreTranslationUsfmAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                DateTime.UtcNow,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1862,17 +1844,16 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.InvalidCorpus);
 
         // SUT
-        Assert.ThrowsAsync<NotSupportedException>(
-            () =>
-                env.Service.GetPreTranslationUsjAsync(
-                    User01,
-                    Project01,
-                    40,
-                    1,
-                    false,
-                    DateTime.UtcNow,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<NotSupportedException>(() =>
+            env.Service.GetPreTranslationUsjAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                DateTime.UtcNow,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1910,17 +1891,16 @@ public class MachineApiServiceTests
         await env.UserSecrets.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetPreTranslationUsjAsync(
-                    User01,
-                    Project01,
-                    40,
-                    1,
-                    false,
-                    DateTime.UtcNow,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetPreTranslationUsjAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                DateTime.UtcNow,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1933,17 +1913,16 @@ public class MachineApiServiceTests
         env.TextDocuments.Add(new TextDocument(id, TestUsj));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetPreTranslationUsjAsync(
-                    User01,
-                    Project01,
-                    40,
-                    1,
-                    false,
-                    DateTime.MinValue,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetPreTranslationUsjAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                DateTime.MinValue,
+                CancellationToken.None
+            )
         );
     }
 
@@ -2027,17 +2006,16 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.InvalidCorpus);
 
         // SUT
-        Assert.ThrowsAsync<NotSupportedException>(
-            () =>
-                env.Service.GetPreTranslationUsxAsync(
-                    User01,
-                    Project01,
-                    40,
-                    1,
-                    false,
-                    DateTime.UtcNow,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<NotSupportedException>(() =>
+            env.Service.GetPreTranslationUsxAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                DateTime.UtcNow,
+                CancellationToken.None
+            )
         );
     }
 
@@ -2049,17 +2027,16 @@ public class MachineApiServiceTests
         await env.UserSecrets.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetPreTranslationUsxAsync(
-                    User01,
-                    Project01,
-                    40,
-                    1,
-                    false,
-                    DateTime.UtcNow,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetPreTranslationUsxAsync(
+                User01,
+                Project01,
+                40,
+                1,
+                false,
+                DateTime.UtcNow,
+                CancellationToken.None
+            )
         );
     }
 
@@ -2124,8 +2101,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetWordGraphAsync(User02, Project01, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetWordGraphAsync(User02, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -2136,8 +2113,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetWordGraphAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetWordGraphAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
         );
     }
 
@@ -2148,8 +2125,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetWordGraphAsync(User01, Project03, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetWordGraphAsync(User01, Project03, Segment, CancellationToken.None)
         );
     }
 
@@ -2162,8 +2139,8 @@ public class MachineApiServiceTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<BrokenCircuitException>(() =>
+            env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -2204,8 +2181,8 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.EngineNotBuilt);
 
         // SUT
-        Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -2365,15 +2342,14 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.GetQueuedStateAsync(
-                    User02,
-                    Project01,
-                    preTranslate: true,
-                    isServalAdmin: false,
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetQueuedStateAsync(
+                User02,
+                Project01,
+                preTranslate: true,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
         );
     }
 
@@ -2553,8 +2529,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.StartBuildAsync(User02, Project01, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.StartBuildAsync(User02, Project01, CancellationToken.None)
         );
     }
 
@@ -2565,8 +2541,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartBuildAsync(User01, "invalid_project_id", CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.StartBuildAsync(User01, "invalid_project_id", CancellationToken.None)
         );
     }
 
@@ -2654,13 +2630,12 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.StartPreTranslationBuildAsync(
-                    User02,
-                    new BuildConfig { ProjectId = Project01 },
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User02,
+                new BuildConfig { ProjectId = Project01 },
+                CancellationToken.None
+            )
         );
     }
 
@@ -2671,13 +2646,12 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.StartPreTranslationBuildAsync(
-                    User01,
-                    new BuildConfig { ProjectId = "invalid_project_id" },
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig { ProjectId = "invalid_project_id" },
+                CancellationToken.None
+            )
         );
     }
 
@@ -2688,18 +2662,17 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.StartPreTranslationBuildAsync(
-                    User01,
-                    new BuildConfig
-                    {
-                        ProjectId = Project01,
-                        TrainingScriptureRange = "GEN",
-                        TrainingBooks = [1],
-                    },
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig
+                {
+                    ProjectId = Project01,
+                    TrainingScriptureRange = "GEN",
+                    TrainingBooks = [1],
+                },
+                CancellationToken.None
+            )
         );
     }
 
@@ -2710,21 +2683,20 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.StartPreTranslationBuildAsync(
-                    User01,
-                    new BuildConfig
-                    {
-                        ProjectId = Project01,
-                        TrainingScriptureRange = "GEN",
-                        TrainingScriptureRanges =
-                        [
-                            new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                        ],
-                    },
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig
+                {
+                    ProjectId = Project01,
+                    TrainingScriptureRange = "GEN",
+                    TrainingScriptureRanges =
+                    [
+                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
+                    ],
+                },
+                CancellationToken.None
+            )
         );
     }
 
@@ -2735,21 +2707,20 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.StartPreTranslationBuildAsync(
-                    User01,
-                    new BuildConfig
-                    {
-                        ProjectId = Project01,
-                        TrainingBooks = [1],
-                        TrainingScriptureRanges =
-                        [
-                            new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                        ],
-                    },
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig
+                {
+                    ProjectId = Project01,
+                    TrainingBooks = [1],
+                    TrainingScriptureRanges =
+                    [
+                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
+                    ],
+                },
+                CancellationToken.None
+            )
         );
     }
 
@@ -2760,18 +2731,17 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.StartPreTranslationBuildAsync(
-                    User01,
-                    new BuildConfig
-                    {
-                        ProjectId = Project01,
-                        TranslationScriptureRange = "GEN",
-                        TranslationBooks = [1],
-                    },
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig
+                {
+                    ProjectId = Project01,
+                    TranslationScriptureRange = "GEN",
+                    TranslationBooks = [1],
+                },
+                CancellationToken.None
+            )
         );
     }
 
@@ -2782,21 +2752,20 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.StartPreTranslationBuildAsync(
-                    User01,
-                    new BuildConfig
-                    {
-                        ProjectId = Project01,
-                        TranslationScriptureRange = "GEN",
-                        TranslationScriptureRanges =
-                        [
-                            new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                        ],
-                    },
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig
+                {
+                    ProjectId = Project01,
+                    TranslationScriptureRange = "GEN",
+                    TranslationScriptureRanges =
+                    [
+                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
+                    ],
+                },
+                CancellationToken.None
+            )
         );
     }
 
@@ -2807,21 +2776,20 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.StartPreTranslationBuildAsync(
-                    User01,
-                    new BuildConfig
-                    {
-                        ProjectId = Project01,
-                        TranslationBooks = [1],
-                        TranslationScriptureRanges =
-                        [
-                            new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
-                        ],
-                    },
-                    CancellationToken.None
-                )
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig
+                {
+                    ProjectId = Project01,
+                    TranslationBooks = [1],
+                    TranslationScriptureRanges =
+                    [
+                        new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
+                    ],
+                },
+                CancellationToken.None
+            )
         );
     }
 
@@ -3135,8 +3103,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.TrainSegmentAsync(User02, Project01, new SegmentPair(), CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.TrainSegmentAsync(User02, Project01, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -3147,8 +3115,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TrainSegmentAsync(User01, "invalid_project_id", new SegmentPair(), CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.TrainSegmentAsync(User01, "invalid_project_id", new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -3159,8 +3127,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TrainSegmentAsync(User01, Project03, new SegmentPair(), CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.TrainSegmentAsync(User01, Project03, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -3177,8 +3145,8 @@ public class MachineApiServiceTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None)
+        Assert.ThrowsAsync<BrokenCircuitException>(() =>
+            env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -3203,8 +3171,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.TranslateAsync(User02, Project01, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.TranslateAsync(User02, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -3215,8 +3183,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.TranslateAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
         );
     }
 
@@ -3227,8 +3195,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateAsync(User01, Project03, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.TranslateAsync(User01, Project03, Segment, CancellationToken.None)
         );
     }
 
@@ -3241,8 +3209,8 @@ public class MachineApiServiceTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<BrokenCircuitException>(() =>
+            env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -3291,8 +3259,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.TranslateNAsync(User02, Project01, n, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.TranslateNAsync(User02, Project01, n, Segment, CancellationToken.None)
         );
     }
 
@@ -3304,8 +3272,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateNAsync(User01, "invalid_project_id", n, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.TranslateNAsync(User01, "invalid_project_id", n, Segment, CancellationToken.None)
         );
     }
 
@@ -3317,8 +3285,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateNAsync(User01, Project03, n, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.TranslateNAsync(User01, Project03, n, Segment, CancellationToken.None)
         );
     }
 
@@ -3332,8 +3300,8 @@ public class MachineApiServiceTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None)
+        Assert.ThrowsAsync<BrokenCircuitException>(() =>
+            env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None)
         );
     }
 
@@ -3412,8 +3380,8 @@ public class MachineApiServiceTests
         await env.ProjectSecrets.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
         );
     }
 
@@ -3424,8 +3392,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocumentsAsync("invalid_project_id", CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdatePreTranslationTextDocumentsAsync("invalid_project_id", CancellationToken.None)
         );
     }
 
@@ -3436,8 +3404,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocumentsAsync(Project02, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project02, CancellationToken.None)
         );
     }
 
@@ -3448,8 +3416,8 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocumentsAsync(Project03, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project03, CancellationToken.None)
         );
     }
 
@@ -3464,8 +3432,8 @@ public class MachineApiServiceTests
         );
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
         );
     }
 

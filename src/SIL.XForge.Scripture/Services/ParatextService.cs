@@ -327,14 +327,13 @@ public class ParatextService : DisposableBase, IParatextService
                 // TODO report results
                 List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
                 bool success = false;
-                bool noErrors = SharingLogicWrapper.HandleErrors(
-                    () =>
-                        success = SharingLogicWrapper.ShareChanges(
-                            sharedPtProjectsToSr,
-                            source.AsInternetSharedRepositorySource(),
-                            out results,
-                            sharedPtProjectsToSr
-                        )
+                bool noErrors = SharingLogicWrapper.HandleErrors(() =>
+                    success = SharingLogicWrapper.ShareChanges(
+                        sharedPtProjectsToSr,
+                        source.AsInternetSharedRepositorySource(),
+                        out results,
+                        sharedPtProjectsToSr
+                    )
                 );
                 if (results == null)
                 {
