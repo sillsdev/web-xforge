@@ -4,6 +4,7 @@ import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { take } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { activeBuildStates } from '../draft-generation';
@@ -21,21 +22,31 @@ export class DraftHistoryListComponent {
   history: BuildDto[] = [];
 
   constructor(
-    private readonly activatedProject: ActivatedProjectService,
-    destroyRef: DestroyRef,
+    activatedProject: ActivatedProjectService,
+    private destroyRef: DestroyRef,
     private readonly draftGenerationService: DraftGenerationService,
+    projectNotificationService: ProjectNotificationService,
     private readonly transloco: TranslocoService
   ) {
-    this.activatedProject.projectId$
+    activatedProject.projectId$
       .pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1))
-      .subscribe(projectId => {
-        this.draftGenerationService
-          .getBuildHistory(projectId)
-          .pipe(quietTakeUntilDestroyed(destroyRef))
-          .subscribe(result => {
-            this.history = result?.reverse() ?? [];
-          });
+      .subscribe(async projectId => {
+        // Initially load the history
+        this.loadHistory(projectId);
+        // Start the connection to SignalR
+        await projectNotificationService.start();
+        // Subscribe to notifications for this project
+        await projectNotificationService.subscribeToProject(projectId);
+        // When build notifications are received, reload the build history
+        // NOTE: We do not need the build state, so just ignore it.
+        projectNotificationService.setNotifyBuildProgressHandler((projectId: string) => {
+          this.loadHistory(projectId);
+        });
       });
+    destroyRef.onDestroy(async () => {
+      // Stop the SignalR connection when the component is destroyed
+      await projectNotificationService.stop();
+    });
   }
 
   get nonActiveBuilds(): BuildDto[] {
@@ -66,5 +77,14 @@ export class DraftHistoryListComponent {
 
   get isBuildActive(): boolean {
     return this.history.some(entry => activeBuildStates.includes(entry.state)) ?? false;
+  }
+
+  loadHistory(projectId: string): void {
+    this.draftGenerationService
+      .getBuildHistory(projectId)
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        this.history = result?.reverse() ?? [];
+      });
   }
 }
