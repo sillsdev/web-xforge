@@ -16,9 +16,7 @@ export class LtrMarkerInterceptor implements TranslocoInterceptor {
   constructor(private readonly injector: Injector) {}
 
   private get translocoService(): TranslocoService {
-    if (this._translocoService == null) {
-      this._translocoService = this.injector.get(TranslocoService);
-    }
+    this._translocoService ??= this.injector.get(TranslocoService);
     return this._translocoService;
   }
 
