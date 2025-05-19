@@ -58,6 +58,18 @@ public class SFProjectServiceTests
     ];
 
     [Test]
+    public void InviteAsync_InvalidEmail()
+    {
+        var env = new TestEnvironment();
+        const string email = "newuser@example.com";
+        const string role = SFProjectRole.CommunityChecker;
+        env.EmailService.ValidateEmail(email).Returns(false);
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl)
+        );
+    }
+
+    [Test]
     public async Task InviteAsync_ProjectAdminSharingDisabled_UserInvited()
     {
         var env = new TestEnvironment();
@@ -216,9 +228,7 @@ public class SFProjectServiceTests
         invitees = await env.Service.InvitedUsersAsync(User01, Project03);
         Assert.That(
             invitees.Select(i => i.Email),
-            Is.EquivalentTo(
-                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }
-            )
+            Is.EquivalentTo(["bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com"])
         );
     }
 
@@ -262,7 +272,6 @@ public class SFProjectServiceTests
     public async Task InviteAsync_LinkSharingEnabled_UserInvited()
     {
         var env = new TestEnvironment();
-        SFProject project = env.GetProject(Project02);
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
         // SUT
@@ -5051,6 +5060,7 @@ public class SFProjectServiceTests
             );
             var audioService = Substitute.For<IAudioService>();
             EmailService = Substitute.For<IEmailService>();
+            EmailService.ValidateEmail(Arg.Any<string>()).Returns(true);
             var currentTime = DateTime.Now;
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 [
