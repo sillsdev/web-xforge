@@ -1,16 +1,40 @@
+import { Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Translation } from '@ngneat/transloco';
+import { Translation, TranslocoService } from '@ngneat/transloco';
 import { LtrMarkerInterceptor } from './ltr-marker.interceptor';
 
 describe('LtrMarkerInterceptor', () => {
   let interceptor: LtrMarkerInterceptor;
+  let mockInjector: Injector;
+  let mockTranslocoService: Partial<TranslocoService>;
 
   const LRE = '\u202A';
   const PDF = '\u202C';
 
+  const englishTranslations: Translation = {
+    'any.Hello': 'Hello',
+    item123: 'Item 123',
+    testPunctuation: 'Value is $50'
+  };
+
   beforeEach(() => {
+    mockTranslocoService = {
+      getTranslation: jasmine.createSpy('getTranslation').and.callFake((langOrScope?: string) => {
+        if (langOrScope === 'en') {
+          return englishTranslations;
+        }
+        return {};
+      })
+    };
+
+    mockInjector = {
+      get: jasmine.createSpy('get').and.callFake((_: any) => {
+        return mockTranslocoService as TranslocoService;
+      })
+    } as Injector;
+
     TestBed.configureTestingModule({
-      providers: [LtrMarkerInterceptor]
+      providers: [LtrMarkerInterceptor, { provide: Injector, useValue: mockInjector }]
     });
     interceptor = TestBed.inject(LtrMarkerInterceptor);
   });
@@ -23,7 +47,6 @@ describe('LtrMarkerInterceptor', () => {
           arabicText: 'مرحبا',
           mixedText: 'Hello مرحبا',
           interpolation: 'Value: {{val}}',
-          empty: '',
           alreadyWrapped: `${LRE}Wrapped${PDF}`
         };
         const expected: Translation = {
@@ -31,41 +54,46 @@ describe('LtrMarkerInterceptor', () => {
           arabicText: 'مرحبا',
           mixedText: 'Hello مرحبا',
           interpolation: `${LRE}Value: {{val}}${PDF}`,
-          empty: '',
           alreadyWrapped: `${LRE}Wrapped${PDF}`
         };
+        // English translation
+        (mockTranslocoService.getTranslation as jasmine.Spy).and.returnValue({
+          engOnly: 'Hello',
+          mixedText: 'Hello there',
+          interpolation: 'Value: {{val}}',
+          alreadyWrapped: `${LRE}Wrapped${PDF}`
+        });
         expect(interceptor.preSaveTranslation(translations, 'ar')).toEqual(expected);
       });
 
       it('en should not wrap anything', () => {
         const translations: Translation = {
-          engOnly: 'Hello',
-          arabicText: 'مرحبا'
+          engOnly: 'Hello'
         };
         expect(interceptor.preSaveTranslation(translations, 'en')).toEqual(translations);
       });
 
       it('should handle an empty translation object', () => {
         const translations: Translation = {};
-        expect(interceptor.preSaveTranslation(translations, 'en')).toEqual({});
+        expect(interceptor.preSaveTranslation(translations, 'ar')).toEqual({});
       });
 
-      it('should not wrap strings containing numbers or common symbols if they also contain UI script chars', () => {
+      it('should not wrap strings containing numbers or common symbols if they contain script chars', () => {
         const translations: Translation = {
-          key1: 'مرحبا 123',
-          key2: 'Test with !@#$ مرحبا'
+          item123: 'مرحبا 123',
+          testPunctuation: 'Test with !@#$ مرحبا'
         };
-        expect(interceptor.preSaveTranslation(translations, 'en')).toEqual(translations);
+        expect(interceptor.preSaveTranslation(translations, 'ar')).toEqual(translations);
       });
 
-      it('should wrap strings containing numbers or common symbols if they DO NOT contain UI script chars', () => {
+      it('should wrap strings containing numbers or common symbols if they do not contain script chars', () => {
         const translations: Translation = {
-          key1: 'Item 123',
-          key2: 'Value is $50'
+          item123: 'Item 123',
+          testPunctuation: 'Value is $50'
         };
         const expected: Translation = {
-          key1: `${LRE}Item 123${PDF}`,
-          key2: `${LRE}Value is $50${PDF}`
+          item123: `${LRE}Item 123${PDF}`,
+          testPunctuation: `${LRE}Value is $50${PDF}`
         };
         expect(interceptor.preSaveTranslation(translations, 'ar')).toEqual(expected);
       });
@@ -73,17 +101,17 @@ describe('LtrMarkerInterceptor', () => {
 
     describe('preSaveTranslationKey', () => {
       it('ar should wrap LTR value', () => {
-        expect(interceptor.preSaveTranslationKey('any.key', 'Hello', 'ar')).toBe(`${LRE}Hello${PDF}`);
+        expect(interceptor.preSaveTranslationKey('any.Hello', 'Hello', 'ar')).toBe(`${LRE}Hello${PDF}`);
       });
 
       it('Localized strings should NOT wrap', () => {
-        expect(interceptor.preSaveTranslationKey('any.key', 'مرحبا', 'ar')).toBe('مرحبا');
-        expect(interceptor.preSaveTranslationKey('any.key', 'Hello', 'en')).toBe('Hello');
+        expect(interceptor.preSaveTranslationKey('any.Hello', 'مرحبا', 'ar')).toBe('مرحبا');
+        expect(interceptor.preSaveTranslationKey('any.Hello', 'Hello', 'en')).toBe('Hello');
       });
 
       it('value is already wrapped should NOT wrap again', () => {
         const alreadyWrapped = `${LRE}Wrapped${PDF}`;
-        expect(interceptor.preSaveTranslationKey('any.key', alreadyWrapped, 'ar')).toBe(alreadyWrapped);
+        expect(interceptor.preSaveTranslationKey('any.Hello', alreadyWrapped, 'ar')).toBe(alreadyWrapped);
       });
     });
   });
