@@ -94,41 +94,14 @@ const booksByProjectsDraftingIt = db.event_metrics.aggregate([
       books: { $addToSet: '$books' }
     }
   },
-  {
-    $project: {
-      books: {
-        $reduce: {
-          input: '$books',
-          initialValue: [],
-          in: {
-            $setUnion: ['$$value', '$$this']
-          }
-        }
-      },
-    }
-  },
-  // We now have a list of books by each project
-  // Unwinding this will allow us to count books by how many projects drafted each
-  { $unwind: '$books' },
-  {
-    $group: {
-      _id: '$books',
-      count: { $sum: 1 }
-    }
-  },
-  {
-    $sort: {
-      count: -1
-    }
-  }
 ]).toArray();
 
-booksByProjectsDraftingIt.sort((a, b) => {
-  const aIndex = bookIds.indexOf(a._id);
-  const bIndex = bookIds.indexOf(b._id);
-  return aIndex - bIndex;
-});
-
-for (const record of booksByProjectsDraftingIt) {
-  print(record._id + '\t' + record.count);
+for (const bookId of bookIds) {
+  let count = 0;
+  for (const record of booksByProjectsDraftingIt) {
+    if (record.books != null && record.books.some(list => list != null && list.includes(bookId))) {
+      count++;
+    }
+  }
+  print(bookId + '\t' + count);
 }
