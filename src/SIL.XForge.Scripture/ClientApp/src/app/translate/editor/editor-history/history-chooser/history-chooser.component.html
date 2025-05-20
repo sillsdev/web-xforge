@@ -37,16 +37,21 @@
         {{ showDiff ? t("hide_changes") : t("show_changes") }}
       </button>
       @if (canRestoreSnapshot) {
-        <button
-          class="revert-history"
-          mat-button
-          type="button"
-          (click)="revertToSnapshot()"
-          [matTooltip]="t('revert_details')"
+        <span
+          [matTooltip]="t(isSnapshotValid ? 'revert_details' : 'revert_disabled_details')"
+          [style.cursor]="!isSnapshotValid ? 'not-allowed' : 'pointer'"
         >
-          <mat-icon class="material-icons-outlined">undo</mat-icon>
-          {{ t("revert") }}
-        </button>
+          <button
+            class="revert-history"
+            mat-button
+            type="button"
+            (click)="revertToSnapshot()"
+            [disabled]="!isSnapshotValid"
+          >
+            <mat-icon class="material-icons-outlined">undo</mat-icon>
+            {{ t(isSnapshotValid ? "revert" : "revert_disabled") }}
+          </button>
+        </span>
       }
     </div>
   }
