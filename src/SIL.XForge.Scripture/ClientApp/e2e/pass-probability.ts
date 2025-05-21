@@ -39,8 +39,8 @@ function numberOfRunsNeededToAchieveDesiredProbabilityOfRegression(
   initialFailures: number,
   desiredProbabilityOfRegression: number
 ): number {
+  if (initialFailures === initialRuns) return Infinity;
   for (let i = 1; ; i++) {
-    if (i > 100) throw new Error('Number of runs needed to achieve desired probability of regression is too high');
     if (
       probabilityOfRegressionGivenPreviousFailureRates(initialRuns, initialFailures, i) > desiredProbabilityOfRegression
     ) {

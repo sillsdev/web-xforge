@@ -71,11 +71,8 @@ export async function isProjectConnected(page: Page, shortName: string): Promise
   if (await goToProjectButtonLocator.isVisible()) {
     return true;
   }
-  // FIXME this doesn't appear to be working as intended
-  if (await unconnectedProjectLocator.getByRole('button', { name: 'Join' }).isVisible()) {
-    return true;
-  }
-  return false;
+
+  return await unconnectedProjectLocator.getByRole('button', { name: 'Join' }).isVisible();
 }
 
 export async function ensureOnMyProjectsPage(page: Page): Promise<void> {
