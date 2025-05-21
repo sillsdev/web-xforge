@@ -117,8 +117,8 @@ export async function communityChecking(
   const shareLinks = await createShareLinksAsAdmin(page, CHECKING_PROJECT_NAME);
 
   const link = shareLinks['Community Checker'];
-  const checkerCount = 1;
-  const answerCount = 10;
+  const checkerCount = 2;
+  const answerCount = 5;
   const checkerPromises = [];
   const serial = false;
   for (let i = 0; i < checkerCount; i++) {
@@ -128,9 +128,14 @@ export async function communityChecking(
   }
   await Promise.all(checkerPromises);
 
+  // Go to the questions and comment
+  await user.click(page.getByRole('link', { name: 'Questions & answers' }));
+  await addComment('Thank you for your answer', page, user);
+
   // Go to Manage questions
   await user.click(page.getByRole('link', { name: 'Manage questions' }));
   await expect(page.locator('.card-content-answer .stat-total')).toContainText(checkerCount * answerCount + '');
+  await expect(page.locator('.card-content-comment .stat-total')).toContainText('2');
 }
 
 async function joinAsChecker(
@@ -159,7 +164,7 @@ async function joinAsChecker(
       await screenshot(page, { pageName: 'community_checker_add_answer', ...screenshotContext });
 
       if (questionNumber === 0 && userNumber === 0) {
-        // await addComment(page, user);
+        await addComment('This is a nice answer.', page, user);
       }
 
       // FIXME(application-bug) The Next button is often (always?) disabled when at the end of a chapter. Click the
@@ -188,10 +193,14 @@ async function joinAsChecker(
   }
 }
 
-// TODO add this to the test
-async function addComment(page: Page, user: UserEmulator): Promise<void> {
-  await user.click(page.getByRole('button', { name: /Show \d more unread answers/ }));
-  await user.click(page.getByRole('button', { name: 'Add a comment' }).first());
-  await user.type('This is a good answer.');
+async function addComment(text: string, page: Page, user: UserEmulator): Promise<void> {
+  const showMoreLocator = page.getByRole('button', { name: /Show \d more unread answers/ });
+  const addCommentLocator = page.getByRole('button', { name: 'Add a comment' }).first();
+  // Wait until one of the buttons is visible. Both can be visible, so first() is used to prevent a strict mode
+  // violation
+  await expect(showMoreLocator.or(addCommentLocator).first()).toBeVisible();
+  if (await showMoreLocator.isVisible()) await showMoreLocator.click();
+  await addCommentLocator.click();
+  await user.type(text);
   await user.click(page.getByRole('button', { name: 'Save' }));
 }
