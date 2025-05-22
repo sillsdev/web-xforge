@@ -4,7 +4,7 @@ permissions: {}
 on:
   # push:
   #   branches: [develop, master, sf-qa, sf-live]
-  # pull_request:
+  pull_request:
   workflow_dispatch:
 
 jobs:
