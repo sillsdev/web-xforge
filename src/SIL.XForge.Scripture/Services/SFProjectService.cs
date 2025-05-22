@@ -32,6 +32,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 {
     public const string ErrorAlreadyConnectedKey = "error-already-connected";
     internal const string ProjectSettingValueUnset = "unset";
+    private const string InvalidEmailAddress = "invalid-email-address";
     private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
         new DictionaryComparer<string, string>();
     private readonly IBackgroundJobClient _backgroundJobClient;
@@ -707,7 +708,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
+        // Validate the email address
+        if (!_emailService.ValidateEmail(email))
+            throw new DataNotFoundException(InvalidEmailAddress);
+
+        // Set the locale for the email
         CultureInfo.CurrentUICulture = new CultureInfo(locale);
+
         // Remove the user sharekey if expired
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
@@ -717,7 +724,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Invite a specific person. Reuse prior code, if any.
         SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
-            p => p.Id == projectId && !p.ShareKeys.Any(sk => sk.Email == email),
+            p => p.Id == projectId && p.ShareKeys.All(sk => sk.Email != email),
             update =>
                 update.Add(
                     p => p.ShareKeys,
