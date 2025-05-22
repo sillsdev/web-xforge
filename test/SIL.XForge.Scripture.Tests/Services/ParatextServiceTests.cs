@@ -5932,15 +5932,13 @@ public class ParatextServiceTests
         ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
 
         env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).Returns(_ => scrText);
-        env.MockDeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>())
-            .Returns([new ChapterDelta(chapter, 1, false, textData)]);
 
         // SUT
         var actual = await env.Service.GetSnapshotAsync(userSecret, project.Id, book, chapter, DateTime.UtcNow);
         Assert.AreEqual(textData.Ops.First(), actual.Data.Ops.First());
         Assert.AreEqual(textData.Id, actual.Id);
         Assert.AreEqual(0, actual.Version);
-        Assert.AreEqual(false, actual.IsValid);
+        Assert.AreEqual(true, actual.IsValid); //snapshot in test repo is valid USFM
     }
 
     [Test]

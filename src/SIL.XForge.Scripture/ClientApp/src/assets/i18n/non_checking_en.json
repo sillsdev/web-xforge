@@ -413,6 +413,8 @@
     "please_connect": "Please connect to the internet to restore this version.",
     "revert": "Restore this version",
     "revert_details": "Restore this previous version of the chapter",
+    "revert_disabled": "Cannot restore this version",
+    "revert_disabled_details": "This version cannot be restored because it has invalid formatting or unsupported markers",
     "revert_error": "Error occurred trying to restore the previous text version. Please try again later.",
     "revert_successful": "Successfully restored previous version",
     "show_changes": "Show changes",
