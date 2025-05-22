@@ -3223,7 +3223,7 @@ public class ParatextSyncRunnerTests
                     AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     NoteTagId = 1234,
                 },
-                Texts = books.Select(b => textInfo).ToList(),
+                Texts = [.. books.Select(b => textInfo)],
                 Sync = new Sync
                 {
                     // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
@@ -3286,8 +3286,9 @@ public class ParatextSyncRunnerTests
                 }
             )
         );
-        textInfo.Chapters = chapterDeltas
-            .Values.Select(
+        textInfo.Chapters =
+        [
+            .. chapterDeltas.Values.Select(
                 (ChapterDelta chapterDelta) =>
                     new Chapter()
                     {
@@ -3296,8 +3297,8 @@ public class ParatextSyncRunnerTests
                         LastVerse = chapterDelta.LastVerse,
                         Permissions = [],
                     }
-            )
-            .ToList();
+            ),
+        ];
 
         env.RealtimeService.AddRepository(
             "users",
@@ -3745,7 +3746,7 @@ public class ParatextSyncRunnerTests
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                         NoteTagId = checkingNoteTagId,
                     },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync
                     {
                         // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
@@ -3782,7 +3783,7 @@ public class ParatextSyncRunnerTests
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
                     WritingSystem = new WritingSystem { Tag = "en" },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync { QueuedCount = 0, SyncedToRepositoryVersion = "beforeSR" },
                 },
                 new SFProject
@@ -3817,7 +3818,7 @@ public class ParatextSyncRunnerTests
                         CheckingEnabled = checkingEnabled,
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync
                     {
                         QueuedCount = 1,
@@ -3840,7 +3841,7 @@ public class ParatextSyncRunnerTests
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
                     WritingSystem = new WritingSystem { Tag = "en" },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync
                     {
                         QueuedCount = 0,
@@ -3881,7 +3882,7 @@ public class ParatextSyncRunnerTests
                         CheckingEnabled = checkingEnabled,
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync
                     {
                         QueuedCount = 1,
@@ -3950,16 +3951,18 @@ public class ParatextSyncRunnerTests
             return new TextInfo
             {
                 BookNum = Canon.BookIdToNumber(book.Id),
-                Chapters = Enumerable
-                    .Range(1, book.HighestTargetChapter)
-                    .Select(c => new Chapter
-                    {
-                        Number = c,
-                        LastVerse = 10,
-                        IsValid = !book.InvalidChapters.Contains(c),
-                        Permissions = { },
-                    })
-                    .ToList(),
+                Chapters =
+                [
+                    .. Enumerable
+                        .Range(1, book.HighestTargetChapter)
+                        .Select(c => new Chapter
+                        {
+                            Number = c,
+                            LastVerse = 10,
+                            IsValid = !book.InvalidChapters.Contains(c),
+                            Permissions = { },
+                        }),
+                ],
                 HasSource = book.HighestSourceChapter > 0,
             };
         }
@@ -4140,7 +4143,7 @@ public class ParatextSyncRunnerTests
                 ""
             )
             {
-                NoteIdsRemoved = new List<string>(noteIds),
+                NoteIdsRemoved = [.. noteIds],
             };
             SetupNoteThreadChanges([noteThreadChange], "target", 40);
         }

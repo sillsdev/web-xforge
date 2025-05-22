@@ -311,8 +311,8 @@ public class UserServiceTests
         string userIdToDelete = "user02";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete)
         );
         Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(0));
     }

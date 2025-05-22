@@ -501,8 +501,8 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Controller.LinkSharingKey(Project01, Role01, ShareLinkType.Recipient, DaysBeforeExpiration)
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.LinkSharingKey(Project01, Role01, ShareLinkType.Recipient, DaysBeforeExpiration)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
@@ -637,8 +637,8 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied, lastVerse)
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied, lastVerse)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
@@ -856,8 +856,8 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Controller.SetRoleProjectPermissions(Project01, Role01, Permissions)
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetRoleProjectPermissions(Project01, Role01, Permissions)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
@@ -909,8 +909,8 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Controller.SetUserProjectPermissions(Project01, User02, Permissions)
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetUserProjectPermissions(Project01, User02, Permissions)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
