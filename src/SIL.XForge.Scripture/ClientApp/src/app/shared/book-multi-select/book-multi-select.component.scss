@@ -1,18 +1,18 @@
 @use 'src/variables';
 
+.scope-selection-wrapper,
 .scope-selection {
   display: flex;
-  align-items: center;
-  column-gap: 8px;
-
-  .project-name {
-    font-weight: 500;
-  }
+  flex-wrap: wrap;
 }
 
-.flex-wrap {
-  display: flex;
-  flex-wrap: wrap;
+.scope-selection-wrapper {
+  gap: 8px;
+  align-items: center;
+}
+
+.project-name {
+  font-weight: 500;
 }
 
 .book-multi-select {
