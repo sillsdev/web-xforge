@@ -19,6 +19,7 @@ import { debounceTime, groupBy, mergeMap, Observable, Subscription, switchMap } 
 import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
@@ -46,6 +47,7 @@ export class LynxWorkspaceService {
     private readonly activatedBookChapterService: ActivatedBookChapterService,
     private readonly destroyRef: DestroyRef,
     private readonly documentReader: TextDocReader,
+    private readonly featureFlags: FeatureFlagService,
     @Inject(DocumentManager) private readonly documentManager: DocumentManager<ScriptureDeltaDocument, Op, Delta>,
     @Inject(Workspace) public readonly workspace: Workspace<Op>
   ) {
@@ -288,10 +290,12 @@ export class LynxWorkspaceService {
       this.textDocChangeSubscription = textDoc.changes$
         .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(async changes => {
-          await this.documentManager.fireChanged(uri, {
-            contentChanges: changes.ops ?? [],
-            version: textDoc.adapter.version
-          });
+          if (this.featureFlags.enableLynxInsights.enabled) {
+            await this.documentManager.fireChanged(uri, {
+              contentChanges: changes.ops ?? [],
+              version: textDoc.adapter.version
+            });
+          }
         });
     }
   }

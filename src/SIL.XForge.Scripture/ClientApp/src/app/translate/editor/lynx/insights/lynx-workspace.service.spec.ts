@@ -10,6 +10,7 @@ import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -43,6 +44,7 @@ describe('LynxWorkspaceService', () => {
   const mockActivatedProjectService = mock<ActivatedProjectService>();
   const mockActivatedBookChapterService = mock<ActivatedBookChapterService>();
   const mockDestroyRef = mock<DestroyRef>();
+  const mockFeatureFlagService = mock<FeatureFlagService>();
   const mockWorkspace = mock<Workspace<Op>>();
   const mockDocumentManager = mock<DocumentManager<ScriptureDeltaDocument, Op, Delta>>();
   const mockTextDocReader = mock<TextDocReader>();
@@ -65,6 +67,7 @@ describe('LynxWorkspaceService', () => {
     }
 
     setupMocks(): void {
+      when(mockFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
       when(mockI18nService.localeCode).thenReturn(defaultLocale.canonicalTag);
       when(mockI18nService.locale$).thenReturn(localeTestSubject$);
       when(mockActivatedProjectService.projectDoc$).thenReturn(projectDocTestSubject$);
@@ -267,6 +270,7 @@ describe('LynxWorkspaceService', () => {
     providers: [
       LynxWorkspaceService,
       { provide: SFProjectService, useMock: mockProjectService },
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },
