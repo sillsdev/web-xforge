@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'book_select'">
   @if (availableBooks.length > 0 && !readonly && !basicMode) {
-    <div class="scope-selection flex-wrap">
+    <div class="scope-selection-wrapper">
       @if (projectName != null) {
         <span class="project-name">{{ projectName }}</span>
       }
