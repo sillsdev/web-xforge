@@ -1,10 +1,12 @@
 import { Router } from '@angular/router';
+import { Translation, TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { DeltaOperation } from 'rich-text';
+import { firstValueFrom } from 'rxjs';
 import { isObj } from '../../type-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
@@ -18,6 +20,19 @@ const VERSE_FROM_SEGMENT_REF_REGEX = /verse_\d+_(\d+[\u200f]?[a-z]?[,-]?\d*[a-z]
 // Regular expression for the verse segment ref of scripture content
 export const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
 export const RIGHT_TO_LEFT_MARK = '\u200f';
+export const LEFT_TO_RIGHT_EMBEDDING = '\u202A';
+export const POP_DIRECTIONAL_FORMATTING = '\u202C';
+
+/**
+ * Factory function for APP_INITIALIZER to preload English translations.
+ * This ensures that English translations are available before the application fully initializes,
+ * which is crucial for interceptors or services that rely on them early in the lifecycle.
+ * @param translocoService The Transloco service for loading translations.
+ * @returns A function that returns a Promise which resolves when English translations are loaded.
+ */
+export function preloadEnglishTranslations(translocoService: TranslocoService): () => Promise<Translation> {
+  return () => firstValueFrom(translocoService.load('en'));
+}
 
 export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRef | undefined {
   if (!startStr) {
