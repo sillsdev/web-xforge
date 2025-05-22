@@ -1,6 +1,8 @@
 import { Injectable, Injector } from '@angular/core';
 import { Translation, TranslocoInterceptor, TranslocoService } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Locale } from 'xforge-common/models/i18n-locale';
+import { LEFT_TO_RIGHT_EMBEDDING, POP_DIRECTIONAL_FORMATTING } from './utils';
 
 /**
  * TranslocoInterceptor to handle bidirectional text for LTR fallbacks in RTL contexts.
@@ -21,11 +23,11 @@ export class LtrMarkerInterceptor implements TranslocoInterceptor {
   }
 
   preSaveTranslation(translation: Translation, langOfTranslationFile: string): Translation {
-    const activeUiLocale = I18nService.getLocale(langOfTranslationFile);
-    const uiIsRtl = activeUiLocale?.direction === 'rtl';
+    const activeUiLocale: Locale | undefined = I18nService.getLocale(langOfTranslationFile);
+    const uiIsRtl: boolean = activeUiLocale?.direction === 'rtl';
 
     if (uiIsRtl) {
-      const englishTranslations = this.translocoService.getTranslation('en');
+      const englishTranslations: Translation = this.translocoService.getTranslation('en');
       const wrappedTranslations: Translation = {};
       for (const key in translation) {
         const currentValue: string = translation[key];
@@ -42,19 +44,19 @@ export class LtrMarkerInterceptor implements TranslocoInterceptor {
     if (currentValue === englishValue) {
       // This suggests the current value is an untranslated fallback to English.
       // Wrap with LTR markers if not already wrapped.
-      if (!currentValue.startsWith('\u202A') && !currentValue.endsWith('\u202C')) {
-        return `\u202A${currentValue}\u202C`;
+      if (!currentValue.startsWith(LEFT_TO_RIGHT_EMBEDDING) && !currentValue.endsWith(POP_DIRECTIONAL_FORMATTING)) {
+        return `${LEFT_TO_RIGHT_EMBEDDING}${currentValue}${POP_DIRECTIONAL_FORMATTING}`;
       }
     }
     return currentValue;
   }
 
   preSaveTranslationKey(key: string, value: string, langOfValue: string): string {
-    const activeUiLocale = I18nService.getLocale(langOfValue);
-    const uiIsRtl = activeUiLocale?.direction === 'rtl';
+    const activeUiLocale: Locale | undefined = I18nService.getLocale(langOfValue);
+    const uiIsRtl: boolean = activeUiLocale?.direction === 'rtl';
 
     if (uiIsRtl) {
-      const englishTranslations = this.translocoService.getTranslation('en');
+      const englishTranslations: Translation = this.translocoService.getTranslation('en');
       const englishValue: string = englishTranslations[key];
       return this.wrapIfSameAsEnglish(value, englishValue);
     }
