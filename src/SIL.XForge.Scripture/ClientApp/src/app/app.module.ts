@@ -5,7 +5,7 @@ import { APP_ID, APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { MatRipple } from '@angular/material/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { TRANSLOCO_INTERCEPTOR, TranslocoModule, TranslocoService } from '@ngneat/transloco';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
 import { QuillModule } from 'ngx-quill';
 import {
@@ -25,7 +25,6 @@ import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browse
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { environment } from '../environments/environment';
-import { preloadEnglishTranslations } from './app-init';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CheckingModule } from './checking/checking.module';
@@ -39,9 +38,9 @@ import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scri
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings/settings.component';
 import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
-import { LtrMarkerInterceptor } from './shared/ltr-marker.interceptor';
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
+import { preloadEnglishTranslations } from './shared/utils';
 import { SyncComponent } from './sync/sync.component';
 import { LynxInsightsModule } from './translate/editor/lynx/insights/lynx-insights.module';
 import { TranslateModule } from './translate/translate.module';
@@ -98,7 +97,6 @@ import { UsersModule } from './users/users.module';
     { provide: ErrorHandler, useClass: ExceptionHandlingService },
     { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
     provideHttpClient(withInterceptorsFromDi()),
-    { provide: TRANSLOCO_INTERCEPTOR, useClass: LtrMarkerInterceptor },
     {
       provide: APP_INITIALIZER,
       useFactory: preloadEnglishTranslations,

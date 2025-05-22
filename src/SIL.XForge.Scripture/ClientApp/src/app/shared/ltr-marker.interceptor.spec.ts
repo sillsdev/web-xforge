@@ -2,14 +2,12 @@ import { Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Translation, TranslocoService } from '@ngneat/transloco';
 import { LtrMarkerInterceptor } from './ltr-marker.interceptor';
+import { LEFT_TO_RIGHT_EMBEDDING, POP_DIRECTIONAL_FORMATTING } from './utils';
 
 describe('LtrMarkerInterceptor', () => {
   let interceptor: LtrMarkerInterceptor;
   let mockInjector: Injector;
   let mockTranslocoService: Partial<TranslocoService>;
-
-  const LRE = '\u202A';
-  const PDF = '\u202C';
 
   const englishTranslations: Translation = {
     'any.Hello': 'Hello',
@@ -47,21 +45,21 @@ describe('LtrMarkerInterceptor', () => {
           arabicText: 'مرحبا',
           mixedText: 'Hello مرحبا',
           interpolation: 'Value: {{val}}',
-          alreadyWrapped: `${LRE}Wrapped${PDF}`
+          alreadyWrapped: `${LEFT_TO_RIGHT_EMBEDDING}Wrapped${POP_DIRECTIONAL_FORMATTING}`
         };
         const expected: Translation = {
-          engOnly: `${LRE}Hello${PDF}`,
+          engOnly: `${LEFT_TO_RIGHT_EMBEDDING}Hello${POP_DIRECTIONAL_FORMATTING}`,
           arabicText: 'مرحبا',
           mixedText: 'Hello مرحبا',
-          interpolation: `${LRE}Value: {{val}}${PDF}`,
-          alreadyWrapped: `${LRE}Wrapped${PDF}`
+          interpolation: `${LEFT_TO_RIGHT_EMBEDDING}Value: {{val}}${POP_DIRECTIONAL_FORMATTING}`,
+          alreadyWrapped: `${LEFT_TO_RIGHT_EMBEDDING}Wrapped${POP_DIRECTIONAL_FORMATTING}`
         };
         // English translation
         (mockTranslocoService.getTranslation as jasmine.Spy).and.returnValue({
           engOnly: 'Hello',
           mixedText: 'Hello there',
           interpolation: 'Value: {{val}}',
-          alreadyWrapped: `${LRE}Wrapped${PDF}`
+          alreadyWrapped: `${LEFT_TO_RIGHT_EMBEDDING}Wrapped${POP_DIRECTIONAL_FORMATTING}`
         });
         expect(interceptor.preSaveTranslation(translations, 'ar')).toEqual(expected);
       });
@@ -92,8 +90,8 @@ describe('LtrMarkerInterceptor', () => {
           testPunctuation: 'Value is $50'
         };
         const expected: Translation = {
-          item123: `${LRE}Item 123${PDF}`,
-          testPunctuation: `${LRE}Value is $50${PDF}`
+          item123: `${LEFT_TO_RIGHT_EMBEDDING}Item 123${POP_DIRECTIONAL_FORMATTING}`,
+          testPunctuation: `${LEFT_TO_RIGHT_EMBEDDING}Value is $50${POP_DIRECTIONAL_FORMATTING}`
         };
         expect(interceptor.preSaveTranslation(translations, 'ar')).toEqual(expected);
       });
@@ -101,7 +99,9 @@ describe('LtrMarkerInterceptor', () => {
 
     describe('preSaveTranslationKey', () => {
       it('ar should wrap LTR value', () => {
-        expect(interceptor.preSaveTranslationKey('any.Hello', 'Hello', 'ar')).toBe(`${LRE}Hello${PDF}`);
+        expect(interceptor.preSaveTranslationKey('any.Hello', 'Hello', 'ar')).toBe(
+          `${LEFT_TO_RIGHT_EMBEDDING}Hello${POP_DIRECTIONAL_FORMATTING}`
+        );
       });
 
       it('Localized strings should NOT wrap', () => {
@@ -110,7 +110,7 @@ describe('LtrMarkerInterceptor', () => {
       });
 
       it('value is already wrapped should NOT wrap again', () => {
-        const alreadyWrapped = `${LRE}Wrapped${PDF}`;
+        const alreadyWrapped = `${LEFT_TO_RIGHT_EMBEDDING}Wrapped${POP_DIRECTIONAL_FORMATTING}`;
         expect(interceptor.preSaveTranslationKey('any.Hello', alreadyWrapped, 'ar')).toBe(alreadyWrapped);
       });
     });
