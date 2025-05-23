@@ -160,13 +160,13 @@ export async function generateDraft(
   await expect(page.getByText('Your draft is ready')).toBeVisible();
   await screenshot(page, { pageName: 'generate_draft_completed', ...context });
   console.log('Draft generation took', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
+  await page.reload(); // Hypothesis: failure is caused by progress service or something. Reset by reloading the page.
   await user.click(page.getByRole('button', { name: 'Serval administration' }));
   await user.click(page.getByRole('button', { name: 'Run webhook to update draft status' }));
-  await user.click(page.getByRole('button', { name: 'Serval administration' }));
+  // await user.click(page.getByRole('button', { name: 'Serval administration' }));
 
   // Preview and apply chapter 1
-  // await user.click(page.getByRole('radio', { name: bookToDraft }));
-  await page.click(page.getByRole('radio', { name: bookToDraft }), { timeout: 60_000 });
+  await page.getByRole('radio', { name: bookToDraft }).click({ timeout: 60_000 });
   await user.click(page.getByRole('button', { name: 'Add to project' }));
   await user.click(page.getByRole('button', { name: 'Overwrite chapter' }));
   await user.click(page.locator('app-tab-header').filter({ hasText: DEFAULT_PROJECT_SHORTNAME }));
