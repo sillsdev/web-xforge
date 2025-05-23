@@ -112,7 +112,7 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'generate_draft_select_books_to_train', ...context });
 
   await goToNextStepExpectingHeading('Advanced');
-  await user.check(page.getByRole('checkbox', { name: 'Enable Fast Training' }));
+  await user.check(page.getByRole('checkbox', { name: 'Use Echo Translation Engine' }));
   await screenshot(page, { pageName: 'generate_draft_advanced_settings', ...context });
 
   await goToNextStepExpectingHeading('Summary');
