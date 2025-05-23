@@ -39,9 +39,10 @@ function shutDownServer() {
   kill -KILL "${pid}" 2>/dev/null
 }
 
+DOTNET_LOG=""
+
 function startServer() {
   cd "${SCRIPT_DIR}/../.."
-  local DOTNET_LOG
   DOTNET_LOG="$(mktemp)"
   output "Logging dotnet output to ${DOTNET_LOG}"
   export ASPNETCORE_ENVIRONMENT="Development"
@@ -87,4 +88,18 @@ function startServer() {
 output "$(date -Is) Starting."
 startServer
 cd "${SCRIPT_DIR}"
-./e2e.mts pre_merge_ci
+if ./e2e.mts pre_merge_ci generate_draft ; then
+  output "E2E tests passed."
+  echo "Here is the log of the dotnet server:"
+  echo "----------------------------------------"
+  cat "${DOTNET_LOG}"
+  shutDownServer "$!"
+  exit 0
+else
+  output "E2E tests failed."
+  echo "Here is the log of the dotnet server:"
+  echo "----------------------------------------"
+  cat "${DOTNET_LOG}"
+  shutDownServer "$!"
+  exit 1
+fi
