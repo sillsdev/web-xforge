@@ -88,18 +88,4 @@ function startServer() {
 output "$(date -Is) Starting."
 startServer
 cd "${SCRIPT_DIR}"
-if ./e2e.mts pre_merge_ci generate_draft ; then
-  output "E2E tests passed."
-  echo "Here is the log of the dotnet server:"
-  echo "----------------------------------------"
-  cat "${DOTNET_LOG}"
-  shutDownServer "$!"
-  exit 0
-else
-  output "E2E tests failed."
-  echo "Here is the log of the dotnet server:"
-  echo "----------------------------------------"
-  cat "${DOTNET_LOG}"
-  shutDownServer "$!"
-  exit 1
-fi
+./e2e.mts pre_merge_ci generate_draft
