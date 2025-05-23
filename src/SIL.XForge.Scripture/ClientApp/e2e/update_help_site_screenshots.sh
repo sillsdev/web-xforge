@@ -4,7 +4,7 @@ set -xueo pipefail
 
 echo "Deleting old screenshots"
 
-rm -r test_output/localized_screenshots/*
+rm -r test_output/localized_screenshots/
 
 echo "Generating new screenshots"
 
