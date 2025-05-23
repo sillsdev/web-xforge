@@ -66,7 +66,11 @@ export async function generateDraft(
   await user.check(page.getByRole('checkbox', { name: 'All the language codes are correct' }));
   await screenshot(page, { pageName: 'configure_sources_final', ...context });
   await user.click(page.getByRole('button', { name: 'Save & sync' }));
-  await user.click(page.getByRole('button', { name: 'Close' }));
+
+  // Wait for changes to be fully saved, which can take some time if the projects have never synced before
+  const closeLocator = page.getByRole('button', { name: 'Close' });
+  await expect(closeLocator).toBeVisible({ timeout: 5 * 60_000 });
+  await user.click(closeLocator);
 
   // The stepper renders every step to the page at once, so we need to keep track of which step we're on
   let currentStep = 0;
