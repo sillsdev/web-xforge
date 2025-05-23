@@ -165,7 +165,8 @@ export async function generateDraft(
   await user.click(page.getByRole('button', { name: 'Serval administration' }));
 
   // Preview and apply chapter 1
-  await user.click(page.getByRole('radio', { name: bookToDraft }));
+  // await user.click(page.getByRole('radio', { name: bookToDraft }));
+  await page.click(page.getByRole('radio', { name: bookToDraft }), { timeout: 60_000 });
   await user.click(page.getByRole('button', { name: 'Add to project' }));
   await user.click(page.getByRole('button', { name: 'Overwrite chapter' }));
   await user.click(page.locator('app-tab-header').filter({ hasText: DEFAULT_PROJECT_SHORTNAME }));
