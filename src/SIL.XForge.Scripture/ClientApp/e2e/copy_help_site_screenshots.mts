@@ -1,5 +1,6 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 
+import { pngImagesDiffer } from "./compare_images.mts";
 import { ScreenshotContext } from "./presets.ts";
 
 const runLogDir = Deno.args[0];
@@ -54,8 +55,14 @@ for (const screenshot of runLog.screenshotEvents) {
   if (pageName in pageNameToFileName) {
     const currentFile = `${runLogDir}/${screenshot.fileName}`;
     const newFile = `${getDirForLocale(localeCode)}/${pageNameToFileName[pageName as keyof typeof pageNameToFileName]}`;
-    console.log(`Moving ${currentFile} to ${newFile}`);
-    await Deno.copyFile(currentFile, newFile);
+
+    const imageDiffers = pngImagesDiffer(currentFile, newFile);
+    if (imageDiffers) {
+      console.log(`Moving ${currentFile} to ${newFile}`);
+      await Deno.copyFile(currentFile, newFile);
+    } else {
+      console.log(`Skipping ${currentFile} as it is identical to ${newFile}`);
+    }
   } else {
     screenshotsWithNoDestination.add(pageName);
   }
