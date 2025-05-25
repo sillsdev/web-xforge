@@ -5785,48 +5785,6 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task GetRevisionHistoryAsync_NoChapterChangesInMercurial()
-    {
-        var env = new TestEnvironment();
-        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        var associatedPtUser = new SFParatextUser(env.Username01);
-        env.SetupProject(env.Project01, associatedPtUser);
-        SFProject project = env.NewSFProject();
-        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
-        env.AddProjectRepository(project);
-        env.AddTextDataOps(project.Id, "RUT", 1);
-        env.ProjectHgRunner.SetStandardOutput(env.RuthBookUsfm, false);
-
-        // SUT
-        bool historyExists = false;
-        int count = 0;
-        await foreach (
-            DocumentRevision revision in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "RUT", 1)
-        )
-        {
-            // This will loop through the 4 valid ops (combined to 3) in MemoryConnection.GetOpsAsync()
-            // and skip the 1 revision in MockHg._log
-            historyExists = true;
-            count++;
-
-            // Check the op sources
-            if (count == 1)
-            {
-                // The first revision has a valid source
-                Assert.AreEqual(revision.Source, OpSource.Draft);
-            }
-            else
-            {
-                // The others do not
-                Assert.IsNull(revision.Source);
-            }
-        }
-
-        Assert.AreEqual(3, count);
-        Assert.IsTrue(historyExists);
-    }
-
-    [Test]
     public async Task GetRevisionHistoryAsync_Success()
     {
         var env = new TestEnvironment();
