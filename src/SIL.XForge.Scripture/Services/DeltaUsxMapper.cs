@@ -63,6 +63,8 @@ public class DeltaUsxMapper(
         "lim",
         // Should not contain verse text, but sometimes do
         "b",
+        // Book
+        "id",
     ];
 
     private class ParseState
@@ -91,10 +93,10 @@ public class DeltaUsxMapper(
         }
     }
 
-    public static bool CanParaContainVerseText(string style)
+    public static bool CanParaContainVerseText(string? style)
     {
         // an empty style indicates an improperly formatted paragraph which could contain verse text
-        if (style == string.Empty)
+        if (string.IsNullOrEmpty(style))
             return true;
         if (char.IsDigit(style[^1]))
             style = style[..^1];
@@ -149,7 +151,9 @@ public class DeltaUsxMapper(
                         case "book":
                             // Check for book validity. The list of valid books are in the XSD
                             bookIsValid = elem.GetSchemaInfo()?.Validity == XmlSchemaValidity.Valid;
-                            break;
+
+                            // Insert the USFM \id tag as book element (as it is in USX), using the para logic
+                            goto case "para";
 
                         case "para":
                             if (state.ImpliedParagraph)
@@ -163,7 +167,7 @@ public class DeltaUsxMapper(
                             {
                                 if (state.CurRef != null)
                                 {
-                                    int slashIndex = state.CurRef.IndexOf("/", StringComparison.Ordinal);
+                                    int slashIndex = state.CurRef.IndexOf('/', StringComparison.Ordinal);
                                     if (slashIndex != -1)
                                         state.CurRef = state.CurRef[..slashIndex];
                                     state.CurRef = GetParagraphRef(nextIds, state.CurRef, state.CurRef + "/" + style);
@@ -239,7 +243,7 @@ public class DeltaUsxMapper(
         Delta newDelta,
         HashSet<XNode> invalidNodes,
         ParseState state,
-        JObject attributes = null
+        JObject? attributes = null
     )
     {
         foreach (XNode node in parentElem.Nodes())
@@ -251,7 +255,7 @@ public class DeltaUsxMapper(
         Delta newDelta,
         HashSet<XNode> invalidNodes,
         ParseState state,
-        JObject attributes = null
+        JObject? attributes = null
     )
     {
         switch (node)
@@ -409,10 +413,13 @@ public class DeltaUsxMapper(
             invalidNodes.Add(elem);
             state.CurChapterIsValid = false;
         }
-        newDelta.InsertPara(GetAttributes(elem), AddInvalidBlockAttribute(invalidNodes, elem));
+
+        JObject attributes = (JObject)AddInvalidBlockAttribute(invalidNodes, elem)?.DeepClone() ?? [];
+        attributes.Add(new JProperty(elem.Name.LocalName, GetAttributes(elem)));
+        newDelta.Insert("\n", attributes);
     }
 
-    private static void SegmentEnded(Delta newDelta, string segRef)
+    private static void SegmentEnded(Delta newDelta, string? segRef)
     {
         if (segRef == null)
             return;
@@ -431,7 +438,7 @@ public class DeltaUsxMapper(
             var attrs = (JObject)lastOp[Delta.Attributes];
             if (
                 (embed != null && (embed["verse"] != null || embed["chapter"] != null))
-                || (attrs != null && (attrs["para"] != null || attrs["table"] != null))
+                || (attrs != null && (attrs["book"] != null || attrs["para"] != null || attrs["table"] != null))
                 || lastOpText.EndsWith('\n')
             )
             {
@@ -455,7 +462,11 @@ public class DeltaUsxMapper(
         return obj;
     }
 
-    private static JObject AddInvalidInlineAttribute(HashSet<XNode> invalidNodes, XNode node, JObject attributes = null)
+    private static JObject? AddInvalidInlineAttribute(
+        HashSet<XNode> invalidNodes,
+        XNode node,
+        JObject? attributes = null
+    )
     {
         if (invalidNodes.Contains(node))
         {
@@ -465,7 +476,11 @@ public class DeltaUsxMapper(
         return attributes;
     }
 
-    private static JObject AddInvalidBlockAttribute(HashSet<XNode> invalidNodes, XNode node, JObject attributes = null)
+    private static JObject? AddInvalidBlockAttribute(
+        HashSet<XNode> invalidNodes,
+        XNode node,
+        JObject? attributes = null
+    )
     {
         if (invalidNodes.Contains(node))
         {
@@ -491,7 +506,7 @@ public class DeltaUsxMapper(
         {
             if (chapterDeltaArray.Length == 1 && chapterDeltaArray[0]?.Delta.Ops.Count == 0)
             {
-                int usxChapterCount = oldUsxDoc.Root.Nodes().Count((XNode node) => IsElement(node, "chapter"));
+                int usxChapterCount = oldUsxDoc.Root!.Nodes().Count(node => IsElement(node, "chapter"));
                 // The chapterDeltas indicate this may be a book in the SF DB with no chapters, but the USX
                 // indicates that we should have known there were chapters and previously recorded them in
                 // the SF DB.
@@ -509,7 +524,7 @@ public class DeltaUsxMapper(
                 }
                 return oldUsxDoc;
             }
-            foreach (XNode curNode in newUsxDoc.Root.Nodes().ToArray())
+            foreach (XNode curNode in newUsxDoc.Root!.Nodes().ToArray())
             {
                 if (IsElement(curNode, "chapter"))
                 {
@@ -556,13 +571,16 @@ public class DeltaUsxMapper(
                     return newUsxDoc;
                 }
 
-                bool replaceNodeContent =
+                bool currentChapterIsValid =
                     chapterDeltaArray[curChapterDeltaIndex].Number == curChapter
                     && chapterDeltaArray[curChapterDeltaIndex].IsValid;
 
-                if (replaceNodeContent && !IsElement(curNode, "book"))
+                bool hasBookOp = chapterDeltaArray[curChapterDeltaIndex]
+                    .Delta.Ops.Any(o => o["attributes"]?["book"] is not null);
+
+                // If the chapter is valid, or if it is a book element, and we have a book op
+                if (currentChapterIsValid && (!IsElement(curNode, "book") || hasBookOp))
                 {
-                    // If the chapter is valid, but the para is not, remove the para.
                     curNode.Remove();
                 }
             }
@@ -580,7 +598,7 @@ public class DeltaUsxMapper(
         }
         catch (Exception e)
         {
-            int usxChapterCount = oldUsxDoc.Root.Nodes().Count((XNode node) => IsElement(node, "chapter"));
+            int usxChapterCount = oldUsxDoc.Root.Nodes().Count(node => IsElement(node, "chapter"));
             string errorExplanation =
                 $"ToUsx() had a problem ({e.Message}). SF DB corruption can cause "
                 + "IndexOutOfRangeException to be thrown here. Rethrowing. Diagnostic info: "
@@ -727,10 +745,11 @@ public class DeltaUsxMapper(
                     {
                         switch (prop.Name)
                         {
+                            case "book":
                             case "para":
-                                // end of a para block
+                                // end of a book or para block
                                 for (int j = 0; j < text.Length; j++)
-                                    content.Add(CreateContainerElement("para", prop.Value, childNodes.Peek()));
+                                    content.Add(CreateContainerElement(prop.Name, prop.Value, childNodes.Peek()));
                                 childNodes.Peek().Clear();
                                 break;
 
