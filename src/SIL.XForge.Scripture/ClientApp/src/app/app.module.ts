@@ -1,11 +1,11 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { DatePipe } from '@angular/common';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { APP_ID, ErrorHandler, NgModule } from '@angular/core';
+import { APP_ID, APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { MatRipple } from '@angular/material/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
 import { QuillModule } from 'ngx-quill';
 import {
@@ -40,6 +40,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
+import { preloadEnglishTranslations } from './shared/utils';
 import { SyncComponent } from './sync/sync.component';
 import { LynxInsightsModule } from './translate/editor/lynx/insights/lynx-insights.module';
 import { TranslateModule } from './translate/translate.module';
@@ -95,7 +96,13 @@ import { UsersModule } from './users/users.module';
     defaultTranslocoMarkupTranspilers(),
     { provide: ErrorHandler, useClass: ExceptionHandlingService },
     { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
-    provideHttpClient(withInterceptorsFromDi())
+    provideHttpClient(withInterceptorsFromDi()),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: preloadEnglishTranslations,
+      deps: [TranslocoService],
+      multi: true
+    }
   ]
 })
 export class AppModule {}
