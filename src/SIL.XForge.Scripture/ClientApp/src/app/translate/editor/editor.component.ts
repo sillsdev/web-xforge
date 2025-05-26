@@ -1758,8 +1758,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const translator: InteractiveTranslator | undefined =
-      await this.interactiveTranslatorFactory?.create(sourceSegment);
+    let translator: InteractiveTranslator | undefined;
+    if (this.translationSuggestionsEnabled) {
+      translator = await this.interactiveTranslatorFactory?.create(sourceSegment);
+    }
     if (translator == null) {
       this.translator = undefined;
       return;
