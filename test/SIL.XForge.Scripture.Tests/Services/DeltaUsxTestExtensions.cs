@@ -141,6 +141,18 @@ public static class DeltaUsxTestExtensions
         return delta.InsertText(text, segRef, attributes);
     }
 
+    public static Delta InsertBook(this Delta delta, string code, string style = "id", bool invalid = false)
+    {
+        var obj = new JObject(new JProperty("code", code), new JProperty("style", style));
+        if (style == "")
+            obj.Add(new JProperty("status", "unknown"));
+        JObject attrs = [];
+        if (invalid)
+            attrs = new JObject(new JProperty("invalid-block", true));
+        attrs.Add(new JProperty("book", obj));
+        return delta.InsertBlank($"{style}_1").Insert("\n", attrs);
+    }
+
     public static Delta InsertChapter(this Delta delta, string number, string style = "c", bool invalid = false)
     {
         var obj = new JObject(new JProperty("number", number), new JProperty("style", style));

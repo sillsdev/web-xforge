@@ -19,10 +19,10 @@ using SIL.XForge.Scripture.Models;
 namespace SIL.XForge.Scripture.Services;
 
 [TestFixture]
-public class DeltaUsxMapperTests
+public partial class DeltaUsxMapperTests
 {
-    private IGuidService _mapperGuidService;
-    private IGuidService _testGuidService;
+    private TestGuidService _mapperGuidService;
+    private TestGuidService _testGuidService;
     private ILogger<DeltaUsxMapper> _logger;
     private IExceptionHandler _exceptionHandler;
     private ScrText _scrText;
@@ -48,7 +48,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx("PHM", Para("h", "Philemon"));
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
@@ -63,6 +63,7 @@ public class DeltaUsxMapperTests
             true,
             Delta
                 .New()
+                .InsertBook("PHM")
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
@@ -71,14 +72,14 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx("PHM", Chapter("1"), Para("p", Verse("1"), "Verse text."));
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
 
         // And we should be able to roundtrip it back.
-        List<ChapterDelta> roundtrippedChapterDeltas = [.. mapper.ToChapterDeltas(newUsxDoc)];
-        Assert.IsTrue(roundtrippedChapterDeltas[0].Delta.DeepEquals(chapterDelta.Delta));
+        List<ChapterDelta> roundTrippedChapterDeltas = [.. mapper.ToChapterDeltas(newUsxDoc)];
+        Assert.IsTrue(roundTrippedChapterDeltas[0].Delta.DeepEquals(chapterDelta.Delta));
     }
 
     [Test]
@@ -109,7 +110,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -145,8 +146,14 @@ public class DeltaUsxMapperTests
         // Get the chapter deltas, which will be the valid chapters
         List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
 
-        var expected1 = Delta.New().InsertChapter("1").InsertVerse("1").InsertBlank("verse_1_1").InsertText("\n");
-        var expected2 = Delta.New().InsertChapter("3").InsertVerse("1").InsertBlank("verse_3_1").InsertText("\n");
+        Delta expected1 = Delta
+            .New()
+            .InsertBook("RUT")
+            .InsertChapter("1")
+            .InsertVerse("1")
+            .InsertBlank("verse_1_1")
+            .InsertText("\n");
+        Delta expected2 = Delta.New().InsertChapter("3").InsertVerse("1").InsertBlank("verse_3_1").InsertText("\n");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
@@ -183,7 +190,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -213,7 +220,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -247,7 +254,7 @@ public class DeltaUsxMapperTests
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         // SUT
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -290,7 +297,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -336,7 +343,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -402,7 +409,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -465,7 +472,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -552,7 +559,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -594,7 +601,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -638,7 +645,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -696,7 +703,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -739,7 +746,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -768,7 +775,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -807,7 +814,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -832,6 +839,7 @@ public class DeltaUsxMapperTests
             true,
             Delta
                 .New()
+                .InsertBook("PHM")
                 .InsertChapter("1")
                 // Table 1 begins
                 // Row 1 begins
@@ -864,7 +872,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -881,8 +889,8 @@ public class DeltaUsxMapperTests
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
 
         // And we should be able to roundtrip it back.
-        List<ChapterDelta> roundtrippedChapterDeltas = [.. mapper.ToChapterDeltas(newUsxDoc)];
-        Assert.IsTrue(roundtrippedChapterDeltas[0].Delta.DeepEquals(chapterDelta.Delta));
+        List<ChapterDelta> roundTrippedChapterDeltas = [.. mapper.ToChapterDeltas(newUsxDoc)];
+        Assert.IsTrue(roundTrippedChapterDeltas[0].Delta.DeepEquals(chapterDelta.Delta));
     }
 
     [Test]
@@ -930,7 +938,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -995,8 +1003,8 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDocA = mapper.ToUsx(Usx("PHM"), new[] { chapterDeltaA });
-        XDocument newUsxDocB = mapper.ToUsx(Usx("PHM"), new[] { chapterDeltaB });
+        XDocument newUsxDocA = mapper.ToUsx(Usx("PHM"), [chapterDeltaA]);
+        XDocument newUsxDocB = mapper.ToUsx(Usx("PHM"), [chapterDeltaB]);
 
         XDocument expected = Usx("PHM", Chapter("1"), Para("p", Verse("1"), "Verse text."));
         // The implied paragraphs are combined.
@@ -1015,7 +1023,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx("PHM", Para("p"), Para("p"));
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
@@ -1024,14 +1032,15 @@ public class DeltaUsxMapperTests
     [Test]
     public void ToUsx_NoParagraphs()
     {
-        var chapterDeltas = new[]
-        {
+        ChapterDelta[] chapterDeltas =
+        [
             new ChapterDelta(
                 1,
                 3,
                 true,
                 Delta
                     .New()
+                    .InsertBook("PHM")
                     .InsertChapter("1")
                     .InsertVerse("1")
                     .InsertText("This is verse 1.", "verse_1_1")
@@ -1054,7 +1063,7 @@ public class DeltaUsxMapperTests
                     .InsertBlank("verse_2_2")
                     .Insert("\n")
             ),
-        };
+        ];
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         XDocument newUsxDoc = mapper.ToUsx(Usx("PHM", Chapter("1"), "Text", Chapter("2"), "Text"), chapterDeltas);
@@ -1074,9 +1083,9 @@ public class DeltaUsxMapperTests
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
 
         // And we should be able to roundtrip it back.
-        List<ChapterDelta> roundtrippedChapterDeltas = [.. mapper.ToChapterDeltas(newUsxDoc)];
-        Assert.IsTrue(roundtrippedChapterDeltas[0].Delta.DeepEquals(chapterDeltas[0].Delta));
-        Assert.IsTrue(roundtrippedChapterDeltas[1].Delta.DeepEquals(chapterDeltas[1].Delta));
+        List<ChapterDelta> roundTrippedChapterDeltas = [.. mapper.ToChapterDeltas(newUsxDoc)];
+        Assert.IsTrue(roundTrippedChapterDeltas[0].Delta.DeepEquals(chapterDeltas[0].Delta));
+        Assert.IsTrue(roundTrippedChapterDeltas[1].Delta.DeepEquals(chapterDeltas[1].Delta));
     }
 
     [Test]
@@ -1098,7 +1107,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -1130,7 +1139,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -1161,7 +1170,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -1175,8 +1184,8 @@ public class DeltaUsxMapperTests
     [Test]
     public void ToUsx_NoParagraphsImpliedParagraph()
     {
-        var chapterDeltas = new[]
-        {
+        ChapterDelta[] chapterDeltas =
+        [
             new ChapterDelta(
                 1,
                 3,
@@ -1206,7 +1215,7 @@ public class DeltaUsxMapperTests
                     .InsertBlank("verse_2_2")
                     .Insert("\n")
             ),
-        };
+        ];
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         XDocument newUsxDoc = mapper.ToUsx(Usx("PHM", Chapter("1"), "Text", Chapter("2"), "Text"), chapterDeltas);
@@ -1230,7 +1239,7 @@ public class DeltaUsxMapperTests
     [Test]
     public void ToUsx_EmptyBook()
     {
-        var chapterDeltas = new[] { new ChapterDelta(1, 0, true, new Delta()) };
+        ChapterDelta[] chapterDeltas = [new ChapterDelta(1, 0, true, Delta.New())];
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), chapterDeltas);
@@ -1243,7 +1252,7 @@ public class DeltaUsxMapperTests
     public void ToUsx_MismatchNoChapters_UnchangedUsx()
     {
         _exceptionHandler.ClearReceivedCalls();
-        var chapterDeltas = new[] { new ChapterDelta(1, 0, true, new Delta()) };
+        ChapterDelta[] chapterDeltas = [new ChapterDelta(1, 0, true, Delta.New())];
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
 
@@ -1262,16 +1271,14 @@ public class DeltaUsxMapperTests
 
         XDocument expected = input;
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
-        _exceptionHandler
-            .Received()
-            .ReportException(Arg.Is<Exception>((Exception e) => e.Message.Contains("no real chapters")));
+        _exceptionHandler.Received().ReportException(Arg.Is((Exception e) => e.Message.Contains("no real chapters")));
     }
 
     [Test]
     public void ToUsx_NewChapter_Added()
     {
-        var chapterDeltas = new[]
-        {
+        ChapterDelta[] chapterDeltas =
+        [
             new ChapterDelta(
                 1,
                 2,
@@ -1298,7 +1305,7 @@ public class DeltaUsxMapperTests
                     .InsertText("New chapter verse 2", "verse_2_2")
                     .InsertPara("p")
             ),
-        };
+        ];
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
 
@@ -1318,8 +1325,8 @@ public class DeltaUsxMapperTests
     [Test]
     public void ToUsx_NewChapter_AddedBetweenChapters()
     {
-        var chapterDeltas = new[]
-        {
+        ChapterDelta[] chapterDeltas =
+        [
             new ChapterDelta(
                 1,
                 2,
@@ -1359,7 +1366,7 @@ public class DeltaUsxMapperTests
                     .InsertText("This is verse 2.", "verse_3_2")
                     .InsertPara("p")
             ),
-        };
+        ];
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
 
@@ -1389,8 +1396,8 @@ public class DeltaUsxMapperTests
     [Test]
     public void ToUsx_FirstChapterMissing()
     {
-        var chapterDeltas = new[]
-        {
+        ChapterDelta[] chapterDeltas =
+        [
             new ChapterDelta(
                 2,
                 2,
@@ -1406,7 +1413,7 @@ public class DeltaUsxMapperTests
                     .InsertText("This is verse 2 (edited).", "verse_2_2")
                     .InsertPara("p")
             ),
-        };
+        ];
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
 
@@ -1453,7 +1460,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -1483,7 +1490,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("XXA", Book("PHM"), Chapter("1")), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("XXA", Book("PHM"), Chapter("1")), [chapterDelta]);
 
         XDocument expected = Usx("XXA", Book("PHM"), Chapter("1"), Para("p", Verse("1"), "Verse text."));
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
@@ -1492,8 +1499,8 @@ public class DeltaUsxMapperTests
     [Test]
     public void ToUsx_InvalidParaInFirstChapter()
     {
-        var chapterDeltas = new[]
-        {
+        ChapterDelta[] chapterDeltas =
+        [
             new ChapterDelta(
                 1,
                 1,
@@ -1532,7 +1539,7 @@ public class DeltaUsxMapperTests
                     .InsertText("New verse text.", "verse_3_1")
                     .InsertPara("p")
             ),
-        };
+        ];
 
         var oldUsxDoc = Usx(
             "PHM",
@@ -1564,8 +1571,8 @@ public class DeltaUsxMapperTests
     [Test]
     public void ToUsx_InvalidParaInMiddleChapter()
     {
-        var chapterDeltas = new[]
-        {
+        ChapterDelta[] chapterDeltas =
+        [
             new ChapterDelta(
                 1,
                 1,
@@ -1604,7 +1611,7 @@ public class DeltaUsxMapperTests
                     .InsertText("New verse text.", "verse_3_1")
                     .InsertPara("p")
             ),
-        };
+        ];
 
         var oldUsxDoc = Usx(
             "PHM",
@@ -1636,8 +1643,8 @@ public class DeltaUsxMapperTests
     [Test]
     public void ToUsx_InvalidParaInLastChapter()
     {
-        var chapterDeltas = new[]
-        {
+        ChapterDelta[] chapterDeltas =
+        [
             new ChapterDelta(
                 1,
                 1,
@@ -1676,7 +1683,7 @@ public class DeltaUsxMapperTests
                     .InsertText("New verse text.", "verse_3_1")
                     .InsertPara("bad", true)
             ),
-        };
+        ];
 
         var oldUsxDoc = Usx(
             "PHM",
@@ -1724,7 +1731,7 @@ public class DeltaUsxMapperTests
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
 
         XDocument expected = Usx(
             "PHM",
@@ -1755,7 +1762,7 @@ public class DeltaUsxMapperTests
         XDocument oldUsxDoc = Usx("PHM", Chapter("bad"), Para("p", Verse("1"), Verse("2")), Chapter("2"));
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-        Assert.Throws<InvalidDataException>(() => mapper.ToUsx(oldUsxDoc, new[] { chapterDelta }));
+        Assert.Throws<InvalidDataException>(() => mapper.ToUsx(oldUsxDoc, [chapterDelta]));
     }
 
     [Test]
@@ -1775,6 +1782,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -1838,6 +1846,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1", "bad", true)
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -1862,6 +1871,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1", "bad", true)
@@ -1892,6 +1902,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -1925,6 +1936,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -1960,6 +1972,7 @@ public class DeltaUsxMapperTests
 
         var expectedChapter1 = Delta
             .New()
+            .InsertBook("PHM")
             .InsertText("Philemon", "mt_1")
             .InsertPara("mt")
             .InsertChapter("1")
@@ -2033,6 +2046,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2090,6 +2104,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2148,6 +2163,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2195,6 +2211,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2229,6 +2246,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2257,6 +2275,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2281,6 +2300,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2318,6 +2338,7 @@ public class DeltaUsxMapperTests
         string sup3CharID = _testGuidService.Generate();
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2382,6 +2403,7 @@ public class DeltaUsxMapperTests
         string sup3CharID = _testGuidService.Generate();
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2453,6 +2475,7 @@ public class DeltaUsxMapperTests
         string sup4CharID = _testGuidService.Generate();
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2537,6 +2560,7 @@ public class DeltaUsxMapperTests
         string sup3CharID = _testGuidService.Generate();
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2595,6 +2619,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2641,6 +2666,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2697,6 +2723,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2753,6 +2780,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2795,6 +2823,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2823,6 +2852,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2851,6 +2881,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -2885,6 +2916,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertText("Before verse.", "cell_1_1_1")
             .InsertVerse("1")
@@ -2934,6 +2966,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertText("Before verse.", "cell_1_1_1")
             .InsertVerse("1")
@@ -2971,7 +3004,7 @@ public class DeltaUsxMapperTests
     {
         string ndCharID = _testGuidService.Generate();
 
-        string bookUsfm = """
+        const string bookUsfm = """
 \id PHM
 \c 1
 \p
@@ -3009,6 +3042,7 @@ public class DeltaUsxMapperTests
         // be expected.
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -3067,6 +3101,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("cell_1_1_1")
             .InsertVerse("1")
@@ -3131,6 +3166,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertText("Before verse.", "cell_1_1_1")
             .InsertVerse("1")
@@ -3176,6 +3212,7 @@ public class DeltaUsxMapperTests
 
         var expected1 = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertVerse("1")
             .InsertText("This is verse 1.", "verse_1_1")
@@ -3218,6 +3255,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .Insert("This is an implied paragraph before the first verse.")
             .Insert("\n")
@@ -3247,6 +3285,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .Insert("This is an implied paragraph before the first verse.")
             .Insert("\n")
@@ -3283,6 +3322,7 @@ public class DeltaUsxMapperTests
 
         var expected1 = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .Insert("This is an implied paragraph before the first verse.")
             .InsertVerse("1")
@@ -3319,11 +3359,13 @@ public class DeltaUsxMapperTests
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
 
+        var expected = Delta.New().InsertBook("PHM");
+
         Assert.That(chapterDeltas.Count, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(0));
         Assert.That(chapterDeltas[0].IsValid, Is.True);
-        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(new Delta()));
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
     [Test]
@@ -3343,6 +3385,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -3381,6 +3424,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -3415,7 +3459,9 @@ public class DeltaUsxMapperTests
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
 
-        var expected = new Delta()
+        var expected = Delta
+            .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -3449,6 +3495,7 @@ public class DeltaUsxMapperTests
 
         var expectedChapter1 = Delta
             .New()
+            .InsertBook("PHM")
             .InsertText("Book title", "imt_1")
             .InsertPara("imt")
             .InsertChapter("1")
@@ -3505,6 +3552,7 @@ public class DeltaUsxMapperTests
 
         var expectedChapter1 = Delta
             .New()
+            .InsertBook("PHM")
             .InsertText("Book title", "imt_1")
             .InsertPara("imt")
             .InsertChapter("1")
@@ -3561,6 +3609,7 @@ public class DeltaUsxMapperTests
 
         var expectedChapter1 = Delta
             .New()
+            .InsertBook("PHM")
             .InsertText("Book title", "imt_1")
             .InsertPara("imt")
             .InsertChapter("1")
@@ -3612,6 +3661,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("s_1")
             .InsertVerse("1")
@@ -3637,10 +3687,11 @@ public class DeltaUsxMapperTests
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
 
-        var expected = new[]
-        {
+        Delta[] expected =
+        [
             Delta
                 .New()
+                .InsertBook("TDX", invalid: true)
                 .InsertChapter("1")
                 .InsertBlank("q_1")
                 .InsertVerse("1")
@@ -3653,7 +3704,7 @@ public class DeltaUsxMapperTests
                 .InsertVerse("1")
                 .InsertText("This verse is also valid, but in an invalid book", "verse_2_1")
                 .InsertPara("q"),
-        };
+        ];
 
         Assert.That(chapterDeltas.Count, Is.EqualTo(2));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
@@ -3678,7 +3729,9 @@ public class DeltaUsxMapperTests
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
 
-        var expected = new Delta()
+        var expected = Delta
+            .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("q_1")
             .InsertVerse("1")
@@ -3711,6 +3764,7 @@ public class DeltaUsxMapperTests
 
         var expected = Delta
             .New()
+            .InsertBook("PHM")
             .InsertChapter("1")
             .InsertBlank("p_1")
             .InsertVerse("1")
@@ -3995,7 +4049,7 @@ public class DeltaUsxMapperTests
         string zipFilePath = Path.Join(GetPathToTestProject(), "SampleData", $"{projectZipFilename}.zip");
         await using FileStream zipFileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
         using ZipArchive archive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
-        Assert.That(archive.Entries.Any(), "setup. unexpected input size.");
+        Assert.That(archive.Entries, Is.Not.Empty, "setup. unexpected input size.");
         bool allBooksRoundtrip = true;
         List<string> errorMessages = [];
         foreach (ZipArchiveEntry entry in archive.Entries)
@@ -4024,10 +4078,13 @@ public class DeltaUsxMapperTests
     private void AssertRoundtrips(string bookUsfm) =>
         Assert.That(DoesRoundtrip(bookUsfm, out string errorMessage), Is.True, errorMessage);
 
+    [GeneratedRegex(@"\\id\s+(\w+)", RegexOptions.Compiled)]
+    private static partial Regex BookCodeRegex();
+
     private static string ExtractBookCode(string bookUsfm)
     {
-        string firstLine = bookUsfm.Split('\n').FirstOrDefault()?.Trim();
-        string bookCode = Regex.Match(firstLine, @"\\id\s+(\w+)").Groups[1].Value;
+        string firstLine = bookUsfm.Split('\n').FirstOrDefault()?.Trim() ?? string.Empty;
+        string bookCode = BookCodeRegex().Match(firstLine).Groups[1].Value;
         return bookCode;
     }
 
@@ -4065,9 +4122,7 @@ public class DeltaUsxMapperTests
         if (!didRoundtrip)
         {
             errorMessage = $"Trouble roundtripping {bookCode}.";
-            IEnumerable<int> invalidChapters = chapterDeltas
-                .Where((ChapterDelta cd) => !cd.IsValid)
-                .Select((ChapterDelta cd) => cd.Number);
+            IEnumerable<int> invalidChapters = chapterDeltas.Where(cd => !cd.IsValid).Select(cd => cd.Number);
             if (invalidChapters.Any())
                 errorMessage += $" Note that the following chapters were invalid: {string.Join(" ", invalidChapters)}";
         }
