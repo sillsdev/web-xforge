@@ -24,6 +24,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { of } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -605,6 +606,51 @@ describe('CheckingOverviewComponent', () => {
     });
     env.waitForQuestions();
     expect(env.component.questionCount(41, 1)).toEqual(0);
+  }));
+
+  it('should display question reference range if present', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUser(env.adminUser);
+
+    const verseRefWithRange: VerseRefData = {
+      bookNum: 40,
+      chapterNum: 1,
+      verse: '1-2',
+      verseNum: 1
+    };
+
+    env.addQuestion({
+      dataId: 'qWithVerseRange',
+      projectRef: 'project01',
+      ownerRef: env.adminUser.id,
+      text: 'Question with verse range text',
+      verseRef: verseRefWithRange,
+      answers: [],
+      isArchived: false,
+      dateCreated: '',
+      dateModified: ''
+    });
+
+    env.waitForQuestions();
+
+    env.clickExpanderAtRow(0);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    env.clickExpanderAtRow(1);
+    env.fixture.detectChanges();
+
+    let foundReference: string | undefined;
+    for (const chapterRow of env.textRows) {
+      const question = chapterRow.query(By.css('div.flex'));
+      if (question && question.nativeElement.textContent.includes('Question with verse range text')) {
+        foundReference = question?.nativeElement.textContent.trim();
+        break;
+      }
+    }
+
+    expect(foundReference).toContain('v1-2');
+    discardPeriodicTasks();
   }));
 });
 

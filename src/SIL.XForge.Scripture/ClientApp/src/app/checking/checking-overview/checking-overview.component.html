@@ -124,7 +124,7 @@
                                 >
                                   <mat-icon>edit</mat-icon>
                                 </button>
-                                v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
+                                v{{ questionReference(questionDoc.data?.verseRef) }} -&nbsp;
                                 @if (questionDoc.data?.audioUrl) {
                                   <mat-icon class="audio-icon material-icons-outlined">audio_file</mat-icon>
                                 }
