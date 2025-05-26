@@ -149,6 +149,9 @@ public class DeltaUsxMapper(
                         case "book":
                             // Check for book validity. The list of valid books are in the XSD
                             bookIsValid = elem.GetSchemaInfo()?.Validity == XmlSchemaValidity.Valid;
+
+                            // Insert the USFM \id  tag as book element (as it is in USX)
+                            ProcessChildNode(elem, chapterDelta, invalidNodes, state);
                             break;
 
                         case "para":
@@ -163,7 +166,7 @@ public class DeltaUsxMapper(
                             {
                                 if (state.CurRef != null)
                                 {
-                                    int slashIndex = state.CurRef.IndexOf("/", StringComparison.Ordinal);
+                                    int slashIndex = state.CurRef.IndexOf('/', StringComparison.Ordinal);
                                     if (slashIndex != -1)
                                         state.CurRef = state.CurRef[..slashIndex];
                                     state.CurRef = GetParagraphRef(nextIds, state.CurRef, state.CurRef + "/" + style);
@@ -491,26 +494,27 @@ public class DeltaUsxMapper(
         {
             if (chapterDeltaArray.Length == 1 && chapterDeltaArray[0]?.Delta.Ops.Count == 0)
             {
-                int usxChapterCount = oldUsxDoc.Root.Nodes().Count((XNode node) => IsElement(node, "chapter"));
+                int usxChapterCount = oldUsxDoc.Root!.Nodes().Count(node => IsElement(node, "chapter"));
                 // The chapterDeltas indicate this may be a book in the SF DB with no chapters, but the USX
                 // indicates that we should have known there were chapters and previously recorded them in
                 // the SF DB.
                 if (usxChapterCount > 0)
                 {
-                    string errorExplanation =
+                    const string errorExplanation =
                         "ToUsx() received a chapterDeltas with no real chapters "
-                        + $"(just one 'chapter' with a Delta.Ops.Count of 0), and USX with {usxChapterCount} "
+                        + "(just one 'chapter' with a Delta.Ops.Count of 0), and USX with {usxChapterCount} "
                         + "chapters. This may indicate corrupt data in the SF DB. Handling by ignoring "
                         + "chapterDeltas and returning the input USX.";
-                    logger.LogWarning(errorExplanation);
+                    logger.LogWarning(errorExplanation, usxChapterCount);
                     // Report to bugsnag, but don't throw.
                     var report = new ArgumentException(errorExplanation);
                     exceptionHandler.ReportException(report);
                 }
                 return oldUsxDoc;
             }
-            foreach (XNode curNode in newUsxDoc.Root.Nodes().ToArray())
+            foreach (XNode curNode in newUsxDoc.Root!.Nodes().ToArray())
             {
+                // TODO: Update the book element's contents if specified
                 if (IsElement(curNode, "chapter"))
                 {
                     if (isFirstChapterFound)
@@ -580,7 +584,7 @@ public class DeltaUsxMapper(
         }
         catch (Exception e)
         {
-            int usxChapterCount = oldUsxDoc.Root.Nodes().Count((XNode node) => IsElement(node, "chapter"));
+            int usxChapterCount = oldUsxDoc.Root.Nodes().Count(node => IsElement(node, "chapter"));
             string errorExplanation =
                 $"ToUsx() had a problem ({e.Message}). SF DB corruption can cause "
                 + "IndexOutOfRangeException to be thrown here. Rethrowing. Diagnostic info: "
@@ -758,7 +762,9 @@ public class DeltaUsxMapper(
 
                         case "blank":
                         case "empty":
-                            // ignore blank and empty embeds
+                        case "book":
+                            // Ignore blank and empty embeds.
+                            // book embeds should have been handled in ToUsx()
                             break;
 
                         default:

@@ -39,8 +39,8 @@ public static class DeltaUsxExtensions
         this Delta delta,
         string type,
         JObject obj,
-        string segRef = null,
-        JObject attributes = null
+        string? segRef = null,
+        JObject? attributes = null
     )
     {
         var embed = new JObject(new JProperty(type, obj));

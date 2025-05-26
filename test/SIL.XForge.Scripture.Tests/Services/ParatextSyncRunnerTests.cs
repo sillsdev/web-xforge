@@ -3271,8 +3271,8 @@ public class ParatextSyncRunnerTests
         // we would write the SF DB information back to the Paratext project (if the text was changed).
 
         // Modify the text a bit so it will need written back to Paratext.
-        string newText = "In the beginning";
-        ops[3]["insert"] = newText;
+        const string newText = "In the beginning";
+        ops[4]["insert"] = newText;
 
         // Make text docs out of the chapter deltas.
         var chapterDeltasAsSortedList = new SortedList<int, IDocument<TextData>>(
@@ -3288,27 +3288,20 @@ public class ParatextSyncRunnerTests
         );
         textInfo.Chapters =
         [
-            .. chapterDeltas.Values.Select(
-                (ChapterDelta chapterDelta) =>
-                    new Chapter()
-                    {
-                        Number = chapterDelta.Number,
-                        IsValid = chapterDelta.IsValid,
-                        LastVerse = chapterDelta.LastVerse,
-                        Permissions = [],
-                    }
-            ),
+            .. chapterDeltas.Values.Select(chapterDelta => new Chapter
+            {
+                Number = chapterDelta.Number,
+                IsValid = chapterDelta.IsValid,
+                LastVerse = chapterDelta.LastVerse,
+                Permissions = [],
+            }),
         ];
 
         env.RealtimeService.AddRepository(
             "users",
             OTType.Json0,
             new MemoryRepository<User>(
-                new[]
-                {
-                    new User { Id = "user01", ParatextId = "pt01" },
-                    new User { Id = "user02", ParatextId = "pt02" },
-                }
+                [new User { Id = "user01", ParatextId = "pt01" }, new User { Id = "user02", ParatextId = "pt02" }]
             )
         );
 
