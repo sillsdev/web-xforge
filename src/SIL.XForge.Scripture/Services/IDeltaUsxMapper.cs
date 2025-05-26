@@ -4,20 +4,12 @@ using SIL.XForge.Realtime.RichText;
 
 namespace SIL.XForge.Scripture.Services;
 
-public class ChapterDelta
+public class ChapterDelta(int number, int lastVerse, bool isValid, Delta delta)
 {
-    public ChapterDelta(int number, int lastVerse, bool isValid, Delta delta)
-    {
-        Number = number;
-        LastVerse = lastVerse;
-        IsValid = isValid;
-        Delta = delta;
-    }
-
-    public int Number { get; }
-    public int LastVerse { get; }
-    public bool IsValid { get; }
-    public Delta Delta { get; }
+    public int Number { get; } = number;
+    public int LastVerse { get; } = lastVerse;
+    public bool IsValid { get; } = isValid;
+    public Delta Delta { get; } = delta;
 }
 
 public interface IDeltaUsxMapper
