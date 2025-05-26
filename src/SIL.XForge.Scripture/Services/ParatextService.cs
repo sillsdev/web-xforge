@@ -2131,18 +2131,20 @@ public class ParatextService : DisposableBase, IParatextService
                 continue;
             }
 
-            // If this revision modifies this chapter, emit it
-            var changesForBook = revisionSummary.GetChangesForBook(bookNum);
-            if (changesForBook.ChapterHasChange(chapter))
+            // We do not check for changes in the chapter, as ChapterHasChange() is a slow IO intensive call when
+            // performed across all revisions. This is because it loads the previous revision's USFM and the current
+            // revision's USFM and compares it. For a 1000 revision history (common for large projects), this can take
+            // up to 6 minutes on a very fast server. An execution time like this will result in Cloudflare returning
+            // a 524 error to the user before the request has finished processing.
+            //
+            // For this return revision points-in-time, a timestamp for a change made to the book is sufficient.
+            paratextUsers.TryGetValue(revision.User, out string? userId);
+            yield return new DocumentRevision
             {
-                paratextUsers.TryGetValue(revision.User, out string? userId);
-                yield return new DocumentRevision
-                {
-                    Source = OpSource.Paratext,
-                    Timestamp = revision.CommitTimeStamp.UtcDateTime,
-                    UserId = userId,
-                };
-            }
+                Source = OpSource.Paratext,
+                Timestamp = revision.CommitTimeStamp.UtcDateTime,
+                UserId = userId,
+            };
         }
 
         // Clean up the scripture text

@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36109.1 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommitGenerator", "CommitGenerator.csproj", "{980BD3CD-0D42-4B0F-868E-00C8392C78F9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{980BD3CD-0D42-4B0F-868E-00C8392C78F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{980BD3CD-0D42-4B0F-868E-00C8392C78F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{980BD3CD-0D42-4B0F-868E-00C8392C78F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{980BD3CD-0D42-4B0F-868E-00C8392C78F9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2ED223C6-268D-4184-9F68-A08D349DE095}
+	EndGlobalSection
+EndGlobal

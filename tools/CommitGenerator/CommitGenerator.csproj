@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <!--
+    This is for compatibility between ICU4C (a dependency of ParatextData) and .NET 8.0 see:
+    https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/8.0/rid-graph
+    -->
+    <UseRidGraph>true</UseRidGraph>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      Make sure any documentation comments which are included in code get checked for syntax during the build, but do
+      not report warnings for missing comments.
+      CS1573: Parameter 'parameter' has no matching param tag in the XML comment for 'parameter' (but other parameters do)
+      CS1591: Missing XML comment for publicly visible type or member 'Type_or_Member'
+      CS1712: Type parameter 'type_parameter' has no matching typeparam tag in the XML comment on 'type_or_member' (but other type parameters do)
+    -->
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn),1573,1591,1712</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\src\SIL.XForge.Scripture\changedChapter.py" Link="changedChapter.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\src\SIL.XForge.Scripture\ParatextMerge.py" Link="ParatextMerge.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\src\SIL.XForge.Scripture\revisionStyle.sty" Link="revisionStyle.sty">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\src\SIL.XForge.Scripture\revisionTemplate.tem" Link="revisionTemplate.tem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ParatextData" Version="9.5.0.12" />
+  </ItemGroup>
+
+</Project>
