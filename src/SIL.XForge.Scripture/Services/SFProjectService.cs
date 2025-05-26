@@ -32,7 +32,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 {
     public const string ErrorAlreadyConnectedKey = "error-already-connected";
     internal const string ProjectSettingValueUnset = "unset";
-    private const string InvalidEmailAddress = "invalid-email-address";
+    internal const string InvalidEmailAddress = "invalid-email-address";
     private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
         new DictionaryComparer<string, string>();
     private readonly IBackgroundJobClient _backgroundJobClient;
@@ -710,7 +710,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Validate the email address
         if (!_emailService.ValidateEmail(email))
-            throw new DataNotFoundException(InvalidEmailAddress);
+            throw new InvalidOperationException(InvalidEmailAddress);
 
         // Set the locale for the email
         CultureInfo.CurrentUICulture = new CultureInfo(locale);

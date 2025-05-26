@@ -64,7 +64,7 @@ public class SFProjectServiceTests
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
         env.EmailService.ValidateEmail(email).Returns(false);
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl)
         );
     }
