@@ -160,7 +160,8 @@ describe('DraftGenerationComponent', () => {
       mockTrainingDataService = jasmine.createSpyObj<TrainingDataService>(['queryTrainingDataAsync']);
       mockTrainingDataService.queryTrainingDataAsync.and.returnValue(Promise.resolve(instance(mockTrainingDataQuery)));
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>({
-        newDraftHistory: createTestFeatureFlag(false)
+        newDraftHistory: createTestFeatureFlag(false),
+        usfmFormat: createTestFeatureFlag(false)
       });
     }
 

@@ -3825,7 +3825,11 @@ public class MachineApiServiceTests
                         Id = Project01,
                         TranslateConfig = new TranslateConfig
                         {
-                            DraftConfig = new DraftConfig { LastSelectedTranslationScriptureRange = "GEN" },
+                            DraftConfig = new DraftConfig
+                            {
+                                LastSelectedTranslationScriptureRange = "GEN",
+                                UsfmConfig = new DraftUsfmConfig { PreserveParagraphMarkers = true },
+                            },
                         },
                         ParatextId = Paratext01,
                         Texts =
@@ -3841,13 +3845,6 @@ public class MachineApiServiceTests
                             },
                         ],
                         UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
-                        TranslateConfig = new TranslateConfig
-                        {
-                            DraftConfig = new DraftConfig
-                            {
-                                UsfmConfig = new DraftUsfmConfig { PreserveParagraphMarkers = true },
-                            },
-                        },
                     },
                     new SFProject
                     {

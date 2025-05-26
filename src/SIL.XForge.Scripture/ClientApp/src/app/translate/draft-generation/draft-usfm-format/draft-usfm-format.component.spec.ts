@@ -9,6 +9,7 @@ import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -22,6 +23,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
+import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftHandlingService } from '../draft-handling.service';
 import { DraftUsfmFormatComponent } from './draft-usfm-format.component';
@@ -34,6 +36,7 @@ const mockedServalAdministration = mock(ServalAdministrationService);
 const mockedRouter = mock(Router);
 const mockI18nService = mock(I18nService);
 const mockedNoticeService = mock(NoticeService);
+const mockedDialogService = mock(DialogService);
 
 describe('DraftUsfmFormatComponent', () => {
   configureTestingModule(() => ({
@@ -42,7 +45,8 @@ describe('DraftUsfmFormatComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       NoopAnimationsModule,
       TestTranslocoModule,
-      TestOnlineStatusModule.forRoot()
+      TestOnlineStatusModule.forRoot(),
+      SharedModule.forRoot()
     ],
     providers: [
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
@@ -97,7 +101,7 @@ describe('DraftUsfmFormatComponent', () => {
     expect(env.component.usfmFormatForm.controls.preserveParagraphs.value).toBe(true);
   }));
 
-  it('cancels if user chooses different configurations and then cancels', fakeAsync(async () => {
+  it('goes back if user chooses different configurations and then goes back', fakeAsync(async () => {
     const env = new TestEnvironment();
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
     expect(env.harnesses?.length).toEqual(1);
@@ -107,7 +111,7 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();
 
-    env.cancelButton.click();
+    env.backButton.click();
     tick();
     env.fixture.detectChanges();
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
@@ -158,6 +162,7 @@ class TestEnvironment {
     );
     this.onlineStatusService.setIsOnline(true);
     when(mockedNoticeService.show(anything())).thenResolve();
+    when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
     this.setupProject(args.config);
     this.fixture = TestBed.createComponent(DraftUsfmFormatComponent);
     this.component = this.fixture.componentInstance;
@@ -167,8 +172,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  get cancelButton(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('.cancel');
+  get backButton(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.back');
   }
 
   get saveButton(): HTMLElement {

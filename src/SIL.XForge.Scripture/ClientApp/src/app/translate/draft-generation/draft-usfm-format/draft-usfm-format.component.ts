@@ -14,6 +14,7 @@ import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { combineLatest, first, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -21,6 +22,7 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { ServalAdministrationService } from '../../../serval-administration/serval-administration.service';
+import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { SharedModule } from '../../../shared/shared.module';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftHandlingService } from '../draft-handling.service';
@@ -43,7 +45,7 @@ import { DraftHandlingService } from '../draft-handling.service';
   templateUrl: './draft-usfm-format.component.html',
   styleUrl: './draft-usfm-format.component.scss'
 })
-export class DraftUsfmFormatComponent extends DataLoadingComponent implements AfterViewInit {
+export class DraftUsfmFormatComponent extends DataLoadingComponent implements AfterViewInit, ConfirmOnLeave {
   @ViewChild(TextComponent) draftText!: TextComponent;
   bookNum: number = 1;
   booksWithDrafts: number[] = [];
@@ -56,6 +58,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   });
 
   private updateDraftConfig$: Subject<DraftUsfmConfig> = new Subject<DraftUsfmConfig>();
+  private initialParagraphState?: boolean;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -63,6 +66,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly servalAdministration: ServalAdministrationService,
+    private readonly dialogService: DialogService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly router: Router,
@@ -166,6 +170,15 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     }
   }
 
+  async confirmLeave(): Promise<boolean> {
+    if (this.initialParagraphState === this.currentUsfmFormatConfig.preserveParagraphMarkers) return true;
+    return this.dialogService.confirm(
+      this.i18n.translate('draft_sources.discard_changes_confirmation'),
+      this.i18n.translate('draft_sources.leave_and_discard'),
+      this.i18n.translate('draft_sources.stay_on_page')
+    );
+  }
+
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     config ??= {
       preserveParagraphMarkers: true
@@ -174,6 +187,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     this.usfmFormatForm.setValue({
       preserveParagraphs: config.preserveParagraphMarkers
     });
+    this.initialParagraphState = config.preserveParagraphMarkers;
 
     this.usfmFormatForm.valueChanges
       .pipe(
