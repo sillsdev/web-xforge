@@ -82,7 +82,7 @@ export class DraftHistoryListComponent {
   loadHistory(projectId: string): void {
     this.draftGenerationService
       .getBuildHistory(projectId)
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .pipe(take(1), quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(result => {
         this.history = result?.reverse() ?? [];
       });
