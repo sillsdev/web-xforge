@@ -2001,7 +2001,7 @@ public class ParatextService : DisposableBase, IParatextService
         else
         {
             // We have the snapshot, but we need to determine if it's valid
-            var isValid = DeltaUsxMapper.IsDeltaValid(new Delta(snapshot.Data.Ops), snapshot.Version);
+            var isValid = DeltaUsxMapper.IsDeltaValid(new Delta(snapshot.Data.Ops));
             ret = new TextSnapshot
             {
                 Id = snapshot.Id,
