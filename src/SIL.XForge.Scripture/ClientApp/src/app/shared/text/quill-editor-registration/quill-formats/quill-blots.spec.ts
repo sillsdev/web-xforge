@@ -2,6 +2,7 @@ import QuillScrollBlot from 'quill/blots/scroll';
 import { instance, mock } from 'ts-mockito';
 import {
   BlankEmbed,
+  BookEmbed,
   ChapterEmbed,
   CharInline,
   EmptyEmbed,
@@ -67,6 +68,25 @@ describe('Quill blots', () => {
     it('should return undefined formats when not initial', () => {
       const node = BlankEmbed.create(true) as HTMLElement;
       expect(BlankEmbed.formats(node)).toBeUndefined();
+    });
+  });
+
+  describe('BookEmbed', () => {
+    it('should create book node', () => {
+      const value = { code: 'MAT' };
+      const node = BookEmbed.create(value) as HTMLElement;
+
+      expect(node.tagName.toLowerCase()).toBe('usx-book');
+      expect(node.querySelector('span')?.innerText).toBe('MAT');
+      expect(node.contentEditable).toBe('false');
+    });
+
+    it('should retrieve book value from node', () => {
+      const value = { code: 'MAT' };
+      const node = BookEmbed.create(value) as HTMLElement;
+
+      const retrieved = BookEmbed.value(node);
+      expect(retrieved).toEqual(value);
     });
   });
 

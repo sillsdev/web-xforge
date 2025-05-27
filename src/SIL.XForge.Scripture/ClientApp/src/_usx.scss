@@ -352,6 +352,15 @@ usx-char {
   }
 }
 
+usx-book {
+  user-select: none;
+  display: block;
+  > span {
+    font: var(--project-font);
+    color: var(--sf-usx-readonly-verse-color);
+  }
+}
+
 usx-chapter {
   user-select: none;
   display: block;

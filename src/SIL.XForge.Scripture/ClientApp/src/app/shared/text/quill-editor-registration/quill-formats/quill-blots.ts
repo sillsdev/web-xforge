@@ -6,7 +6,18 @@ import QuillInlineBlot from 'quill/blots/inline';
 import QuillScrollBlot from 'quill/blots/scroll';
 import QuillTextBlot from 'quill/blots/text';
 import { isString } from '../../../../../type-utils';
-import { Chapter, Figure, Note, NoteThread, Para, Ref, Unmatched, UsxStyle, Verse } from './quill-blot-value-types';
+import {
+  Book,
+  Chapter,
+  Figure,
+  Note,
+  NoteThread,
+  Para,
+  Ref,
+  Unmatched,
+  UsxStyle,
+  Verse
+} from './quill-blot-value-types';
 
 /** Zero-width space */
 const ZWSP = '\u200b';
@@ -505,6 +516,30 @@ export class ChapterEmbed extends QuillBlockEmbedBlot {
   }
 
   static value(node: HTMLElement): Chapter {
+    return getUsxValue(node);
+  }
+}
+
+export class BookEmbed extends QuillBlockEmbedBlot {
+  static blotName = 'book';
+  static tagName = 'usx-book';
+
+  static create(value: Book): Node {
+    const node = super.create(value) as HTMLElement;
+    const span = document.createElement('span');
+    let text = value.code;
+    if (value.contents != null) {
+      text += ' ' + value.contents.ops.reduce((text, op) => text + op.insert, '');
+    }
+
+    span.innerText = text;
+    node.appendChild(span);
+    node.contentEditable = 'false';
+    setUsxValue(node, value);
+    return node;
+  }
+
+  static value(node: HTMLElement): Book {
     return getUsxValue(node);
   }
 }

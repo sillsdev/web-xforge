@@ -23,6 +23,7 @@ import {
 } from './quill-formats/quill-attributors';
 import {
   BlankEmbed,
+  BookEmbed,
   ChapterEmbed,
   CharInline,
   EmptyEmbed,
@@ -55,6 +56,7 @@ export function registerScriptureFormats(formatRegistry: QuillFormatRegistryServ
     FigureEmbed,
     UnmatchedEmbed,
     ChapterEmbed,
+    BookEmbed,
     UnknownBlot,
 
     // Inline Blots

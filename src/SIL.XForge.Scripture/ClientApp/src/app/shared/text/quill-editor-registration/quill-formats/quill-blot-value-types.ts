@@ -9,6 +9,11 @@ export interface Para extends UsxStyle {
   status?: string;
 }
 
+export interface Book extends UsxStyle {
+  code: string;
+  contents?: { ops: DeltaOperation[] };
+}
+
 export interface Chapter extends UsxStyle {
   number: number;
   altnumber?: string;
