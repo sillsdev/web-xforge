@@ -6,7 +6,18 @@ import QuillInlineBlot from 'quill/blots/inline';
 import QuillScrollBlot from 'quill/blots/scroll';
 import QuillTextBlot from 'quill/blots/text';
 import { isString } from '../../../../../type-utils';
-import { Chapter, Figure, Note, NoteThread, Para, Ref, Unmatched, UsxStyle, Verse } from './quill-blot-value-types';
+import {
+  Book,
+  Chapter,
+  Figure,
+  Note,
+  NoteThread,
+  Para,
+  Ref,
+  Unmatched,
+  UsxStyle,
+  Verse
+} from './quill-blot-value-types';
 
 /** Zero-width space */
 const ZWSP = '\u200b';
@@ -506,5 +517,40 @@ export class ChapterEmbed extends QuillBlockEmbedBlot {
 
   static value(node: HTMLElement): Chapter {
     return getUsxValue(node);
+  }
+}
+
+export class BookBlock extends QuillBlockBlot {
+  static blotName = 'book';
+  static tagName = 'usx-book';
+
+  static create(value: Book): HTMLElement {
+    const node = super.create(value);
+    if (value != null && value.style != null) {
+      node.setAttribute(customAttributeName('style'), value.style);
+      node.setAttribute(customAttributeName('code'), value.code);
+      setUsxValue(node, value);
+    }
+    return node;
+  }
+
+  static formats(node: HTMLElement): Book {
+    return BookBlock.value(node);
+  }
+
+  static value(node: HTMLElement): Book {
+    return getUsxValue(node);
+  }
+
+  format(name: string, value: any): void {
+    const book = value as Book;
+    if (name === BookBlock.blotName && value != null && book.style != null) {
+      const elem = this.domNode as HTMLElement;
+      elem.setAttribute(customAttributeName('style'), book.style);
+      elem.setAttribute(customAttributeName('code'), book.code);
+      setUsxValue(elem, book);
+    } else {
+      super.format(name, value);
+    }
   }
 }
