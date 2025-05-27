@@ -271,7 +271,7 @@ export function getUnsupportedTags(deltaOp: DeltaOperation): string[] {
       if (style !== undefined) {
         invalidTags.add(style);
       } else {
-        style = (deltaOp.attributes?.para as any)?.style;
+        style = (deltaOp.attributes?.para ?? (deltaOp.attributes?.book as any))?.style;
         if (style !== undefined) {
           invalidTags.add(style);
         }
