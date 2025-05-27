@@ -135,7 +135,11 @@ export class SyncProgressComponent {
     await this.projectNotificationService.subscribeToProject(this._projectDoc.id);
   }
 
-  public updateProgressState(projectId: string, progressState: ProgressState): void {
+  public isActiveProjectSource(): boolean {
+    return this.activeSyncProjectName !== undefined && this.activeSyncProjectName === this.sourceProjectDoc?.data?.name;
+  }
+
+  protected updateProgressState(projectId: string, progressState: ProgressState): void {
     const hasSourceProject = this.sourceProjectDoc?.data != null;
     this.syncPhase = progressState.syncPhase;
     this.syncProgress = Math.floor(progressState.syncProgress ?? 0);

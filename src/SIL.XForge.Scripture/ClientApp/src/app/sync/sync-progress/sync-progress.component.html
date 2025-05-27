@@ -1,7 +1,10 @@
 <div class="sync-progress">
   @if (showSyncStatus) {
     <div *transloco="let t; read: 'sync'">
-      <div class="sync-header">
+      <div class="sync-header centered-content">
+        @if (isActiveProjectSource()) {
+          <div>{{ t("synchronize_reference_project") }}</div>
+        }
         <h3>{{ activeSyncProjectName }}</h3>
       </div>
       <div class="sync-status">
