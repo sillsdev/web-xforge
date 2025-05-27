@@ -44,11 +44,11 @@ public static class DeltaUsxTestExtensions
 
     public static Delta InsertFigure(
         this Delta delta,
-        string file,
-        string size,
-        string reference,
-        string text,
-        string segRef,
+        string? file,
+        string? size,
+        string? reference,
+        string? text,
+        string? segRef,
         bool invalid = false
     )
     {
@@ -72,7 +72,7 @@ public static class DeltaUsxTestExtensions
         string text,
         string style,
         string cid,
-        string segRef = null,
+        string? segRef = null,
         bool invalid = false
     )
     {
@@ -88,7 +88,7 @@ public static class DeltaUsxTestExtensions
         this Delta delta,
         string text,
         IEnumerable<CharAttr> charAttrs,
-        string segRef = null,
+        string? segRef = null,
         bool invalid = false
     )
     {
@@ -110,7 +110,7 @@ public static class DeltaUsxTestExtensions
         this Delta delta,
         string style,
         string cid,
-        string segRef = null,
+        string? segRef = null,
         bool invalid = false
     )
     {
@@ -128,7 +128,7 @@ public static class DeltaUsxTestExtensions
         string style,
         string reference,
         string cid,
-        string segRef = null,
+        string? segRef = null,
         bool invalid = false
     )
     {
@@ -171,10 +171,10 @@ public static class DeltaUsxTestExtensions
         return delta.InsertEmbed("verse", obj, attributes: attrs);
     }
 
-    public static Delta InsertOptBreak(this Delta delta, string segRef = null) =>
+    public static Delta InsertOptBreak(this Delta delta, string? segRef = null) =>
         delta.InsertEmbed("optbreak", [], segRef);
 
-    public static Delta InsertMilestone(this Delta delta, string style, string segRef = null, bool invalid = false)
+    public static Delta InsertMilestone(this Delta delta, string style, string? segRef = null, bool invalid = false)
     {
         var obj = new JObject(new JProperty("style", style));
         JObject attrs = null;

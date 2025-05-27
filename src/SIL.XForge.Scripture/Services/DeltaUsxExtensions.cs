@@ -19,6 +19,7 @@ public static class DeltaUsxExtensions
             attributes = (JObject)attributes?.DeepClone() ?? [];
             attributes.Add(new JProperty("segment", segRef));
         }
+
         return delta.Insert(text, attributes);
     }
 
@@ -28,7 +29,7 @@ public static class DeltaUsxExtensions
         return delta.Insert(new { blank = true }, attrs);
     }
 
-    public static Delta InsertEmpty(this Delta delta, string segRef, JObject? attributes = null)
+    public static Delta InsertEmpty(this Delta delta, string? segRef, JObject? attributes = null)
     {
         attributes = (JObject)attributes?.DeepClone() ?? [];
         attributes.Add(new JProperty("segment", segRef));

@@ -51,7 +51,7 @@ public class Delta
             return this;
 
         var newOp = new JObject(new JProperty(InsertType, textToken));
-        if (attrsToken != null && attrsToken.HasValues)
+        if (attrsToken is { HasValues: true })
             newOp[Attributes] = attrsToken;
 
         return Add(newOp);
@@ -65,7 +65,7 @@ public class Delta
         return Add(new JObject(new JProperty(DeleteType, length)));
     }
 
-    public Delta Retain(int length, object attributes = null)
+    public Delta Retain(int length, object? attributes = null)
     {
         if (length <= 0)
             return this;
@@ -78,7 +78,7 @@ public class Delta
         }
 
         var newOp = new JObject(new JProperty(RetainType, length));
-        if (attrsToken != null && attrsToken.HasValues)
+        if (attrsToken is { HasValues: true })
             newOp[Attributes] = attrsToken;
 
         return Add(newOp);
@@ -87,7 +87,7 @@ public class Delta
     public Delta Chop()
     {
         JToken lastOp = Ops.Count == 0 ? null : Ops[^1];
-        if (lastOp != null && lastOp[RetainType] != null && lastOp[Attributes] == null)
+        if (lastOp?[RetainType] != null && lastOp[Attributes] == null)
             Ops.RemoveAt(Ops.Count - 1);
         return this;
     }
@@ -143,10 +143,7 @@ public class Delta
         if (this == other)
             return new Delta();
 
-        if (other == null)
-        {
-            throw new ArgumentNullException(nameof(other));
-        }
+        ArgumentNullException.ThrowIfNull(other, nameof(other));
 
         if (!TryConcatInserts(this, out string thisStr) || !TryConcatInserts(other, out string otherStr))
             throw new InvalidOperationException("Both deltas must be documents.");
@@ -212,11 +209,7 @@ public class Delta
         return true;
     }
 
-    public override string ToString()
-    {
-        var array = new JArray(Ops);
-        return array.ToString();
-    }
+    public override string ToString() => new JArray(Ops).ToString();
 
     /// <summary>
     /// Concatenate all the text belonging to a given verse, including section headings. If the verse string
@@ -271,7 +264,7 @@ public class Delta
         int index = Ops.Count;
         JToken lastOp = Ops.Count == 0 ? null : Ops[^1];
         newOp = (JObject)newOp.DeepClone();
-        if (lastOp != null && lastOp.Type == JTokenType.Object)
+        if (lastOp is { Type: JTokenType.Object })
         {
             if (newOp.OpType() == DeleteType && lastOp.OpType() == DeleteType)
             {
@@ -318,7 +311,7 @@ public class Delta
         return this;
     }
 
-    private static JToken ComposeAttributes(JToken a, JToken b, bool keepNull)
+    private static JObject? ComposeAttributes(JToken? a, JToken? b, bool keepNull)
     {
         JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : [];
         JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : [];
@@ -373,7 +366,7 @@ public class Delta
         return JToken.DeepEquals(aClone, bClone);
     }
 
-    static JToken DiffAttributes(JToken a, JToken b, bool ignoreCharIdDifferences)
+    private static JObject? DiffAttributes(JToken? a, JToken? b, bool ignoreCharIdDifferences)
     {
         JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : [];
         JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : [];
@@ -404,7 +397,7 @@ public class Delta
     }
 
     /// <summary> Does a deep search and strips the cid object property from all char nodes. </summary>
-    static void StripCharId(JObject obj)
+    private static void StripCharId(JObject obj)
     {
         if (obj.ContainsKey("char"))
         {
@@ -446,22 +439,19 @@ public class Delta
         }
     }
 
-    private class OpIterator
+    private class OpIterator(IReadOnlyList<JToken> ops)
     {
-        private readonly IReadOnlyList<JToken> _ops;
         private int _index;
         private int _offset;
-
-        public OpIterator(IReadOnlyList<JToken> ops) => _ops = ops;
 
         public bool HasNext() => PeekLength() < int.MaxValue;
 
         public JToken Next(int length = int.MaxValue)
         {
-            if (_index >= _ops.Count)
+            if (_index >= ops.Count)
                 return new JObject(new JProperty(RetainType, int.MaxValue));
 
-            JToken nextOp = _ops[_index];
+            JToken nextOp = ops[_index];
             int offset = _offset;
             int opLength = nextOp.OpLength();
             if (length >= opLength - offset)
@@ -490,21 +480,21 @@ public class Delta
             return retOp;
         }
 
-        public JToken Peek() => _index >= _ops.Count ? null : _ops[_index];
+        public JToken? Peek() => _index >= ops.Count ? null : ops[_index];
 
         public int PeekLength()
         {
-            if (_index >= _ops.Count)
+            if (_index >= ops.Count)
                 return int.MaxValue;
-            return _ops[_index].OpLength() - _offset;
+            return ops[_index].OpLength() - _offset;
         }
 
         public string PeekType()
         {
-            if (_index >= _ops.Count)
+            if (_index >= ops.Count)
                 return RetainType;
 
-            JToken nextOp = _ops[_index];
+            JToken nextOp = ops[_index];
             return nextOp.OpType();
         }
     }
@@ -512,17 +502,17 @@ public class Delta
     /// <summary>Provides methods to process ops for text that may have attribute changes</summary>
     private class DeltaOpsAttributeHelper(bool retainCharIdsOnAttributes)
     {
-        private readonly List<int> opLengths = [];
-        private readonly List<JObject> originalDeltaOps = [];
-        private readonly List<JObject> newDeltaOps = [];
+        private readonly List<int> _opLengths = [];
+        private readonly List<JObject> _originalDeltaOps = [];
+        private readonly List<JObject> _newDeltaOps = [];
 
-        public void Add(int length, JToken originalOp, JToken newOp)
+        public void Add(int length, JToken? originalOp, JToken? newOp)
         {
-            opLengths.Add(length);
+            _opLengths.Add(length);
             JObject originalOpObject = originalOp?.Type == JTokenType.Object ? (JObject)originalOp : [];
             JObject newOpObject = newOp?.Type == JTokenType.Object ? (JObject)newOp : [];
-            originalDeltaOps.Add(originalOpObject);
-            newDeltaOps.Add(newOpObject);
+            _originalDeltaOps.Add(originalOpObject);
+            _newDeltaOps.Add(newOpObject);
         }
 
         /// <summary>Adds the ops to the given delta based on the ops added to the instance of this class</summary>
@@ -530,32 +520,32 @@ public class Delta
         {
             // To retain cid properties in this diff, we check whether there is a change in
             // the ops for all the ops in this diff. If the ops differ for any op
-            // in this diff, we update all of the cid properties that have been regenerated. Otherwise,
+            // in this diff, we update all the cid properties that have been regenerated. Otherwise,
             // we use the old cid properties instead of the regenerated ones.
             bool retainCharIds = retainCharIdsOnAttributes && !HaveOpsChanged();
-            for (int i = 0; i < originalDeltaOps.Count; i++)
+            for (int i = 0; i < _originalDeltaOps.Count; i++)
             {
-                JObject originalOp = originalDeltaOps[i];
-                JObject newOp = newDeltaOps[i];
+                JObject originalOp = _originalDeltaOps[i];
+                JObject newOp = _newDeltaOps[i];
                 if (JTokenDeepEqualsIgnoreCharId(originalOp[InsertType], newOp[InsertType]))
                 {
                     delta.Retain(
-                        opLengths[i],
+                        _opLengths[i],
                         DiffAttributes(originalOp[Attributes], newOp[Attributes], retainCharIds)
                     );
                 }
                 else
                 {
                     delta.Add(newOp);
-                    delta.Delete(opLengths[i]);
+                    delta.Delete(_opLengths[i]);
                 }
             }
         }
 
         private bool HaveOpsChanged()
         {
-            JObject[] originalOpsArray = [.. originalDeltaOps];
-            JObject[] newOpsArray = [.. newDeltaOps];
+            JObject[] originalOpsArray = [.. _originalDeltaOps];
+            JObject[] newOpsArray = [.. _newDeltaOps];
             for (int i = 0; i < originalOpsArray.Length; i++)
             {
                 JObject originalOp = originalOpsArray[i];
@@ -565,6 +555,7 @@ public class Delta
                 if (!JTokenDeepEqualsIgnoreCharId(originalOp[Attributes], newOp[Attributes]))
                     return true;
             }
+
             return false;
         }
     }

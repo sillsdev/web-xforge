@@ -235,9 +235,6 @@ public class DeltaUsxMapper(
         return chapterDeltas;
     }
 
-    private void ProcessChildNodes(XElement parentElem, Delta newDelta, HashSet<XNode> invalidNodes) =>
-        ProcessChildNodes(parentElem, newDelta, invalidNodes, new ParseState());
-
     private void ProcessChildNodes(
         XElement parentElem,
         Delta newDelta,
@@ -264,7 +261,7 @@ public class DeltaUsxMapper(
                 switch (elem.Name.LocalName)
                 {
                     case "para":
-                        ProcessChildNodes(elem, newDelta, invalidNodes);
+                        ProcessChildNodes(elem, newDelta, invalidNodes, new ParseState());
                         InsertPara(elem, newDelta, invalidNodes, state);
                         break;
 
@@ -385,13 +382,13 @@ public class DeltaUsxMapper(
         XElement elem,
         Delta newDelta,
         HashSet<XNode> invalidNodes,
-        string curRef,
-        JObject attributes
+        string? curRef,
+        JObject? attributes
     )
     {
         JObject obj = GetAttributes(elem);
         var contents = new Delta();
-        ProcessChildNodes(elem, contents, invalidNodes);
+        ProcessChildNodes(elem, contents, invalidNodes, new ParseState());
         if (contents.Ops.Count > 0)
         {
             obj.Add(new JProperty("contents", new JObject(new JProperty("ops", new JArray(contents.Ops)))));
@@ -406,7 +403,7 @@ public class DeltaUsxMapper(
 
     private static void InsertPara(XElement elem, Delta newDelta, HashSet<XNode> invalidNodes, ParseState state)
     {
-        string style = elem.Attribute("style")?.Value;
+        string? style = elem.Attribute("style")?.Value;
         bool canContainVerseText = CanParaContainVerseText(style);
         if (!canContainVerseText && elem.Descendants("verse").Any())
         {
@@ -475,6 +472,7 @@ public class DeltaUsxMapper(
             attributes = (JObject)attributes?.DeepClone() ?? [];
             attributes["invalid-inline"] = true;
         }
+
         return attributes;
     }
 
@@ -489,6 +487,7 @@ public class DeltaUsxMapper(
             attributes = (JObject)attributes?.DeepClone() ?? [];
             attributes["invalid-block"] = true;
         }
+
         return attributes;
     }
 
@@ -508,7 +507,7 @@ public class DeltaUsxMapper(
         {
             if (chapterDeltaArray.Length == 1 && chapterDeltaArray[0]?.Delta.Ops.Count == 0)
             {
-                int usxChapterCount = oldUsxDoc.Root!.Nodes().Count(node => IsElement(node, "chapter"));
+                int usxChapterCount = oldUsxDoc.Root?.Nodes().Count(node => IsElement(node, "chapter")) ?? 0;
                 // The chapterDeltas indicate this may be a book in the SF DB with no chapters, but the USX
                 // indicates that we should have known there were chapters and previously recorded them in
                 // the SF DB.
@@ -526,7 +525,8 @@ public class DeltaUsxMapper(
                 }
                 return oldUsxDoc;
             }
-            foreach (XNode curNode in newUsxDoc.Root!.Nodes().ToArray())
+
+            foreach (XNode curNode in newUsxDoc.Root?.Nodes().ToArray() ?? [])
             {
                 if (IsElement(curNode, "chapter"))
                 {
