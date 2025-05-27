@@ -43,6 +43,17 @@ h1 {
 .sync-header {
   display: flex;
   justify-content: center;
+  padding-top: 8px;
+
+  h3 {
+    margin-top: 8px;
+  }
+}
+
+.centered-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .card-content {
