@@ -156,7 +156,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           ])
         ),
         switchMap(([timestamp, draftExists]) => {
-          if (!draftExists && timestamp == null) {
+          // As getGeneratedDraftHistory() will always return a draft, we should not show a draft if the user does not
+          // have a timestamp in the query string. If a query string was specified, the user was sent from the draft
+          // history component.
+          if (!draftExists && (this.timestamp == null || timestamp == null)) {
             this.draftCheckState = 'draft-empty';
             return EMPTY;
           }
