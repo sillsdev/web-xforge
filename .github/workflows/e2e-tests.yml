@@ -2,9 +2,8 @@ name: E2E Tests
 permissions: {}
 
 on:
-  # push:
-  #   branches: [develop, master, sf-qa, sf-live]
   pull_request:
+  merge_group:
   workflow_dispatch:
 
 jobs:

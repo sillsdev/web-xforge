@@ -8,8 +8,8 @@
     "failure": 0
   },
   "generate_draft": {
-    "success": 1,
-    "failure": 0
+    "success": 52,
+    "failure": 6
   },
   "community_checking": {
     "success": 13,
