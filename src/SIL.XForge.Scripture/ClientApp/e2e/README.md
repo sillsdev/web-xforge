@@ -14,7 +14,6 @@ Install other dependencies:
 
 ```bash
 cd src/SIL.XForge.Scripture/ClientApp/e2e
-deno install
 npx playwright install
 ```
 
