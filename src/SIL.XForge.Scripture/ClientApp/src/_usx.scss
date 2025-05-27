@@ -4,6 +4,7 @@
   counter-reset: note;
 }
 
+usx-book,
 usx-para {
   display: block;
 
@@ -179,6 +180,7 @@ usx-para {
   }
 }
 quill-editor.ltr {
+  usx-book,
   usx-para {
     &[data-style='li'],
     &[data-style='li1'] {
@@ -240,6 +242,7 @@ quill-editor.ltr {
   }
 }
 quill-editor.rtl {
+  usx-book,
   usx-para {
     &[data-style='io'],
     &[data-style='io1'] {
