@@ -183,7 +183,6 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
     {
         // Convert the USX to Deltas
         DeltaUsxMapper mapper = new DeltaUsxMapper(
-            new SequentialGuidService(),
             loggerFactory.CreateLogger<DeltaUsxMapper>(),
             new ConsoleExceptionHandler()
         );
@@ -231,6 +230,14 @@ void Roundtrip(string usfm, string fileName, string path, RoundtripMethod roundt
         using XmlNodeReader nodeReader = new XmlNodeReader(usx);
         nodeReader.MoveToContent();
         actualUsx = XDocument.Load(nodeReader);
+
+        // Output the USX if requested
+        if (outputAllFiles)
+        {
+            actualUsx.Save(
+                Path.Join("output", $"{Path.GetFileName(path)}-{Path.GetFileNameWithoutExtension(fileName)}-usx.xml")
+            );
+        }
     }
     else
     {
