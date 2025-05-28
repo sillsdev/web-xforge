@@ -3944,6 +3944,52 @@ public class DeltaUsxMapperTests
     [Test]
     public async Task RoundTrip_Asv() => await RoundTripTestHelper("eng-asv_usfm-partial", "eng-asv");
 
+    [Test]
+    public void IsDeltaValid_Valid_ReturnsTrue()
+    {
+        var delta = Delta.New().InsertChapter("1").InsertPara("p").InsertText("text", "verse_1_1");
+
+        bool result = DeltaUsxMapper.IsDeltaValid(delta);
+
+        Assert.IsTrue(result);
+    }
+
+    [Test]
+    public void IsDeltaValid_InvalidPara_ReturnsFalse()
+    {
+        var delta = Delta
+            .New()
+            .InsertText("Book title", "imt_1")
+            .InsertPara("imt")
+            .InsertChapter("1")
+            .InsertBlank("bad_1")
+            .InsertVerse("1")
+            .InsertText("New verse text.", "verse_1_1")
+            .InsertPara("bad", true);
+
+        bool result = DeltaUsxMapper.IsDeltaValid(delta);
+
+        Assert.IsFalse(result);
+    }
+
+    [Test]
+    public void IsDeltaValid_InvalidVerse_ReturnsFalse()
+    {
+        var delta = Delta
+            .New()
+            .InsertChapter("1")
+            .InsertBlank("p_1")
+            .InsertVerse("1", "bad", true)
+            .InsertBlank("verse_1_1")
+            .InsertVerse("2")
+            .InsertBlank("verse_1_2")
+            .InsertPara("p");
+
+        bool result = DeltaUsxMapper.IsDeltaValid(delta);
+
+        Assert.IsFalse(result);
+    }
+
     private async Task RoundTripTestHelper(string projectZipFilename, string projectShortName)
     {
         string zipFilePath = Path.Join(GetPathToTestProject(), "SampleData", $"{projectZipFilename}.zip");

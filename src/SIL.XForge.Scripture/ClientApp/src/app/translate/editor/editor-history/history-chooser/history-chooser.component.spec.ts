@@ -139,9 +139,9 @@ describe('HistoryChooserComponent', () => {
     expect(env.component.selectedSnapshot).toBeUndefined();
   }));
 
-  it('should not display the revert history button if the user cannot edit', fakeAsync(() => {
+  it('should not display the revert history button if the user cannot restore', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedTextDocService.canEdit(anything(), 40, 1)).thenReturn(false);
+    when(mockedTextDocService.canRestore(anything(), 40, 1)).thenReturn(false);
     env.triggerNgOnChanges();
     env.wait();
     expect(env.revertHistoryButton).toBeNull();
@@ -287,7 +287,7 @@ describe('HistoryChooserComponent', () => {
       when(mockedProjectService.getProfile('project01')).thenCall(() =>
         this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
       );
-      when(mockedTextDocService.canEdit(anything(), 40, 1)).thenReturn(true);
+      when(mockedTextDocService.canRestore(anything(), 40, 1)).thenReturn(true);
     }
 
     get historySelect(): HTMLElement {

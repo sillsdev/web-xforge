@@ -594,6 +594,23 @@ public class DeltaUsxMapper(
     }
 
     /// <summary>
+    /// Checks if the provided Delta object can be converted to a valid USX document.
+    /// </summary>
+    /// <param name="delta">The Delta object to validate.</param>
+    /// <param name="usxVersion">The USX version number to set on the root element. Defaults to 1.0.</param>
+    public static bool IsDeltaValid(Delta delta, double usxVersion = 1)
+    {
+        List<XNode> xNodes = ProcessDelta(delta);
+        XElement usxRootElement = new XElement("usx", xNodes);
+        usxRootElement.SetAttributeValue("version", string.Format("{0:0.0}", usxVersion));
+        XDocument usx = new XDocument(usxRootElement);
+        bool isValid = true;
+        usx.Validate(Schemas, (_, _) => isValid = false);
+
+        return isValid;
+    }
+
+    /// <summary>
     /// Make USX from a Delta's ops.
     /// </summary>
     private static List<XNode> ProcessDelta(Delta delta)
