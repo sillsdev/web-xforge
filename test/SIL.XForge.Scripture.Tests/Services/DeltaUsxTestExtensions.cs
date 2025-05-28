@@ -71,15 +71,12 @@ public static class DeltaUsxTestExtensions
         this Delta delta,
         string text,
         string style,
-        string cid,
         string? segRef = null,
         bool invalid = false,
         bool forceNewOp = false
     )
     {
-        var attributes = new JObject(
-            new JProperty("char", new JObject(new JProperty("style", style), new JProperty("cid", cid)))
-        );
+        var attributes = new JObject(new JProperty("char", new JObject(new JProperty("style", style))));
         if (invalid)
             attributes.Add(new JProperty("invalid-inline", true));
         return delta.InsertText(text, segRef, attributes, forceNewOp);
@@ -95,30 +92,16 @@ public static class DeltaUsxTestExtensions
     )
     {
         var attributes = new JObject(
-            new JProperty(
-                "char",
-                charAttrs.Select(charAttr => new JObject(
-                    new JProperty("style", charAttr.Style),
-                    new JProperty("cid", charAttr.CharID)
-                ))
-            )
+            new JProperty("char", charAttrs.Select(charAttr => new JObject(new JProperty("style", charAttr.Style))))
         );
         if (invalid)
             attributes.Add(new JProperty("invalid-inline", true));
         return delta.InsertText(text, segRef, attributes, forceNewOp);
     }
 
-    public static Delta InsertEmptyChar(
-        this Delta delta,
-        string style,
-        string cid,
-        string? segRef = null,
-        bool invalid = false
-    )
+    public static Delta InsertEmptyChar(this Delta delta, string style, string? segRef = null, bool invalid = false)
     {
-        var attributes = new JObject(
-            new JProperty("char", new JObject(new JProperty("style", style), new JProperty("cid", cid)))
-        );
+        var attributes = new JObject(new JProperty("char", new JObject(new JProperty("style", style))));
         if (invalid)
             attributes.Add(new JProperty("invalid-inline", true));
         return delta.InsertEmpty(segRef, attributes);
@@ -129,13 +112,12 @@ public static class DeltaUsxTestExtensions
         string text,
         string style,
         string reference,
-        string cid,
         string? segRef = null,
         bool invalid = false
     )
     {
         var attributes = new JObject(
-            new JProperty("char", new JObject(new JProperty("style", style), new JProperty("cid", cid))),
+            new JProperty("char", new JObject(new JProperty("style", style))),
             new JProperty("ref", new JObject(new JProperty("loc", reference)))
         );
         if (invalid)
