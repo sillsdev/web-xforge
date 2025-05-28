@@ -842,14 +842,18 @@ public class DeltaUsxMapper(ILogger<DeltaUsxMapper> logger, IExceptionHandler ex
     /// </summary>
     private static bool CharAttributesMatch(List<JObject> curCharAttrs, List<JObject> charAttrs)
     {
+        // If the number of attributes varies, they do not match
         if (curCharAttrs.Count > charAttrs.Count)
-            return false;
-
-        for (int i = 0; i < curCharAttrs.Count; i++)
         {
-            if (!JToken.DeepEquals(curCharAttrs[i], charAttrs[i]))
-                return false;
+            return false;
         }
+
+        // See if any of the pairs of attributes do not match.
+        if (curCharAttrs.Where((t, i) => !JToken.DeepEquals(t, charAttrs[i])).Any())
+        {
+            return false;
+        }
+
         return true;
     }
 

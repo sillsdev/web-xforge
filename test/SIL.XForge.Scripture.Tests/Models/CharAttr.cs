@@ -2,5 +2,6 @@ namespace SIL.XForge.Scripture.Models;
 
 public class CharAttr
 {
-    public string Style { get; set; }
+    public required string Style { get; init; }
+    public string? Closed { get; init; }
 }

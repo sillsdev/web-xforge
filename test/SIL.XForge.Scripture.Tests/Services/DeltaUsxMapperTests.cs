@@ -568,6 +568,127 @@ public partial class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToUsx_NestedCharsInNote()
+    {
+        var chapterDelta = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("In ", "verse_1_1")
+                .InsertChar("The Book of the ", "bk", "verse_1_1")
+                .InsertChar("Lord", [new CharAttr { Style = "bk" }, new CharAttr { Style = "nd" }], "verse_1_1")
+                .InsertNote(
+                    Delta
+                        .New()
+                        .InsertChar("1.1 ", [new CharAttr { Style = "fr", Closed = "false" }])
+                        .InsertChar("thick…fire", [new CharAttr { Style = "fq", Closed = "false" }])
+                        .InsertChar(": This is how the ", [new CharAttr { Style = "ft", Closed = "false" }])
+                        .InsertChar(
+                            "LORD",
+                            [new CharAttr { Style = "ft", Closed = "false" }, new CharAttr { Style = "nd" }]
+                        )
+                        .InsertChar(" led the people of Israel...", [new CharAttr { Style = "ft", Closed = "false" }]),
+                    "f",
+                    "+",
+                    "verse_1_1"
+                )
+                .InsertPara("q1")
+        );
+
+        var mapper = new DeltaUsxMapper(_logger, _exceptionHandler);
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
+
+        XDocument expected = Usx(
+            "PHM",
+            Chapter("1"),
+            Para(
+                "q1",
+                Verse("1"),
+                "In ",
+                Char("bk", "The Book of the ", Char("nd", "Lord")),
+                Note(
+                    "f",
+                    "+",
+                    NonClosingChar("fr", "1.1 "),
+                    NonClosingChar("fq", "thick…fire"),
+                    NonClosingChar("ft", ": This is how the ", Char("nd", "LORD"), " led the people of Israel...")
+                )
+            )
+        );
+        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+    }
+
+    [Test]
+    public void ToUsx_DoubleNestedCharsInNote()
+    {
+        var chapterDelta = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("In ", "verse_1_1")
+                .InsertChar("The Book of the ", "bk", "verse_1_1")
+                .InsertChar("Lord", [new CharAttr { Style = "bk" }, new CharAttr { Style = "nd" }], "verse_1_1")
+                .InsertNote(
+                    Delta
+                        .New()
+                        .InsertChar("1.1 ", [new CharAttr { Style = "fr", Closed = "false" }])
+                        .InsertChar(
+                            "The Book of the ",
+                            [new CharAttr { Style = "ft", Closed = "false" }, new CharAttr { Style = "bk" }]
+                        )
+                        .InsertChar(
+                            "Lord",
+                            [
+                                new CharAttr { Style = "ft", Closed = "false" },
+                                new CharAttr { Style = "bk" },
+                                new CharAttr { Style = "nd" },
+                            ]
+                        )
+                        .InsertChar(
+                            ": The book that Isaiah refers to is unknown.",
+                            [new CharAttr { Style = "ft", Closed = "false" }]
+                        ),
+                    "f",
+                    "+",
+                    "verse_1_1"
+                )
+                .InsertPara("q1")
+        );
+
+        var mapper = new DeltaUsxMapper(_logger, _exceptionHandler);
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
+
+        XDocument expected = Usx(
+            "PHM",
+            Chapter("1"),
+            Para(
+                "q1",
+                Verse("1"),
+                "In ",
+                Char("bk", "The Book of the ", Char("nd", "Lord")),
+                Note(
+                    "f",
+                    "+",
+                    NonClosingChar("fr", "1.1 "),
+                    NonClosingChar("ft", Char("bk", "The Book of the ", Char("nd", "Lord"))),
+                    NonClosingChar("ft", ": The book that Isaiah refers to is unknown.")
+                )
+            )
+        );
+        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+    }
+
+    [Test]
     public void ToUsx_AdjacentChars()
     {
         var chapterDelta = new ChapterDelta(
@@ -4128,6 +4249,9 @@ public partial class DeltaUsxMapperTests
 
     private static XElement Char(string style, params object[] contents) =>
         new XElement("char", new XAttribute("style", style), contents);
+
+    private static XElement NonClosingChar(string style, params object[] contents) =>
+        new XElement("char", new XAttribute("style", style), new XAttribute("closed", false), contents);
 
     private static XElement Ref(string loc, string text) => new XElement("ref", new XAttribute("loc", loc), text);
 

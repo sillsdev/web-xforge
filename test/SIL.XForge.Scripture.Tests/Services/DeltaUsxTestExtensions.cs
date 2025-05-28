@@ -92,7 +92,14 @@ public static class DeltaUsxTestExtensions
     )
     {
         var attributes = new JObject(
-            new JProperty("char", charAttrs.Select(charAttr => new JObject(new JProperty("style", charAttr.Style))))
+            new JProperty(
+                "char",
+                charAttrs.Select(charAttr =>
+                    charAttr.Closed is not null
+                        ? new JObject(new JProperty("style", charAttr.Style), new JProperty("closed", charAttr.Closed))
+                        : new JObject(new JProperty("style", charAttr.Style))
+                )
+            )
         );
         if (invalid)
             attributes.Add(new JProperty("invalid-inline", true));
