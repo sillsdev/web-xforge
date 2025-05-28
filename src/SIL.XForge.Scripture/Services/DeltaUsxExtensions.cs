@@ -12,7 +12,13 @@ public static class DeltaUsxExtensions
         return delta.Insert("\n", attributes);
     }
 
-    public static Delta InsertText(this Delta delta, string text, string? segRef = null, JObject? attributes = null)
+    public static Delta InsertText(
+        this Delta delta,
+        string text,
+        string? segRef = null,
+        JObject? attributes = null,
+        bool forceNewOp = false
+    )
     {
         if (segRef != null)
         {
@@ -20,7 +26,7 @@ public static class DeltaUsxExtensions
             attributes.Add(new JProperty("segment", segRef));
         }
 
-        return delta.Insert(text, attributes);
+        return delta.Insert(text, attributes, forceNewOp);
     }
 
     public static Delta InsertBlank(this Delta delta, string segRef)
