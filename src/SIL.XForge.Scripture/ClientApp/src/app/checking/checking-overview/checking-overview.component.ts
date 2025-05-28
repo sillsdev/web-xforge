@@ -5,6 +5,7 @@ import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -420,6 +421,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   getBookId(text: TextInfo): string {
     return Canon.bookNumberToId(text.bookNum);
+  }
+
+  protected questionReference(verseRef: VerseRefData | undefined): string | undefined {
+    return verseRef?.verse ?? verseRef?.verseNum.toString();
   }
 
   private async confirmArchiveQuestions(archive: boolean, scope: string): Promise<boolean> {
