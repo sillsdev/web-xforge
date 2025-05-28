@@ -617,8 +617,7 @@ describe('EditorComponent', () => {
       });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      // showSuggestions being true doesn't mean suggestions are shown, only that they could be if visible
-      expect(env.component.showSuggestions).toBe(true);
+      expect(env.component.showSuggestions).toBe(false);
 
       // Change to the long verse
       const range = env.component.target!.getSegmentRange('verse_1_6');
@@ -629,6 +628,31 @@ describe('EditorComponent', () => {
       expect(env.component.target!.segmentRef).toBe('verse_1_6');
       expect(env.component.showSuggestions).toBe(false);
       verify(mockedNoticeService.show(anything())).never();
+
+      env.dispose();
+    }));
+
+    it('should not call getWordGraph if user has suggestions disabled', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({
+        selectedBookNum: 40,
+        selectedChapterNum: 1,
+        selectedSegment: 'verse_1_5',
+        translationSuggestionsEnabled: false
+      });
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_5');
+      expect(env.component.showSuggestions).toBe(false);
+
+      // Change to the long verse
+      const range = env.component.target!.getSegmentRange('verse_1_6');
+      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
+      env.wait();
+
+      // Verify an error did not display
+      expect(env.component.target!.segmentRef).toBe('verse_1_6');
+      expect(env.component.showSuggestions).toBe(false);
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
 
       env.dispose();
     }));
