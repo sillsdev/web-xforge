@@ -3151,10 +3151,9 @@ public class ParatextSyncRunnerTests
     [Test]
     public void GetParatextChaptersAsDeltas_BeginsWithExpectedContent()
     {
-        IGuidService mapperGuidService = new TestGuidService();
         ILogger<DeltaUsxMapper> logger = Substitute.For<ILogger<DeltaUsxMapper>>();
         IExceptionHandler exceptionHandler = Substitute.For<IExceptionHandler>();
-        DeltaUsxMapper mapper = new(mapperGuidService, logger, exceptionHandler);
+        DeltaUsxMapper mapper = new(logger, exceptionHandler);
         TestEnvironment env = new(false, mapper);
 
         TextInfo textInfo = new() { BookNum = 8, Chapters = null };
@@ -3198,10 +3197,9 @@ public class ParatextSyncRunnerTests
         // writes chapter deltas back to Paratext data on disk. Test that core methods involved in this process
         // roundtrip data successfully. Using a real DeltaUsxMapper, this is an integration test.
 
-        IGuidService mapperGuidService = new TestGuidService();
         ILogger<DeltaUsxMapper> logger = Substitute.For<ILogger<DeltaUsxMapper>>();
         IExceptionHandler exceptionHandler = Substitute.For<IExceptionHandler>();
-        DeltaUsxMapper mapper = new(mapperGuidService, logger, exceptionHandler);
+        DeltaUsxMapper mapper = new(logger, exceptionHandler);
         TestEnvironment env = new(false, mapper);
 
         // Not using something like SetupSFData() because DeltaUsxMapper is not a substitute.

@@ -11,11 +11,7 @@ using SIL.XForge.Realtime.RichText;
 
 namespace SIL.XForge.Scripture.Services;
 
-public class DeltaUsxMapper(
-    IGuidService guidService,
-    ILogger<DeltaUsxMapper> logger,
-    IExceptionHandler exceptionHandler
-) : IDeltaUsxMapper
+public class DeltaUsxMapper(ILogger<DeltaUsxMapper> logger, IExceptionHandler exceptionHandler) : IDeltaUsxMapper
 {
     private static readonly XmlSchemaSet Schemas = CreateSchemaSet();
 
@@ -286,8 +282,6 @@ public class DeltaUsxMapper(
                         var newChildAttributes = (JObject)attributes?.DeepClone() ?? [];
                         JToken existingCharAttrs = newChildAttributes["char"];
                         JObject newCharAttrs = GetAttributes(elem);
-                        if (!newCharAttrs.ContainsKey("cid"))
-                            newCharAttrs.Add("cid", guidService.Generate());
 
                         if (existingCharAttrs == null)
                             newChildAttributes.Add(new JProperty(elem.Name.LocalName, newCharAttrs));
@@ -673,8 +667,21 @@ public class DeltaUsxMapper(
                 // were being tracked, start recording char XML elements for the tracked character attributes until
                 // either we run out of them, or the tracked character attributes set matches the beginning of the
                 // current op's character attributes.
-                while (curCharAttrs.Count > 0 && !CharAttributesMatch(curCharAttrs, charAttrs))
+                if (curCharAttrs.Count > 0 && curCharAttrs.Count == charAttrs.Count)
+                {
+                    // Close the nested chars at the first level only.
+                    // This means that adjacent chars will be closed, but nested not yet closed.
                     CharEnded(childNodes, curCharAttrs);
+                }
+                else
+                {
+                    // Close off the nested chars if the attributes are different
+                    while (curCharAttrs.Count > 0 && !CharAttributesMatch(curCharAttrs, charAttrs))
+                    {
+                        CharEnded(childNodes, curCharAttrs);
+                    }
+                }
+
                 // If the current op is inserting text with formatting that is not already being tracked for the
                 // existing text, prepare places to isolate the new text that the new formatting will apply to.
                 for (int i = curCharAttrs.Count; i < charAttrs.Count; i++)
@@ -896,11 +903,6 @@ public class DeltaUsxMapper(
     {
         JObject charAttrs = curCharAttrs[^1];
         curCharAttrs.RemoveAt(curCharAttrs.Count - 1);
-        if (charAttrs.ContainsKey("cid"))
-        {
-            charAttrs = (JObject)charAttrs.DeepClone();
-            charAttrs.Property("cid").Remove();
-        }
         XElement charElem = CreateContainerElement("char", charAttrs, childNodes.Peek());
         childNodes.Pop();
         childNodes.Peek().Add(charElem);

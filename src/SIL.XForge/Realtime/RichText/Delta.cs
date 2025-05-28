@@ -154,16 +154,12 @@ public class Delta
         var thisIter = new OpIterator(this.Ops);
         var otherIter = new OpIterator(other.Ops);
 
-        // If the two deltas have differences in text content, include character IDs in the diff output (thus causing all cids to be changed when applying the diff later).
-        // If the two deltas have identical text content, don't produce a diff of character IDs, except on ops with formatting changes where we will report cid differences.
-        bool retainCharIds = thisStr == otherStr;
-
         // Note that when the text content is identical, the list of Diff results to process here will contain just one item.
         foreach (Diff component in diffResult)
         {
             int length = component.text.Length;
             DeltaOpsAttributeHelper deltaOpsHelper =
-                component.operation == Operation.EQUAL ? new DeltaOpsAttributeHelper(retainCharIds) : null;
+                component.operation == Operation.EQUAL ? new DeltaOpsAttributeHelper() : null;
             while (length > 0)
             {
                 int opLength = 0;
@@ -279,7 +275,7 @@ public class Delta
                 }
             }
 
-            if (!forceNewOp && JTokenDeepEqualsIgnoreCharId(newOp[Attributes], lastOp[Attributes]))
+            if (!forceNewOp && JToken.DeepEquals(newOp[Attributes], lastOp[Attributes]))
             {
                 if (newOp[InsertType]?.Type == JTokenType.String && lastOp[InsertType]?.Type == JTokenType.String)
                 {
@@ -342,26 +338,7 @@ public class Delta
         return true;
     }
 
-    /// <summary>
-    /// Test for value equality of two JTokens while ignoring the cid object property in char nodes.
-    /// </summary>
-    private static bool JTokenDeepEqualsIgnoreCharId(JToken? a, JToken? b)
-    {
-        if (a == null && b == null)
-            return true;
-        if (b == null)
-            return false;
-        // If the token is not an object, it will not have a char property
-        if (a?.Type != JTokenType.Object || b.Type != JTokenType.Object)
-            return JToken.DeepEquals(a, b);
-        JObject aClone = (JObject)a.DeepClone();
-        JObject bClone = (JObject)b.DeepClone();
-        StripCharId(aClone);
-        StripCharId(bClone);
-        return JToken.DeepEquals(aClone, bClone);
-    }
-
-    private static JObject? DiffAttributes(JToken? a, JToken? b, bool ignoreCharIdDifferences)
+    private static JObject? DiffAttributes(JToken? a, JToken? b)
     {
         JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : [];
         JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : [];
@@ -369,11 +346,6 @@ public class Delta
         // to be the cid for the new object
         JObject aClone = (JObject)aObj.DeepClone();
         JObject bClone = (JObject)bObj.DeepClone();
-        if (ignoreCharIdDifferences)
-        {
-            StripCharId(aClone);
-            StripCharId(bClone);
-        }
         // Make a list of all attributes and their values in b, that are changed, new, or removed in b.
         JObject attributes = aClone
             .Properties()
@@ -389,49 +361,6 @@ public class Delta
                 }
             );
         return attributes.HasValues ? attributes : null;
-    }
-
-    /// <summary> Does a deep search and strips the cid object property from all char nodes. </summary>
-    private static void StripCharId(JObject obj)
-    {
-        if (obj.ContainsKey("char"))
-        {
-            switch (obj["char"].Type)
-            {
-                case JTokenType.Object:
-                    ((JObject)obj["char"]).Property("cid")?.Remove();
-                    break;
-                case JTokenType.Array:
-                    foreach (JToken token in (JArray)obj["char"])
-                        if (token.Type == JTokenType.Object)
-                            ((JObject)token).Property("cid")?.Remove();
-                    break;
-                default:
-                    break;
-            }
-        }
-        IEnumerable<string> properties = obj.Properties().Select(p => p.Name);
-        foreach (string prop in properties)
-        {
-            JToken token = obj[prop];
-            if (token.Type == JTokenType.Object)
-            {
-                // Strip the cid property off descendant nodes
-                StripCharId((JObject)token);
-            }
-            else if (token.Type == JTokenType.Array)
-            {
-                // This JArray represents something similar to insert.note.contents.ops[]
-                for (int i = 0; i < token.Count(); i++)
-                {
-                    if (token[i].Type == JTokenType.Object)
-                    {
-                        // Strip the cid property off descendant nodes
-                        StripCharId((JObject)token[i]);
-                    }
-                }
-            }
-        }
     }
 
     private class OpIterator(IReadOnlyList<JToken> ops)
@@ -495,7 +424,7 @@ public class Delta
     }
 
     /// <summary>Provides methods to process ops for text that may have attribute changes</summary>
-    private class DeltaOpsAttributeHelper(bool retainCharIdsOnAttributes)
+    private class DeltaOpsAttributeHelper
     {
         private readonly List<int> _opLengths = [];
         private readonly List<JObject> _originalDeltaOps = [];
@@ -513,21 +442,13 @@ public class Delta
         /// <summary>Adds the ops to the given delta based on the ops added to the instance of this class</summary>
         public void AddOpsToDelta(Delta delta)
         {
-            // To retain cid properties in this diff, we check whether there is a change in
-            // the ops for all the ops in this diff. If the ops differ for any op
-            // in this diff, we update all the cid properties that have been regenerated. Otherwise,
-            // we use the old cid properties instead of the regenerated ones.
-            bool retainCharIds = retainCharIdsOnAttributes && !HaveOpsChanged();
             for (int i = 0; i < _originalDeltaOps.Count; i++)
             {
                 JObject originalOp = _originalDeltaOps[i];
                 JObject newOp = _newDeltaOps[i];
-                if (JTokenDeepEqualsIgnoreCharId(originalOp[InsertType], newOp[InsertType]))
+                if (JToken.DeepEquals(originalOp[InsertType], newOp[InsertType]))
                 {
-                    delta.Retain(
-                        _opLengths[i],
-                        DiffAttributes(originalOp[Attributes], newOp[Attributes], retainCharIds)
-                    );
+                    delta.Retain(_opLengths[i], DiffAttributes(originalOp[Attributes], newOp[Attributes]));
                 }
                 else
                 {
@@ -535,23 +456,6 @@ public class Delta
                     delta.Delete(_opLengths[i]);
                 }
             }
-        }
-
-        private bool HaveOpsChanged()
-        {
-            JObject[] originalOpsArray = [.. _originalDeltaOps];
-            JObject[] newOpsArray = [.. _newDeltaOps];
-            for (int i = 0; i < originalOpsArray.Length; i++)
-            {
-                JObject originalOp = originalOpsArray[i];
-                JObject newOp = newOpsArray[i];
-                if (!JTokenDeepEqualsIgnoreCharId(originalOp[InsertType], newOp[InsertType]))
-                    return true;
-                if (!JTokenDeepEqualsIgnoreCharId(originalOp[Attributes], newOp[Attributes]))
-                    return true;
-            }
-
-            return false;
         }
     }
 }

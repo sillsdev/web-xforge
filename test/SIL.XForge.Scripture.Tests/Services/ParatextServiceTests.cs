@@ -712,11 +712,7 @@ public class ParatextServiceTests
         );
 
         TextData data = new TextData(new Delta(new[] { token1, token2, token3, token4, token5 }));
-        var mapper = new DeltaUsxMapper(
-            new TestGuidService(),
-            Substitute.For<ILogger<DeltaUsxMapper>>(),
-            Substitute.For<IExceptionHandler>()
-        );
+        var mapper = new DeltaUsxMapper(Substitute.For<ILogger<DeltaUsxMapper>>(), Substitute.For<IExceptionHandler>());
         var newDocUsx = mapper.ToUsx(env.RuthBookUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
 
         int booksUpdated = await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx);
