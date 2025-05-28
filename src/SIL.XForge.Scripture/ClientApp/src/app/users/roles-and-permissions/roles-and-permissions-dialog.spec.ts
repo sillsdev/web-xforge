@@ -71,17 +71,21 @@ describe('RolesAndPermissionsComponent', () => {
     env.closeDialog();
   }));
 
-  it('disables the form when offline', fakeAsync(() => {
-    env.setupProjectData();
+  it('updates the form when the network connection changes', fakeAsync(() => {
+    env.setupProjectData(rolesByUser);
     env.openDialog();
 
+    expect(env.component?.isParatextUser()).toBe(true);
+    expect(env.component?.roles.disabled).toBe(true);
     expect(env.component?.form.disabled).toBe(false);
 
     env.isOnline$.next(false);
     expect(env.component?.form.disabled).toBe(true);
+    expect(env.component?.roles.disabled).toBe(true);
 
     env.isOnline$.next(true);
     expect(env.component?.form.disabled).toBe(false);
+    expect(env.component?.roles.disabled).toBe(true);
   }));
 
   it('initializes values from the project', fakeAsync(() => {
