@@ -4518,7 +4518,13 @@ class TestEnvironment {
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
     when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
     when(
-      mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything(), anything())
+      mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
     ).thenReturn(of([]));
     when(mockedDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));

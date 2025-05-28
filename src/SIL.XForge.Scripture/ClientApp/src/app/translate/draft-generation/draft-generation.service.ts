@@ -4,6 +4,7 @@ import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
 import { EMPTY, firstValueFrom, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
@@ -208,14 +209,22 @@ export class DraftGenerationService {
     projectId: string,
     book: number,
     chapter: number,
-    timestamp?: Date
+    timestamp?: Date,
+    usfmConfig?: DraftUsfmConfig
   ): Observable<DeltaOperation[]> {
     if (!this.onlineStatusService.isOnline) {
       return of([]);
     }
     let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`;
+    const queryParams: string[] = [];
     if (timestamp != null) {
-      url += `?timestamp=${timestamp.toISOString()}`;
+      queryParams.push(`timestamp=${timestamp.toISOString()}`);
+    }
+    if (usfmConfig != null) {
+      queryParams.push(`preserveParagraphs=${usfmConfig.preserveParagraphMarkers}`);
+    }
+    if (queryParams.length > 0) {
+      url += `?${queryParams.join('&')}`;
     }
     return this.httpClient.get<Snapshot<TextData> | undefined>(url).pipe(
       map(res => res.data?.data.ops ?? []),

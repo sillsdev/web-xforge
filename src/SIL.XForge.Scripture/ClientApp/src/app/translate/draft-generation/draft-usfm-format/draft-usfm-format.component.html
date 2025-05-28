@@ -1,0 +1,53 @@
+<ng-container *transloco="let t; read: 'draft_usfm_format'">
+  <h1>{{ t("usfm_format_title") }}</h1>
+  <p>{{ t("usfm_format_description") }}</p>
+  @if (!isOnline) {
+    <p class="offline-text">{{ t("connect_to_the_internet") }}</p>
+  }
+  <div>
+    <button mat-stroked-button class="back" (click)="close()">
+      <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
+      >{{ t("back") }}
+    </button>
+  </div>
+  <div class="format-container">
+    <div class="format-options">
+      <form [formGroup]="usfmFormatForm" (change)="reloadText()">
+        <mat-card class="options">
+          <mat-card-content class="format-options">
+            <mat-checkbox formControlName="preserveParagraphs">
+              <span>{{ t("preserve_paragraphs") }}</span>
+              <span class="description">{{ t("paragraph_marker_description") }}</span>
+            </mat-checkbox>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
+              <mat-icon>check</mat-icon>
+              {{ t("save_changes") }}
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </form>
+    </div>
+    <div class="text-container">
+      <app-book-chapter-chooser
+        [books]="booksWithDrafts"
+        [book]="bookNum"
+        (bookChange)="bookChanged($event)"
+        [(chapter)]="chapterNum"
+        [chapters]="chapters"
+        (chapterChange)="chapterChanged($event)"
+      ></app-book-chapter-chooser>
+      <div class="viewer-container">
+        <app-text
+          [isReadOnly]="true"
+          [subscribeToUpdates]="false"
+          [isRightToLeft]="isRightToLeft"
+          [class.initializing]="isInitializing"
+          [class.loading]="isLoadingData"
+          class="viewer"
+        ></app-text>
+      </div>
+    </div>
+  </div>
+</ng-container>
