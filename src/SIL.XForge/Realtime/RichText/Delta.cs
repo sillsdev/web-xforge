@@ -36,7 +36,7 @@ public class Delta
 
     public List<JToken> Ops { get; set; }
 
-    public Delta Insert(object text, object? attributes = null)
+    public Delta Insert(object text, object? attributes = null, bool forceNewOp = false)
     {
         if (text is not JToken textToken)
             textToken = JToken.FromObject(text);
@@ -54,7 +54,7 @@ public class Delta
         if (attrsToken is { HasValues: true })
             newOp[Attributes] = attrsToken;
 
-        return Add(newOp);
+        return Add(newOp, forceNewOp);
     }
 
     public Delta Delete(int length)
@@ -62,7 +62,7 @@ public class Delta
         if (length <= 0)
             return this;
 
-        return Add(new JObject(new JProperty(DeleteType, length)));
+        return Add(new JObject(new JProperty(DeleteType, length)), forceNewOp: false);
     }
 
     public Delta Retain(int length, object? attributes = null)
@@ -81,7 +81,7 @@ public class Delta
         if (attrsToken is { HasValues: true })
             newOp[Attributes] = attrsToken;
 
-        return Add(newOp);
+        return Add(newOp, forceNewOp: false);
     }
 
     public Delta Chop()
@@ -101,11 +101,11 @@ public class Delta
         {
             if (otherIter.PeekType() == InsertType)
             {
-                delta.Add(otherIter.Next());
+                delta.Add(otherIter.Next(), forceNewOp: false);
             }
             else if (thisIter.PeekType() == DeleteType)
             {
-                delta.Add(thisIter.Next());
+                delta.Add(thisIter.Next(), forceNewOp: false);
             }
             else
             {
@@ -127,11 +127,11 @@ public class Delta
                     );
                     if (attributes != null)
                         newOp[Attributes] = attributes;
-                    delta.Add(newOp);
+                    delta.Add(newOp, forceNewOp: false);
                 }
                 else if (otherOp.OpType() == DeleteType && thisOp.OpType() == RetainType)
                 {
-                    delta.Add(otherOp);
+                    delta.Add(otherOp, forceNewOp: false);
                 }
             }
         }
@@ -171,7 +171,7 @@ public class Delta
                 {
                     case Operation.INSERT:
                         opLength = Math.Min(otherIter.PeekLength(), length);
-                        delta.Add(otherIter.Next(opLength));
+                        delta.Add(otherIter.Next(opLength), forceNewOp: false);
                         break;
 
                     case Operation.DELETE:
@@ -201,12 +201,7 @@ public class Delta
         if (Ops.Count != other.Ops.Count)
             return false;
 
-        for (int i = 0; i < Ops.Count; i++)
-        {
-            if (!JToken.DeepEquals(Ops[i], other.Ops[i]))
-                return false;
-        }
-        return true;
+        return !Ops.Where((t, i) => !JToken.DeepEquals(t, other.Ops[i])).Any();
     }
 
     public override string ToString() => new JArray(Ops).ToString();
@@ -259,7 +254,7 @@ public class Delta
         return TryConcatInserts(verseDeltaOps, out opStr);
     }
 
-    private Delta Add(JToken newOp)
+    private Delta Add(JToken newOp, bool forceNewOp)
     {
         int index = Ops.Count;
         JToken lastOp = Ops.Count == 0 ? null : Ops[^1];
@@ -284,7 +279,7 @@ public class Delta
                 }
             }
 
-            if (JToken.DeepEquals(newOp[Attributes], lastOp[Attributes]))
+            if (!forceNewOp && JTokenDeepEqualsIgnoreCharId(newOp[Attributes], lastOp[Attributes]))
             {
                 if (newOp[InsertType]?.Type == JTokenType.String && lastOp[InsertType]?.Type == JTokenType.String)
                 {
@@ -536,7 +531,7 @@ public class Delta
                 }
                 else
                 {
-                    delta.Add(newOp);
+                    delta.Add(newOp, forceNewOp: false);
                     delta.Delete(_opLengths[i]);
                 }
             }

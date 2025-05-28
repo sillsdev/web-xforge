@@ -73,7 +73,8 @@ public static class DeltaUsxTestExtensions
         string style,
         string cid,
         string? segRef = null,
-        bool invalid = false
+        bool invalid = false,
+        bool forceNewOp = false
     )
     {
         var attributes = new JObject(
@@ -81,7 +82,7 @@ public static class DeltaUsxTestExtensions
         );
         if (invalid)
             attributes.Add(new JProperty("invalid-inline", true));
-        return delta.InsertText(text, segRef, attributes);
+        return delta.InsertText(text, segRef, attributes, forceNewOp);
     }
 
     public static Delta InsertChar(
@@ -89,7 +90,8 @@ public static class DeltaUsxTestExtensions
         string text,
         IEnumerable<CharAttr> charAttrs,
         string? segRef = null,
-        bool invalid = false
+        bool invalid = false,
+        bool forceNewOp = false
     )
     {
         var attributes = new JObject(
@@ -103,7 +105,7 @@ public static class DeltaUsxTestExtensions
         );
         if (invalid)
             attributes.Add(new JProperty("invalid-inline", true));
-        return delta.InsertText(text, segRef, attributes);
+        return delta.InsertText(text, segRef, attributes, forceNewOp);
     }
 
     public static Delta InsertEmptyChar(

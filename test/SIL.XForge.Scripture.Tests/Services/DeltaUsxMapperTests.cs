@@ -456,7 +456,8 @@ public partial class DeltaUsxMapperTests
                         new CharAttr { Style = "bd", CharID = bdCharID },
                         new CharAttr { Style = "sup", CharID = sup2CharID },
                     },
-                    "verse_1_1"
+                    "verse_1_1",
+                    forceNewOp: true
                 )
                 .InsertChar(
                     "3",
@@ -465,7 +466,8 @@ public partial class DeltaUsxMapperTests
                         new CharAttr { Style = "bd", CharID = bdCharID },
                         new CharAttr { Style = "sup", CharID = sup3CharID },
                     },
-                    "verse_1_1"
+                    "verse_1_1",
+                    forceNewOp: true
                 )
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p")
@@ -532,7 +534,8 @@ public partial class DeltaUsxMapperTests
                         new CharAttr { Style = "no", CharID = noCharID },
                         new CharAttr { Style = "sup", CharID = sup2CharID },
                     },
-                    "verse_1_1"
+                    "verse_1_1",
+                    forceNewOp: true
                 )
                 .InsertChar(
                     "3",
@@ -542,7 +545,8 @@ public partial class DeltaUsxMapperTests
                         new CharAttr { Style = "no", CharID = noCharID },
                         new CharAttr { Style = "sup", CharID = sup3CharID },
                     },
-                    "verse_1_1"
+                    "verse_1_1",
+                    forceNewOp: true
                 )
                 .InsertChar(" and this is bold.", "bd", bdCharID, "verse_1_1")
                 .InsertChar(
@@ -594,8 +598,8 @@ public partial class DeltaUsxMapperTests
                 .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertChar("1", "sup", _testGuidService.Generate(), "verse_1_1")
-                .InsertChar("2", "sup", _testGuidService.Generate(), "verse_1_1")
-                .InsertChar("3", "sup", _testGuidService.Generate(), "verse_1_1")
+                .InsertChar("2", "sup", _testGuidService.Generate(), "verse_1_1", forceNewOp: true)
+                .InsertChar("3", "sup", _testGuidService.Generate(), "verse_1_1", forceNewOp: true)
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p")
         );
@@ -2423,7 +2427,8 @@ public partial class DeltaUsxMapperTests
                     new CharAttr { Style = "bd", CharID = bdCharID },
                     new CharAttr { Style = "sup", CharID = sup2CharID },
                 },
-                "verse_1_1"
+                "verse_1_1",
+                forceNewOp: true
             )
             .InsertChar(
                 "3",
@@ -2432,7 +2437,8 @@ public partial class DeltaUsxMapperTests
                     new CharAttr { Style = "bd", CharID = bdCharID },
                     new CharAttr { Style = "sup", CharID = sup3CharID },
                 },
-                "verse_1_1"
+                "verse_1_1",
+                forceNewOp: true
             )
             .InsertText(" This is normal text.", "verse_1_1")
             .InsertPara("p");
@@ -2516,7 +2522,8 @@ public partial class DeltaUsxMapperTests
                     new CharAttr { Style = "no", CharID = noCharID },
                     new CharAttr { Style = "sup", CharID = sup3CharID },
                 },
-                "verse_1_1"
+                "verse_1_1",
+                forceNewOp: true
             )
             .InsertChar(" and this is bold.", "bd", bdCharID, "verse_1_1")
             .InsertChar(
@@ -2624,8 +2631,8 @@ public partial class DeltaUsxMapperTests
             .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertChar("1", "sup", _testGuidService.Generate(), "verse_1_1")
-            .InsertChar("2", "sup", _testGuidService.Generate(), "verse_1_1")
-            .InsertChar("3", "sup", _testGuidService.Generate(), "verse_1_1")
+            .InsertChar("2", "sup", _testGuidService.Generate(), "verse_1_1", forceNewOp: true)
+            .InsertChar("3", "sup", _testGuidService.Generate(), "verse_1_1", forceNewOp: true)
             .InsertText(" This is normal text.", "verse_1_1")
             .InsertPara("p");
 

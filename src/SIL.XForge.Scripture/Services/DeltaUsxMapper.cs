@@ -136,14 +136,15 @@ public class DeltaUsxMapper(
             },
             true
         );
-        var chapterDeltas = new List<ChapterDelta>();
-        var chapterDelta = new Delta();
-        var nextIds = new Dictionary<string, int>();
-        var state = new ParseState();
+        List<ChapterDelta> chapterDeltas = [];
+        Delta chapterDelta = Delta.New();
+        Dictionary<string, int> nextIds = [];
+        ParseState state = new ParseState();
         bool bookIsValid = true;
-        foreach (XNode node in usxDoc.Element("usx")!.Nodes())
+        List<XNode> nodes = usxDoc.Element("usx")?.Nodes().ToList() ?? [];
+        for (int i = 0; i < nodes.Count; i++)
         {
-            switch (node)
+            switch (nodes[i])
             {
                 case XElement elem:
                     switch (elem.Name.LocalName)
@@ -158,7 +159,7 @@ public class DeltaUsxMapper(
                         case "para":
                             if (state.ImpliedParagraph)
                             {
-                                chapterDelta.Insert('\n');
+                                chapterDelta.Insert('\n', forceNewOp: false);
                                 state.ImpliedParagraph = false;
                             }
                             var style = (string)elem.Attribute("style");
@@ -212,12 +213,12 @@ public class DeltaUsxMapper(
                         // but Paratext 9.0 can still generate USX with verses or notes at the chapter level.
                         case "verse":
                         case "note":
-                            ProcessChildNode(elem, chapterDelta, invalidNodes, state);
+                            ProcessChildNode(elem, i, chapterDelta, invalidNodes, state);
                             state.ImpliedParagraph = true;
                             break;
 
                         default:
-                            ProcessChildNode(elem, chapterDelta, invalidNodes, state);
+                            ProcessChildNode(elem, i, chapterDelta, invalidNodes, state);
                             break;
                     }
                     if (elem.GetSchemaInfo().Validity != XmlSchemaValidity.Valid)
@@ -243,12 +244,16 @@ public class DeltaUsxMapper(
         JObject? attributes = null
     )
     {
-        foreach (XNode node in parentElem.Nodes())
-            ProcessChildNode(node, newDelta, invalidNodes, state, attributes);
+        List<XNode> nodes = [.. parentElem.Nodes()];
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            ProcessChildNode(nodes[i], i, newDelta, invalidNodes, state, attributes);
+        }
     }
 
     private void ProcessChildNode(
         XNode node,
+        int nodeIndex,
         Delta newDelta,
         HashSet<XNode> invalidNodes,
         ParseState state,
@@ -317,7 +322,7 @@ public class DeltaUsxMapper(
                             foreach (XElement cell in row.Elements())
                             {
                                 state.CurRef = $"cell_{state.TableIndex}_{rowIndex}_{cellIndex}";
-                                ProcessChildNode(cell, newDelta, invalidNodes, state);
+                                ProcessChildNode(cell, cellIndex - 1, newDelta, invalidNodes, state);
                                 SegmentEnded(newDelta, state.CurRef);
                                 var attrs = new JObject(
                                     new JProperty("table", tableAttributes),
@@ -328,7 +333,7 @@ public class DeltaUsxMapper(
                                 attrs = AddInvalidBlockAttribute(invalidNodes, elem, attrs);
                                 attrs = AddInvalidBlockAttribute(invalidNodes, row, attrs);
                                 attrs = AddInvalidBlockAttribute(invalidNodes, cell, attrs);
-                                newDelta.Insert("\n", attrs);
+                                newDelta.Insert("\n", attrs, forceNewOp: false);
                                 cellIndex++;
                             }
                             rowIndex++;
@@ -350,7 +355,8 @@ public class DeltaUsxMapper(
                 newDelta.InsertText(
                     text.Value,
                     state.CurRef,
-                    AddInvalidInlineAttribute(invalidNodes, text, attributes)
+                    attributes: AddInvalidInlineAttribute(invalidNodes, text, attributes),
+                    forceNewOp: nodeIndex == 0
                 );
                 break;
         }
@@ -361,7 +367,7 @@ public class DeltaUsxMapper(
         if (state.ImpliedParagraph)
         {
             SegmentEnded(chapterDelta, state.CurRef);
-            chapterDelta.Insert('\n');
+            chapterDelta.Insert('\n', forceNewOp: false);
             state.ImpliedParagraph = false;
         }
         if (!int.TryParse(state.CurChapter, out int chapterNum))
