@@ -270,6 +270,7 @@
     "draft_faulted": "Failed",
     "draft_pending": "Pending",
     "draft_unknown": "Unknown",
+    "format_usfm": "Format USFM",
     "hide_model_training_configuration": "Hide model training configuration",
     "show_model_training_configuration": "Show model training configuration",
     "training_model_description": "The language model was trained on this configuration"
