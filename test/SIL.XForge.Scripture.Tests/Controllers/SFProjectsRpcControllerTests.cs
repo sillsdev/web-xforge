@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using EdjCase.JsonRpc.Common;
 using EdjCase.JsonRpc.Router.Defaults;
 using Hangfire;
 using Hangfire.Common;
@@ -314,6 +315,21 @@ public class SFProjectsRpcControllerTests
         var result = await env.Controller.Invite(Project01, Email, Locale, Role);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task Invite_InvalidEmail()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = SFProjectService.InvalidEmailAddress;
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+            .Throws(new InvalidOperationException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.Invite(Project01, Email, Locale, Role);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual((int)RpcErrorCode.InvalidParams, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
