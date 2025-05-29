@@ -4,8 +4,10 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
 import { Router } from '@angular/router';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
@@ -40,7 +42,9 @@ import { DraftHandlingService } from '../draft-handling.service';
     FormsModule,
     ReactiveFormsModule,
     SharedModule,
-    TranslocoModule
+    TranslocoModule,
+    MatFormFieldModule,
+    MatRadioModule
   ],
   templateUrl: './draft-usfm-format.component.html',
   styleUrl: './draft-usfm-format.component.scss'

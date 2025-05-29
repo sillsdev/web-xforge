@@ -29,7 +29,6 @@
 }
 
 .options {
-  width: 360px;
   padding: 8px 0;
   row-gap: 8px;
 
@@ -64,4 +63,24 @@
   .viewer-container {
     overflow-y: auto;
   }
+}
+
+mat-card-actions {
+  justify-content: space-between;
+}
+
+form {
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  p {
+    margin: 0;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
 }
