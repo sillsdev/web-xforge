@@ -1,32 +1,78 @@
 <ng-container *transloco="let t; read: 'draft_usfm_format'">
-  <h1>{{ t("usfm_format_title") }}</h1>
-  <p>{{ t("usfm_format_description") }}</p>
+  <h1>{{ t("draft_format_options") }}</h1>
   @if (!isOnline) {
     <p class="offline-text">{{ t("connect_to_the_internet") }}</p>
   }
-  <div>
-    <button mat-stroked-button class="back" (click)="close()">
-      <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
-      >{{ t("back") }}
-    </button>
-  </div>
   <div class="format-container">
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">
+        <p>
+          Your draft has been translated. However, there are some formatting options that you can choose before using
+          your draft.
+        </p>
+
         <mat-card class="options">
+          <mat-card-header><mat-card-title>Mid-verse paragraph breaks</mat-card-title></mat-card-header>
           <mat-card-content class="format-options">
-            <mat-checkbox formControlName="preserveParagraphs">
-              <span>{{ t("preserve_paragraphs") }}</span>
-              <span class="description">{{ t("paragraph_marker_description") }}</span>
-            </mat-checkbox>
+            Scripture Forge translates each verse as a whole and can't always place paragraph breaks in the right place.
+            Choose how the paragraph breaks in source verses should appear in the draft.
+            <mat-for-field>
+              <mat-radio-group>
+                <mat-radio-button value="remove">
+                  Remove
+                  <span class="description">
+                    Mid-verse paragraph breaks in the source will be omitted in the draft.
+                  </span>
+                </mat-radio-button>
+                <mat-radio-button value="best-guess">
+                  Best guess
+                  <span class="description">
+                    Mid-verse paragraph breaks in the source will be placed at the best guess of where they should be in
+                    the draft.
+                  </span>
+                </mat-radio-button>
+                <mat-radio-button value="move-to-end">
+                  Move to end
+                  <span class="description">
+                    Mid-verse paragraph breaks in the source will be moved to the end of the verse in the draft.
+                  </span>
+                </mat-radio-button>
+              </mat-radio-group>
+            </mat-for-field>
           </mat-card-content>
-          <mat-card-actions align="end">
-            <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
-              <mat-icon>check</mat-icon>
-              {{ t("save_changes") }}
-            </button>
-          </mat-card-actions>
         </mat-card>
+
+        <mat-card class="options">
+          <mat-card-header>
+            <mat-card-title>Quote style <small>[coming soon]</small></mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="format-options">
+            Scripture Forge can't always preserve quotes from from the source text. Choose how quotes should appear in
+            the draft.
+            <mat-for-field>
+              <mat-radio-group>
+                <mat-radio-button value="remove">
+                  Straight quotes: " "
+                  <span class="description"> Use only straight quotes in the draft. </span>
+                </mat-radio-button>
+                <mat-radio-button value="best-guess">
+                  Curly quotes: “ ”
+                  <span class="description">
+                    Attempt to use curly quotes, even though they may not always be correct.
+                  </span>
+                </mat-radio-button>
+              </mat-radio-group>
+            </mat-for-field>
+          </mat-card-content>
+        </mat-card>
+
+        <div class="actions">
+          <button mat-button class="back" (click)="close()"><mat-icon>close</mat-icon>{{ t("cancel") }}</button>
+          <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
+            <mat-icon>check</mat-icon>
+            {{ t("save_changes") }}
+          </button>
+        </div>
       </form>
     </div>
     <div class="text-container">
