@@ -7,7 +7,7 @@ const runLogDir = Deno.args[0];
 const helpRepo = Deno.args[1];
 
 if (runLogDir == null || helpRepo == null) {
-  console.error("Usage: ./copy_help_site_screenshots.mts <run_log_dir> <help_repo>");
+  console.error("Usage: ./copy-help-site-screenshots.mts <run_log_dir> <help_repo>");
   Deno.exit(1);
 }
 
