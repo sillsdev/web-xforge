@@ -3,9 +3,9 @@
     <div *transloco="let t; read: 'sync'">
       <div class="sync-header centered-content">
         @if (isActiveProjectSource()) {
-          <div>{{ t("synchronize_reference_project") }}</div>
+          <div>{{ t("synchronize_source_project") }}</div>
         }
-        <h3>{{ activeSyncProjectName }}</h3>
+        <h3>{{ activeSyncProjectDoc?.data?.name }}</h3>
       </div>
       <div class="sync-status">
         @if (syncPhaseMessage.includes("_percent")) {

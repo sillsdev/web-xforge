@@ -43,7 +43,7 @@ export class SyncProgressComponent {
   syncPhase?: SyncPhase;
   phasePercentage: number = 0;
   syncProgress: number = 0;
-  activeSyncProjectName: string = '';
+  activeSyncProjectDoc?: SFProjectDoc;
   private progressPercent$ = new BehaviorSubject<number>(0);
 
   /** The progress as a percent between 0 and 100 for the target project and the source project, if one exists. */
@@ -136,7 +136,7 @@ export class SyncProgressComponent {
   }
 
   public isActiveProjectSource(): boolean {
-    return this.activeSyncProjectName !== undefined && this.activeSyncProjectName === this.sourceProjectDoc?.data?.name;
+    return this.activeSyncProjectDoc !== undefined && this.activeSyncProjectDoc.id === this.sourceProjectDoc?.id;
   }
 
   protected updateProgressState(projectId: string, progressState: ProgressState): void {
@@ -146,12 +146,12 @@ export class SyncProgressComponent {
     this.phasePercentage =
       progressState.syncProgress != null ? Math.round((progressState.syncProgress - this.syncProgress) * 100) : 0;
     if (projectId === this._projectDoc?.id) {
-      this.activeSyncProjectName = this._projectDoc?.data?.name ?? '';
+      this.activeSyncProjectDoc = this._projectDoc;
       this.progressPercent$.next(
         hasSourceProject ? 0.5 + progressState.progressValue * 0.5 : progressState.progressValue
       );
     } else if (hasSourceProject && projectId === this.sourceProjectDoc?.id) {
-      this.activeSyncProjectName = this.sourceProjectDoc?.data?.name ?? '';
+      this.activeSyncProjectDoc = this.sourceProjectDoc;
       this.progressPercent$.next(progressState.progressValue * 0.5);
     }
   }
