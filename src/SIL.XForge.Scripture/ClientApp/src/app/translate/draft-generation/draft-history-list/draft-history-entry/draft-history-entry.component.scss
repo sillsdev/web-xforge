@@ -21,6 +21,11 @@ mat-panel-description {
   font-size: 1.1em;
 }
 
+.draft-options {
+  display: flex;
+  column-gap: 8px;
+}
+
 .date {
   font-size: 0.9em;
   color: #666;

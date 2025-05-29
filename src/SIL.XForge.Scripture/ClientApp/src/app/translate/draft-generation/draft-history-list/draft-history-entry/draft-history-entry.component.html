@@ -1,9 +1,9 @@
 <ng-container *transloco="let t; read: 'draft_history_entry'">
   @if (entry != null) {
     <mat-expansion-panel
-      [disabled]="forceDetailsOpen || !hasDetails"
-      [expanded]="forceDetailsOpen"
-      [hideToggle]="forceDetailsOpen || !hasDetails"
+      [disabled]="isLatestDraft || !hasDetails"
+      [expanded]="isLatestDraft"
+      [hideToggle]="isLatestDraft || !hasDetails"
     >
       <mat-expansion-panel-header [collapsedHeight]="'auto'" [expandedHeight]="'auto'">
         <mat-panel-title>
@@ -23,7 +23,15 @@
           <p class="book-buttons">
             <app-draft-preview-books [build]="entry" />
           </p>
-          <app-draft-download-button [build]="entry" [flat]="true" />
+          <div class="draft-options">
+            <app-draft-download-button [build]="entry" [flat]="true" />
+            @if (featureFlags.usfmFormat.enabled && isLatestDraft) {
+              <button mat-button class="format-usfm" [routerLink]="['format']">
+                <mat-icon>settings</mat-icon>
+                {{ t("format_usfm") }}
+              </button>
+            }
+          </div>
         }
         @if (hasTrainingConfiguration) {
           @if (canDownloadBuild) {
