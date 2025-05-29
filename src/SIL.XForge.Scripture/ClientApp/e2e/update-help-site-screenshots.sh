@@ -12,4 +12,4 @@ echo "Generating new screenshots"
 
 echo "Copying new screenshots to help site"
 
-./copy_help_site_screenshots.mts test_output/localized_screenshots ~/src/scripture-forge-help
+./copy-help-site-screenshots.mts test_output/localized_screenshots ~/src/scripture-forge-help
