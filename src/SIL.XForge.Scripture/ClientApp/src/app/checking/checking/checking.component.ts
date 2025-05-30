@@ -902,7 +902,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   onChapterSelect(chapter: number): void {
-    this.navigateBookChapter(this.projectDoc!.id, 'all', this.book!, chapter);
+    const scope: QuestionScope = this.activeQuestionScope === 'book' ? 'book' : 'all';
+    this.navigateBookChapter(this.projectDoc!.id, scope, this.book!, chapter);
   }
 
   questionUpdated(_questionDoc: QuestionDoc): void {
