@@ -44,6 +44,7 @@ import { DraftHistoryListComponent } from './draft-history-list/draft-history-li
 import { DraftInformationComponent } from './draft-information/draft-information.component';
 import { DraftPreviewBooksComponent } from './draft-preview-books/draft-preview-books.component';
 import { DraftSource, DraftSourcesService } from './draft-sources.service';
+import { PROJECT_CHANGE_THROTTLE_TIME } from './draft-utils';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
@@ -118,8 +119,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   cancelDialogRef?: MatDialogRef<any>;
 
   readonly draftDurationHours = 2.5;
-  /** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
-  private readonly projectChangeThrottlingMs = 500;
 
   // TODO: Remove the SF-3219 notice entirely after it has expired
   readonly improvedDraftGenerationNotice = this.i18n.interpolate('draft_generation.improved_draft_generation_notice');
@@ -218,7 +217,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     combineLatest([
       this.activatedProject.changes$.pipe(
-        throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
+        throttleTime(PROJECT_CHANGE_THROTTLE_TIME, asyncScheduler, { leading: true, trailing: true }),
         filterNullish(),
         tap(projectDoc => {
           const translateConfig = projectDoc.data?.translateConfig;
@@ -249,7 +248,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     this.activatedProject.changes$
       .pipe(
-        throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
+        throttleTime(PROJECT_CHANGE_THROTTLE_TIME, asyncScheduler, { leading: true, trailing: true }),
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
@@ -445,7 +444,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.activatedProject.changes$
       .pipe(
-        throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
+        throttleTime(PROJECT_CHANGE_THROTTLE_TIME, asyncScheduler, { leading: true, trailing: true }),
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project

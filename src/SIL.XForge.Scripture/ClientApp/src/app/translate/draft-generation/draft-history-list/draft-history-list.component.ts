@@ -1,13 +1,14 @@
 import { Component, DestroyRef } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
-import { take } from 'rxjs';
+import { asyncScheduler, switchMap, throttleTime } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { activeBuildStates } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
+import { PROJECT_CHANGE_THROTTLE_TIME } from '../draft-utils';
 import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-entry.component';
 
 @Component({
@@ -26,15 +27,17 @@ export class DraftHistoryListComponent {
     private readonly draftGenerationService: DraftGenerationService,
     private readonly transloco: TranslocoService
   ) {
-    this.activatedProject.projectId$
-      .pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1))
-      .subscribe(projectId => {
-        this.draftGenerationService
-          .getBuildHistory(projectId)
-          .pipe(quietTakeUntilDestroyed(destroyRef))
-          .subscribe(result => {
-            this.history = result?.reverse() ?? [];
-          });
+    // Listen for changes to the project to call getBuildHistory() so that new drafts
+    // that are started will cause the history to refresh.
+    this.activatedProject.changes$
+      .pipe(
+        quietTakeUntilDestroyed(destroyRef),
+        filterNullish(),
+        throttleTime(PROJECT_CHANGE_THROTTLE_TIME, asyncScheduler, { leading: true, trailing: true }),
+        switchMap(projectDoc => this.draftGenerationService.getBuildHistory(projectDoc.id))
+      )
+      .subscribe(result => {
+        this.history = result?.reverse() ?? [];
       });
   }
 

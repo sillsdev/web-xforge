@@ -3,6 +3,9 @@ import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/t
 import language_code_mapping from '../../../../../language_code_mapping.json';
 import { SelectableProjectWithLanguageCode } from '../../core/paratext.service';
 
+/** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
+export const PROJECT_CHANGE_THROTTLE_TIME = 500;
+
 /** Represents draft sources as a set of two {@link TranslateSource} arrays, and one {@link SFProjectProfile} array. */
 export interface DraftSourcesAsTranslateSourceArrays {
   trainingSources: TranslateSource[];
