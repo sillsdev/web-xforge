@@ -123,6 +123,22 @@ describe('DraftHistoryListComponent', () => {
     expect(env.component.nonActiveBuilds).toEqual(buildHistory);
   }));
 
+  it('should handle new build started', fakeAsync(() => {
+    const build = { state: BuildStates.Completed } as BuildDto;
+    const buildHistory = [build];
+    const env = new TestEnvironment(buildHistory);
+    expect(env.component.history).toEqual(buildHistory);
+    expect(env.component.isBuildActive).toBe(false);
+    expect(env.component.latestBuild).toBe(build);
+
+    const newBuild = { state: BuildStates.Active } as BuildDto;
+    when(mockedDraftGenerationService.getBuildHistory('project01')).thenReturn(of([build, newBuild]));
+    // simulate when project notification is updated
+    env.component.loadHistory('project01');
+    env.fixture.detectChanges();
+    expect(env.component.history).toEqual([newBuild, build]);
+  }));
+
   class TestEnvironment {
     component: DraftHistoryListComponent;
     fixture: ComponentFixture<DraftHistoryListComponent>;

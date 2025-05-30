@@ -146,7 +146,7 @@ export class DraftHistoryEntryComponent {
   }
 
   @Input() canDownloadBuild = false;
-  @Input() isLatestDraft = false;
+  @Input() isLatestBuild = false;
 
   trainingConfigurationOpen = false;
 
