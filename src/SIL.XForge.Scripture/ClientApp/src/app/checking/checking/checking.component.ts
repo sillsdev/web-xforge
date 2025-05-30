@@ -602,8 +602,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           if (
             routeProjectId !== prevProjectId ||
             routeScope !== prevScope ||
-            routeBookNum !== prevBookNum ||
-            (routeChapter == null ? undefined : parseInt(routeChapter)) !== prevChapterNum
+            (routeBookNum !== prevBookNum && prevScope !== 'all') ||
+            ((routeChapter == null ? undefined : parseInt(routeChapter)) !== prevChapterNum && prevScope === 'chapter')
           ) {
             this.cleanup();
             this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
@@ -646,9 +646,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
                 if (this.onlineStatusService.isOnline) {
                   qd.updateFileCache();
-                  if (isActiveQuestionDoc) {
-                    qd.updateAnswerFileCache();
-                  }
                 }
 
                 this.updateAdjacentQuestions(this.questionsList!.activeQuestionDoc!);
@@ -694,7 +691,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               });
           } else {
             // Visible questions didn't change, but active question must update on route change
-            this.questionsList?.activateStoredQuestion();
+            // this.questionsList?.activateStoredQuestion();
 
             // Ensure refs updated if book changed, but no new questions query (scope is 'all')
             if (routeBookNum !== prevBookNum) {
@@ -898,11 +895,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   onBookSelect(book: number): void {
     const navChapterNum: number = this.projectDoc!.data!.texts.find(t => t.bookNum === book)?.chapters[0].number ?? 1;
-    this.navigateBookChapter(this.projectDoc!.id, 'all', book, navChapterNum);
+    this.navigateBookChapter(this.projectDoc!.id, this.activeQuestionScope!, book, navChapterNum);
   }
 
   onChapterSelect(chapter: number): void {
-    this.navigateBookChapter(this.projectDoc!.id, 'all', this.book!, chapter);
+    this.navigateBookChapter(this.projectDoc!.id, this.activeQuestionScope!, this.book!, chapter);
   }
 
   questionUpdated(_questionDoc: QuestionDoc): void {
