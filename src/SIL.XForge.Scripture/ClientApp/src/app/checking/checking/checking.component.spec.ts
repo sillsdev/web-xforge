@@ -851,7 +851,7 @@ describe('CheckingComponent', () => {
       env.waitForQuestionTimersToComplete();
     }));
 
-    it('resets filter after a user changes chapter', fakeAsync(() => {
+    it('should not reset scope after a user changes chapter', fakeAsync(() => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
         projectBookRoute: 'JHN',
@@ -859,27 +859,27 @@ describe('CheckingComponent', () => {
         questionScope: 'chapter'
       });
       expect(env.questions.length).toEqual(14);
-      env.setQuestionScope('all');
+      env.component.onChapterSelect(2);
       env.setBookChapter('JHN', 2);
       tick();
       env.fixture.detectChanges();
-      expect(env.component.activeQuestionScope).toEqual('all');
+      expect(env.component.activeQuestionScope).toEqual('chapter');
       env.waitForQuestionTimersToComplete();
     }));
 
-    it('resets filter after a user changes book', fakeAsync(() => {
+    it('should not reset scope after a user changes book', fakeAsync(() => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
         projectBookRoute: 'JHN',
         projectChapterRoute: 1,
-        questionScope: 'chapter'
+        questionScope: 'book'
       });
-      expect(env.questions.length).toEqual(14);
-      env.setQuestionScope('all');
+      expect(env.questions.length).toEqual(15);
+      env.component.onBookSelect(40);
       env.setBookChapter('MAT', 1);
       tick();
       env.fixture.detectChanges();
-      expect(env.component.activeQuestionScope).toEqual('all');
+      expect(env.component.activeQuestionScope).toEqual('book');
       env.waitForQuestionTimersToComplete();
     }));
 
