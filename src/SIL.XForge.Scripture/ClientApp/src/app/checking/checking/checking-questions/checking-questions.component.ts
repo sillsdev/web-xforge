@@ -166,8 +166,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     // Handle changes to questionDocs in ngOnChanges instead of setter to ensure other @Inputs are set
     // when 'activateStoredQuestion' is called, such as 'routeBookChapter'.
     const questionDocs: Readonly<QuestionDoc[] | undefined> = changes.questionDocs?.currentValue;
-    if (questionDocs != null && this.activeQuestionDoc == null) {
-      // Only activate the stored question if no previous question was selected
+    if (questionDocs != null) {
       if (questionDocs.length > 0) {
         this.activateStoredQuestion({ isQuestionListChange: true });
       } else {
@@ -177,6 +176,9 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       this.haveQuestionsLoaded = true;
       this.changed.emit({ questionDoc: this.activeQuestionDoc, actionSource: { isQuestionListChange: true } });
       this.changeDetector.markForCheck();
+    } else if (changes.routeBookChapter != null) {
+      // If the route book/chapter changes, activate the first question on the new chapter
+      this.activateStoredQuestion();
     }
   }
 
@@ -294,16 +296,20 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
           }
         }
       }
-    } else {
+    } else if (
+      this.routeBookChapter == null ||
+      (this.activeQuestionDoc?.data != null &&
+        bookChapterMatchesVerseRef(this.routeBookChapter, this.activeQuestionDoc.data.verseRef))
+    ) {
       questionToActivate = this.activeQuestionDoc;
     }
 
     // No stored question, so use first question within route book/chapter if available.
-    // Otherwise use first question.
-    questionToActivate ??=
-      this.questionDocs.find(
-        qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
-      ) ?? this.questionDocs[0];
+    questionToActivate ??= this.questionDocs.find(
+      qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
+    );
+    // If no question was previously active, choose the first question
+    questionToActivate ??= this.activeQuestionDoc == null ? this.questionDocs[0] : undefined;
 
     if (questionToActivate != null) {
       this.activateQuestion(questionToActivate, actionSource);
