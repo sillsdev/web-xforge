@@ -434,6 +434,7 @@
     "link_copied": "Enlace copiado al portapapeles",
     "link_sharing": "Los enlaces también pueden compartirse con usuarios sin dirección de correo electrónico a través de plataformas de redes sociales.",
     "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
+    "not_inviting_email_invalid": "No invitar: Dirección de correo electrónico no válida",
     "resend": "Reenviar",
     "send_a_link": "Enviar un enlace",
     "select_invitation_language": "Seleccione un idioma para el correo electrónico de invitación",

@@ -434,6 +434,7 @@
     "link_copied": "链接已复制到剪贴板",
     "link_sharing": "Links can also be shared to users without an email address via social media platforms.",
     "not_inviting_already_member": "不邀请：用户已经是该项目的成员",
+    "not_inviting_email_invalid": "Not inviting: Invalid email address",
     "resend": "重发",
     "send_a_link": "Send a link",
     "select_invitation_language": "Select a language for the invitation email",

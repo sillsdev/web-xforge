@@ -189,6 +189,7 @@
     "draft_queued_detail_multiple": "Pembuatan konsep terjemahan berada di nomor antrian {{ count }} , dan akan dimulai setelah server selesai mengerjakan proyek lain. Silakan periksa kembali nanti.",
     "draft_queued_detail": "Pembuatan konsep terjemahan telah dimasukkan antrian, dan akan dimulai setelah server selesai mengerjakan proyek lain. Silakan periksa kembali nanti.",
     "draft_queued_header": "Konsep masuk antrian",
+    "format_usfm": "Format USFM",
     "generate_back_translation_drafts_header": "Membuat konsep terjemahan balik",
     "generate_draft_button": "Buat konsep",
     "generate_forward_translation_drafts_header": "Membuat konsep terjemahan",
@@ -261,6 +262,25 @@
     "use_echo_warning": "Mengaktifkan ini akan menggunakan mesin Echo Translation terhadap teks sumber Anda alih-alih menerjemahkannya.",
     "use_echo": "Gunakan Mesin Echo Translation"
   },
+  "draft_history_entry": {
+    "click_book_to_preview": "Klik kitab di bawah ini untuk melihat pratinjau konsep dan menambahkannya ke proyek Anda.",
+    "download_zip": "Download draft as ZIP file",
+    "draft_active": "Running",
+    "draft_canceled": "Canceled",
+    "draft_completed": "Completed",
+    "draft_faulted": "Gagal",
+    "draft_pending": "Pending",
+    "draft_unknown": "tidak diketahui",
+    "hide_model_training_configuration": "Hide model training configuration",
+    "show_model_training_configuration": "Show model training configuration",
+    "training_model_description": "The language model was trained on this configuration"
+  },
+  "draft_history_list": {
+    "draft_canceled": "The draft was canceled",
+    "draft_completed": "The draft is ready",
+    "draft_faulted": "The draft failed",
+    "previously_generated_drafts": "Previously generated drafts"
+  },
   "draft_preview_books": {
     "add_to_project": "Tambahkan ke proyek",
     "add_to_different_project": "Tambahkan ke proyek yang berbeda",
@@ -307,6 +327,17 @@
     "target_language_data": "Data Bahasa Sasaran",
     "training_language_model": "Melatih model bahasa",
     "unknown_language_code": "tidak diketahui"
+  },
+  "draft_usfm_format": {
+    "changes_have_been_saved": "Changes have been saved",
+    "back": "Kembali",
+    "connect_to_the_internet": "Please connect to the internet to change the USFM format for your draft",
+    "failed_to_save": "Failed to save changes. Try again later.",
+    "paragraph_marker_description": "Keep paragraphs from the translation source",
+    "preserve_paragraphs": "Preserve paragraph markers",
+    "save_changes": "Simpan Jawaban",
+    "usfm_format_title": "Format USFM for drafts",
+    "usfm_format_description": "Select the USFM format to apply to your draft"
   },
   "editor": {
     "add_comment": "Tambah Komentar",
@@ -394,6 +425,8 @@
     "please_connect": "Sambungkan ke internet untuk memulihkan versi ini.",
     "revert": "Pulihkan versi ini",
     "revert_details": "Pulihkan versi sebelumnya dari pasal ini",
+    "revert_disabled": "Cannot restore this version",
+    "revert_disabled_details": "This version cannot be restored because it has invalid formatting or unsupported markers",
     "revert_error": "Terjadi kesalahan saat mencoba memulihkan versi teks sebelumnya. Silakan coba lagi nanti.",
     "revert_successful": "Berhasil memulihkan versi sebelumnya",
     "show_changes": "Tampilkan perubahan",
@@ -463,6 +496,29 @@
     "source_and_target_projects_all_have_language_code": "Proyek sumber dan target semuanya memiliki kode bahasa [b]{{ languageCode }}[/b]. Jika Anda menerjemahkan ke dalam dialek atau bahasa terkait yang tidak memiliki kode ISO terpisah, pengaturan ini mungkin benar. Untuk semua proyek lain, mengatur proyek sumber dan target ke bahasa yang sama dapat secara signifikan mengurangi kualitas konsep.",
     "sources_in_following_languages": "Saat ini proyek-proyek sumber tersedia dalam bahasa-bahasa berikut ini:",
     "sources_must_be_same_language": "Sumber pelatihan harus menggunakan bahasa yang sama dengan sumber konsep. Anda dapat memperbarui teks sumber Anda di halaman pengaturan [link:projectSettingsUrl][/link]"
+  },
+  "lynx_insights_overlay": {
+    "multi_insight_header_select_for_details": "Select for details",
+    "tooltip_actions": "Aksi",
+    "tooltip_dismiss": "Hentikan",
+    "tooltip_more_info": "More info"
+  },
+  "lynx_insights_panel": {
+    "restore": "Memulihkan"
+  },
+  "lynx_insights_panel_header": {
+    "insights": "Insights",
+    "filter_menu_filter_header": "Tampilkan",
+    "filter_menu_filter_info": "Notices",
+    "filter_menu_filter_warning": "Warnings",
+    "filter_menu_filter_error": "Errors",
+    "filter_menu_filter_dismissed": "Dismissed",
+    "filter_menu_sort_header": "Order by",
+    "filter_menu_sort_severity": "Severity",
+    "filter_menu_sort_appearance": "Appearance in text",
+    "scope_chapter": "Chapter",
+    "scope_book": "Kitab",
+    "scope_project": "Proyek"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} penonton lain"

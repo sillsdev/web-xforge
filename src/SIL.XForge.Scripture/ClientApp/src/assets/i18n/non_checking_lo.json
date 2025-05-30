@@ -189,6 +189,7 @@
     "draft_queued_detail_multiple": "The translation draft generation is number {{ count }} in the queue, and will begin once the server is finished with other projects. Please check back later.",
     "draft_queued_detail": "Generation of the translation draft has been queued, and will begin once the server is finished with another project. Please check back later.",
     "draft_queued_header": "Draft queued",
+    "format_usfm": "Format USFM",
     "generate_back_translation_drafts_header": "Generate back translation drafts",
     "generate_draft_button": "Generate draft",
     "generate_forward_translation_drafts_header": "Generate translation drafts",
@@ -261,6 +262,25 @@
     "use_echo_warning": "Enabling this will echo your source text instead of translating it.",
     "use_echo": "Use Echo Translation Engine"
   },
+  "draft_history_entry": {
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
+    "download_zip": "Download draft as ZIP file",
+    "draft_active": "Running",
+    "draft_canceled": "Canceled",
+    "draft_completed": "Completed",
+    "draft_faulted": "Failed",
+    "draft_pending": "Pending",
+    "draft_unknown": "Unknown",
+    "hide_model_training_configuration": "Hide model training configuration",
+    "show_model_training_configuration": "Show model training configuration",
+    "training_model_description": "The language model was trained on this configuration"
+  },
+  "draft_history_list": {
+    "draft_canceled": "The draft was canceled",
+    "draft_completed": "The draft is ready",
+    "draft_faulted": "The draft failed",
+    "previously_generated_drafts": "Previously generated drafts"
+  },
   "draft_preview_books": {
     "add_to_project": "Add to project",
     "add_to_different_project": "Add to a different project",
@@ -307,6 +327,17 @@
     "target_language_data": "Target language data",
     "training_language_model": "Training the language model",
     "unknown_language_code": "unknown"
+  },
+  "draft_usfm_format": {
+    "changes_have_been_saved": "Changes have been saved",
+    "back": "Back",
+    "connect_to_the_internet": "Please connect to the internet to change the USFM format for your draft",
+    "failed_to_save": "Failed to save changes. Try again later.",
+    "paragraph_marker_description": "Keep paragraphs from the translation source",
+    "preserve_paragraphs": "Preserve paragraph markers",
+    "save_changes": "ບັນທຶກຄຳຕອບ",
+    "usfm_format_title": "Format USFM for drafts",
+    "usfm_format_description": "Select the USFM format to apply to your draft"
   },
   "editor": {
     "add_comment": "Add Comment",
@@ -394,6 +425,8 @@
     "please_connect": "Please connect to the internet to restore this version.",
     "revert": "Restore this version",
     "revert_details": "Restore this previous version of the chapter",
+    "revert_disabled": "Cannot restore this version",
+    "revert_disabled_details": "This version cannot be restored because it has invalid formatting or unsupported markers",
     "revert_error": "Error occurred trying to restore the previous text version. Please try again later.",
     "revert_successful": "Successfully restored previous version",
     "show_changes": "Show changes",
@@ -463,6 +496,29 @@
     "source_and_target_projects_all_have_language_code": "The source and target projects all have the [b]{{ languageCode }}[/b] language code. If you are translating into a dialect or related language that does not have a separate ISO code, these settings may be correct. For all other projects, having the source and target projects set to the same language may significantly reduce the draft quality.",
     "sources_in_following_languages": "Currently the source projects are in the following languages:",
     "sources_must_be_same_language": "The training source must be the same language as the drafting source. You can update your source texts on the [link:projectSettingsUrl]settings page[/link]"
+  },
+  "lynx_insights_overlay": {
+    "multi_insight_header_select_for_details": "Select for details",
+    "tooltip_actions": "Actions",
+    "tooltip_dismiss": "Dismiss",
+    "tooltip_more_info": "More info"
+  },
+  "lynx_insights_panel": {
+    "restore": "Restore"
+  },
+  "lynx_insights_panel_header": {
+    "insights": "Insights",
+    "filter_menu_filter_header": "Show",
+    "filter_menu_filter_info": "Notices",
+    "filter_menu_filter_warning": "Warnings",
+    "filter_menu_filter_error": "Errors",
+    "filter_menu_filter_dismissed": "Dismissed",
+    "filter_menu_sort_header": "Order by",
+    "filter_menu_sort_severity": "Severity",
+    "filter_menu_sort_appearance": "Appearance in text",
+    "scope_chapter": "Chapter",
+    "scope_book": "Book",
+    "scope_project": "Project"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} other viewers"

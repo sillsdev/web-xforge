@@ -434,6 +434,7 @@
     "link_copied": "Link copiado para a área de transferência",
     "link_sharing": "Links can also be shared to users without an email address via social media platforms.",
     "not_inviting_already_member": "Não convidar: Usuário já é membro deste projeto",
+    "not_inviting_email_invalid": "Not inviting: Invalid email address",
     "resend": "Reenviar",
     "send_a_link": "Send a link",
     "select_invitation_language": "Selecione um idioma para o e-mail do convite",

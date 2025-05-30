@@ -189,6 +189,7 @@
     "draft_queued_detail_multiple": "La generación del borrador de traducción es el número {{ count }} en la cola, y comenzará una vez que el servidor haya terminado con otros proyectos. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_detail": "La generación del borrador de traducción se ha puesto en cola y comenzará una vez que el servidor haya terminado con otro proyecto. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_header": "Borrador en cola",
+    "format_usfm": "Formato USFM",
     "generate_back_translation_drafts_header": "Generar borradores de retrotraducción",
     "generate_draft_button": "Generar borrador",
     "generate_forward_translation_drafts_header": "Generar borradores de traducción",
@@ -261,6 +262,25 @@
     "use_echo_warning": "Si activa esta opción, se hará eco del texto original en lugar de traducirlo.",
     "use_echo": "Utilizar el motor de traducción Eco"
   },
+  "draft_history_entry": {
+    "click_book_to_preview": "Haga clic en un libro de los que aparecen a continuación para previsualizar el borrador y añadirlo a su proyecto.",
+    "download_zip": "Descargar borrador como archivo ZIP",
+    "draft_active": "En curso",
+    "draft_canceled": "Cancelado",
+    "draft_completed": "Completado",
+    "draft_faulted": "Fallido",
+    "draft_pending": "Pendiente",
+    "draft_unknown": "Desconocido",
+    "hide_model_training_configuration": "Ocultar la configuración de entrenamiento del modelo",
+    "show_model_training_configuration": "Mostrar la configuración de entrenamiento del modelo",
+    "training_model_description": "El modelo lingüístico se entrenó con esta configuración"
+  },
+  "draft_history_list": {
+    "draft_canceled": "El borrador fue cancelado",
+    "draft_completed": "El borrador está listo",
+    "draft_faulted": "El borrador fracasó",
+    "previously_generated_drafts": "Borradores generados anteriormente"
+  },
   "draft_preview_books": {
     "add_to_project": "Añadir al proyecto",
     "add_to_different_project": "Añadir a un proyecto diferente",
@@ -307,6 +327,17 @@
     "target_language_data": "Datos de idioma de destino",
     "training_language_model": "Entrenamiento del modelo de idioma",
     "unknown_language_code": "desconocido"
+  },
+  "draft_usfm_format": {
+    "changes_have_been_saved": "Se han guardado los cambios",
+    "back": "Atrás",
+    "connect_to_the_internet": "Conéctate a Internet para cambiar el formato USFM de tu borrador",
+    "failed_to_save": "No se han podido guardar los cambios. Vuelva a intentarlo más tarde.",
+    "paragraph_marker_description": "Conservar los párrafos de la fuente de traducción",
+    "preserve_paragraphs": "Conservar los marcadores de párrafo",
+    "save_changes": "Guardar respuesta",
+    "usfm_format_title": "Formato USFM para borradores",
+    "usfm_format_description": "Seleccione el formato USFM que desea aplicar a su proyecto"
   },
   "editor": {
     "add_comment": "Añadir comentario",
@@ -394,6 +425,8 @@
     "please_connect": "Por favor, conéctese a Internet para restaurar esta versión.",
     "revert": "Restaurar esta versión",
     "revert_details": "Restaurar esta versión anterior del capítulo",
+    "revert_disabled": "No se puede restaurar esta versión",
+    "revert_disabled_details": "Esta versión no se puede restaurar porque tiene un formato no válido o marcadores no compatibles",
     "revert_error": "Ocurrió un error al intentar restaurar la versión de texto anterior. Por favor, inténtalo de nuevo más tarde.",
     "revert_successful": "Versión anterior restaurada con éxito",
     "show_changes": "Mostrar cambios",
@@ -463,6 +496,29 @@
     "source_and_target_projects_all_have_language_code": "Los proyectos de origen y destino tienen el código de idioma [b]{{ languageCode }}[/b]. Si está traduciendo a un dialecto o idioma relacionado que no tiene un código ISO separado, estos ajustes pueden ser correctos. Para el resto de proyectos, tener los proyectos de origen y destino configurados en el mismo idioma puede reducir significativamente la calidad del borrador.",
     "sources_in_following_languages": "Actualmente, los proyectos fuente están en los siguientes idiomas:",
     "sources_must_be_same_language": "La fuente de formación debe estar en el mismo idioma que la fuente de redacción. Puede actualizar los textos fuente en la página [link:projectSettingsUrl]settings[/link]"
+  },
+  "lynx_insights_overlay": {
+    "multi_insight_header_select_for_details": "Seleccione para más detalles",
+    "tooltip_actions": "Acciones",
+    "tooltip_dismiss": "Descartar",
+    "tooltip_more_info": "Más información"
+  },
+  "lynx_insights_panel": {
+    "restore": "Restaurar"
+  },
+  "lynx_insights_panel_header": {
+    "insights": "Insights",
+    "filter_menu_filter_header": "Mostrar",
+    "filter_menu_filter_info": "Avisos",
+    "filter_menu_filter_warning": "Avisos",
+    "filter_menu_filter_error": "Errores",
+    "filter_menu_filter_dismissed": "Despedido",
+    "filter_menu_sort_header": "Ordenar por",
+    "filter_menu_sort_severity": "Severidad",
+    "filter_menu_sort_appearance": "Aparición en el texto",
+    "scope_chapter": "Capítulo",
+    "scope_book": "Libro",
+    "scope_project": "Proyecto"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} otros observadores"
