@@ -107,7 +107,7 @@ describe('DraftHistoryEntryComponent', () => {
 
       // SUT
       component.entry = entry;
-      component.isLatestDraft = true;
+      component.isLatestBuild = true;
       tick();
       fixture.detectChanges();
 
@@ -140,7 +140,7 @@ describe('DraftHistoryEntryComponent', () => {
 
       // SUT
       component.entry = entry;
-      component.isLatestDraft = true;
+      component.isLatestBuild = true;
       tick();
       fixture.detectChanges();
 
@@ -180,7 +180,7 @@ describe('DraftHistoryEntryComponent', () => {
 
       // SUT
       component.entry = entry;
-      component.isLatestDraft = true;
+      component.isLatestBuild = true;
       tick();
       fixture.detectChanges();
 
@@ -196,7 +196,7 @@ describe('DraftHistoryEntryComponent', () => {
     it('should handle builds with incomplete additional info', () => {
       const entry = { additionalInfo: {} } as BuildDto;
       component.entry = entry;
-      component.isLatestDraft = true;
+      component.isLatestBuild = true;
       expect(component.bookNames).toEqual([]);
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedByDate).toBe('');
