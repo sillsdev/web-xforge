@@ -189,6 +189,7 @@
     "draft_queued_detail_multiple": "La génération de l'ébauche de traduction est numéro {{ count }} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_detail": "La génération de l'ébauche de traduction est numéro {} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_header": "Ébauche en attente",
+    "format_usfm": "Format USFM",
     "generate_back_translation_drafts_header": "Générer des ébauches de rétro-traduction",
     "generate_draft_button": "Générer une ébauche",
     "generate_forward_translation_drafts_header": "Générer des brouillons de traduction",
@@ -261,6 +262,25 @@
     "use_echo_warning": "En activant cette option, vous ferez écho à votre texte source au lieu de le traduire.",
     "use_echo": "Utiliser le moteur de traduction d'Echo"
   },
+  "draft_history_entry": {
+    "click_book_to_preview": "Cliquez sur un livre ci-dessous pour prévisualiser l'ébauche et l'ajouter à votre projet.",
+    "download_zip": "Télécharger l'ébauche en tant que fichier ZIP",
+    "draft_active": "En cours",
+    "draft_canceled": "Annulée",
+    "draft_completed": "Achevé",
+    "draft_faulted": "Échoué",
+    "draft_pending": "En attente",
+    "draft_unknown": "Inconnu",
+    "hide_model_training_configuration": "Masquer la configuration de l'apprentissage du modèle",
+    "show_model_training_configuration": "Afficher la configuration de l'entraînement au modèle",
+    "training_model_description": "Le modèle de langue a été formé sur cette configuration"
+  },
+  "draft_history_list": {
+    "draft_canceled": "L'ébauche a été annulée",
+    "draft_completed": "Votre ébauche est prête",
+    "draft_faulted": "L'ébauche a échoué",
+    "previously_generated_drafts": "Ébauches générées précédemment"
+  },
   "draft_preview_books": {
     "add_to_project": "Ajouter au Projet",
     "add_to_different_project": "Ajouter à un autre projet",
@@ -307,6 +327,17 @@
     "target_language_data": "Données sur la langue cible",
     "training_language_model": "Formation du modèle de langue",
     "unknown_language_code": "inconnu"
+  },
+  "draft_usfm_format": {
+    "changes_have_been_saved": "Les modifications ont été enregistrées",
+    "back": "Retour",
+    "connect_to_the_internet": "Veuillez vous connecter à internet pour modifier le format USFM de votre ébauche",
+    "failed_to_save": "Impossible d'enregistrer les modifications. Réessayez plus tard.",
+    "paragraph_marker_description": "Conserver les paragraphes de la source de traduction",
+    "preserve_paragraphs": "Conserver les marqueurs de paragraphe",
+    "save_changes": "Envoyer la réponse",
+    "usfm_format_title": "Formater les ébauches USFM",
+    "usfm_format_description": "Sélectionnez le format USFM à appliquer à votre ébauche"
   },
   "editor": {
     "add_comment": "Ajouter un commentaire",
@@ -394,6 +425,8 @@
     "please_connect": "Veuillez vous connecter à internet pour restaurer cette version.",
     "revert": "Restaurer cette version",
     "revert_details": "Restaurer cette version précédente du chapitre",
+    "revert_disabled": "Impossible de restaurer cette version",
+    "revert_disabled_details": "Cette version ne peut pas être restaurée car elle a un formatage invalide ou des marqueurs non pris en charge",
     "revert_error": "Une erreur s'est produite lors de la restauration de la version précédente du texte. Veuillez réessayer plus tard.",
     "revert_successful": "Restauration réussie de la version précédente",
     "show_changes": "Afficher les modifications",
@@ -463,6 +496,29 @@
     "source_and_target_projects_all_have_language_code": "Les projets source et cible ont tous le code de langue [b]{{ languageCode }}[/b] . Si vous traduisez dans un dialecte ou une langue connexe qui n'a pas de code ISO séparé, ces paramètres peuvent être corrects. Pour tous les autres projets, le fait d'avoir les projets source et cible fixés dans la même langue peut considérablement réduire la qualité du brouillon.",
     "sources_in_following_languages": "Actuellement, les projets sources sont dans les langues suivantes :",
     "sources_must_be_same_language": "La source de formation doit être dans la même langue que la source de rédaction. Vous pouvez mettre à jour vos textes sources sur la [link:projectSettingsUrl]page des paramètres[/link]"
+  },
+  "lynx_insights_overlay": {
+    "multi_insight_header_select_for_details": "Sélectionner pour plus de détails",
+    "tooltip_actions": "Actions",
+    "tooltip_dismiss": "Ignorer",
+    "tooltip_more_info": "Plus d'informations"
+  },
+  "lynx_insights_panel": {
+    "restore": "Restaurer"
+  },
+  "lynx_insights_panel_header": {
+    "insights": "Aperçus",
+    "filter_menu_filter_header": "Afficher",
+    "filter_menu_filter_info": "Notes",
+    "filter_menu_filter_warning": "Avertissements",
+    "filter_menu_filter_error": "Erreurs",
+    "filter_menu_filter_dismissed": "Ignorer",
+    "filter_menu_sort_header": "Trier par",
+    "filter_menu_sort_severity": "Sévérité",
+    "filter_menu_sort_appearance": "Apparence dans le texte",
+    "scope_chapter": "Chapitre",
+    "scope_book": "Livre",
+    "scope_project": "Projet"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} autres observateurs"

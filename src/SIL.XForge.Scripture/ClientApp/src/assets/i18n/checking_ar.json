@@ -434,6 +434,7 @@
     "link_copied": "تم نسخ الرابط إلى الحافظة",
     "link_sharing": "Links can also be shared to users without an email address via social media platforms.",
     "not_inviting_already_member": "لا تدعو، فالمُستخدِم عضو في المشروع",
+    "not_inviting_email_invalid": "Not inviting: Invalid email address",
     "resend": "إعادة إرسال",
     "send_a_link": "Send a link",
     "select_invitation_language": "حدِّد لغة الرسالة الإلكترونية للدعوة",

@@ -434,6 +434,7 @@
     "link_copied": "Linkul a fost copiat in memorie",
     "link_sharing": "Links can also be shared to users without an email address via social media platforms.",
     "not_inviting_already_member": "Invitația nu a fost trimisă: Utilizatorul este deja membru al acestui proiect",
+    "not_inviting_email_invalid": "Not inviting: Invalid email address",
     "resend": "Retrimitere",
     "send_a_link": "Send a link",
     "select_invitation_language": "Selectați o limbă pentru mesajul de invitație",

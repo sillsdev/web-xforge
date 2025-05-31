@@ -434,6 +434,7 @@
     "link_copied": "Lien copié dans le presse-papiers",
     "link_sharing": "Les liens peuvent également être partagés aux utilisateurs sans adresse e-mail via des plateformes de réseaux sociaux.",
     "not_inviting_already_member": "Pas d'invitation : L'utilisateur est déjà membre de ce projet",
+    "not_inviting_email_invalid": "Pas d'invitation: Adresse électronique non valide",
     "resend": "Renvoyer",
     "send_a_link": "Envoyez un lien",
     "select_invitation_language": "Sélectionnez une langue pour l'e-mail d'invitation",

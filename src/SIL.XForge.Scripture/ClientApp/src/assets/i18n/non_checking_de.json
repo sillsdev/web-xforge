@@ -189,6 +189,7 @@
     "draft_queued_detail_multiple": "Das Generieren des Übersetzungsentwurf ist die Nummer {{ count }} in der Warteschlange und wird beginnen, sobald der Server mit anderen Projekten fertig ist. Bitte überprüfe später erneut.",
     "draft_queued_detail": "Das Generieren des Übersetzungsentwurfs wurde in die Warteschlange eingereiht und wird beginnen, sobald der Server mit einem anderen Projekt fertig ist. Bitte schaue später wieder vorbei.",
     "draft_queued_header": "Entwurf in Warteschlange",
+    "format_usfm": "Format USFM",
     "generate_back_translation_drafts_header": "Rückübersetzungsentwurf generieren",
     "generate_draft_button": "Entwurf generieren",
     "generate_forward_translation_drafts_header": "Übersetzungsentwurf generieren",
@@ -261,6 +262,25 @@
     "use_echo_warning": "Wenn Du dies aktivierst, wird Dein Quelltext wiedergeben, anstatt ihn zu übersetzen.",
     "use_echo": "Die Funktion Übersetzung Wiedergeben verwenden"
   },
+  "draft_history_entry": {
+    "click_book_to_preview": "Klicke auf ein Buch unten, um eine Vorschau des Entwurfs zu erstellen und es Deinem Projekt hinzuzufügen.",
+    "download_zip": "Download draft as ZIP file",
+    "draft_active": "Running",
+    "draft_canceled": "Canceled",
+    "draft_completed": "Completed",
+    "draft_faulted": "Fehlgeschlagen",
+    "draft_pending": "Pending",
+    "draft_unknown": "Unbekannt",
+    "hide_model_training_configuration": "Hide model training configuration",
+    "show_model_training_configuration": "Show model training configuration",
+    "training_model_description": "The language model was trained on this configuration"
+  },
+  "draft_history_list": {
+    "draft_canceled": "The draft was canceled",
+    "draft_completed": "The draft is ready",
+    "draft_faulted": "The draft failed",
+    "previously_generated_drafts": "Previously generated drafts"
+  },
   "draft_preview_books": {
     "add_to_project": "Zum Projekt hinzufügen",
     "add_to_different_project": "Einem anderen Projekt hinzufügen",
@@ -307,6 +327,17 @@
     "target_language_data": "Daten in der Zielsprache",
     "training_language_model": "Sprachmodell schulen",
     "unknown_language_code": "unbekannt"
+  },
+  "draft_usfm_format": {
+    "changes_have_been_saved": "Changes have been saved",
+    "back": "Zurück",
+    "connect_to_the_internet": "Please connect to the internet to change the USFM format for your draft",
+    "failed_to_save": "Failed to save changes. Try again later.",
+    "paragraph_marker_description": "Keep paragraphs from the translation source",
+    "preserve_paragraphs": "Preserve paragraph markers",
+    "save_changes": "Speichern",
+    "usfm_format_title": "Format USFM for drafts",
+    "usfm_format_description": "Select the USFM format to apply to your draft"
   },
   "editor": {
     "add_comment": "Kommentar hinzufügen",
@@ -394,6 +425,8 @@
     "please_connect": "Bitte verbinde Dich mit dem Internet, um diese Version wiederherzustellen.",
     "revert": "Diese Version wiederherstellen",
     "revert_details": "Diese vorherige Version des Kapitels wiederherstellen",
+    "revert_disabled": "Cannot restore this version",
+    "revert_disabled_details": "This version cannot be restored because it has invalid formatting or unsupported markers",
     "revert_error": "Fehler beim Versuch, die vorherigen Textversion wiederherzustellen. Bitte versuche es später noch einmal.",
     "revert_successful": "Vorherige Version erfolgreich wiederhergestellt",
     "show_changes": "Änderungen anzeigen",
@@ -463,6 +496,29 @@
     "source_and_target_projects_all_have_language_code": "Die Ausgangs- und Zielprojekte haben alle den Sprachcode [b]{{ languageCode }}[/b]. Wenn Du in einen Dialekt oder eine verwandte Sprache übersetzest, die keinen eigenen ISO-Code hat, sind diese Einstellungen möglicherweise richtig. Bei allen anderen Projekten kann es die Qualität des Entwurfs erheblich beeinträchtigen, wenn Ausgangs- und Zielprojekt auf dieselbe Sprache eingestellt sind.",
     "sources_in_following_languages": "Derzeit liegen die Ausgangsprojekte in den folgenden Sprachen vor:",
     "sources_must_be_same_language": "Der Ausgangstext für die Schulung muss in dieselbe Sprache wie die des Entwurfs sein. Du kannst Deinen Ausgangstext auf der Seite [link:projectSettingsUrl]settings[/link] aktualisieren"
+  },
+  "lynx_insights_overlay": {
+    "multi_insight_header_select_for_details": "Select for details",
+    "tooltip_actions": "Funktionen",
+    "tooltip_dismiss": "Verwerfen",
+    "tooltip_more_info": "More info"
+  },
+  "lynx_insights_panel": {
+    "restore": "Wiederherstellen"
+  },
+  "lynx_insights_panel_header": {
+    "insights": "Insights",
+    "filter_menu_filter_header": "Anzeigen",
+    "filter_menu_filter_info": "Notices",
+    "filter_menu_filter_warning": "Warnings",
+    "filter_menu_filter_error": "Errors",
+    "filter_menu_filter_dismissed": "Dismissed",
+    "filter_menu_sort_header": "Order by",
+    "filter_menu_sort_severity": "Severity",
+    "filter_menu_sort_appearance": "Appearance in text",
+    "scope_chapter": "Chapter",
+    "scope_book": "Buch",
+    "scope_project": "Projekt"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} andere Betrachter"

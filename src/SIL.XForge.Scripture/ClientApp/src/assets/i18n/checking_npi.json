@@ -434,6 +434,7 @@
     "link_copied": "लिंकलाई क्लिपबोर्डमा कपि गरियो",
     "link_sharing": "Links can also be shared to users without an email address via social media platforms.",
     "not_inviting_already_member": "आमन्त्रण छैन: उक्त प्रयोगकर्ता यस प्रोजेक्‍टको पहिले नै सदस्य हुनुहुन्छ‍",
+    "not_inviting_email_invalid": "Not inviting: Invalid email address",
     "resend": "फेरि पठाउनुहोस्",
     "send_a_link": "लिङ्क पठाउनुहोस्",
     "select_invitation_language": "निमन्त्रणा इमेलको लागि भाषा चयन गर्नुहोस्",
