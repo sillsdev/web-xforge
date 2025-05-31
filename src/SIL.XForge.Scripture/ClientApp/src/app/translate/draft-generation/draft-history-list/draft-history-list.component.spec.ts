@@ -8,6 +8,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
@@ -17,6 +18,7 @@ import { DraftHistoryListComponent } from './draft-history-list.component';
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedI18nService = mock(I18nService);
+const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
@@ -27,6 +29,7 @@ describe('DraftHistoryListComponent', () => {
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: I18nService, useMock: mockedI18nService },
+      { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService }
     ]
