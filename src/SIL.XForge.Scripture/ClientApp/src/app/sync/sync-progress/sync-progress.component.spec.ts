@@ -243,14 +243,14 @@ class TestEnvironment {
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 1);
     }, false);
-    this.host.syncProgress.updateProgressState(projectId, new ProgressState(percentCompleted));
+    this.host.syncProgress['updateProgressState'](projectId, new ProgressState(percentCompleted));
     tick();
     this.fixture.detectChanges();
     tick();
   }
 
   emitSyncComplete(successful: boolean, projectId: string): void {
-    this.host.syncProgress.updateProgressState(projectId, new ProgressState(1));
+    this.host.syncProgress['updateProgressState'](projectId, new ProgressState(1));
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);
