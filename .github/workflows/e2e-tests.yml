@@ -1,0 +1,490 @@
+name: E2E Tests
+permissions: {}
+
+on:
+  # pull_request:
+  # merge_group:
+  workflow_dispatch:
+  schedule:
+    # Run an hour before release-qa.yml
+    # For now this is just to determine how reliable this workflow is.
+    - cron: "30 0 * * 0-1,3-6"
+
+jobs:
+  prepare-realtimeserver-backend:
+    name: "Prepare Realtime Server backend"
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04"]
+        dotnet_version: ["8.0.x"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: "Cache realtimeserver backend"
+        id: cache-realtimeserver-backend
+        uses: actions/cache@v4
+        with:
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          path: |
+            src/RealtimeServer/lib
+            src/RealtimeServer/node_modules
+      - name: "Deps: Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: |
+            src/RealtimeServer/package-lock.json
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which node
+          node --version
+          which npm
+          npm --version
+      - name: "Ensure desired tool versions"
+        # The build machine may come with newer tools than we are ready for.
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+      - name: "Deps: RealtimeServer npm"
+        run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
+      - name: "Build: RealtimeServer"
+        run: cd src/RealtimeServer  && npm run build
+
+  prepare-frontend:
+    name: "Prepare frontend "
+    needs: [prepare-realtimeserver-backend]
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04"]
+        dotnet_version: ["8.0.x"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: "Cache frontend"
+        id: cache-frontend
+        uses: actions/cache@v4
+        with:
+          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
+          path: |
+            src/SIL.XForge.Scripture/ClientApp/dist
+            src/SIL.XForge.Scripture/ClientApp/.angular/cache
+            src/SIL.XForge.Scripture/ClientApp/node_modules
+      - name: "Restore cached backend realtimeserver"
+        id: cache-restore-realtimeserver
+        uses: actions/cache/restore@v4
+        with:
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
+          path: |
+            src/RealtimeServer/lib
+            src/RealtimeServer/node_modules
+      - name: "Deps: Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which node
+          node --version
+          which npm
+          npm --version
+      - name: "Ensure desired tool versions"
+        # The build machine may come with newer tools than we are ready for.
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+      - name: "Deps: Frontend npm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
+      - name: "Build: Frontend"
+        if: steps.cache-frontend.outputs.cache-hit != 'true'
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+
+  prepare-dotnet-backend:
+    name: "Prepare dotnet backend"
+    needs: [prepare-realtimeserver-backend]
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04"]
+        dotnet_version: ["8.0.x"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: "Generate dotnet backend source hash"
+        id: dotnet-backend-source-hash
+        run: |
+          set -xueo pipefail
+          # Generate a hash of all the files in the repo, except for frontend.
+          # This is useful lieu of being able to give exclusions to the hashFiles() function.
+          # We include Realtime Server since it is included in the dotnet backend
+          # build product.
+          echo "hash=$(find -type f -not -path './.git/*' -and \
+            -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
+            xargs -0 sha256sum |
+            sort |
+            sha512sum |
+            cut --delimiter ' ' --fields 1)" >> $GITHUB_OUTPUT
+      - name: "Cache backend"
+        id: cache-backend
+        uses: actions/cache@v4
+        with:
+          key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}
+          path: |
+            ./src/SIL.Converters.Usj/obj
+            ./src/SIL.Converters.Usj/bin
+            ./src/SIL.XForge/obj
+            ./src/SIL.XForge/bin
+            ./src/Help/UpdateHelp/obj
+            ./src/Help/UpdateHelp/bin
+            ./src/SIL.XForge.Scripture/obj
+            ./src/SIL.XForge.Scripture/bin
+            ./src/Docker/obj
+            ./src/Docker/bin
+            ./test/SIL.XForge.Tests/obj
+            ./test/SIL.XForge.Tests/bin
+            ./test/SIL.Converters.Usj.Tests/obj
+            ./test/SIL.Converters.Usj.Tests/bin
+            ./test/SIL.XForge.Scripture.Tests/obj
+            ./test/SIL.XForge.Scripture.Tests/bin
+            ~/.nuget
+      - name: "Restore cached backend realtimeserver"
+        id: cache-restore-realtimeserver
+        uses: actions/cache/restore@v4
+        with:
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
+          path: |
+            src/RealtimeServer/lib
+            src/RealtimeServer/node_modules
+      - name: "Deps: .NET"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{matrix.dotnet_version}}
+          cache: true
+          cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
+      - name: "Deps: Backend nuget"
+        run: dotnet restore
+      - name: "Build: dotnet Backend"
+        if: steps.cache-backend.outputs.cache-hit != 'true'
+        run: dotnet build xForge.sln
+
+  prepare-e2e:
+    name: "Prepare E2E"
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04"]
+        dotnet_version: ["8.0.x"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: "Deps: Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
+      - name: "Ensure desired tool versions"
+        # The build machine may come with newer tools than we are ready for.
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+
+      - name: "Generate year-month stamp"
+        id: year-month-stamp
+        run: |
+          set -xueo pipefail
+          echo "year_month_stamp=$(date +%Y-%m)" >> $GITHUB_OUTPUT
+      - name: "Cache Playwright browsers"
+        id: cache-playwright-browsers
+        uses: actions/cache@v4
+        with:
+          key: playwright-browsers-${{ runner.os }}-${{ steps.year-month-stamp.outputs.year_month_stamp }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+          path: |
+            ~/.cache/ms-playwright
+      - name: Playwright install browsers
+        run: |
+          set -xueo pipefail
+          cd src/SIL.XForge.Scripture/ClientApp/e2e
+          npx playwright install
+
+  run_e2e_tests:
+    name: "Run E2E tests"
+    needs: [prepare-realtimeserver-backend, prepare-frontend, prepare-dotnet-backend, prepare-e2e]
+    environment: "e2e_tests"
+    strategy:
+      matrix:
+        os: ["ubuntu-22.04"]
+        dotnet_version: ["8.0.x"]
+        node_version: ["22.13.0"]
+        npm_version: ["10.9.2"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: "Generate dotnet backend source hash"
+        id: dotnet-backend-source-hash
+        run: |
+          set -xueo pipefail
+          # Generate a hash of all the files in the repo, except for frontend.
+          # This is useful lieu of being able to give exclusions to the hashFiles() function.
+          # We include Realtime Server since it is included in the dotnet backend
+          # build product.
+          echo "hash=$(find -type f -not -path './.git/*' -and \
+            -not -path './src/SIL.XForge.Scripture/ClientApp/*' -print0 |
+            xargs -0 sha256sum |
+            sort |
+            sha512sum |
+            cut --delimiter ' ' --fields 1)" >> $GITHUB_OUTPUT
+
+      - name: "Restore cached backend realtimeserver"
+        id: cache-restore-realtimeserver
+        uses: actions/cache/restore@v4
+        with:
+          key: realtimeserver-backend-${{ runner.os }}-${{ hashFiles('src/RealtimeServer/**') }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
+          path: |
+            src/RealtimeServer/lib
+            src/RealtimeServer/node_modules
+
+      - name: "Restore cached frontend"
+        id: cache-restore-frontend
+        uses: actions/cache/restore@v4
+        with:
+          key: frontend-${{ runner.os }}-${{ hashFiles('src/SIL.XForge.Scripture/ClientApp/**') }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
+          path: |
+            src/SIL.XForge.Scripture/ClientApp/dist
+            src/SIL.XForge.Scripture/ClientApp/.angular/cache
+            src/SIL.XForge.Scripture/ClientApp/node_modules
+
+      - name: "Restore cached backend dotnet"
+        id: cache-restore-dotnet
+        uses: actions/cache/restore@v4
+        with:
+          key: backend-${{ runner.os }}-${{ steps.dotnet-backend-source-hash.outputs.hash }}
+          # (Cache miss here means a mistake in workflow design.)
+          fail-on-cache-miss: true
+          path: |
+            ./src/SIL.Converters.Usj/obj
+            ./src/SIL.Converters.Usj/bin
+            ./src/SIL.XForge/obj
+            ./src/SIL.XForge/bin
+            ./src/Help/UpdateHelp/obj
+            ./src/Help/UpdateHelp/bin
+            ./src/SIL.XForge.Scripture/obj
+            ./src/SIL.XForge.Scripture/bin
+            ./src/Docker/obj
+            ./src/Docker/bin
+            ./test/SIL.XForge.Tests/obj
+            ./test/SIL.XForge.Tests/bin
+            ./test/SIL.Converters.Usj.Tests/obj
+            ./test/SIL.Converters.Usj.Tests/bin
+            ./test/SIL.XForge.Scripture.Tests/obj
+            ./test/SIL.XForge.Scripture.Tests/bin
+            ~/.nuget
+
+      - name: "Generate year-month stamp"
+        id: year-month-stamp
+        run: |
+          set -xueo pipefail
+          echo "year_month_stamp=$(date +%Y-%m)" >> $GITHUB_OUTPUT
+      - name: "Restore cache e2e dependencies"
+        id: cache-restore-e2e-dependencies
+        uses: actions/cache/restore@v4
+        with:
+          key: playwright-browsers-${{ runner.os }}-${{ steps.year-month-stamp.outputs.year_month_stamp }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+          # (Cache miss here means a mistake in workflow design, or a month-boundary problem.)
+          fail-on-cache-miss: true
+          path: |
+            ~/.cache/ms-playwright
+
+      - name: "Deps: .NET"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{matrix.dotnet_version}}
+          cache: true
+          cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
+
+      - name: "Deps: Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "npm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/package-lock.json
+            src/RealtimeServer/package-lock.json
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
+          which node
+          node --version
+          which npm
+          npm --version
+      - name: "Ensure desired tool versions"
+        # The build machine may come with newer tools than we are ready for.
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+
+      - name: "Deps: Running SF"
+        run: |
+          set -xueo pipefail
+
+          # Helper method to avoid failing from a network hiccup during provision
+          function tryharderto() {
+            i=0
+            until "$@"; do
+              ((++i <= 3))
+              echo >&2 "Retrying ${i}"
+              sleep 2m
+            done
+          }
+
+          tryharderto sudo add-apt-repository --yes --update ppa:ansible/ansible
+          tryharderto sudo apt-get install --assume-yes ansible
+          cd deploy
+          ansible-playbook dev-server.playbook.yml --limit localhost --diff
+
+      - name: "Configure secrets"
+        env:
+          PARATEXT_CLIENT_ID: ${{ secrets.PARATEXT_CLIENT_ID }}
+          PARATEXT_CLIENT_SECRET: ${{ secrets.PARATEXT_CLIENT_SECRET }}
+          AUTH0_BACKEND_CLIENT_SECRET: ${{ secrets.AUTH0_BACKEND_CLIENT_SECRET }}
+          PARATEXT_RESOURCE_PASSWORD_HASH: ${{ secrets.PARATEXT_RESOURCE_PASSWORD_HASH }}
+          PARATEXT_RESOURCE_PASSWORD_BASE64: ${{ secrets.PARATEXT_RESOURCE_PASSWORD_BASE64 }}
+          SERVAL_CLIENT_ID: ${{ secrets.SERVAL_CLIENT_ID }}
+          SERVAL_CLIENT_SECRET: ${{ secrets.SERVAL_CLIENT_SECRET }}
+          E2E_SECRETS_JSON_BASE64: ${{ secrets.E2E_SECRETS_JSON_BASE64 }}
+        run: |
+          set -xueo pipefail
+          cd src/SIL.XForge.Scripture/
+          dotnet user-secrets set "Paratext:ClientId" "${PARATEXT_CLIENT_ID}"
+          dotnet user-secrets set "Paratext:ClientSecret" "${PARATEXT_CLIENT_SECRET}"
+          dotnet user-secrets set "Auth:BackendClientSecret" "${AUTH0_BACKEND_CLIENT_SECRET}"
+          dotnet user-secrets set "Paratext:ResourcePasswordHash" "${PARATEXT_RESOURCE_PASSWORD_HASH}"
+          dotnet user-secrets set "Paratext:ResourcePasswordBase64" "${PARATEXT_RESOURCE_PASSWORD_BASE64}"
+          dotnet user-secrets set "Serval:ClientId" "${SERVAL_CLIENT_ID}"
+          dotnet user-secrets set "Serval:ClientSecret" "${SERVAL_CLIENT_SECRET}"
+          base64 --decode - <<< "${E2E_SECRETS_JSON_BASE64}" > ./ClientApp/e2e/secrets.json
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@909cc5acb0fdd60627fb858598759246509fa755 # v2.0.2
+        with:
+          deno-version: v2.x
+      - name: Playwright install browsers and package dependencies
+        run: |
+          set -xueo pipefail
+          cd src/SIL.XForge.Scripture/ClientApp/e2e
+          sudo npx playwright install-deps
+          npx playwright install
+
+      - name: Run E2E tests
+        env:
+          HG_PATH: /usr/bin/hg
+        run: ./src/SIL.XForge.Scripture/ClientApp/e2e/pre_merge_ci.sh
+
+      - name: Publish test results
+        uses: actions/upload-artifact@v4
+        # Run this step even if the job fails.
+        if: always()
+        with:
+          name: e2e-test-results
+          path: ./src/SIL.XForge.Scripture/ClientApp/e2e/test_output/ci_e2e_test_results/*.zip
+          # Don't fail if no zip files are found
+          if-no-files-found: ignore
