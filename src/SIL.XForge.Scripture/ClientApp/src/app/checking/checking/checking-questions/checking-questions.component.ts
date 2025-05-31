@@ -166,7 +166,8 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     // Handle changes to questionDocs in ngOnChanges instead of setter to ensure other @Inputs are set
     // when 'activateStoredQuestion' is called, such as 'routeBookChapter'.
     const questionDocs: Readonly<QuestionDoc[] | undefined> = changes.questionDocs?.currentValue;
-    if (questionDocs != null) {
+    if (questionDocs != null && this.activeQuestionDoc == null) {
+      // Only activate the stored question if no previous question was selected
       if (questionDocs.length > 0) {
         this.activateStoredQuestion({ isQuestionListChange: true });
       } else {

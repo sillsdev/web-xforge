@@ -374,6 +374,7 @@ describe('CheckingComponent', () => {
       env.setBookChapter('JHN', 2);
       expect(env.getQuestionText(question)).toBe('John 2');
       expect(await env.getCurrentBookAndChapter()).toBe('John 2');
+      env.waitForQuestionTimersToComplete();
     }));
 
     it('start question respects route book/chapter', fakeAsync(async () => {
@@ -569,8 +570,7 @@ describe('CheckingComponent', () => {
       expect(env.isSegmentHighlighted(1, 5)).toBe(true);
       expect(env.segmentHasQuestion(1, 5)).toBe(true);
       expect(env.component.questionVerseRefs.some(verseRef => verseRef.equals(new VerseRef('JHN 1:5')))).toBe(true);
-      tick();
-      flush();
+      env.waitForQuestionTimersToComplete();
     }));
 
     it('records audio for question when button clicked', fakeAsync(() => {
@@ -851,6 +851,38 @@ describe('CheckingComponent', () => {
       env.waitForQuestionTimersToComplete();
     }));
 
+    it('resets filter after a user changes chapter', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'chapter'
+      });
+      expect(env.questions.length).toEqual(14);
+      env.setQuestionScope('all');
+      env.setBookChapter('JHN', 2);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.activeQuestionScope).toEqual('all');
+      env.waitForQuestionTimersToComplete();
+    }));
+
+    it('resets filter after a user changes book', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'chapter'
+      });
+      expect(env.questions.length).toEqual(14);
+      env.setQuestionScope('all');
+      env.setBookChapter('MAT', 1);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.activeQuestionScope).toEqual('all');
+      env.waitForQuestionTimersToComplete();
+    }));
+
     it('can narrow questions scope', fakeAsync(() => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
@@ -921,7 +953,8 @@ describe('CheckingComponent', () => {
       env.waitForQuestionTimersToComplete();
 
       expect(spyUpdateQuestionRefs).toHaveBeenCalledTimes(1);
-      expect(spyRefreshSummary).toHaveBeenCalledTimes(1);
+      // Called at least once or more depending on if another question replaces the archived question
+      expect(spyRefreshSummary).toHaveBeenCalled();
     }));
   });
 
@@ -1913,8 +1946,9 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
+      verify(questionDoc!.updateAnswerFileCache()).times(1);
       env.simulateRemoteEditAnswer(0, 'Question 6 edited answer');
-      verify(questionDoc!.updateAnswerFileCache()).times(3);
+      verify(questionDoc!.updateAnswerFileCache()).times(2);
       expect().nothing();
       tick();
       flush();
@@ -1924,8 +1958,9 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
+      verify(questionDoc!.updateAnswerFileCache()).times(1);
       env.simulateRemoteDeleteAnswer('q6Id', 0);
-      verify(questionDoc!.updateAnswerFileCache()).times(3);
+      verify(questionDoc!.updateAnswerFileCache()).times(2);
       expect().nothing();
       tick();
       flush();
