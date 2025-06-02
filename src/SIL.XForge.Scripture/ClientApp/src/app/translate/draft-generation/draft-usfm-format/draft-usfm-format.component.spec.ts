@@ -1,11 +1,11 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
+import { MatRadioButtonHarness } from '@angular/material/radio/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftUsfmConfig, ParagraphBreakFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -62,21 +62,21 @@ describe('DraftUsfmFormatComponent', () => {
   }));
 
   it('shows message if user is not online', fakeAsync(async () => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd } });
     expect(env.offlineMessage).toBeNull();
 
     env.onlineStatusService.setIsOnline(false);
     tick();
     env.fixture.detectChanges();
     expect(env.offlineMessage).not.toBeNull();
-    expect(env.harnesses?.length).toEqual(1);
+    expect(env.harnesses?.length).toEqual(5);
     const isDisabled: boolean = await env.harnesses![0].isDisabled();
     expect(isDisabled).toBe(true);
   }));
 
   // Book and chapter changed
   it('navigates to a different book and chapter', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd } });
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
     expect(env.component.chapters.length).toEqual(1);
     expect(env.component.booksWithDrafts.length).toEqual(2);
@@ -93,19 +93,21 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).thrice();
   }));
 
+  it('should initialize with no paragraph format selected', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.component.usfmFormatForm.controls.paragraphFormat.value).toBeNull();
+  }));
+
   it('should show the currently selected format options', fakeAsync(() => {
-    const config: DraftUsfmConfig = {
-      preserveParagraphMarkers: true
-    };
-    const env = new TestEnvironment({ config });
-    expect(env.component.usfmFormatForm.controls.preserveParagraphs.value).toBe(true);
+    const env = new TestEnvironment({ config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd } });
+    expect(env.component.usfmFormatForm.controls.paragraphFormat.value).toBe(ParagraphBreakFormat.MoveToEnd);
   }));
 
   it('goes back if user chooses different configurations and then goes back', fakeAsync(async () => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd } });
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
-    expect(env.harnesses?.length).toEqual(1);
-    await env.harnesses![0].uncheck();
+    expect(env.harnesses?.length).toEqual(5);
+    await env.harnesses![0].check();
     tick();
     env.fixture.detectChanges();
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
@@ -119,14 +121,14 @@ describe('DraftUsfmFormatComponent', () => {
   }));
 
   it('should save changes to the draft format', fakeAsync(async () => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd } });
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).once();
-    expect(env.harnesses?.length).toEqual(1);
-    await env.harnesses![0].uncheck();
+    expect(env.harnesses?.length).toEqual(5);
+    await env.harnesses![0].check();
     tick();
     env.fixture.detectChanges();
     const config: DraftUsfmConfig = {
-      preserveParagraphMarkers: false
+      paragraphFormat: ParagraphBreakFormat.Remove
     };
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();
@@ -144,7 +146,7 @@ describe('DraftUsfmFormatComponent', () => {
 class TestEnvironment {
   component: DraftUsfmFormatComponent;
   fixture: ComponentFixture<DraftUsfmFormatComponent>;
-  harnesses?: MatCheckboxHarness[];
+  harnesses?: MatRadioButtonHarness[];
   readonly projectId = 'project01';
   onlineStatusService: TestOnlineStatusService;
 
@@ -167,7 +169,7 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(DraftUsfmFormatComponent);
     this.component = this.fixture.componentInstance;
     const loader = TestbedHarnessEnvironment.loader(this.fixture);
-    loader.getAllHarnesses(MatCheckboxHarness).then(harnesses => (this.harnesses = harnesses));
+    loader.getAllHarnesses(MatRadioButtonHarness).then(harnesses => (this.harnesses = harnesses));
     tick(EDITOR_READY_TIMEOUT);
     this.fixture.detectChanges();
   }
@@ -185,9 +187,6 @@ class TestEnvironment {
   }
 
   setupProject(config?: DraftUsfmConfig): void {
-    config ??= {
-      preserveParagraphMarkers: true
-    };
     const texts: TextInfo[] = [
       {
         bookNum: 1,

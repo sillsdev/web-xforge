@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftUsfmConfig, ParagraphBreakFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, first, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -58,11 +58,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   isInitializing: boolean = true;
 
   usfmFormatForm: FormGroup = new FormGroup({
-    preserveParagraphs: new FormControl()
+    paragraphFormat: new FormControl<ParagraphBreakFormat | null>(null)
   });
 
-  private updateDraftConfig$: Subject<DraftUsfmConfig> = new Subject<DraftUsfmConfig>();
-  private initialParagraphState?: boolean;
+  private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
+  private lastSavedParagraphState?: ParagraphBreakFormat;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -96,10 +96,13 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     return this.onlineStatusService.isOnline;
   }
 
-  private get currentUsfmFormatConfig(): DraftUsfmConfig {
-    return {
-      preserveParagraphMarkers: this.usfmFormatForm.controls.preserveParagraphs.value
-    };
+  private get currentParagraphFormat(): DraftUsfmConfig | undefined {
+    const paragraphFormat = this.usfmFormatForm.controls.paragraphFormat.value;
+    return paragraphFormat == null
+      ? undefined
+      : {
+          paragraphFormat: +paragraphFormat
+        };
   }
 
   ngAfterViewInit(): void {
@@ -157,14 +160,17 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   reloadText(): void {
     this.loadingStarted();
-    this.updateDraftConfig$.next(this.currentUsfmFormatConfig);
+    this.updateDraftConfig$.next(this.currentParagraphFormat);
   }
 
   async saveChanges(): Promise<void> {
     if (this.projectId == null || !this.isOnline) return;
 
     try {
-      await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentUsfmFormatConfig);
+      if (this.currentParagraphFormat != null) {
+        await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentParagraphFormat);
+      }
+      this.lastSavedParagraphState = this.currentParagraphFormat?.paragraphFormat;
       // not awaited so that the user is directed to the draft generation page
       this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId).then(() => {
         this.noticeService.show(translate('draft_usfm_format.changes_have_been_saved'));
@@ -175,7 +181,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   async confirmLeave(): Promise<boolean> {
-    if (this.initialParagraphState === this.currentUsfmFormatConfig.preserveParagraphMarkers) return true;
+    if (this.lastSavedParagraphState === this.currentParagraphFormat?.paragraphFormat) return true;
     return this.dialogService.confirm(
       this.i18n.translate('draft_sources.discard_changes_confirmation'),
       this.i18n.translate('draft_sources.leave_and_discard'),
@@ -184,14 +190,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   private setUsfmConfig(config?: DraftUsfmConfig): void {
-    config ??= {
-      preserveParagraphMarkers: true
-    };
-
     this.usfmFormatForm.setValue({
-      preserveParagraphs: config.preserveParagraphMarkers
+      paragraphFormat: config?.paragraphFormat.toString() ?? null
     });
-    this.initialParagraphState = config.preserveParagraphMarkers;
+    this.lastSavedParagraphState = config?.paragraphFormat;
 
     this.usfmFormatForm.valueChanges
       .pipe(

@@ -368,7 +368,7 @@ public class MachineApiController : ControllerBase
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. This cannot be zero.</param>
     /// <param name="timestamp">The timestamp to return the pre-translations at. If not set, this is the current date and time.</param>
-    /// <param name="preserveParagraphs">If <c>true</c>, configure the draft delta to preserve paragraph markers.</param>
+    /// <param name="paragraphFormat">If <c>true</c>, configure the draft delta to preserve paragraph markers.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
@@ -382,7 +382,7 @@ public class MachineApiController : ControllerBase
         int bookNum,
         int chapterNum,
         [FromQuery] DateTime? timestamp,
-        [FromQuery] bool? preserveParagraphs,
+        [FromQuery] int? paragraphFormat,
         CancellationToken cancellationToken
     )
     {
@@ -390,9 +390,9 @@ public class MachineApiController : ControllerBase
         {
             bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             DraftUsfmConfig? config = null;
-            if (preserveParagraphs != null)
+            if (paragraphFormat != null)
             {
-                config = new DraftUsfmConfig { PreserveParagraphMarkers = preserveParagraphs ?? true };
+                config = new DraftUsfmConfig { ParagraphFormat = (ParagraphBreakFormat)paragraphFormat };
             }
             Snapshot<TextData> delta = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,

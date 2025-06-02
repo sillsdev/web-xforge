@@ -311,14 +311,8 @@ export class SFProjectService extends ProjectService<SFProject> {
               usfmFormat: {
                 bsonType: 'object',
                 properties: {
-                  preserveParagraphMarkers: {
-                    bsonType: 'bool'
-                  },
-                  preserveStyleMarkers: {
-                    bsonType: 'bool'
-                  },
-                  preserveEmbedMarkers: {
-                    bsonType: 'bool'
+                  paragraphFormat: {
+                    bsonType: 'int'
                   }
                 },
                 additionalProperties: false
