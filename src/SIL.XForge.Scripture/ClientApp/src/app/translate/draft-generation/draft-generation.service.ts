@@ -221,7 +221,7 @@ export class DraftGenerationService {
       queryParams.push(`timestamp=${timestamp.toISOString()}`);
     }
     if (usfmConfig != null) {
-      queryParams.push(`preserveParagraphs=${usfmConfig.preserveParagraphMarkers}`);
+      queryParams.push(`paragraphFormat=${usfmConfig.paragraphFormat}`);
     }
     if (queryParams.length > 0) {
       url += `?${queryParams.join('&')}`;

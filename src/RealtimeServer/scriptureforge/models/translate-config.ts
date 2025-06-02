@@ -29,6 +29,12 @@ export enum TranslateShareLevel {
   Specific = 'specific'
 }
 
+export enum ParagraphBreakFormat {
+  Remove = 0,
+  BestGuess = 1,
+  MoveToEnd = 2
+}
+
 export interface BaseProject {
   paratextId: string;
   shortName: string;
@@ -43,7 +49,7 @@ export interface ProjectScriptureRange {
 }
 
 export interface DraftUsfmConfig {
-  preserveParagraphMarkers: boolean;
+  paragraphFormat: ParagraphBreakFormat;
 }
 
 export interface DraftConfig {
