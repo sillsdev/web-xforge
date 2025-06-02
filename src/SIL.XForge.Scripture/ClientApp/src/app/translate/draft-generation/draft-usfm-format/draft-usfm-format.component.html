@@ -7,38 +7,35 @@
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">
         <p>
-          Your draft has been translated. However, there are some formatting options that you can choose before using
-          your draft.
+          {{ t("draft_format_description") }}
         </p>
 
         <mat-card class="options">
-          <mat-card-header><mat-card-title>Mid-verse paragraph breaks</mat-card-title></mat-card-header>
+          <mat-card-header
+            ><mat-card-title>{{ t("paragraph_break_title") }}</mat-card-title></mat-card-header
+          >
           <mat-card-content class="format-options">
-            Scripture Forge translates each verse as a whole and can't always place paragraph breaks in the right place.
-            Choose how the paragraph breaks in source verses should appear in the draft.
-            <mat-for-field>
-              <mat-radio-group>
-                <mat-radio-button value="remove">
-                  Remove
-                  <span class="description">
-                    Mid-verse paragraph breaks in the source will be omitted in the draft.
-                  </span>
-                </mat-radio-button>
-                <mat-radio-button value="best-guess">
-                  Best guess
-                  <span class="description">
-                    Mid-verse paragraph breaks in the source will be placed at the best guess of where they should be in
-                    the draft.
-                  </span>
-                </mat-radio-button>
-                <mat-radio-button value="move-to-end">
-                  Move to end
-                  <span class="description">
-                    Mid-verse paragraph breaks in the source will be moved to the end of the verse in the draft.
-                  </span>
-                </mat-radio-button>
-              </mat-radio-group>
-            </mat-for-field>
+            {{ t("paragraph_break_description") }}
+            <mat-radio-group formControlName="paragraphFormat">
+              <mat-radio-button value="0">
+                {{ t("option_remove") }}
+                <span class="description">
+                  {{ t("option_remove_description") }}
+                </span>
+              </mat-radio-button>
+              <mat-radio-button value="1">
+                {{ t("option_best_guess") }}
+                <span class="description">
+                  {{ t("option_best_guess_description") }}
+                </span>
+              </mat-radio-button>
+              <mat-radio-button value="2">
+                {{ t("option_end") }}
+                <span class="description">
+                  {{ t("option_end_description") }}
+                </span>
+              </mat-radio-button>
+            </mat-radio-group>
           </mat-card-content>
         </mat-card>
 
@@ -49,20 +46,18 @@
           <mat-card-content class="format-options">
             Scripture Forge can't always preserve quotes from from the source text. Choose how quotes should appear in
             the draft.
-            <mat-for-field>
-              <mat-radio-group>
-                <mat-radio-button value="remove">
-                  Straight quotes: " "
-                  <span class="description"> Use only straight quotes in the draft. </span>
-                </mat-radio-button>
-                <mat-radio-button value="best-guess">
-                  Curly quotes: “ ”
-                  <span class="description">
-                    Attempt to use curly quotes, even though they may not always be correct.
-                  </span>
-                </mat-radio-button>
-              </mat-radio-group>
-            </mat-for-field>
+            <mat-radio-group>
+              <mat-radio-button value="remove">
+                Straight quotes: " "
+                <span class="description"> Use only straight quotes in the draft. </span>
+              </mat-radio-button>
+              <mat-radio-button value="best-guess">
+                Curly quotes: “ ”
+                <span class="description">
+                  Attempt to use curly quotes, even though they may not always be correct.
+                </span>
+              </mat-radio-button>
+            </mat-radio-group>
           </mat-card-content>
         </mat-card>
 
