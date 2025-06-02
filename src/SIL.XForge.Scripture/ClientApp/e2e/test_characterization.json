@@ -1,0 +1,22 @@
+{
+  "smoke_tests": {
+    "success": 12,
+    "failure": 0
+  },
+  "home_and_login": {
+    "success": 46,
+    "failure": 0
+  },
+  "generate_draft": {
+    "success": 52,
+    "failure": 6
+  },
+  "community_checking": {
+    "success": 13,
+    "failure": 0
+  },
+  "localized_screenshots": {
+    "success": 46,
+    "failure": 0
+  }
+}
