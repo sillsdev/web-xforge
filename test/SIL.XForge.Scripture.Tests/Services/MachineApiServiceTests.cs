@@ -1652,7 +1652,7 @@ public class MachineApiServiceTests
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
-        DraftUsfmConfig config = new DraftUsfmConfig { PreserveParagraphMarkers = false };
+        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
 
         // SUT
         Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
@@ -1675,7 +1675,7 @@ public class MachineApiServiceTests
                 Project01,
                 40,
                 1,
-                Arg.Is<DraftUsfmConfig>(d => d.PreserveParagraphMarkers == config.PreserveParagraphMarkers),
+                Arg.Is<DraftUsfmConfig>(d => d.ParagraphFormat == config.ParagraphFormat),
                 CancellationToken.None
             );
     }
@@ -1688,7 +1688,7 @@ public class MachineApiServiceTests
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
-        DraftUsfmConfig config = new DraftUsfmConfig { PreserveParagraphMarkers = false };
+        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
 
         // SUT
         Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
@@ -1711,7 +1711,7 @@ public class MachineApiServiceTests
                 Project01,
                 40,
                 1,
-                Arg.Is<DraftUsfmConfig>(d => d.PreserveParagraphMarkers == config.PreserveParagraphMarkers),
+                Arg.Is<DraftUsfmConfig>(d => d.ParagraphFormat == config.ParagraphFormat),
                 CancellationToken.None
             );
     }
@@ -1938,7 +1938,7 @@ public class MachineApiServiceTests
         env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
             .Returns(expected);
 
-        var config = new DraftUsfmConfig { PreserveParagraphMarkers = false };
+        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -1958,7 +1958,7 @@ public class MachineApiServiceTests
                 Project01,
                 40,
                 1,
-                Arg.Is<DraftUsfmConfig>(d => d.PreserveParagraphMarkers == config.PreserveParagraphMarkers),
+                Arg.Is<DraftUsfmConfig>(d => d.ParagraphFormat == config.ParagraphFormat),
                 CancellationToken.None
             );
     }
@@ -2030,7 +2030,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var config = new DraftUsfmConfig { PreserveParagraphMarkers = true };
+        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.MoveToEnd };
         env.PreTranslationService.GetPreTranslationUsfmAsync(
                 Project01,
                 40,
@@ -2234,7 +2234,7 @@ public class MachineApiServiceTests
         };
         // Add a default document snapshot
         env.TextDocuments.Add(new TextDocument(id, usj));
-        var config = new DraftUsfmConfig { PreserveParagraphMarkers = false };
+        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
@@ -2256,7 +2256,7 @@ public class MachineApiServiceTests
                 Project01,
                 40,
                 1,
-                Arg.Is<DraftUsfmConfig>(d => d.PreserveParagraphMarkers == config.PreserveParagraphMarkers),
+                Arg.Is<DraftUsfmConfig>(d => d.ParagraphFormat == config.ParagraphFormat),
                 CancellationToken.None
             );
     }
@@ -2399,7 +2399,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult(usfm));
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
         string expected = UsjToUsx.UsjToUsxString(TestUsj);
-        var config = new DraftUsfmConfig { PreserveParagraphMarkers = false };
+        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
 
         // SUT
         string actual = await env.Service.GetPreTranslationUsxAsync(
@@ -2419,7 +2419,7 @@ public class MachineApiServiceTests
                 Project01,
                 40,
                 1,
-                Arg.Is<DraftUsfmConfig>(d => d.PreserveParagraphMarkers == config.PreserveParagraphMarkers),
+                Arg.Is<DraftUsfmConfig>(d => d.ParagraphFormat == config.ParagraphFormat),
                 CancellationToken.None
             );
     }
@@ -3830,7 +3830,7 @@ public class MachineApiServiceTests
                             DraftConfig = new DraftConfig
                             {
                                 LastSelectedTranslationScriptureRange = "GEN",
-                                UsfmConfig = new DraftUsfmConfig { PreserveParagraphMarkers = true },
+                                UsfmConfig = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.MoveToEnd },
                             },
                         },
                         ParatextId = Paratext01,

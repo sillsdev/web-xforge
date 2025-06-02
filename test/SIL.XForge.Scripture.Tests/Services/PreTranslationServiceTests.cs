@@ -460,6 +460,75 @@ public class PreTranslationServiceTests
     }
 
     [Test]
+    public async Task GetPreTranslationUsfmAsync_ParagraphFormatSpecified()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
+        );
+
+        // SUT
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                PretranslationUsfmMarkerBehavior.Strip,
+                cancellationToken: CancellationToken.None
+            );
+
+        // SUT2
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.BestGuess },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                PretranslationUsfmMarkerBehavior.Preserve,
+                cancellationToken: CancellationToken.None
+            );
+
+        // SUT3
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.MoveToEnd },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(2)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                PretranslationUsfmMarkerBehavior.Preserve,
+                cancellationToken: CancellationToken.None
+            );
+    }
+
+    [Test]
     public async Task GetPreTranslationUsfmAsync_ReturnsEmptyStringForMissingChapter()
     {
         // Set up test environment

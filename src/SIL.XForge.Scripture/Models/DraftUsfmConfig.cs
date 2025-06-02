@@ -1,6 +1,13 @@
 namespace SIL.XForge.Scripture.Models;
 
+public enum ParagraphBreakFormat
+{
+    Remove,
+    BestGuess,
+    MoveToEnd,
+}
+
 public class DraftUsfmConfig
 {
-    public bool PreserveParagraphMarkers { get; set; } = true;
+    public ParagraphBreakFormat ParagraphFormat { get; set; } = ParagraphBreakFormat.MoveToEnd;
 }
