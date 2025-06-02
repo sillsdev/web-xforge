@@ -100,7 +100,7 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('should show the currently selected format options', fakeAsync(() => {
     const env = new TestEnvironment({ config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd } });
-    expect(env.component.usfmFormatForm.controls.paragraphFormat.value).toBe(ParagraphBreakFormat.MoveToEnd);
+    expect(+env.component.usfmFormatForm.controls.paragraphFormat.value).toBe(ParagraphBreakFormat.MoveToEnd);
   }));
 
   it('goes back if user chooses different configurations and then goes back', fakeAsync(async () => {
