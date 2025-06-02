@@ -81,6 +81,7 @@ for (const locale of localeCodesInRunLog()) {
 async function copyScreenshotIfDiffers(source: string, destination: string): Promise<void> {
   const imageDiffers = pngImagesDiffer(source, destination);
   if (imageDiffers || copyFilesEvenIfIdentical) {
+    // zopflipng npm package must be installed globally for this to work
     console.log(`Copying ${source} to ${destination} using zopflipng...`);
     const zopflipng = new Deno.Command("zopflipng", { args: ["-y", source, destination], stdout: "inherit" });
     const status = await zopflipng.output();
