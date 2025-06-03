@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -147,7 +147,7 @@ describe('DraftHistoryListComponent', () => {
       when(mockedActivatedProjectService.projectId$).thenReturn(of('project01'));
       when(mockedActivatedProjectService.changes$).thenReturn(of(undefined)); // Required for DraftPreviewBooksComponent
       when(mockedDraftGenerationService.getBuildHistory('project01')).thenReturn(new BehaviorSubject(buildHistory));
-      when(mockedFeatureFlagsService.usfmFormat).thenReturn({ enabled: true } as ObservableFeatureFlag);
+      when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
 
       this.fixture = TestBed.createComponent(DraftHistoryListComponent);
       this.component = this.fixture.componentInstance;

@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { anything, mock, when } from 'ts-mockito';
-import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -45,7 +45,7 @@ describe('DraftHistoryEntryComponent', () => {
   }));
 
   beforeEach(() => {
-    when(mockedFeatureFlagsService.usfmFormat).thenReturn({ enabled: true } as ObservableFeatureFlag);
+    when(mockedFeatureFlagsService.usfmFormat).thenReturn(createTestFeatureFlag(true));
     fixture = TestBed.createComponent(DraftHistoryEntryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
