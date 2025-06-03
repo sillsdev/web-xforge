@@ -56,9 +56,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   chapterNum: number = 1;
   chapters: number[] = [];
   isInitializing: boolean = true;
+  paragraphBreakFormat = ParagraphBreakFormat;
 
+  paragraphFormat = new FormControl<ParagraphBreakFormat | null>(null);
   usfmFormatForm: FormGroup = new FormGroup({
-    paragraphFormat: new FormControl<ParagraphBreakFormat | null>(null)
+    paragraphFormat: this.paragraphFormat
   });
 
   private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
@@ -97,12 +99,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   private get currentParagraphFormat(): DraftUsfmConfig | undefined {
-    const paragraphFormat = this.usfmFormatForm.controls.paragraphFormat.value;
-    return paragraphFormat == null
-      ? undefined
-      : {
-          paragraphFormat: +paragraphFormat
-        };
+    const paragraphFormat = this.paragraphFormat.value;
+    return paragraphFormat == null ? undefined : { paragraphFormat };
   }
 
   ngAfterViewInit(): void {
