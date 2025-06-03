@@ -382,7 +382,7 @@ public class MachineApiController : ControllerBase
         int bookNum,
         int chapterNum,
         [FromQuery] DateTime? timestamp,
-        [FromQuery] int? paragraphFormat,
+        [FromQuery] string? paragraphFormat,
         CancellationToken cancellationToken
     )
     {
@@ -392,7 +392,15 @@ public class MachineApiController : ControllerBase
             DraftUsfmConfig? config = null;
             if (paragraphFormat != null)
             {
-                config = new DraftUsfmConfig { ParagraphFormat = (ParagraphBreakFormat)paragraphFormat };
+                string format = string.Empty;
+                format = paragraphFormat switch
+                {
+                    ParagraphBreakFormat.Remove => ParagraphBreakFormat.Remove,
+                    ParagraphBreakFormat.BestGuess => ParagraphBreakFormat.BestGuess,
+                    ParagraphBreakFormat.MoveToEnd => ParagraphBreakFormat.MoveToEnd,
+                    _ => ParagraphBreakFormat.MoveToEnd,
+                };
+                config = new DraftUsfmConfig { ParagraphFormat = format };
             }
             Snapshot<TextData> delta = await _machineApiService.GetPreTranslationDeltaAsync(
                 _userAccessor.UserId,
