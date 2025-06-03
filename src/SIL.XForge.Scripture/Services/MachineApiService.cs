@@ -466,7 +466,9 @@ public class MachineApiService(
                     // We are using the TranslationBuild.Pretranslate.SourceFilters.ScriptureRange to find the
                     // books selected for drafting. Some projects may have used the now obsolete field
                     // TranslationBuild.Pretranslate.ScriptureRange and will not get checked for webhook failures.
-                    foreach (ParallelCorpusFilter source in ptc.SourceFilters ?? [])
+                    foreach (
+                        ParallelCorpusFilter source in ptc.SourceFilters?.Where(s => s.ScriptureRange is not null) ?? []
+                    )
                     {
                         foreach (
                             (string book, List<int> bookChapters) in scriptureRangeParser.GetChapters(
