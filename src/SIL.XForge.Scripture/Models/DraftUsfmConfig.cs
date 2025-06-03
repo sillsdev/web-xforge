@@ -1,13 +1,13 @@
 namespace SIL.XForge.Scripture.Models;
 
-public enum ParagraphBreakFormat
+public static class ParagraphBreakFormat
 {
-    Remove,
-    BestGuess,
-    MoveToEnd,
+    public const string Remove = "remove";
+    public const string BestGuess = "best_guess";
+    public const string MoveToEnd = "move_to_end";
 }
 
 public class DraftUsfmConfig
 {
-    public ParagraphBreakFormat ParagraphFormat { get; set; } = ParagraphBreakFormat.MoveToEnd;
+    public string ParagraphFormat { get; set; } = ParagraphBreakFormat.MoveToEnd;
 }
