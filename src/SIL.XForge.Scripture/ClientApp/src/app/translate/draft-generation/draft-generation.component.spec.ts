@@ -34,7 +34,6 @@ import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHandlingService } from './draft-handling.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from './draft-sources.service';
-import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
 describe('DraftGenerationComponent', () => {
@@ -49,7 +48,6 @@ describe('DraftGenerationComponent', () => {
   let mockTextDocService: jasmine.SpyObj<TextDocService>;
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
-  let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockProgressService: jasmine.SpyObj<ProgressService>;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
@@ -98,7 +96,6 @@ describe('DraftGenerationComponent', () => {
           { provide: NoticeService, useValue: mockNoticeService },
           { provide: NllbLanguageService, useValue: mockNllbLanguageService },
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-          { provide: PreTranslationSignupUrlService, useValue: mockPreTranslationSignupUrlService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },
           { provide: ProgressService, useValue: mockProgressService },
           { provide: FeatureFlagService, useValue: mockFeatureFlagService }
@@ -149,8 +146,6 @@ describe('DraftGenerationComponent', () => {
       );
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
-      mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
-      mockPreTranslationSignupUrlService.generateSignupUrl.and.returnValue(Promise.resolve(''));
 
       const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
       when(mockTrainingDataQuery.localChanges$).thenReturn(of());
@@ -224,10 +219,6 @@ describe('DraftGenerationComponent', () => {
       return (this.fixture.nativeElement as HTMLElement).querySelector('app-draft-download-button');
     }
 
-    get improvedDraftGenerationNotice(): HTMLElement | null {
-      return this.getElementByTestId('improved-draft-generation-notice');
-    }
-
     get offlineTextElement(): HTMLElement | null {
       return (this.fixture.nativeElement as HTMLElement).querySelector('.offline-text');
     }
@@ -296,44 +287,6 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.configureDraftButton).not.toBeNull();
-    }));
-  });
-
-  describe('Improved draft generation notice', () => {
-    // Do not run this test after April 1 2025
-    const shouldRunTest = new Date() < new Date('2025-05-31');
-    (shouldRunTest ? it : xit)(
-      'should show notice if back translation or pre-translate approved',
-      fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.component.isBackTranslation = true;
-        env.component.isPreTranslationApproved = false;
-        env.fixture.detectChanges();
-        tick();
-
-        expect(env.component.isBackTranslation).toBe(true);
-        expect(env.component.isPreTranslationApproved).toBe(false);
-        expect(env.improvedDraftGenerationNotice).not.toBeNull();
-
-        env.component.isBackTranslation = false;
-        env.component.isPreTranslationApproved = true;
-        env.fixture.detectChanges();
-        tick();
-
-        expect(env.component.isBackTranslation).toBe(false);
-        expect(env.component.isPreTranslationApproved).toBe(true);
-        expect(env.improvedDraftGenerationNotice).not.toBeNull();
-      })
-    );
-
-    it('should not show notice if not back translation nor pre-translate approved.', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.component.isBackTranslation = false;
-      env.component.isPreTranslationApproved = false;
-      env.fixture.detectChanges();
-      tick();
-
-      expect(env.improvedDraftGenerationNotice).toBeNull();
     }));
   });
 
