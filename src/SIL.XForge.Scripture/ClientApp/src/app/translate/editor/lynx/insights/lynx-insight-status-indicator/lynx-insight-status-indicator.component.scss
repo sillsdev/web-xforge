@@ -26,6 +26,10 @@ mat-icon {
   width: 0.9em;
   height: 1em;
 
+  &.update-icon {
+    color: var(--sys-primary);
+  }
+
   &.check-icon {
     width: 1.2em;
     height: 1.2em;
