@@ -56,6 +56,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   chapterNum: number = 1;
   chapters: number[] = [];
   isInitializing: boolean = true;
+  paragraphBreakFormat = ParagraphBreakFormat;
 
   usfmFormatForm: FormGroup = new FormGroup({
     paragraphFormat: new FormControl<ParagraphBreakFormat | null>(null)
