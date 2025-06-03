@@ -312,7 +312,7 @@ export class SFProjectService extends ProjectService<SFProject> {
                 bsonType: 'object',
                 properties: {
                   paragraphFormat: {
-                    bsonType: 'int'
+                    bsonType: 'string'
                   }
                 },
                 additionalProperties: false

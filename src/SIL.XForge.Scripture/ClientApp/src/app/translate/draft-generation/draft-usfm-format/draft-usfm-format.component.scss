@@ -12,9 +12,8 @@
   display: flex;
   flex-direction: row;
   column-gap: 8px;
-  height: 100%;
+  height: 90%;
   margin-top: 8px;
-  overflow: hidden;
 
   @include breakpoints.media-breakpoint-down(sm) {
     flex-direction: column;
