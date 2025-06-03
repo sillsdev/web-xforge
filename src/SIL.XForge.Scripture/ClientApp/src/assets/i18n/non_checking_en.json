@@ -504,7 +504,11 @@
     "tooltip_more_info": "More info"
   },
   "lynx_insights_panel": {
-    "restore": "Restore"
+    "loading": "Loading...",
+    "restore": "Restore",
+    "show_more": "Show more",
+    "remaining": "remaining",
+    "unknown_insight_location": "Unknown location"
   },
   "lynx_insights_panel_header": {
     "insights": "Insights",

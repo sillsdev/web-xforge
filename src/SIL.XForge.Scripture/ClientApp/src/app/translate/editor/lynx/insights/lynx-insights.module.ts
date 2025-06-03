@@ -7,6 +7,8 @@ import { MatRippleModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTreeModule } from '@angular/material/tree';
@@ -51,6 +53,8 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
     MatDividerModule,
     MatIconModule,
     MatMenuModule,
+    MatProgressBarModule,
+    MatProgressSpinnerModule,
     MatRippleModule,
     MatTabsModule,
     MatTooltipModule,
