@@ -17,19 +17,19 @@
           <mat-card-content class="format-options">
             {{ t("paragraph_break_description") }}
             <mat-radio-group formControlName="paragraphFormat">
-              <mat-radio-button value="0">
-                {{ t("option_remove") }}
-                <span class="description">
-                  {{ t("option_remove_description") }}
-                </span>
-              </mat-radio-button>
-              <mat-radio-button value="1">
+              <mat-radio-button [value]="paragraphBreakFormat.BestGuess">
                 {{ t("option_best_guess") }}
                 <span class="description">
                   {{ t("option_best_guess_description") }}
                 </span>
               </mat-radio-button>
-              <mat-radio-button value="2">
+              <mat-radio-button [value]="paragraphBreakFormat.Remove">
+                {{ t("option_remove") }}
+                <span class="description">
+                  {{ t("option_remove_description") }}
+                </span>
+              </mat-radio-button>
+              <mat-radio-button [value]="paragraphBreakFormat.MoveToEnd">
                 {{ t("option_end") }}
                 <span class="description">
                   {{ t("option_end_description") }}
@@ -47,15 +47,13 @@
             Scripture Forge can't always preserve quotes from from the source text. Choose how quotes should appear in
             the draft.
             <mat-radio-group>
-              <mat-radio-button value="remove">
-                Straight quotes: " "
-                <span class="description"> Use only straight quotes in the draft. </span>
-              </mat-radio-button>
               <mat-radio-button value="best-guess">
-                Curly quotes: “ ”
-                <span class="description">
-                  Attempt to use curly quotes, even though they may not always be correct.
-                </span>
+                Automatic quote style
+                <span class="description"> Attempt to use the same quote style as the rest of the project. </span>
+              </mat-radio-button>
+              <mat-radio-button value="remove">
+                Straight quotes
+                <span class="description">Use only straight quotes in the draft.</span>
               </mat-radio-button>
             </mat-radio-group>
           </mat-card-content>

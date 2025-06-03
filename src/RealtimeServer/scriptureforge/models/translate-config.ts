@@ -30,9 +30,9 @@ export enum TranslateShareLevel {
 }
 
 export enum ParagraphBreakFormat {
-  Remove = 0,
-  BestGuess = 1,
-  MoveToEnd = 2
+  BestGuess = 'best_guess',
+  Remove = 'remove',
+  MoveToEnd = 'move_to_end'
 }
 
 export interface BaseProject {
