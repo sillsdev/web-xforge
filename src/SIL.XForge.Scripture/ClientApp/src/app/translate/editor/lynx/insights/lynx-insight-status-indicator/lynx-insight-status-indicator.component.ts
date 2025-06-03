@@ -1,7 +1,8 @@
 import { Component, HostListener } from '@angular/core';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
-import { Observable, map } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
+import { LynxWorkspaceService } from '../lynx-workspace.service';
 
 interface InsightCount {
   type: LynxInsightType;
@@ -27,7 +28,12 @@ export class LynxInsightStatusIndicatorComponent {
     )
   );
 
-  constructor(private readonly editorInsightState: LynxInsightStateService) {}
+  readonly isLoading$: Observable<boolean> = this.lynxWorkspaceService.taskRunningStatus$;
+
+  constructor(
+    private readonly editorInsightState: LynxInsightStateService,
+    private readonly lynxWorkspaceService: LynxWorkspaceService
+  ) {}
 
   @HostListener('click')
   onClick(): void {

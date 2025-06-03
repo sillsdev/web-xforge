@@ -15,7 +15,20 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { debounceTime, groupBy, mergeMap, Observable, Subscription, switchMap } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  groupBy,
+  map,
+  mergeMap,
+  Observable,
+  of,
+  shareReplay,
+  startWith,
+  Subscription,
+  switchMap,
+  take
+} from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -39,6 +52,9 @@ export class LynxWorkspaceService {
   private projectDocChangeSubscription?: Subscription;
   private readonly curInsights = new Map<string, LynxInsight[]>();
   public readonly rawInsightSource$: Observable<LynxInsight[]>;
+
+  /** Emits `true` while a new project's insights are loading, and `false` once the first insights arrive. */
+  public readonly taskRunningStatus$: Observable<boolean>;
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -64,6 +80,24 @@ export class LynxWorkspaceService {
       groupBy(event => event.uri),
       mergeMap(group$ => group$.pipe(switchMap(event => this.onDiagnosticsChanged(event)))),
       debounceTime(10) // Debouncing avoids emitting after each event URI when loading a new project
+    );
+
+    // Task is running if new project activated and insights have not yet been emitted by rawInsightSource$
+    this.taskRunningStatus$ = this.activatedProjectService.projectDoc$.pipe(
+      switchMap(projectDoc => {
+        if (projectDoc == null) {
+          return of(false);
+        }
+
+        // Start with true (task running), then emit false when first insights are received
+        return this.rawInsightSource$.pipe(
+          take(1),
+          map(() => false),
+          startWith(true)
+        );
+      }),
+      distinctUntilChanged(),
+      shareReplay(1)
     );
   }
 
