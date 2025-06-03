@@ -266,28 +266,27 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   private findClosestRevision(date: Date, revisions: Revision[]): Revision | undefined {
     const targetTime: number = date.getTime();
-    const oneHour: number = 60 * 60 * 1000;
 
-    let closestBefore: Revision | undefined;
-    let closestAfter: Revision | undefined;
+    let closestLater: Revision | undefined;
+    let closestEarlier: Revision | undefined;
 
     // The revisions are sorted in descending order
     for (const rev of revisions) {
       const revTime = new Date(rev.timestamp).getTime();
       if (revTime > targetTime) {
-        closestBefore = rev;
+        closestLater = rev;
       } else {
-        closestAfter = rev;
+        closestEarlier = rev;
         break;
       }
     }
 
-    // If there is no revision after, or it's too far in the future, prefer the one before
-    if (closestAfter == null || new Date(closestAfter.timestamp).getTime() - targetTime > oneHour) {
-      return closestBefore;
+    // If there is no earlier revision, or it's too far in the future, prefer the one before
+    if (closestEarlier == null) {
+      return closestLater;
     }
 
-    return closestAfter;
+    return closestEarlier;
   }
 
   private hasContent(delta?: DeltaOperation[]): boolean {
