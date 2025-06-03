@@ -10,13 +10,21 @@
     >
       <button matRipple [class.dismissed]="node.isDismissed" class="tree-toggle leaf" (click)="onLeafNodeClick(node)">
         <div class="level-ref">
-          <span>
-            {{ node.description }}
-          </span>
-          <!-- TODO: Removed for MVP -->
-          <!-- <mat-icon [matTooltip]="t('restore')" (click)="restoreDismissedInsight(node.insight)" class="restore-icon">
-            visibility_on
-          </mat-icon> -->
+          @if (node.isLoading) {
+            <span class="insight-loading-text">{{ node.description }}</span>
+            <mat-spinner diameter="16" class="insight-loading-spinner"></mat-spinner>
+          } @else {
+            <span>{{ node.description }}</span>
+            @if (node.isDismissed) {
+              <mat-icon
+                [matTooltip]="t('restore')"
+                (click)="restoreDismissedInsight(node.insight!)"
+                class="restore-icon"
+              >
+                visibility_on
+              </mat-icon>
+            }
+          }
         </div>
       </button>
     </mat-tree-node>
@@ -44,6 +52,35 @@
           }
         }
       </button>
+
+      @if (
+        parentNodeRef.isExpanded && node.children && node.children.length > lynxInsightConfig.panelOptimizationThreshold
+      ) {
+        @if (node.remainingChildCount > 0) {
+          <button
+            mat-button
+            [disabled]="node.loadingProgressPercent < 100"
+            (click)="showMoreNodes(node)"
+            class="show-more-button"
+          >
+            @if (node.loadingProgressPercent < 100) {
+              <span class="button-text">
+                {{ t("loading") }}
+              </span>
+              <mat-progress-bar
+                [value]="node.loadingProgressPercent"
+                [color]="node.loadingProgressPercent < 70 ? 'accent' : 'primary'"
+                class="progress-bar"
+              >
+              </mat-progress-bar>
+            } @else {
+              <span class="button-text">
+                {{ t("show_more") }} ({{ node.remainingChildCount }} {{ t("remaining") }})
+              </span>
+            }
+          </button>
+        }
+      }
     </mat-tree-node>
   </mat-tree>
 </ng-container>
