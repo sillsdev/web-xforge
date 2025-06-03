@@ -95,12 +95,12 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('should initialize with no paragraph format selected', fakeAsync(() => {
     const env = new TestEnvironment();
-    expect(env.component.usfmFormatForm.controls.paragraphFormat.value).toBeNull();
+    expect(env.component.paragraphFormat.value).toBeNull();
   }));
 
   it('should show the currently selected format options', fakeAsync(() => {
     const env = new TestEnvironment({ config: { paragraphFormat: ParagraphBreakFormat.MoveToEnd } });
-    expect(+env.component.usfmFormatForm.controls.paragraphFormat.value).toBe(ParagraphBreakFormat.MoveToEnd);
+    expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.MoveToEnd);
   }));
 
   it('goes back if user chooses different configurations and then goes back', fakeAsync(async () => {
@@ -128,7 +128,7 @@ describe('DraftUsfmFormatComponent', () => {
     tick();
     env.fixture.detectChanges();
     const config: DraftUsfmConfig = {
-      paragraphFormat: ParagraphBreakFormat.Remove
+      paragraphFormat: ParagraphBreakFormat.BestGuess
     };
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).twice();
