@@ -392,6 +392,36 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
+    it('updates active question when route book/chapter changes', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'book'
+      });
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
+      env.setBookChapter('JHN', 2);
+      env.fixture.detectChanges();
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q15Id');
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('clears active question when route book/chapter changes to chapter without questions', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: 'MAT',
+        projectChapterRoute: 1,
+        questionScope: 'book'
+      });
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q16Id');
+      env.setBookChapter('MAT', 2);
+      env.fixture.detectChanges();
+      expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
+      flush();
+      discardPeriodicTasks();
+    }));
+
     it('can select a question', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const question = env.selectQuestion(1);
@@ -2795,7 +2825,10 @@ class TestEnvironment {
         {
           bookNum: 40,
           hasSource: false,
-          chapters: [{ number: 1, lastVerse: 28, isValid: true, permissions: {} }],
+          chapters: [
+            { number: 1, lastVerse: 28, isValid: true, permissions: {} },
+            { number: 2, lastVerse: 23, isValid: true, permissions: {} }
+          ],
           permissions: {}
         }
       ],
@@ -3292,6 +3325,11 @@ class TestEnvironment {
       {
         id: getTextDocId(projectId, 40, 1),
         data: this.createTextDataForChapter(1),
+        type: RichText.type.name
+      },
+      {
+        id: getTextDocId(projectId, 40, 2),
+        data: this.createTextDataForChapter(2),
         type: RichText.type.name
       }
     ]);
