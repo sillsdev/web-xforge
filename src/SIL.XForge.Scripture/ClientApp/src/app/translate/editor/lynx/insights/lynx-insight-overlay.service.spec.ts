@@ -4,7 +4,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { LynxEditor } from './lynx-editor';
+import { LynxEditor, LynxTextModelConverter } from './lynx-editor';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from './lynx-insight-overlay.service';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
@@ -29,9 +29,9 @@ describe('LynxInsightOverlayService', () => {
   describe('open()', () => {
     it('should not open overlay when insights array is empty', fakeAsync(() => {
       const env = new TestEnvironment();
-      const { origin, editor } = env.createTestData();
+      const { origin, editor, textModelConverter } = env.createTestData();
 
-      const result = env.service.open(origin, [], editor);
+      const result = env.service.open(origin, [], editor, textModelConverter);
       tick();
 
       expect(result).toBeUndefined();
@@ -248,13 +248,21 @@ class TestEnvironment {
     });
   }
 
-  createTestData(): { origin: HTMLElement; editor: LynxEditor; editorMock: LynxEditor; insights: LynxInsight[] } {
+  createTestData(): {
+    origin: HTMLElement;
+    editor: LynxEditor;
+    editorMock: LynxEditor;
+    insights: LynxInsight[];
+    textModelConverter: LynxTextModelConverter;
+  } {
     const origin = document.createElement('div');
     const editorMock = mock<LynxEditor>();
     when(editorMock.getScrollingContainer()).thenReturn(this.containerElement);
     const editor = instance(editorMock);
     const insights = [{ id: 'insight1' } as LynxInsight];
-    return { origin, editor, editorMock, insights };
+    const textModelConverterMock = mock<LynxTextModelConverter>();
+    when(textModelConverterMock.dataDeltaToEditorDelta(anything())).thenCall(delta => delta);
+    return { origin, editor, editorMock, insights, textModelConverter: instance(textModelConverterMock) };
   }
 
   /**
@@ -306,7 +314,7 @@ class TestEnvironment {
 
     when(mockOverlay.create(anything())).thenReturn(this.overlayRefs[refIndex].instance);
     const testData = this.createTestData();
-    const result = this.service.open(testData.origin, testData.insights, testData.editor)!;
+    const result = this.service.open(testData.origin, testData.insights, testData.editor, testData.textModelConverter)!;
     tick(); // Process setTimeout
 
     return { ...testData, result };
