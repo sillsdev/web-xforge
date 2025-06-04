@@ -2,10 +2,12 @@ import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { saveAs } from 'file-saver';
+import Papa from 'papaparse';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -484,5 +486,37 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     if (textQuestionDocs != null) {
       textQuestionDocs.push(questionDoc);
     }
+  }
+
+  /**
+   * Download all published questions as a CSV file with Reference and Question columns.
+   * The filename includes the project short name and the current date (YYYY-MM-DD).
+   */
+  downloadQuestionsCsv(): void {
+    const rows = [['Reference', 'Question']];
+    for (const questionDoc of this.allPublishedQuestions) {
+      if (questionDoc.data != null) {
+        const reference = questionDoc.data.verseRef == null ? '' : toVerseRef(questionDoc.data.verseRef).toString();
+        const question = questionDoc.data.text ?? '';
+        rows.push([reference, question]);
+      }
+    }
+    const csv = Papa.unparse(rows);
+    // Sanitize the project short name, even though as of 2025-06-04 no projects have any non-alphanumeric characters
+    // in their short names other than hyphens and underscores.
+    const shortName = (this.projectDoc?.data?.shortName ?? '').replace(/[^-_a-zA-Z0-9]/g, '_');
+    const dateStr = this.getCurrentDateString();
+    const filename = `${shortName}_questions_${dateStr}.csv`;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    saveAs(blob, filename);
+  }
+
+  /** Returns current date as YYYY-MM-DD */
+  private getCurrentDateString(): string {
+    const now = new Date();
+    const year = now.getFullYear().toString();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }
