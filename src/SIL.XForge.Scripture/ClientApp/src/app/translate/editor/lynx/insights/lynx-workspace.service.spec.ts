@@ -49,14 +49,14 @@ describe('LynxWorkspaceService', () => {
   const mockDocumentManager = mock<DocumentManager<ScriptureDeltaDocument, Op, Delta>>();
   const mockTextDocReader = mock<TextDocReader>();
 
-  const projectDocTestSubject$ = new BehaviorSubject<SFProjectProfileDoc | undefined>(undefined);
-  const bookChapterTestSubject$ = new BehaviorSubject<RouteBookChapter | undefined>(undefined);
-  const localeTestSubject$ = new BehaviorSubject<Locale>(defaultLocale);
-  const diagnosticsChangedTestSubject$ = new Subject<DiagnosticsChanged>();
-
   class TestEnvironment {
     service!: LynxWorkspaceService;
     realtimeService!: TestRealtimeService;
+
+    readonly projectDocTestSubject$ = new BehaviorSubject<SFProjectProfileDoc | undefined>(undefined);
+    readonly bookChapterTestSubject$ = new BehaviorSubject<RouteBookChapter | undefined>(undefined);
+    readonly localeTestSubject$ = new BehaviorSubject<Locale>(defaultLocale);
+    readonly diagnosticsChangedTestSubject$ = new Subject<DiagnosticsChanged>();
 
     constructor(autoInit = true) {
       this.setupMocks();
@@ -69,12 +69,12 @@ describe('LynxWorkspaceService', () => {
     setupMocks(): void {
       when(mockFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
       when(mockI18nService.localeCode).thenReturn(defaultLocale.canonicalTag);
-      when(mockI18nService.locale$).thenReturn(localeTestSubject$);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(projectDocTestSubject$);
-      when(mockActivatedBookChapterService.activatedBookChapter$).thenReturn(bookChapterTestSubject$);
+      when(mockI18nService.locale$).thenReturn(this.localeTestSubject$);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(this.projectDocTestSubject$);
+      when(mockActivatedBookChapterService.activatedBookChapter$).thenReturn(this.bookChapterTestSubject$);
       when(mockDestroyRef.onDestroy(anything())).thenCall((callback: () => void) => callback());
 
-      when(mockWorkspace.diagnosticsChanged$).thenReturn(diagnosticsChangedTestSubject$);
+      when(mockWorkspace.diagnosticsChanged$).thenReturn(this.diagnosticsChangedTestSubject$);
       when(mockWorkspace.init()).thenReturn(Promise.resolve());
       when(mockWorkspace.changeLanguage(anything())).thenReturn(Promise.resolve());
       when(mockWorkspace.getOnTypeTriggerCharacters()).thenReturn(['.', ',']);
@@ -197,7 +197,7 @@ describe('LynxWorkspaceService', () => {
         message
       }));
 
-      diagnosticsChangedTestSubject$.next({
+      this.diagnosticsChangedTestSubject$.next({
         uri: textDocId.toString(),
         diagnostics
       });
@@ -224,7 +224,7 @@ describe('LynxWorkspaceService', () => {
     }
 
     triggerBookChapterChange(chapter: number): void {
-      bookChapterTestSubject$.next({
+      this.bookChapterTestSubject$.next({
         bookId: Canon.bookNumberToId(BOOK_NUM),
         chapter
       });
@@ -232,12 +232,12 @@ describe('LynxWorkspaceService', () => {
     }
 
     triggerProjectChange(id: string): void {
-      projectDocTestSubject$.next(this.createMockProjectDoc(id));
+      this.projectDocTestSubject$.next(this.createMockProjectDoc(id));
       tick();
     }
 
     triggerLocaleChange(locale: Locale): void {
-      localeTestSubject$.next(locale);
+      this.localeTestSubject$.next(locale);
       tick();
     }
 
@@ -336,6 +336,106 @@ describe('LynxWorkspaceService', () => {
       env.triggerProjectChange('new-project');
 
       expect([...env.service.currentInsights.values()].flat().length).toBe(0);
+    }));
+  });
+
+  describe('Task running status', () => {
+    it('should emit false when no project is active', fakeAsync(() => {
+      const env = new TestEnvironment();
+      let taskRunning: boolean | undefined;
+
+      env.service.taskRunningStatus$.subscribe(status => {
+        taskRunning = status;
+      });
+      tick();
+
+      expect(taskRunning).toBe(false);
+    }));
+
+    it('should emit true when project is activated, then false after insights arrive', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const statusValues: boolean[] = [];
+
+      env.service.taskRunningStatus$.subscribe(status => {
+        statusValues.push(status);
+      });
+
+      // Initially should be false (no project)
+      tick();
+      expect(statusValues).toEqual([false]);
+
+      // When project is activated, should emit true (task running)
+      env.triggerProjectChange(PROJECT_ID);
+      expect(statusValues).toEqual([false, true]);
+
+      // When insights arrive, should emit false (task complete)
+      env.setupActiveTextDocId();
+      env.triggerDiagnostics(['Test insight']);
+      expect(statusValues).toEqual([false, true, false]);
+    }));
+
+    it('should restart loading cycle when different project is activated', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const statusValues: boolean[] = [];
+
+      env.service.taskRunningStatus$.subscribe(status => {
+        statusValues.push(status);
+      });
+
+      // Initial state and first project
+      tick();
+      env.triggerProjectChange(PROJECT_ID);
+      env.setupActiveTextDocId();
+      env.triggerDiagnostics(['Insight for project 1']);
+      expect(statusValues).toEqual([false, true, false]);
+
+      // Switch to different project - should restart loading cycle
+      const differentProjectId = 'project02';
+      env.triggerProjectChange(differentProjectId);
+      expect(statusValues).toEqual([false, true, false, true]);
+
+      // Complete loading for second project
+      env.service['projectId'] = differentProjectId;
+      env.service['textDocId'] = new TextDocId(differentProjectId, BOOK_NUM, CHAPTER_NUM);
+      env.triggerDiagnostics(['Insight for project 2']);
+      expect(statusValues).toEqual([false, true, false, true, false]);
+    }));
+
+    it('should handle empty insights correctly', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const statusValues: boolean[] = [];
+
+      env.service.taskRunningStatus$.subscribe(status => {
+        statusValues.push(status);
+      });
+
+      tick();
+      env.triggerProjectChange(PROJECT_ID);
+      expect(statusValues).toEqual([false, true]);
+
+      // Empty diagnostics should still complete the loading task
+      env.setupActiveTextDocId();
+      env.triggerDiagnostics([]); // Empty diagnostics
+      expect(statusValues).toEqual([false, true, false]);
+    }));
+
+    it('should use shareReplay to avoid multiple subscriptions triggering multiple emissions', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const statusValues1: boolean[] = [];
+      const statusValues2: boolean[] = [];
+
+      // Create multiple subscriptions
+      env.service.taskRunningStatus$.subscribe(status => statusValues1.push(status));
+      env.service.taskRunningStatus$.subscribe(status => statusValues2.push(status));
+
+      tick();
+      env.triggerProjectChange(PROJECT_ID);
+      env.setupActiveTextDocId();
+      env.triggerDiagnostics(['Test insight']);
+
+      // Both subscriptions should receive the same values
+      expect(statusValues1).toEqual([false, true, false]);
+      expect(statusValues2).toEqual([false, true, false]);
     }));
   });
 
