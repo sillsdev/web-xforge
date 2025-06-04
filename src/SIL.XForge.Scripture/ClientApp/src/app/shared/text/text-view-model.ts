@@ -6,7 +6,7 @@ import { DeltaOperation, StringMap } from 'rich-text';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
-import { LynxRangeConverter } from '../../translate/editor/lynx/insights/lynx-editor';
+import { LynxTextModelConverter } from '../../translate/editor/lynx/insights/lynx-editor';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
 import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
@@ -125,7 +125,7 @@ class SegmentInfo {
  * See text.component.spec.ts for some unit tests.
  */
 @Injectable()
-export class TextViewModel implements OnDestroy, LynxRangeConverter {
+export class TextViewModel implements OnDestroy, LynxTextModelConverter {
   editor?: Quill;
 
   private readonly _segments: Map<string, Range> = new Map<string, Range>();
@@ -588,6 +588,10 @@ export class TextViewModel implements OnDestroy, LynxRangeConverter {
     endEditorPos = endEditorPos === -1 ? editorPos : endEditorPos;
 
     return { index: startEditorPos, length: endEditorPos - startEditorPos };
+  }
+
+  dataDeltaToEditorDelta(dataDelta: Delta): Delta {
+    return this.addEmbeddedElementsToDelta(dataDelta);
   }
 
   private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
