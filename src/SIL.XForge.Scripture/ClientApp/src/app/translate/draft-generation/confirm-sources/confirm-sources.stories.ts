@@ -16,7 +16,7 @@ const mockDraftService = mock(DraftSourcesService);
 const mockActivatedProject = mock(ActivatedProjectService);
 const mockAuthService = mock(AuthService);
 
-when(mockActivatedProject.projectDoc$).thenReturn(
+when(mockActivatedProject.changes$).thenReturn(
   of({
     data: createTestProjectProfile({
       name: 'Test Project',

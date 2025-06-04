@@ -31,7 +31,7 @@ export class ConfirmSourcesComponent {
     private readonly i18nService: I18nService,
     private readonly activatedProject: ActivatedProjectService
   ) {
-    this.activatedProject.projectDoc$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
+    this.activatedProject.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc?.data != null) {
         this.draftSources = draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays(
           projectToDraftSources(projectDoc?.data)
