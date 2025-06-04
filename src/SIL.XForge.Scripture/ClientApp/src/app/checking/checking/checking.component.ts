@@ -690,9 +690,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 this.updateVisibleQuestions();
               });
           } else {
-            // Visible questions didn't change, but active question must update on route change
-            // this.questionsList?.activateStoredQuestion();
-
             // Ensure refs updated if book changed, but no new questions query (scope is 'all')
             if (routeBookNum !== prevBookNum) {
               this.updateQuestionRefs();
@@ -1091,11 +1088,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       if (withFilterReset) {
         this.resetFilter();
       }
+
+      this.questionsList?.activateQuestion(questionDoc);
     } else if (withFilterReset) {
       // Reset filter, but don't update visible questions yet if navigating
       this.activeQuestionFilter = QuestionFilter.None;
     }
-    this.questionsList?.activateQuestion(questionDoc);
   }
 
   /**
