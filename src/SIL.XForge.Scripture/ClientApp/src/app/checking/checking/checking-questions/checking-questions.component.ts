@@ -296,12 +296,15 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
           }
         }
       }
-    } else if (
-      this.routeBookChapter == null ||
-      (this.activeQuestionDoc?.data != null &&
-        bookChapterMatchesVerseRef(this.routeBookChapter, this.activeQuestionDoc.data.verseRef))
-    ) {
-      questionToActivate = this.activeQuestionDoc;
+    } else {
+      // If there is an active question, check if it matches the route book/chapter
+      const useActiveQuestion: boolean =
+        this.routeBookChapter == null ||
+        (this.activeQuestionDoc?.data != null &&
+          bookChapterMatchesVerseRef(this.routeBookChapter, this.activeQuestionDoc.data.verseRef));
+      if (useActiveQuestion) {
+        questionToActivate = this.activeQuestionDoc;
+      }
     }
 
     // No stored question, so use first question within route book/chapter if available.
@@ -313,6 +316,8 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
 
     if (questionToActivate != null) {
       this.activateQuestion(questionToActivate, actionSource);
+    } else {
+      this.activeQuestionDoc = undefined;
     }
   }
 
