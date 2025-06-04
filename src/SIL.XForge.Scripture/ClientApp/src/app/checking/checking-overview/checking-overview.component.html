@@ -5,8 +5,15 @@
       <ng-container class="primary-actions">
         @if (showImportButton) {
           <button mat-button type="button" (click)="importDialog()" id="import-btn">
-            {{ t("import_questions") }}
+            <mat-icon>file_upload</mat-icon>
+            {{ t("import") }}
           </button>
+          @if (allQuestionsCount > 0) {
+            <button mat-button type="button" (click)="downloadQuestionsCsv()" id="download-csv-btn">
+              <mat-icon>download</mat-icon>
+              {{ t("export") }}
+            </button>
+          }
         }
         @if (!isLoadingData) {
           <button
