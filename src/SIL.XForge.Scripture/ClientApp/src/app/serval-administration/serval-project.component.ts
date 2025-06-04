@@ -29,6 +29,7 @@ interface Row {
   name: string;
   category: string;
   fileName: string;
+  languageCode: string;
 }
 
 interface ProjectAndRange {
@@ -59,8 +60,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   preTranslate = false;
   projectName = '';
 
-  headingsToDisplay = { category: 'Category', type: 'Type', name: 'Project', id: '' };
-  columnsToDisplay = ['category', 'type', 'name', 'id'];
+  headingsToDisplay = { category: 'Category', type: 'Type', name: 'Project', languageCode: 'Language tag', id: '' };
+  columnsToDisplay = ['category', 'type', 'name', 'languageCode', 'id'];
   rows: Row[] = [];
 
   trainingBooksByProject: ProjectAndRange[] = [];
@@ -120,7 +121,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             type: projectType(projectDoc.data),
             name: this.projectName,
             category: 'Target Project',
-            fileName: project.shortName + '.zip'
+            fileName: project.shortName + '.zip',
+            languageCode: project.writingSystem.tag
           });
 
           let i = 1;
@@ -131,7 +133,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
               type: projectType(draftingSource),
               name: projectLabel(draftingSource),
               category: 'Drafting Source ' + i++,
-              fileName: draftingSource.shortName + '.zip'
+              fileName: draftingSource.shortName + '.zip',
+              languageCode: draftingSource.writingSystem.tag
             });
           }
 
@@ -143,7 +146,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
               type: projectType(trainingSource),
               name: projectLabel(trainingSource),
               category: 'Training Source  ' + i++,
-              fileName: trainingSource.shortName + '.zip'
+              fileName: trainingSource.shortName + '.zip',
+              languageCode: trainingSource.writingSystem.tag
             });
           }
 
