@@ -176,7 +176,6 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
       if (this.autocomplete && this.autocomplete.panel && this.autocompleteTrigger) {
         fromEvent(this.autocomplete.panel.nativeElement, 'scroll')
           .pipe(
-            map(() => this.autocomplete.panel.nativeElement.scrollTop),
             takeUntil(this.autocompleteTrigger.panelClosingActions.pipe(tap(() => this.resourceCountLimit$.next(25))))
           )
           .subscribe(() => {
