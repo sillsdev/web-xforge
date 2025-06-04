@@ -415,6 +415,8 @@ public class DeltaUsxMapper(
         }
 
         JObject attributes = (JObject)AddInvalidBlockAttribute(invalidNodes, elem)?.DeepClone() ?? [];
+
+        // Map to the element name, so para and book can preserve their mapping to usx-para and usx-book
         attributes.Add(new JProperty(elem.Name.LocalName, GetAttributes(elem)));
         newDelta.Insert("\n", attributes);
     }
