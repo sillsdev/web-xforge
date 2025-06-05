@@ -1,15 +1,17 @@
 import Ajv from 'ajv';
 import ajvBsonType from 'ajv-bsontype';
+import * as fs from 'fs';
 import { Db } from 'mongodb';
+import * as path from 'path';
 import ShareDB from 'sharedb';
 import shareDBAccess from 'sharedb-access';
-import { Connection, Doc, Op, RawOp } from 'sharedb/lib/client';
+import { Connection, Doc, Op, Query, RawOp } from 'sharedb/lib/client';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
 import { SchemaProperties, ValidationSchema } from './models/validation-schema';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
-import { createFetchQuery, docFetch } from './utils/sharedb-utils';
+import { createFetchQuery } from './utils/sharedb-utils';
 
 export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 export const XF_ROLE_CLAIM = 'http://xforge.org/role';
@@ -394,6 +396,60 @@ export class RealtimeServer extends ShareDB {
     });
 
     this.defaultConnection = this.connect();
+
+    // setTimeout(() => this.reportObjectUsage(this.defaultConnection!, 'server'), 60 * 1000);
+  }
+
+  async reportObjectUsage(connection: Connection, label: string): Promise<void> {
+    const queries: Query[] = (connection as any).queries;
+    const collections = (connection as any).collections;
+    const presences: any[] = (connection as any).presences;
+    const snapshotRequests: any[] = (connection as any).snapshotRequests;
+
+    // Create report object with timestamp
+    const report = {
+      timestamp: new Date().toISOString(),
+      label,
+      counts: {
+        queries: queries?.length ?? -1,
+        collections: {} as Record<string, number>,
+        presences: presences?.length ?? -1,
+        snapshotRequests: snapshotRequests?.length ?? -1
+      }
+    };
+
+    // Process collections to count documents
+    for (const collection in collections) {
+      if (Object.prototype.hasOwnProperty.call(collections, collection)) {
+        const docs = collections[collection];
+        report.counts.collections[collection] = Object.keys(docs).length;
+      }
+    }
+
+    // Define file path
+    const filePath = path.join(process.cwd(), 'realtimeserver-object-usage.json');
+
+    // Read existing data or initialize empty array
+    let existingData: any[] = [];
+    try {
+      if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        existingData = JSON.parse(fileContent);
+      }
+    } catch (error) {
+      console.error('Error reading existing file:', error);
+      existingData = [];
+    }
+
+    // Add new report
+    existingData.push(report);
+
+    // Write back to file
+    fs.writeFileSync(filePath, JSON.stringify(existingData, null, 2));
+
+    console.log(`Object usage report (${label}) written to ${filePath} at ${report.timestamp}`);
+
+    setTimeout(() => this.reportObjectUsage(connection, label), 60 * 1000);
   }
 
   async addValidationSchema(db: Db): Promise<void> {
@@ -425,6 +481,15 @@ export class RealtimeServer extends ShareDB {
         req = { userId: connectionOrUserId };
       }
     }
+    const randomNumber = Math.floor(Math.random() * 1000000);
+
+    //    if (!(connection instanceof MigrationConnection)) {
+    if (this.migrationsDisabled) {
+      setTimeout(() => this.reportObjectUsage(connection, `client_${randomNumber}`), 60 * 1000);
+    } else {
+      console.log('connect: Not reporting object usage for migration connection.');
+    }
+
     return super.connect(connection, req);
   }
 
