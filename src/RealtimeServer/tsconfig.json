@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "sourceMap": true,
-    "sourceRoot": "../../../../../../../../../../src/RealtimeServer/common/",
+    // This long path points up from `.../bin/Debug/net8.0/...` to the RealtimeServer source code.
+    "sourceRoot": "../../../../../../../../../src/RealtimeServer/common/",
     "declaration": true,
     "target": "es6",
     "moduleResolution": "node",
