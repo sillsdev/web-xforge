@@ -6,40 +6,53 @@
   <div class="format-container">
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">
-        <p>
-          {{ t("draft_format_description") }}
-        </p>
-
-        <mat-card class="options">
-          <mat-card-header
-            ><mat-card-title>{{ t("paragraph_break_title") }}</mat-card-title></mat-card-header
-          >
-          <mat-card-content class="format-options">
-            {{ t("paragraph_break_description") }}
-            <mat-radio-group formControlName="paragraphFormat">
-              <mat-radio-button [value]="paragraphBreakFormat.BestGuess">
-                {{ t("option_best_guess") }}
-                <span class="description">
-                  {{ t("option_best_guess_description") }}
-                </span>
-              </mat-radio-button>
-              <mat-radio-button [value]="paragraphBreakFormat.Remove">
-                {{ t("option_remove") }}
-                <span class="description">
-                  {{ t("option_remove_description") }}
-                </span>
-              </mat-radio-button>
-              <mat-radio-button [value]="paragraphBreakFormat.MoveToEnd">
-                {{ t("option_end") }}
-                <span class="description">
-                  {{ t("option_end_description") }}
-                </span>
-              </mat-radio-button>
-            </mat-radio-group>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="options">
+        <div class="large-screen">
+          <p>
+            {{ t("draft_format_description") }}
+          </p>
+          <mat-card class="options">
+            <mat-card-header
+              ><mat-card-title>{{ t("paragraph_break_title") }}</mat-card-title></mat-card-header
+            >
+            <mat-card-content class="format-options">
+              {{ t("paragraph_break_description") }}
+              <mat-radio-group formControlName="paragraphFormat">
+                <mat-radio-button [value]="paragraphBreakFormat.BestGuess">
+                  {{ t("option_best_guess") }}
+                  <span class="description">
+                    {{ t("option_best_guess_description") }}
+                  </span>
+                </mat-radio-button>
+                <mat-radio-button [value]="paragraphBreakFormat.Remove">
+                  {{ t("option_remove") }}
+                  <span class="description">
+                    {{ t("option_remove_description") }}
+                  </span>
+                </mat-radio-button>
+                <mat-radio-button [value]="paragraphBreakFormat.MoveToEnd">
+                  {{ t("option_end") }}
+                  <span class="description">
+                    {{ t("option_end_description") }}
+                  </span>
+                </mat-radio-button>
+              </mat-radio-group>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        <div class="small-screen">
+          <div>
+            <span>{{ t("paragraph_break_title") }}</span>
+            <app-info [text]="t('paragraph_break_description')"></app-info>
+          </div>
+          <mat-form-field>
+            <mat-select formControlName="paragraphFormat">
+              <mat-option [value]="paragraphBreakFormat.BestGuess">{{ t("option_best_guess") }}</mat-option>
+              <mat-option [value]="paragraphBreakFormat.Remove">{{ t("option_remove") }}</mat-option>
+              <mat-option [value]="paragraphBreakFormat.MoveToEnd">{{ t("option_end") }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <mat-card class="options large-screen">
           <mat-card-header>
             <mat-card-title>Quote style <small>[coming soon]</small></mat-card-title>
           </mat-card-header>
