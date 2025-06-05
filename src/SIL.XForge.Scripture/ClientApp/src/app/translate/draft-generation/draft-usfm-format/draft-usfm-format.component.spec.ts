@@ -93,9 +93,9 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).thrice();
   }));
 
-  it('should initialize with no paragraph format selected', fakeAsync(() => {
+  it('should initialize and default to move to end', fakeAsync(() => {
     const env = new TestEnvironment();
-    expect(env.component.paragraphFormat.value).toBeNull();
+    expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.MoveToEnd);
   }));
 
   it('should show the currently selected format options', fakeAsync(() => {
@@ -144,6 +144,9 @@ describe('DraftUsfmFormatComponent', () => {
 
   it('should not save if format is empty', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.component.paragraphFormat.setValue(null);
+    tick();
+    env.fixture.detectChanges();
     env.component.saveChanges();
     tick();
     env.fixture.detectChanges();
