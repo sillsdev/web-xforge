@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
+import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
@@ -36,10 +39,12 @@ interface TrainingConfigurationRow {
     CommonModule,
     DraftDownloadButtonComponent,
     DraftPreviewBooksComponent,
+    MatButtonModule,
     MatExpansionModule,
     MatIconModule,
     MatTableModule,
-    TranslocoModule
+    TranslocoModule,
+    RouterModule
   ],
   templateUrl: './draft-history-entry.component.html',
   styleUrl: './draft-history-entry.component.scss'
@@ -141,7 +146,7 @@ export class DraftHistoryEntryComponent {
   }
 
   @Input() canDownloadBuild = false;
-  @Input() forceDetailsOpen = false;
+  @Input() isLatestBuild = false;
 
   trainingConfigurationOpen = false;
 
@@ -150,7 +155,8 @@ export class DraftHistoryEntryComponent {
   constructor(
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    readonly featureFlags: FeatureFlagService
   ) {}
 
   get bookNames(): string[] {
