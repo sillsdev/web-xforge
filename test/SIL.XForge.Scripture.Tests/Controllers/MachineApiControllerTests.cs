@@ -914,7 +914,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: (int)ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
             CancellationToken.None
         );
 
@@ -946,7 +946,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: (int)ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
             CancellationToken.None
         );
 
@@ -976,7 +976,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: (int)ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
             CancellationToken.None
         );
 
@@ -1006,7 +1006,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: (int)ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
             CancellationToken.None
         );
 
@@ -1036,7 +1036,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: (int)ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
             CancellationToken.None
         );
 
@@ -1067,7 +1067,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: (int)ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
             CancellationToken.None
         );
 
@@ -1096,7 +1096,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: (int)ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);
@@ -1124,7 +1124,7 @@ public class MachineApiControllerTests
             40,
             1,
             null,
-            paragraphFormat: (int)ParagraphBreakFormat.MoveToEnd,
+            paragraphFormat: ParagraphBreakFormat.MoveToEnd,
             CancellationToken.None
         );
         Assert.IsInstanceOf<OkObjectResult>(result.Result);
