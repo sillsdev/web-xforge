@@ -592,6 +592,24 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationScriptureRange).toEqual('NUM;DEU');
     });
   });
+
+  describe('version 23', () => {
+    it('removes obsolete usfm config', async () => {
+      const env = new TestEnvironment(22);
+      const conn = env.server.connect();
+
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { usfmConfig: { preserveParagraphMarkers: true } } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.usfmConfig.preserveParagraphMarkers).toBe(true);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.usfmConfig).toBeUndefined();
+    });
+  });
 });
 
 class TestEnvironment {
