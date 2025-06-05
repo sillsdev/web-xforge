@@ -54,6 +54,11 @@
   flex-direction: column;
   overflow: hidden;
 
+  @include breakpoints.media-breakpoint-down(sm) {
+    height: 600px;
+    overflow: initial;
+  }
+
   .viewer-container {
     overflow-y: auto;
   }
@@ -71,20 +76,6 @@ form {
 
   @include breakpoints.media-breakpoint-down(sm) {
     width: 100%;
-  }
-
-  .large-screen {
-    @include breakpoints.media-breakpoint-down(sm) {
-      display: none;
-    }
-  }
-
-  .small-screen {
-    display: none;
-    justify-content: space-between;
-    @include breakpoints.media-breakpoint-down(sm) {
-      display: flex;
-    }
   }
 
   p {
