@@ -401,8 +401,8 @@ export class RealtimeServer extends ShareDB {
   async reportObjectUsage(connection: Connection, label: string): Promise<void> {
     const queries: Query[] = (connection as any).queries;
     const collections = (connection as any).collections;
-    const presences: any[] = (connection as any).presences;
-    const snapshotRequests: any[] = (connection as any).snapshotRequests;
+    const presences: any[] = (connection as any)._presences;
+    const snapshotRequests: any[] = (connection as any)._snapshotRequests;
 
     // Create report object with timestamp
     const report = {
