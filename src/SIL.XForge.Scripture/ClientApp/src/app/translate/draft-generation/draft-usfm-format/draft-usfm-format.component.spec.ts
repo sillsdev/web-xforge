@@ -141,6 +141,17 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(env.projectId)).once();
     verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).never();
   }));
+
+  it('should not save if format is empty', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.saveChanges();
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.usfmFormatForm.valid).toBe(true);
+    expect(env.component.paragraphFormat.value).toBeNull();
+    verify(mockedProjectService.onlineSetUsfmConfig(anything(), anything())).never();
+    verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(anything())).never();
+  }));
 });
 
 class TestEnvironment {
