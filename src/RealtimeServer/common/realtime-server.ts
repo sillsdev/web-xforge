@@ -11,7 +11,7 @@ import { Project } from './models/project';
 import { SchemaProperties, ValidationSchema } from './models/validation-schema';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
-import { createFetchQuery } from './utils/sharedb-utils';
+import { createFetchQuery, docFetch } from './utils/sharedb-utils';
 
 export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 export const XF_ROLE_CLAIM = 'http://xforge.org/role';
@@ -396,8 +396,6 @@ export class RealtimeServer extends ShareDB {
     });
 
     this.defaultConnection = this.connect();
-
-    // setTimeout(() => this.reportObjectUsage(this.defaultConnection!, 'server'), 60 * 1000);
   }
 
   async reportObjectUsage(connection: Connection, label: string): Promise<void> {
@@ -481,10 +479,8 @@ export class RealtimeServer extends ShareDB {
         req = { userId: connectionOrUserId };
       }
     }
-    const randomNumber = Math.floor(Math.random() * 1000000);
-
-    //    if (!(connection instanceof MigrationConnection)) {
-    if (this.migrationsDisabled) {
+    if (!this.dataValidationDisabled) {
+      const randomNumber = Math.floor(Math.random() * 1000000);
       setTimeout(() => this.reportObjectUsage(connection, `client_${randomNumber}`), 60 * 1000);
     } else {
       console.log('connect: Not reporting object usage for migration connection.');
