@@ -602,8 +602,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           if (
             routeProjectId !== prevProjectId ||
             routeScope !== prevScope ||
-            (routeBookNum !== prevBookNum && prevScope !== 'all') ||
-            ((routeChapter == null ? undefined : parseInt(routeChapter)) !== prevChapterNum && prevScope === 'chapter')
+            (routeScope !== 'all' && routeBookNum !== prevBookNum) ||
+            (routeScope === 'chapter' && (routeChapter == null ? undefined : parseInt(routeChapter)) !== prevChapterNum)
           ) {
             this.cleanup();
             this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
