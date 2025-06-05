@@ -218,12 +218,12 @@ export class DraftGenerationService {
     let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`;
     const params = new URLSearchParams();
     if (timestamp != null) {
-      params.append(`timestamp`, timestamp.toISOString());
+      params.append('timestamp', timestamp.toISOString());
     }
     if (usfmConfig != null) {
-      params.append(`paragraphFormat`, usfmConfig.paragraphFormat);
+      params.append('paragraphFormat', usfmConfig.paragraphFormat);
     }
-    if (params.toString().length > 0) {
+    if (params.size > 0) {
       url += `?${params.toString()}`;
     }
     return this.httpClient.get<Snapshot<TextData> | undefined>(url).pipe(

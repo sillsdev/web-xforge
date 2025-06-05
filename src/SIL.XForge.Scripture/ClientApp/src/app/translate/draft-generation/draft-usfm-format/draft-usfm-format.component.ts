@@ -60,7 +60,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   isInitializing: boolean = true;
   paragraphBreakFormat = ParagraphBreakFormat;
 
-  paragraphFormat = new FormControl<ParagraphBreakFormat | null>(null);
+  paragraphFormat = new FormControl<ParagraphBreakFormat>(ParagraphBreakFormat.MoveToEnd);
   usfmFormatForm: FormGroup = new FormGroup({
     paragraphFormat: this.paragraphFormat
   });
@@ -189,7 +189,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     this.usfmFormatForm.setValue({
-      paragraphFormat: config?.paragraphFormat.toString() ?? null
+      paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.MoveToEnd
     });
     this.lastSavedState = config;
 
