@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
@@ -38,6 +39,7 @@ import { DraftHandlingService } from '../draft-handling.service';
     MatCheckboxModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -64,7 +66,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   });
 
   private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
-  private lastSavedParagraphState?: ParagraphBreakFormat;
+  private lastSavedState?: DraftUsfmConfig;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -98,7 +100,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     return this.onlineStatusService.isOnline;
   }
 
-  private get currentParagraphFormat(): DraftUsfmConfig | undefined {
+  private get currentFormat(): DraftUsfmConfig | undefined {
     const paragraphFormat = this.paragraphFormat.value;
     return paragraphFormat == null ? undefined : { paragraphFormat };
   }
@@ -158,17 +160,15 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   reloadText(): void {
     this.loadingStarted();
-    this.updateDraftConfig$.next(this.currentParagraphFormat);
+    this.updateDraftConfig$.next(this.currentFormat);
   }
 
   async saveChanges(): Promise<void> {
-    if (this.projectId == null || !this.isOnline) return;
+    if (this.projectId == null || !this.isOnline || this.currentFormat == null) return;
 
     try {
-      if (this.currentParagraphFormat != null) {
-        await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentParagraphFormat);
-      }
-      this.lastSavedParagraphState = this.currentParagraphFormat?.paragraphFormat;
+      await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentFormat);
+      this.lastSavedState = this.currentFormat;
       // not awaited so that the user is directed to the draft generation page
       this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId).then(() => {
         this.noticeService.show(translate('draft_usfm_format.changes_have_been_saved'));
@@ -179,7 +179,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   async confirmLeave(): Promise<boolean> {
-    if (this.lastSavedParagraphState === this.currentParagraphFormat?.paragraphFormat) return true;
+    if (this.lastSavedState?.paragraphFormat === this.currentFormat?.paragraphFormat) return true;
     return this.dialogService.confirm(
       this.i18n.translate('draft_sources.discard_changes_confirmation'),
       this.i18n.translate('draft_sources.leave_and_discard'),
@@ -191,7 +191,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     this.usfmFormatForm.setValue({
       paragraphFormat: config?.paragraphFormat.toString() ?? null
     });
-    this.lastSavedParagraphState = config?.paragraphFormat;
+    this.lastSavedState = config;
 
     this.usfmFormatForm.valueChanges
       .pipe(
