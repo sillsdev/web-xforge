@@ -3,7 +3,7 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { ScrollDispatcher } from '@angular/cdk/scrolling';
 import { Injectable, NgZone } from '@angular/core';
 import { asyncScheduler, observeOn, Subject, take, takeUntil } from 'rxjs';
-import { LynxEditor } from './lynx-editor';
+import { LynxEditor, LynxTextModelConverter } from './lynx-editor';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
 
@@ -30,7 +30,12 @@ export class LynxInsightOverlayService {
     return this.openRef != null;
   }
 
-  open(origin: HTMLElement, insights: LynxInsight[], editor: LynxEditor): LynxInsightOverlayRef | undefined {
+  open(
+    origin: HTMLElement,
+    insights: LynxInsight[],
+    editor: LynxEditor,
+    textModelConverter: LynxTextModelConverter
+  ): LynxInsightOverlayRef | undefined {
     if (insights.length === 0) {
       return undefined;
     }
@@ -45,6 +50,7 @@ export class LynxInsightOverlayService {
 
     componentRef.instance.insights = insights;
     componentRef.instance.editor = editor;
+    componentRef.instance.textModelConverter = textModelConverter;
     componentRef.instance.insightDismiss.pipe(take(1)).subscribe(() => this.close());
     componentRef.instance.insightHover
       .pipe(takeUntil(overlayRef.closed$))
