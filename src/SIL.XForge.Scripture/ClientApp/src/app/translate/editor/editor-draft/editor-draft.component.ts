@@ -137,7 +137,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
                 .pipe(
                   map(revisions => {
                     if (revisions != null) {
-                      this.draftRevisions = revisions;
+                      // Sort revisions by timestamp descending
+                      this.draftRevisions = [...revisions].sort((a, b) => {
+                        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+                      });
                       const date = this.timestamp ?? new Date();
                       // Don't emit this.selectedRevision$, as the merge will handle this
                       this.selectedRevision = this.findClosestRevision(date, this.draftRevisions);
@@ -261,29 +264,24 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
   }
 
-  private findClosestRevision(date: Date, revisions: Revision[]): Revision {
+  private findClosestRevision(date: Date, revisions: Revision[]): Revision | undefined {
     const targetTime: number = date.getTime();
-    const oneHour: number = 60 * 60 * 1000;
 
-    let closestBefore: Revision | null = null;
-    let closestAfter: Revision | null = null;
+    let closestLater: Revision | undefined;
+    let closestEarlier: Revision | undefined;
 
+    // The revisions are sorted in descending order
     for (const rev of revisions) {
       const revTime = new Date(rev.timestamp).getTime();
-      if (revTime <= targetTime) {
-        closestBefore = rev;
+      if (revTime > targetTime) {
+        closestLater = rev;
       } else {
-        closestAfter = rev;
+        closestEarlier = rev;
         break;
       }
     }
 
-    // If there is no revision after, or it's too far in the future, prefer the one before
-    if (closestAfter == null || new Date(closestAfter.timestamp).getTime() - targetTime > oneHour) {
-      return closestBefore!;
-    }
-
-    return closestAfter;
+    return closestEarlier ?? closestLater;
   }
 
   private hasContent(delta?: DeltaOperation[]): boolean {

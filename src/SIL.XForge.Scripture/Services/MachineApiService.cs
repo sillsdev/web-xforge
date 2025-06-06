@@ -877,6 +877,8 @@ public class MachineApiService(
             }
         }
 
+        // Display the revisions in descending order to match the history API endpoint
+        revisions.Reverse();
         return revisions;
     }
 
