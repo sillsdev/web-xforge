@@ -222,6 +222,7 @@ quill-editor.rtl {
   > .ql-editor {
     background-color: var(--sf-quill-background);
 
+    usx-book,
     usx-para,
     p {
       margin-bottom: 1em;
@@ -237,6 +238,11 @@ quill-editor.rtl {
         color: var(--sf-text-color);
         background-color: var(--sf-text-background);
       }
+    }
+
+    usx-book[data-code]:first-child:before {
+      content: attr(data-code);
+      color: var(--sf-usx-chapter-color);
     }
 
     .highlight-segment {
@@ -261,6 +267,7 @@ quill-editor.rtl {
 // workaround for Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1569107
 // using "box-decoration-break: clone" or blur radius in a "box-shadow" with RTL text can cause weird behavior
 .template-editor.rtl[data-browser-engine='gecko'] > .ql-container > .ql-editor {
+  usx-book,
   usx-para,
   p {
     > usx-para-contents {
