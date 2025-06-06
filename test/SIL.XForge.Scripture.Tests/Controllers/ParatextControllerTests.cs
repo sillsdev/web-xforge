@@ -407,6 +407,74 @@ public class ParatextControllerTests
         Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
     }
 
+    [Test]
+    public async Task SyncAsync_Forbidden()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.ConnectOrSyncAsync(User01, Project01).ThrowsAsync(new ForbiddenException("Forbidden"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task SyncAsync_Invalid()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.ConnectOrSyncAsync(User01, Project01)
+            .ThrowsAsync(new InvalidOperationException("Forbidden"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
+
+        Assert.IsInstanceOf<ConflictResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task SyncAsync_NotFound()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.ConnectOrSyncAsync(User01, Project01).ThrowsAsync(new DataNotFoundException("Not Found"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task SyncAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.ConnectOrSyncAsync(User01, Project01).Returns(Task.FromResult(Project01));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        Assert.That((actual.Result as OkObjectResult).Value, Is.EqualTo(Project01));
+    }
+
+    [Test]
+    public async Task SyncAsync_Unauthorized()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.ConnectOrSyncAsync(User01, Project01)
+            .ThrowsAsync(new UnauthorizedAccessException("Forbidden"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
+
+        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+    }
+
     private class TestEnvironment
     {
         public readonly IReadOnlyList<ParatextProject> TestParatextProjects = [new ParatextProject()];
