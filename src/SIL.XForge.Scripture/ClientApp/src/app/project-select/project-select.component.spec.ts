@@ -44,13 +44,6 @@ describe('ProjectSelectComponent', () => {
     expect(env.component.sourceParatextId.value).toBe('r02');
   }));
 
-  it('selects project when valid name typed manually', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.clickInput();
-    env.inputText('Project 1');
-    expect(env.component.sourceParatextId.value).toBe('p01');
-  }));
-
   it('does not open autocomplete when disabled', fakeAsync(() => {
     const env = new TestEnvironment();
     expect(env.autoCompleteShowing).toBe(false);

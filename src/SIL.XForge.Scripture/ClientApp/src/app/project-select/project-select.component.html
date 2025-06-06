@@ -16,16 +16,16 @@
       (opened)="autocompleteOpened()"
       class="project-select"
     >
-      @if (nullableLength(projects$ | async) > 0) {
+      @if (nullableLength(filteredProjects$ | async) > 0) {
         <mat-optgroup [label]="t('projects')">
-          @for (project of projects$ | async; track project.paratextId) {
+          @for (project of filteredProjects$ | async; track project.paratextId) {
             <mat-option [value]="project">{{ projectLabel(project) }}</mat-option>
           }
         </mat-optgroup>
       }
-      @if (nullableLength(resources$ | async) > 0) {
+      @if (nullableLength(filteredResources$ | async) > 0) {
         <mat-optgroup [label]="t('resources')">
-          @for (resource of resources$ | async; track resource.paratextId) {
+          @for (resource of filteredResources$ | async; track resource.paratextId) {
             <mat-option [value]="resource">{{ projectLabel(resource) }}</mat-option>
           }
         </mat-optgroup>
