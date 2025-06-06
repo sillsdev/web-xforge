@@ -59,8 +59,20 @@ export class WebSocketStreamListener {
       server: this.httpServer,
       verifyClient: this.verifyClient
     });
+    //mark
+
+    // Report WebSocket client count every minute
+    setInterval(() => {
+      console.log(`[${new Date().toISOString()}] WebSocket clients connected: ${wss.clients.size}`);
+    }, 60000); // Run every minute (60000 ms)
 
     wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
+      webSocket.onopen = () => {
+        console.log('WebSocket connection opened');
+      };
+      webSocket.onclose = () => {
+        console.log('WebSocket connection closed');
+      };
       const stream = new WebSocketJSONStream(webSocket);
       backend.listen(stream, req);
     });

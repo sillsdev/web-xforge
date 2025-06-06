@@ -479,12 +479,14 @@ export class RealtimeServer extends ShareDB {
         req = { userId: connectionOrUserId };
       }
     }
-    if (!this.dataValidationDisabled) {
-      const randomNumber = Math.floor(Math.random() * 1000000);
-      setTimeout(() => this.reportObjectUsage(connection, `client_${randomNumber}`), 60 * 1000);
-    } else {
-      console.log('connect: Not reporting object usage for migration connection.');
-    }
+
+    // Not monitoring connections here in case we were keeping them alive by holding a reference to them.
+    // if (!this.dataValidationDisabled) {
+    //   const randomNumber = Math.floor(Math.random() * 1000000);
+    //   setTimeout(() => this.reportObjectUsage(connection, `client_${randomNumber}`), 60 * 1000);
+    // } else {
+    //   console.log('connect: Not reporting object usage for migration connection.');
+    // }
 
     return super.connect(connection, req);
   }

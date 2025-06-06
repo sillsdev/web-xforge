@@ -50,6 +50,31 @@ const connections = new Map<number, Connection>();
 let connectionIndex = 0;
 let running = false;
 
+// Report connection and collections information every minute
+setInterval(() => {
+  console.log(`----- Connection Report: ${new Date().toISOString()} -----`);
+  console.log(`Total active connections: ${connections.size}`);
+
+  connections.forEach((connection, handle) => {
+    console.log(`\nConnection ${handle}:`);
+    // Access the private collections property
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const collections = (connection as any).collections;
+    if (!collections) {
+      console.log('  No collections found');
+      return;
+    }
+
+    for (const collection in collections) {
+      if (Object.prototype.hasOwnProperty.call(collections, collection)) {
+        const docs = collections[collection];
+        console.log(`  Collection "${collection}": ${Object.keys(docs).length} documents`);
+      }
+    }
+  });
+  console.log('----- End Connection Report -----\n');
+}, 60000); // Run every minute (60000 ms)
+
 async function startServer(options: RealtimeServerOptions): Promise<void> {
   if (running) {
     return;
@@ -155,6 +180,7 @@ function createSnapshots(docs: Doc[] | undefined): Snapshot[] | undefined {
 
 function getDoc(handle: number, collection: string, id: string): Doc | undefined {
   const conn = connections.get(handle);
+  //mark
   if (conn != null) {
     return conn.get(collection, id);
   }
@@ -184,6 +210,7 @@ export = {
     }
     const connection = server.connect(userId);
     connection.on('error', err => console.log(err));
+    //mark
     const index = connectionIndex++;
     connections.set(index, connection);
     callback(undefined, index);
@@ -193,7 +220,7 @@ export = {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
-    }
+    } //mark
     connections.delete(handle);
     callback(undefined, {});
   },
