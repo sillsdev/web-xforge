@@ -1077,23 +1077,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   /**
-   * Navigate to book/chapter of specified question if necessary and select question.
+   * Activate a question which should automatically navigate to the book/chapter
    */
   activateQuestion(questionDoc: QuestionDoc | undefined, { withFilterReset = false } = {}): void {
     if (questionDoc == null) {
       return;
     }
 
-    if (!this.navigateQuestionChapter(questionDoc)) {
-      if (withFilterReset) {
-        this.resetFilter();
-      }
-
-      this.questionsList?.activateQuestion(questionDoc);
-    } else if (withFilterReset) {
-      // Reset filter, but don't update visible questions yet if navigating
-      this.activeQuestionFilter = QuestionFilter.None;
+    if (withFilterReset) {
+      this.resetFilter();
     }
+    this.questionsList?.activateQuestion(questionDoc);
   }
 
   /**

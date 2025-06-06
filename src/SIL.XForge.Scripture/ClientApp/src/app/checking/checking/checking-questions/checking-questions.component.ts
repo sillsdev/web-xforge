@@ -311,8 +311,6 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     questionToActivate ??= this.questionDocs.find(
       qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
     );
-    // If no question was previously active, choose the first question
-    questionToActivate ??= this.activeQuestionDoc == null ? this.questionDocs[0] : undefined;
 
     if (questionToActivate != null) {
       this.activateQuestion(questionToActivate, actionSource);
