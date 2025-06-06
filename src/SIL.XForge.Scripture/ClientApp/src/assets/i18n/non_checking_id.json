@@ -194,7 +194,6 @@
     "generate_draft_button": "Buat konsep",
     "generate_forward_translation_drafts_header": "Membuat konsep terjemahan",
     "generate_new_draft": "Konsep baru",
-    "improved_draft_generation_notice": "Pembuatan konsep telah ditingkatkan! Lebih banyak markah USFM akan dipertahankan dengan baik ketika Anda membuat konsep. Silakan {1}hubungi kami{2} jika Anda menemukan masalah.",
     "info_alert_last_sync_failed": "Proyek Anda gagal disinkronkan. Ini akan disinkronkan saat Anda membuat konsep berikutnya.",
     "info_alert_no_source_access": "Anda tidak memiliki akses ke proyek sumber terjemahan {{ name }}. Silakan hubungi Administrator Paratext Anda untuk mendapatkan akses, kemudian [link:connectProjectUrl] sambungkan ke proyek ini [/link] sebelum Anda dapat membuat konsep.",
     "info_alert_no_training_source_access": "Anda tidak memiliki akses ke proyek sumber terjemahan {{ name }}. Silakan hubungi Administrator Paratext Anda untuk mendapatkan akses, kemudian [link:connectProjectUrl] sambungkan ke proyek ini [/link] sebelum Anda dapat membuat konsep.",
@@ -271,6 +270,7 @@
     "draft_faulted": "Gagal",
     "draft_pending": "Pending",
     "draft_unknown": "tidak diketahui",
+    "format_usfm": "Format USFM",
     "hide_model_training_configuration": "Hide model training configuration",
     "show_model_training_configuration": "Show model training configuration",
     "training_model_description": "The language model was trained on this configuration"
@@ -504,7 +504,11 @@
     "tooltip_more_info": "More info"
   },
   "lynx_insights_panel": {
-    "restore": "Memulihkan"
+    "loading": "Memuat...",
+    "restore": "Memulihkan",
+    "show_more": "Show more",
+    "remaining": "remaining",
+    "unknown_insight_location": "Unknown location"
   },
   "lynx_insights_panel_header": {
     "insights": "Insights",
@@ -720,6 +724,7 @@
     "successfully_synchronized_with_paratext": "Berhasil menyinkronkan {{ projectName }} dengan Paratext.",
     "synchronize": "Menyinkronkan dengan Paratext",
     "synchronize_project": "Menyinkronkan{{ projectName }} dengan Paratext",
+    "synchronize_source_project": "Synchronizing source text:",
     "your_project_is_being_synchronized": "Proyek Anda sedang disinkronkan...",
     "sync_is_disabled": "Sinkronisasi untuk proyek ini perlu dinonaktifkan, sehingga tidak tersedia untuk saat ini. Silakan hubungi {{ email }} untuk mendiskusikan apa yang perlu dilakukan agar sinkronisasi proyek dapat diaktifkan kembali.",
     "sync_failure_support_message": "Ada kesalahan saat terakhir kali Scripture Forge mencoba menyinkronkan proyek dengan Paratext. Jika masih tidak berhasil setelah Anda mencoba lagi, silakan laporkan masalahnya dengan menulis ke {{email}}.",

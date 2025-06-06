@@ -194,7 +194,6 @@
     "generate_draft_button": "Generate draft",
     "generate_forward_translation_drafts_header": "Generate translation drafts",
     "generate_new_draft": "New draft",
-    "improved_draft_generation_notice": "Drafting has been upgraded! More of the USFM markers will be properly preserved when you generate a draft. Please {1}contact us{2} if you notice any issues.",
     "info_alert_last_sync_failed": "Your project failed to synchronize. It will be synchronized when you next generate a draft.",
     "info_alert_no_source_access": "You do not have access to the translation source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_no_training_source_access": "You do not have access to the training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
@@ -271,6 +270,7 @@
     "draft_faulted": "Failed",
     "draft_pending": "Pending",
     "draft_unknown": "naməlum",
+    "format_usfm": "Format USFM",
     "hide_model_training_configuration": "Hide model training configuration",
     "show_model_training_configuration": "Show model training configuration",
     "training_model_description": "The language model was trained on this configuration"
@@ -504,7 +504,11 @@
     "tooltip_more_info": "More info"
   },
   "lynx_insights_panel": {
-    "restore": "Restore"
+    "loading": "Yüklənir...",
+    "restore": "Restore",
+    "show_more": "Show more",
+    "remaining": "remaining",
+    "unknown_insight_location": "Unknown location"
   },
   "lynx_insights_panel_header": {
     "insights": "Insights",
@@ -720,6 +724,7 @@
     "successfully_synchronized_with_paratext": "{{ projectName }} Paratext ilə uğurla sinxronlaşdırıldı. ",
     "synchronize": "Sinxronlaşdırmaq",
     "synchronize_project": "{{ projectName }} Paratext ilə sinxronlaşdırıldı",
+    "synchronize_source_project": "Synchronizing source text:",
     "your_project_is_being_synchronized": "Sizin layihəniz sinxronlaşdırılır...",
     "sync_is_disabled": "Bu layihə üçün sinxronizasiyanın ləğv edilməsi lazım idi, buna görə də hazırda mövcud deyil. Layihə sinxronizasiyasının yenidən aktivləşdirilməsi üçün nələrin edilməsi lazım olduğunu müzakirə etmək üçün {{ email }} ilə əlaqə saxlayın.",
     "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please report the problem by writing to {{email}}.",
