@@ -469,9 +469,11 @@ describe('DraftGenerationService', () => {
       });
       tick();
 
+      const queryParams = new URLSearchParams();
+      queryParams.append('timestamp', timestamp.toISOString());
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta?timestamp=${timestamp.toISOString()}`
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta?${queryParams.toString()}`
       );
       expect(req.request.method).toEqual('GET');
       req.flush(preTranslationDeltaData);
@@ -697,9 +699,11 @@ describe('DraftGenerationService', () => {
       });
       tick();
 
+      const params = new URLSearchParams();
+      params.append('timestamp', date.toISOString());
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm?timestamp=${date.toISOString()}`
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm?${params.toString()}`
       );
       expect(req.request.method).toEqual('GET');
       req.flush(usfm);
@@ -879,10 +883,12 @@ describe('DraftGenerationService', () => {
       });
       tick();
 
+      const params = new URLSearchParams();
+      params.append('timestamp', '2024-08-27T01:02:03.004Z');
       // Setup the HTTP request for 1 John
       const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
       const req1jn = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm?timestamp=2024-08-27T01:02:03.004Z`
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm?${params.toString()}`
       );
       expect(req1jn.request.method).toEqual('GET');
       req1jn.flush(usfm);
@@ -911,10 +917,12 @@ describe('DraftGenerationService', () => {
       });
       tick();
 
+      const params = new URLSearchParams();
+      params.append('timestamp', '2024-08-27T01:02:03.004Z');
       // Setup the HTTP request for 1 John
       const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
       const req1jn = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm?timestamp=2024-08-27T01:02:03.004Z`
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm?${params.toString()}`
       );
       expect(req1jn.request.method).toEqual('GET');
       req1jn.flush(usfm);

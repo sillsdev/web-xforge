@@ -9,5 +9,5 @@ public static class ParagraphBreakFormat
 
 public class DraftUsfmConfig
 {
-    public string ParagraphFormat { get; set; } = ParagraphBreakFormat.MoveToEnd;
+    public string ParagraphFormat { get; set; } = ParagraphBreakFormat.BestGuess;
 }

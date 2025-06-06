@@ -290,8 +290,10 @@ export class DraftGenerationService {
       return of(undefined);
     }
     let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`;
+    const params = new URLSearchParams();
     if (timestamp != null) {
-      url += `?timestamp=${timestamp.toISOString()}`;
+      params.append('timestamp', timestamp.toISOString());
+      url += `?${params.toString()}`;
     }
     return this.httpClient.get<string>(url).pipe(
       map(res => res.data),
