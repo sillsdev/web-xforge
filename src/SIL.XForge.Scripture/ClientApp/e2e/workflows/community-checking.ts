@@ -89,7 +89,7 @@ export async function communityChecking(
   ).toBeVisible();
   await user.click(page.getByRole('button', { name: 'Archive' }));
 
-  await user.click(page.getByRole('button', { name: 'Bulk import' }));
+  await user.click(page.getByRole('button', { name: 'Import' }));
   const fileChooserPromise = page.waitForEvent('filechooser');
   await user.click(page.getByRole('button', { name: 'Import from spreadsheet' }));
   const fileChooser = await fileChooserPromise;

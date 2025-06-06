@@ -6,6 +6,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { ngfModule } from 'angular-file';
+import { saveAs } from 'file-saver';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -313,6 +314,16 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.component.showImportButton).toBe(true);
       expect(env.importButton).not.toBeNull();
+    }));
+  });
+
+  describe('Export Questions', () => {
+    it('should export questions to CSV', fakeAsync(() => {
+      spyOn(saveAs, 'saveAs').and.stub();
+      const env = new TestEnvironment();
+      env.waitForQuestions();
+      env.clickElement(env.exportButton);
+      expect(saveAs).toHaveBeenCalled();
     }));
   });
 
@@ -1015,6 +1026,10 @@ class TestEnvironment {
 
   get importButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#import-btn'));
+  }
+
+  get exportButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#export-btn'));
   }
 
   get loadingQuestionsLabel(): DebugElement {
