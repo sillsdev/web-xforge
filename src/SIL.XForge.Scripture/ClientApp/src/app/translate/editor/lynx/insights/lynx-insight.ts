@@ -43,9 +43,11 @@ export interface LynxInsightConfig {
   filter: LynxInsightFilter;
   sortOrder: LynxInsightSortOrder;
   queryParamName: string;
+  actionOverlayApplyPrimaryActionChord: Partial<KeyboardEvent>;
   /** The link text length as an approximate goal.  Actual may be slightly smaller or larger due to word boundaries. */
   panelLinkTextGoalLength: number;
-  actionOverlayApplyPrimaryActionChord: Partial<KeyboardEvent>;
+  /** Nodes with more children than this will use progressive loading and paged display. */
+  panelOptimizationThreshold: number;
 }
 
 export interface LynxInsightAction {
@@ -63,7 +65,8 @@ export const EDITOR_INSIGHT_DEFAULTS = new InjectionToken<LynxInsightConfig>('ED
     filter: { types: ['info', 'warning', 'error'], scope: 'chapter' },
     sortOrder: 'severity',
     queryParamName: 'insight',
+    actionOverlayApplyPrimaryActionChord: { altKey: true, shiftKey: true, key: 'Enter' },
     panelLinkTextGoalLength: 30,
-    actionOverlayApplyPrimaryActionChord: { altKey: true, shiftKey: true, key: 'Enter' }
+    panelOptimizationThreshold: 100
   })
 });
