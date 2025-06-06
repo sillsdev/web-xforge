@@ -3750,16 +3750,27 @@ describe('EditorComponent', () => {
   });
 
   it('sets book and chapter according to route', fakeAsync(() => {
-    const navigationParams: Params = { projectId: 'project01', bookId: 'MRK', chapter: '2' };
+    const navigationParams: Params = { projectId: 'project01', bookId: 'MAT', chapter: '2' };
     const env = new TestEnvironment();
 
     env.setProjectUserConfig();
     env.routeWithParams(navigationParams);
     env.wait();
 
-    expect(env.bookName).toEqual('Mark');
+    expect(env.bookName).toEqual('Matthew');
     expect(env.component.chapter).toBe(2);
 
+    env.dispose();
+  }));
+
+  it('navigates to alternate chapter if specified chapter does not exist', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const nonExistentChapter = 3;
+    const routerSpy = spyOn(env.router, 'navigateByUrl').and.callThrough();
+    env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: nonExistentChapter });
+    env.wait();
+
+    expect(routerSpy).toHaveBeenCalledWith('/projects/project01/translate/MAT/1');
     env.dispose();
   }));
 
