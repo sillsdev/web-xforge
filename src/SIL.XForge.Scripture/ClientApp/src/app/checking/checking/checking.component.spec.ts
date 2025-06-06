@@ -418,6 +418,9 @@ describe('CheckingComponent', () => {
       env.setBookChapter('MAT', 2);
       env.fixture.detectChanges();
       expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
+      env.setBookChapter('MAT', 3);
+      env.fixture.detectChanges();
+      expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
       flush();
       discardPeriodicTasks();
     }));
@@ -2827,7 +2830,8 @@ class TestEnvironment {
           hasSource: false,
           chapters: [
             { number: 1, lastVerse: 28, isValid: true, permissions: {} },
-            { number: 2, lastVerse: 23, isValid: true, permissions: {} }
+            { number: 2, lastVerse: 23, isValid: true, permissions: {} },
+            { number: 3, lastVerse: 26, isValid: true, permissions: {} }
           ],
           permissions: {}
         }
@@ -3330,6 +3334,11 @@ class TestEnvironment {
       {
         id: getTextDocId(projectId, 40, 2),
         data: this.createTextDataForChapter(2),
+        type: RichText.type.name
+      },
+      {
+        id: getTextDocId(projectId, 40, 3),
+        data: this.createTextDataForChapter(3),
         type: RichText.type.name
       }
     ]);
