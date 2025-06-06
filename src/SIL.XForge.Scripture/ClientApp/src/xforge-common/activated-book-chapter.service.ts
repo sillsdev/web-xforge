@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivationEnd, Params, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
   BehaviorSubject,
   combineLatest,
@@ -51,7 +52,13 @@ export class ActivatedBookChapterService {
         chapter = projectUserConfig.selectedChapterNum;
       }
 
-      chapter ??= projectProfile.texts.find(t => t.bookNum === bookNum)?.chapters[0]?.number;
+      const textInfo: TextInfo | undefined = projectProfile.texts.find(t => t.bookNum === bookNum);
+      chapter ??= textInfo?.chapters[0]?.number;
+
+      // emit undefined for the chapter if the chapter does not exist
+      if (textInfo?.chapters.find(c => c.number === chapter) == null) {
+        chapter = undefined;
+      }
 
       return of({ bookId, chapter });
     }),
