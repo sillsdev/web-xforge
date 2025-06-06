@@ -194,7 +194,6 @@
     "generate_draft_button": "Générer une ébauche",
     "generate_forward_translation_drafts_header": "Générer des brouillons de traduction",
     "generate_new_draft": "Nouvelle ébauche",
-    "improved_draft_generation_notice": "La rédaction a été améliorée ! Un plus grand nombre de marqueurs de l'USFM seront correctement préservés lorsque vous générez un brouillon. Veuillez {1}nous contacter{2} si vous constatez des problèmes.",
     "info_alert_last_sync_failed": "Votre projet n'a pas réussi à se synchroniser. Il sera synchronisé lorsque vous générerez votre prochaine ébauche.",
     "info_alert_no_source_access": "Vous n'avez pas accès au projet de traduction {{ name }}. Veuillez contacter votre administrateur Paratext pour obtenir l'accès, puis [link:connectProjectUrl]connectez-vous à ce projet[/link] avant de pouvoir générer une ébauche.",
     "info_alert_no_training_source_access": "Vous n'avez pas accès au projet source de formation {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
@@ -271,6 +270,7 @@
     "draft_faulted": "Échoué",
     "draft_pending": "En attente",
     "draft_unknown": "Inconnu",
+    "format_usfm": "Format USFM",
     "hide_model_training_configuration": "Masquer la configuration de l'apprentissage du modèle",
     "show_model_training_configuration": "Afficher la configuration de l'entraînement au modèle",
     "training_model_description": "Le modèle de langue a été formé sur cette configuration"
@@ -504,7 +504,11 @@
     "tooltip_more_info": "Plus d'informations"
   },
   "lynx_insights_panel": {
-    "restore": "Restaurer"
+    "loading": "Chargement...",
+    "restore": "Restaurer",
+    "show_more": "Show more",
+    "remaining": "remaining",
+    "unknown_insight_location": "Unknown location"
   },
   "lynx_insights_panel_header": {
     "insights": "Aperçus",
@@ -720,6 +724,7 @@
     "successfully_synchronized_with_paratext": "Synchronisation réussie de {{ projectName }} avec Paratext.",
     "synchronize": "Synchronisation avec Paratext",
     "synchronize_project": "Synchroniser {{ projectName }} avec Paratext",
+    "synchronize_source_project": "Synchronisation du texte source :",
     "your_project_is_being_synchronized": "Votre projet est en cours de synchronisation...",
     "sync_is_disabled": "La synchronisation pour ce projet a dû être désactivée, elle n'est donc pas disponible pour le moment. Veuillez contacter {{ email }} pour discuter de ce qui doit être fait pour que la synchronisation du projet puisse être à nouveau activée.",
     "sync_failure_support_message": "Une erreur est survenue la dernière fois que Scripture Forge a essayé de synchroniser le projet avec Paratext. Si cela ne fonctionne toujours pas après avoir réessayé, veuillez envoyer un rapport de problème à ce sujet en écrivant à {{email}}.",
