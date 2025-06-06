@@ -173,14 +173,14 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
 
   autocompleteOpened(): void {
     setTimeout(() => {
-      if (this.autocomplete && this.autocomplete.panel && this.autocompleteTrigger) {
-        fromEvent(this.autocomplete.panel.nativeElement, 'scroll')
+      if (this.autocomplete?.panel != null && this.autocompleteTrigger != null) {
+        fromEvent<Event>(this.autocomplete.panel.nativeElement, 'scroll')
           .pipe(
-            map(() => this.autocomplete.panel.nativeElement.scrollTop),
             takeUntil(this.autocompleteTrigger.panelClosingActions.pipe(tap(() => this.resourceCountLimit$.next(25))))
           )
-          .subscribe(() => {
-            const panel = this.autocomplete.panel.nativeElement;
+          .subscribe(event => {
+            const panel = event.target as HTMLElement | null;
+            if (panel == null) return;
             // if scrolled to within 100px of bottom, display more resources
             if (this.resources != null && panel.scrollHeight <= panel.scrollTop + panel.clientHeight + 100) {
               this.resourceCountLimit$.next(Math.min(this.resourceCountLimit$.getValue() + 25, this.resources.length));
