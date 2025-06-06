@@ -216,15 +216,15 @@ export class DraftGenerationService {
       return of([]);
     }
     let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`;
-    const queryParams: string[] = [];
+    const params = new URLSearchParams();
     if (timestamp != null) {
-      queryParams.push(`timestamp=${timestamp.toISOString()}`);
+      params.append('timestamp', timestamp.toISOString());
     }
     if (usfmConfig != null) {
-      queryParams.push(`preserveParagraphs=${usfmConfig.preserveParagraphMarkers}`);
+      params.append('paragraphFormat', usfmConfig.paragraphFormat);
     }
-    if (queryParams.length > 0) {
-      url += `?${queryParams.join('&')}`;
+    if (params.size > 0) {
+      url += `?${params.toString()}`;
     }
     return this.httpClient.get<Snapshot<TextData> | undefined>(url).pipe(
       map(res => res.data?.data.ops ?? []),
@@ -290,8 +290,10 @@ export class DraftGenerationService {
       return of(undefined);
     }
     let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`;
+    const params = new URLSearchParams();
     if (timestamp != null) {
-      url += `?timestamp=${timestamp.toISOString()}`;
+      params.append('timestamp', timestamp.toISOString());
+      url += `?${params.toString()}`;
     }
     return this.httpClient.get<string>(url).pipe(
       map(res => res.data),

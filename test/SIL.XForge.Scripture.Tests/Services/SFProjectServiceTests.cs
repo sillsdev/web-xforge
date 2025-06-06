@@ -3842,14 +3842,19 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project01);
-        DraftUsfmConfig config = new DraftUsfmConfig { PreserveParagraphMarkers = true };
-        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveParagraphMarkers, Is.True);
+        Assert.That(
+            project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphFormat,
+            Is.EqualTo(ParagraphBreakFormat.BestGuess)
+        );
 
         // SUT
-        config.PreserveParagraphMarkers = false;
+        DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove };
         await env.Service.SetUsfmConfigAsync(User01, Project01, config);
         project = env.GetProject(Project01);
-        Assert.That(project.TranslateConfig.DraftConfig.UsfmConfig.PreserveParagraphMarkers, Is.False);
+        Assert.That(
+            project.TranslateConfig.DraftConfig.UsfmConfig.ParagraphFormat,
+            Is.EqualTo(ParagraphBreakFormat.Remove)
+        );
     }
 
     [Test]
@@ -3859,8 +3864,8 @@ public class SFProjectServiceTests
         DraftUsfmConfig config = new DraftUsfmConfig();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SetUsfmConfigAsync(User01, "invalid_project", config)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.SetUsfmConfigAsync(User01, "invalid_project", config)
         );
     }
 

@@ -194,9 +194,14 @@ public class PreTranslationService(
             textId: GetTextId(bookNum),
             textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
             template: PretranslationUsfmTemplate.Source,
-            paragraphMarkerBehavior: config.PreserveParagraphMarkers
-                ? PretranslationUsfmMarkerBehavior.Preserve
-                : PretranslationUsfmMarkerBehavior.Strip,
+            paragraphMarkerBehavior: config.ParagraphFormat switch
+            {
+                // TODO: Update mappings to USFM marker behavior when available in serval
+                ParagraphBreakFormat.Remove => PretranslationUsfmMarkerBehavior.Strip,
+                ParagraphBreakFormat.BestGuess => PretranslationUsfmMarkerBehavior.Preserve,
+                ParagraphBreakFormat.MoveToEnd => PretranslationUsfmMarkerBehavior.Preserve,
+                _ => PretranslationUsfmMarkerBehavior.Preserve,
+            },
             cancellationToken: cancellationToken
         );
 
