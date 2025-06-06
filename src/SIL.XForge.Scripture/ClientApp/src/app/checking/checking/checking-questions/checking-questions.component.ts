@@ -176,6 +176,9 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       this.haveQuestionsLoaded = true;
       this.changed.emit({ questionDoc: this.activeQuestionDoc, actionSource: { isQuestionListChange: true } });
       this.changeDetector.markForCheck();
+    } else if (changes.routeBookChapter != null) {
+      // If the route book/chapter changes, activate the first question on the new chapter
+      this.activateStoredQuestion();
     }
   }
 
@@ -294,18 +297,25 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
         }
       }
     } else {
-      questionToActivate = this.activeQuestionDoc;
+      // If there is an active question, check if it matches the route book/chapter
+      const useActiveQuestion: boolean =
+        this.routeBookChapter == null ||
+        (this.activeQuestionDoc?.data != null &&
+          bookChapterMatchesVerseRef(this.routeBookChapter, this.activeQuestionDoc.data.verseRef));
+      if (useActiveQuestion) {
+        questionToActivate = this.activeQuestionDoc;
+      }
     }
 
     // No stored question, so use first question within route book/chapter if available.
-    // Otherwise use first question.
-    questionToActivate ??=
-      this.questionDocs.find(
-        qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
-      ) ?? this.questionDocs[0];
+    questionToActivate ??= this.questionDocs.find(
+      qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
+    );
 
     if (questionToActivate != null) {
       this.activateQuestion(questionToActivate, actionSource);
+    } else {
+      this.activeQuestionDoc = undefined;
     }
   }
 

@@ -580,7 +580,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             };
           } else {
             const suggestedBookChapter: BookChapter = await this.getSuggestedNavBookChapter(routeBookNum);
-
             this.navigateBookChapter(
               routeProjectId,
               routeScope!,
@@ -607,7 +606,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             (routeScope === 'chapter' && (routeChapter == null ? undefined : parseInt(routeChapter)) !== prevChapterNum)
           ) {
             this.cleanup();
-
             this.questionsQuery = await this.checkingQuestionsService.queryQuestions(
               routeProjectId,
               {
@@ -648,9 +646,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
                 if (this.onlineStatusService.isOnline) {
                   qd.updateFileCache();
-                  if (isActiveQuestionDoc) {
-                    qd.updateAnswerFileCache();
-                  }
                 }
 
                 this.updateAdjacentQuestions(this.questionsList!.activeQuestionDoc!);
@@ -695,9 +690,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 this.updateVisibleQuestions();
               });
           } else {
-            // Visible questions didn't change, but active question must update on route change
-            this.questionsList?.activateStoredQuestion();
-
             // Ensure refs updated if book changed, but no new questions query (scope is 'all')
             if (routeBookNum !== prevBookNum) {
               this.updateQuestionRefs();
@@ -733,7 +725,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((state: BreakpointState) => {
         this.calculateScriptureSliderPosition();
-
         // `questionsPanel` is undefined until ngAfterViewInit, but setting `isQuestionListPermanent`
         // here causes `ExpressionChangedAfterItHasBeenCheckedError`, so wrap in setTimeout
         setTimeout(() => {
@@ -746,7 +737,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       .observe(this.mediaBreakpointService.width('<', Breakpoint.MD))
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe((state: BreakpointState) => {
-        this.isScreenSmall = state.matches;
+        // setting isScreenSmall causes `ExpressionChangedAfterItHasBeenCheckedError`, so wrap in setTimeout
+        setTimeout(() => (this.isScreenSmall = state.matches));
       });
   }
 
@@ -940,9 +932,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       }
 
       // Ensure navigation is set to book/chapter of selected question
-      if (this.navigateQuestionChapter(questionDoc)) {
-        return;
-      }
+      this.navigateQuestionChapter(questionDoc);
     }
   }
 
@@ -1087,23 +1077,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   /**
-   * Navigate to book/chapter of specified question if necessary and select question.
+   * Activate a question which should automatically navigate to the book/chapter
    */
   activateQuestion(questionDoc: QuestionDoc | undefined, { withFilterReset = false } = {}): void {
     if (questionDoc == null) {
       return;
     }
 
-    if (!this.navigateQuestionChapter(questionDoc)) {
-      if (withFilterReset) {
-        this.resetFilter();
-      }
-
-      this.questionsList?.activateQuestion(questionDoc);
-    } else if (withFilterReset) {
-      // Reset filter, but don't update visible questions yet if navigating
-      this.activeQuestionFilter = QuestionFilter.None;
+    if (withFilterReset) {
+      this.resetFilter();
     }
+    this.questionsList?.activateQuestion(questionDoc);
   }
 
   /**

@@ -71,9 +71,7 @@
                 [book]="book"
                 [chapters]="chapters"
                 [chapter]="chapter"
-                [bookSelectDisabled]="activeQuestionScope === 'all'"
-                [chapterSelectDisabled]="activeQuestionScope !== 'chapter'"
-                [prevNextHidden]="activeQuestionScope !== 'chapter' || isScreenSmall"
+                [prevNextHidden]="isScreenSmall"
                 (bookChange)="onBookSelect($event)"
                 (chapterChange)="onChapterSelect($event)"
               >
