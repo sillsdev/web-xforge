@@ -203,18 +203,18 @@ describe('LynxInsightsPanelComponent', () => {
 
       // Populate caches with enough entries to exceed thresholds for cleanup
       // Use keys that won't match any current visible node descriptions
-      for (let i = 0; i < env.MAX_CACHED_NODE_ARRAYS + 5; i++) {
+      for (let i = 0; i < env.LIGHTWEIGHT_CACHE_MAX_SIZE + 5; i++) {
         env.component['visibleChildrenCache'].set(`NONEXISTENT_NODE_DESC_${i}-childCount`, []);
       }
-      for (let i = 0; i < env.MAX_CACHED_ENTRIES + 5; i++) {
+      for (let i = 0; i < env.LIGHTWEIGHT_CACHE_MAX_SIZE + 5; i++) {
         env.component['pagedLoadingCache'].set(`NONEXISTENT_NODE_DESC_${i}-loading`, true);
       }
       env.component['lastVisibleCountMap'].set('NONEXISTENT_NODE_DESC_1-count', 5);
       env.component['lastVisibleCountMap'].set('NONEXISTENT_NODE_DESC_2-count', 10);
 
       // Verify caches are populated above thresholds
-      expect(env.component['visibleChildrenCache'].size).toBeGreaterThan(env.MAX_CACHED_NODE_ARRAYS);
-      expect(env.component['pagedLoadingCache'].size).toBeGreaterThan(env.MAX_CACHED_ENTRIES);
+      expect(env.component['visibleChildrenCache'].size).toBeGreaterThan(env.LIGHTWEIGHT_CACHE_MAX_SIZE);
+      expect(env.component['pagedLoadingCache'].size).toBeGreaterThan(env.LIGHTWEIGHT_CACHE_MAX_SIZE);
       expect(env.component['lastVisibleCountMap'].size).toBeGreaterThan(0);
 
       // Trigger tree rebuild with different insights
@@ -224,8 +224,8 @@ describe('LynxInsightsPanelComponent', () => {
       tick();
 
       // Caches should be significantly reduced after cleanup
-      expect(env.component['visibleChildrenCache'].size).toBeLessThan(env.MAX_CACHED_NODE_ARRAYS);
-      expect(env.component['pagedLoadingCache'].size).toBeLessThan(env.MAX_CACHED_ENTRIES);
+      expect(env.component['visibleChildrenCache'].size).toBeLessThan(env.LIGHTWEIGHT_CACHE_MAX_SIZE);
+      expect(env.component['pagedLoadingCache'].size).toBeLessThan(env.LIGHTWEIGHT_CACHE_MAX_SIZE);
     }));
   });
 
@@ -350,35 +350,37 @@ describe('LynxInsightsPanelComponent', () => {
   describe('Memory management', () => {
     it('should clean up text snippet cache when it exceeds max size', fakeAsync(() => {
       const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
-      const testCacheEntries = testEnvironment.MAX_CACHED_ENTRIES + 20; // Fill cache beyond max size
+      const testCacheEntries = testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE + 20; // Fill cache beyond max size
 
       for (let i = 0; i < testCacheEntries; i++) {
         testEnvironment.component['textSnippetCache'].set(`insight-${i}`, `text-${i}`);
       }
 
       // Add current insight ids to prevent them from being cleaned up
-      for (let i = testEnvironment.MAX_CACHED_ENTRIES; i < testCacheEntries; i++) {
+      for (let i = testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE; i < testCacheEntries; i++) {
         testEnvironment.component['currentInsightIds'].add(`insight-${i}`);
       }
 
       (testEnvironment.component as any).cleanUpCaches();
 
       expect(testEnvironment.component['textSnippetCache'].size).toBeLessThanOrEqual(
-        testEnvironment.MAX_CACHED_ENTRIES
+        testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE
       );
     }));
 
     it('should clean up text doc cache when it exceeds max size', fakeAsync(() => {
       const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
-      // Fill cache beyond MAX_CACHED_DOCS
-      for (let i = 0; i < testEnvironment.MAX_CACHED_DOCS + 10; i++) {
+      // Fill cache beyond max size
+      for (let i = 0; i < testEnvironment.TEXT_DOC_CACHE_MAX_SIZE + 10; i++) {
         testEnvironment.component['textDocCache'].set(`doc-${i}`, Promise.resolve(instance(mockTextDoc)));
       }
 
       (testEnvironment.component as any).manageMemoryUsage();
 
-      expect(testEnvironment.component['textDocCache'].size).toBeLessThanOrEqual(testEnvironment.MAX_CACHED_DOCS);
+      expect(testEnvironment.component['textDocCache'].size).toBeLessThanOrEqual(
+        testEnvironment.TEXT_DOC_CACHE_MAX_SIZE
+      );
     }));
 
     it('should clean up loading progress for obsolete nodes', fakeAsync(() => {
@@ -396,28 +398,28 @@ describe('LynxInsightsPanelComponent', () => {
       const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       // Add many cache entries to exceed the limit and trigger cleanup
-      for (let i = 0; i < testEnvironment.MAX_CACHED_NODE_ARRAYS + 20; i++) {
+      for (let i = 0; i < testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE + 20; i++) {
         testEnvironment.component['visibleChildrenCache'].set(`obsolete-entry-${i}`, []);
       }
 
       // Add a cache entry that matches a current tree node description
-      testEnvironment.component['visibleChildrenCache'].set('Test warning insight-1', []);
+      testEnvironment.component['visibleChildrenCache'].set('Test warning insight', []);
 
       // The cache should now be over the limit, so cleanup should happen
       (testEnvironment.component as any).manageMemoryUsage();
 
       // Should clean up many obsolete entries
       let obsoleteEntriesRemaining = 0;
-      for (let i = 0; i < testEnvironment.MAX_CACHED_NODE_ARRAYS + 20; i++) {
+      for (let i = 0; i < testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE + 20; i++) {
         if (testEnvironment.component['visibleChildrenCache'].has(`obsolete-entry-${i}`)) {
           obsoleteEntriesRemaining++;
         }
       }
 
       // Most obsolete entries should be removed
-      expect(obsoleteEntriesRemaining).toBeLessThan(testEnvironment.MAX_CACHED_NODE_ARRAYS + 5);
+      expect(obsoleteEntriesRemaining).toBeLessThan(testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE + 5);
       // Should keep entries that match current tree nodes if they're visible
-      expect(testEnvironment.component['visibleChildrenCache'].has('Test warning insight-1')).toBe(true);
+      expect(testEnvironment.component['visibleChildrenCache'].has('Test warning insight')).toBe(true);
     }));
   });
 
@@ -616,10 +618,8 @@ class TestEnvironment {
   readonly component: LynxInsightsPanelComponent;
   readonly fixture: ComponentFixture<LynxInsightsPanelComponent>;
 
-  // Component constants - accessed from the component for consistency with actual values
-  readonly MAX_CACHED_NODE_ARRAYS: number;
-  readonly MAX_CACHED_ENTRIES: number;
-  readonly MAX_CACHED_DOCS: number;
+  readonly TEXT_DOC_CACHE_MAX_SIZE: number;
+  readonly LIGHTWEIGHT_CACHE_MAX_SIZE: number;
   readonly MAX_BATCH_SIZE: number;
   readonly panelOptimizationThreshold: number = OPTIMIZATION_THRESHOLD;
 
@@ -712,9 +712,8 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
 
     // Initialize component constants from the actual component
-    this.MAX_CACHED_NODE_ARRAYS = (this.component as any)['MAX_CACHED_NODE_ARRAYS'];
-    this.MAX_CACHED_ENTRIES = (this.component as any)['MAX_CACHED_ENTRIES'];
-    this.MAX_CACHED_DOCS = (this.component as any)['MAX_CACHED_DOCS'];
+    this.TEXT_DOC_CACHE_MAX_SIZE = (this.component as any)['TEXT_DOC_CACHE_MAX_SIZE'];
+    this.LIGHTWEIGHT_CACHE_MAX_SIZE = (this.component as any)['LIGHTWEIGHT_CACHE_MAX_SIZE'];
     this.MAX_BATCH_SIZE = (this.component as any)['MAX_BATCH_SIZE'];
 
     // Allow the component to initialize and process initial data

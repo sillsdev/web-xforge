@@ -67,55 +67,38 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   /** Set of all insight ids currently in the tree (used for cache cleanup). */
   private currentInsightIds = new Set<string>();
 
-  /** Maximum size of text doc cache before cleanup is triggered. */
-  private readonly TEXT_DOC_CACHE_MAX_SIZE = 20;
-
-  /** Maximum number of cached text docs to retain during cleanup (TextDoc objects are heavy). */
-  private readonly MAX_CACHED_DOCS = 50;
-
-  /** Maximum number of cached entries for lightweight caches (strings, booleans). */
-  private readonly MAX_CACHED_ENTRIES = 100;
-
-  /** Maximum number of cached visible children arrays (medium weight node arrays). */
-  private readonly MAX_CACHED_NODE_ARRAYS = 75;
-
-  /** Maximum number of nodes to process in a single batch. */
-  private readonly MAX_BATCH_SIZE = 100;
-
-  /** Threshold for triggering memory management after batch completion. */
-  private readonly MEMORY_MANAGEMENT_THRESHOLD = 200;
-
-  /** Initial batch size for high-priority processing. */
-  private readonly INITIAL_BATCH_SIZE = 10;
-
-  /** Processing delay in milliseconds for UI smoothness. */
-  private readonly PROCESSING_DELAY_MS = 100;
-
-  /** Maximum nodes for parallel processing optimization. */
-  private readonly PARALLEL_PROCESSING_MAX_NODES = 20;
-
-  /** Threshold ratio for choosing parallel vs sequential processing. */
-  private readonly PARALLEL_PROCESSING_RATIO_THRESHOLD = 0.5;
-
   /** Tracks which nodes have very large child sets to provide special UI feedback. */
   private nodesWithLargeChildSets = new Set<string>();
 
   /** Tracks loading progress for large node sets - Maps node description -> {completed: number, total: number}. */
   private loadingProgressMap = new Map<string, { completed: number; total: number }>();
 
-  /** Tracks which nodes are currently loading more children. */
-  // nodesLoadingMore set removed - no longer needed
-
-  /** Cache for visible children to avoid recalculating on every tree render. */
+  /** Maps visible node description -> children nodes. */
   private visibleChildrenCache = new Map<string, InsightPanelNode[]>();
 
-  /**
-   * Maps nodeDescription-childCount -> whether a node needs paged loading.
-   */
+  /** Maps node description -> whether a node needs paged loading. */
   private pagedLoadingCache = new Map<string, boolean>();
 
   /** Track the last visible node count for each node to detect when more are loaded. */
   private lastVisibleCountMap = new Map<string, number>();
+
+  /** Initial batch size for high-priority processing. */
+  private readonly INITIAL_BATCH_SIZE = 10;
+
+  /** Maximum number of nodes to process in a single batch. */
+  private readonly MAX_BATCH_SIZE = 50;
+
+  /** Prevents memory growth of text doc cache. */
+  private readonly TEXT_DOC_CACHE_MAX_SIZE = 100;
+
+  /** Prevents memory growth of visible children cache and paged loading cache. */
+  private readonly LIGHTWEIGHT_CACHE_MAX_SIZE = 1000;
+
+  /** Threshold for triggering cache cleanup based on num items processed since last cleanup. */
+  private readonly NUM_ITEMS_CACHE_CLEANUP_THRESHOLD = 200;
+
+  /** Num items processed since last memory cleanup. */
+  private numItemsProcessedSinceCleanup = 0;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -290,7 +273,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
       return false;
     }
 
-    const cacheKey = `${node.description}-${node.children.length}`;
+    const cacheKey = node.description;
     const cached = this.pagedLoadingCache.get(cacheKey);
     if (cached != null) {
       return cached;
@@ -313,7 +296,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
       return [];
     }
 
-    const cacheKey = `${node.description}-${node.children.length}`;
+    const cacheKey = node.description;
     const cached = this.visibleChildrenCache.get(cacheKey);
     if (cached) {
       return cached;
@@ -356,7 +339,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
     this.lastVisibleCountMap.set(node.description, newCount);
 
     // Clear cache to force recalculation
-    const cacheKey = `${node.description}-${node.children.length}`;
+    const cacheKey = node.description;
     this.visibleChildrenCache.delete(cacheKey);
 
     // Update remaining count immediately so UI is consistent
@@ -657,16 +640,6 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
       }
     }
 
-    // Enforce size limit on text snippets cache
-    if (this.textSnippetCache.size > this.MAX_CACHED_ENTRIES) {
-      const entries = Array.from(this.textSnippetCache.entries());
-      const toKeep = entries.slice(-this.MAX_CACHED_ENTRIES);
-      this.textSnippetCache.clear();
-      for (const [key, value] of toKeep) {
-        this.textSnippetCache.set(key, value);
-      }
-    }
-
     // Clean up loading progress tracking for nodes no longer in tree
     const { visibleNodeDescriptions } = this.collectVisibleItems(this.treeDataSource);
     for (const [nodeDesc] of this.loadingProgressMap) {
@@ -682,15 +655,11 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
    * This helps prevent memory leaks and excessive memory usage with large datasets.
    */
   private manageMemoryUsage(): void {
-    const currentTextDocCacheSize = this.textDocCache.size;
-    const pagedLoadingCacheSize = this.pagedLoadingCache.size;
-    const visibleChildrenCacheSize = this.visibleChildrenCache.size;
-
     // Always get currently visible items for cache cleanup decisions
     const { visibleTextDocIds, visibleNodeDescriptions } = this.collectVisibleItems(this.treeDataSource);
 
     // Clean up text document cache if it exceeds the limit
-    if (currentTextDocCacheSize > this.TEXT_DOC_CACHE_MAX_SIZE) {
+    if (this.textDocCache.size > this.TEXT_DOC_CACHE_MAX_SIZE) {
       // Remove docs not currently visible, keeping most recently used
       const entriesToKeep: Array<[string, Promise<TextDoc>]> = [];
       for (const [key, value] of this.textDocCache) {
@@ -700,8 +669,8 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
       }
 
       // If we still have too many, keep only the most recent ones
-      if (entriesToKeep.length > this.MAX_CACHED_DOCS) {
-        entriesToKeep.splice(0, entriesToKeep.length - this.MAX_CACHED_DOCS);
+      if (entriesToKeep.length > this.TEXT_DOC_CACHE_MAX_SIZE) {
+        entriesToKeep.splice(0, entriesToKeep.length - this.TEXT_DOC_CACHE_MAX_SIZE);
       }
 
       this.textDocCache.clear();
@@ -710,28 +679,27 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
       }
     }
 
-    // Clean up paged loading cache if it exceeds the limit
-    if (pagedLoadingCacheSize > this.MAX_CACHED_ENTRIES) {
+    // Prune non-visible nodes from paged loading cache
+    if (this.pagedLoadingCache.size > this.LIGHTWEIGHT_CACHE_MAX_SIZE) {
       for (const [cacheKey] of this.pagedLoadingCache) {
-        // Extract node description from cache key format: 'description-childCount'
-        const nodeDesc = cacheKey.split('-')[0];
-
-        if (!visibleNodeDescriptions.has(nodeDesc)) {
+        if (!visibleNodeDescriptions.has(cacheKey)) {
           this.pagedLoadingCache.delete(cacheKey);
         }
       }
     }
 
-    // Clean up visible children cache if it's getting too large
-    if (visibleChildrenCacheSize > this.MAX_CACHED_NODE_ARRAYS) {
+    // Prune non-visible nodes from visible children cache
+    if (this.visibleChildrenCache.size > this.LIGHTWEIGHT_CACHE_MAX_SIZE) {
       // Keep only cache entries for currently visible nodes
       for (const [cacheKey] of this.visibleChildrenCache) {
-        const nodeDesc = cacheKey.split('-')[0]; // Extract node description from cache key
-        if (!visibleNodeDescriptions.has(nodeDesc)) {
+        if (!visibleNodeDescriptions.has(cacheKey)) {
           this.visibleChildrenCache.delete(cacheKey);
         }
       }
     }
+
+    // Reset cumulative counter after cleanup
+    this.numItemsProcessedSinceCleanup = 0;
   }
 
   /**
@@ -1000,7 +968,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
           this.markNodeProcessingComplete(parentNode);
         }
       }
-    }, this.PROCESSING_DELAY_MS);
+    }, 100);
   }
 
   /**
@@ -1023,7 +991,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   /**
    * Updates the progress tracking for a parent node based on completed items.
    */
-  private updateProgressForNode(node: InsightPanelNode, _completedCount: number, _totalCount: number): void {
+  private updateProgressForNode(node: InsightPanelNode): void {
     const parentNode = this.findParentNode(node);
 
     if (parentNode && this.nodesWithLargeChildSets.has(parentNode.description)) {
@@ -1045,13 +1013,12 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
    */
   private processNodeBatchSequentially(batch: Array<{ node: InsightPanelNode; insight: LynxInsight }>): void {
     let index = 0;
-    let processedCount = 0;
-    const totalItems = batch.length;
 
     const processNext = (): void => {
       if (index >= batch.length) {
-        // Trigger memory cleanup after processing large batches
-        if (totalItems > this.MEMORY_MANAGEMENT_THRESHOLD) {
+        // Trigger cleanup if threshold reached
+        this.numItemsProcessedSinceCleanup += batch.length;
+        if (this.numItemsProcessedSinceCleanup > this.NUM_ITEMS_CACHE_CLEANUP_THRESHOLD) {
           this.manageMemoryUsage();
         }
         return;
@@ -1059,9 +1026,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
 
       const { node, insight } = batch[index++];
       this.processNodeAsync(node, insight).then(() => {
-        // Update progress tracking
-        processedCount++;
-        this.updateProgressForNode(node, processedCount, totalItems);
+        this.updateProgressForNode(node);
 
         // Schedule the next node
         requestAnimationFrame(processNext);
@@ -1076,21 +1041,19 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
    * Process nodes in parallel for better performance.
    */
   private processNodeBatchParallel(batch: Array<{ node: InsightPanelNode; insight: LynxInsight }>): void {
-    let completedCount = 0;
-    const totalInBatch = batch.length;
-
-    batch.forEach(item =>
-      this.processNodeAsync(item.node, item.insight).then(() => {
-        // Update progress for the parent node
-        completedCount++;
-        this.updateProgressForNode(item.node, completedCount, totalInBatch);
-
-        // Trigger memory cleanup when parallel batch completes
-        if (completedCount === totalInBatch && totalInBatch > this.MEMORY_MANAGEMENT_THRESHOLD) {
-          this.manageMemoryUsage();
-        }
-      })
-    );
+    Promise.all(
+      batch.map(item =>
+        this.processNodeAsync(item.node, item.insight).then(() => {
+          this.updateProgressForNode(item.node);
+        })
+      )
+    ).then(() => {
+      // Trigger cleanup if threshold reached
+      this.numItemsProcessedSinceCleanup += batch.length;
+      if (this.numItemsProcessedSinceCleanup > this.NUM_ITEMS_CACHE_CLEANUP_THRESHOLD) {
+        this.manageMemoryUsage();
+      }
+    });
   }
 
   private async processNodeAsync(node: InsightPanelNode, insight: LynxInsight): Promise<void> {
