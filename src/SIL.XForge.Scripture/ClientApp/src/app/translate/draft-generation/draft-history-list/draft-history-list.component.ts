@@ -49,6 +49,10 @@ export class DraftHistoryListComponent {
     });
   }
 
+  get hasCompletedBuild(): boolean {
+    return this.history.some(entry => entry.state === BuildStates.Completed);
+  }
+
   get nonActiveBuilds(): BuildDto[] {
     return this.history.filter(entry => !activeBuildStates.includes(entry.state)) || [];
   }
