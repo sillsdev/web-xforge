@@ -233,6 +233,37 @@ describe('I18nService', () => {
       expect(service.localizeBookChapter('MRK', 3)).toBe('Mark \u200F3');
     });
   });
+
+  describe('formatAndLocalizeScriptureRange', () => {
+    it('should localize sequential and non-sequential books', () => {
+      when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
+      when(mockedTranslocoService.translate<string>('canon.book_names.EXO')).thenReturn('Exodus');
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
+
+      const service = getI18nService();
+
+      // SUT
+      expect(service.formatAndLocalizeScriptureRange('EXO;GEN;MRK')).toBe('Genesis - Exodus, Mark');
+    });
+
+    it('should localize one book name', () => {
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
+
+      const service = getI18nService();
+
+      // SUT
+      expect(service.formatAndLocalizeScriptureRange('MRK')).toBe('Mark');
+    });
+
+    it('should ignore invalid book codes', () => {
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
+
+      const service = getI18nService();
+
+      // SUT
+      expect(service.formatAndLocalizeScriptureRange('invalid_book_code')).toBe('');
+    });
+  });
 });
 
 function getI18nService(): I18nService {

@@ -27,7 +27,7 @@ const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: str
 };
 
 interface TrainingConfigurationRow {
-  bookNames: string[];
+  scriptureRange: string;
   source: string;
   target: string;
 }
@@ -93,7 +93,7 @@ export class DraftHistoryEntryComponent {
 
         // Return the data for this training range
         return {
-          bookNames: r.scriptureRange.split(';').map(id => this.i18n.localizeBook(id)),
+          scriptureRange: this.i18n.formatAndLocalizeScriptureRange(r.scriptureRange),
           source: source?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown'),
           target: target?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown')
         } as TrainingConfigurationRow;
@@ -150,7 +150,7 @@ export class DraftHistoryEntryComponent {
 
   trainingConfigurationOpen = false;
 
-  readonly columnsToDisplay: string[] = ['bookNames', 'source', 'target'];
+  readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
   constructor(
     readonly i18n: I18nService,
@@ -159,15 +159,11 @@ export class DraftHistoryEntryComponent {
     readonly featureFlags: FeatureFlagService
   ) {}
 
-  get bookNames(): string[] {
-    if (this.entry?.additionalInfo?.translationScriptureRanges == null) return [];
-    return [
-      ...new Set(
-        this.entry.additionalInfo.translationScriptureRanges.flatMap(r =>
-          r.scriptureRange.split(';').map(id => this.i18n.localizeBook(id))
-        )
-      )
-    ];
+  get scriptureRange(): string {
+    if (this.entry?.additionalInfo?.translationScriptureRanges == null) return '';
+    return this.i18n.formatAndLocalizeScriptureRange(
+      this.entry.additionalInfo.translationScriptureRanges.map(item => item.scriptureRange).join(';')
+    );
   }
 
   formatDate(date?: string): string {
