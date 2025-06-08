@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'draft_history_list'">
   @if (latestBuild != null) {
     <h2>{{ lastCompletedBuildMessage }}</h2>
-    <app-draft-history-entry [entry]="latestBuild" [isLatestBuild]="true" [canDownloadBuild]="true" />
+    <app-draft-history-entry [entry]="latestBuild" [isLatestBuild]="true" [canDownloadBuild]="hasCompletedBuild" />
   }
 
   @if (historicalBuilds.length > 0) {
