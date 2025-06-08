@@ -179,6 +179,12 @@ usx-para {
     text-align: center;
   }
 }
+
+usx-book[data-code]:first-child:before {
+  content: attr(data-code) ' ';
+  color: var(--sf-usx-chapter-color);
+}
+
 quill-editor.ltr {
   usx-book,
   usx-para {

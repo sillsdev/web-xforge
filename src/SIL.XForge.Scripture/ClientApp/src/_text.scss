@@ -240,11 +240,6 @@ quill-editor.rtl {
       }
     }
 
-    usx-book[data-code]:first-child:before {
-      content: attr(data-code);
-      color: var(--sf-usx-chapter-color);
-    }
-
     .highlight-segment {
       color: black;
     }
