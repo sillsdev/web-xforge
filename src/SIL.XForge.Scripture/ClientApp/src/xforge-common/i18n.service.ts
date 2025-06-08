@@ -7,6 +7,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { BehaviorSubject, Observable, of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { booksFromScriptureRange } from '../app/shared/utils';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { ObjectPaths } from '../type-utils';
@@ -236,6 +237,35 @@ export class I18nService {
 
   localizeBookChapter(book: number | string, chapter: number): string {
     return `${this.localizeBook(book)} ${this.getDirectionMark()}${chapter}`;
+  }
+
+  formatAndLocalizeScriptureRange(scriptureRange: string): string {
+    const bookNumbers = booksFromScriptureRange(scriptureRange)
+      .filter(i => i > 0)
+      .sort((a, b) => a - b);
+
+    if (bookNumbers.length === 0) return '';
+
+    const ranges: string[] = [];
+    let start = bookNumbers[0];
+    let end = bookNumbers[0];
+
+    if (bookNumbers.length === 1) return this.localizeBook(start);
+
+    for (let i = 1; i <= bookNumbers.length; i++) {
+      const current = bookNumbers[i];
+      if (current === end + 1) {
+        end = current;
+      } else {
+        const fromBook = this.localizeBook(start);
+        const toBook = this.localizeBook(end);
+        ranges.push(start === end ? fromBook : `${fromBook} - ${toBook}`);
+        start = current;
+        end = current;
+      }
+    }
+
+    return ranges.join(', ');
   }
 
   localizeReference(verse: VerseRef): string {
