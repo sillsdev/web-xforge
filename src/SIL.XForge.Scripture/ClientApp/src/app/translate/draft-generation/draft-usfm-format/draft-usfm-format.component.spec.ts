@@ -93,9 +93,9 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).thrice();
   }));
 
-  it('should initialize and default to move to end', fakeAsync(() => {
+  it('should initialize and default to best guess', fakeAsync(() => {
     const env = new TestEnvironment();
-    expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.MoveToEnd);
+    expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
   }));
 
   it('should show the currently selected format options', fakeAsync(() => {
