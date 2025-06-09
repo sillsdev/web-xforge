@@ -252,9 +252,8 @@ export class I18nService {
 
     if (bookNumbers.length === 1) return this.localizeBook(start);
 
-    for (let i = 1; i <= bookNumbers.length; i++) {
-      // At the end of the array, this will be undefined and we will execute the else block
-      const current: number | undefined = bookNumbers[i];
+    for (let i = 1; i < bookNumbers.length; i++) {
+      const current: number = bookNumbers[i];
       if (current === end + 1) {
         end = current;
       } else {
@@ -265,6 +264,11 @@ export class I18nService {
         end = current;
       }
     }
+
+    // Handle the last book in the scripture range
+    const fromBook: string = this.localizeBook(start);
+    const toBook: string = this.localizeBook(end);
+    ranges.push(start === end ? fromBook : `${fromBook} - ${toBook}`);
 
     return ranges.join(', ');
   }
