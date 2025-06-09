@@ -240,25 +240,26 @@ export class I18nService {
   }
 
   formatAndLocalizeScriptureRange(scriptureRange: string): string {
-    const bookNumbers = booksFromScriptureRange(scriptureRange)
+    const bookNumbers: number[] = booksFromScriptureRange(scriptureRange)
       .filter(i => i > 0)
       .sort((a, b) => a - b);
 
     if (bookNumbers.length === 0) return '';
 
     const ranges: string[] = [];
-    let start = bookNumbers[0];
-    let end = bookNumbers[0];
+    let start: number = bookNumbers[0];
+    let end: number = bookNumbers[0];
 
     if (bookNumbers.length === 1) return this.localizeBook(start);
 
     for (let i = 1; i <= bookNumbers.length; i++) {
-      const current = bookNumbers[i];
+      // At the end of the array, this will be undefined and we will execute the else block
+      const current: number | undefined = bookNumbers[i];
       if (current === end + 1) {
         end = current;
       } else {
-        const fromBook = this.localizeBook(start);
-        const toBook = this.localizeBook(end);
+        const fromBook: string = this.localizeBook(start);
+        const toBook: string = this.localizeBook(end);
         ranges.push(start === end ? fromBook : `${fromBook} - ${toBook}`);
         start = current;
         end = current;
