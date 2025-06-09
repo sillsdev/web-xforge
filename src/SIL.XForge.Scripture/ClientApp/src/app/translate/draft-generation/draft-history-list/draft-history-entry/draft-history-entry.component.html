@@ -59,7 +59,7 @@
             <table mat-table [dataSource]="trainingConfiguration">
               <ng-container matColumnDef="scriptureRange">
                 <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let element">{{ scriptureRange }}</td>
+                <td mat-cell *matCellDef="let element">{{ element.scriptureRange }}</td>
               </ng-container>
               <ng-container matColumnDef="source">
                 <th mat-header-cell *matHeaderCellDef>

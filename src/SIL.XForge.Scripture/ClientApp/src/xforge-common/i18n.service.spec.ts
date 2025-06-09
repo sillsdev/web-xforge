@@ -246,6 +246,23 @@ describe('I18nService', () => {
       expect(service.formatAndLocalizeScriptureRange('EXO;GEN;MRK')).toBe('Genesis - Exodus, Mark');
     });
 
+    it('should localize multiple sequences of books', () => {
+      when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
+      when(mockedTranslocoService.translate<string>('canon.book_names.JOB')).thenReturn('Job');
+      when(mockedTranslocoService.translate<string>('canon.book_names.PSA')).thenReturn('Psalms');
+      when(mockedTranslocoService.translate<string>('canon.book_names.MAT')).thenReturn('Matthew');
+      when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
+      when(mockedTranslocoService.translate<string>('canon.book_names.LUK')).thenReturn('Luke');
+      when(mockedTranslocoService.translate<string>('canon.book_names.JHN')).thenReturn('John');
+
+      const service = getI18nService();
+
+      // SUT
+      expect(service.formatAndLocalizeScriptureRange('JHN;PSA;GEN;LUK;JOB;MAT;MRK')).toBe(
+        'Genesis, Job - Psalms, Matthew - John'
+      );
+    });
+
     it('should localize one book name', () => {
       when(mockedTranslocoService.translate<string>('canon.book_names.MRK')).thenReturn('Mark');
 
