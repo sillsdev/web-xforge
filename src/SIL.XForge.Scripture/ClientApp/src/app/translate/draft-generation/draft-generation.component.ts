@@ -344,6 +344,15 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return !(source?.noAccess ?? false);
   }
 
+  getTranslationScriptureRange(job?: BuildDto): string {
+    // TODO: Update with changes from SF-3390
+    return (
+      job?.additionalInfo?.translationScriptureRanges
+        .flatMap(r => r.scriptureRange.split(';').map(id => this.i18n.localizeBook(id)))
+        .join(', ') ?? ''
+    );
+  }
+
   hasDraftQueueDepth(job?: BuildDto): boolean {
     return (job?.queueDepth ?? 0) > 0;
   }
