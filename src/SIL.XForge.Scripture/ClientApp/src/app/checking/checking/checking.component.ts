@@ -15,8 +15,17 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { asyncScheduler, combineLatest, merge, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
+import { asyncScheduler, BehaviorSubject, combineLatest, from, merge, Observable, Subscription } from 'rxjs';
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  throttleTime
+} from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -117,17 +126,25 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   /** The book/chapter from the route.  Stored question activation is constrained to this book/chapter. */
   routeBookChapter?: BookChapter;
 
+  private readonly activeQuestionDoc$ = new BehaviorSubject<QuestionDoc | undefined>(undefined);
+
   /**
    * The question before the active question according to the active question filter.
    * This question may be in a different book/chapter.
    */
-  prevQuestion?: QuestionDoc;
+  readonly prevQuestion$: Observable<QuestionDoc | undefined> = this.activeQuestionDoc$.pipe(
+    switchMap(activeDoc => from(this.getAdjacentQuestion(activeDoc, 'prev'))),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
   /**
    * The question after the active question according to the active question filter.
    * This question may be in a different book/chapter.
    */
-  nextQuestion?: QuestionDoc;
+  readonly nextQuestion$: Observable<QuestionDoc | undefined> = this.activeQuestionDoc$.pipe(
+    switchMap(activeDoc => from(this.getAdjacentQuestion(activeDoc, 'next'))),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -642,8 +659,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 if (this.onlineStatusService.isOnline) {
                   qd.updateFileCache();
                 }
-
-                this.updateAdjacentQuestions(this.questionsList!.activeQuestionDoc!);
               });
 
             // Determine when to update visible questions
@@ -735,6 +750,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         // setting isScreenSmall causes `ExpressionChangedAfterItHasBeenCheckedError`, so wrap in setTimeout
         setTimeout(() => (this.isScreenSmall = state.matches));
       });
+
+    if (this.questionsList?.activeQuestionDoc) {
+      this.activeQuestionDoc$.next(this.questionsList.activeQuestionDoc);
+    }
   }
 
   ngOnDestroy(): void {
@@ -794,7 +813,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         break;
       case 'archive':
         this._scriptureAudioPlayer?.pause();
-        this.activateQuestion(this.nextQuestion);
+        this.activateNextQuestion();
         break;
       case 'like':
         if (answerAction.answer != null) {
@@ -915,7 +934,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     if (questionDoc != null) {
       this.updateActiveQuestionVerseRef(questionDoc);
-      this.updateAdjacentQuestions(questionDoc);
       this.calculateScriptureSliderPosition(true);
       this.refreshSummary();
 
@@ -929,6 +947,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       // Ensure navigation is set to book/chapter of selected question
       this.navigateQuestionChapter(questionDoc);
     }
+
+    this.activeQuestionDoc$.next(questionDoc);
   }
 
   async questionDialog(): Promise<void> {
@@ -961,7 +981,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   setQuestionFilter(filter: QuestionFilter): void {
     this.activeQuestionFilter = filter;
     this.updateVisibleQuestions();
-    this.updateAdjacentQuestions(this.questionsList?.activeQuestionDoc);
   }
 
   setQuestionScope(scope: QuestionScope): void {
@@ -1085,9 +1104,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.questionsList?.activateQuestion(questionDoc);
   }
 
+  activatePreviousQuestion(): void {
+    this.prevQuestion$.pipe(take(1)).subscribe(prevQuestion => {
+      this.activateQuestion(prevQuestion);
+    });
+  }
+
+  activateNextQuestion(): void {
+    this.nextQuestion$.pipe(take(1)).subscribe(nextQuestion => {
+      this.activateQuestion(nextQuestion);
+    });
+  }
+
   /**
    * Retrieves the adjacent question based on the active question and the direction.
-   * Adjacent question might be outside the current filtered scope.
+   * Adjacent question might be outside the current scope but not the filter.
    * @param activeQuestion - The active question.
    * @param prevOrNext - The direction to search for the adjacent question.
    * @return The adjacent question.
@@ -1126,16 +1157,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       return adjacentQuestionInScope;
     }
 
-    // No adjacent question inside current scope.
-    // If scope is 'all', no need to query outside scope
-    if (this.activeQuestionScope === 'all') {
-      return undefined;
-    }
-
     let query: RealtimeQuery<QuestionDoc> | undefined;
 
     try {
-      // If no adjacent question in current filtered scope, get the adjacent question outside this scope
+      // If no adjacent question in current scope, get the adjacent question outside this scope
       query = await this.checkingQuestionsService.queryAdjacentQuestion(
         this.projectDoc!.id,
         relativeTo!,
@@ -1369,16 +1394,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         })
       );
     }
-  }
-
-  private async updateAdjacentQuestions(activeQuestion: QuestionDoc | undefined): Promise<void> {
-    const [prevQuestion, nextQuestion] = await Promise.all([
-      this.getAdjacentQuestion(activeQuestion, 'prev'),
-      this.getAdjacentQuestion(activeQuestion, 'next')
-    ]);
-
-    this.prevQuestion = prevQuestion;
-    this.nextQuestion = nextQuestion;
   }
 
   private updateActiveQuestionVerseRef(questionDoc: QuestionDoc | undefined): void {

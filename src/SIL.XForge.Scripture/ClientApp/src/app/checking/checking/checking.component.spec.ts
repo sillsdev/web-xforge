@@ -220,26 +220,57 @@ describe('CheckingComponent', () => {
         const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'JHN', projectChapterRoute: 1 });
         const prev = env.previousButton;
         const next = env.nextButton;
-        env.component.prevQuestion = {} as QuestionDoc;
-        env.component.nextQuestion = {} as QuestionDoc;
+
+        const getAdjacentQuestionSpy = spyOn(env.component as any, 'getAdjacentQuestion').and.callThrough();
+        const adjacentQuestion = { id: 'q1Id', data: { text: 'Dummy Question' } } as QuestionDoc;
+        const activeQuestion = { id: 'activeQId', data: { text: 'Active Question' } } as QuestionDoc;
+
+        // Scenario 1: Both prev and next question exist
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(adjacentQuestion));
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(false);
         expect(next.nativeElement.disabled).toBe(false);
-        env.component.prevQuestion = undefined;
-        env.component.nextQuestion = undefined;
+
+        // Scenario 2: Neither prev nor next question exist
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(undefined));
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(true);
         expect(next.nativeElement.disabled).toBe(true);
-        env.component.prevQuestion = undefined;
-        env.component.nextQuestion = {} as QuestionDoc;
+
+        // Scenario 3: Prev question undefined, Next question exists
+        getAdjacentQuestionSpy.and.callFake(
+          async (_activeQuestion: QuestionDoc | undefined, direction: 'prev' | 'next') => {
+            if (direction === 'prev') return Promise.resolve(undefined);
+            return Promise.resolve(adjacentQuestion);
+          }
+        );
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(true);
         expect(next.nativeElement.disabled).toBe(false);
-        env.component.prevQuestion = {} as QuestionDoc;
-        env.component.nextQuestion = undefined;
+
+        // Scenario 4: Prev question exists, Next question undefined
+        getAdjacentQuestionSpy.and.callFake(
+          async (_activeQuestion: QuestionDoc | undefined, direction: 'prev' | 'next') => {
+            if (direction === 'next') return Promise.resolve(undefined);
+            return Promise.resolve(adjacentQuestion);
+          }
+        );
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(false);
         expect(next.nativeElement.disabled).toBe(true);
+
         env.waitForAudioPlayer();
         discardPeriodicTasks();
         flush();

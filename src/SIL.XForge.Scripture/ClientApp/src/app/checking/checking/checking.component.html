@@ -209,8 +209,8 @@
           <div class="question-nav-wrapper">
             <button
               mat-button
-              (click)="activateQuestion(prevQuestion!)"
-              [disabled]="prevQuestion == null"
+              (click)="activatePreviousQuestion()"
+              [disabled]="(prevQuestion$ | async) == null"
               class="prev-question"
             >
               <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
@@ -218,24 +218,24 @@
             </button>
             <button
               mat-button
-              (click)="activateQuestion(nextQuestion!)"
-              [disabled]="nextQuestion == null"
+              (click)="activateNextQuestion()"
+              [disabled]="(nextQuestion$ | async) == null"
               class="next-question"
             >
               {{ t("next") }}<mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
             </button>
             <button
               mat-icon-button
-              (click)="activateQuestion(prevQuestion!)"
-              [disabled]="prevQuestion == null"
+              (click)="activatePreviousQuestion()"
+              [disabled]="(prevQuestion$ | async) == null"
               class="prev-question"
             >
               <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
             </button>
             <button
               mat-icon-button
-              (click)="activateQuestion(nextQuestion!)"
-              [disabled]="nextQuestion == null"
+              (click)="activateNextQuestion()"
+              [disabled]="(nextQuestion$ | async) == null"
               class="next-question"
             >
               <mat-icon>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
