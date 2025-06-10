@@ -161,7 +161,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData.PreTranslationEngineId));
-        await env.QueueBuildAsync(preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true);
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
@@ -178,7 +178,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true);
         env.ConfigureTranslationBuild();
 
         // SUT
@@ -415,6 +415,14 @@ public class MachineApiServiceTests
 
         TestEnvironment.AssertCoreBuildProperties(translationBuild, actual);
         Assert.NotNull(actual.AdditionalInfo);
+        Assert.AreEqual(
+            new ProjectScriptureRange { ScriptureRange = "GEN" },
+            actual.AdditionalInfo.TranslationScriptureRanges.Single()
+        );
+        Assert.AreEqual(
+            new ProjectScriptureRange { ScriptureRange = "EXO" },
+            actual.AdditionalInfo.TrainingScriptureRanges.Single()
+        );
     }
 
     [Test]
@@ -589,7 +597,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -617,7 +625,7 @@ public class MachineApiServiceTests
         const string trainingScriptureRange = "GEN;EXO";
         const string translationScriptureRange = "LEV;NUM";
         DateTime requestedDateTime = DateTime.UtcNow;
-        await env.QueueBuildAsync(preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -1056,6 +1064,15 @@ public class MachineApiServiceTests
         );
 
         TestEnvironment.AssertCoreBuildProperties(translationBuild, actual);
+        Assert.NotNull(actual.AdditionalInfo);
+        Assert.AreEqual(
+            new ProjectScriptureRange { ScriptureRange = "GEN" },
+            actual.AdditionalInfo.TranslationScriptureRanges.Single()
+        );
+        Assert.AreEqual(
+            new ProjectScriptureRange { ScriptureRange = "EXO" },
+            actual.AdditionalInfo.TrainingScriptureRanges.Single()
+        );
     }
 
     [Test]
@@ -2579,7 +2596,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const string errorMessage = "This is an error message from Serval";
-        await env.QueueBuildAsync(preTranslate: false, DateTime.UtcNow.AddHours(-6), errorMessage);
+        await env.QueueBuildAsync(Project01, preTranslate: false, DateTime.UtcNow.AddHours(-6), errorMessage);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
@@ -2598,7 +2615,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(preTranslate: false, DateTime.UtcNow.AddHours(-6));
+        await env.QueueBuildAsync(Project01, preTranslate: false, DateTime.UtcNow.AddHours(-6));
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
@@ -2617,7 +2634,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(preTranslate: false);
+        await env.QueueBuildAsync(Project01, preTranslate: false);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
@@ -2654,7 +2671,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const string errorMessage = "This is an error message from Serval";
-        await env.QueueBuildAsync(preTranslate: true, DateTime.UtcNow.AddHours(-6), errorMessage);
+        await env.QueueBuildAsync(Project01, preTranslate: true, DateTime.UtcNow.AddHours(-6), errorMessage);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
@@ -2673,7 +2690,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(preTranslate: true, DateTime.UtcNow.AddHours(-6));
+        await env.QueueBuildAsync(Project01, preTranslate: true, DateTime.UtcNow.AddHours(-6));
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
@@ -2688,11 +2705,11 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetQueuedStateAsync_PreTranslationBuildQueued()
+    public async Task GetQueuedStateAsync_PreTranslationBuildQueuedWithScriptureRange()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
@@ -2703,6 +2720,42 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
         Assert.AreEqual(MachineApiService.BuildStateQueued, actual?.State);
+        Assert.NotNull(actual.AdditionalInfo);
+        Assert.AreEqual(
+            new ProjectScriptureRange { ScriptureRange = "GEN" },
+            actual.AdditionalInfo.TranslationScriptureRanges.Single()
+        );
+        Assert.AreEqual(
+            new ProjectScriptureRange { ScriptureRange = "EXO" },
+            actual.AdditionalInfo.TrainingScriptureRanges.Single()
+        );
+    }
+
+    [Test]
+    public async Task GetQueuedStateAsync_PreTranslationBuildQueuedWithScriptureRanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.QueueBuildAsync(Project02, preTranslate: true);
+
+        // SUT
+        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
+            User01,
+            Project02,
+            preTranslate: true,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+        Assert.AreEqual(MachineApiService.BuildStateQueued, actual?.State);
+        Assert.NotNull(actual.AdditionalInfo);
+        Assert.AreEqual(
+            new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "GEN" },
+            actual.AdditionalInfo.TranslationScriptureRanges.Single()
+        );
+        Assert.AreEqual(
+            new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "EXO" },
+            actual.AdditionalInfo.TrainingScriptureRanges.Single()
+        );
     }
 
     [Test]
@@ -2763,6 +2816,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         await env.QueueBuildAsync(
+            Project01,
             preTranslate: true,
             dateTime: null,
             errorMessage: null,
@@ -3887,6 +3941,7 @@ public class MachineApiServiceTests
                             DraftConfig = new DraftConfig
                             {
                                 LastSelectedTranslationScriptureRange = "GEN",
+                                LastSelectedTrainingScriptureRange = "EXO",
                                 UsfmConfig = new DraftUsfmConfig { PreserveParagraphMarkers = true },
                             },
                         },
@@ -3914,6 +3969,14 @@ public class MachineApiServiceTests
                             {
                                 AlternateSourceEnabled = true,
                                 AlternateSource = new TranslateSource { ProjectRef = Project03 },
+                                LastSelectedTranslationScriptureRanges =
+                                [
+                                    new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "GEN" },
+                                ],
+                                LastSelectedTrainingScriptureRanges =
+                                [
+                                    new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = "EXO" },
+                                ],
                             },
                         },
                         UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
@@ -4028,13 +4091,14 @@ public class MachineApiServiceTests
         }
 
         public async Task QueueBuildAsync(
+            string sfProjectId,
             bool preTranslate,
             DateTime? dateTime = null,
             string? errorMessage = null,
             bool? preTranslationsRetrieved = null
         ) =>
             await ProjectSecrets.UpdateAsync(
-                Project01,
+                sfProjectId,
                 u =>
                 {
                     if (preTranslate)
