@@ -187,9 +187,22 @@ mat-expansion-panel-header {
 
 mat-panel-title {
   display: flex;
-  align-items: center;
-  flex-direction: row;
+  align-items: start;
+  flex-direction: column;
   flex: 0 1 auto;
+
+  .title {
+    color: var(
+      --mat-expansion-header-text-color,
+      var(--mat-app-on-surface)
+    ); /* Keep the text color, even when disabled */
+    font-size: 1.1em;
+  }
+
+  .subtitle {
+    font-size: 0.9em;
+    color: #666;
+  }
 }
 
 mat-panel-description {
@@ -199,5 +212,5 @@ mat-panel-description {
 .progress-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 24px;
 }
