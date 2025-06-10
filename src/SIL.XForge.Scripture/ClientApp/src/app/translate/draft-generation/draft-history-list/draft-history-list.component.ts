@@ -57,20 +57,26 @@ export class DraftHistoryListComponent {
     return this.history.filter(entry => !activeBuildStates.includes(entry.state)) || [];
   }
 
-  get completedBuilds(): BuildDto[] {
-    return this.history.filter(entry => entry.state === BuildStates.Completed) || [];
+  get latestBuild(): BuildDto | undefined {
+    return this.isBuildActive ? undefined : this.nonActiveBuilds[0];
   }
 
-  get latestCompletedBuild(): BuildDto | undefined {
-    return this.isBuildActive || this.completedBuilds.length === 0 ? undefined : this.completedBuilds[0];
+  get lastCompletedBuildMessage(): string {
+    switch (this.latestBuild?.state) {
+      case BuildStates.Canceled:
+        return this.transloco.translate('draft_history_list.draft_canceled');
+      case BuildStates.Completed:
+        return this.transloco.translate('draft_history_list.draft_completed');
+      case BuildStates.Faulted:
+        return this.transloco.translate('draft_history_list.draft_faulted');
+      default:
+        // The latest build must be a build that has finished
+        return '';
+    }
   }
 
   get historicalBuilds(): BuildDto[] {
-    return this.latestCompletedBuild == null ||
-      this.nonActiveBuilds.length === 0 ||
-      (this.nonActiveBuilds.length > 0 && this.nonActiveBuilds[0].state !== BuildStates.Completed)
-      ? this.nonActiveBuilds
-      : this.nonActiveBuilds.slice(1);
+    return this.latestBuild == null ? this.nonActiveBuilds : this.nonActiveBuilds.slice(1);
   }
 
   get isBuildActive(): boolean {
