@@ -14,7 +14,6 @@ namespace SIL.XForge.Scripture.Services;
 [Intercept(typeof(EventMetricLogger))]
 public interface ISFProjectService : IProjectService
 {
-    Task<string> ConnectOrSyncAsync(string curUserId, string projectId);
     Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings);
     Task<string> CreateResourceProjectAsync(string curUserId, string paratextId, bool addUser);
     Task DeleteProjectAsync(string curUserId, string projectId);

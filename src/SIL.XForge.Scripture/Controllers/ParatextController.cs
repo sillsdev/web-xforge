@@ -54,6 +54,41 @@ public class ParatextController : ControllerBase
     }
 
     /// <summary>
+    /// Connects a project in Paratext to Scripture Forge.
+    /// </summary>
+    /// <param name="settings">The project configuration settings.</param>
+    /// <returns>The Scripture Forge project identifier.</returns>
+    /// <response code="200">The user has connected the project to Scripture Forge successfully.</response>
+    /// <response code="401">The user does not have permission to access the Paratext Registry or Archives.</response>
+    /// <response code="403">The user does not have permission to connect this project to Scripture Forge.</response>
+    /// <response code="404">The user or project could not be found.</response>
+    /// <response code="409">The project already exists in Scripture Forge.</response>
+    [HttpPost("projects")]
+    public async Task<ActionResult<string>> CreateProjectAsync(SFProjectCreateSettings settings)
+    {
+        try
+        {
+            return Ok(await _projectService.CreateProjectAsync(_userAccessor.UserId, settings));
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
+    }
+
+    /// <summary>
     /// Download a project or resource as a Paratext zip file.
     /// </summary>
     /// <param name="projectId">The Scripture Forge project identifier.</param>
@@ -272,21 +307,20 @@ public class ParatextController : ControllerBase
     }
 
     /// <summary>
-    /// Joins a user to an existing project already configured in Scripture Forge.
+    /// Syncs a project already in Scripture Forge with Paratext.
     /// </summary>
-    /// <param name="projectId">The Paratext project identifier or the Scripture Forge project identifier.</param>
-    /// <returns>The Scripture Forge project identifier.</returns>
-    /// <response code="200">The user has joined to the project successfully.</response>
+    /// <param name="projectId">The Scripture Forge project identifier.</param>
+    /// <returns>The sync job identifier.</returns>
+    /// <response code="200">The user has started the project sync.</response>
     /// <response code="401">The user does not have permission to access the Paratext Registry or Archives.</response>
-    /// <response code="403">The user does not have permission to join this project.</response>
+    /// <response code="403">The user does not have permission to sync this project.</response>
     /// <response code="404">The user or project could not be found.</response>
-    /// <response code="404">The project cannot be connected to, or synced. Log a support ticket.</response>
-    [HttpPost("projects")]
-    public async Task<ActionResult<string>> SyncAsync([FromBody] string projectId)
+    [HttpPost("projects/{projectId}/sync")]
+    public async Task<ActionResult<string>> SyncAsync(string projectId)
     {
         try
         {
-            return Ok(await _projectService.ConnectOrSyncAsync(_userAccessor.UserId, projectId));
+            return Ok(await _projectService.SyncAsync(_userAccessor.UserId, projectId));
         }
         catch (DataNotFoundException)
         {
@@ -295,10 +329,6 @@ public class ParatextController : ControllerBase
         catch (ForbiddenException)
         {
             return Forbid();
-        }
-        catch (InvalidOperationException)
-        {
-            return Conflict();
         }
         catch (UnauthorizedAccessException)
         {

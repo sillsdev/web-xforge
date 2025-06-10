@@ -91,42 +91,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     protected override string ProjectAdminRole => SFProjectRole.Administrator;
 
     /// <summary>
-    /// Connects to a Paratext project or syncs an existing project.
-    /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="projectId">The Paratext project identifier or the Scripture Forge project identifier.</param>
-    /// <returns>The Scripture Forge project identifier.</returns>
-    /// <exception cref="DataNotFoundException">The project or user does not exist.</exception>
-    /// <exception cref="ForbiddenException">The user is not an administrator or translator.</exception>
-    /// <exception cref="InvalidOperationException">The project exists on disk but not in the database.</exception>
-    /// <exception cref="UnauthorizedAccessException">
-    /// The user cannot access the Paratext Registry or Archives.
-    /// </exception>
-    public async Task<string> ConnectOrSyncAsync(string curUserId, string projectId)
-    {
-        // Ensure we have a valid user
-        Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
-        if (!userSecretAttempt.TryResult(out UserSecret userSecret))
-        {
-            throw new DataNotFoundException("The user does not exist.");
-        }
-
-        // Connect or sync, depending if the project exists
-        SFProject? project = await RealtimeService
-            .QuerySnapshots<SFProject>()
-            .SingleOrDefaultAsync(p => p.Id == projectId || p.ParatextId == projectId);
-        if (project is null)
-        {
-            return await CreateProjectAsync(curUserId, new SFProjectCreateSettings { ParatextId = projectId });
-        }
-        else
-        {
-            await SyncAsync(curUserId, project.Id);
-            return project.Id;
-        }
-    }
-
-    /// <summary>
     /// Connects to a Paratext project,
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
