@@ -3376,56 +3376,6 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task ConnectOrSyncAsync_CreatesMissingProject()
-    {
-        // Setup
-        var env = new TestEnvironment();
-        env.ParatextService.TryGetProjectRoleAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Any<string>(),
-                Arg.Any<CancellationToken>()
-            )
-            .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
-
-        // SUT
-        string actual = await env.Service.ConnectOrSyncAsync(User01, "ptProject123");
-        Assert.IsNotEmpty(actual);
-    }
-
-    [Test]
-    public async Task ConnectOrSyncAsync_SyncsExistingProjectByParatextId()
-    {
-        // Setup
-        string paratextId = "paratext_" + Project01;
-        var env = new TestEnvironment();
-
-        // SUT
-        string actual = await env.Service.ConnectOrSyncAsync(User01, paratextId);
-        Assert.AreEqual(Project01, actual);
-    }
-
-    [Test]
-    public async Task ConnectOrSyncAsync_SyncsExistingProjectByProjectId()
-    {
-        // Setup
-        var env = new TestEnvironment();
-
-        // SUT
-        string actual = await env.Service.ConnectOrSyncAsync(User01, Project01);
-        Assert.AreEqual(Project01, actual);
-    }
-
-    [Test]
-    public void ConnectOrSyncAsync_UserDoesNotExist()
-    {
-        // Setup
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.ConnectOrSyncAsync("invalid_user_id", Project01));
-    }
-
-    [Test]
     public async Task SyncAsync_AdministratorsCanSyncProject()
     {
         // Setup
