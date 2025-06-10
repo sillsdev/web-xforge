@@ -206,11 +206,23 @@
                   <mat-expansion-panel-header>
                     <mat-panel-title>
                       @if (isDraftQueued(draftJob)) {
-                        {{ t("draft_syncing") }}
+                        @if (isSyncing()) {
+                          <span class="title">{{ t("draft_syncing") }}</span>
+                        } @else {
+                          <span class="title">{{ t("draft_queued_header") }}</span>
+                          @if (hasDraftQueueDepth(draftJob)) {
+                            <span class="subtitle">{{
+                              t("draft_queued_multiple", { count: draftJob.queueDepth })
+                            }}</span>
+                          }
+                        }
                       } @else if (isDraftActive(draftJob)) {
-                        {{ t("draft_active_header") }}
+                        <span class="title">{{ t("draft_active_header") }}</span>
+                        <span class="subtitle">{{
+                          t("draft_percent_complete", { percent: draftJob.percentCompleted | l10nPercent })
+                        }}</span>
                       } @else if (isDraftFinishing(draftJob)) {
-                        {{ t("draft_finishing_header") }}
+                        <span class="title"> {{ t("draft_finishing_header") }}</span>
                       }
                     </mat-panel-title>
                     <mat-panel-description>
@@ -219,7 +231,9 @@
                   </mat-expansion-panel-header>
                   <div class="progress-wrapper">
                     <mat-progress-bar
-                      [mode]="draftJob.percentCompleted === 0 ? 'indeterminate' : 'determinate'"
+                      [mode]="
+                        draftJob.percentCompleted === 0 && !isDraftActive(draftJob) ? 'indeterminate' : 'determinate'
+                      "
                       [value]="draftJob.percentCompleted * 100"
                     />
                     @if (canCancel(draftJob)) {

@@ -19,6 +19,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -59,6 +60,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     TranslocoModule,
     TranslocoMarkupModule,
     SharedModule,
+    L10nPercentPipe,
     WorkingAnimatedIndicatorComponent,
     DraftGenerationStepsComponent,
     DraftInformationComponent,
@@ -346,10 +348,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   getTranslationScriptureRange(job?: BuildDto): string {
     // TODO: Update with changes from SF-3390
-    return (
-      job?.additionalInfo?.translationScriptureRanges
-        .flatMap(r => r.scriptureRange.split(';').map(id => this.i18n.localizeBook(id)))
-        .join(', ') ?? ''
+    return this.i18n.enumerateList(
+      job?.additionalInfo?.translationScriptureRanges.flatMap(r =>
+        r.scriptureRange.split(';').map(id => this.i18n.localizeBook(id))
+      ) ?? []
     );
   }
 
