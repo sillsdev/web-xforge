@@ -10,6 +10,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ComparisonOperator, PropertyFilter, QueryParameters, Sort } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
+import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 
 export enum QuestionFilter {
@@ -44,6 +45,7 @@ export class CheckingQuestionsService {
 
   constructor(
     private readonly realtimeService: RealtimeService,
+    private readonly userService: UserService,
     private readonly fileService: FileService
   ) {}
 
@@ -219,6 +221,33 @@ export class CheckingQuestionsService {
 
   private getFilterForQuestionFilter(filter: QuestionFilter): PropertyFilter {
     switch (filter) {
+      case QuestionFilter.CurrentUserHasAnswered:
+        return {
+          [obj<Question>().pathStr(q => q.answers)]: {
+            $elemMatch: {
+              [obj<Answer>().pathStr(a => a.ownerRef)]: this.userService.currentUserId,
+              [obj<Answer>().pathStr(a => a.deleted)]: false
+            }
+          }
+        };
+      case QuestionFilter.CurrentUserHasNotAnswered:
+        return {
+          $or: [
+            {
+              [obj<Question>().pathStr(q => q.answers)]: {
+                $not: {
+                  $elemMatch: {
+                    [obj<Answer>().pathStr(a => a.ownerRef)]: this.userService.currentUserId,
+                    [obj<Answer>().pathStr(a => a.deleted)]: false
+                  }
+                }
+              }
+            },
+            {
+              [obj<Question>().pathStr(q => q.answers)]: { $size: 0 }
+            }
+          ]
+        } as PropertyFilter;
       case QuestionFilter.HasAnswers:
         return { [obj<Question>().pathStr(q => q.answers)]: { $ne: [] } };
       case QuestionFilter.NoAnswers:
