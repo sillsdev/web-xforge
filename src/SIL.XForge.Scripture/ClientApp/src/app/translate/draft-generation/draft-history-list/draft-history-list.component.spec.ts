@@ -49,7 +49,8 @@ describe('DraftHistoryListComponent', () => {
     expect(env.component.history).toEqual([]);
     expect(env.component.historicalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
-    expect(env.component.latestCompletedBuild).toBeUndefined();
+    expect(env.component.latestBuild).toBeUndefined();
+    expect(env.component.lastCompletedBuildMessage).toBe('');
     expect(env.component.nonActiveBuilds).toEqual([]);
   });
 
@@ -58,7 +59,8 @@ describe('DraftHistoryListComponent', () => {
     expect(env.component.history).toEqual([]);
     expect(env.component.historicalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
-    expect(env.component.latestCompletedBuild).toBeUndefined();
+    expect(env.component.latestBuild).toBeUndefined();
+    expect(env.component.lastCompletedBuildMessage).toBe('');
     expect(env.component.nonActiveBuilds).toEqual([]);
   });
 
@@ -69,7 +71,8 @@ describe('DraftHistoryListComponent', () => {
     expect(env.component.history).toEqual([activeBuild, completedBuild]);
     expect(env.component.historicalBuilds).toEqual([completedBuild]);
     expect(env.component.isBuildActive).toBe(true);
-    expect(env.component.latestCompletedBuild).toBeUndefined();
+    expect(env.component.latestBuild).toBeUndefined();
+    expect(env.component.lastCompletedBuildMessage).toBe('');
     expect(env.component.nonActiveBuilds).toEqual([completedBuild]);
   }));
 
@@ -79,7 +82,8 @@ describe('DraftHistoryListComponent', () => {
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.historicalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(true);
-    expect(env.component.latestCompletedBuild).toBeUndefined();
+    expect(env.component.latestBuild).toBeUndefined();
+    expect(env.component.lastCompletedBuildMessage).toBe('');
     expect(env.component.nonActiveBuilds).toEqual([]);
   });
 
@@ -88,9 +92,10 @@ describe('DraftHistoryListComponent', () => {
     const buildHistory = [build];
     const env = new TestEnvironment(buildHistory);
     expect(env.component.history).toEqual(buildHistory);
-    expect(env.component.historicalBuilds).toEqual(buildHistory);
+    expect(env.component.historicalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
-    expect(env.component.latestCompletedBuild).toBeUndefined();
+    expect(env.component.latestBuild).toBe(build);
+    expect(env.component.lastCompletedBuildMessage).not.toBe('');
     expect(env.component.nonActiveBuilds).toEqual(buildHistory);
   }));
 
@@ -101,7 +106,8 @@ describe('DraftHistoryListComponent', () => {
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.historicalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
-    expect(env.component.latestCompletedBuild).toBe(build);
+    expect(env.component.latestBuild).toBe(build);
+    expect(env.component.lastCompletedBuildMessage).not.toBe('');
     expect(env.component.nonActiveBuilds).toEqual(buildHistory);
   }));
 
@@ -110,9 +116,10 @@ describe('DraftHistoryListComponent', () => {
     const buildHistory = [build];
     const env = new TestEnvironment(buildHistory);
     expect(env.component.history).toEqual(buildHistory);
-    expect(env.component.historicalBuilds).toEqual(buildHistory);
+    expect(env.component.historicalBuilds).toEqual([]);
     expect(env.component.isBuildActive).toBe(false);
-    expect(env.component.latestCompletedBuild).toBeUndefined();
+    expect(env.component.latestBuild).toBe(build);
+    expect(env.component.lastCompletedBuildMessage).not.toBe('');
     expect(env.component.nonActiveBuilds).toEqual(buildHistory);
   }));
 
@@ -122,7 +129,7 @@ describe('DraftHistoryListComponent', () => {
     const env = new TestEnvironment(buildHistory);
     expect(env.component.history).toEqual(buildHistory);
     expect(env.component.isBuildActive).toBe(false);
-    expect(env.component.latestCompletedBuild).toBe(build);
+    expect(env.component.latestBuild).toBe(build);
 
     const newBuild = { state: BuildStates.Active } as BuildDto;
     when(mockedDraftGenerationService.getBuildHistory('project01')).thenReturn(of([build, newBuild]));
@@ -130,18 +137,6 @@ describe('DraftHistoryListComponent', () => {
     env.component.loadHistory('project01');
     env.fixture.detectChanges();
     expect(env.component.history).toEqual([newBuild, build]);
-  }));
-
-  it('should handle a canceled and completed build', fakeAsync(() => {
-    const completedBuild = { state: BuildStates.Completed } as BuildDto;
-    const faultedBuild = { state: BuildStates.Faulted } as BuildDto;
-    const buildHistory = [faultedBuild, completedBuild];
-    const env = new TestEnvironment(buildHistory);
-    expect(env.component.history).toEqual(buildHistory);
-    expect(env.component.historicalBuilds).toEqual([faultedBuild]);
-    expect(env.component.isBuildActive).toBe(false);
-    expect(env.component.latestCompletedBuild).toBe(completedBuild);
-    expect(env.component.nonActiveBuilds).toEqual(buildHistory);
   }));
 
   class TestEnvironment {
