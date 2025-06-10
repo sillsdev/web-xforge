@@ -49,16 +49,16 @@ export class DraftHistoryListComponent {
     });
   }
 
-  get hasCompletedBuild(): boolean {
-    return this.history.some(entry => entry.state === BuildStates.Completed);
-  }
-
   get nonActiveBuilds(): BuildDto[] {
     return this.history.filter(entry => !activeBuildStates.includes(entry.state)) || [];
   }
 
   get latestBuild(): BuildDto | undefined {
     return this.isBuildActive ? undefined : this.nonActiveBuilds[0];
+  }
+
+  get latestBuildHasCompleted(): boolean {
+    return this.latestBuild?.state === BuildStates.Completed;
   }
 
   get lastCompletedBuildMessage(): string {
