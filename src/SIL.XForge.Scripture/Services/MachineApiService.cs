@@ -245,7 +245,7 @@ public class MachineApiService(
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -268,6 +268,7 @@ public class MachineApiService(
         // Make sure the DTO conforms to the machine-api V2 URLs
         if (buildDto is not null)
         {
+            buildDto = UpdateDto(buildDto, project.TranslateConfig.DraftConfig);
             buildDto = UpdateDto(buildDto, sfProjectId);
         }
 
@@ -554,7 +555,7 @@ public class MachineApiService(
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
         // Otherwise execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -581,6 +582,7 @@ public class MachineApiService(
             }
 
             buildDto = CreateDto(translationBuild);
+            buildDto = UpdateDto(buildDto, project.TranslateConfig.DraftConfig);
             buildDto = UpdateDto(buildDto, sfProjectId);
         }
         catch (ServalApiException e)
@@ -714,7 +716,7 @@ public class MachineApiService(
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
 
         // If there is a job queued, return a build dto with a status showing it is queued
         if (
@@ -790,12 +792,13 @@ public class MachineApiService(
                     };
                 }
             }
-        }
 
-        // Make sure the DTO conforms to the machine-api V2 URLs
-        if (buildDto is not null)
-        {
-            buildDto = UpdateDto(buildDto, sfProjectId);
+            // Make sure the DTO conforms to the machine-api V2 URLs
+            if (buildDto is not null)
+            {
+                buildDto = UpdateDto(buildDto, project.TranslateConfig.DraftConfig);
+                buildDto = UpdateDto(buildDto, sfProjectId);
+            }
         }
 
         return buildDto;
@@ -1743,6 +1746,40 @@ public class MachineApiService(
         return buildDto;
     }
 
+    private static ServalBuildDto UpdateDto(ServalBuildDto buildDto, DraftConfig draftConfig)
+    {
+        // Add the training scripture ranges
+        buildDto.AdditionalInfo.TrainingScriptureRanges.Clear();
+        foreach (ProjectScriptureRange scriptureRange in draftConfig.LastSelectedTrainingScriptureRanges)
+        {
+            buildDto.AdditionalInfo.TrainingScriptureRanges.Add(scriptureRange);
+        }
+
+        // Add the older training scripture range. We don't know what source project it came from
+        if (!string.IsNullOrWhiteSpace(draftConfig.LastSelectedTrainingScriptureRange))
+        {
+            buildDto.AdditionalInfo.TrainingScriptureRanges.Add(
+                new ProjectScriptureRange { ScriptureRange = draftConfig.LastSelectedTrainingScriptureRange }
+            );
+        }
+
+        // Add the translation scripture ranges
+        buildDto.AdditionalInfo.TranslationScriptureRanges.Clear();
+        foreach (ProjectScriptureRange scriptureRange in draftConfig.LastSelectedTranslationScriptureRanges)
+        {
+            buildDto.AdditionalInfo.TranslationScriptureRanges.Add(scriptureRange);
+        }
+
+        // Add the older translation scripture range
+        if (!string.IsNullOrWhiteSpace(draftConfig.LastSelectedTranslationScriptureRange))
+        {
+            buildDto.AdditionalInfo.TranslationScriptureRanges.Add(
+                new ProjectScriptureRange { ScriptureRange = draftConfig.LastSelectedTranslationScriptureRange }
+            );
+        }
+        return buildDto;
+    }
+
     private static ServalBuildDto UpdateDto(ServalBuildDto buildDto, EventMetric eventMetric)
     {
         // Ensure that there is the Serval additional data
@@ -1761,6 +1798,7 @@ public class MachineApiService(
         );
 
         // Add the training scripture ranges
+        buildDto.AdditionalInfo.TrainingScriptureRanges.Clear();
         foreach (ProjectScriptureRange scriptureRange in buildConfig.TrainingScriptureRanges)
         {
             buildDto.AdditionalInfo.TrainingScriptureRanges.Add(scriptureRange);
@@ -1775,6 +1813,7 @@ public class MachineApiService(
         }
 
         // Add the translation scripture ranges
+        buildDto.AdditionalInfo.TranslationScriptureRanges.Clear();
         foreach (ProjectScriptureRange scriptureRange in buildConfig.TranslationScriptureRanges)
         {
             buildDto.AdditionalInfo.TranslationScriptureRanges.Add(scriptureRange);
