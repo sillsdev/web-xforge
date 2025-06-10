@@ -418,9 +418,11 @@ describe('CheckingComponent', () => {
       env.setBookChapter('MAT', 2);
       env.fixture.detectChanges();
       expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
+      expect(env.component.chapter).toEqual(2);
       env.setBookChapter('MAT', 3);
       env.fixture.detectChanges();
       expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
+      expect(env.component.chapter).toEqual(3);
       flush();
       discardPeriodicTasks();
     }));
