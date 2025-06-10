@@ -189,6 +189,8 @@
     "draft_queued_detail_multiple": "The translation draft generation is number {{ count }} in the queue, and will begin once the server is finished with other projects. Please check back later.",
     "draft_queued_detail": "Generation of the translation draft has been queued, and will begin once the server is finished with another project. Please check back later.",
     "draft_queued_header": "Draft queued",
+    "draft_queued_multiple": "This draft is number {{ count }} in the queue",
+    "draft_queued_next": "This draft is queued",
     "format_usfm": "Format USFM",
     "generate_back_translation_drafts_header": "Generate back translation drafts",
     "generate_draft_button": "Generate draft",
