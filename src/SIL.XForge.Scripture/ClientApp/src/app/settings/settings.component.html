@@ -6,7 +6,8 @@
     }
     <div>
       <form [formGroup]="form">
-        <mat-card class="card card-outline">
+        <!-- Translation Settings Card -->
+        <mat-card>
           <mat-card-content>
             <mat-card-title>{{ t("translate") }}</mat-card-title>
             <div class="tool-setting">
@@ -106,7 +107,11 @@
               }
             </div>
           </mat-card-content>
-          @if (showPreTranslationSettings) {
+        </mat-card>
+
+        <!-- Pre-Translation Settings Card -->
+        @if (showPreTranslationSettings) {
+          <mat-card>
             <mat-card-content>
               <mat-card-title>{{ t("pre_translation_drafting") }}</mat-card-title>
               <div>
@@ -173,7 +178,11 @@
                 }
               </div>
             </mat-card-content>
-          }
+          </mat-card>
+        }
+
+        <!-- Community Checking Settings Card -->
+        <mat-card>
           <mat-card-content>
             <mat-card-title>{{ t("community_checking_settings") }}</mat-card-title>
             <div class="tool-setting">
@@ -246,6 +255,10 @@
               </div>
             }
           </mat-card-content>
+        </mat-card>
+
+        <!-- Sharing Settings Card -->
+        <mat-card>
           <mat-card-content>
             <mat-card-title>{{ t("sharing_settings") }}</mat-card-title>
             <p class="helper-text">{{ t("sharing_description") }}</p>
@@ -324,34 +337,38 @@
 
     <div id="danger-zone">
       <h2>{{ t("danger_zone") }}</h2>
-      <mat-card class="card-content" id="delete-project">
-        <h4>{{ t("delete_this_project") }}</h4>
-        @if (isActiveSourceProject) {
-          <p class="source-project-msg">
-            {{ t("source_projects_cannot_be_deleted") }}
-          </p>
-        } @else if (isProjectSyncing) {
-          <p class="project-syncing-msg">
-            {{ t("cannot_delete_project_while_syncing") }}
-          </p>
-        } @else {
-          <p>{{ t("delete_project_cannot_be_undone") }}</p>
-          <p>
-            <span [innerHTML]="synchronizeWarning?.before"></span>
-            <a [appRouterLink]="['/projects', projectId, 'sync']">{{ synchronizeWarning?.templateTagText }}</a>
-            <span>{{ synchronizeWarning?.after }}</span>
-          </p>
-        }
-        <button
-          id="delete-btn"
-          mat-flat-button
-          type="button"
-          (click)="openDeleteProjectDialog()"
-          [class.enabled]="!deleteButtonDisabled"
-          [disabled]="deleteButtonDisabled"
-        >
-          {{ t("delete_this_project") }}
-        </button>
+      <mat-card id="delete-project">
+        <mat-card-content>
+          <mat-card-title>{{ t("delete_this_project") }}</mat-card-title>
+          @if (isActiveSourceProject) {
+            <p class="source-project-msg">
+              {{ t("source_projects_cannot_be_deleted") }}
+            </p>
+          } @else if (isProjectSyncing) {
+            <p class="project-syncing-msg">
+              {{ t("cannot_delete_project_while_syncing") }}
+            </p>
+          } @else {
+            <p>{{ t("delete_project_cannot_be_undone") }}</p>
+            <p>
+              <span [innerHTML]="synchronizeWarning?.before"></span>
+              <a [appRouterLink]="['/projects', projectId, 'sync']">{{ synchronizeWarning?.templateTagText }}</a>
+              <span>{{ synchronizeWarning?.after }}</span>
+            </p>
+          }
+        </mat-card-content>
+        <mat-card-actions align="end">
+          <button
+            id="delete-btn"
+            mat-flat-button
+            type="button"
+            (click)="openDeleteProjectDialog()"
+            [class.enabled]="!deleteButtonDisabled"
+            [disabled]="deleteButtonDisabled"
+          >
+            {{ t("delete_this_project") }}
+          </button>
+        </mat-card-actions>
       </mat-card>
     </div>
   </div>

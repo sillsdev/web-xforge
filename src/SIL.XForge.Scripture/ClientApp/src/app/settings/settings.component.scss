@@ -178,3 +178,9 @@ mat-radio-group.tool-setting {
     align-self: end;
   }
 }
+
+form {
+  display: flex;
+  flex-direction: column;
+  row-gap: 16px;
+}
