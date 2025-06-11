@@ -1,14 +1,13 @@
 import { DestroyRef, Injectable } from '@angular/core';
-import { merge } from 'lodash-es';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subject } from 'rxjs';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { ComparisonOperator, PropertyFilter, QueryParameters, Sort } from 'xforge-common/query-parameters';
+import { ComparisonOperator, QueryParameters, Sort } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -81,17 +80,15 @@ export class CheckingQuestionsService {
   }
 
   /**
-   * Query the question that is adjacent to the supplied question.
+   * Query the questions that precede or follow the supplied question.
    * @param projectId The ID of the project to query
    * @param relativeTo The question or verse to use as a reference point
-   * @param questionFilter The filter to apply to the results
    * @param prevOrNext Whether to query the question before or after the reference point
    * @param destroyRef The reference to destroy the query when the component gets destroyed.
    */
-  queryAdjacentQuestion(
+  queryAdjacentQuestions(
     projectId: string,
     relativeTo: Question | VerseRefData,
-    questionFilter: QuestionFilter,
     prevOrNext: 'prev' | 'next',
     destroyRef: DestroyRef
   ): Promise<RealtimeQuery<QuestionDoc>> {
@@ -146,15 +143,10 @@ export class CheckingQuestionsService {
         }
       ],
 
-      $sort: this.getQuestionSortParams(prevOrNext === 'next' ? 'ascending' : 'descending'),
-      $limit: 1
+      $sort: this.getQuestionSortParams(prevOrNext === 'next' ? 'ascending' : 'descending')
     };
 
-    return this.realtimeService.subscribeQuery(
-      QuestionDoc.COLLECTION,
-      merge(queryParams, this.getFilterForQuestionFilter(questionFilter)),
-      destroyRef
-    );
+    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
   }
 
   async queryFirstUnansweredQuestion(
@@ -217,63 +209,6 @@ export class CheckingQuestionsService {
         this.afterQuestionCreated$.next(questionDoc);
         return questionDoc;
       });
-  }
-
-  private getFilterForQuestionFilter(filter: QuestionFilter): PropertyFilter {
-    switch (filter) {
-      case QuestionFilter.CurrentUserHasAnswered:
-        return {
-          [obj<Question>().pathStr(q => q.answers)]: {
-            $elemMatch: {
-              [obj<Answer>().pathStr(a => a.ownerRef)]: this.userService.currentUserId,
-              [obj<Answer>().pathStr(a => a.deleted)]: false
-            }
-          }
-        };
-      case QuestionFilter.CurrentUserHasNotAnswered:
-        return {
-          $or: [
-            {
-              [obj<Question>().pathStr(q => q.answers)]: {
-                $not: {
-                  $elemMatch: {
-                    [obj<Answer>().pathStr(a => a.ownerRef)]: this.userService.currentUserId,
-                    [obj<Answer>().pathStr(a => a.deleted)]: false
-                  }
-                }
-              }
-            },
-            {
-              [obj<Question>().pathStr(q => q.answers)]: { $size: 0 }
-            }
-          ]
-        } as PropertyFilter;
-      case QuestionFilter.HasAnswers:
-        return { [obj<Question>().pathStr(q => q.answers)]: { $ne: [] } };
-      case QuestionFilter.NoAnswers:
-        return { [obj<Question>().pathStr(q => q.answers)]: { $size: 0 } };
-      case QuestionFilter.StatusNone:
-        return {
-          [obj<Question>().pathStr(q => q.answers)]: {
-            $elemMatch: { [obj<Answer>().pathStr(a => a.status)]: { $in: [null, AnswerStatus.None] } }
-          }
-        };
-      case QuestionFilter.StatusExport:
-        return {
-          [obj<Question>().pathStr(q => q.answers)]: {
-            $elemMatch: { [obj<Answer>().pathStr(a => a.status)]: AnswerStatus.Exportable }
-          }
-        };
-      case QuestionFilter.StatusResolved:
-        return {
-          [obj<Question>().pathStr(q => q.answers)]: {
-            $elemMatch: { [obj<Answer>().pathStr(a => a.status)]: AnswerStatus.Resolved }
-          }
-        };
-      case QuestionFilter.None:
-      default:
-        return {};
-    }
   }
 
   private isVerseRefData(item: Question | VerseRefData): item is VerseRefData {

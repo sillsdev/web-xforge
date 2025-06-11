@@ -11,7 +11,7 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
-import { CheckingQuestionsService, QuestionFilter } from './checking-questions.service';
+import { CheckingQuestionsService } from './checking-questions.service';
 
 describe('CheckingQuestionsService', () => {
   const questions: Partial<Snapshot<Question>>[] = [];
@@ -265,84 +265,83 @@ describe('CheckingQuestionsService', () => {
     }));
   });
 
-  describe('queryAdjacentQuestion', () => {
+  describe('queryAdjacentQuestions', () => {
     it('should query the next question', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[0].data!,
-        QuestionFilter.None,
         'next',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-1');
+      expect(question.docs.length).toBe(39);
     }));
 
     it('should query the previous question', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[1].data!,
-        QuestionFilter.None,
         'prev',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-0');
+      expect(question.docs.length).toBe(1);
     }));
 
     it('should query the next question in the next chapter', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[9].data!,
-        QuestionFilter.None,
         'next',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-0');
+      expect(question.docs.length).toBe(30);
     }));
 
     it('should query the previous question in the previous chapter', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[10].data!,
-        QuestionFilter.None,
         'prev',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-9');
+      expect(question.docs.length).toBe(10);
     }));
 
     it('should query the next question in the next book', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[19].data!,
-        QuestionFilter.None,
         'next',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-j1-0');
+      expect(question.docs.length).toBe(20);
     }));
 
     it('should query the previous question in the previous book', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[20].data!,
-        QuestionFilter.None,
         'prev',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-9');
+      expect(question.docs.length).toBe(20);
     }));
 
     it('should return empty array if there is no next question', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[49].data!,
-        QuestionFilter.None,
         'next',
         noopDestroyRef
       );
@@ -351,341 +350,14 @@ describe('CheckingQuestionsService', () => {
     }));
 
     it('should return empty array if there is no previous question', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[0].data!,
-        QuestionFilter.None,
         'prev',
         noopDestroyRef
       );
       tick();
       expect(question.docs.length).toBe(0);
     }));
-
-    it('should query the next question in outside the current chapter with filter "HasAnswers"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[19].data!,
-        QuestionFilter.HasAnswers,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j2-0');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "HasAnswers"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[40].data!,
-        QuestionFilter.HasAnswers,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m2-9');
-    }));
-
-    it('should query the next question in outside the current chapter with filter "NoAnswers"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[9].data!,
-        QuestionFilter.NoAnswers,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j1-0');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "NoAnswers"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[20].data!,
-        QuestionFilter.NoAnswers,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m1-9');
-    }));
-
-    it('should query the next question in outside the current chapter with filter "StatusNone"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[19].data!,
-        QuestionFilter.StatusNone,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j2-0');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "StatusNone"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[40].data!,
-        QuestionFilter.StatusNone,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m2-9');
-    }));
-
-    it('should query the next question in outside the current chapter with filter "StatusExport"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[17].data!,
-        QuestionFilter.StatusExport,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j2-1');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "StatusExport"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[41].data!,
-        QuestionFilter.StatusExport,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m2-7');
-    }));
-
-    it('should query the next question in outside the current chapter with filter "StatusResolved"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[18].data!,
-        QuestionFilter.StatusResolved,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j2-2');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "StatusResolved"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[42].data!,
-        QuestionFilter.StatusResolved,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m2-8');
-    }));
-
-    describe('with CurrentUserHasAnswered filter', () => {
-      it('should find next question answered by current user, skipping unanswered', fakeAsync(async () => {
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          questions.find(q => q.data?.dataId === 'question-m1-8')!.data!, // M1:8 (no answers)
-          QuestionFilter.CurrentUserHasAnswered,
-          'next',
-          noopDestroyRef
-        );
-        tick();
-        expect(query.docs.length).toBe(1);
-        expect(query.docs[0].data!.dataId).toEqual('question-m2-0'); // M2:0 (answered by 'ownerId')
-      }));
-
-      it('should find previous question answered by current user, skipping unanswered', fakeAsync(async () => {
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          questions.find(q => q.data?.dataId === 'question-j1-0')!.data!, // J1:0 (no answers)
-          QuestionFilter.CurrentUserHasAnswered,
-          'prev',
-          noopDestroyRef
-        );
-        tick();
-        expect(query.docs.length).toBe(1);
-        expect(query.docs[0].data!.dataId).toEqual('question-m2-9'); // M2:9 (answered by 'ownerId')
-      }));
-
-      it('should find immediate next question if answered by current user', fakeAsync(async () => {
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          questions.find(q => q.data?.dataId === 'question-m2-0')!.data!, // M2:0 (answered by 'ownerId')
-          QuestionFilter.CurrentUserHasAnswered,
-          'next',
-          noopDestroyRef
-        );
-        tick();
-        expect(query.docs.length).toBe(1);
-        expect(query.docs[0].data!.dataId).toEqual('question-m2-1'); // M2:1 (answered by 'ownerId')
-      }));
-
-      it('should return empty if no further questions are answered by current user (next)', fakeAsync(async () => {
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          questions.find(q => q.data?.dataId === 'question-j2-9')!.data!, // J2:9 (last question answered by 'ownerId')
-          QuestionFilter.CurrentUserHasAnswered,
-          'next',
-          noopDestroyRef
-        );
-        tick();
-        expect(query.docs.length).toBe(0);
-      }));
-
-      it('should return empty if no prior questions are answered by current user (prev)', fakeAsync(async () => {
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          questions.find(q => q.data?.dataId === 'question-m2-0')!.data!, // M2:0 (first question answered by 'ownerId')
-          QuestionFilter.CurrentUserHasAnswered,
-          'prev',
-          noopDestroyRef
-        );
-        tick();
-        expect(query.docs.length).toBe(0); // M1 questions have no answers
-      }));
-    });
-
-    describe('with CurrentUserHasNotAnswered filter', () => {
-      const testUserId = 'testUser01';
-      let modifiedQuestionsView: Partial<Snapshot<Question>>[];
-
-      beforeEach(() => {
-        modifiedQuestionsView = JSON.parse(JSON.stringify(questions));
-
-        const q_m2_5_data = modifiedQuestionsView.find(q => q.data?.dataId === 'question-m2-5')?.data;
-        if (q_m2_5_data?.answers) {
-          q_m2_5_data.answers.push({
-            dataId: `question-m2-5-ansByTestUser`,
-            ownerRef: testUserId,
-            text: `answer by testUser for M2:5`,
-            verseRef: { bookNum: 40, chapterNum: 2, verseNum: 6 },
-            scriptureText: 'Quoted scripture',
-            likes: [],
-            dateCreated: new Date().toISOString(),
-            dateModified: new Date().toISOString(),
-            deleted: false,
-            comments: [],
-            status: AnswerStatus.None
-          });
-        }
-
-        const q_m2_6_data = modifiedQuestionsView.find(q => q.data?.dataId === 'question-m2-6')?.data;
-        if (q_m2_6_data) {
-          q_m2_6_data.answers = [
-            {
-              dataId: `question-m2-6-ansByTestUser`,
-              ownerRef: testUserId,
-              text: `answer by testUser for M2:6`,
-              verseRef: { bookNum: 40, chapterNum: 2, verseNum: 7 },
-              scriptureText: 'Quoted scripture',
-              likes: [],
-              dateCreated: new Date().toISOString(),
-              dateModified: new Date().toISOString(),
-              deleted: false,
-              comments: [],
-              status: AnswerStatus.None
-            }
-          ];
-        }
-
-        realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, modifiedQuestionsView);
-        mockUserService.currentUserId = testUserId;
-      });
-
-      it('should find next question not answered by current user, skipping those answered by them', fakeAsync(async () => {
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          modifiedQuestionsView.find(q => q.data?.dataId === 'question-m2-4')!.data!, // M2:4 (by 'ownerId')
-          QuestionFilter.CurrentUserHasNotAnswered,
-          'next',
-          noopDestroyRef
-        );
-        tick();
-        // M2:5 is answered by ownerId and testUserId (skip)
-        // M2:6 is answered by testUserId (skip)
-        // M2:7 is answered by ownerId (select)
-        expect(query.docs.length).toBe(1);
-        expect(query.docs[0].data!.dataId).toEqual('question-m2-7');
-      }));
-
-      it('should find previous question not answered by current user, skipping those answered by them', fakeAsync(async () => {
-        // Start at M2:8 (by 'ownerId'). Prev should be M2:7 (by 'ownerId').
-        // M2:6 (by testUserId) and M2:5 (by testUserId and ownerId) should be skipped if we started later.
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          modifiedQuestionsView.find(q => q.data?.dataId === 'question-m2-8')!.data!,
-          QuestionFilter.CurrentUserHasNotAnswered,
-          'prev',
-          noopDestroyRef
-        );
-        tick();
-        expect(query.docs.length).toBe(1);
-        expect(query.docs[0].data!.dataId).toEqual('question-m2-7'); // M2:7 (by 'ownerId')
-      }));
-
-      it('should find next question with no answers at all', fakeAsync(async () => {
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          modifiedQuestionsView.find(q => q.data?.dataId === 'question-m2-9')!.data!, // M2:9 (by 'ownerId')
-          QuestionFilter.CurrentUserHasNotAnswered,
-          'next',
-          noopDestroyRef
-        );
-        tick();
-        expect(query.docs.length).toBe(1);
-        expect(query.docs[0].data!.dataId).toEqual('question-j1-0'); // J1:0 (no answers)
-      }));
-
-      it('should find previous question with no answers at all', fakeAsync(async () => {
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          modifiedQuestionsView.find(q => q.data?.dataId === 'question-m2-0')!.data!, // M2:0 (by 'ownerId')
-          QuestionFilter.CurrentUserHasNotAnswered,
-          'prev',
-          noopDestroyRef
-        );
-        tick();
-        expect(query.docs.length).toBe(1);
-        expect(query.docs[0].data!.dataId).toEqual('question-m1-9'); // M1:9 (no answers)
-      }));
-
-      it('should return empty if no further questions meet "CurrentUserHasNotAnswered" (next)', fakeAsync(async () => {
-        for (let i = 40; i <= 49; i++) {
-          // J2 questions (indices in original `questions` array)
-          const qData = modifiedQuestionsView.find(q => q.data?.dataId === `question-j2-${i - 40}`)?.data;
-          if (qData) {
-            qData.answers = [
-              {
-                dataId: `${qData.dataId}-ansByTestUser`,
-                ownerRef: testUserId,
-                text: 'ans',
-                verseRef: { bookNum: 43, chapterNum: 2, verseNum: i - 40 + 1 },
-                scriptureText: '',
-                likes: [],
-                dateCreated: '',
-                dateModified: '',
-                deleted: false,
-                comments: [],
-                status: AnswerStatus.None
-              }
-            ];
-          }
-        }
-        realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, modifiedQuestionsView);
-
-        const query = await questionsService.queryAdjacentQuestion(
-          projectId,
-          modifiedQuestionsView.find(q => q.data?.dataId === 'question-j1-9')!.data!, // J1:9 (no answers)
-          QuestionFilter.CurrentUserHasNotAnswered,
-          'next',
-          noopDestroyRef
-        );
-        tick();
-        // All J2 questions are now answered by testUserId, so they should be skipped.
-        expect(query.docs.length).toBe(0);
-      }));
-    });
   });
 });
