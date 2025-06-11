@@ -58,7 +58,7 @@ describe('DraftHistoryEntryComponent', () => {
   describe('entry', () => {
     it('should handle undefined values', () => {
       component.entry = undefined;
-      expect(component.bookNames).toEqual([]);
+      expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedByDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
@@ -78,19 +78,19 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(component.bookNames).toEqual(['Genesis']);
+      expect(component.scriptureRange).toEqual('Genesis');
       expect(component.buildRequestedByUserName).toBe(user);
       expect(component.buildRequestedByDate).toBe(date);
       expect(component.canDownloadBuild).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
-      expect(component.columnsToDisplay).toEqual(['bookNames', 'source', 'target']);
+      expect(component.columnsToDisplay).toEqual(['scriptureRange', 'source', 'target']);
       expect(component.hasDetails).toBe(true);
       expect(component.entry).toBe(entry);
       expect(component.sourceLanguage).toBe('fr');
       expect(component.targetLanguage).toBe('en');
       expect(component.trainingConfiguration).toEqual([
         {
-          bookNames: ['Exodus'],
+          scriptureRange: 'Exodus',
           source: 'src',
           target: 'tar'
         }
@@ -111,14 +111,14 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(component.bookNames).toEqual(['Genesis']);
+      expect(component.scriptureRange).toEqual('Genesis');
       expect(component.canDownloadBuild).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).not.toBeNull();
     }));
 
     it('should handle builds where the draft cannot be downloaded yet', fakeAsync(() => {
-      when(mockedI18nService.localizeBook('GEN')).thenReturn('Genesis');
-      when(mockedI18nService.localizeBook('EXO')).thenReturn('Exodus');
+      when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
+      when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
       when(mockedI18nService.translateStatic('draft_history_entry.draft_unknown')).thenReturn('Unknown');
       const targetProjectDoc = {
         id: 'project01'
@@ -144,19 +144,19 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(component.bookNames).toEqual(['Genesis']);
+      expect(component.scriptureRange).toEqual('Genesis');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedByDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
-      expect(component.columnsToDisplay).toEqual(['bookNames', 'source', 'target']);
+      expect(component.columnsToDisplay).toEqual(['scriptureRange', 'source', 'target']);
       expect(component.hasDetails).toBe(true);
       expect(component.entry).toBe(entry);
       expect(component.sourceLanguage).toBe('');
       expect(component.targetLanguage).toBe('');
       expect(component.trainingConfiguration).toEqual([
         {
-          bookNames: ['Exodus'],
+          scriptureRange: 'Exodus',
           source: 'Unknown',
           target: 'Unknown'
         }
@@ -166,7 +166,8 @@ describe('DraftHistoryEntryComponent', () => {
 
     it('should handle builds with additional info referencing a deleted user', fakeAsync(() => {
       when(mockedI18nService.formatDate(anything())).thenReturn('formatted-date');
-      when(mockedI18nService.localizeBook('GEN')).thenReturn('localized-book');
+      when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
+      when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
       const userDoc = { id: 'sf-user-id', data: undefined } as UserProfileDoc;
       when(mockedUserService.getProfile(anything())).thenResolve(userDoc);
       const entry = {
@@ -184,7 +185,7 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(component.bookNames).toEqual(['localized-book']);
+      expect(component.scriptureRange).toEqual('Genesis');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedByDate).toBe('formatted-date');
       expect(component.canDownloadBuild).toBe(true);
@@ -197,7 +198,7 @@ describe('DraftHistoryEntryComponent', () => {
       const entry = { additionalInfo: {} } as BuildDto;
       component.entry = entry;
       component.isLatestBuild = true;
-      expect(component.bookNames).toEqual([]);
+      expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedByDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
@@ -209,7 +210,7 @@ describe('DraftHistoryEntryComponent', () => {
     it('should handle builds without additional info', () => {
       const entry = {} as BuildDto;
       component.entry = entry;
-      expect(component.bookNames).toEqual([]);
+      expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedByDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
@@ -252,8 +253,8 @@ describe('DraftHistoryEntryComponent', () => {
     translateBooks: string[];
   }): BuildDto {
     when(mockedI18nService.formatDate(anything())).thenReturn(date);
-    when(mockedI18nService.localizeBook('GEN')).thenReturn('Genesis');
-    when(mockedI18nService.localizeBook('EXO')).thenReturn('Exodus');
+    when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
+    when(mockedI18nService.formatAndLocalizeScriptureRange('EXO')).thenReturn('Exodus');
     const userDoc = {
       id: 'sf-user-id',
       data: createTestUserProfile({ displayName: user })
