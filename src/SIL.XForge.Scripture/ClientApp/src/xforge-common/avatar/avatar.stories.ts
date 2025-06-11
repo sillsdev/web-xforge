@@ -1,5 +1,6 @@
 import { Meta, StoryObj } from '@storybook/angular';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { CALVIN_AVATAR_URI } from '../../data-uris';
 import { AvatarComponent } from './avatar.component';
 
 export default {
@@ -21,7 +22,7 @@ export const WithImage: Story = {
   args: {
     user: createTestUserProfile({
       displayName: 'John Doe',
-      avatarUrl: 'https://cdn.drawception.com/drawings/O6Bfl1QP5R.png'
+      avatarUrl: CALVIN_AVATAR_URI
     })
   }
 };
@@ -68,7 +69,7 @@ export const WithVariedSizes: Story = {
       }),
       user2: createTestUserProfile({
         displayName: 'John Doe',
-        avatarUrl: 'https://cdn.drawception.com/drawings/O6Bfl1QP5R.png'
+        avatarUrl: CALVIN_AVATAR_URI
       }),
       user3: createTestUserProfile({
         displayName: '李小龙',
