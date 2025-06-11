@@ -23,6 +23,7 @@ import {
 } from './quill-formats/quill-attributors';
 import {
   BlankEmbed,
+  BookBlock,
   ChapterEmbed,
   CharInline,
   EmptyEmbed,
@@ -65,6 +66,7 @@ export function registerScriptureFormats(formatRegistry: QuillFormatRegistryServ
     TextAnchorInline,
 
     // Block Blots
+    BookBlock,
     ParaBlock,
 
     // Class Attributors

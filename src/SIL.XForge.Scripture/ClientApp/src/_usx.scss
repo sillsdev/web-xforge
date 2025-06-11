@@ -4,6 +4,7 @@
   counter-reset: note;
 }
 
+usx-book,
 usx-para {
   display: block;
 
@@ -178,7 +179,14 @@ usx-para {
     text-align: center;
   }
 }
+
+usx-book[data-code]:first-child:before {
+  content: attr(data-code) ' ';
+  color: var(--sf-usx-chapter-color);
+}
+
 quill-editor.ltr {
+  usx-book,
   usx-para {
     &[data-style='li'],
     &[data-style='li1'] {
@@ -240,6 +248,7 @@ quill-editor.ltr {
   }
 }
 quill-editor.rtl {
+  usx-book,
   usx-para {
     &[data-style='io'],
     &[data-style='io1'] {

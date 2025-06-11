@@ -36,7 +36,7 @@ public class Delta
 
     public List<JToken> Ops { get; set; }
 
-    public Delta Insert(object text, object attributes = null)
+    public Delta Insert(object text, object? attributes = null)
     {
         if (text is not JToken textToken)
             textToken = JToken.FromObject(text);
