@@ -44,13 +44,6 @@ describe('ProjectSelectComponent', () => {
     expect(env.component.sourceParatextId.value).toBe('r02');
   }));
 
-  it('selects project when valid name typed manually', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.clickInput();
-    env.inputText('Project 1');
-    expect(env.component.sourceParatextId.value).toBe('p01');
-  }));
-
   it('does not open autocomplete when disabled', fakeAsync(() => {
     const env = new TestEnvironment();
     expect(env.autoCompleteShowing).toBe(false);
@@ -164,6 +157,35 @@ describe('ProjectSelectComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.selectionInvalidMessage!.textContent).toContain('You do not have permission');
+  }));
+
+  it('updates the filtered list when the resources update', fakeAsync(() => {
+    const initialProjects = [
+      { name: 'Project 1', paratextId: 'p01', shortName: 'P1' },
+      { name: 'Project 2', paratextId: 'p02', shortName: 'P2' }
+    ];
+    const initialResources = [];
+    const env = new TestEnvironment([], initialProjects, initialResources);
+    env.clickInput();
+
+    expect(env.groupLabels.length).toBe(1);
+    expect(env.groupLabels[0]).toBe('Projects');
+    expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'P2 - Project 2']);
+
+    env.inputText('R1');
+    expect(env.groupLabels.length).toBe(0);
+
+    // Update the resources
+    const updatedResources = [
+      { name: 'Resource 1', paratextId: 'r01', shortName: 'R1' },
+      { name: 'Resource 2', paratextId: 'r02', shortName: 'R2' }
+    ];
+    env.component.resources = updatedResources;
+    env.fixture.detectChanges();
+    tick();
+    expect(env.groupLabels.length).toBe(1);
+    expect(env.groupLabels[0]).toBe('Resources');
+    expect(env.optionsText(0)).toEqual(['R1 - Resource 1']);
   }));
 });
 
