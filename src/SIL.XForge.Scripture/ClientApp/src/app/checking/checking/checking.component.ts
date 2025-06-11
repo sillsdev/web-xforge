@@ -158,18 +158,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private textAudioSub?: Subscription;
   private audioChangedSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
-  private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
-    [QuestionFilter.None]: () => true,
-    [QuestionFilter.CurrentUserHasNotAnswered]: answers =>
-      !answers.some(a => a.ownerRef === this.userService.currentUserId),
-    [QuestionFilter.CurrentUserHasAnswered]: answers =>
-      answers.some(a => a.ownerRef === this.userService.currentUserId),
-    [QuestionFilter.HasAnswers]: answers => answers.length > 0,
-    [QuestionFilter.NoAnswers]: answers => answers.length === 0,
-    [QuestionFilter.StatusNone]: answers => answers.some(a => a.status === AnswerStatus.None || a.status == null),
-    [QuestionFilter.StatusExport]: answers => answers.some(a => a.status === AnswerStatus.Exportable),
-    [QuestionFilter.StatusResolved]: answers => answers.some(a => a.status === AnswerStatus.Resolved)
-  };
   private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
   private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
@@ -1161,15 +1149,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     try {
       // If no adjacent question in current scope, get the adjacent question outside this scope
-      query = await this.checkingQuestionsService.queryAdjacentQuestion(
+      query = await this.checkingQuestionsService.queryAdjacentQuestions(
         this.projectDoc!.id,
         relativeTo!,
-        this.activeQuestionFilter,
         prevOrNext,
         this.destroyRef
       );
 
-      return query.docs[0];
+      return this.filterQuestions(query.docs)[0];
     } finally {
       query?.dispose();
     }
@@ -1202,8 +1189,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     if (this.activeQuestionFilter === QuestionFilter.None) {
       matchingQuestions = this.questionDocs.slice();
     } else {
-      const filterFunction = this.questionFilterFunctions[this.activeQuestionFilter];
-      matchingQuestions = this.questionDocs.filter(q => (q.data == null ? false : filterFunction(q.getAnswers())));
+      matchingQuestions = this.filterQuestions(this.questionDocs);
     }
 
     this.visibleQuestions = matchingQuestions;
@@ -1216,6 +1202,24 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     this.updateQuestionRefs();
     this.refreshSummary();
+  }
+
+  private filterQuestions(unfilteredQuestions: readonly QuestionDoc[]): QuestionDoc[] {
+    const questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
+      [QuestionFilter.None]: () => true,
+      [QuestionFilter.CurrentUserHasNotAnswered]: answers =>
+        !answers.some(a => a.ownerRef === this.userService.currentUserId),
+      [QuestionFilter.CurrentUserHasAnswered]: answers =>
+        answers.some(a => a.ownerRef === this.userService.currentUserId),
+      [QuestionFilter.HasAnswers]: answers => answers.length > 0,
+      [QuestionFilter.NoAnswers]: answers => answers.length === 0,
+      [QuestionFilter.StatusNone]: answers => answers.some(a => a.status === AnswerStatus.None || a.status == null),
+      [QuestionFilter.StatusExport]: answers => answers.some(a => a.status === AnswerStatus.Exportable),
+      [QuestionFilter.StatusResolved]: answers => answers.some(a => a.status === AnswerStatus.Resolved)
+    };
+    const filterFunction = questionFilterFunctions[this.activeQuestionFilter];
+
+    return unfilteredQuestions.filter(q => (q.data == null ? false : filterFunction(q.getAnswers())));
   }
 
   private updateAudioMissingWarning(): void {
@@ -1570,19 +1574,18 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     if (suggestedBookChapter == null) {
       let query: RealtimeQuery<QuestionDoc> | undefined;
       try {
-        query = await this.checkingQuestionsService.queryAdjacentQuestion(
+        query = await this.checkingQuestionsService.queryAdjacentQuestions(
           this.projectDoc!.id,
           {
             bookNum: routeBookNum ?? 1,
             chapterNum: 1,
             verseNum: 0
           },
-          this.activeQuestionFilter,
           'next',
           this.destroyRef
         );
 
-        const firstQuestionVerseRef: VerseRefData | undefined = query.docs[0]?.data?.verseRef;
+        const firstQuestionVerseRef: VerseRefData | undefined = this.filterQuestions(query.docs)[0]?.data?.verseRef;
 
         if (firstQuestionVerseRef != null) {
           // If route book is provided, don't use question from a different book
