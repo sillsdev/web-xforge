@@ -91,8 +91,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     protected override string ProjectAdminRole => SFProjectRole.Administrator;
 
     /// <summary>
-    /// Returns SF project id of created project.
+    /// Connects to a Paratext project,
     /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="settings">The create project settings.</param>
+    /// <returns>The Scripture Forge identifier of the created project.</returns>
+    /// <exception cref="DataNotFoundException">The user or project does not exist.</exception>
+    /// <exception cref="InvalidOperationException">The project already exists.</exception>
+    /// <exception cref="ForbiddenException">The user does not have permission to connect to the project.</exception>
     public async Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings)
     {
         Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);

@@ -3859,8 +3859,8 @@ public class SFProjectServiceTests
         DraftUsfmConfig config = new DraftUsfmConfig();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SetUsfmConfigAsync(User01, "invalid_project", config)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.SetUsfmConfigAsync(User01, "invalid_project", config)
         );
     }
 
