@@ -1,19 +1,21 @@
 import { expect } from 'npm:@playwright/test';
 import { Locator, Page } from 'npm:playwright';
-import { DEFAULT_PROJECT_SHORTNAME, preset, ScreenshotContext } from '../e2e-globals.ts';
+import { preset, ScreenshotContext } from '../e2e-globals.ts';
 import {
-  deleteProject,
   enableDeveloperMode,
-  ensureJoinedOrConnectedToProject,
-  ensureNavigatedToProject,
+  freshlyConnectProject,
   installMouseFollower,
-  isProjectJoined,
   logInAsPTUser,
   logOut,
   screenshot,
   switchLanguage
 } from '../e2e-utils.ts';
 import { UserEmulator } from '../user-emulator.mts';
+
+type EngineMode = 'echo' | 'fast';
+
+const ENGINE_MODE: EngineMode = 'echo';
+const DRAFT_PROJECT_SHORT_NAME = 'SEEDSP2';
 
 export async function generateDraft(
   page: Page,
@@ -26,12 +28,7 @@ export async function generateDraft(
   await page.waitForTimeout(500);
   const user = new UserEmulator(page);
 
-  if (await isProjectJoined(page, DEFAULT_PROJECT_SHORTNAME)) {
-    await deleteProject(page, DEFAULT_PROJECT_SHORTNAME);
-  }
-
-  await ensureJoinedOrConnectedToProject(page, DEFAULT_PROJECT_SHORTNAME);
-  await ensureNavigatedToProject(page, DEFAULT_PROJECT_SHORTNAME);
+  await freshlyConnectProject(page, DRAFT_PROJECT_SHORT_NAME);
 
   await enableDeveloperMode(page, { closeMenu: true });
 
@@ -90,7 +87,7 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'generate_draft_confirm_sources', ...context });
 
   await goToNextStepExpectingHeading('Select books to draft');
-  await expect(getStep().getByRole('option')).toHaveCount(66);
+  await expect(getStep().getByRole('option')).toHaveCount(3);
   const options = await getStep().getByRole('option').all();
 
   let previousBookWasSelected = false;
@@ -116,7 +113,9 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'generate_draft_select_books_to_train', ...context });
 
   await goToNextStepExpectingHeading('Advanced');
-  await user.check(page.getByRole('checkbox', { name: 'Use Echo Translation Engine' }));
+  if (ENGINE_MODE === 'echo') await user.check(page.getByRole('checkbox', { name: 'Use Echo Translation Engine' }));
+  else if (ENGINE_MODE === 'fast') await user.check(page.getByRole('checkbox', { name: 'Enable Fast Training' }));
+
   await screenshot(page, { pageName: 'generate_draft_advanced_settings', ...context });
 
   await goToNextStepExpectingHeading('Summary');
@@ -131,15 +130,22 @@ export async function generateDraft(
   await screenshot(page, { pageName: 'generate_draft_initializing', ...context });
   await expect(page.getByRole('heading', { name: 'Draft queued' })).toBeVisible({ timeout: 60_000 });
   await screenshot(page, { pageName: 'generate_draft_queued', ...context });
+
+  // The draft ready message shouldn't show up until after progress messages, but echo jobs can run too fast for progress messages to appear.
+  const draftReadyLocator = page.getByText('Your draft is ready');
+
   // Wait for the draft to start - timeout is long because there can be another job in the queue
-  await expect(page.getByRole('heading', { name: 'Draft in progress' })).toBeVisible({ timeout: 15 * 60_000 });
+  const inProgressTimeout = ENGINE_MODE === 'echo' ? 3 * 60_000 : 15 * 60_000;
+  await expect(page.getByRole('heading', { name: 'Draft in progress' }).or(draftReadyLocator)).toBeVisible({
+    timeout: inProgressTimeout
+  });
   console.log('UI shows draft in progress after', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
   await screenshot(page, { pageName: 'generate_draft_in_progress', ...context });
 
   // Make sure the progress is changing
   let progress: number | null = null;
   let lastProgressChange: number | null = null;
-  while (true) {
+  while (!(await draftReadyLocator.isVisible())) {
     // Use allTextContents so it won't crash if the element disappears before we can read it
     // FIXME Sometimes fails with "Execution context was destroyed, most likely because of a navigation"
     const currentProgressText = (await page.locator('circle-progress').allTextContents())[0];
@@ -161,7 +167,7 @@ export async function generateDraft(
   }
 
   // Completion
-  await expect(page.getByText('Your draft is ready')).toBeVisible();
+  await expect(draftReadyLocator).toBeVisible();
   await screenshot(page, { pageName: 'generate_draft_completed', ...context });
   console.log('Draft generation took', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
 
@@ -177,7 +183,7 @@ export async function generateDraft(
   await user.click(page.getByRole('radio', { name: bookToDraft }));
   await user.click(page.getByRole('button', { name: 'Add to project' }));
   await user.click(page.getByRole('button', { name: 'Overwrite chapter' }));
-  await user.click(page.locator('app-tab-header').filter({ hasText: DEFAULT_PROJECT_SHORTNAME }));
+  await user.click(page.locator('app-tab-header').filter({ hasText: DRAFT_PROJECT_SHORT_NAME }));
 
   // Go back to generate draft page and apply all chapters
   await user.click(page.getByRole('link', { name: 'Generate draft' }));
