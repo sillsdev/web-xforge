@@ -373,6 +373,7 @@
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
+    "cannot_import": "You cannot import this draft because you do not have permission to edit this chapter. Permissions can be updated in Paratext.",
     "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "draft_indicator_applied": "Added",
     "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
