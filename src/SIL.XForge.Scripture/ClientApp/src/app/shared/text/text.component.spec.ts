@@ -1998,15 +1998,6 @@ class TestEnvironment {
     resolver(textDocBeingGotten);
     this.waitForEditor();
   }
-
-  /** Assert that in `parentNode`, there are only immediate children with name and order specified in
-   * `nodeOrderings`. */
-  private assertNodeOrder(parentNode: Node, nodeOrderings: string[]): void {
-    const childNodes: string[] = Array.from(parentNode.childNodes).map((n: ChildNode) => n.nodeName.toLowerCase());
-    expect(childNodes)
-      .withContext(`not expected list of nodes: [${childNodes}] does not match expected [${nodeOrderings}]`)
-      .toEqual(nodeOrderings);
-  }
 }
 
 function basicSimpleText(): { env: TestEnvironment; segmentRange: QuillRange } {

@@ -255,7 +255,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('does not subscribe to build when project does not have drafting enabled', () => {
-      const _ = new TestEnvironment(() => TestEnvironment.initProject('user01', false));
+      new TestEnvironment(() => TestEnvironment.initProject('user01', false));
       expect(mockDraftGenerationService.getLastCompletedBuild).not.toHaveBeenCalled();
       expect(mockDraftGenerationService.getBuildProgress).not.toHaveBeenCalled();
     });

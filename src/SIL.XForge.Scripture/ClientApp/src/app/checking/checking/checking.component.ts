@@ -155,7 +155,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   };
   private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
-  private isProjectAdmin: boolean = false;
   private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
   private _showScriptureAudioPlayer: boolean = false;
 
@@ -562,10 +561,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             this.projectDeleteSub = this.projectDoc.delete$
               .pipe(quietTakeUntilDestroyed(this.destroyRef))
               .subscribe(() => this.onRemovedFromProject());
-
-            this.projectService
-              .isProjectAdmin(routeProjectId, this.userService.currentUserId)
-              .then(isAdmin => (this.isProjectAdmin = isAdmin));
           }
 
           this.activeQuestionScope = routeScope;
