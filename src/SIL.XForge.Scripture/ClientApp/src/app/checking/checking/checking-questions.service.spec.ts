@@ -9,7 +9,6 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
-import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { CheckingQuestionsService } from './checking-questions.service';
 
@@ -169,16 +168,12 @@ describe('CheckingQuestionsService', () => {
 
   let questionsService: CheckingQuestionsService;
   let realtimeService: TestRealtimeService;
-  let mockUserService: { currentUserId: string };
 
   configureTestingModule(() => ({
     imports: [TestRealtimeModule.forRoot(new TypeRegistry([QuestionDoc], [FileType.Audio], []))]
   }));
 
   beforeEach(() => {
-    mockUserService = { currentUserId: 'ownerId' };
-    TestBed.overrideProvider(UserService, { useValue: mockUserService });
-
     realtimeService = TestBed.inject(TestRealtimeService);
     realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, JSON.parse(JSON.stringify(questions)));
     questionsService = TestBed.inject(CheckingQuestionsService);
