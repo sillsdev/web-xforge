@@ -6,7 +6,6 @@ import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/mode
 import { lastValueFrom, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -29,7 +28,6 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly userService: UserService,
     private readonly permissions: PermissionsService,
     private readonly resumeCheckingService: ResumeCheckingService,
-    private readonly dialogService: DialogService,
     noticeService: NoticeService,
     private destroyRef: DestroyRef
   ) {
