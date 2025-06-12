@@ -68,6 +68,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -107,7 +108,6 @@ import { TrainingProgressComponent } from '../training-progress/training-progres
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 import { HistoryRevisionFormatPipe } from './editor-history/history-chooser/history-revision-format.pipe';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
-import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
 import { LynxInsightsModule } from './lynx/insights/lynx-insights.module';
 import { LynxWorkspaceService } from './lynx/insights/lynx-workspace.service';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
@@ -131,7 +131,7 @@ const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedParatextService = mock(ParatextService);
 const mockedPermissionsService = mock(PermissionsService);
 const mockedLynxWorkspaceService = mock(LynxWorkspaceService);
-const mockedLynxInsightStateService = mock(LynxInsightStateService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 class MockComponent {}
 
@@ -198,7 +198,7 @@ describe('EditorComponent', () => {
       { provide: TabMenuService, useValue: EditorTabMenuService },
       { provide: PermissionsService, useMock: mockedPermissionsService },
       { provide: LynxWorkspaceService, useMock: mockedLynxWorkspaceService },
-      { provide: LynxInsightStateService, useMock: mockedLynxInsightStateService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -4239,6 +4239,53 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
     });
+
+    describe('lynx features', () => {
+      it('should not show lynx features when feature flag is not enabled', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(false));
+        });
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.showInsights).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should show lynx features when feature flag is enabled and user has chapter edit permissions', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
+        });
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.showInsights).toBe(true);
+
+        env.dispose();
+      }));
+
+      it('should not show lynx features if user has no chapter edit permissions', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
+        });
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(false);
+        expect(env.component.showInsights).toBe(false);
+
+        env.dispose();
+      }));
+    });
   });
 });
 
@@ -4540,6 +4587,9 @@ class TestEnvironment {
     when(mockedDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
+    when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(false));
+    when(mockedFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
+    when(mockedLynxWorkspaceService.rawInsightSource$).thenReturn(of([]));
 
     this.realtimeService = TestBed.inject(TestRealtimeService);
 
