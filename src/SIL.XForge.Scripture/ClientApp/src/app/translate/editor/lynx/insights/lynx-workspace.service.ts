@@ -314,13 +314,13 @@ export class LynxWorkspaceService {
 
     this.textDocId = textDocId;
     if (this.textDocId != null) {
+      const uri: string = this.textDocId.toString();
       const textDoc = await this.projectService.getText(this.textDocId);
-      await this.documentManager.fireOpened(this.textDocId.toString(), {
+      await this.documentManager.fireOpened(uri, {
         format: 'scripture-delta',
         version: textDoc.adapter.version,
         content: textDoc.data as Delta
       });
-      const uri: string = this.textDocId.toString();
       this.textDocChangeSubscription = textDoc.changes$
         .pipe(quietTakeUntilDestroyed(this.destroyRef))
         .subscribe(async changes => {
