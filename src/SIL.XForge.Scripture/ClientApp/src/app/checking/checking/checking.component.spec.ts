@@ -374,6 +374,7 @@ describe('CheckingComponent', () => {
       env.setBookChapter('JHN', 2);
       expect(env.getQuestionText(question)).toBe('John 2');
       expect(await env.getCurrentBookAndChapter()).toBe('John 2');
+      env.waitForQuestionTimersToComplete();
     }));
 
     it('start question respects route book/chapter', fakeAsync(async () => {
@@ -387,6 +388,41 @@ describe('CheckingComponent', () => {
       // Question 5 has been stored as the question to start at, but route book/chapter is forced to MAT 1,
       // so active question must be from MAT 1
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q16Id');
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('updates active question when route book/chapter changes', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'book'
+      });
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
+      env.setBookChapter('JHN', 2);
+      env.fixture.detectChanges();
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q15Id');
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('clears active question when route book/chapter changes to chapter without questions', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: 'MAT',
+        projectChapterRoute: 1,
+        questionScope: 'book'
+      });
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q16Id');
+      env.setBookChapter('MAT', 2);
+      env.fixture.detectChanges();
+      expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
+      expect(env.component.chapter).toEqual(2);
+      env.setBookChapter('MAT', 3);
+      env.fixture.detectChanges();
+      expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
+      expect(env.component.chapter).toEqual(3);
       flush();
       discardPeriodicTasks();
     }));
@@ -569,8 +605,7 @@ describe('CheckingComponent', () => {
       expect(env.isSegmentHighlighted(1, 5)).toBe(true);
       expect(env.segmentHasQuestion(1, 5)).toBe(true);
       expect(env.component.questionVerseRefs.some(verseRef => verseRef.equals(new VerseRef('JHN 1:5')))).toBe(true);
-      tick();
-      flush();
+      env.waitForQuestionTimersToComplete();
     }));
 
     it('records audio for question when button clicked', fakeAsync(() => {
@@ -851,6 +886,38 @@ describe('CheckingComponent', () => {
       env.waitForQuestionTimersToComplete();
     }));
 
+    it('should not reset scope after a user changes chapter', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'chapter'
+      });
+      expect(env.questions.length).toEqual(14);
+      env.component.onChapterSelect(2);
+      env.setBookChapter('JHN', 2);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.activeQuestionScope).toEqual('chapter');
+      env.waitForQuestionTimersToComplete();
+    }));
+
+    it('should not reset scope after a user changes book', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'book'
+      });
+      expect(env.questions.length).toEqual(15);
+      env.component.onBookSelect(40);
+      env.setBookChapter('MAT', 1);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.activeQuestionScope).toEqual('book');
+      env.waitForQuestionTimersToComplete();
+    }));
+
     it('can narrow questions scope', fakeAsync(() => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
@@ -921,7 +988,8 @@ describe('CheckingComponent', () => {
       env.waitForQuestionTimersToComplete();
 
       expect(spyUpdateQuestionRefs).toHaveBeenCalledTimes(1);
-      expect(spyRefreshSummary).toHaveBeenCalledTimes(1);
+      // Called at least once or more depending on if another question replaces the archived question
+      expect(spyRefreshSummary).toHaveBeenCalled();
     }));
   });
 
@@ -1913,8 +1981,9 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
+      verify(questionDoc!.updateAnswerFileCache()).times(1);
       env.simulateRemoteEditAnswer(0, 'Question 6 edited answer');
-      verify(questionDoc!.updateAnswerFileCache()).times(3);
+      verify(questionDoc!.updateAnswerFileCache()).times(2);
       expect().nothing();
       tick();
       flush();
@@ -1924,8 +1993,9 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
+      verify(questionDoc!.updateAnswerFileCache()).times(1);
       env.simulateRemoteDeleteAnswer('q6Id', 0);
-      verify(questionDoc!.updateAnswerFileCache()).times(3);
+      verify(questionDoc!.updateAnswerFileCache()).times(2);
       expect().nothing();
       tick();
       flush();
@@ -2760,7 +2830,11 @@ class TestEnvironment {
         {
           bookNum: 40,
           hasSource: false,
-          chapters: [{ number: 1, lastVerse: 28, isValid: true, permissions: {} }],
+          chapters: [
+            { number: 1, lastVerse: 28, isValid: true, permissions: {} },
+            { number: 2, lastVerse: 23, isValid: true, permissions: {} },
+            { number: 3, lastVerse: 26, isValid: true, permissions: {} }
+          ],
           permissions: {}
         }
       ],
@@ -3257,6 +3331,16 @@ class TestEnvironment {
       {
         id: getTextDocId(projectId, 40, 1),
         data: this.createTextDataForChapter(1),
+        type: RichText.type.name
+      },
+      {
+        id: getTextDocId(projectId, 40, 2),
+        data: this.createTextDataForChapter(2),
+        type: RichText.type.name
+      },
+      {
+        id: getTextDocId(projectId, 40, 3),
+        data: this.createTextDataForChapter(3),
         type: RichText.type.name
       }
     ]);
