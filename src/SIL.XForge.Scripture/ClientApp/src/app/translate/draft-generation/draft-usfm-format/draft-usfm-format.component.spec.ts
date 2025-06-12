@@ -57,7 +57,8 @@ describe('DraftUsfmFormatComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: I18nService, useMock: mockI18nService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 
@@ -93,9 +94,10 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).thrice();
   }));
 
-  it('should initialize and default to best guess', fakeAsync(() => {
+  it('should initialize and default to best guess', fakeAsync(async () => {
     const env = new TestEnvironment();
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
+    expect(await env.component.confirmLeave()).toBe(true);
   }));
 
   it('should show the currently selected format options', fakeAsync(() => {
@@ -116,6 +118,8 @@ describe('DraftUsfmFormatComponent', () => {
     env.backButton.click();
     tick();
     env.fixture.detectChanges();
+    // user will be prompted that there are unsaved changes
+    expect(await env.component.confirmLeave()).toBe(true);
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, anything())).never();
     verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).once();
   }));

@@ -191,7 +191,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     this.usfmFormatForm.setValue({
       paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.BestGuess
     });
-    this.lastSavedState = config;
+    this.lastSavedState = this.currentFormat;
 
     this.usfmFormatForm.valueChanges
       .pipe(
