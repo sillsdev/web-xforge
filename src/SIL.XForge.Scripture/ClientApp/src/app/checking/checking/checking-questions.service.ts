@@ -9,7 +9,6 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ComparisonOperator, QueryParameters, Sort } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 
 export enum QuestionFilter {
@@ -44,7 +43,6 @@ export class CheckingQuestionsService {
 
   constructor(
     private readonly realtimeService: RealtimeService,
-    private readonly userService: UserService,
     private readonly fileService: FileService
   ) {}
 
