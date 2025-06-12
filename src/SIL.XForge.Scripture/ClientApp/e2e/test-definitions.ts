@@ -2,6 +2,7 @@ import { BrowserType, Page } from 'npm:playwright';
 import { ScreenshotContext } from './e2e-globals.ts';
 import secrets from './secrets.json' with { type: 'json' };
 import { communityChecking } from './workflows/community-checking.ts';
+import { editTranslation } from './workflows/edit-translation.ts';
 import { generateDraft } from './workflows/generate-draft.ts';
 import { localizedScreenshots } from './workflows/localized-screenshots.ts';
 import { runSmokeTests, traverseHomePageAndLoginPage } from './workflows/smoke-tests.mts';
@@ -21,5 +22,8 @@ export const tests = {
   },
   generate_draft: async (_engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
     await generateDraft(page, screenshotContext, secrets.users[0]);
+  },
+  edit_translation: async (_engine: BrowserType, page: Page, screenshotContext: ScreenshotContext) => {
+    await editTranslation(page, screenshotContext, secrets.users[0]);
   }
 } as const;
