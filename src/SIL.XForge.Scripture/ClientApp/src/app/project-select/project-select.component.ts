@@ -194,9 +194,11 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
       }
     });
   }
-
-  inputClicked(): void {
+  inputClicked(event: MouseEvent): void {
     this.autocompleteTrigger.openPanel();
+    const input = event.target as HTMLInputElement;
+    // Select all the text so the user can begin typing to replace it
+    input.select();
   }
 
   nullableLength(project: SelectableProject[] | null): number {
