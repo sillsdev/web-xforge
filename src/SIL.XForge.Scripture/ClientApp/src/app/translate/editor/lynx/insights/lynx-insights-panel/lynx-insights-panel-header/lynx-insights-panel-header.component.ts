@@ -9,7 +9,6 @@ import {
   LynxInsightType,
   LynxInsightTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
-import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { LynxInsightStateService } from '../../lynx-insight-state.service';
 
@@ -32,7 +31,6 @@ export class LynxInsightsPanelHeaderComponent implements OnInit {
 
   constructor(
     private readonly destroyRef: DestroyRef,
-    private readonly i18n: I18nService,
     readonly state: LynxInsightStateService
   ) {}
 
