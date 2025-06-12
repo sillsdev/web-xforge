@@ -1,32 +1,70 @@
 <ng-container *transloco="let t; read: 'draft_usfm_format'">
-  <h1>{{ t("usfm_format_title") }}</h1>
-  <p>{{ t("usfm_format_description") }}</p>
+  <h1>{{ t("draft_format_options") }}</h1>
   @if (!isOnline) {
     <p class="offline-text">{{ t("connect_to_the_internet") }}</p>
   }
-  <div>
-    <button mat-stroked-button class="back" (click)="close()">
-      <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
-      >{{ t("back") }}
-    </button>
-  </div>
   <div class="format-container">
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">
+        <p>
+          {{ t("draft_format_description") }}
+        </p>
         <mat-card class="options">
+          <mat-card-header
+            ><mat-card-title>{{ t("paragraph_break_title") }}</mat-card-title></mat-card-header
+          >
           <mat-card-content class="format-options">
-            <mat-checkbox formControlName="preserveParagraphs">
-              <span>{{ t("preserve_paragraphs") }}</span>
-              <span class="description">{{ t("paragraph_marker_description") }}</span>
-            </mat-checkbox>
+            {{ t("paragraph_break_description") }}
+            <mat-radio-group formControlName="paragraphFormat">
+              <mat-radio-button [value]="paragraphBreakFormat.BestGuess">
+                {{ t("option_best_guess") }}
+                <span class="new">new</span>
+                <span class="description">
+                  {{ t("option_best_guess_description") }} Recommended for most projects.
+                </span>
+              </mat-radio-button>
+              <mat-radio-button [value]="paragraphBreakFormat.Remove">
+                {{ t("option_remove") }}
+                <span class="new">new</span>
+                <span class="description">
+                  {{ t("option_remove_description") }}
+                </span>
+              </mat-radio-button>
+              <mat-radio-button [value]="paragraphBreakFormat.MoveToEnd">
+                {{ t("option_end") }}
+                <span class="description">{{ t("option_end_description") }} </span>
+              </mat-radio-button>
+            </mat-radio-group>
           </mat-card-content>
-          <mat-card-actions align="end">
-            <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
-              <mat-icon>check</mat-icon>
-              {{ t("save_changes") }}
-            </button>
-          </mat-card-actions>
         </mat-card>
+        <mat-card class="options">
+          <mat-card-header>
+            <mat-card-title>Quote style <small>[coming soon]</small></mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="format-options">
+            Choose how quotes should appear in the draft.
+            <mat-radio-group>
+              <mat-radio-button value="best-guess">
+                Automatic quote style <span class="new">new</span>
+                <span class="description">
+                  Attempt to use the same quote style as the rest of the project. Recommended for most projects.
+                </span>
+              </mat-radio-button>
+              <mat-radio-button value="remove">
+                Straight quotes
+                <span class="description"> Use only straight quotes in the draft.</span>
+              </mat-radio-button>
+            </mat-radio-group>
+          </mat-card-content>
+        </mat-card>
+
+        <div class="actions">
+          <button mat-button class="back" (click)="close()"><mat-icon>close</mat-icon>{{ t("cancel") }}</button>
+          <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
+            <mat-icon>check</mat-icon>
+            {{ t("save_changes") }}
+          </button>
+        </div>
       </form>
     </div>
     <div class="text-container">

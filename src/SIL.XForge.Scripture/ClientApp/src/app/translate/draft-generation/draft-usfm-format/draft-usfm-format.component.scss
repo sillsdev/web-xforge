@@ -12,9 +12,8 @@
   display: flex;
   flex-direction: row;
   column-gap: 8px;
-  height: 100%;
+  height: 90%;
   margin-top: 8px;
-  overflow: hidden;
 
   @include breakpoints.media-breakpoint-down(sm) {
     flex-direction: column;
@@ -29,14 +28,8 @@
 }
 
 .options {
-  width: 360px;
   padding: 8px 0;
   row-gap: 8px;
-
-  .format-options {
-    display: flex;
-    flex-direction: column;
-  }
 
   span {
     display: block;
@@ -61,7 +54,44 @@
   flex-direction: column;
   overflow: hidden;
 
+  @include breakpoints.media-breakpoint-down(sm) {
+    height: 600px;
+    overflow: initial;
+  }
+
   .viewer-container {
     overflow-y: auto;
   }
+}
+
+mat-card-actions {
+  justify-content: space-between;
+}
+
+form {
+  width: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @include breakpoints.media-breakpoint-down(sm) {
+    width: 100%;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.new {
+  background-color: green;
+  color: white;
+  display: inline-block !important;
+  border-radius: 50px;
+  padding-inline: 6px;
 }
