@@ -19,7 +19,7 @@ export interface LynxEditor {
   getRoot(): HTMLElement;
 }
 
-export interface LynxRangeConverter {
+export interface LynxTextModelConverter {
   /**
    * Translates a range from the data model to the editor.
    * Useful when embeds that are present only in the editor model may affect
@@ -28,6 +28,14 @@ export interface LynxRangeConverter {
    * @returns The corresponding range in the editor model, or the original range as a fallback.
    */
   dataRangeToEditorRange(dataRange: Range): Range;
+  /**
+   * Translates the data model delta to the editor model delta.
+   * Useful when embeds that are present only in the editor model may affect
+   * update ops from Lynx.
+   * @param dataDelta The data model delta.
+   * @returns The corresponding editor model delta.
+   */
+  dataDeltaToEditorDelta(dataDelta: Delta): Delta;
 }
 
 @Injectable({ providedIn: 'root' })
