@@ -33,7 +33,7 @@ describe('ActivatedBookChapterService', () => {
     readonly projectUserConfig$ = new BehaviorSubject<SFProjectUserConfig | undefined>(undefined);
 
     readonly testBookId = 'MAT';
-    readonly testChapter = 5;
+    readonly testChapter = 2;
     readonly testBookNum = Canon.bookIdToNumber(this.testBookId);
 
     service: ActivatedBookChapterService;
@@ -198,7 +198,7 @@ describe('ActivatedBookChapterService', () => {
       const profile = env.createTestProjectProfile();
       const userConfig = createTestProjectUserConfig({
         selectedBookNum: Canon.bookIdToNumber('MRK'), // Different book
-        selectedChapterNum: 3
+        selectedChapterNum: 1
       });
       env.projectChanges$.next(env.createProfileDoc(profile));
       env.projectUserConfig$.next(userConfig);
@@ -212,6 +212,23 @@ describe('ActivatedBookChapterService', () => {
       tick();
 
       expect(emittedValue).toEqual({ bookId: env.testBookId, chapter: 1 });
+    }));
+
+    it('should omit chapter when a non-existent chapter is specified', fakeAsync(() => {
+      const env = new TestEnvironment();
+      let emittedValue: RouteBookChapter | undefined;
+
+      env.setupData();
+
+      const nonExistentChapter = 99;
+      env.emitRouteChange(env.testBookId, nonExistentChapter);
+
+      env.service.activatedBookChapter$.subscribe(value => {
+        emittedValue = value;
+      });
+      tick();
+
+      expect(emittedValue).toEqual({ bookId: env.testBookId, chapter: undefined });
     }));
 
     it('should not emit duplicate values when project data is updated', fakeAsync(() => {
