@@ -10,10 +10,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { filter } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { isNetworkError } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -104,7 +106,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     private readonly router: Router,
     private readonly onlineStatus: OnlineStatusService,
     readonly i18n: I18nService,
-    noticeService: NoticeService
+    noticeService: NoticeService,
+    private readonly errorReportingService: ErrorReportingService
   ) {
     super(noticeService);
 
@@ -133,7 +136,12 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
         this.userConnectedProjectsAndResources = projects.filter(project => project.data != null);
       });
 
-    this.loadProjects();
+    this.onlineStatus.onlineStatus$
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        filter(isOnline => isOnline)
+      )
+      .subscribe(() => this.loadProjects());
   }
 
   get appOnline(): boolean {
@@ -190,11 +198,21 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 
   async loadProjects(): Promise<void> {
     this.loadingStarted();
-    [this.projects, this.resources] = await Promise.all([
-      this.paratextService.getProjects(),
-      this.paratextService.getResources()
-    ]);
-    this.loadingFinished();
+    try {
+      [this.projects, this.resources] = await Promise.all([
+        this.paratextService.getProjects(),
+        this.paratextService.getResources()
+      ]);
+    } catch (error) {
+      if (!isNetworkError(error)) {
+        this.errorReportingService.silentError(
+          'Error occurred getting projects and resources',
+          ErrorReportingService.normalizeError(error)
+        );
+      }
+    } finally {
+      this.loadingFinished();
+    }
   }
 
   get draftSourcesAsArray(): DraftSourcesAsSelectableProjectArrays {
