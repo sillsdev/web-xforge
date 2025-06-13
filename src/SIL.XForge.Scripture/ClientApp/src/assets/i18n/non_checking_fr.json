@@ -73,7 +73,8 @@
     "confirm_bulk_republish": "Êtes-vous sûr de vouloir republier toutes les questions de {{ scope }} ?",
     "confirm_delete_chapter_audio": "Êtes-vous sûr de vouloir supprimer le chapitre audio et les données de synchronisation pour {{ book }} {{ chapter }} ?",
     "delete": "Supprimer",
-    "import_questions": "Importer",
+    "export": "Exporter",
+    "import": "Importer",
     "no_archived_questions": "Il n'y a aucune question archivée.",
     "no_questions": "Il n'y a aucune question publiée. ",
     "question_count_label": "{{ count }} questions",
@@ -189,7 +190,7 @@
     "draft_queued_detail_multiple": "La génération de l'ébauche de traduction est numéro {{ count }} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_detail": "La génération de l'ébauche de traduction est numéro {} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_header": "Ébauche en attente",
-    "format_usfm": "Format USFM",
+    "format_draft": "Formater l'ébauche",
     "generate_back_translation_drafts_header": "Générer des ébauches de rétro-traduction",
     "generate_draft_button": "Générer une ébauche",
     "generate_forward_translation_drafts_header": "Générer des brouillons de traduction",
@@ -270,7 +271,7 @@
     "draft_faulted": "Échoué",
     "draft_pending": "En attente",
     "draft_unknown": "Inconnu",
-    "format_usfm": "Format USFM",
+    "format_draft": "Formater l'ébauche",
     "hide_model_training_configuration": "Masquer la configuration de l'apprentissage du modèle",
     "show_model_training_configuration": "Afficher la configuration de l'entraînement au modèle",
     "training_model_description": "Le modèle de langue a été formé sur cette configuration"
@@ -330,14 +331,20 @@
   },
   "draft_usfm_format": {
     "changes_have_been_saved": "Les modifications ont été enregistrées",
-    "back": "Retour",
+    "cancel": "Annuler",
     "connect_to_the_internet": "Veuillez vous connecter à internet pour modifier le format USFM de votre ébauche",
+    "draft_format_description": "Votre ébauche est terminée. Cependant, il y a des options de mise en forme que vous pouvez choisir avant d'utiliser votre brouillon.",
+    "draft_format_options": "Formater l'ébauche",
     "failed_to_save": "Impossible d'enregistrer les modifications. Réessayez plus tard.",
-    "paragraph_marker_description": "Conserver les paragraphes de la source de traduction",
-    "preserve_paragraphs": "Conserver les marqueurs de paragraphe",
-    "save_changes": "Envoyer la réponse",
-    "usfm_format_title": "Formater les ébauches USFM",
-    "usfm_format_description": "Sélectionnez le format USFM à appliquer à votre ébauche"
+    "option_best_guess": "Meilleure estimation",
+    "option_best_guess_description": "Les sauts de paragraphe au demi-verset dans la source seront placés à la meilleure estimation de l'endroit où ils devraient se trouver dans le brouillon.",
+    "option_end": "Déplacer vers la fin",
+    "option_end_description": "Les pauses de paragraphe au demi-verset dans la source seront déplacées à la fin du verset dans l'ébauche.",
+    "option_remove": "Supprimer",
+    "option_remove_description": "Les pauses intermédiaires de paragraphe dans la source seront omises dans l'ébauche.",
+    "paragraph_break_description": "Scripture Forge traduit chaque verset dans son ensemble pour une meilleure qualité de texte. Choisissez comment le paragraphe se décompose des versets source.",
+    "paragraph_break_title": "Sauts de paragraphe au milieu du verset",
+    "save_changes": "Envoyer la réponse"
   },
   "editor": {
     "add_comment": "Ajouter un commentaire",
@@ -506,9 +513,9 @@
   "lynx_insights_panel": {
     "loading": "Chargement...",
     "restore": "Restaurer",
-    "show_more": "Show more",
-    "remaining": "remaining",
-    "unknown_insight_location": "Unknown location"
+    "show_more": "Plus d'informations",
+    "remaining": "temps restant",
+    "unknown_insight_location": "Emplacement inconnu"
   },
   "lynx_insights_panel_header": {
     "insights": "Aperçus",
@@ -692,7 +699,7 @@
     "number_of_suggestions": "Nombre de suggestions",
     "settings_not_available_offline": "Ces paramètres ne sont pas disponibles lorsque vous êtes hors connexion.",
     "suggestion_confidence": "Confiance dans les suggestions",
-    "translation_suggestions": "Suggestions de traduction",
+    "show_translation_suggestions": "Show translation suggestions",
     "translator_settings": "Paramètres du traducteur"
   },
   "supported_back_translation_languages_dialog": {
