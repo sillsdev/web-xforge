@@ -1,39 +1,16 @@
-.slider-labels {
-  margin-top: 15px;
-  flex-direction: row;
-  box-sizing: border-box;
-  display: flex;
-  place-content: stretch space-between;
-  align-items: stretch;
-}
-
-.row {
-  column-gap: 12px;
-  margin: 20px 12px;
-  flex-direction: row;
-  box-sizing: border-box;
-  display: flex;
-  flex-grow: 1;
-  flex-shrink: 1;
-  flex-basis: 1e-9px;
-}
-
-.col {
-  flex-grow: 1;
-  flex-shrink: 1;
-  flex-basis: 0%;
-  box-sizing: border-box;
-}
-
 mat-dialog-content {
-  padding-block: 20px;
-  overflow: visible; // prevent mat-select menu from causing scroll bar
   display: flex;
   flex-direction: column;
+  gap: 2em;
+  width: 400px;
+  max-width: 100%;
 }
 
-#suggestions-enabled-switch {
-  margin-block-end: 30px;
+.slider-labels {
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
 }
 
 .suggestions-confidence-field {
@@ -43,17 +20,9 @@ mat-dialog-content {
 
 .minor-header {
   font-size: 0.875rem;
-  line-height: 1.375rem;
   font-weight: 500;
 }
 
-span {
-  font-size: 0.75rem;
-  line-height: 1.25rem;
-  font-weight: 400;
-}
-
-mat-dialog-actions {
-  place-content: flex-end;
-  box-sizing: border-box;
+#suggestions-enabled-switch {
+  margin-block: 1em;
 }

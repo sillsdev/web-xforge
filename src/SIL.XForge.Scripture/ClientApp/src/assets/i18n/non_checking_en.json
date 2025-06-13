@@ -699,7 +699,7 @@
     "number_of_suggestions": "Number of suggestions",
     "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
-    "translation_suggestions": "Translation suggestions",
+    "show_translation_suggestions": "Show translation suggestions",
     "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {
