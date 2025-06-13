@@ -1,4 +1,6 @@
 #!/usr/bin/env -S deno run --allow-env --allow-sys --allow-read --allow-write --allow-run
+/// <reference lib="dom" />
+
 import { chromium, devices, expect } from "npm:@playwright/test";
 import { Page } from "npm:playwright";
 import locales from "../../locales.json" with { type: "json" };
@@ -6,11 +8,6 @@ import locales from "../../locales.json" with { type: "json" };
 // This is a legacy script that is left here for future reference. It works, but is not currently used by the tests.
 
 const typingDelayFactor = 1; // reduce to 0 to speed up typing
-
-// Trick TypeScript into not complaining that the document isn't defined for functions that are actually evaluated in
-// the browser, not in Deno.
-// deno-lint-ignore no-explicit-any
-const document = {} as any;
 
 async function injectBlinkAnimation(page: Page) {
   await page.evaluate(() => {
@@ -29,19 +26,18 @@ async function highlightElement(page: Page, selector: string) {
   await page.evaluate(selector => {
     const div = document.createElement("div");
     div.id = "element-highlight";
-    const rect = document.querySelector(selector).getBoundingClientRect();
-    div.style = `
-      position: absolute;
-      top: ${rect.top}px;
-      left: ${rect.left}px;
-      width: ${rect.width}px;
-      height: ${rect.height}px;
-      z-index: 1000;
-      outline: 3px dashed red;
-      border-radius: 10px;
-      scale: 1.1;
-      animation: blink-animation 0.5s ease infinite;
-      `;
+    const rect = document.querySelector(selector)?.getBoundingClientRect();
+    if (!rect) throw new Error(`Element not found for selector: ${selector}`);
+    div.style.position = "absolute";
+    div.style.top = `${rect.top}px`;
+    div.style.left = `${rect.left}px`;
+    div.style.width = `${rect.width}px`;
+    div.style.height = `${rect.height}px`;
+    div.style.zIndex = "1000";
+    div.style.outline = "3px dashed red";
+    div.style.borderRadius = "10px";
+    div.style.scale = "1.1";
+    div.style.animation = "blink-animation 0.5s ease infinite";
     document.body.appendChild(div);
   }, selector);
 }
