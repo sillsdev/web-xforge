@@ -73,7 +73,8 @@
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
     "delete": "हटाउनुहोस्",
-    "import_questions": "Bulk import",
+    "export": "Export",
+    "import": "Import",
     "no_archived_questions": "There are no archived questions.",
     "no_questions": "There are no published questions. ",
     "question_count_label": "{{ count }} questions",
@@ -189,7 +190,7 @@
     "draft_queued_detail_multiple": "The translation draft generation is number {{ count }} in the queue, and will begin once the server is finished with other projects. Please check back later.",
     "draft_queued_detail": "Generation of the translation draft has been queued, and will begin once the server is finished with another project. Please check back later.",
     "draft_queued_header": "Draft queued",
-    "format_usfm": "Format USFM",
+    "format_draft": "Format draft",
     "generate_back_translation_drafts_header": "Generate back translation drafts",
     "generate_draft_button": "Generate draft",
     "generate_forward_translation_drafts_header": "Generate translation drafts",
@@ -270,7 +271,7 @@
     "draft_faulted": "Failed",
     "draft_pending": "Pending",
     "draft_unknown": "अज्ञात",
-    "format_usfm": "Format USFM",
+    "format_draft": "Format draft",
     "hide_model_training_configuration": "Hide model training configuration",
     "show_model_training_configuration": "Show model training configuration",
     "training_model_description": "The language model was trained on this configuration"
@@ -330,14 +331,20 @@
   },
   "draft_usfm_format": {
     "changes_have_been_saved": "Changes have been saved",
-    "back": "Back",
+    "cancel": "रद्द गर्नुहोस्",
     "connect_to_the_internet": "Please connect to the internet to change the USFM format for your draft",
+    "draft_format_description": "Your draft has completed. However, there are some formatting options that you can choose before using your draft.",
+    "draft_format_options": "Format draft",
     "failed_to_save": "Failed to save changes. Try again later.",
-    "paragraph_marker_description": "Keep paragraphs from the translation source",
-    "preserve_paragraphs": "Preserve paragraph markers",
-    "save_changes": "जवाफ सेभ गर्नुहोस्",
-    "usfm_format_title": "Format USFM for drafts",
-    "usfm_format_description": "Select the USFM format to apply to your draft"
+    "option_best_guess": "Best guess",
+    "option_best_guess_description": "Mid-verse paragraph breaks in the source will be placed at the best guess of where they should be in the draft.",
+    "option_end": "Move to end",
+    "option_end_description": "Mid-verse paragraph breaks in the source will be moved to the end of the verse in the draft.",
+    "option_remove": "Remove",
+    "option_remove_description": "Mid-verse paragraph breaks in the source will be omitted in the draft.",
+    "paragraph_break_description": "Scripture Forge translates each verse as a whole for best text quality. Choose how the paragraph breaks from the source verses are placed.",
+    "paragraph_break_title": "Mid-verse paragraph breaks",
+    "save_changes": "जवाफ सेभ गर्नुहोस्"
   },
   "editor": {
     "add_comment": "Add Comment",
@@ -692,7 +699,7 @@
     "number_of_suggestions": "Number of suggestions",
     "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
-    "translation_suggestions": "Translation suggestions",
+    "show_translation_suggestions": "Show translation suggestions",
     "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {
