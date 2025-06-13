@@ -10,7 +10,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { QuestionDoc } from '../../core/models/question-doc';
-import { CheckingQuestionsService, QuestionFilter } from './checking-questions.service';
+import { CheckingQuestionsService } from './checking-questions.service';
 
 describe('CheckingQuestionsService', () => {
   const questions: Partial<Snapshot<Question>>[] = [];
@@ -175,7 +175,7 @@ describe('CheckingQuestionsService', () => {
 
   beforeEach(() => {
     realtimeService = TestBed.inject(TestRealtimeService);
-    realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
+    realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, JSON.parse(JSON.stringify(questions)));
     questionsService = TestBed.inject(CheckingQuestionsService);
   });
 
@@ -260,84 +260,83 @@ describe('CheckingQuestionsService', () => {
     }));
   });
 
-  describe('queryAdjacentQuestion', () => {
+  describe('queryAdjacentQuestions', () => {
     it('should query the next question', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[0].data!,
-        QuestionFilter.None,
         'next',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-1');
+      expect(question.docs.length).toBe(39);
     }));
 
     it('should query the previous question', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[1].data!,
-        QuestionFilter.None,
         'prev',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-0');
+      expect(question.docs.length).toBe(1);
     }));
 
     it('should query the next question in the next chapter', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[9].data!,
-        QuestionFilter.None,
         'next',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-0');
+      expect(question.docs.length).toBe(30);
     }));
 
     it('should query the previous question in the previous chapter', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[10].data!,
-        QuestionFilter.None,
         'prev',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m1-9');
+      expect(question.docs.length).toBe(10);
     }));
 
     it('should query the next question in the next book', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[19].data!,
-        QuestionFilter.None,
         'next',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-j1-0');
+      expect(question.docs.length).toBe(20);
     }));
 
     it('should query the previous question in the previous book', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[20].data!,
-        QuestionFilter.None,
         'prev',
         noopDestroyRef
       );
       tick();
       expect(question.docs[0].data!.dataId).toEqual('question-m2-9');
+      expect(question.docs.length).toBe(20);
     }));
 
     it('should return empty array if there is no next question', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[49].data!,
-        QuestionFilter.None,
         'next',
         noopDestroyRef
       );
@@ -346,135 +345,14 @@ describe('CheckingQuestionsService', () => {
     }));
 
     it('should return empty array if there is no previous question', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
+      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestions(
         projectId,
         questions[0].data!,
-        QuestionFilter.None,
         'prev',
         noopDestroyRef
       );
       tick();
       expect(question.docs.length).toBe(0);
-    }));
-
-    it('should query the next question in outside the current chapter with filter "HasAnswers"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[19].data!,
-        QuestionFilter.HasAnswers,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j2-0');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "HasAnswers"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[40].data!,
-        QuestionFilter.HasAnswers,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m2-9');
-    }));
-
-    it('should query the next question in outside the current chapter with filter "NoAnswers"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[9].data!,
-        QuestionFilter.NoAnswers,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j1-0');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "NoAnswers"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[20].data!,
-        QuestionFilter.NoAnswers,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m1-9');
-    }));
-
-    it('should query the next question in outside the current chapter with filter "StatusNone"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[19].data!,
-        QuestionFilter.StatusNone,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j2-0');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "StatusNone"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[40].data!,
-        QuestionFilter.StatusNone,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m2-9');
-    }));
-
-    it('should query the next question in outside the current chapter with filter "StatusExport"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[17].data!,
-        QuestionFilter.StatusExport,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j2-1');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "StatusExport"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[41].data!,
-        QuestionFilter.StatusExport,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m2-7');
-    }));
-
-    it('should query the next question in outside the current chapter with filter "StatusResolved"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[18].data!,
-        QuestionFilter.StatusResolved,
-        'next',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-j2-2');
-    }));
-
-    it('should query the previous question in outside the current chapter with filter "StatusResolved"', fakeAsync(async () => {
-      const question: RealtimeQuery<QuestionDoc> = await questionsService.queryAdjacentQuestion(
-        projectId,
-        questions[42].data!,
-        QuestionFilter.StatusResolved,
-        'prev',
-        noopDestroyRef
-      );
-      tick();
-      expect(question.docs[0].data!.dataId).toEqual('question-m2-8');
     }));
   });
 });

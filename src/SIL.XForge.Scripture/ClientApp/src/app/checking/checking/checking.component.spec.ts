@@ -18,7 +18,7 @@ import { Delta } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -220,26 +220,57 @@ describe('CheckingComponent', () => {
         const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'JHN', projectChapterRoute: 1 });
         const prev = env.previousButton;
         const next = env.nextButton;
-        env.component.prevQuestion = {} as QuestionDoc;
-        env.component.nextQuestion = {} as QuestionDoc;
+
+        const getAdjacentQuestionSpy = spyOn(env.component as any, 'getAdjacentQuestion').and.callThrough();
+        const adjacentQuestion = { id: 'q1Id', data: { text: 'Dummy Question' } } as QuestionDoc;
+        const activeQuestion = { id: 'activeQId', data: { text: 'Active Question' } } as QuestionDoc;
+
+        // Scenario 1: Both prev and next question exist
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(adjacentQuestion));
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(false);
         expect(next.nativeElement.disabled).toBe(false);
-        env.component.prevQuestion = undefined;
-        env.component.nextQuestion = undefined;
+
+        // Scenario 2: Neither prev nor next question exist
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(undefined));
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(true);
         expect(next.nativeElement.disabled).toBe(true);
-        env.component.prevQuestion = undefined;
-        env.component.nextQuestion = {} as QuestionDoc;
+
+        // Scenario 3: Prev question undefined, Next question exists
+        getAdjacentQuestionSpy.and.callFake(
+          async (_activeQuestion: QuestionDoc | undefined, direction: 'prev' | 'next') => {
+            if (direction === 'prev') return Promise.resolve(undefined);
+            return Promise.resolve(adjacentQuestion);
+          }
+        );
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(true);
         expect(next.nativeElement.disabled).toBe(false);
-        env.component.prevQuestion = {} as QuestionDoc;
-        env.component.nextQuestion = undefined;
+
+        // Scenario 4: Prev question exists, Next question undefined
+        getAdjacentQuestionSpy.and.callFake(
+          async (_activeQuestion: QuestionDoc | undefined, direction: 'prev' | 'next') => {
+            if (direction === 'next') return Promise.resolve(undefined);
+            return Promise.resolve(adjacentQuestion);
+          }
+        );
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(false);
         expect(next.nativeElement.disabled).toBe(true);
+
         env.waitForAudioPlayer();
         discardPeriodicTasks();
         flush();
@@ -991,6 +1022,195 @@ describe('CheckingComponent', () => {
       // Called at least once or more depending on if another question replaces the archived question
       expect(spyRefreshSummary).toHaveBeenCalled();
     }));
+
+    describe('Question Filter', () => {
+      it('should filter out answered questions - "NoAnswers"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.NoAnswers;
+
+        const questionRemaining = env.getQuestionDoc('q1Id');
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{}] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions the current user has answered - "CurrentUserHasNotAnswered"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: CHECKER_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.CurrentUserHasNotAnswered;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: ADMIN_USER.id }] as Answer[]; // Answered by a different user
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: CHECKER_USER.id }] as Answer[]; // Answered by current user
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions the current user has not answered - "CurrentUserHasAnswered"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: CHECKER_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.CurrentUserHasAnswered;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: CHECKER_USER.id }] as Answer[]; // Answered by current user
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: ADMIN_USER.id }] as Answer[]; // Answered by a different user
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions with no answers - "HasAnswers"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.HasAnswers;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: ADMIN_USER.id }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions where no answer has status None or null - "StatusNone"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.StatusNone;
+
+        const questionRemainingNullStatus = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: undefined }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionRemainingNoneStatus = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.None }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.Exportable }] as Answer[];
+          }
+        } as QuestionDoc;
+
+        let filtered = env.component['filterQuestions']([questionRemainingNullStatus, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemainingNullStatus);
+
+        filtered = env.component['filterQuestions']([questionRemainingNoneStatus, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemainingNoneStatus);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions where no answer has status Exportable - "StatusExport"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.StatusExport;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.Exportable }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.Resolved }] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions where no answer has status Resolved - "StatusResolved"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.StatusResolved;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.Resolved }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.None }] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+    });
   });
 
   describe('Answers', () => {
