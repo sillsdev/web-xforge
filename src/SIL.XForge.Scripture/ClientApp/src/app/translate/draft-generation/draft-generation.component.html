@@ -329,7 +329,7 @@
       }
     </section>
 
-    @if (featureFlags.newDraftHistory.enabled) {
+    @if (isOnline && featureFlags.newDraftHistory.enabled) {
       <app-draft-history-list />
       @if (isServalAdmin()) {
         <h2>Further information</h2>

@@ -57,6 +57,10 @@ export class DraftHistoryListComponent {
     return this.isBuildActive ? undefined : this.nonActiveBuilds[0];
   }
 
+  get latestBuildHasCompleted(): boolean {
+    return this.latestBuild?.state === BuildStates.Completed;
+  }
+
   get lastCompletedBuildMessage(): string {
     switch (this.latestBuild?.state) {
       case BuildStates.Canceled:
