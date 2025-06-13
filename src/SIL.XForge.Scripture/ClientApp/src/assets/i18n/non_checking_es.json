@@ -73,7 +73,8 @@
     "confirm_bulk_republish": "¿Está seguro de que quiere volver a publicar todas las preguntas en {{ scope }}?",
     "confirm_delete_chapter_audio": "¿Está seguro de que desea eliminar los datos de audio y temporización del capítulo {{ chapter }} de {{ book }}?",
     "delete": "Eliminar",
-    "import_questions": "Importar",
+    "export": "Exportar",
+    "import": "Importar",
     "no_archived_questions": "No hay preguntas archivadas.",
     "no_questions": "No hay preguntas publicadas. ",
     "question_count_label": "{{ count }} preguntas",
@@ -189,7 +190,7 @@
     "draft_queued_detail_multiple": "La generación del borrador de traducción es el número {{ count }} en la cola, y comenzará una vez que el servidor haya terminado con otros proyectos. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_detail": "La generación del borrador de traducción se ha puesto en cola y comenzará una vez que el servidor haya terminado con otro proyecto. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_header": "Borrador en cola",
-    "format_usfm": "Formato USFM",
+    "format_draft": "Formatear borrador",
     "generate_back_translation_drafts_header": "Generar borradores de retrotraducción",
     "generate_draft_button": "Generar borrador",
     "generate_forward_translation_drafts_header": "Generar borradores de traducción",
@@ -270,7 +271,7 @@
     "draft_faulted": "Fallido",
     "draft_pending": "Pendiente",
     "draft_unknown": "Desconocido",
-    "format_usfm": "Formato USFM",
+    "format_draft": "Formatear borrador",
     "hide_model_training_configuration": "Ocultar la configuración de entrenamiento del modelo",
     "show_model_training_configuration": "Mostrar la configuración de entrenamiento del modelo",
     "training_model_description": "El modelo lingüístico se entrenó con esta configuración"
@@ -330,14 +331,20 @@
   },
   "draft_usfm_format": {
     "changes_have_been_saved": "Se han guardado los cambios",
-    "back": "Atrás",
+    "cancel": "Cancelar",
     "connect_to_the_internet": "Conéctate a Internet para cambiar el formato USFM de tu borrador",
+    "draft_format_description": "Su borrador se ha completado. Sin embargo, hay algunas opciones de formato que puede elegir antes de utilizar su borrador.",
+    "draft_format_options": "Formatear borrador",
     "failed_to_save": "No se han podido guardar los cambios. Vuelva a intentarlo más tarde.",
-    "paragraph_marker_description": "Conservar los párrafos de la fuente de traducción",
-    "preserve_paragraphs": "Conservar los marcadores de párrafo",
-    "save_changes": "Guardar respuesta",
-    "usfm_format_title": "Formato USFM para borradores",
-    "usfm_format_description": "Seleccione el formato USFM que desea aplicar a su proyecto"
+    "option_best_guess": "Mejor suposición",
+    "option_best_guess_description": "Los saltos de párrafo a mitad del versículo en la fuente se colocarán según la mejor estimación de dónde deberían estar en el borrador.",
+    "option_end": "Mover al final",
+    "option_end_description": "Los saltos de párrafo a mitad del versículo en la fuente se trasladarán al final del versículo en el borrador.",
+    "option_remove": "Eliminar",
+    "option_remove_description": "En el borrador se omitirán los saltos de párrafo a mitad del versículo en la fuente.",
+    "paragraph_break_description": "Scripture Forge traduce cada versículo como un todo para obtener la mejor calidad de texto. Elija cómo se colocan los saltos de párrafo de los versículos de origen.",
+    "paragraph_break_title": "Los saltos de párrafo a mitad del versículo",
+    "save_changes": "Guardar respuesta"
   },
   "editor": {
     "add_comment": "Añadir comentario",
@@ -506,9 +513,9 @@
   "lynx_insights_panel": {
     "loading": "Cargando...",
     "restore": "Restaurar",
-    "show_more": "Show more",
-    "remaining": "remaining",
-    "unknown_insight_location": "Unknown location"
+    "show_more": "Mostrar más",
+    "remaining": "restante",
+    "unknown_insight_location": "Ubicación desconocida"
   },
   "lynx_insights_panel_header": {
     "insights": "Insights",
@@ -692,7 +699,7 @@
     "number_of_suggestions": "Número de sugerencias",
     "settings_not_available_offline": "Estos ajustes no están disponibles mientras está fuera de línea.",
     "suggestion_confidence": "Confianza en la sugerencia",
-    "translation_suggestions": "Sugerencias de traducción",
+    "show_translation_suggestions": "Show translation suggestions",
     "translator_settings": "Configuración del traductor"
   },
   "supported_back_translation_languages_dialog": {
