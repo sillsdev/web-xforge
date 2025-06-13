@@ -15,7 +15,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { Revision } from '../../core/paratext.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { HttpClient } from '../../machine-api/http-client';
-import { booksFromScriptureRange, getBookFileNameDigits } from '../../shared/utils';
+import { booksFromScriptureRange, formatDateForFilename, getBookFileNameDigits } from '../../shared/utils';
 import {
   activeBuildStates,
   BuildConfig,
@@ -373,13 +373,7 @@ export class DraftGenerationService {
         // Download the zip file
         let filename: string = (projectDoc.data?.shortName ?? 'Translation') + ' Draft';
         if (lastCompletedBuild?.additionalInfo?.dateFinished != null) {
-          const date: Date = new Date(lastCompletedBuild.additionalInfo.dateFinished);
-          const year: string = date.getFullYear().toString();
-          const month: string = (date.getMonth() + 1).toString().padStart(2, '0');
-          const day: string = date.getDate().toString().padStart(2, '0');
-          const hours: string = date.getHours().toString().padStart(2, '0');
-          const minutes: string = date.getMinutes().toString().padStart(2, '0');
-          filename += ` ${year}-${month}-${day}_${hours}${minutes}`;
+          filename += ' ' + formatDateForFilename(new Date(lastCompletedBuild.additionalInfo.dateFinished));
         }
 
         filename += '.zip';

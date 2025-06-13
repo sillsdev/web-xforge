@@ -26,6 +26,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { formatDateForFilename } from '../../shared/utils';
 import { CheckingUtils } from '../checking.utils';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import {
@@ -505,20 +506,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     // Sanitize the project short name, even though as of 2025-06-04 no projects have any non-alphanumeric characters
     // in their short names other than hyphens and underscores.
     const shortName = (this.projectDoc?.data?.shortName ?? '').replace(/[^-_a-zA-Z0-9]/g, '_');
-    const dateStr = this.getCurrentDateTimeString();
+    const dateStr = formatDateForFilename(new Date());
     const filename = `${shortName}_questions_${dateStr}.csv`;
     const blob = new Blob([csv], { type: 'text/csv' });
     saveAs(blob, filename);
-  }
-
-  /** Returns current date as YYYY-MM-DD_HH-MM */
-  private getCurrentDateTimeString(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}_${hours}-${minutes}`;
   }
 }
