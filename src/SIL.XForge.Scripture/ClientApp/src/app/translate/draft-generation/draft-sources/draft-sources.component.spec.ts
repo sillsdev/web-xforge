@@ -12,6 +12,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -73,7 +74,8 @@ describe('DraftSourcesComponent', () => {
       { provide: SFUserProjectsService, useMock: mockedSFUserProjectsService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      { provide: ErrorReportingService, useMock: mock(ErrorReportingService) }
     ]
   }));
 
@@ -88,6 +90,30 @@ describe('DraftSourcesComponent', () => {
 
   it('loads projects and resources on init', fakeAsync(() => {
     const env = new TestEnvironment();
+    verify(mockedParatextService.getProjects()).once();
+    verify(mockedParatextService.getResources()).once();
+    expect(env.component.projects).toBeDefined();
+    expect(env.component.resources).toBeDefined();
+  }));
+
+  it('suppresses network errors', fakeAsync(() => {
+    const env = new TestEnvironment({ projectLoadSuccessful: false });
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.projects).toBeUndefined();
+  }));
+
+  it('loads projects and resources when returning online', fakeAsync(() => {
+    const env = new TestEnvironment({ isOnline: false });
+    verify(mockedParatextService.getProjects()).never();
+    verify(mockedParatextService.getResources()).never();
+    expect(env.component.projects).toBeUndefined();
+    expect(env.component.resources).toBeUndefined();
+
+    // Simulate going online
+    env.testOnlineStatusService.setIsOnline(true);
+    tick();
+    env.fixture.detectChanges();
     verify(mockedParatextService.getProjects()).once();
     verify(mockedParatextService.getResources()).once();
     expect(env.component.projects).toBeDefined();
@@ -488,7 +514,9 @@ class TestEnvironment {
 
   private projectsLoaded$: Subject<void> = new Subject<void>();
 
-  constructor() {
+  constructor(
+    args: { isOnline?: boolean; projectLoadSuccessful?: boolean } = { isOnline: true, projectLoadSuccessful: true }
+  ) {
     const userSFProjectsAndResourcesCount: number = 6;
     const userNonSFProjectsCount: number = 3;
     const userNonSFResourcesCount: number = 3;
@@ -621,6 +649,9 @@ class TestEnvironment {
     when(mockedParatextService.getResources()).thenResolve(
       projects.filter(o => o.projectType === 'resource').map(o => o.selectableProjectWithLanguageCode)
     );
+    if (args.projectLoadSuccessful === false) {
+      when(mockedParatextService.getProjects()).thenReject(new Error('504 Gateway Timeout'));
+    }
     when(mockedSFUserProjectsService.projectDocs$).thenReturn(of(usersProjectsAndResourcesOnSF));
     when(mockedI18nService.getLanguageDisplayName(anything())).thenReturn('Test Language');
     when(mockedI18nService.enumerateList(anything())).thenCall(items => items.join(', '));
@@ -628,13 +659,16 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     when(mockedActivatedProjectService.projectId).thenReturn(this.activatedProjectDoc.id);
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
+    this.testOnlineStatusService.setIsOnline(!!args.isOnline);
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
     tick();
 
-    this.loadingFinished();
+    if (args.projectLoadSuccessful !== false) {
+      this.loadingFinished();
+    }
     tick();
     this.fixture.detectChanges();
   }
