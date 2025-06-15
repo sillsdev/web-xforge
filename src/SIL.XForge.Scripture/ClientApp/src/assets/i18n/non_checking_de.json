@@ -73,7 +73,8 @@
     "confirm_bulk_republish": "Bist Du sicher, dass Du alle Fragen auf {{ scope }} neu veröffentlichen willst?",
     "confirm_delete_chapter_audio": "Bist Du sicher, dass Sie die Audio- und Zeitdaten je Kapitel für {{ book }} {{ chapter }} löschen möchtest?",
     "delete": "Löschen",
-    "import_questions": "Massenimport",
+    "export": "Exportieren",
+    "import": "Import",
     "no_archived_questions": "Es gibt keine archivierten Fragen.",
     "no_questions": "Es gibt keine veröffentlichten Fragen. ",
     "question_count_label": "{{ count }} Fragen",
@@ -189,7 +190,7 @@
     "draft_queued_detail_multiple": "Das Generieren des Übersetzungsentwurf ist die Nummer {{ count }} in der Warteschlange und wird beginnen, sobald der Server mit anderen Projekten fertig ist. Bitte überprüfe später erneut.",
     "draft_queued_detail": "Das Generieren des Übersetzungsentwurfs wurde in die Warteschlange eingereiht und wird beginnen, sobald der Server mit einem anderen Projekt fertig ist. Bitte schaue später wieder vorbei.",
     "draft_queued_header": "Entwurf in Warteschlange",
-    "format_usfm": "USFM formatieren",
+    "format_draft": "Entwurf formatieren",
     "generate_back_translation_drafts_header": "Rückübersetzungsentwurf generieren",
     "generate_draft_button": "Entwurf generieren",
     "generate_forward_translation_drafts_header": "Übersetzungsentwurf generieren",
@@ -270,7 +271,7 @@
     "draft_faulted": "Fehlgeschlagen",
     "draft_pending": "Ausstehend",
     "draft_unknown": "Unbekannt",
-    "format_usfm": "USFM formatieren",
+    "format_draft": "Entwurf formatieren",
     "hide_model_training_configuration": "Modellschulungskonfiguration ausblenden",
     "show_model_training_configuration": "Modellschulungskonfiguration anzeigen",
     "training_model_description": "Das Sprachmodell wurde mit dieser Konfiguration geschult"
@@ -330,14 +331,20 @@
   },
   "draft_usfm_format": {
     "changes_have_been_saved": "Änderungen wurden gespeichert",
-    "back": "Zurück",
+    "cancel": "Abbrechen",
     "connect_to_the_internet": "Bitte stelle eine Verbindung zum Internet her, um das USFM-Format für Deinen Entwurf zu ändern",
+    "draft_format_description": "Dein Entwurf ist fertig. Es gibt jedoch einige Formatierungsoptionen, die Du wählen kannst, bevor Du Deinen Entwurf verwendest.",
+    "draft_format_options": "Entwurf formatieren",
     "failed_to_save": "Speichern der Änderungen fehlgeschlagen. Versuche es später nochmals.",
-    "paragraph_marker_description": "Absätze aus der Übersetzungsquelle beibehalten",
-    "preserve_paragraphs": "Absatzmarkierungen beibehalten",
-    "save_changes": "Speichern",
-    "usfm_format_title": "USFM für Entwürfe formatieren",
-    "usfm_format_description": "Wähle das USFM-Format, das Du für Deinen Entwurf verwenden möchtest"
+    "option_best_guess": "Bester Vorschlag",
+    "option_best_guess_description": "Absatzumbrüche innerhalb eines Verses im Ausgangstext werden an der Stelle eingefügt, an der sie im Entwurf am ehesten stehen sollten.",
+    "option_end": "Ans Ende verschieben",
+    "option_end_description": "Absatzumbrüche innerhalb eines Verses im Ausgangstext werden im Entwurf ans Ende des Verses verschoben.",
+    "option_remove": "Entfernen",
+    "option_remove_description": "Absatzumbrüche innerhalb eines Verses im Ausgangstext werden im Entwurf weggelassen.",
+    "paragraph_break_description": "Scripture Forge übersetzt jeden Vers als Ganzes, um beste Qualität des Textes sicherzustellen. Wähle, wie die Absatzumbrüche aus dem Ausgangsvers platziert werden sollen.",
+    "paragraph_break_title": "Absatzumbrüche innerhalb eines Verses",
+    "save_changes": "Speichern"
   },
   "editor": {
     "add_comment": "Kommentar hinzufügen",
@@ -692,7 +699,7 @@
     "number_of_suggestions": "Anzahl Vorschläge",
     "settings_not_available_offline": "Diese Einstellungen sind nicht verfügbar, wenn Du offline bist.",
     "suggestion_confidence": "Vertrauen in Vorschlag",
-    "translation_suggestions": "Übersetzungsvorschläge",
+    "show_translation_suggestions": "Show translation suggestions",
     "translator_settings": "Übersetzungseinstellungen"
   },
   "supported_back_translation_languages_dialog": {
