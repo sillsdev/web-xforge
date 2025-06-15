@@ -243,7 +243,7 @@
                     }
                   </div>
                 </mat-expansion-panel>
-              } @else {
+              } @else if (!featureFlags.newDraftHistory.enabled) {
                 @if (isDraftQueued(draftJob)) {
                   <section>
                     @if (isSyncing()) {
@@ -315,7 +315,7 @@
                           @if (featureFlags.usfmFormat.enabled) {
                             <button mat-button [routerLink]="['format']">
                               <mat-icon>settings</mat-icon>
-                              {{ t("format_usfm") }}
+                              {{ t("format_draft") }}
                             </button>
                           }
                         }
