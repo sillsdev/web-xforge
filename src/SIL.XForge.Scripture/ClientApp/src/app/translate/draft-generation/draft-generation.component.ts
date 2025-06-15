@@ -347,11 +347,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   getTranslationScriptureRange(job?: BuildDto): string {
-    // TODO: Update with changes from SF-3390
-    return this.i18n.enumerateList(
-      job?.additionalInfo?.translationScriptureRanges.flatMap(r =>
-        r.scriptureRange.split(';').map(id => this.i18n.localizeBook(id))
-      ) ?? []
+    if (job?.additionalInfo?.translationScriptureRanges == null) return '';
+    return this.i18n.formatAndLocalizeScriptureRange(
+      job.additionalInfo.translationScriptureRanges.map(item => item.scriptureRange).join(';')
     );
   }
 

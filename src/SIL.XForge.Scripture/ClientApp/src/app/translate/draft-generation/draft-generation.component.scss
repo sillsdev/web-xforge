@@ -201,7 +201,7 @@ mat-panel-title {
 
   .subtitle {
     font-size: 0.9em;
-    color: #666;
+    color: var(--draft-history-entry-subtitle-color);
   }
 }
 
