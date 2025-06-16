@@ -14,7 +14,7 @@
         <p>{{ t("select_project_to_translate") }}</p>
         @for (source of draftingSources; track $index) {
           <app-project-select
-            [isDisabled]="loading"
+            [isDisabled]="loading || !appOnline"
             [projects]="projects"
             [resources]="resources"
             [nonSelectableProjects]="nonSelectableProjects"
@@ -55,7 +55,7 @@
         </p>
         @for (source of trainingSources; track $index) {
           <app-project-select
-            [isDisabled]="loading"
+            [isDisabled]="loading || !appOnline"
             [projects]="projects"
             [resources]="resources"
             [nonSelectableProjects]="nonSelectableProjects"
