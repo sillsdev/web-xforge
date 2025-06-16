@@ -68,7 +68,12 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
       this.insightState.filteredChapterInsights$
     ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef), observeOn(asapScheduler))
-      .subscribe(([range, insights]) => this.handleSelectionChange(range, insights));
+      .subscribe(([range, insights]) => {
+        this.handleSelectionChange(
+          range,
+          insights.map(insight => this.adjustInsightRange(insight))
+        );
+      });
 
     combineLatest([fromEvent(this.editor.root, 'mouseover'), this.insightState.filteredChapterInsights$])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
@@ -89,7 +94,12 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
           return merge(
             // Render blots when insights change
             this.insightState.filteredChapterInsights$.pipe(
-              tap(insights => this.insightRenderService.render(insights, this.editor!, this.lynxTextModelConverter!))
+              tap(insights =>
+                this.insightRenderService.render(
+                  insights.map(insight => this.adjustInsightRange(insight)),
+                  this.editor!
+                )
+              )
             ),
             // Check display state to render action overlay or cursor active state
             this.insightState.displayState$.pipe(
@@ -205,6 +215,20 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
     for (const edit of edits) {
       this.editor.updateContents(this.lynxTextModelConverter.dataDeltaToEditorDelta(edit), 'user');
     }
+  }
+
+  /**
+   * Translate dataRange to editorRange (adjust for note embeds)
+   */
+  private adjustInsightRange(insight: LynxInsight): LynxInsight {
+    if (this.lynxTextModelConverter == null) {
+      return insight;
+    }
+
+    return {
+      ...insight,
+      range: this.lynxTextModelConverter.dataRangeToEditorRange(insight.range)
+    };
   }
 }
 
