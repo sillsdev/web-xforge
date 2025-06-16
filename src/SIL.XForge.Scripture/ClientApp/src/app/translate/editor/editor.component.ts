@@ -1986,16 +1986,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private loadProjectUserConfig(chapterFromUrl?: number): void {
-    let chapter: number = chapterFromUrl ?? (this.chapters.length > 0 ? this.chapters[0] : 1);
+    let chapter: number = chapterFromUrl ?? this.chapters[0] ?? 1;
     this.loadTranslateSuggesterConfidence();
 
-    if (this.projectUserConfigDoc?.data != null) {
+    if (chapterFromUrl == null && this.projectUserConfigDoc?.data != null) {
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
-        if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
-          // Use chapter from url if specified
-          chapter = chapterFromUrl ?? this.projectUserConfigDoc.data.selectedChapterNum;
+        if (
+          this.projectUserConfigDoc.data.selectedChapterNum != null &&
+          this.chapters.includes(this.projectUserConfigDoc.data.selectedChapterNum)
+        ) {
+          chapter = this.projectUserConfigDoc.data.selectedChapterNum;
         }
       }
+    }
+
+    if (!this.chapters.includes(chapter)) {
+      this.loadingFinished();
+      this.chapter = this.chapters[0] ?? 1;
+      return;
     }
     this.toggleNoteThreadVerses(false);
     this._chapter = chapter;
