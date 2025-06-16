@@ -277,6 +277,23 @@ describe('CheckingComponent', () => {
       }));
     });
 
+    it('gets adjacent question when no actively selected question', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        questionScope: 'book',
+        projectBookRoute: 'MAT',
+        projectChapterRoute: 2 // no questions on chapter 2
+      });
+      const getAdjacentQuestionSpy = spyOn(env.component as any, 'getAdjacentQuestion').and.callThrough();
+      env.component.activeQuestionScope = 'all';
+      env.component['activeQuestionDoc$'].next(undefined);
+      env.fixture.detectChanges();
+      tick();
+      expect(getAdjacentQuestionSpy).toHaveBeenCalledWith(undefined, 'next');
+      flush();
+      discardPeriodicTasks();
+    }));
+
     it('should open question dialog', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       env.clickButton(env.addQuestionButton);

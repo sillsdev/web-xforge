@@ -1131,7 +1131,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       if (activeQuestionIndex >= 0) {
         adjacentQuestionInScope = this.visibleQuestions[activeQuestionIndex + (prevOrNext === 'prev' ? -1 : 1)];
       }
-    } else if (this.activeQuestionScope !== 'all') {
+    } else {
       // Get prev/next relative to current chapter if no active question.
       // This can happen if scope has no visible questions (taking question filter into account).
       relativeTo = {
