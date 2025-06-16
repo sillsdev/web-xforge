@@ -1,0 +1,56 @@
+use("xforge");
+
+db.sf_projects.aggregate([
+  {
+    $project: {
+      _id: 0,
+      projectId: "$_id",
+      shortName: 1,
+      resource: {
+        $objectToArray: {
+          $ifNull: ["$resourceConfig", {}]
+        }
+      },
+      userRoles: {
+        $objectToArray: {
+          $ifNull: ["$userRoles", {}]
+        }
+      }
+    }
+  },
+  {
+    $match: {
+      $expr: {
+        $and: [
+          { $eq: ["$resource", []] },
+          { $gt: [{ $size: "$userRoles" }, 0] },
+          {
+            $eq: [
+              {
+                $size: {
+                  $filter: {
+                    input: "$userRoles",
+                    as: "role",
+                    cond: { $eq: ["$$role.v", "pt_administrator"] }
+                  }
+                }
+              },
+              0
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    $project: {
+      projectId: 1,
+      shortName: 1,
+      userId: "$userRoles.k",
+      numUsers: { $size: "$userRoles" }
+    }
+  }
+  // {
+  //   $count: 'numProjects'
+  // }
+]);
