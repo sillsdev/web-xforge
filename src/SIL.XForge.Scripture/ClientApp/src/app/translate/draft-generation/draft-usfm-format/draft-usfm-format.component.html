@@ -7,14 +7,14 @@
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">
         <p>
-          {{ t("draft_format_description") }}
+          The draft has been created. Here are some formatting options for the text. You can try each option to see the
+          difference it makes.
         </p>
         <mat-card class="options">
-          <mat-card-header
-            ><mat-card-title>{{ t("paragraph_break_title") }}</mat-card-title></mat-card-header
-          >
+          <mat-card-header><mat-card-title>Line breaks</mat-card-title></mat-card-header>
           <mat-card-content class="format-options">
-            {{ t("paragraph_break_description") }}
+            Scripture Forge translates complete verses, without line breaks, because this gives the best draft. Choose
+            where to place the line breaks from the source.
             <mat-radio-group formControlName="paragraphFormat">
               <mat-radio-button [value]="paragraphBreakFormat.BestGuess">
                 {{ t("option_best_guess") }}
@@ -47,7 +47,7 @@
               <mat-radio-button value="best-guess">
                 Automatic quote style <span class="new">new</span>
                 <span class="description">
-                  Attempt to use the same quote style as the rest of the project. Recommended for most projects.
+                  Use the same quote style as the rest of the project, if possible. Recommended for most projects.
                 </span>
               </mat-radio-button>
               <mat-radio-button value="remove">
