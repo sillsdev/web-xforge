@@ -341,13 +341,13 @@
     "draft_format_options": "Format draft",
     "failed_to_save": "Failed to save changes. Try again later.",
     "option_best_guess": "Best guess",
-    "option_best_guess_description": "Mid-verse paragraph breaks in the source will be placed at the best guess of where they should be in the draft.",
+    "option_best_guess_description": "Line breaks in the source will be placed at the best guess of where they should be in the draft.",
     "option_end": "Move to end",
-    "option_end_description": "Mid-verse paragraph breaks in the source will be moved to the end of the verse in the draft.",
+    "option_end_description": "Line breaks in the source will be moved to the end of the verse.",
     "option_remove": "Remove",
-    "option_remove_description": "Mid-verse paragraph breaks in the source will be omitted in the draft.",
+    "option_remove_description": "Line breaks in the source will be omitted from the draft.",
     "paragraph_break_description": "Scripture Forge translates each verse as a whole for best text quality. Choose how the paragraph breaks from the source verses are placed.",
-    "paragraph_break_title": "Mid-verse paragraph breaks",
+    "paragraph_break_title": "Line breaks",
     "save_changes": "Save"
   },
   "editor": {
