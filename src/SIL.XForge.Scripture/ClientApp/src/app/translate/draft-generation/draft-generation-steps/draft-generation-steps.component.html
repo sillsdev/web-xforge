@@ -259,7 +259,7 @@
             <span class="explanation">{{ t("summary_training") }}</span>
             <table mat-table class="confirm-training" [dataSource]="selectedTrainingBooksCollapsed()">
               <ng-container matColumnDef="book">
-                <th mat-header-cell *matHeaderCellDef></th>
+                <th mat-header-cell *matHeaderCellDef>{{ t("training_books") }}</th>
                 <td mat-cell *matCellDef="let element">
                   <div class="confirm-books cell-padding-block">
                     {{ i18n.enumerateList(element.ranges) }}
