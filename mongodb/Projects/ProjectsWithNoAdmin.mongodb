@@ -1,56 +1,23 @@
 use("xforge");
 
-db.sf_projects.aggregate([
+db.sf_projects.find(
   {
-    $project: {
-      _id: 0,
-      projectId: "$_id",
-      shortName: 1,
-      resource: {
-        $objectToArray: {
-          $ifNull: ["$resourceConfig", {}]
-        }
-      },
-      userRoles: {
-        $objectToArray: {
-          $ifNull: ["$userRoles", {}]
-        }
+    //filter out resources
+    paratextId: /^.{40}$/,
+    //filter out projects with no admin
+    $expr: {
+      $not: {
+        $in: ["pt_administrator", { $map: { input: { $objectToArray: "$userRoles" }, as: "role", in: "$$role.v" } }]
       }
     }
   },
   {
-    $match: {
-      $expr: {
-        $and: [
-          { $eq: ["$resource", []] },
-          { $gt: [{ $size: "$userRoles" }, 0] },
-          {
-            $eq: [
-              {
-                $size: {
-                  $filter: {
-                    input: "$userRoles",
-                    as: "role",
-                    cond: { $eq: ["$$role.v", "pt_administrator"] }
-                  }
-                }
-              },
-              0
-            ]
-          }
-        ]
-      }
-    }
-  },
-  {
-    $project: {
-      projectId: 1,
-      shortName: 1,
-      userId: "$userRoles.k",
-      numUsers: { $size: "$userRoles" }
-    }
+    _id: 0,
+    projectId: "$_id",
+    name: 1,
+    shortName: 1,
+    userRoles: 1,
+    userIds: { $map: { input: { $objectToArray: "$userRoles" }, as: "role", in: "$$role.k" } },
+    userCount: { $size: { $objectToArray: "$userRoles" } }
   }
-  // {
-  //   $count: 'numProjects'
-  // }
-]);
+);
