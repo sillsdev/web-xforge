@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@ngneat/transloco';
@@ -90,10 +90,10 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   @ViewChild('selectAllCheckbox') selectAllCheckbox!: MatCheckbox;
   @ViewChild('dialogContentBody') dialogContentBody!: ElementRef;
 
-  fromControl = new UntypedFormControl('', [SFValidators.verseStr()]);
-  toControl = new UntypedFormControl('', [SFValidators.verseStr()]);
-  filterControl = new UntypedFormControl();
-  filterForm = new UntypedFormGroup({
+  fromControl = new FormControl('', [SFValidators.verseStr()]);
+  toControl = new FormControl('', [SFValidators.verseStr()]);
+  filterControl = new FormControl('');
+  filterForm = new FormGroup({
     from: this.fromControl,
     to: this.toControl,
     filter: this.filterControl
