@@ -129,6 +129,7 @@ public class Startup
 
     private bool IsDevelopmentEnvironment => Environment.IsDevelopment();
     private bool IsTestingEnvironment => Environment.IsEnvironment("Testing");
+    private bool IsStagingEnvironment => Environment.IsEnvironment("Staging");
 
     // This method gets called by the runtime. Use this method to add services to the container.
     public IServiceProvider ConfigureServices(IServiceCollection services)
@@ -210,15 +211,19 @@ public class Startup
         IExceptionHandler exceptionHandler
     )
     {
-        if (IsDevelopmentEnvironment || IsTestingEnvironment)
+        if (IsDevelopmentEnvironment || IsTestingEnvironment || IsStagingEnvironment)
         {
-            app.UseDeveloperExceptionPage();
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+
+        if (IsDevelopmentEnvironment || IsTestingEnvironment)
+        {
+            app.UseDeveloperExceptionPage();
+        }
         else
         {
-            app.UseExceptionHandler(errorApp => exceptionHandler.ReportExceptions(errorApp));
+            app.UseExceptionHandler(exceptionHandler.ReportExceptions);
         }
 
         app.UseStatusCodePagesWithReExecute("/Status/Error", "?code={0}");
