@@ -373,7 +373,7 @@ describe('CheckingComponent', () => {
         questionScope: 'chapter'
       });
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anything())).times(
-        (14 + 1 + 1) * 3
+        14 + 1 + 1
       );
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
@@ -529,14 +529,14 @@ describe('CheckingComponent', () => {
       const questionId = 'q15Id';
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
-      ).times(2 + 2);
+      ).times(2);
       env.clickButton(env.editQuestionButton);
       verify(mockedDialogService.confirm(anything(), anything())).never();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       tick(env.questionReadTimer);
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
-      ).times(3 + 2);
+      ).times(3);
       expect().nothing();
     }));
 
@@ -557,7 +557,7 @@ describe('CheckingComponent', () => {
       expect(env.audioPlayerOnQuestion).not.toBeNull();
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
-      ).times(2 + 2);
+      ).times(2);
       env.clickButton(env.editQuestionButton);
       env.waitForSliderUpdate();
       expect(env.audioPlayerOnQuestion).toBeNull();
