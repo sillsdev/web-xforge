@@ -62,9 +62,9 @@
             <mat-icon>check</mat-icon>
             {{ t("save_changes") }}
           </button>
-          @if (saving) {
+          <div class="progress" [ngClass]="{ saving: saving }">
             <mat-spinner diameter="24"></mat-spinner>
-          }
+          </div>
         </div>
       </form>
     </div>
