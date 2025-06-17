@@ -1,0 +1,23 @@
+use("xforge");
+
+db.sf_projects.find(
+  {
+    //filter out resources
+    paratextId: /^.{40}$/,
+    //filter out projects with no admin
+    $expr: {
+      $not: {
+        $in: ["pt_administrator", { $map: { input: { $objectToArray: "$userRoles" }, as: "role", in: "$$role.v" } }]
+      }
+    }
+  },
+  {
+    _id: 0,
+    projectId: "$_id",
+    name: 1,
+    shortName: 1,
+    userRoles: 1,
+    userIds: { $map: { input: { $objectToArray: "$userRoles" }, as: "role", in: "$$role.k" } },
+    userCount: { $size: { $objectToArray: "$userRoles" } }
+  }
+);
