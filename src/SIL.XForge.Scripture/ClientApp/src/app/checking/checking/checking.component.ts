@@ -150,7 +150,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private _isDrawerPermanent: boolean = true;
   private _chapter?: number;
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
-  private allQuestionsQuery?: RealtimeQuery<QuestionDoc>;
   private _activeQuestionVerseRef?: VerseRef;
   private questionsSub?: Subscription;
   private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
@@ -549,13 +548,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                   }
                 }
               });
-
-            // this is necessary for correctly resolving out-of-scope adjacent questions when joining the project
-            this.allQuestionsQuery = await this.checkingQuestionsService.queryQuestions(
-              this.projectDoc.id,
-              {},
-              this.destroyRef
-            );
 
             this.hideTextSub?.unsubscribe();
             this.hideTextSub = this.projectDoc.changes$
@@ -1689,7 +1681,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.audioChangedSub?.unsubscribe();
     this.questionsRemoteChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
-    this.allQuestionsQuery?.dispose();
     this.textAudioQuery?.dispose();
     this.hideTextSub?.unsubscribe();
     this.textAudioSub?.unsubscribe();
