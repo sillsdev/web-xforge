@@ -32,7 +32,7 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -221,12 +221,29 @@ describe('CheckingComponent', () => {
         const prev = env.previousButton;
         const next = env.nextButton;
 
-        const getAdjacentQuestionSpy = spyOn(env.component as any, 'getAdjacentQuestion').and.callThrough();
-        const adjacentQuestion = { id: 'q1Id', data: { text: 'Dummy Question' } } as QuestionDoc;
+        const getAdjacentQuestionSpy = spyOn(
+          env.component['checkingQuestionsService'] as any,
+          'queryAdjacentQuestions'
+        ).and.callThrough();
+        const adjacentQuestion = {
+          id: 'q1Id',
+          data: { text: 'Dummy Question' },
+          getAnswers: (_?: string) => {
+            return [{}] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const queryEmpty = mock(RealtimeQuery<QuestionDoc>) as RealtimeQuery<QuestionDoc>;
+        when(queryEmpty.docs).thenReturn([]);
+        when(queryEmpty.ready$).thenReturn(new BehaviorSubject<boolean>(true));
+
+        const query = mock(RealtimeQuery<QuestionDoc>) as RealtimeQuery<QuestionDoc>;
+        when(query.docs).thenReturn([adjacentQuestion]);
+        when(query.ready$).thenReturn(new BehaviorSubject<boolean>(true));
         const activeQuestion = { id: 'activeQId', data: { text: 'Active Question' } } as QuestionDoc;
 
         // Scenario 1: Both prev and next question exist
-        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(adjacentQuestion));
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(instance(query)));
         env.component['activeQuestionDoc$'].next(activeQuestion);
         env.fixture.detectChanges();
         tick();
@@ -235,7 +252,7 @@ describe('CheckingComponent', () => {
         expect(next.nativeElement.disabled).toBe(false);
 
         // Scenario 2: Neither prev nor next question exist
-        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(undefined));
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(instance(queryEmpty)));
         env.component['activeQuestionDoc$'].next(activeQuestion);
         env.fixture.detectChanges();
         tick();
@@ -245,9 +262,9 @@ describe('CheckingComponent', () => {
 
         // Scenario 3: Prev question undefined, Next question exists
         getAdjacentQuestionSpy.and.callFake(
-          async (_activeQuestion: QuestionDoc | undefined, direction: 'prev' | 'next') => {
-            if (direction === 'prev') return Promise.resolve(undefined);
-            return Promise.resolve(adjacentQuestion);
+          async (_p: string, _q: Question | VerseRefData, direction: 'prev' | 'next', _d: DestroyRef) => {
+            if (direction === 'prev') return Promise.resolve(instance(queryEmpty));
+            return Promise.resolve(instance(query));
           }
         );
         env.component['activeQuestionDoc$'].next(activeQuestion);
@@ -259,9 +276,9 @@ describe('CheckingComponent', () => {
 
         // Scenario 4: Prev question exists, Next question undefined
         getAdjacentQuestionSpy.and.callFake(
-          async (_activeQuestion: QuestionDoc | undefined, direction: 'prev' | 'next') => {
-            if (direction === 'next') return Promise.resolve(undefined);
-            return Promise.resolve(adjacentQuestion);
+          async (_p: string, _q: Question | VerseRefData, direction: 'prev' | 'next', _d: DestroyRef) => {
+            if (direction === 'next') return Promise.resolve(instance(queryEmpty));
+            return Promise.resolve(instance(query));
           }
         );
         env.component['activeQuestionDoc$'].next(activeQuestion);
@@ -390,7 +407,7 @@ describe('CheckingComponent', () => {
         questionScope: 'chapter'
       });
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anything())).times(
-        14 + 1 + 1
+        (14 + 1) * 2 + 1
       );
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
