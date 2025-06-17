@@ -6,26 +6,24 @@
   <div class="format-container">
     <div class="format-options">
       <form [formGroup]="usfmFormatForm" (change)="reloadText()">
-        <p>
-          The draft has been created. Here are some formatting options for the text. You can try each option to see the
-          difference it makes.
-        </p>
+        <p>{{ t("draft_format_description") }}</p>
         <mat-card class="options">
-          <mat-card-header><mat-card-title>Line breaks</mat-card-title></mat-card-header>
+          <mat-card-header
+            ><mat-card-title>{{ t("line_breaks_title") }}</mat-card-title></mat-card-header
+          >
           <mat-card-content class="format-options">
-            Scripture Forge translates complete verses, without line breaks, because this gives the best draft. Choose
-            where to place the line breaks from the source.
+            <span>{{ t("line_breaks_description") }}</span>
             <mat-radio-group formControlName="paragraphFormat">
               <mat-radio-button [value]="paragraphBreakFormat.BestGuess">
                 {{ t("option_best_guess") }}
-                <span class="new">new</span>
+                <span class="new">{{ t("new") }}</span>
                 <span class="description">
-                  {{ t("option_best_guess_description") }} Recommended for most projects.
+                  {{ t("option_best_guess_description") }}
                 </span>
               </mat-radio-button>
               <mat-radio-button [value]="paragraphBreakFormat.Remove">
                 {{ t("option_remove") }}
-                <span class="new">new</span>
+                <span class="new">{{ t("new") }}</span>
                 <span class="description">
                   {{ t("option_remove_description") }}
                 </span>
@@ -43,14 +41,14 @@
           </mat-card-header>
           <mat-card-content class="format-options">
             Choose how quotes should appear in the draft.
-            <mat-radio-group>
-              <mat-radio-button value="best-guess">
-                Automatic quote style <span class="new">new</span>
+            <mat-radio-group formControlName="quoteFormat">
+              <mat-radio-button [value]="quoteStyleFormat.Automatic">
+                Automatic quote style <span class="new">{{ t("new") }}</span>
                 <span class="description">
                   Use the same quote style as the rest of the project, if possible. Recommended for most projects.
                 </span>
               </mat-radio-button>
-              <mat-radio-button value="remove">
+              <mat-radio-button [value]="quoteStyleFormat.Straight">
                 Straight quotes
                 <span class="description"> Use only straight quotes in the draft.</span>
               </mat-radio-button>
@@ -64,6 +62,9 @@
             <mat-icon>check</mat-icon>
             {{ t("save_changes") }}
           </button>
+          @if (saving) {
+            <mat-spinner diameter="24"></mat-spinner>
+          }
         </div>
       </form>
     </div>
