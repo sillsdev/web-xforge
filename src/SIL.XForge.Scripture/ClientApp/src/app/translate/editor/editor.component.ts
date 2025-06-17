@@ -295,7 +295,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.activatedProject.changes$.pipe(filterNullish()),
     this.chapter$
   ]).pipe(
-    map(() => this.textDocService.hasChapterEditPermissionForText(this.text, this.chapter)),
+    map(([_, chapterNum]) => this.textDocService.hasChapterEditPermissionForText(this.text, chapterNum)),
     distinctUntilChanged(),
     tap(hasPermission => (this.hasChapterEditPermission = hasPermission)) // Cache for non-reactive access
   );
