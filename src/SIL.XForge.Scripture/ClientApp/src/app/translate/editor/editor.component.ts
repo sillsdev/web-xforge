@@ -707,7 +707,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Show insights only if the feature flag is enabled and the user has chapter edit permissions
     combineLatest([this.featureFlagService.enableLynxInsights.enabled$, this.hasChapterEditPermission$])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([ffEnabled, hasEditPermission]) => (this.showInsights = ffEnabled && !!hasEditPermission));
+      .subscribe(([ffEnabled, hasEditPermission]) => {
+        this.showInsights = ffEnabled && !!hasEditPermission && this.isUsfmValid;
+        return this.showInsights;
+      });
   }
 
   ngAfterViewInit(): void {
