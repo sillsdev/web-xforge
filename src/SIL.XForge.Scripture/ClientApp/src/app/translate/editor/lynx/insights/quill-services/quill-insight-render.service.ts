@@ -4,7 +4,7 @@ import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/
 import { StringMap } from 'rich-text';
 import { take, takeUntil } from 'rxjs';
 import { InsightRenderService } from '../base-services/insight-render.service';
-import { LynxRangeConverter } from '../lynx-editor';
+import { LynxTextModelConverter } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
@@ -31,13 +31,13 @@ export class QuillInsightRenderService extends InsightRenderService {
   /**
    * Renders the insights in the editor, applying formatting, action menus, and attention (opacity overlay).
    */
-  render(insights: LynxInsight[], editor: Quill | undefined, rangeConverter: LynxRangeConverter): void {
+  render(insights: LynxInsight[], editor: Quill | undefined): void {
     // Ensure text is more than just '\n'
     if (editor == null || editor.getLength() <= 1) {
       return;
     }
 
-    this.refreshInsightFormatting(insights, editor, rangeConverter);
+    this.refreshInsightFormatting(insights, editor);
   }
 
   /**
@@ -57,16 +57,13 @@ export class QuillInsightRenderService extends InsightRenderService {
    * Creates a delta with all the insights' formatting applied, and sets the editor contents to that delta.
    * This avoids multiple calls to quill `formatText`, which will re-render the DOM after each call.
    */
-  private refreshInsightFormatting(insights: LynxInsight[], editor: Quill, rangeConverter: LynxRangeConverter): void {
+  private refreshInsightFormatting(insights: LynxInsight[], editor: Quill): void {
     // Group insights by type and range
     const insightsByTypeAndRange = new Map<string, Map<string, LynxInsight[]>>();
 
     for (const insight of insights) {
-      // Translate dataRange to editorRange (adjust for note embeds)
-      const editorRange = rangeConverter.dataRangeToEditorRange(insight.range);
-
       const typeKey = `${this.prefix}-${insight.type}`;
-      const rangeKey = `${editorRange.index}:${editorRange.length}`;
+      const rangeKey = `${insight.range.index}:${insight.range.length}`;
 
       if (!insightsByTypeAndRange.has(typeKey)) {
         insightsByTypeAndRange.set(typeKey, new Map<string, LynxInsight[]>());
@@ -110,7 +107,12 @@ export class QuillInsightRenderService extends InsightRenderService {
     editor.updateContents(delta, 'api');
   }
 
-  renderActionOverlay(insights: LynxInsight[], editor: Quill, actionOverlayActive: boolean): void {
+  renderActionOverlay(
+    insights: LynxInsight[],
+    editor: Quill,
+    textModelConverter: LynxTextModelConverter,
+    actionOverlayActive: boolean
+  ): void {
     this.overlayService.close();
     let editorAttention = false;
 
@@ -128,7 +130,8 @@ export class QuillInsightRenderService extends InsightRenderService {
           const ref: LynxInsightOverlayRef | undefined = this.overlayService.open(
             overlayAnchor,
             insights,
-            new QuillLynxEditorAdapter(editor)
+            new QuillLynxEditorAdapter(editor),
+            textModelConverter
           );
 
           if (ref != null) {

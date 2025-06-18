@@ -1,9 +1,10 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, ElementRef, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
+import { Delta } from 'quill';
 import { fromEvent } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { LynxEditor } from '../lynx-editor';
+import { LynxEditor, LynxTextModelConverter } from '../lynx-editor';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightAction, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
@@ -36,6 +37,7 @@ export class LynxInsightOverlayComponent implements OnInit {
   }
 
   @Input() editor?: LynxEditor;
+  @Input() textModelConverter?: LynxTextModelConverter;
 
   /** Emits when insight is dismissed by user. */
   @Output() insightDismiss = new EventEmitter<LynxInsight>();
@@ -110,11 +112,11 @@ export class LynxInsightOverlayComponent implements OnInit {
   }
 
   selectAction(action: LynxInsightAction): void {
-    if (this.editor == null) {
+    if (this.editor == null || this.textModelConverter == null) {
       return;
     }
 
-    this.editor.updateContents(action.ops, 'user');
+    this.editor.updateContents(this.textModelConverter.dataDeltaToEditorDelta(new Delta(action.ops)), 'user');
 
     if (this.focusedInsight == null) {
       throw new Error('No focused insight');

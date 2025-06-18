@@ -16,7 +16,7 @@ import {
 } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
-import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory } from '../lynx-editor';
+import { LynxableEditor, LynxEditor, LynxEditorAdapterFactory, LynxTextModelConverter } from '../lynx-editor';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { getMostNestedInsight } from '../lynx-insight-util';
@@ -30,6 +30,8 @@ export class LynxInsightActionPromptComponent implements OnInit {
   @Input() set editor(value: LynxableEditor | undefined) {
     this.lynxEditor = value == null ? undefined : this.lynxEditorAdapterFactory.getAdapter(value);
   }
+
+  @Input() lynxTextModelConverter?: LynxTextModelConverter;
 
   activeInsights: LynxInsight[] = [];
   isRtl: boolean = this.dir.value === 'rtl';
@@ -52,7 +54,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.lynxEditor == null) {
+    if (this.lynxEditor == null || this.lynxTextModelConverter == null) {
       return;
     }
 
@@ -66,7 +68,18 @@ export class LynxInsightActionPromptComponent implements OnInit {
         switchMap(() => this.editorInsightState.displayState$),
         map(displayState =>
           displayState.activeInsightIds
-            .map(id => this.editorInsightState.getInsight(id))
+            .map(id => {
+              const insight: LynxInsight | undefined = this.editorInsightState.getInsight(id);
+
+              if (insight == null) {
+                return undefined;
+              }
+
+              return {
+                ...insight,
+                range: this.lynxTextModelConverter!.dataRangeToEditorRange(insight.range)
+              };
+            })
             .filter((insight): insight is LynxInsight => insight != null)
         ),
         tap(activeInsights => {
