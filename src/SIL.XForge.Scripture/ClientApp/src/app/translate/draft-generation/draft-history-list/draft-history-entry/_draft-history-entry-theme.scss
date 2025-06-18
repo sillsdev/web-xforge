@@ -5,7 +5,7 @@
 
   --draft-history-entry-red-color: #{if($is-dark, red, darkRed)};
   --draft-history-entry-green-color: #{if($is-dark, lightGreen, darkGreen)};
-  --draft-history-entry-grey-color: lightGrey;
+  --draft-history-entry-grey-color: #{if($is-dark, hsl(0 0% 60%), hsl(0 0% 45%))};
 }
 
 @mixin theme($theme) {
