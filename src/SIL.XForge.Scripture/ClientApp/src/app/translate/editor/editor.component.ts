@@ -67,19 +67,7 @@ import {
   Subscription,
   timer
 } from 'rxjs';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  first,
-  map,
-  repeat,
-  retry,
-  switchMap,
-  take,
-  tap,
-  throttleTime
-} from 'rxjs/operators';
+import { debounceTime, filter, first, map, repeat, retry, switchMap, take, tap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -296,7 +284,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.chapter$
   ]).pipe(
     map(([_, chapterNum]) => this.textDocService.hasChapterEditPermissionForText(this.text, chapterNum)),
-    distinctUntilChanged(),
     tap(hasPermission => (this.hasChapterEditPermission = hasPermission)) // Cache for non-reactive access
   );
 
@@ -707,7 +694,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Show insights only if the feature flag is enabled and the user has chapter edit permissions
     combineLatest([this.featureFlagService.enableLynxInsights.enabled$, this.hasChapterEditPermission$])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([ffEnabled, hasEditPermission]) => (this.showInsights = ffEnabled && !!hasEditPermission));
+      .subscribe(([ffEnabled, hasEditPermission]) => {
+        this.showInsights = ffEnabled && !!hasEditPermission && this.isUsfmValid;
+        return this.showInsights;
+      });
   }
 
   ngAfterViewInit(): void {

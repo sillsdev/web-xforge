@@ -93,6 +93,7 @@ import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { ParatextService } from '../../core/paratext.service';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -4245,28 +4246,17 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment(() => {
           when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(false));
         });
+
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
         env.setCurrentUser('user03');
         env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
         env.wait();
 
         expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
         expect(env.component.showInsights).toBe(false);
-
-        env.dispose();
-      }));
-
-      it('should show lynx features when feature flag is enabled and user has chapter edit permissions', fakeAsync(async () => {
-        const env = new TestEnvironment(() => {
-          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
-        });
-        env.setCurrentUser('user03');
-        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
-        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
-        env.wait();
-
-        expect(env.component.hasChapterEditPermission).toBe(true);
-        expect(env.component.showInsights).toBe(true);
 
         env.dispose();
       }));
@@ -4275,13 +4265,84 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment(() => {
           when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
         });
+
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
         env.setCurrentUser('user03');
         env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
         env.wait();
 
         expect(env.component.hasChapterEditPermission).toBe(false);
+        expect(env.component.isUsfmValid).toBe(true);
         expect(env.component.showInsights).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should not show lynx features when USFM is invalid', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
+        });
+
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(false);
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(false);
+        expect(env.component.showInsights).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should not show lynx features when changing chapter from USFM valid to chapter USFM invalid', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
+        });
+
+        const textDocService = TestBed.inject(TextDocService);
+        const textDocService_isUsfmValidForText_Spy = spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+        spyOn(textDocService, 'hasChapterEditPermissionForText').and.returnValue(true); // Force edit permission true
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.showInsights).toBe(true);
+
+        // Change chapters to one with invalid USFM
+        textDocService_isUsfmValidForText_Spy.and.returnValue(false);
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(false);
+        expect(env.component.showInsights).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should show lynx features when feature flag is enabled and user has chapter edit permissions and USFM is valid', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
+        });
+
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.showInsights).toBe(true);
 
         env.dispose();
       }));
