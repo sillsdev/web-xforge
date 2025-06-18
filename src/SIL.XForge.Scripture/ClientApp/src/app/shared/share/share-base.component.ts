@@ -16,7 +16,7 @@ export abstract class ShareBaseComponent {
     ) as SFProjectRole[];
   }
 
-  protected get userShareableRoles(): string[] {
+  protected get userShareableRoles(): SFProjectRole[] {
     const project = this.projectDoc?.data;
     if (project == null) {
       return [];
@@ -67,6 +67,6 @@ export abstract class ShareBaseComponent {
             Operation.Create
           )
       )
-      .map(info => info.role as string);
+      .map(info => info.role);
   }
 }

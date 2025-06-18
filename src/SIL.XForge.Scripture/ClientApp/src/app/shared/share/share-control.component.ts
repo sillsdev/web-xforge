@@ -8,7 +8,7 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
-import { FormGroupDirective, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -36,10 +36,10 @@ export class ShareControlComponent extends ShareBaseComponent {
   @Input() defaultRole: SFProjectRole = SF_DEFAULT_SHARE_ROLE;
   @ViewChild('shareLinkField') shareLinkField?: ElementRef<HTMLInputElement>;
 
-  email = new UntypedFormControl('', [XFValidators.email, Validators.required]);
-  localeControl = new UntypedFormControl('', [Validators.required]);
-  roleControl = new UntypedFormControl('', [Validators.required]);
-  sendInviteForm: UntypedFormGroup = new UntypedFormGroup({
+  email = new FormControl('', [XFValidators.email, Validators.required]);
+  localeControl = new FormControl('', [Validators.required]);
+  roleControl = new FormControl<SFProjectRole | null>(null, [Validators.required]);
+  sendInviteForm = new FormGroup({
     email: this.email,
     role: this.roleControl,
     locale: this.localeControl
@@ -74,7 +74,7 @@ export class ShareControlComponent extends ShareBaseComponent {
             this.projectService.getProfile(projectId),
             this.projectService.isProjectAdmin(projectId, this.userService.currentUserId)
           ]);
-          this.roleControl.setValue(this.defaultShareRole);
+          this.roleControl.setValue(this.defaultShareRole ?? null);
         }
         this.projectDoc.remoteChanges$
           .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
@@ -93,7 +93,7 @@ export class ShareControlComponent extends ShareBaseComponent {
     this.projectId$.next(id);
   }
 
-  get shareRole(): SFProjectRole {
+  get shareRole(): SFProjectRole | null {
     return this.roleControl.value;
   }
 
@@ -120,11 +120,12 @@ export class ShareControlComponent extends ShareBaseComponent {
         SFProjectDomain.UserInvites,
         Operation.Create
       ) &&
+      this.shareRole != null &&
       this.userShareableRoles.includes(this.shareRole)
     );
   }
 
-  private get defaultShareRole(): string | undefined {
+  private get defaultShareRole(): SFProjectRole | undefined {
     const roles = this.userShareableRoles;
     if (this.defaultRole != null && roles.some(role => role === this.defaultRole)) {
       return this.defaultRole;
@@ -136,14 +137,21 @@ export class ShareControlComponent extends ShareBaseComponent {
   }
 
   async onEmailInput(): Promise<void> {
-    if (this._projectId == null || this.email.invalid) {
+    if (this._projectId == null || this.email.invalid || this.email.value == null) {
       return;
     }
     this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this._projectId, this.email.value);
   }
 
   async sendEmail(form: FormGroupDirective): Promise<void> {
-    if (this._projectId == null || this.email.value === '' || this.email.value == null || !this.sendInviteForm.valid) {
+    if (
+      this._projectId == null ||
+      this.email.value === '' ||
+      this.email.value == null ||
+      this.localeControl.value == null ||
+      this.shareRole == null ||
+      !this.sendInviteForm.valid
+    ) {
       return;
     }
 
