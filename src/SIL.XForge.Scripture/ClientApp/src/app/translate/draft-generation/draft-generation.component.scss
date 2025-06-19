@@ -180,3 +180,42 @@ section {
   display: flex;
   gap: 0.5em;
 }
+
+mat-expansion-panel-header {
+  color: var(--mat-expansion-header-text-color, var(--mat-app-on-surface)) !important;
+}
+
+mat-panel-title {
+  display: flex;
+  align-items: start;
+  flex-direction: column;
+  flex: 0 1 auto;
+
+  .title {
+    color: var(
+      --mat-expansion-header-text-color,
+      var(--mat-app-on-surface)
+    ); /* Keep the text color, even when disabled */
+    font-size: 1.1em;
+  }
+
+  .subtitle {
+    font-size: 0.9em;
+    color: var(--draft-history-entry-subtitle-color);
+  }
+}
+
+mat-panel-description {
+  font-weight: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}

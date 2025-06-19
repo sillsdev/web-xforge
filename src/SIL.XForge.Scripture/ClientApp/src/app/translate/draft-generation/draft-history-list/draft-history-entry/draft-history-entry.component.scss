@@ -13,7 +13,7 @@ mat-panel-description {
   flex-grow: 0;
 }
 
-.drafted-books {
+.title {
   color: var(
     --mat-expansion-header-text-color,
     var(--mat-app-on-surface)
@@ -26,9 +26,9 @@ mat-panel-description {
   column-gap: 8px;
 }
 
-.date {
+.subtitle {
   font-size: 0.9em;
-  color: #666;
+  color: var(--draft-history-entry-subtitle-color);
 }
 
 .status {
