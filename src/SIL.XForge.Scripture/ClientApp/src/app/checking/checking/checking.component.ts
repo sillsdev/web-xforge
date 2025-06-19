@@ -8,24 +8,14 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
-import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { asyncScheduler, BehaviorSubject, combineLatest, from, merge, Observable, Subscription } from 'rxjs';
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  shareReplay,
-  startWith,
-  switchMap,
-  take,
-  throttleTime
-} from 'rxjs/operators';
+import { asyncScheduler, BehaviorSubject, combineLatest, merge, Observable, of, Subscription } from 'rxjs';
+import { distinctUntilChanged, filter, map, startWith, take, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -132,19 +122,18 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
    * The question before the active question according to the active question filter.
    * This question may be in a different book/chapter.
    */
-  readonly prevQuestion$: Observable<QuestionDoc | undefined> = this.activeQuestionDoc$.pipe(
-    switchMap(activeDoc => from(this.getAdjacentQuestion(activeDoc, 'prev'))),
-    shareReplay({ bufferSize: 1, refCount: true })
-  );
+  protected prevQuestion$: Observable<QuestionDoc | undefined> = new BehaviorSubject(undefined);
 
   /**
    * The question after the active question according to the active question filter.
    * This question may be in a different book/chapter.
    */
-  readonly nextQuestion$: Observable<QuestionDoc | undefined> = this.activeQuestionDoc$.pipe(
-    switchMap(activeDoc => from(this.getAdjacentQuestion(activeDoc, 'next'))),
-    shareReplay({ bufferSize: 1, refCount: true })
-  );
+  protected nextQuestion$: Observable<QuestionDoc | undefined> = new BehaviorSubject(undefined);
+
+  private defaultQuestionsQuery?: RealtimeQuery<QuestionDoc>;
+  private defaultQuestionsQuerySub?: Subscription;
+  private nextQuestionOutOfScope?: RealtimeQuery<QuestionDoc>;
+  private prevQuestionOutOfScope?: RealtimeQuery<QuestionDoc>;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -579,16 +568,30 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               chapterNum: this.chapter
             };
           } else {
-            const suggestedBookChapter: BookChapter = await this.getSuggestedNavBookChapter(routeBookNum);
-            this.navigateBookChapter(
-              routeProjectId,
-              routeScope!,
-              suggestedBookChapter.bookNum,
-              suggestedBookChapter.chapterNum,
+            this.defaultQuestionsQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
+              this.projectDoc!.id,
               {
-                replaceUrl: true
-              }
+                bookNum: routeBookNum ?? 1,
+                chapterNum: 1,
+                verseNum: 0
+              },
+              'next',
+              this.destroyRef
             );
+            this.defaultQuestionsQuerySub = this.defaultQuestionsQuery.ready$
+              .pipe(ready => ready, quietTakeUntilDestroyed(this.destroyRef))
+              .subscribe(async () => {
+                const suggestedBookChapter: BookChapter = await this.getSuggestedNavBookChapter(routeBookNum);
+                this.navigateBookChapter(
+                  routeProjectId,
+                  routeScope!,
+                  suggestedBookChapter.bookNum,
+                  suggestedBookChapter.chapterNum,
+                  {
+                    replaceUrl: true
+                  }
+                );
+              });
 
             return;
           }
@@ -737,6 +740,67 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       .subscribe((state: BreakpointState) => {
         // setting isScreenSmall causes `ExpressionChangedAfterItHasBeenCheckedError`, so wrap in setTimeout
         setTimeout(() => (this.isScreenSmall = state.matches));
+      });
+
+    this.activeQuestionDoc$
+      .pipe(
+        filter(() => this.book != null && this.projectDoc != null),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(async qDoc => {
+        // Get prev/next relative to current chapter if no active question.
+        // This can happen if scope has no visible questions (taking question filter into account).
+        const relativeTo = qDoc?.data ?? {
+          bookNum: this.book!,
+          chapterNum: this.chapter ?? 1,
+          verseNum: 1
+        };
+
+        this.prevQuestionOutOfScope?.dispose();
+        const prevInScope = await this.getAdjacentQuestionInScope(qDoc, 'prev');
+        if (prevInScope != null) {
+          this.prevQuestionOutOfScope = undefined;
+          this.prevQuestion$ = of(prevInScope);
+        } else {
+          this.prevQuestionOutOfScope = await this.checkingQuestionsService.queryAdjacentQuestions(
+            this.projectDoc!.id,
+            relativeTo,
+            'prev',
+            this.destroyRef
+          );
+          this.prevQuestionOutOfScope.ready$
+            .pipe(
+              filter(ready => ready),
+              map(() => this.prevQuestionOutOfScope!),
+              quietTakeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe(async query => {
+              this.prevQuestion$ = of(this.filterQuestions(query.docs)[0]);
+            });
+        }
+
+        this.nextQuestionOutOfScope?.dispose();
+        const nextInScope = await this.getAdjacentQuestionInScope(qDoc, 'next');
+        if (nextInScope != null) {
+          this.nextQuestionOutOfScope = undefined;
+          this.nextQuestion$ = of(nextInScope);
+        } else {
+          this.nextQuestionOutOfScope = await this.checkingQuestionsService.queryAdjacentQuestions(
+            this.projectDoc!.id,
+            relativeTo,
+            'next',
+            this.destroyRef
+          );
+          this.nextQuestionOutOfScope.ready$
+            .pipe(
+              filter(ready => ready),
+              map(() => this.nextQuestionOutOfScope!),
+              quietTakeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe(async query => {
+              this.nextQuestion$ = of(this.filterQuestions(query.docs)[0]);
+            });
+        }
       });
 
     if (this.questionsList?.activeQuestionDoc) {
@@ -1104,62 +1168,25 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     });
   }
 
-  /**
-   * Retrieves the adjacent question based on the active question and the direction.
-   * Adjacent question might be outside the current scope but not the filter.
-   * @param activeQuestion - The active question.
-   * @param prevOrNext - The direction to search for the adjacent question.
-   * @return The adjacent question.
-   */
-  private async getAdjacentQuestion(
+  private async getAdjacentQuestionInScope(
     activeQuestion: QuestionDoc | undefined,
     prevOrNext: 'prev' | 'next'
   ): Promise<QuestionDoc | undefined> {
     if (this.visibleQuestions == null) {
       return undefined;
     }
-
-    let relativeTo: Question | VerseRefData | undefined;
     let adjacentQuestionInScope: QuestionDoc | undefined;
 
     if (activeQuestion?.data != null) {
-      relativeTo = activeQuestion.data;
-
       const activeQuestionIndex: number = this.visibleQuestions.findIndex(q => q.id === activeQuestion.id);
 
       // Check for adjacent question in current scope (book/chapter/all) for the current filter (use visible questions)
       if (activeQuestionIndex >= 0) {
         adjacentQuestionInScope = this.visibleQuestions[activeQuestionIndex + (prevOrNext === 'prev' ? -1 : 1)];
       }
-    } else {
-      // Get prev/next relative to current chapter if no active question.
-      // This can happen if scope has no visible questions (taking question filter into account).
-      relativeTo = {
-        bookNum: this.book!,
-        chapterNum: this.chapter ?? 1,
-        verseNum: 1 // Can be anything since 'relativeTo' is only a verseRef if there are no questions in the chapter
-      };
     }
 
-    if (adjacentQuestionInScope != null) {
-      return adjacentQuestionInScope;
-    }
-
-    let query: RealtimeQuery<QuestionDoc> | undefined;
-
-    try {
-      // If no adjacent question in current scope, get the adjacent question outside this scope
-      query = await this.checkingQuestionsService.queryAdjacentQuestions(
-        this.projectDoc!.id,
-        relativeTo!,
-        prevOrNext,
-        this.destroyRef
-      );
-
-      return this.filterQuestions(query.docs)[0];
-    } finally {
-      query?.dispose();
-    }
+    return adjacentQuestionInScope;
   }
 
   private updateQuestionRefs(): void {
@@ -1572,32 +1599,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     // Suggest book/chapter from first question (within route book if provided)
     if (suggestedBookChapter == null) {
-      let query: RealtimeQuery<QuestionDoc> | undefined;
-      try {
-        query = await this.checkingQuestionsService.queryAdjacentQuestions(
-          this.projectDoc!.id,
-          {
-            bookNum: routeBookNum ?? 1,
-            chapterNum: 1,
-            verseNum: 0
-          },
-          'next',
-          this.destroyRef
-        );
+      const firstQuestionVerseRef: VerseRefData | undefined = this.filterQuestions(this.defaultQuestionsQuery!.docs)[0]
+        ?.data?.verseRef;
 
-        const firstQuestionVerseRef: VerseRefData | undefined = this.filterQuestions(query.docs)[0]?.data?.verseRef;
-
-        if (firstQuestionVerseRef != null) {
-          // If route book is provided, don't use question from a different book
-          if (routeBookNum == null || routeBookNum === firstQuestionVerseRef.bookNum) {
-            suggestedBookChapter = {
-              bookNum: firstQuestionVerseRef.bookNum,
-              chapterNum: firstQuestionVerseRef.chapterNum
-            };
-          }
+      if (firstQuestionVerseRef != null) {
+        // If route book is provided, don't use question from a different book
+        if (routeBookNum == null || routeBookNum === firstQuestionVerseRef.bookNum) {
+          suggestedBookChapter = {
+            bookNum: firstQuestionVerseRef.bookNum,
+            chapterNum: firstQuestionVerseRef.chapterNum
+          };
         }
-      } finally {
-        query?.dispose();
       }
     }
 
@@ -1684,5 +1696,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.textAudioQuery?.dispose();
     this.hideTextSub?.unsubscribe();
     this.textAudioSub?.unsubscribe();
+    this.defaultQuestionsQuery?.dispose();
+    this.defaultQuestionsQuerySub?.unsubscribe();
+    this.prevQuestionOutOfScope?.dispose();
+    this.nextQuestionOutOfScope?.dispose();
   }
 }

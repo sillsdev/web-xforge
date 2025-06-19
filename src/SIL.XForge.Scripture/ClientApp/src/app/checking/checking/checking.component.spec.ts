@@ -32,7 +32,7 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -177,24 +177,6 @@ describe('CheckingComponent', () => {
   }));
 
   describe('Interface', () => {
-    it('can navigate using next button', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER });
-      env.selectQuestion(1);
-      env.clickButton(env.nextButton);
-      tick(env.questionReadTimer);
-      const nextQuestion = env.currentQuestion;
-      expect(nextQuestion).toEqual(2);
-    }));
-
-    it('can navigate using previous button', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER });
-      env.selectQuestion(2);
-      env.clickButton(env.previousButton);
-      tick(env.questionReadTimer);
-      const nextQuestion = env.currentQuestion;
-      expect(nextQuestion).toEqual(1);
-    }));
-
     it('should display books in canonical order', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       env.waitForSliderUpdate();
@@ -215,18 +197,75 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
+    it('reroutes when no book and chapter are provided', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: undefined,
+        projectChapterRoute: undefined,
+        questionScope: 'all'
+      });
+
+      expect(env.router.url).toContain('MAT/1?scope=all');
+    }));
+
+    it('reroutes when no book is provided', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: 'MAT',
+        projectChapterRoute: undefined,
+        questionScope: 'book'
+      });
+
+      expect(env.router.url).toContain('MAT/1?scope=book');
+    }));
+
     describe('Prev/Next question buttons', () => {
+      it('can navigate using next button', fakeAsync(() => {
+        const env = new TestEnvironment({ user: ADMIN_USER });
+        env.selectQuestion(1);
+        env.clickButton(env.nextButton);
+        tick(env.questionReadTimer);
+        const nextQuestion = env.currentQuestion;
+        expect(nextQuestion).toEqual(2);
+      }));
+
+      it('can navigate using previous button', fakeAsync(() => {
+        const env = new TestEnvironment({ user: ADMIN_USER });
+        env.selectQuestion(2);
+        env.clickButton(env.previousButton);
+        tick(env.questionReadTimer);
+        const nextQuestion = env.currentQuestion;
+        expect(nextQuestion).toEqual(1);
+      }));
+
       it('prev/next disabled state based on existence of prev/next question', fakeAsync(() => {
         const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'JHN', projectChapterRoute: 1 });
         const prev = env.previousButton;
         const next = env.nextButton;
 
-        const getAdjacentQuestionSpy = spyOn(env.component as any, 'getAdjacentQuestion').and.callThrough();
-        const adjacentQuestion = { id: 'q1Id', data: { text: 'Dummy Question' } } as QuestionDoc;
+        const getAdjacentQuestionSpy = spyOn(
+          env.component['checkingQuestionsService'] as any,
+          'queryAdjacentQuestions'
+        ).and.callThrough();
+        const adjacentQuestion = {
+          id: 'q1Id',
+          data: { text: 'Dummy Question' },
+          getAnswers: (_?: string) => {
+            return [{}] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const queryEmpty = mock(RealtimeQuery<QuestionDoc>) as RealtimeQuery<QuestionDoc>;
+        when(queryEmpty.docs).thenReturn([]);
+        when(queryEmpty.ready$).thenReturn(new BehaviorSubject<boolean>(true));
+
+        const query = mock(RealtimeQuery<QuestionDoc>) as RealtimeQuery<QuestionDoc>;
+        when(query.docs).thenReturn([adjacentQuestion]);
+        when(query.ready$).thenReturn(new BehaviorSubject<boolean>(true));
         const activeQuestion = { id: 'activeQId', data: { text: 'Active Question' } } as QuestionDoc;
 
         // Scenario 1: Both prev and next question exist
-        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(adjacentQuestion));
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(instance(query)));
         env.component['activeQuestionDoc$'].next(activeQuestion);
         env.fixture.detectChanges();
         tick();
@@ -235,7 +274,7 @@ describe('CheckingComponent', () => {
         expect(next.nativeElement.disabled).toBe(false);
 
         // Scenario 2: Neither prev nor next question exist
-        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(undefined));
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(instance(queryEmpty)));
         env.component['activeQuestionDoc$'].next(activeQuestion);
         env.fixture.detectChanges();
         tick();
@@ -245,9 +284,9 @@ describe('CheckingComponent', () => {
 
         // Scenario 3: Prev question undefined, Next question exists
         getAdjacentQuestionSpy.and.callFake(
-          async (_activeQuestion: QuestionDoc | undefined, direction: 'prev' | 'next') => {
-            if (direction === 'prev') return Promise.resolve(undefined);
-            return Promise.resolve(adjacentQuestion);
+          async (_p: string, _q: Question | VerseRefData, direction: 'prev' | 'next', _d: DestroyRef) => {
+            if (direction === 'prev') return Promise.resolve(instance(queryEmpty));
+            return Promise.resolve(instance(query));
           }
         );
         env.component['activeQuestionDoc$'].next(activeQuestion);
@@ -259,9 +298,9 @@ describe('CheckingComponent', () => {
 
         // Scenario 4: Prev question exists, Next question undefined
         getAdjacentQuestionSpy.and.callFake(
-          async (_activeQuestion: QuestionDoc | undefined, direction: 'prev' | 'next') => {
-            if (direction === 'next') return Promise.resolve(undefined);
-            return Promise.resolve(adjacentQuestion);
+          async (_p: string, _q: Question | VerseRefData, direction: 'prev' | 'next', _d: DestroyRef) => {
+            if (direction === 'next') return Promise.resolve(instance(queryEmpty));
+            return Promise.resolve(instance(query));
           }
         );
         env.component['activeQuestionDoc$'].next(activeQuestion);
@@ -284,7 +323,7 @@ describe('CheckingComponent', () => {
         projectBookRoute: 'MAT',
         projectChapterRoute: 2 // no questions on chapter 2
       });
-      const getAdjacentQuestionSpy = spyOn(env.component as any, 'getAdjacentQuestion').and.callThrough();
+      const getAdjacentQuestionSpy = spyOn(env.component as any, 'getAdjacentQuestionInScope').and.callThrough();
       env.component.activeQuestionScope = 'all';
       env.component['activeQuestionDoc$'].next(undefined);
       env.fixture.detectChanges();
@@ -2740,14 +2779,7 @@ class TestEnvironment {
 
   private readonly testProject: SFProject = TestEnvironment.generateTestProject();
 
-  constructor({
-    user,
-    projectBookRoute = 'JHN',
-    projectChapterRoute = 1,
-    questionScope = 'book',
-    hasConnection = true,
-    testProject = undefined
-  }: {
+  constructor(options: {
     user: UserInfo;
     projectBookRoute?: string;
     projectChapterRoute?: number;
@@ -2755,6 +2787,10 @@ class TestEnvironment {
     hasConnection?: boolean;
     testProject?: SFProject;
   }) {
+    const { user, testProject, questionScope = 'book', hasConnection = true } = options;
+    const projectBookRoute = 'projectBookRoute' in options ? options.projectBookRoute : 'JHN';
+    const projectChapterRoute = 'projectChapterRoute' in options ? options.projectChapterRoute : 1;
+
     this.params$ = new BehaviorSubject<Params>({
       projectId: 'project01',
       bookId: projectBookRoute,
@@ -2799,7 +2835,7 @@ class TestEnvironment {
     this.router = TestBed.inject(Router);
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);
 
-    this.setRouteSnapshot(projectBookRoute, projectChapterRoute.toString(), questionScope);
+    this.setRouteSnapshot(projectBookRoute, projectChapterRoute?.toString(), questionScope);
     this.setupDefaultProjectData(user);
 
     // 'ready$' from SharedbRealtimeQueryAdapter (not the MemoryRealtimeQueryAdapter used in tests)
@@ -3501,7 +3537,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private setRouteSnapshot(bookId: string, chapter: string, scope: QuestionScope): void {
+  private setRouteSnapshot(bookId: string | undefined, chapter: string | undefined, scope: QuestionScope): void {
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.params = { bookId, chapter };
     snapshot.queryParams = { scope };
