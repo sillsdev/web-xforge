@@ -1,0 +1,32 @@
+<div class="permissions-viewer-container">
+  <h1>Permissions Viewer</h1>
+
+  <div class="content">
+    <table class="permissions-table">
+      <thead>
+        <tr>
+          <th>Domain / Role</th>
+          @for (role of roles; track role) {
+            <th>{{ i18n.localizeRole(role) }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (domain of domains; track domain) {
+          <tr>
+            <td>{{ domain }}</td>
+            @for (role of roles; track role) {
+              <td>
+                <div class="operations-list">
+                  @for (operation of getOperationsForRoleDomain(role, domain); track operation) {
+                    <span class="operation-tag {{ operation }}">{{ operation }}</span>
+                  }
+                </div>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
