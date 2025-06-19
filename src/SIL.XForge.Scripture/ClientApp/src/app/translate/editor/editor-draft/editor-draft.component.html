@@ -58,6 +58,11 @@
             }
           </button>
         }
+        @if (!canApplyDraft) {
+          <app-notice icon="warning" type="warning" mode="fill-dark">
+            {{ "editor_draft_tab.cannot_import" | transloco }}
+          </app-notice>
+        }
       </div>
     </div>
   }

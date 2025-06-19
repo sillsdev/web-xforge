@@ -47,3 +47,8 @@ app-notice {
 .draft-select {
   @include styles.dense_mat_select();
 }
+
+app-notice {
+  margin: 0;
+  width: 100%;
+}
