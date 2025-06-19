@@ -177,24 +177,6 @@ describe('CheckingComponent', () => {
   }));
 
   describe('Interface', () => {
-    it('can navigate using next button', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER });
-      env.selectQuestion(1);
-      env.clickButton(env.nextButton);
-      tick(env.questionReadTimer);
-      const nextQuestion = env.currentQuestion;
-      expect(nextQuestion).toEqual(2);
-    }));
-
-    it('can navigate using previous button', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER });
-      env.selectQuestion(2);
-      env.clickButton(env.previousButton);
-      tick(env.questionReadTimer);
-      const nextQuestion = env.currentQuestion;
-      expect(nextQuestion).toEqual(1);
-    }));
-
     it('should display books in canonical order', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       env.waitForSliderUpdate();
@@ -215,7 +197,47 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
+    it('reroutes when no book and chapter are provided', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: undefined,
+        projectChapterRoute: undefined,
+        questionScope: 'all'
+      });
+
+      expect(env.router.url).toContain('MAT/1?scope=all');
+    }));
+
+    it('reroutes when no book is provided', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: 'MAT',
+        projectChapterRoute: undefined,
+        questionScope: 'book'
+      });
+
+      expect(env.router.url).toContain('MAT/1?scope=book');
+    }));
+
     describe('Prev/Next question buttons', () => {
+      it('can navigate using next button', fakeAsync(() => {
+        const env = new TestEnvironment({ user: ADMIN_USER });
+        env.selectQuestion(1);
+        env.clickButton(env.nextButton);
+        tick(env.questionReadTimer);
+        const nextQuestion = env.currentQuestion;
+        expect(nextQuestion).toEqual(2);
+      }));
+
+      it('can navigate using previous button', fakeAsync(() => {
+        const env = new TestEnvironment({ user: ADMIN_USER });
+        env.selectQuestion(2);
+        env.clickButton(env.previousButton);
+        tick(env.questionReadTimer);
+        const nextQuestion = env.currentQuestion;
+        expect(nextQuestion).toEqual(1);
+      }));
+
       it('prev/next disabled state based on existence of prev/next question', fakeAsync(() => {
         const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'JHN', projectChapterRoute: 1 });
         const prev = env.previousButton;
@@ -390,7 +412,7 @@ describe('CheckingComponent', () => {
         questionScope: 'chapter'
       });
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anything())).times(
-        (14 + 1) * 2 + 1
+        14 + 1 + 1
       );
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
@@ -2740,14 +2762,7 @@ class TestEnvironment {
 
   private readonly testProject: SFProject = TestEnvironment.generateTestProject();
 
-  constructor({
-    user,
-    projectBookRoute = 'JHN',
-    projectChapterRoute = 1,
-    questionScope = 'book',
-    hasConnection = true,
-    testProject = undefined
-  }: {
+  constructor(options: {
     user: UserInfo;
     projectBookRoute?: string;
     projectChapterRoute?: number;
@@ -2755,6 +2770,10 @@ class TestEnvironment {
     hasConnection?: boolean;
     testProject?: SFProject;
   }) {
+    const { user, testProject, questionScope = 'book', hasConnection = true } = options;
+    const projectBookRoute = 'projectBookRoute' in options ? options.projectBookRoute : 'JHN';
+    const projectChapterRoute = 'projectChapterRoute' in options ? options.projectChapterRoute : 1;
+
     this.params$ = new BehaviorSubject<Params>({
       projectId: 'project01',
       bookId: projectBookRoute,
@@ -2799,7 +2818,7 @@ class TestEnvironment {
     this.router = TestBed.inject(Router);
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);
 
-    this.setRouteSnapshot(projectBookRoute, projectChapterRoute.toString(), questionScope);
+    this.setRouteSnapshot(projectBookRoute, projectChapterRoute?.toString(), questionScope);
     this.setupDefaultProjectData(user);
 
     // 'ready$' from SharedbRealtimeQueryAdapter (not the MemoryRealtimeQueryAdapter used in tests)
@@ -3501,7 +3520,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private setRouteSnapshot(bookId: string, chapter: string, scope: QuestionScope): void {
+  private setRouteSnapshot(bookId: string | undefined, chapter: string | undefined, scope: QuestionScope): void {
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.params = { bookId, chapter };
     snapshot.queryParams = { scope };

@@ -757,30 +757,50 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         };
 
         this.prevQuestionOutOfScope?.dispose();
-        this.prevQuestionOutOfScope = await this.checkingQuestionsService.queryAdjacentQuestions(
-          this.projectDoc!.id,
-          relativeTo,
-          'prev',
-          this.destroyRef
-        );
-        this.prevQuestionOutOfScope.ready$
-          .pipe(ready => ready, quietTakeUntilDestroyed(this.destroyRef))
-          .subscribe(async () => {
-            this.prevQuestion$ = of(await this.getAdjacentQuestion(qDoc, 'prev'));
-          });
+        const prevInScope = await this.getAdjacentQuestionInScope(qDoc, 'prev');
+        if (prevInScope != null) {
+          this.prevQuestionOutOfScope = undefined;
+          this.prevQuestion$ = of(prevInScope);
+        } else {
+          this.prevQuestionOutOfScope = await this.checkingQuestionsService.queryAdjacentQuestions(
+            this.projectDoc!.id,
+            relativeTo,
+            'prev',
+            this.destroyRef
+          );
+          this.prevQuestionOutOfScope.ready$
+            .pipe(
+              filter(ready => ready),
+              map(() => this.prevQuestionOutOfScope!),
+              quietTakeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe(async query => {
+              this.prevQuestion$ = of(this.filterQuestions(query.docs)[0]);
+            });
+        }
 
         this.nextQuestionOutOfScope?.dispose();
-        this.nextQuestionOutOfScope = await this.checkingQuestionsService.queryAdjacentQuestions(
-          this.projectDoc!.id,
-          relativeTo,
-          'next',
-          this.destroyRef
-        );
-        this.nextQuestionOutOfScope.ready$
-          .pipe(ready => ready, quietTakeUntilDestroyed(this.destroyRef))
-          .subscribe(async () => {
-            this.nextQuestion$ = of(await this.getAdjacentQuestion(qDoc, 'next'));
-          });
+        const nextInScope = await this.getAdjacentQuestionInScope(qDoc, 'next');
+        if (nextInScope != null) {
+          this.nextQuestionOutOfScope = undefined;
+          this.nextQuestion$ = of(nextInScope);
+        } else {
+          this.nextQuestionOutOfScope = await this.checkingQuestionsService.queryAdjacentQuestions(
+            this.projectDoc!.id,
+            relativeTo,
+            'next',
+            this.destroyRef
+          );
+          this.nextQuestionOutOfScope.ready$
+            .pipe(
+              filter(ready => ready),
+              map(() => this.nextQuestionOutOfScope!),
+              quietTakeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe(async query => {
+              this.nextQuestion$ = of(this.filterQuestions(query.docs)[0]);
+            });
+        }
       });
 
     if (this.questionsList?.activeQuestionDoc) {
@@ -1148,21 +1168,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     });
   }
 
-  /**
-   * Retrieves the adjacent question based on the active question and the direction.
-   * Adjacent question might be outside the current scope but not the filter.
-   * @param activeQuestion - The active question.
-   * @param prevOrNext - The direction to search for the adjacent question.
-   * @return The adjacent question.
-   */
-  private async getAdjacentQuestion(
+  private async getAdjacentQuestionInScope(
     activeQuestion: QuestionDoc | undefined,
     prevOrNext: 'prev' | 'next'
   ): Promise<QuestionDoc | undefined> {
     if (this.visibleQuestions == null) {
       return undefined;
     }
-
     let adjacentQuestionInScope: QuestionDoc | undefined;
 
     if (activeQuestion?.data != null) {
@@ -1174,16 +1186,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       }
     }
 
-    if (adjacentQuestionInScope != null) {
-      return adjacentQuestionInScope;
-    }
-
-    // If no adjacent question in current scope, use the adjacent question outside this scope
-    if (prevOrNext === 'next') {
-      return this.filterQuestions(this.nextQuestionOutOfScope!.docs)[0];
-    } else {
-      return this.filterQuestions(this.prevQuestionOutOfScope!.docs)[0];
-    }
+    return adjacentQuestionInScope;
   }
 
   private updateQuestionRefs(): void {
