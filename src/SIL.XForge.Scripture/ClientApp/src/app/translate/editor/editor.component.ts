@@ -67,19 +67,7 @@ import {
   Subscription,
   timer
 } from 'rxjs';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  first,
-  map,
-  repeat,
-  retry,
-  switchMap,
-  take,
-  tap,
-  throttleTime
-} from 'rxjs/operators';
+import { debounceTime, filter, first, map, repeat, retry, switchMap, take, tap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -296,7 +284,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.chapter$
   ]).pipe(
     map(([_, chapterNum]) => this.textDocService.hasChapterEditPermissionForText(this.text, chapterNum)),
-    distinctUntilChanged(),
     tap(hasPermission => (this.hasChapterEditPermission = hasPermission)) // Cache for non-reactive access
   );
 
