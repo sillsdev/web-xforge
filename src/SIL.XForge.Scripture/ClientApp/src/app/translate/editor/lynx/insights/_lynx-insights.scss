@@ -95,6 +95,10 @@ $iconTypes: list.append($insightTypes, 'checkmark');
   &.error {
     @include insight-styles('error');
   }
+
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 // Insights should let more severe insights show through,
