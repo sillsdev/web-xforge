@@ -1,18 +1,14 @@
-using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Paratext.Data;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
-using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 
 [TestFixture]
 public class SharingLogicWrapperTests
 {
-    private const string ParatextUser01 = "ParatextUser01";
-
     [Test]
     public void HandleErrors_DoesNotThrowByDefault()
     {
@@ -64,27 +60,6 @@ public class SharingLogicWrapperTests
         );
         Assert.That(actual, Is.True);
         Assert.That(results, Is.Empty);
-    }
-
-    [Test]
-    public void ShareChanges_ThrowsExceptionIfObserver()
-    {
-        // Setup
-        var env = new TestEnvironment();
-
-        // Create a shared project with a user that is an observer
-        var sharedProject = new SharedProject { Permissions = new ParatextRegistryPermissionManager(ParatextUser01) };
-        sharedProject.Permissions.CreateUser(ParatextUser01);
-
-        // SUT
-        Assert.Throws<InvalidOperationException>(() =>
-            env.Service.ShareChanges(
-                sharedProjects: [sharedProject],
-                new SharedRepositorySource(),
-                out List<SendReceiveResult> _,
-                reviewProjects: []
-            )
-        );
     }
 
     private class TestEnvironment

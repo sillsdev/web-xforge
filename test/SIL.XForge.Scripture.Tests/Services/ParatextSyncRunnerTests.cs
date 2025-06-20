@@ -2611,6 +2611,13 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
 
+        env.ParatextService.UpdateBiblicalTerms(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<BiblicalTerm>>()
+            )
+            .Returns(new SyncMetricInfo(0, 0, 1));
+
         // This Biblical Term will be updated
         env.RealtimeService.GetRepository<BiblicalTerm>()
             .Add(
@@ -2761,6 +2768,10 @@ public class ParatextSyncRunnerTests
         Assert.AreEqual("domain03_en", biblicalTerm.Definitions["en"].Domains.Last());
         Assert.AreEqual("gloss02_en", biblicalTerm.Definitions["en"].Gloss);
         Assert.AreEqual("notes02_en", biblicalTerm.Definitions["en"].Notes);
+
+        // Check that the resource users metrics have been updated
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.ParatextBiblicalTerms, Is.EqualTo(new SyncMetricInfo(0, 0, 1)));
     }
 
     [Test]

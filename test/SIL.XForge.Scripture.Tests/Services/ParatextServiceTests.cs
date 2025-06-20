@@ -4096,6 +4096,30 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void SendReceiveAsync_ThrowsExceptionIfObserver()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // Create a project with a user that is an observer
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(user01Secret, UserRoles.Observer);
+
+        // SUT
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.SendReceiveAsync(
+                user01Secret,
+                ptProjectId,
+                null,
+                CancellationToken.None,
+                new SyncMetrics { ParatextBooks = new SyncMetricInfo(0, 0, 1) }
+            )
+        );
+    }
+
+    [Test]
     public async Task SendReceiveAsync_UserIsAdministrator_Succeeds()
     {
         var env = new TestEnvironment();
@@ -6300,8 +6324,13 @@ public class ParatextServiceTests
         IReadOnlyList<BiblicalTerm> biblicalTerms = [new BiblicalTerm()];
 
         // SUT
-        env.Service.UpdateBiblicalTerms(userSecret, env.PTProjectIds[env.Project01].Id, biblicalTerms);
+        SyncMetricInfo actual = env.Service.UpdateBiblicalTerms(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            biblicalTerms
+        );
         env.MockScrTextCollection.Received(1).FindById(Arg.Any<string>(), Arg.Any<string>());
+        Assert.That(actual, Is.EqualTo(new SyncMetricInfo()));
     }
 
     [Test]
@@ -6312,8 +6341,68 @@ public class ParatextServiceTests
         IReadOnlyList<BiblicalTerm> biblicalTerms = [];
 
         // SUT
-        env.Service.UpdateBiblicalTerms(userSecret, env.PTProjectIds[env.Project01].Id, biblicalTerms);
+        SyncMetricInfo actual = env.Service.UpdateBiblicalTerms(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            biblicalTerms
+        );
         env.MockScrTextCollection.DidNotReceive().FindById(Arg.Any<string>(), Arg.Any<string>());
+        Assert.That(actual, Is.EqualTo(new SyncMetricInfo()));
+    }
+
+    [Test]
+    public void UpdateBiblicalTerms_NoChange()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Setup term rendering
+        const string termId = "Ἀβιά-1";
+        const string rendering = "Abijah";
+        const string notes = "Notes";
+        env.ProjectFileManager.GetXml<TermRenderingsList>(Arg.Any<string>())
+            .Returns(
+                new TermRenderingsList
+                {
+                    RenderingsInternal =
+                    [
+                        new TermRendering
+                        {
+                            Id = termId,
+                            RenderingsInternal = rendering,
+                            Notes = notes,
+                        },
+                    ],
+                }
+            );
+
+        IReadOnlyList<BiblicalTerm> biblicalTerms =
+        [
+            new BiblicalTerm
+            {
+                TermId = termId,
+                Renderings = [rendering],
+                Description = notes,
+            },
+        ];
+
+        // SUT
+        SyncMetricInfo actual = env.Service.UpdateBiblicalTerms(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            biblicalTerms
+        );
+        env.ProjectFileManager.Received(1)
+            .SetXml(
+                Arg.Is<TermRenderingsList>(r =>
+                    r.Renderings.Single().Id == termId
+                    && r.Renderings.Single().RenderingsEntries.Single() == rendering
+                    && r.Renderings.Single().Notes == notes
+                ),
+                "TermRenderings.xml"
+            );
+        Assert.That(actual, Is.EqualTo(new SyncMetricInfo()));
     }
 
     [Test]
@@ -6354,7 +6443,11 @@ public class ParatextServiceTests
         ];
 
         // SUT
-        env.Service.UpdateBiblicalTerms(userSecret, env.PTProjectIds[env.Project01].Id, biblicalTerms);
+        SyncMetricInfo actual = env.Service.UpdateBiblicalTerms(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            biblicalTerms
+        );
         env.ProjectFileManager.Received(1)
             .SetXml(
                 Arg.Is<TermRenderingsList>(r =>
@@ -6364,6 +6457,7 @@ public class ParatextServiceTests
                 ),
                 "TermRenderings.xml"
             );
+        Assert.That(actual, Is.EqualTo(new SyncMetricInfo(0, 0, 1)));
     }
 
     [Test]
