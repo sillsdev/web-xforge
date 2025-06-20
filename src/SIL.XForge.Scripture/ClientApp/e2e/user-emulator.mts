@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 import { Locator, Page } from "npm:playwright";
 import { preset } from "./e2e-globals.ts";
 
@@ -5,28 +6,27 @@ export class UserEmulator {
   constructor(private readonly page: Page) {}
 
   async info(message: string, time = 3_000): Promise<void> {
-    const document: any = {};
     await this.page.evaluate(message => {
       const div = document.createElement("div");
       div.id = "info-message";
       div.textContent = message;
       div.style.position = "absolute";
-      div.style.top = 0;
-      div.style.left = 0;
-      div.style.right = 0;
-      div.style.bottom = 0;
-      div.style["z-index"] = 10000000;
+      div.style.top = "0";
+      div.style.left = "0";
+      div.style.right = "0";
+      div.style.bottom = "0";
+      div.style.zIndex = "1000000";
       div.style.background = "black";
       div.style.color = "white";
-      div.style["font-family"] = "Roboto";
-      div.style["font-size"] = "3em";
+      div.style.fontFamily = "Roboto";
+      div.style.fontSize = "3em";
       div.style.display = "flex";
-      div.style["align-items"] = "center";
-      div.style["justify-content"] = "center";
+      div.style.alignItems = "center";
+      div.style.justifyContent = "center";
 
       document.body.appendChild(div);
     }, message);
-    await this.page.waitForTimeout(time);
+    await this.page.waitForTimeout(preset.defaultUserDelay === 0 ? 0 : time);
     await this.page.evaluate(() => document.getElementById("info-message")?.remove());
   }
 
@@ -51,15 +51,17 @@ export class UserEmulator {
   }
 
   async type(text: string): Promise<void> {
-    // wait for the focused element to be an input
-    const document = {} as any;
-    await this.page.waitForFunction(() => ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName));
+    // wait for the focused element to be an input, textarea, or contenteditable
+    await this.page.waitForFunction(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return el != null && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable === true);
+    });
     await this.page.keyboard.type(text, { delay: this.typingDelay });
     await this.afterAction();
   }
 
   async clearField(locator: Locator): Promise<void> {
-    const characterCount = await locator.evaluate(el => el.value.length);
+    const characterCount = await locator.evaluate((el: HTMLInputElement) => el.value.length);
     for (let i = 0; i <= characterCount; i++) {
       await this.page.waitForTimeout(this.typingDelay / 2);
       await this.page.keyboard.press("Backspace");

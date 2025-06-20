@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 import { Browser, chromium, Locator, Page, PageScreenshotOptions } from 'npm:playwright';
 import { expect } from 'npm:playwright/test';
 import locales from '../../locales.json' with { type: 'json' };
@@ -83,6 +84,59 @@ export async function ensureOnMyProjectsPage(page: Page): Promise<void> {
   await page.waitForURL(url => url.pathname === '/projects');
 }
 
+/**
+ * Connect to a project, deleting it first if it already exists.
+ * @param page The Playwright page object.
+ * @param shortName The short name of the project to connect.
+ * @param source Optional short name of source text to select when connecting the project.
+ */
+export async function freshlyConnectProject(page: Page, shortName: string, source?: string): Promise<void> {
+  await ensureOnMyProjectsPage(page);
+  const connected = await isProjectConnected(page, shortName);
+  const joined = await isProjectJoined(page, shortName);
+
+  if (connected && !joined) await ensureJoinedOrConnectedToProject(page, shortName);
+
+  if (connected) {
+    await ensureNavigatedToProject(page, shortName);
+    await deleteProject(page, shortName);
+  }
+
+  await connectProject(page, shortName, source);
+}
+
+/**
+ * Connects a project by clicking the "Connect" button on the My Projects page. The project must not already be
+ * connected.
+ * @param page The Playwright page object.
+ * @param shortName The short name of the project to connect.
+ * @param source Optional short name of source text to select when connecting the project.
+ * @returns A promise that resolves when the project is connected.
+ */
+export async function connectProject(page: Page, shortName: string, source?: string): Promise<void> {
+  await ensureOnMyProjectsPage(page);
+  await page
+    .locator(`.user-unconnected-project:has-text("${shortName}")`)
+    .getByRole('link', { name: 'Connect' })
+    .click();
+
+  await page.waitForURL(url => /^\/connect-project/.test(url.pathname));
+
+  if (source != null) {
+    await page.getByRole('combobox', { name: 'Source text (optional)' }).click();
+    // FIXME(application-bug) The source text combobox is not always ready to be used immediately after opening the
+    // connect project page because resources are still loading, and if they load after the user types, the filtering
+    // doesn't happen until further input.
+    await page.waitForTimeout(5000);
+    await page.getByRole('combobox', { name: 'Source text (optional)' }).click();
+    await page.keyboard.type(source);
+    await page.getByRole('option', { name: `${source} - ` }).click();
+  }
+
+  await page.getByRole('button', { name: 'Connect' }).click();
+  await waitForNavigationToProjectPage(page, E2E_SYNC_DEFAULT_TIMEOUT);
+}
+
 export async function ensureJoinedOrConnectedToProject(page: Page, shortName: string): Promise<void> {
   // Wait for the project to be listed as connected or not connected
   await Promise.race([
@@ -96,17 +150,22 @@ export async function ensureJoinedOrConnectedToProject(page: Page, shortName: st
   // If not connected, click on the Connect or Join
   const project = await page.locator(`.user-unconnected-project:has-text("${shortName}")`);
 
-  if (await project.getByRole('button', { name: 'Join' }).isVisible()) {
-    await project.getByRole('button', { name: 'Join' }).click();
-  } else if (await project.getByRole('link', { name: 'Connect' }).isVisible()) {
-    await project.getByRole('link', { name: 'Connect' }).click();
+  const connectLocator = project.getByRole('link', { name: 'Connect' });
+  const joinLocator = project.getByRole('button', { name: 'Join' });
+
+  await expect(joinLocator.or(connectLocator)).toBeVisible();
+
+  if (await joinLocator.isVisible()) {
+    await joinLocator.click();
+  } else if (await connectLocator.isVisible()) {
+    await connectLocator.click();
     await page.waitForURL(url => /^\/connect-project/.test(url.pathname));
     await page.getByRole('button', { name: 'Connect' }).click();
   } else {
     throw new Error('Neither Join nor Connect button found');
   }
 
-  await page.waitForURL(url => /\/projects\/[a-z0-9]+/.test(url.pathname), { timeout: E2E_SYNC_DEFAULT_TIMEOUT });
+  await waitForNavigationToProjectPage(page, E2E_SYNC_DEFAULT_TIMEOUT);
 }
 
 export async function screenshot(
@@ -184,7 +243,11 @@ export async function ensureNavigatedToProject(page: Page, shortName: string): P
   await ensureOnMyProjectsPage(page);
 
   await page.getByRole('button', { name: shortName }).click();
-  await page.waitForURL(url => /\/projects\/[a-z0-9]+/.test(url.pathname));
+  await waitForNavigationToProjectPage(page);
+}
+
+export async function waitForNavigationToProjectPage(page: Page, timeout?: number): Promise<void> {
+  await page.waitForURL(url => /\/projects\/[a-z0-9]+/.test(url.pathname), { timeout });
 }
 
 export async function deleteProject(page: Page, shortName: string): Promise<void> {
@@ -238,15 +301,14 @@ export async function enableDeveloperMode(page: Page, options = { closeMenu: fal
 
 export async function installMouseFollower(page: Page): Promise<void> {
   const animationMs = Math.min(preset.defaultUserDelay, 200);
-  const document: any = {};
   await page.evaluate(animationMs => {
     const arrowSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M0 55.2L0 426c0 12.2 9.9 22 22 22c6.3 0 12.4-2.7 16.6-7.5L121.2 346l58.1 116.3c7.9 15.8 27.1 22.2 42.9 14.3s22.2-27.1 14.3-42.9L179.8 320l118.1 0c12.2 0 22.1-9.9 22.1-22.1c0-6.3-2.7-12.3-7.4-16.5L38.6 37.9C34.3 34.1 28.9 32 23.2 32C10.4 32 0 42.4 0 55.2z"/></svg>`;
     // Work around the inability to directly create an SVG element
     const span = document.createElement('span');
     span.innerHTML = arrowSvg;
-    const mouseFollower = span.firstChild;
+    const mouseFollower = span.firstElementChild as HTMLElement;
     mouseFollower.style.position = 'absolute';
-    mouseFollower.style['z-index'] = 1000000;
+    mouseFollower.style.zIndex = '1000000';
     mouseFollower.style.width = '30px';
     // Add a white border around the arrow for contrast with dark backgrounds
     mouseFollower.style.filter =
@@ -321,13 +383,12 @@ export function isRootUrl(url: string): boolean {
 }
 
 async function setLocatorToValue(page: Page, locator: string, value: string): Promise<void> {
-  // Trick TypeScript into not complaining that the document isn't defined
-  // The function is actually evaluated in the browser, not in Deno
-  // deno-lint-ignore no-explicit-any
-  const document = {} as any;
   return await page.evaluate(
     ({ locator, value }) => {
-      document.querySelector(locator).value = value;
+      const element = document.querySelector(locator);
+      if (element == null) throw new Error(`Element not found for locator: ${locator}`);
+      // @ts-ignore Property 'value' does not exist on type 'Element'.
+      element.value = value;
     },
     { locator, value }
   );
@@ -442,5 +503,55 @@ export class Utils {
 
   private static pad(n: number): string {
     return n.toString().padStart(2, '0');
+  }
+}
+
+/**
+ * Moves the caret to the end of the element using browser APIs.
+ * Supports input, textarea, or contenteditable elements.
+ */
+export async function moveCaretToEndOfSegment(page: Page, locator: Locator): Promise<void> {
+  // Focus the element
+  await locator.focus();
+
+  // Move caret to the end using browser APIs
+  await locator.evaluate((el: HTMLElement) => {
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+      const len: number = el.value.length;
+      el.setSelectionRange(len, len);
+    } else if (el.isContentEditable) {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      if (sel != null) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+  });
+}
+
+/**
+ * Deletes all text in the element by moving the caret to the end and pressing Backspace repeatedly.
+ * Supports input, textarea, or contenteditable elements.
+ */
+export async function deleteAllTextInSegment(page: Page, locator: Locator): Promise<void> {
+  // Move caret to the end first
+  await moveCaretToEndOfSegment(page, locator);
+
+  // Get the length of the text/content
+  const length: number = await locator.evaluate((el: HTMLElement): number => {
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+      return el.value.length;
+    } else if (el.isContentEditable) {
+      return el.textContent?.length ?? 0;
+    }
+    return 0;
+  });
+
+  // Press Backspace repeatedly to delete all text
+  for (let i = 0; i < length; i++) {
+    await page.keyboard.press('Backspace');
   }
 }
