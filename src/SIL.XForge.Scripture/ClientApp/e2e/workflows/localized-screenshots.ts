@@ -5,6 +5,7 @@ import { E2E_SYNC_DEFAULT_TIMEOUT, logger, preset, ScreenshotContext } from '../
 import {
   deleteProject,
   deleteUserAsSiteAdmin,
+  enableDeveloperMode,
   enableDraftingOnProjectAsServalAdmin,
   ensureJoinedOrConnectedToProject,
   getNewBrowserForSideWork,
@@ -103,7 +104,7 @@ export async function localizedScreenshots(
     await user.hover(homePageSignUpButtonLocator, defaultArrowLocation);
     await screenshot(
       page,
-      { ...context, pageName: 'localized_page_sign_up', locale: localeCode },
+      { ...context, pageName: 'page_sign_up', locale: localeCode },
       { clip: signUpButtonScreenshotClip }
     );
 
@@ -114,7 +115,7 @@ export async function localizedScreenshots(
     await user.hover(page.locator('.auth0-lock-social-button').first(), { x: 0.85, y: 0.6 });
     await screenshotElements(page, [page.locator('.auth0-lock-widget-container')], {
       ...context,
-      pageName: 'localized_auth0_sign_up_with_pt',
+      pageName: 'auth0_sign_up_with_pt',
       locale: localeCode
     });
     await page.locator('.auth0-lock-social-button').first().click();
@@ -127,7 +128,7 @@ export async function localizedScreenshots(
     await user.hover(page.locator('#password-group').getByRole('button'));
     await screenshot(
       page,
-      { ...context, pageName: 'localized_pt_registry_login', locale: localeCode },
+      { ...context, pageName: 'pt_registry_login', locale: localeCode },
       { animations: 'disabled' }
     );
   }
@@ -163,7 +164,7 @@ export async function localizedScreenshots(
 
   await forEachLocale(async locale => {
     await user.hover(joinOrConnectLocator.first(), defaultArrowLocation);
-    await screenshot(page, { ...context, pageName: 'localized_my_projects', locale });
+    await screenshot(page, { ...context, pageName: 'my_projects', locale });
   });
 
   await joinOrConnectLocator.click();
@@ -173,7 +174,7 @@ export async function localizedScreenshots(
   await connectButtonLocator.click({ trial: true }); // wait for the button to be clickable
   await forEachLocale(async locale => {
     await user.hover(connectButtonLocator, defaultArrowLocation);
-    await screenshot(page, { ...context, pageName: 'localized_connected_project', locale });
+    await screenshot(page, { ...context, pageName: 'connect_project', locale });
   });
 
   await connectButtonLocator.click();
@@ -184,7 +185,7 @@ export async function localizedScreenshots(
   const syncButtonLocator = page.locator('mat-card').getByRole('button');
   await forEachLocale(async locale => {
     await user.hover(syncButtonLocator, defaultArrowLocation);
-    await screenshot(page, { ...context, pageName: 'localized_sync', locale });
+    await screenshot(page, { ...context, pageName: 'sync', locale });
   });
 
   await navLocator(page, 'generate_draft').click();
@@ -224,6 +225,7 @@ export async function localizedScreenshots(
 
   await forEachLocale(async locale => {
     await user.hover(await page.getByRole('combobox'), defaultArrowLocation);
+    await page.waitForTimeout(200); // Wait for the hover effect on the input
     await screenshotElements(
       page,
       [page.locator('app-draft-sources > .draft-sources-stepper'), page.locator('app-draft-sources > .overview')],
@@ -312,6 +314,91 @@ export async function localizedScreenshots(
       page,
       [page.locator('app-draft-generation')],
       { ...context, pageName: 'generate_draft_summary', locale },
+      { margin: 8 }
+    );
+  });
+
+  // Generate the draft
+
+  await enableDeveloperMode(page, { closeMenu: true });
+  await user.check(page.getByRole('checkbox', { name: 'Use Echo Translation Engine' }));
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Generate draft' }).click();
+  await expect(page.getByText('Draft queued')).toBeVisible({ timeout: 60_000 });
+
+  // Go to settings page and set a source while the draft is being generated
+  await navLocator(page, 'settings').click();
+  await page.getByRole('combobox', { name: 'Source text (optional)' }).fill('ntv');
+  await page.getByRole('option', { name: 'NTV - ' }).click();
+  await page.waitForSelector('#sync-icon:not(.sync-in-progress)', { timeout: E2E_SYNC_DEFAULT_TIMEOUT });
+
+  // Go back to the draft generation page
+  await navLocator(page, 'generate_draft').click();
+  await expect(page.getByText('Your draft is ready')).toBeVisible({ timeout: 180_000 });
+  await page.reload();
+  await installMouseFollower(page);
+  // Wait for the draft status to start updating
+  await page.waitForTimeout(5_000);
+  await expect(page.getByText('Your draft is ready')).toBeVisible();
+  await expect(page.getByText('No books have any drafts')).not.toBeVisible();
+  await expect(page.getByText('Draft is finishing')).not.toBeVisible();
+
+  await forEachLocale(async locale => {
+    await user.hover(page.getByRole('radio').first(), defaultArrowLocation);
+    await screenshot(page, { ...context, pageName: 'draft_complete', locale });
+  });
+
+  await page.getByRole('radio', { name: 'Ruth' }).first().click();
+
+  await expect(page.getByRole('button', { name: 'Add to project' })).toBeVisible();
+
+  await forEachLocale(async locale => {
+    await user.hover(page.locator('.apply-draft-button-container').getByRole('button'), defaultArrowLocation);
+    await screenshot(page, { ...context, pageName: 'draft_preview', locale });
+  });
+
+  await page.getByRole('button', { name: 'Add to project' }).click();
+  await page.getByRole('button', { name: 'Overwrite chapter' }).click();
+
+  await forEachLocale(async locale => {
+    await user.hover(page.locator('.apply-draft-button-container').getByRole('button'), defaultArrowLocation);
+
+    await screenshot(page, { ...context, pageName: 'chapter_imported', locale });
+  });
+
+  // Go back to the draft generation page
+  await navLocator(page, 'generate_draft').click();
+  await expect(page.getByText('Your draft is ready')).toBeVisible();
+
+  await forEachLocale(async locale => {
+    await page.getByRole('radio').nth(1).click();
+    await user.hover(page.getByRole('menuitem').last(), defaultArrowLocation);
+    await screenshot(page, { ...context, pageName: 'import_book', locale });
+    await page.keyboard.press('Escape');
+  });
+
+  await forEachLocale(async locale => {
+    await page.getByRole('radio').nth(1).click();
+    await page.getByRole('menuitem').last().click();
+    await page.getByRole('combobox').fill('seedsp2');
+    await page.getByRole('option', { name: 'seedsp2 - ' }).click();
+    await page.getByRole('checkbox').check();
+    await user.hover(page.getByRole('button').last(), defaultArrowLocation);
+    await screenshotElements(
+      page,
+      [page.locator('mat-dialog-container')],
+      { ...context, pageName: 'import_book_dialog', locale },
+      { margin: 8 }
+    );
+    await page.keyboard.press('Escape');
+  });
+
+  await forEachLocale(async locale => {
+    await user.hover(page.locator('[data-test-id="download-button"]'), defaultArrowLocation);
+    await screenshotElements(
+      page,
+      [page.locator('.draft-complete')],
+      { ...context, pageName: 'download_usfm', locale },
       { margin: 8 }
     );
   });

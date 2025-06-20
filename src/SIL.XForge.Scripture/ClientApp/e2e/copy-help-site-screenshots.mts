@@ -1,12 +1,13 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-run
 
 import { walk } from "jsr:@std/fs/walk";
+import path from "node:path";
 import { pngImagesDiffer } from "./compare-images.mts";
 import { ScreenshotEvent } from "./e2e-test-run-logger.ts";
 
 const runLogDir = Deno.args[0];
 const helpRepo = Deno.args[1];
-const copyFilesEvenIfIdentical = true;
+const copyFilesEvenIfIdentical = false;
 
 if (runLogDir == null || helpRepo == null) {
   console.error("Usage: ./copy-help-site-screenshots.mts <run_log_dir> <help_repo>");
@@ -27,7 +28,7 @@ function getDirForLocale(localeCode: string): string {
     : `${helpRepo}/i18n/${localeCode}/docusaurus-plugin-content-docs/current`;
 }
 
-function getScreenshotByFileNameAndLocale(fileName: string, localeCode: string): any | undefined {
+function getScreenshotByFileNameAndLocale(fileName: string, localeCode: string): ScreenshotEvent | undefined {
   const pageName = fileName.replace(/\.png$/, "");
   return screenshotEvents.find(event => event.context.pageName === pageName && event.context.locale === localeCode);
 }
@@ -44,28 +45,58 @@ async function imagesInMarkdownFile(filePath: string): Promise<string[]> {
   return matches.map(match => match[1]);
 }
 
+const screenshotsReferencedByHelpFiles = new Set<string>();
+
 for (const locale of localeCodesInRunLog()) {
   const localeDir = getDirForLocale(locale);
   try {
     console.log(`Walking directory: ${localeDir}`);
     for await (const entry of walk(localeDir)) {
-      if (entry.isFile && entry.name.endsWith(".md")) {
+      // Remove any PNG files that are not referenced by Markdown files
+      if (entry.isDirectory) {
+        const pngsReferencedByMarkdownFiles: string[] = [];
+        const pngsInDirectory: string[] = [];
+        for await (const subEntry of Deno.readDir(entry.path)) {
+          if (subEntry.isFile && subEntry.name.endsWith(".md")) {
+            pngsReferencedByMarkdownFiles.push(...(await imagesInMarkdownFile(path.join(entry.path, subEntry.name))));
+          } else if (subEntry.isFile && subEntry.name.endsWith(".png")) {
+            pngsInDirectory.push(subEntry.name);
+          }
+        }
+
+        for (const imageFileName of pngsInDirectory) {
+          if (!pngsReferencedByMarkdownFiles.includes(imageFileName)) {
+            const filePath = path.join(entry.path, imageFileName);
+            console.log(`Removing unreferenced screenshot: ${filePath}`);
+            await Deno.remove(filePath);
+          }
+        }
+
+        // Copy screenshots referenced by Markdown files
+      } else if (entry.isFile && entry.name.endsWith(".md")) {
         for (const imageFileName of await imagesInMarkdownFile(entry.path)) {
           const screenshot = getScreenshotByFileNameAndLocale(imageFileName, locale);
-          if (screenshot) {
-            console.log(`Found screenshot for image ${imageFileName} in locale ${locale}:`, screenshot.fileName);
-            const markdownFileDir = entry.path.substring(0, entry.path.lastIndexOf("/"));
-            const source = `${runLogDir}/${screenshot.fileName}`;
-            const destination = `${markdownFileDir}/${imageFileName}`;
+          if (screenshot != null) {
+            screenshotsReferencedByHelpFiles.add(screenshot.context.pageName!);
+            console.log(`Found screenshot for image ${imageFileName} in ${localeDir}:`, screenshot.fileName);
+            const markdownFileDir = path.dirname(entry.path);
+            const source = path.join(runLogDir, screenshot.fileName);
+            const destination = path.join(markdownFileDir, imageFileName);
             await copyScreenshotIfDiffers(source, destination);
           } else {
-            console.warn(`No screenshot found for image ${imageFileName} in locale ${locale}`);
+            console.warn(`No screenshot found for image ${imageFileName} in ${localeDir}`);
           }
         }
       }
     }
   } catch (error) {
     console.error(`Error reading directory ${localeDir}:`, error);
+  }
+}
+
+for (const pageName of new Set(screenshotEvents.map(event => event.context.pageName))) {
+  if (pageName != null && !screenshotsReferencedByHelpFiles.has(pageName)) {
+    console.warn(`Screenshot "${pageName}" is not referenced by any help file.`);
   }
 }
 
@@ -79,14 +110,14 @@ for (const locale of localeCodesInRunLog()) {
  * @throws If the source file does not exist or if the copy fails.
  */
 async function copyScreenshotIfDiffers(source: string, destination: string): Promise<void> {
-  const imageDiffers = pngImagesDiffer(source, destination);
+  const imageDiffers = pngImagesDiffer(source, destination, "diff.png");
   if (imageDiffers || copyFilesEvenIfIdentical) {
     // zopflipng npm package must be installed globally for this to work
     console.log(`Copying ${source} to ${destination} using zopflipng...`);
     const zopflipng = new Deno.Command("zopflipng", { args: ["-y", source, destination], stdout: "inherit" });
     const status = await zopflipng.output();
     if (status.code !== 0) {
-      throw new Error(`Failed to copy ${source} to ${destination} using zopflipng:`, status);
+      throw new Error(`Failed to copy ${source} to ${destination} using zopflipng: ${status}`);
     }
   } else {
     console.log(`Skipping ${source} as it is identical to ${destination}`);
