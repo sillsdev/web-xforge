@@ -1,6 +1,6 @@
 import { preset, ScreenshotContext } from './e2e-globals.ts';
 
-interface ScreenshotEvent {
+export interface ScreenshotEvent {
   fileName: string;
   context: ScreenshotContext;
 }

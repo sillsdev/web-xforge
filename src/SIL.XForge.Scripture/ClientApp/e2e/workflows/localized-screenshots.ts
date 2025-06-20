@@ -103,7 +103,7 @@ export async function localizedScreenshots(
     await user.hover(homePageSignUpButtonLocator, defaultArrowLocation);
     await screenshot(
       page,
-      { ...context, pageName: 'localized_page_sign_up', locale: localeCode },
+      { ...context, pageName: 'page_sign_up', locale: localeCode },
       { clip: signUpButtonScreenshotClip }
     );
 
@@ -114,7 +114,7 @@ export async function localizedScreenshots(
     await user.hover(page.locator('.auth0-lock-social-button').first(), { x: 0.85, y: 0.6 });
     await screenshotElements(page, [page.locator('.auth0-lock-widget-container')], {
       ...context,
-      pageName: 'localized_auth0_sign_up_with_pt',
+      pageName: 'auth0_sign_up_with_pt',
       locale: localeCode
     });
     await page.locator('.auth0-lock-social-button').first().click();
@@ -127,7 +127,7 @@ export async function localizedScreenshots(
     await user.hover(page.locator('#password-group').getByRole('button'));
     await screenshot(
       page,
-      { ...context, pageName: 'localized_pt_registry_login', locale: localeCode },
+      { ...context, pageName: 'pt_registry_login', locale: localeCode },
       { animations: 'disabled' }
     );
   }
@@ -163,7 +163,7 @@ export async function localizedScreenshots(
 
   await forEachLocale(async locale => {
     await user.hover(joinOrConnectLocator.first(), defaultArrowLocation);
-    await screenshot(page, { ...context, pageName: 'localized_my_projects', locale });
+    await screenshot(page, { ...context, pageName: 'my_projects', locale });
   });
 
   await joinOrConnectLocator.click();
@@ -173,7 +173,7 @@ export async function localizedScreenshots(
   await connectButtonLocator.click({ trial: true }); // wait for the button to be clickable
   await forEachLocale(async locale => {
     await user.hover(connectButtonLocator, defaultArrowLocation);
-    await screenshot(page, { ...context, pageName: 'localized_connected_project', locale });
+    await screenshot(page, { ...context, pageName: 'connect_project', locale });
   });
 
   await connectButtonLocator.click();
@@ -184,7 +184,7 @@ export async function localizedScreenshots(
   const syncButtonLocator = page.locator('mat-card').getByRole('button');
   await forEachLocale(async locale => {
     await user.hover(syncButtonLocator, defaultArrowLocation);
-    await screenshot(page, { ...context, pageName: 'localized_sync', locale });
+    await screenshot(page, { ...context, pageName: 'sync', locale });
   });
 
   await navLocator(page, 'generate_draft').click();
