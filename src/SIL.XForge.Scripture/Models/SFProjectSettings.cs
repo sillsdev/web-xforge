@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SIL.XForge.Scripture.Models;
 
@@ -18,6 +19,7 @@ public class SFProjectSettings
 
     // pre-translation settings
     public bool? AdditionalTrainingData { get; set; }
+    public IEnumerable<string>? AdditionalTrainingDataFiles { get; set; }
     public bool? AdditionalTrainingSourceEnabled { get; set; }
     public string? AdditionalTrainingSourceParatextId { get; set; }
     public bool? AlternateSourceEnabled { get; set; }

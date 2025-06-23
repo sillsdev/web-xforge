@@ -7,13 +7,14 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of, Subject } from 'rxjs';
-import { anything, capture, mock, verify, when } from 'ts-mockito';
+import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -27,10 +28,12 @@ import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSource, DraftSourcesAsArrays, DraftSourcesService } from '../draft-sources.service';
 import { translateSourceToSelectableProjectWithLanguageTag } from '../draft-utils';
+import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftSourcesComponent, sourceArraysToSettingsChange } from './draft-sources.component';
 
 /** This interface allows specification of a project using multiple types at once, to help the spec provide the
@@ -54,6 +57,14 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedSFUserProjectsService = mock(SFUserProjectsService);
 const mockedAuthService = mock(AuthService);
 const mockedDialogService = mock(DialogService);
+const mockTrainingDataService = mock(TrainingDataService);
+
+const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
+const trainingDataQueryLocalChanges$: Subject<void> = new Subject<void>();
+when(mockTrainingDataQuery.localChanges$).thenReturn(trainingDataQueryLocalChanges$);
+when(mockTrainingDataQuery.ready$).thenReturn(of(true));
+when(mockTrainingDataQuery.remoteChanges$).thenReturn(of());
+when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
 
 describe('DraftSourcesComponent', () => {
   configureTestingModule(() => ({
@@ -75,6 +86,7 @@ describe('DraftSourcesComponent', () => {
       { provide: AuthService, useMock: mockedAuthService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialogService },
+      { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: ErrorReportingService, useMock: mock(ErrorReportingService) }
     ]
   }));
@@ -138,7 +150,9 @@ describe('DraftSourcesComponent', () => {
           env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
         additionalTrainingSourceEnabled: true,
         additionalTrainingSourceParatextId:
-          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId,
+        additionalTrainingDataFiles:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.lastSelectedTrainingDataFiles
       };
 
       // No unsaved changes
@@ -175,7 +189,9 @@ describe('DraftSourcesComponent', () => {
           env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
         // The second training source, the "additional training source", should not be set.
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset
+        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset,
+        additionalTrainingDataFiles:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.lastSelectedTrainingDataFiles
       };
 
       // Remove the second training source.
@@ -219,7 +235,9 @@ describe('DraftSourcesComponent', () => {
           env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId,
         // And the second training source, the "additional training source", should not be set.
         additionalTrainingSourceEnabled: false,
-        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset
+        additionalTrainingSourceParatextId: DraftSourcesComponent.projectSettingValueUnset,
+        additionalTrainingDataFiles:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.lastSelectedTrainingDataFiles
       };
 
       // Remove the first training source.
@@ -282,6 +300,36 @@ describe('DraftSourcesComponent', () => {
       tick();
       expect(env.component.trainingSources.length).toEqual(2);
     }));
+
+    it('saves the selected training files', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      env.clickLanguageCodesConfirmationCheckbox();
+
+      const expectedSettingsChangeRequest: SFProjectSettings = {
+        alternateSourceEnabled: true,
+        alternateSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateSource!.paratextId,
+        alternateTrainingSourceEnabled: true,
+        alternateTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.alternateTrainingSource!.paratextId,
+        additionalTrainingSourceEnabled: true,
+        additionalTrainingSourceParatextId:
+          env.activatedProjectDoc.data!.translateConfig.draftConfig.additionalTrainingSource!.paratextId,
+        additionalTrainingDataFiles: ['test1', 'test2']
+      };
+
+      env.component.onTrainingDataSelect(['test1', 'test2']);
+
+      env.component.save();
+      tick();
+      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
+      const actualSettingsChangeRequest: SFProjectSettings = capture(
+        mockedSFProjectService.onlineUpdateSettings
+      ).last()[1];
+      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+    }));
   });
 
   describe('sourceArraysToSettingsChange', () => {
@@ -330,6 +378,7 @@ describe('DraftSourcesComponent', () => {
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
+        [],
         currentProjectParatextId
       );
 
@@ -339,7 +388,8 @@ describe('DraftSourcesComponent', () => {
         alternateSourceEnabled: false,
         alternateSourceParatextId: 'unset',
         alternateTrainingSourceEnabled: false,
-        alternateTrainingSourceParatextId: 'unset'
+        alternateTrainingSourceParatextId: 'unset',
+        additionalTrainingDataFiles: []
       });
     });
 
@@ -354,6 +404,7 @@ describe('DraftSourcesComponent', () => {
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
+        [],
         currentProjectParatextId
       );
       expect(result).toEqual({
@@ -362,7 +413,8 @@ describe('DraftSourcesComponent', () => {
         alternateSourceEnabled: false,
         alternateSourceParatextId: 'unset',
         alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId: mockProject1.paratextId
+        alternateTrainingSourceParatextId: mockProject1.paratextId,
+        additionalTrainingDataFiles: []
       });
     });
 
@@ -377,6 +429,7 @@ describe('DraftSourcesComponent', () => {
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
+        [],
         currentProjectParatextId
       );
       expect(result).toEqual({
@@ -385,7 +438,8 @@ describe('DraftSourcesComponent', () => {
         alternateSourceEnabled: false,
         alternateSourceParatextId: 'unset',
         alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId: mockProject1.paratextId
+        alternateTrainingSourceParatextId: mockProject1.paratextId,
+        additionalTrainingDataFiles: []
       });
     });
 
@@ -400,6 +454,7 @@ describe('DraftSourcesComponent', () => {
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
+        [],
         currentProjectParatextId
       );
       expect(result).toEqual({
@@ -408,7 +463,8 @@ describe('DraftSourcesComponent', () => {
         alternateSourceEnabled: true,
         alternateSourceParatextId: mockProject1.paratextId,
         alternateTrainingSourceEnabled: false,
-        alternateTrainingSourceParatextId: 'unset'
+        alternateTrainingSourceParatextId: 'unset',
+        additionalTrainingDataFiles: []
       });
     });
 
@@ -423,6 +479,7 @@ describe('DraftSourcesComponent', () => {
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
+        [],
         currentProjectParatextId
       );
       expect(result).toEqual({
@@ -431,7 +488,8 @@ describe('DraftSourcesComponent', () => {
         alternateSourceEnabled: true,
         alternateSourceParatextId: mockProject1.paratextId,
         alternateTrainingSourceEnabled: true,
-        alternateTrainingSourceParatextId: mockProject1.paratextId
+        alternateTrainingSourceParatextId: mockProject1.paratextId,
+        additionalTrainingDataFiles: []
       });
     });
 
@@ -447,6 +505,7 @@ describe('DraftSourcesComponent', () => {
           sources.trainingSources,
           sources.draftingSources,
           sources.trainingTargets,
+          [],
           currentProjectParatextId
         )
       ).toThrow();
@@ -463,6 +522,7 @@ describe('DraftSourcesComponent', () => {
         sources.trainingSources,
         sources.draftingSources,
         sources.trainingTargets,
+        [],
         currentProjectParatextId
       );
       expect(result).toEqual({
@@ -471,7 +531,8 @@ describe('DraftSourcesComponent', () => {
         alternateSourceEnabled: false,
         alternateSourceParatextId: 'unset',
         alternateTrainingSourceEnabled: false,
-        alternateTrainingSourceParatextId: 'unset'
+        alternateTrainingSourceParatextId: 'unset',
+        additionalTrainingDataFiles: []
       });
     });
 
@@ -660,6 +721,11 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectId).thenReturn(this.activatedProjectDoc.id);
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.activatedProjectDoc);
     this.testOnlineStatusService.setIsOnline(!!args.isOnline);
+
+    when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
+      instance(mockTrainingDataQuery)
+    );
+    when(mockTrainingDataQuery.docs).thenReturn([]);
 
     this.fixture = TestBed.createComponent(DraftSourcesComponent);
     this.component = this.fixture.componentInstance;

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogConfig } from '@angular/material/dialog';
@@ -11,9 +11,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SharedModule } from '../../../shared/shared.module';
 import {
   TrainingDataUploadDialogComponent,
@@ -32,43 +30,21 @@ export interface TrainingDataOption {
   imports: [CommonModule, MatButtonModule, MatChipsModule, MatIconModule, SharedModule, TranslocoModule],
   styleUrls: ['./training-data-multi-select.component.scss']
 })
-export class TrainingDataMultiSelectComponent implements OnChanges, OnInit {
+export class TrainingDataMultiSelectComponent implements OnChanges {
   @Input() availableTrainingData: TrainingData[] = [];
   @Input() selectedTrainingDataIds: string[] = [];
   @Output() trainingDataSelect = new EventEmitter<string[]>();
 
-  sourceLanguage?: string;
-  targetLanguage?: string;
   trainingDataOptions: TrainingDataOption[] = [];
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly dialogService: DialogService,
-    private readonly i18n: I18nService,
     private readonly trainingDataService: TrainingDataService,
-    private readonly userService: UserService,
-    private destroyRef: DestroyRef
+    private readonly userService: UserService
   ) {}
-
-  ngOnInit(): void {
-    this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.sourceLanguage = this.getLanguageDisplayName('source');
-      this.targetLanguage = this.getLanguageDisplayName('target');
-    });
-  }
 
   ngOnChanges(): void {
     this.initTrainingDataOptions();
-  }
-
-  private getLanguageDisplayName(project: 'source' | 'target'): string | undefined {
-    const projectDoc: SFProjectProfile | undefined = this.activatedProjectService.projectDoc?.data;
-    if (projectDoc == null) {
-      return undefined;
-    } else if (project === 'source') {
-      return this.i18n.getLanguageDisplayName(projectDoc.translateConfig.source?.writingSystem.tag);
-    } else {
-      return this.i18n.getLanguageDisplayName(projectDoc.writingSystem.tag);
-    }
   }
 
   canDeleteTrainingData(trainingData: TrainingData): boolean {
