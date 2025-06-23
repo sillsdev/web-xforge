@@ -106,11 +106,13 @@ public static class DeltaUsxTestExtensions
         return delta.InsertText(text, segRef, attributes);
     }
 
+    public static Delta InsertBlank(this Delta delta, string? segRef) => delta.InsertText(string.Empty, segRef);
+
     public static Delta InsertEmptyChar(
         this Delta delta,
         string style,
         string cid,
-        string segRef = null,
+        string? segRef = null,
         bool invalid = false
     )
     {
@@ -119,7 +121,7 @@ public static class DeltaUsxTestExtensions
         );
         if (invalid)
             attributes.Add(new JProperty("invalid-inline", true));
-        return delta.InsertEmpty(segRef, attributes);
+        return delta.InsertText(string.Empty, segRef, attributes);
     }
 
     public static Delta InsertCharRef(

@@ -12,7 +12,7 @@ public class DeltaTests
     public void Insert_EmptyText_EmptyOps()
     {
         var delta = Delta.New().Insert("");
-        Assert.That(delta.Ops, Is.Empty);
+        Assert.That(delta.Ops, Is.EqualTo(Objs(new { insert = string.Empty })));
     }
 
     [Test]

@@ -47,11 +47,8 @@ public class Delta
             attrsToken ??= JToken.FromObject(attributes);
         }
 
-        if (textToken.Type == JTokenType.String && ((string)textToken).Length == 0)
-            return this;
-
         var newOp = new JObject(new JProperty(InsertType, textToken));
-        if (attrsToken != null && attrsToken.HasValues)
+        if (attrsToken is { HasValues: true })
             newOp[Attributes] = attrsToken;
 
         return Add(newOp);

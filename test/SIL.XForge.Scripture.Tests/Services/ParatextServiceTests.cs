@@ -1611,7 +1611,7 @@ public class ParatextServiceTests
             // \b text after stanza break
             const string chapterText =
                 "[ { \"insert\": { \"chapter\": { \"style\": \"c\", \"number\": \"1\" } } }, "
-                + "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"q_1\" } },"
+                + "{ \"insert\": \"\", \"attributes\": { \"segment\": \"q_1\" } },"
                 + "{ \"insert\": { \"verse\": { \"style\": \"v\", \"number\": \"1\" } } }, "
                 + "{ \"insert\": \""
                 + text1
@@ -7730,7 +7730,7 @@ public class ParatextServiceTests
                             + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"p\" } }}, "
                             + "{ \"insert\": \"Section heading text\", \"attributes\": { \"segment\": \"s_1\" } }, "
                             + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"s\" } }}, "
-                            + "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"p_1\" } }"
+                            + "{ \"insert\": \"\", \"attributes\": { \"segment\": \"p_1\" } }"
                     );
                 }
             }

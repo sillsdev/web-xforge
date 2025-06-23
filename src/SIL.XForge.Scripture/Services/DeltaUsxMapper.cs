@@ -303,7 +303,7 @@ public class DeltaUsxMapper(
                         }
                         newChildAttributes = AddInvalidInlineAttribute(invalidNodes, elem, newChildAttributes);
                         if (!elem.Nodes().Any() && elem.Value == "")
-                            newDelta.InsertEmpty(state.CurRef, newChildAttributes);
+                            newDelta.InsertText(elem.Value, state.CurRef, newChildAttributes);
                         else
                             ProcessChildNodes(elem, newDelta, invalidNodes, state, newChildAttributes);
                         break;
@@ -428,7 +428,7 @@ public class DeltaUsxMapper(
 
         if (newDelta.Ops.Count == 0)
         {
-            newDelta.InsertBlank(segRef);
+            newDelta.InsertText(string.Empty, segRef);
         }
         else
         {
@@ -444,7 +444,7 @@ public class DeltaUsxMapper(
                 || lastOpText.EndsWith('\n')
             )
             {
-                newDelta.InsertBlank(segRef);
+                newDelta.InsertText(string.Empty, segRef);
             }
         }
     }
@@ -679,7 +679,14 @@ public class DeltaUsxMapper(
             // If we are inserting a basic string, rather than a more complex object, like a chapter number.
             if (op[Delta.InsertType].Type == JTokenType.String)
             {
-                var text = (string)op[Delta.InsertType];
+                string text = (string)op[Delta.InsertType];
+
+                // Skip blanks
+                if (string.IsNullOrEmpty(text))
+                {
+                    continue;
+                }
+
                 // If we were recently working with table information, but the current op doesn't describe the end of a
                 // table cell, and we seem to be done with the table, then end the table.
                 if (curTableAttrs != null && attrs?["table"] == null && text == "\n")
@@ -796,7 +803,7 @@ public class DeltaUsxMapper(
 
                         case "blank":
                         case "empty":
-                            // ignore blank and empty embeds
+                            // Ignore legacy blank and empty embeds
                             break;
 
                         default:
