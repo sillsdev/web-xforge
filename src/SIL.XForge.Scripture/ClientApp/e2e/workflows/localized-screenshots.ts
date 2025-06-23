@@ -150,7 +150,7 @@ export async function localizedScreenshots(
   if (preset.showArrow) await installMouseFollower(page);
 
   const joinOrConnectLocator = page.locator(`.user-unconnected-project:has-text("${shortName}")`).getByRole('link');
-  await expect(joinOrConnectLocator).toBeVisible();
+  await expect(joinOrConnectLocator).toBeVisible({ timeout: 30_000 });
 
   async function forEachLocale(callback: (localeCode: string) => Promise<void>): Promise<void> {
     for (let i = 0; i < preset.locales.length; i++) {
