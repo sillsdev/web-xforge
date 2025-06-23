@@ -150,6 +150,7 @@ public class SFProjectsRpcController(
                     { "SourceParatextId", settings?.SourceParatextId },
                     { "BiblicalTermsEnabled", settings?.BiblicalTermsEnabled?.ToString() },
                     { "AdditionalTrainingData", settings?.AdditionalTrainingData?.ToString() },
+                    { "AdditionalTrainingDataFiles", settings?.AdditionalTrainingDataFiles?.ToString() },
                     { "AlternateSourceParatextId", settings?.AlternateSourceParatextId },
                     { "AlternateTrainingSourceEnabled", settings?.AlternateTrainingSourceEnabled?.ToString() },
                     { "AlternateTrainingSourceParatextId", settings?.AlternateTrainingSourceParatextId },
