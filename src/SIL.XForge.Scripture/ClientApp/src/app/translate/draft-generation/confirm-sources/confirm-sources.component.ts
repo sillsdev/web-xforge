@@ -6,6 +6,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { projectLabel } from '../../../shared/utils';
 import {
   DraftSourcesAsSelectableProjectArrays,
   draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays,
@@ -38,6 +39,10 @@ export class ConfirmSourcesComponent {
         );
       }
     });
+  }
+
+  projectLabel(project: SelectableProjectWithLanguageCode): string {
+    return projectLabel(project);
   }
 
   get trainingSources(): SelectableProjectWithLanguageCode[] {
