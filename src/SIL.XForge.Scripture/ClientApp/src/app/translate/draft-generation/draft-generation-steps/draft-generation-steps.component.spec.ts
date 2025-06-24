@@ -843,7 +843,7 @@ describe('DraftGenerationStepsComponent', () => {
         texts: availableBooks,
         translateConfig: {
           source: { projectRef: 'sourceProject', shortName: 'sP1', writingSystem: { tag: 'eng' } },
-          draftConfig: { additionalTrainingData: true, lastSelectedTrainingDataFiles: ['file1'] }
+          draftConfig: { lastSelectedTrainingDataFiles: ['file1'] }
         },
         writingSystem: { tag: 'nllb' }
       })

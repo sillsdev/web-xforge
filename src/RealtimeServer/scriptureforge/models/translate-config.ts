@@ -53,7 +53,6 @@ export interface DraftUsfmConfig {
 }
 
 export interface DraftConfig {
-  additionalTrainingData: boolean;
   additionalTrainingSourceEnabled: boolean;
   additionalTrainingSource?: TranslateSource;
   alternateSourceEnabled: boolean;

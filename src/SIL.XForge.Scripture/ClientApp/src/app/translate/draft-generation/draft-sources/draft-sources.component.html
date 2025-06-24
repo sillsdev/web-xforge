@@ -110,16 +110,14 @@
             [placeholder]="projectPlaceholder(source)"
           ></app-project-select>
         }
-        @if (trainingDataFilesAvailable) {
-          <p>{{ t("training_files_description", { sourceLanguageDisplayName, targetLanguageDisplayName }) }}</p>
-          <div class="training-files">
-            <app-training-data-multi-select
-              [availableTrainingData]="availableTrainingFiles"
-              [selectedTrainingDataIds]="selectedTrainingFileIds"
-              (trainingDataSelect)="onTrainingDataSelect($event)"
-            ></app-training-data-multi-select>
-          </div>
-        }
+        <p>{{ t("training_files_description", { sourceLanguageDisplayName, targetLanguageDisplayName }) }}</p>
+        <div class="training-files">
+          <app-training-data-multi-select
+            [availableTrainingData]="availableTrainingFiles"
+            [selectedTrainingDataIds]="selectedTrainingFileIds"
+            (trainingDataSelect)="onTrainingDataSelect($event)"
+          ></app-training-data-multi-select>
+        </div>
 
         <ng-container *ngTemplateOutlet="navigationButtons"></ng-container>
       </div>

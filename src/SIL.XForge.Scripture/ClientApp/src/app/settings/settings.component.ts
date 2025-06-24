@@ -39,7 +39,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new FormControl(false);
   sourceParatextId = new FormControl<string | undefined>(undefined);
   biblicalTermsEnabled = new FormControl(false);
-  additionalTrainingData = new FormControl(false);
   servalConfig = new FormControl<string | undefined>(undefined);
   checkingEnabled = new FormControl(false);
   usersSeeEachOthersResponses = new FormControl(false);
@@ -58,7 +57,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
     biblicalTermsEnabled: this.biblicalTermsEnabled,
-    additionalTrainingData: this.additionalTrainingData,
     servalConfig: this.servalConfig,
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
@@ -353,10 +351,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
-    if (this.settingChanged(newValue, 'additionalTrainingData')) {
-      this.updateSetting(newValue, 'additionalTrainingData');
-    }
-
     this.updateCheckingConfig(newValue);
 
     // Update the sharing settings
@@ -441,7 +435,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
       biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
-      additionalTrainingData: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingData,
       servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
@@ -487,7 +480,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
-    this.controlStates.set('additionalTrainingData', ElementState.InSync);
     this.controlStates.set('servalConfig', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
