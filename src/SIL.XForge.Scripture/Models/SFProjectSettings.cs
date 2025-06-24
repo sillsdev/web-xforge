@@ -18,6 +18,7 @@ public class SFProjectSettings
     public bool? TranslateShareEnabled { get; set; }
 
     // pre-translation settings
+    [Obsolete("For backwards compatibility with older frontend clients. Deprecated June 2025.")]
     public bool? AdditionalTrainingData { get; set; }
     public IEnumerable<string>? AdditionalTrainingDataFiles { get; set; }
     public bool? AdditionalTrainingSourceEnabled { get; set; }

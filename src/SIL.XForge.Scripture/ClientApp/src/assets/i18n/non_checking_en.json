@@ -647,8 +647,6 @@
     "exporting_answers": "Exporting Answers",
     "log_in_with_paratext": "Log in to Paratext",
     "pre_translation_drafting": "Translation draft generation",
-    "pre_translation_additional_training_data": "Allow additional training data",
-    "pre_translation_additional_training_data_info": "These are two column CSV files specially crafted to provide training data pairs.",
     "pre_translation_alternate_source_info": "Select a different source for drafting, if your currently selected source is not to be used for pre-translation drafting.",
     "pre_translation_alternate_training_source_info": "Selecting a separate translation for training, such as a back translation, can improve drafting quality.",
     "pre_translation_alternate_training_source_text_placeholder": "Alternate training source text (optional)",

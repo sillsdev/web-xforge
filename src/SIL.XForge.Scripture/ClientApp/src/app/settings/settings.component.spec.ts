@@ -190,41 +190,6 @@ describe('SettingsComponent', () => {
       expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
     }));
 
-    describe('Additional Training Data', () => {
-      it('should update when the additional training data checkbox is ticked', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-        expect(env.statusDone(env.additionalTrainingDataStatus)).toBeNull();
-        expect(env.inputElement(env.additionalTrainingDataCheckbox).checked).toBe(false);
-        env.clickElement(env.inputElement(env.additionalTrainingDataCheckbox));
-        expect(env.inputElement(env.additionalTrainingDataCheckbox).checked).toBe(true);
-        env.wait();
-
-        expect(env.statusDone(env.additionalTrainingDataStatus)).not.toBeNull();
-      }));
-
-      it('should update when the additional training data checkbox is unticked', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translateConfig: {
-            draftConfig: {
-              additionalTrainingData: true
-            },
-            preTranslate: true
-          }
-        });
-        env.wait();
-        expect(env.statusDone(env.additionalTrainingDataStatus)).toBeNull();
-        expect(env.inputElement(env.additionalTrainingDataCheckbox).checked).toBe(true);
-        env.clickElement(env.inputElement(env.additionalTrainingDataCheckbox));
-        expect(env.inputElement(env.additionalTrainingDataCheckbox).checked).toBe(false);
-        env.wait();
-
-        expect(env.statusDone(env.additionalTrainingDataStatus)).not.toBeNull();
-      }));
-    });
-
     describe('Serval Config TextArea', () => {
       it('should not display for non-serval administrators', fakeAsync(() => {
         const env = new TestEnvironment();
@@ -1100,14 +1065,6 @@ class TestEnvironment {
 
   get basedOnSelectProjectsResources(): SelectableProject[] {
     return (this.basedOnSelectComponent.projects || []).concat(this.basedOnSelectComponent.resources || []);
-  }
-
-  get additionalTrainingDataCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checkbox-pre-translation-additional-training-data'));
-  }
-
-  get additionalTrainingDataStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#pre-translation-additional-training-data-status'));
   }
 
   get translatorsShareCheckbox(): DebugElement {

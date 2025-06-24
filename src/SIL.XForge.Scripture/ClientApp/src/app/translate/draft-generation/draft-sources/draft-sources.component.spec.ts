@@ -695,7 +695,6 @@ class TestEnvironment {
     sfProject0.translateConfig.draftConfig.alternateTrainingSource = usersSFResources[2];
     sfProject0.translateConfig.draftConfig.additionalTrainingSourceEnabled = true;
     sfProject0.translateConfig.draftConfig.additionalTrainingSource = usersSFProjects[2];
-    sfProject0.translateConfig.draftConfig.additionalTrainingData = false;
     sfProject0.translateConfig.translationSuggestionsEnabled = false;
     sfProject0.translateConfig.preTranslate = true;
 
