@@ -548,11 +548,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             );
             UpdateSetting(
                 op,
-                p => p.TranslateConfig.DraftConfig.AdditionalTrainingData,
-                settings.AdditionalTrainingData
-            );
-            UpdateSetting(
-                op,
                 p => p.TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles,
                 settings.AdditionalTrainingDataFiles
             );

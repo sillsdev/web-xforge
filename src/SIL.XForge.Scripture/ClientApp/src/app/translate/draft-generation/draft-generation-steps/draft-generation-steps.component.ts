@@ -443,9 +443,8 @@ export class DraftGenerationStepsComponent implements OnInit {
         }
       }
 
-      const trainingFiles = this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.additionalTrainingData
-        ? this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingDataFiles
-        : [];
+      const trainingFiles =
+        this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingDataFiles ?? [];
 
       this.done.emit({
         trainingScriptureRanges: trainingData,

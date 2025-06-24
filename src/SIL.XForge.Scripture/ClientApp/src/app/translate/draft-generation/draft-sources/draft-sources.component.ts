@@ -104,7 +104,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 
   private controlStates = new Map<string, ElementState>();
   private isTrainingDataInitialized: boolean = false;
-  protected trainingDataFilesAvailable: boolean = false;
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataQuerySubscription?: Subscription;
 
@@ -176,10 +175,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
       .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
       .subscribe(() => {
         this.availableTrainingFiles = [];
-        if (projectDoc.data?.translateConfig.draftConfig.additionalTrainingData) {
-          this.availableTrainingFiles =
-            this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
-        }
+        this.availableTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
         if (!this.isTrainingDataInitialized) {
           // Set the selection based on previous builds
           this.isTrainingDataInitialized = true;
@@ -195,8 +191,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 
           // Set the selected data files to the intersection, or if the intersection is empty, do not select any
           this.selectedTrainingFileIds = intersection.length > 0 ? intersection : [];
-          this.trainingDataFilesAvailable =
-            projectDoc.data?.translateConfig.draftConfig.additionalTrainingData ?? false;
         }
       });
   }
