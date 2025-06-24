@@ -143,11 +143,11 @@ class TestEnvironment {
   private addTextDoc(id: TextDocId): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
-    delta.insert({ blank: true }, { segment: 'p_1' });
+    delta.insert('', { segment: 'p_1' });
     delta.insert({ verse: { number: '1', style: 'v' } });
     delta.insert(`chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_2` });
+    delta.insert('', { segment: `verse_${id.chapterNum}_2` });
     delta.insert({ verse: { number: '3', style: 'v' } });
     delta.insert(`chapter ${id.chapterNum}, verse 3.`, { segment: `verse_${id.chapterNum}_3` });
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {

@@ -529,13 +529,13 @@ class TestEnvironment {
     const delta = new Delta();
     delta.insert({ chapter: { number: '1', style: 'c' } });
     delta.insert('heading text', { para: { style: 'p' } });
-    delta.insert({ blank: true }, { segment: 'p_1' });
+    delta.insert('', { segment: 'p_1' });
     delta.insert({ verse: { number: '1', style: 'v' } });
     delta.insert('target: chapter 1, verse 1.', { segment: 'verse_1_1' });
     delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert({ blank: true }, { segment: 'verse_1_2' });
+    delta.insert('', { segment: 'verse_1_2' });
     delta.insert('\n', { para: { style: 'p' } });
-    delta.insert({ blank: true }, { segment: 'verse_1_2/p_1' });
+    delta.insert('', { segment: 'verse_1_2/p_1' });
     delta.insert({ verse: { number: '3', style: 'v' } });
     delta.insert('target: chapter 1, verse 3.', { segment: 'verse_1_3' });
     delta.insert({ verse: { number: '4', style: 'v' } });
@@ -552,7 +552,7 @@ class TestEnvironment {
     delta.insert({ verse: { number: '8', style: 'v' } });
     delta.insert(' target: chapter 1, verse 8. ', { segment: 'verse_1_8' });
     delta.insert({ verse: { number: '9', style: 'v' } });
-    delta.insert({ blank: true }, { segment: 'verse_1_9' });
+    delta.insert('', { segment: 'verse_1_9' });
     delta.insert({ verse: { number: '10', style: 'v' } });
     delta.insert('verse ten', { segment: 'verse_1_10' });
     return delta;

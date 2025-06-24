@@ -133,16 +133,16 @@ function visualizeOps(ops, showAttributes = false) {
     .map(op => {
       if (typeof op.insert === 'undefined') {
         return colored(colors.red, '[ invalid op ' + JSON.stringify(op) + ' ]');
+      } else if (op.insert.blank === true || (typeof op.insert === 'string' && op.insert === '')) {
+        if (showAttributes) {
+          return colored(colors.darkGrey, '(blank)');
+        }
       } else if (typeof op.insert === 'string') {
         let output = op.insert;
         if (showAttributes) {
           output = colored(colors.darkGrey, JSON.stringify(op.attributes)) + output;
         }
         return output;
-      } else if (op.insert.blank === true) {
-        if (showAttributes) {
-          return colored(colors.darkGrey, '(blank)');
-        }
       } else if (op.insert.verse) {
         return colored(colors.lightBlue, op.insert.verse.number + ' ');
       } else if (op.insert.chapter) {

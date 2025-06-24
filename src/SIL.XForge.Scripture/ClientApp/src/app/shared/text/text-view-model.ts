@@ -194,7 +194,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
 
     this.textDocId = textDocId;
     this.textDoc = textDoc;
-    editor.setContents(this.textDoc.data as Delta);
+    editor.setContents(this.dataToView(this.textDoc.data as Delta));
     editor.history.clear();
 
     if (subscribeToUpdates) {
@@ -206,7 +206,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
 
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
-        editor.setContents(textDoc.data as Delta);
+        editor.setContents(this.dataToView(textDoc.data as Delta));
       }
       editor.history.clear();
     });
@@ -604,6 +604,23 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     return leadingEmbedCount;
   }
 
+  private dataToView(delta?: Delta): Delta {
+    const modelDelta = new Delta();
+    if (delta?.ops != null) {
+      for (const op of delta.ops) {
+        const modelOp: DeltaOperation = cloneDeep(op);
+
+        // Convert { insert: '' } into { insert: { blank: true } }
+        if (isString(modelOp.insert) && modelOp.insert === '') {
+          modelOp.insert = { blank: true };
+        }
+
+        (modelDelta as any).push(modelOp);
+      }
+    }
+    return modelDelta;
+  }
+
   private viewToData(delta: Delta): Delta {
     let modelDelta = new Delta();
     if (delta.ops != null) {
@@ -892,6 +909,9 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         }
       } else if (cloneOp.insert != null && cloneOp.insert['note-thread-embed'] != null) {
         cloneOp = undefined;
+      } else if (cloneOp.insert != null && cloneOp.insert['blank'] != null) {
+        // Convert { insert: { blank: true } } into { insert: '' }
+        cloneOp.insert = '';
       }
 
       if (cloneOp != null) {
@@ -913,7 +933,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     const adjustedDelta = new Delta();
     let curIndex: number = 0;
     let embedsUpToIndex: number = 0;
-    let previousOp: 'retain' | 'insert' | 'delete' | undefined;
+    let previousOp: 'retain' | 'insert' | 'delete' | 'blank' | undefined;
     let editorStartPos: number = 0;
     for (const op of modelDelta.ops) {
       const cloneOp: DeltaOperation = cloneDeep(op);
@@ -944,8 +964,13 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         }
         previousOp = 'delete';
       } else if (cloneOp.insert != null) {
+        // Convert { insert: '' } into { insert: { blank: true } }
+        if (isString(cloneOp.insert) && cloneOp.insert === '') {
+          cloneOp.insert = { blank: true };
+        }
+        // Add the attributes
         cloneOp.attributes = getAttributesAtPosition(this.checkEditor(), editorStartPos);
-        previousOp = 'insert';
+        previousOp = 'blank';
       }
       (adjustedDelta as any).push(cloneOp);
     }

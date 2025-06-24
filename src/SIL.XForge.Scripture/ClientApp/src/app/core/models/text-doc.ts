@@ -59,7 +59,7 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
         const op = this.data.ops[i];
         const nextOp = i < this.data.ops.length - 1 ? this.data.ops[i + 1] : undefined;
         if (op.attributes != null && op.attributes.segment != null) {
-          if ((op.insert as any).blank != null) {
+          if ((op.insert as any).blank != null || (op.insert as any) === '') {
             const segRef: string = op.attributes.segment as string;
             if (
               nextOp == null ||
@@ -82,7 +82,12 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
     const verses: string[] = [];
     if (this.data != null && this.data.ops != null) {
       for (const op of this.data.ops) {
-        if (op.attributes != null && op.attributes.segment != null && (op.insert as any).blank == null) {
+        if (
+          op.attributes != null &&
+          op.attributes.segment != null &&
+          (op.insert as any).blank == null &&
+          (op.insert as string) !== ''
+        ) {
           const segRef: string = op.attributes.segment as string;
           if (segRef.startsWith('verse_')) {
             const verse: string | undefined = getVerseStrFromSegmentRef(segRef);

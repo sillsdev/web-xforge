@@ -5187,7 +5187,7 @@ class TestEnvironment {
   addTextDoc(id: TextDocId, textType: TextType = 'target', corrupt: boolean = false, tooLong: boolean = false): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
-    delta.insert({ blank: true }, { segment: 'p_1' });
+    delta.insert('', { segment: 'p_1' });
     delta.insert({ verse: { number: '1', style: 'v' } });
     delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
@@ -5196,7 +5196,7 @@ class TestEnvironment {
         delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2.`, { segment: `verse_${id.chapterNum}_2` });
         break;
       case 'target':
-        delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_2` });
+        delta.insert('', { segment: `verse_${id.chapterNum}_2` });
         break;
     }
     delta.insert({ verse: { number: '3', style: 'v' } });
