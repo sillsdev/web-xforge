@@ -150,7 +150,7 @@ public static class DeltaUsxTestExtensions
         if (invalid)
             attrs = new JObject(new JProperty("invalid-block", true));
         attrs.Add(new JProperty("book", obj));
-        return delta.InsertBlank($"{style}_1").Insert("\n", attrs);
+        return delta.Insert("\n", attrs);
     }
 
     public static Delta InsertChapter(this Delta delta, string number, string style = "c", bool invalid = false)
