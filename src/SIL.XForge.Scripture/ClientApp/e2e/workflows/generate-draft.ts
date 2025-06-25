@@ -3,9 +3,12 @@ import { Locator, Page } from 'npm:playwright';
 import { preset, ScreenshotContext } from '../e2e-globals.ts';
 import {
   enableDeveloperMode,
+  enableDraftingOnProjectAsServalAdmin,
   freshlyConnectProject,
+  getNewBrowserForSideWork,
   installMouseFollower,
   logInAsPTUser,
+  logInAsSiteAdmin,
   logOut,
   screenshot,
   switchLanguage
@@ -35,14 +38,11 @@ export async function generateDraft(
   await user.click(page.getByRole('link', { name: 'Generate draft beta' }));
   await expect(page.getByRole('heading', { name: 'Generate translation drafts' })).toBeVisible();
   await screenshot(page, { pageName: 'generate_draft', ...context });
-  await user.wait(1500);
 
-  // Enable pre-translation drafting, then close the panel
-  await user.click(page.getByRole('button', { name: 'Serval administration' }));
-  await user.check(page.getByRole('checkbox', { name: 'Pre-Translation Drafting Enabled' }));
-  await user.click(page.getByRole('button', { name: 'Serval administration' }));
-
-  await user.info('Step 1: Configure sources');
+  // Have Serval admin enable pre-translation drafting
+  const siteAdminBrowser = await getNewBrowserForSideWork();
+  await logInAsSiteAdmin(siteAdminBrowser.page);
+  await enableDraftingOnProjectAsServalAdmin(siteAdminBrowser.page, DRAFT_PROJECT_SHORT_NAME);
 
   // Configure sources page
   await user.click(page.getByRole('button', { name: 'Configure sources' }));
@@ -131,7 +131,8 @@ export async function generateDraft(
   await expect(page.getByRole('heading', { name: 'Draft queued' })).toBeVisible({ timeout: 60_000 });
   await screenshot(page, { pageName: 'generate_draft_queued', ...context });
 
-  // The draft ready message shouldn't show up until after progress messages, but echo jobs can run too fast for progress messages to appear.
+  // The draft ready message shouldn't show up until after progress messages, but echo jobs can run too fast for
+  // progress messages to appear.
   const draftReadyLocator = page.getByText('Your draft is ready');
 
   // Wait for the draft to start - timeout is long because there can be another job in the queue
@@ -172,12 +173,9 @@ export async function generateDraft(
   console.log('Draft generation took', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
 
   // FIXME(application-bug) If we don't reload the page at this step, the page freezes, especially on lower-end machines
-  // (including GitHub actions) while attempging to click on the name of the book to draft.
+  // (including GitHub actions) while attempting to click on the name of the book to draft.
+  // The reload also serves to trigger the update of the draft status
   await page.reload();
-
-  await user.click(page.getByRole('button', { name: 'Serval administration' }));
-  await user.click(page.getByRole('button', { name: 'Run webhook to update draft status' }));
-  await user.click(page.getByRole('button', { name: 'Serval administration' }));
 
   // Preview and apply chapter 1
   await user.click(page.getByRole('radio', { name: bookToDraft }));
