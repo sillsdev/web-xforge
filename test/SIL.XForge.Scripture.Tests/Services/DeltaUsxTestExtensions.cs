@@ -11,7 +11,7 @@ public static class DeltaUsxTestExtensions
     /// <summary>
     /// This method should be called when a paragraph _ends_, not begins.
     /// </summary>
-    public static Delta InsertPara(this Delta delta, string style, bool invalid = false)
+    public static Delta InsertPara(this Delta delta, string style, bool invalid = false, string? cid = null)
     {
         var obj = new JObject(new JProperty("style", style));
         if (style == "")
@@ -19,6 +19,12 @@ public static class DeltaUsxTestExtensions
         JObject attrs = null;
         if (invalid)
             attrs = new JObject(new JProperty("invalid-block", true));
+        if (cid is not null)
+        {
+            attrs ??= [];
+            attrs.Add(new JProperty("cid", cid));
+        }
+
         return delta.InsertPara(obj, attrs);
     }
 
@@ -150,7 +156,7 @@ public static class DeltaUsxTestExtensions
         if (invalid)
             attrs = new JObject(new JProperty("invalid-block", true));
         attrs.Add(new JProperty("book", obj));
-        return delta.InsertBlank($"{style}_1").Insert("\n", attrs);
+        return delta.Insert("\n", attrs);
     }
 
     public static Delta InsertChapter(this Delta delta, string number, string style = "c", bool invalid = false)
