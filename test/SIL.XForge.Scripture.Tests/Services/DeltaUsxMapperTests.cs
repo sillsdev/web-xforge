@@ -65,7 +65,6 @@ public partial class DeltaUsxMapperTests
                 .New()
                 .InsertBook("PHM")
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("Verse text.", "verse_1_1")
                 .InsertPara("p")
@@ -92,19 +91,12 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertBlank("verse_1_1")
                 .InsertVerse("2")
-                .InsertBlank("verse_1_2")
                 .InsertPara("p")
-                .InsertBlank("verse_1_2/li_1")
                 .InsertPara("li")
-                .InsertBlank("verse_1_2/li_2")
                 .InsertPara("li")
-                .InsertBlank("verse_1_2/p_3")
                 .InsertVerse("3")
-                .InsertBlank("verse_1_3")
                 .InsertPara("p")
                 .Insert("\n")
         );
@@ -146,14 +138,8 @@ public partial class DeltaUsxMapperTests
         // Get the chapter deltas, which will be the valid chapters
         List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
 
-        Delta expected1 = Delta
-            .New()
-            .InsertBook("RUT")
-            .InsertChapter("1")
-            .InsertVerse("1")
-            .InsertBlank("verse_1_1")
-            .InsertText("\n");
-        Delta expected2 = Delta.New().InsertChapter("3").InsertVerse("1").InsertBlank("verse_3_1").InsertText("\n");
+        Delta expected1 = Delta.New().InsertBook("RUT").InsertChapter("1").InsertVerse("1").InsertText("\n");
+        Delta expected2 = Delta.New().InsertChapter("3").InsertVerse("1").InsertText("\n");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
@@ -180,7 +166,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is some ", "verse_1_1")
                 .InsertChar("bold", "bd", _testGuidService.Generate(), "verse_1_1")
@@ -210,7 +195,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is some ", "verse_1_1")
                 .InsertEmptyChar("bd", _testGuidService.Generate(), "verse_1_1")
@@ -241,7 +225,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is some ", "verse_1_1")
                 .InsertChar("bold", "bd", _testGuidService.Generate(), "verse_1_1")
@@ -274,7 +257,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(
@@ -333,7 +315,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is a verse with a figure", "verse_1_1")
                 .InsertFigure("file.jpg", "col", "PHM 1:1", "Caption", "verse_1_1")
@@ -373,7 +354,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertChar(
                     "1",
@@ -438,7 +418,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertChar(
                     "1",
@@ -503,7 +482,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertChar(
                     "1",
@@ -591,7 +569,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertChar("1", "sup", _testGuidService.Generate(), "verse_1_1")
                 .InsertChar("2", "sup", _testGuidService.Generate(), "verse_1_1")
@@ -621,7 +598,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(
@@ -682,7 +658,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(
@@ -737,7 +712,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is a verse with a line break", "verse_1_1")
                 .InsertOptBreak("verse_1_1")
@@ -766,7 +740,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is a verse with a milestone", "verse_1_1")
                 .InsertMilestone("ts", "verse_1_1")
@@ -801,13 +774,10 @@ public partial class DeltaUsxMapperTests
                 .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
-                .InsertBlank("cell_1_1_2")
                 .InsertVerse("2")
                 .InsertText("This is verse 2.", "verse_1_2")
                 .InsertCell(1, 1, "tc2", "start")
-                .InsertBlank("cell_1_2_1")
                 .InsertCell(1, 2, "tc1", "start")
-                .InsertBlank("cell_1_2_2")
                 .InsertVerse("3")
                 .InsertText("This is verse 3.", "verse_1_3")
                 .InsertCell(1, 2, "tc2", "start")
@@ -851,21 +821,17 @@ public partial class DeltaUsxMapperTests
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
                 // Cell 2 begins
-                .InsertBlank("cell_1_1_2")
                 .InsertVerse("2")
                 .InsertText("This is verse 2.", "verse_1_2")
                 .InsertCell(1, 1, "tc2", "start")
                 // Row 2 begins
                 // Cell 1 begins
-                .InsertBlank("cell_1_2_1")
                 .InsertCell(1, 2, "tc1", "start")
                 // Cell 2 begins
-                .InsertBlank("cell_1_2_2")
                 .InsertVerse("3")
                 .InsertText("This is verse 3.", "verse_1_3")
                 .InsertCell(1, 2, "tc2", "start")
                 // Post-table content
-                .InsertBlank("p_1")
                 .InsertVerse("4")
                 .InsertText("This is verse 4.", "verse_1_4")
                 .InsertPara("p")
@@ -903,35 +869,27 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse 1.", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
-                .InsertBlank("cell_1_1_2")
                 .InsertVerse("2")
                 .InsertText("This is verse 2.", "verse_1_2")
                 .InsertCell(1, 1, "tc2", "start")
-                .InsertBlank("cell_1_2_1")
                 .InsertVerse("3")
                 .InsertText("This is verse 3.", "verse_1_3")
                 .InsertCell(1, 2, "tc1", "start")
-                .InsertBlank("cell_1_2_2")
                 .InsertVerse("4")
                 .InsertText("This is verse 4.", "verse_1_4")
                 .InsertCell(1, 2, "tc2", "start")
-                .InsertBlank("cell_2_1_1")
                 .InsertVerse("5")
                 .InsertText("This is verse 5.", "verse_1_5")
                 .InsertCell(2, 1, "tc1", "start")
-                .InsertBlank("cell_2_1_2")
                 .InsertVerse("6")
                 .InsertText("This is verse 6.", "verse_1_6")
                 .InsertCell(2, 1, "tc2", "start")
-                .InsertBlank("cell_2_2_1")
                 .InsertVerse("7")
                 .InsertText("This is verse 7.", "verse_1_7")
                 .InsertCell(2, 2, "tc1", "start")
-                .InsertBlank("cell_2_2_2")
                 .InsertVerse("8")
                 .InsertText("This is verse 8.", "verse_1_8")
                 .InsertCell(2, 2, "tc2", "start")
@@ -978,7 +936,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("Verse text.", "verse_1_1")
                 .InsertPara("p")
@@ -993,13 +950,7 @@ public partial class DeltaUsxMapperTests
             1,
             1,
             true,
-            Delta
-                .New()
-                .InsertChapter("1")
-                .InsertBlank("p_1")
-                .InsertVerse("1")
-                .InsertText("Verse text.", "verse_1_1")
-                .InsertPara("p")
+            Delta.New().InsertChapter("1").InsertVerse("1").InsertText("Verse text.", "verse_1_1").InsertPara("p")
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
@@ -1015,12 +966,7 @@ public partial class DeltaUsxMapperTests
     [Test]
     public void ToUsx_ConsecutiveSameStyleEmptyParas()
     {
-        var chapterDelta = new ChapterDelta(
-            1,
-            0,
-            true,
-            Delta.New().InsertBlank("p_1").InsertPara("p").InsertBlank("p_2").InsertPara("p")
-        );
+        var chapterDelta = new ChapterDelta(1, 0, true, Delta.New().InsertPara("p").InsertPara("p"));
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
@@ -1045,24 +991,11 @@ public partial class DeltaUsxMapperTests
                     .InsertVerse("1")
                     .InsertText("This is verse 1.", "verse_1_1")
                     .InsertVerse("2")
-                    .InsertBlank("verse_1_2")
                     .InsertVerse("3")
                     .InsertText("This is verse 3.", "verse_1_3")
                     .Insert("\n")
             ),
-            new ChapterDelta(
-                2,
-                2,
-                true,
-                Delta
-                    .New()
-                    .InsertChapter("2")
-                    .InsertVerse("1")
-                    .InsertBlank("verse_2_1")
-                    .InsertVerse("2")
-                    .InsertBlank("verse_2_2")
-                    .Insert("\n")
-            ),
+            new ChapterDelta(2, 2, true, Delta.New().InsertChapter("2").InsertVerse("1").InsertVerse("2").Insert("\n")),
         ];
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
@@ -1100,9 +1033,7 @@ public partial class DeltaUsxMapperTests
                 .InsertChapter("1")
                 .Insert("This is an implied paragraph before the first verse.")
                 .Insert("\n")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertBlank("verse_1_1")
                 .InsertPara("p")
         );
 
@@ -1132,9 +1063,7 @@ public partial class DeltaUsxMapperTests
                 .Insert("\n")
                 .Insert(" This is actually part of the first implied paragraph.")
                 .Insert("\n")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertBlank("verse_1_1")
                 .InsertPara("p")
         );
 
@@ -1165,7 +1094,6 @@ public partial class DeltaUsxMapperTests
                 .Insert("\n")
                 .InsertText("This is actually an implied paragraph as part of the verse.", "p_1")
                 .InsertVerse("1")
-                .InsertBlank("verse_1_1")
                 .InsertPara("p")
         );
 
@@ -1197,24 +1125,11 @@ public partial class DeltaUsxMapperTests
                     .InsertVerse("1")
                     .InsertText("This is verse 1.", "verse_1_1")
                     .InsertVerse("2")
-                    .InsertBlank("verse_1_2")
                     .InsertVerse("3")
                     .InsertText("This is verse 3.", "verse_1_3")
                     .Insert("\n")
             ),
-            new ChapterDelta(
-                2,
-                2,
-                true,
-                Delta
-                    .New()
-                    .InsertChapter("2")
-                    .InsertVerse("1")
-                    .InsertBlank("verse_2_1")
-                    .InsertVerse("2")
-                    .InsertBlank("verse_2_2")
-                    .Insert("\n")
-            ),
+            new ChapterDelta(2, 2, true, Delta.New().InsertChapter("2").InsertVerse("1").InsertVerse("2").Insert("\n")),
         ];
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
@@ -1233,6 +1148,30 @@ public partial class DeltaUsxMapperTests
             Verse("1"),
             Verse("2")
         );
+        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+    }
+
+    [Test]
+    public void ToUsx_CombinedConsecutiveParagraph()
+    {
+        // This corresponds to the following USFM
+        /*
+         * \c 1
+         * \v 1
+         * \p
+         * \p
+         */
+        var chapterDelta = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta.New().InsertChapter("1").Insert("\n\n", new { para = new { style = "p" } }).InsertVerse("1")
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), [chapterDelta]);
+
+        XDocument expected = Usx("PHM", Chapter("1"), Para("p"), Para("p"), Verse("1"));
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
     }
 
@@ -1446,16 +1385,11 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertBlank("verse_1_1")
                 .InsertVerse("2")
-                .InsertBlank("verse_1_2")
                 .InsertPara("p")
                 .InsertPara("b")
-                .InsertBlank("p_2")
                 .InsertVerse("3")
-                .InsertBlank("verse_1_3")
                 .InsertPara("p")
         );
 
@@ -1482,7 +1416,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("Verse text.", "verse_1_1")
                 .InsertPara("p")
@@ -1510,7 +1443,6 @@ public partial class DeltaUsxMapperTests
                     .InsertText("Book title", "imt_1")
                     .InsertPara("imt")
                     .InsertChapter("1")
-                    .InsertBlank("bad_1")
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_1_1")
                     .InsertPara("bad", true)
@@ -1522,7 +1454,6 @@ public partial class DeltaUsxMapperTests
                 Delta
                     .New()
                     .InsertChapter("2")
-                    .InsertBlank("p_1")
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_2_1")
                     .InsertPara("p")
@@ -1534,7 +1465,6 @@ public partial class DeltaUsxMapperTests
                 Delta
                     .New()
                     .InsertChapter("3")
-                    .InsertBlank("p_1")
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_3_1")
                     .InsertPara("p")
@@ -1582,7 +1512,6 @@ public partial class DeltaUsxMapperTests
                     .InsertText("Book title", "imt_1")
                     .InsertPara("imt")
                     .InsertChapter("1")
-                    .InsertBlank("p_1")
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_1_1")
                     .InsertPara("p")
@@ -1594,7 +1523,6 @@ public partial class DeltaUsxMapperTests
                 Delta
                     .New()
                     .InsertChapter("2")
-                    .InsertBlank("bad_1")
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_2_1")
                     .InsertPara("bad", true)
@@ -1606,7 +1534,6 @@ public partial class DeltaUsxMapperTests
                 Delta
                     .New()
                     .InsertChapter("3")
-                    .InsertBlank("p_1")
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_3_1")
                     .InsertPara("p")
@@ -1654,7 +1581,6 @@ public partial class DeltaUsxMapperTests
                     .InsertText("Book title", "imt_1")
                     .InsertPara("imt")
                     .InsertChapter("1")
-                    .InsertBlank("p_1")
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_1_1")
                     .InsertPara("p")
@@ -1666,7 +1592,6 @@ public partial class DeltaUsxMapperTests
                 Delta
                     .New()
                     .InsertChapter("2")
-                    .InsertBlank("p_1")
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_2_1")
                     .InsertPara("p")
@@ -1678,7 +1603,6 @@ public partial class DeltaUsxMapperTests
                 Delta
                     .New()
                     .InsertChapter("3")
-                    .InsertBlank("bad_1")
                     .InsertVerse("1")
                     .InsertText("New verse text.", "verse_3_1")
                     .InsertPara("bad", true)
@@ -1722,7 +1646,6 @@ public partial class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
-                .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is a verse with an unmatched marker", "verse_1_1")
                 .InsertEmbed("unmatched", new JObject(new JProperty("marker", "bad")), "verse_1_1")
@@ -1748,15 +1671,7 @@ public partial class DeltaUsxMapperTests
             2,
             2,
             true,
-            Delta
-                .New()
-                .InsertChapter("2")
-                .InsertBlank("p_1")
-                .InsertVerse("1")
-                .InsertBlank("verse_2_1")
-                .InsertVerse("2")
-                .InsertBlank("verse_2_2")
-                .InsertPara("p")
+            Delta.New().InsertChapter("2").InsertVerse("1").InsertVerse("2").InsertPara("p")
         );
 
         XDocument oldUsxDoc = Usx("PHM", Chapter("bad"), Para("p", Verse("1"), Verse("2")), Chapter("2"));
@@ -1784,19 +1699,12 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
-            .InsertBlank("verse_1_1")
             .InsertVerse("2")
-            .InsertBlank("verse_1_2")
             .InsertPara("p")
-            .InsertBlank("verse_1_2/li_1")
             .InsertPara("li")
-            .InsertBlank("verse_1_2/li_2")
-            .InsertPara("li")
-            .InsertBlank("verse_1_2/p_3")
+            .InsertPara("li", cid: _testGuidService.Generate())
             .InsertVerse("3")
-            .InsertBlank("verse_1_3")
             .InsertPara("p");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
@@ -1819,15 +1727,7 @@ public partial class DeltaUsxMapperTests
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
         List<ChapterDelta> chapterDeltas = [.. mapper.ToChapterDeltas(usxDoc)];
 
-        var expected = Delta
-            .New()
-            .InsertChapter("2")
-            .InsertBlank("p_1")
-            .InsertVerse("1")
-            .InsertBlank("verse_2_1")
-            .InsertVerse("2")
-            .InsertBlank("verse_2_2")
-            .InsertPara("p");
+        var expected = Delta.New().InsertChapter("2").InsertVerse("1").InsertVerse("2").InsertPara("p");
 
         Assert.That(chapterDeltas.Count, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(2));
@@ -1848,11 +1748,8 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1", "bad", true)
-            .InsertBlank("p_1")
             .InsertVerse("1")
-            .InsertBlank("verse_1_1")
             .InsertVerse("2")
-            .InsertBlank("verse_1_2")
             .InsertPara("p");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
@@ -1873,11 +1770,8 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1", "bad", true)
-            .InsertBlank("verse_1_1")
             .InsertVerse("2")
-            .InsertBlank("verse_1_2")
             .InsertPara("p");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
@@ -1904,7 +1798,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertChar(
                 "blah",
@@ -1917,7 +1810,6 @@ public partial class DeltaUsxMapperTests
                 invalid: true
             )
             .InsertVerse("2")
-            .InsertBlank("verse_1_2")
             .InsertPara("p");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
@@ -1938,11 +1830,8 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
-            .InsertBlank("verse_1_1")
             .InsertVerse("2bad", "v", true)
-            .InsertBlank("verse_1_2bad")
             .InsertPara("p");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
@@ -1976,33 +1865,21 @@ public partial class DeltaUsxMapperTests
             .InsertText("Philemon", "mt_1")
             .InsertPara("mt")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
-            .InsertBlank("verse_1_1")
             .InsertVerse("2")
-            .InsertBlank("verse_1_2")
             .InsertPara("p")
-            .InsertBlank("s_1")
             .InsertPara("s")
-            .InsertBlank("p_2")
             .InsertVerse("3")
-            .InsertBlank("verse_1_3")
             .InsertPara("p");
 
         var expectedChapter2 = Delta
             .New()
             .InsertChapter("2")
-            .InsertBlank("p_1")
             .InsertVerse("1")
-            .InsertBlank("verse_2_1")
             .InsertVerse("2")
-            .InsertBlank("verse_2_2")
             .InsertPara("p")
-            .InsertBlank("s_1")
             .InsertPara("s")
-            .InsertBlank("p_2")
             .InsertVerse("3")
-            .InsertBlank("verse_2_3")
             .InsertPara("p");
 
         Assert.That(chapterDeltas.Count, Is.EqualTo(2));
@@ -2048,7 +1925,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a footnote", "verse_1_1")
             .InsertNote(
@@ -2106,7 +1982,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a footnote", "verse_1_1")
             .InsertNote(
@@ -2165,7 +2040,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a footnote", "verse_1_1")
             .InsertNote(
@@ -2213,7 +2087,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a figure", "verse_1_1")
             .InsertFigure("file.jpg", "col", "PHM 1:1", "Caption", "verse_1_1")
@@ -2248,7 +2121,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a figure", "verse_1_1")
             .InsertFigure("file.jpg", "col", null, "Caption", "verse_1_1", true)
@@ -2277,7 +2149,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is some ", "verse_1_1")
             .InsertChar("bold", "bd", _testGuidService.Generate(), "verse_1_1")
@@ -2302,7 +2173,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is some ", "verse_1_1")
             .InsertEmptyChar("bd", _testGuidService.Generate(), "verse_1_1")
@@ -2340,7 +2210,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertChar(
                 "1",
@@ -2405,7 +2274,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertChar(
                 "1",
@@ -2477,7 +2345,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertChar(
                 "1",
@@ -2562,7 +2429,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertChar(
                 "1",
@@ -2621,7 +2487,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertChar("1", "sup", _testGuidService.Generate(), "verse_1_1")
             .InsertChar("2", "sup", _testGuidService.Generate(), "verse_1_1")
@@ -2668,7 +2533,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a footnote", "verse_1_1")
             .InsertNote(
@@ -2725,7 +2589,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a footnote", "verse_1_1")
             .InsertNote(
@@ -2782,7 +2645,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a footnote", "verse_1_1")
             .InsertNote(
@@ -2825,7 +2687,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a line break", "verse_1_1")
             .InsertOptBreak("verse_1_1")
@@ -2854,7 +2715,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a line break", "verse_1_1")
             .InsertMilestone("ts", "verse_1_1")
@@ -2883,7 +2743,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with a line break", "verse_1_1")
             .InsertMilestone("bad", "verse_1_1", true)
@@ -2924,13 +2783,10 @@ public partial class DeltaUsxMapperTests
             .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
             .InsertText(".", "verse_1_1")
             .InsertCell(1, 1, "tc1", "start")
-            .InsertBlank("cell_1_1_2")
             .InsertVerse("2")
             .InsertText("This is verse 2.", "verse_1_2")
             .InsertCell(1, 1, "tc2", "start")
-            .InsertBlank("cell_1_2_1")
             .InsertCell(1, 2, "tc1", "start")
-            .InsertBlank("cell_1_2_2")
             .InsertVerse("3")
             .InsertText("This is verse 3.", "verse_1_3")
             .InsertCell(1, 2, "tc2", "start");
@@ -2974,17 +2830,13 @@ public partial class DeltaUsxMapperTests
             .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
             .InsertText(".", "verse_1_1")
             .InsertCell(1, 1, "tc1", "start")
-            .InsertBlank("cell_1_1_2")
             .InsertVerse("2")
             .InsertText("This is verse 2.", "verse_1_2")
             .InsertCell(1, 1, "tc2", "start")
-            .InsertBlank("cell_1_2_1")
             .InsertCell(1, 2, "tc1", "start")
-            .InsertBlank("cell_1_2_2")
             .InsertVerse("3")
             .InsertText("This is verse 3.", "verse_1_3")
             .InsertCell(1, 2, "tc2", "start")
-            .InsertBlank("p_1")
             .InsertVerse("4")
             .InsertText("This is verse 4.", "verse_1_4")
             .InsertPara("p");
@@ -3044,7 +2896,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("B", "verse_1_1")
             .InsertPara("p")
@@ -3103,35 +2954,27 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("cell_1_1_1")
             .InsertVerse("1")
             .InsertText("This is verse 1.", "verse_1_1")
             .InsertCell(1, 1, "tc1", "start")
-            .InsertBlank("cell_1_1_2")
             .InsertVerse("2")
             .InsertText("This is verse 2.", "verse_1_2")
             .InsertCell(1, 1, "tc2", "start")
-            .InsertBlank("cell_1_2_1")
             .InsertVerse("3")
             .InsertText("This is verse 3.", "verse_1_3")
             .InsertCell(1, 2, "tc1", "start")
-            .InsertBlank("cell_1_2_2")
             .InsertVerse("4")
             .InsertText("This is verse 4.", "verse_1_4")
             .InsertCell(1, 2, "tc2", "start")
-            .InsertBlank("cell_2_1_1")
             .InsertVerse("5")
             .InsertText("This is verse 5.", "verse_1_5")
             .InsertCell(2, 1, "tc1", "start")
-            .InsertBlank("cell_2_1_2")
             .InsertVerse("6")
             .InsertText("This is verse 6.", "verse_1_6")
             .InsertCell(2, 1, "tc2", "start")
-            .InsertBlank("cell_2_2_1")
             .InsertVerse("7")
             .InsertText("This is verse 7.", "verse_1_7")
             .InsertCell(2, 2, "tc1", "start")
-            .InsertBlank("cell_2_2_2")
             .InsertVerse("8")
             .InsertText("This is verse 8.", "verse_1_8")
             .InsertCell(2, 2, "tc2", "start");
@@ -3174,13 +3017,10 @@ public partial class DeltaUsxMapperTests
             .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
             .InsertText(".", "verse_1_1")
             .InsertCell(1, 1, "bad", "start", true)
-            .InsertBlank("cell_1_1_2")
             .InsertVerse("2")
             .InsertText("This is verse 2.", "verse_1_2")
             .InsertCell(1, 1, "tc2", "start")
-            .InsertBlank("cell_1_2_1")
             .InsertCell(1, 2, "tc1", "start")
-            .InsertBlank("cell_1_2_2")
             .InsertVerse("3")
             .InsertText("This is verse 3.", "verse_1_3")
             .InsertCell(1, 2, "tc2", "start");
@@ -3217,18 +3057,10 @@ public partial class DeltaUsxMapperTests
             .InsertVerse("1")
             .InsertText("This is verse 1.", "verse_1_1")
             .InsertVerse("2")
-            .InsertBlank("verse_1_2")
             .InsertVerse("3")
             .InsertText("This is verse 3.", "verse_1_3")
             .Insert("\n");
-        var expected2 = Delta
-            .New()
-            .InsertChapter("2")
-            .InsertVerse("1")
-            .InsertBlank("verse_2_1")
-            .InsertVerse("2-3")
-            .InsertBlank("verse_2_2-3")
-            .Insert("\n");
+        var expected2 = Delta.New().InsertChapter("2").InsertVerse("1").InsertVerse("2-3").Insert("\n");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(3));
@@ -3259,9 +3091,7 @@ public partial class DeltaUsxMapperTests
             .InsertChapter("1")
             .Insert("This is an implied paragraph before the first verse.")
             .Insert("\n")
-            .InsertBlank("p_1")
             .InsertVerse("1")
-            .InsertBlank("verse_1_1")
             .InsertPara("p");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
@@ -3291,7 +3121,6 @@ public partial class DeltaUsxMapperTests
             .Insert("\n")
             .InsertText("This is actually an implied paragraph as part of the verse.", "p_1")
             .InsertVerse("1")
-            .InsertBlank("verse_1_1")
             .InsertPara("p");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
@@ -3328,18 +3157,10 @@ public partial class DeltaUsxMapperTests
             .InsertVerse("1")
             .InsertText("This is verse 1.", "verse_1_1")
             .InsertVerse("2")
-            .InsertBlank("verse_1_2")
             .InsertVerse("3")
             .InsertText("This is verse 3.", "verse_1_3")
             .Insert("\n");
-        var expected2 = Delta
-            .New()
-            .InsertChapter("2")
-            .InsertVerse("1")
-            .InsertBlank("verse_2_1")
-            .InsertVerse("2-3")
-            .InsertBlank("verse_2_2-3")
-            .Insert("\n");
+        var expected2 = Delta.New().InsertChapter("2").InsertVerse("1").InsertVerse("2-3").Insert("\n");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(3));
@@ -3387,19 +3208,12 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
-            .InsertBlank("verse_1_1")
             .InsertVerse("2")
-            .InsertBlank("verse_1_2")
             .InsertPara("p")
-            .InsertBlank("verse_1_2/_1")
             .InsertPara("")
-            .InsertBlank("verse_1_2/li_2")
             .InsertPara("li")
-            .InsertBlank("verse_1_2/_3")
             .InsertVerse("3")
-            .InsertBlank("verse_1_3")
             .InsertPara("");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
@@ -3426,17 +3240,11 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
-            .InsertBlank("verse_1_1")
             .InsertVerse("2")
-            .InsertBlank("verse_1_2")
             .InsertPara("p")
-            .InsertBlank("verse_1_2/b_1")
             .InsertPara("b")
-            .InsertBlank("verse_1_2/p_2")
             .InsertVerse("3")
-            .InsertBlank("verse_1_3")
             .InsertPara("p");
 
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
@@ -3463,7 +3271,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_1_1")
             .InsertPara("p")
@@ -3499,21 +3306,18 @@ public partial class DeltaUsxMapperTests
             .InsertText("Book title", "imt_1")
             .InsertPara("imt")
             .InsertChapter("1")
-            .InsertBlank("bad_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_1_1")
             .InsertPara("bad", true);
         var expectedChapter2 = Delta
             .New()
             .InsertChapter("2")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_2_1")
             .InsertPara("p");
         var expectedChapter3 = Delta
             .New()
             .InsertChapter("3")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_3_1")
             .InsertPara("p");
@@ -3556,21 +3360,18 @@ public partial class DeltaUsxMapperTests
             .InsertText("Book title", "imt_1")
             .InsertPara("imt")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_1_1")
             .InsertPara("p");
         var expectedChapter2 = Delta
             .New()
             .InsertChapter("2")
-            .InsertBlank("bad_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_2_1")
             .InsertPara("bad", true);
         var expectedChapter3 = Delta
             .New()
             .InsertChapter("3")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_3_1")
             .InsertPara("p");
@@ -3613,21 +3414,18 @@ public partial class DeltaUsxMapperTests
             .InsertText("Book title", "imt_1")
             .InsertPara("imt")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_1_1")
             .InsertPara("p");
         var expectedChapter2 = Delta
             .New()
             .InsertChapter("2")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_2_1")
             .InsertPara("p");
         var expectedChapter3 = Delta
             .New()
             .InsertChapter("3")
-            .InsertBlank("bad_1")
             .InsertVerse("1")
             .InsertText("Verse text.", "verse_3_1")
             .InsertPara("bad", true);
@@ -3663,7 +3461,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("s_1")
             .InsertVerse("1")
             .InsertText("This verse should not exist within this paragraph style", "verse_1_1")
             .InsertPara("s", true);
@@ -3693,14 +3490,12 @@ public partial class DeltaUsxMapperTests
                 .New()
                 .InsertBook("TDX", invalid: true)
                 .InsertChapter("1")
-                .InsertBlank("q_1")
                 .InsertVerse("1")
                 .InsertText("This verse is valid, but in an invalid book", "verse_1_1")
                 .InsertPara("q"),
             Delta
                 .New()
                 .InsertChapter("2")
-                .InsertBlank("q_1")
                 .InsertVerse("1")
                 .InsertText("This verse is also valid, but in an invalid book", "verse_2_1")
                 .InsertPara("q"),
@@ -3733,13 +3528,11 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("q_1")
             .InsertVerse("1")
             .InsertText("Poetry first line", "verse_1_1")
             .InsertPara("q")
             .InsertText("Poetry second line", "verse_1_1/q_1")
             .InsertPara("q")
-            .InsertBlank("verse_1_1/b_2")
             .InsertPara("b")
             .InsertText("Poetry third line", "verse_1_1/q_3")
             .InsertPara("q")
@@ -3766,7 +3559,6 @@ public partial class DeltaUsxMapperTests
             .New()
             .InsertBook("PHM")
             .InsertChapter("1")
-            .InsertBlank("p_1")
             .InsertVerse("1")
             .InsertText("This is a verse with an unmatched marker", "verse_1_1")
             .InsertEmbed("unmatched", new JObject(new JProperty("marker", "bad")), "verse_1_1")
@@ -3983,7 +3775,7 @@ public partial class DeltaUsxMapperTests
             """
             \id PSA - A
             \c 1
-            \q \v 1 
+            \q \v 1
             \b
             Blessed is the man...
             \b
@@ -4016,7 +3808,6 @@ public partial class DeltaUsxMapperTests
             .InsertText("Book title", "imt_1")
             .InsertPara("imt")
             .InsertChapter("1")
-            .InsertBlank("bad_1")
             .InsertVerse("1")
             .InsertText("New verse text.", "verse_1_1")
             .InsertPara("bad", true);
@@ -4029,15 +3820,7 @@ public partial class DeltaUsxMapperTests
     [Test]
     public void IsDeltaValid_InvalidVerse_ReturnsFalse()
     {
-        var delta = Delta
-            .New()
-            .InsertChapter("1")
-            .InsertBlank("p_1")
-            .InsertVerse("1", "bad", true)
-            .InsertBlank("verse_1_1")
-            .InsertVerse("2")
-            .InsertBlank("verse_1_2")
-            .InsertPara("p");
+        var delta = Delta.New().InsertChapter("1").InsertVerse("1", "bad", true).InsertVerse("2").InsertPara("p");
 
         bool result = DeltaUsxMapper.IsDeltaValid(delta);
 
