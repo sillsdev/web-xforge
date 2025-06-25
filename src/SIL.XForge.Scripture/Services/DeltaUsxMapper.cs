@@ -182,7 +182,6 @@ public class DeltaUsxMapper(
                                 state.CurRef = GetParagraphRef(nextIds, style, style);
                             }
                             ProcessChildNodes(elem, chapterDelta, invalidNodes, state);
-                            SegmentEnded(chapterDelta, state.CurRef);
                             if (!canContainVerseText)
                                 state.CurRef = null;
                             InsertPara(elem, chapterDelta, invalidNodes, state);
@@ -321,7 +320,6 @@ public class DeltaUsxMapper(
                             {
                                 state.CurRef = $"cell_{state.TableIndex}_{rowIndex}_{cellIndex}";
                                 ProcessChildNode(cell, newDelta, invalidNodes, state);
-                                SegmentEnded(newDelta, state.CurRef);
                                 var attrs = new JObject(
                                     new JProperty("table", tableAttributes),
                                     new JProperty("row", rowAttributes)
@@ -363,7 +361,6 @@ public class DeltaUsxMapper(
     {
         if (state.ImpliedParagraph)
         {
-            SegmentEnded(chapterDelta, state.CurRef);
             chapterDelta.Insert('\n');
             state.ImpliedParagraph = false;
         }
@@ -376,7 +373,6 @@ public class DeltaUsxMapper(
     private static void InsertVerse(XElement elem, Delta newDelta, HashSet<XNode> invalidNodes, ParseState state)
     {
         var verse = (string)elem.Attribute("number");
-        SegmentEnded(newDelta, state.CurRef);
         state.CurRef = $"verse_{state.CurChapter}_{verse}";
         newDelta.InsertEmbed("verse", GetAttributes(elem), attributes: AddInvalidInlineAttribute(invalidNodes, elem));
     }
@@ -404,7 +400,7 @@ public class DeltaUsxMapper(
         );
     }
 
-    private static void InsertPara(XElement elem, Delta newDelta, HashSet<XNode> invalidNodes, ParseState state)
+    private void InsertPara(XElement elem, Delta newDelta, HashSet<XNode> invalidNodes, ParseState state)
     {
         string style = elem.Attribute("style")?.Value;
         bool canContainVerseText = CanParaContainVerseText(style);
@@ -418,35 +414,19 @@ public class DeltaUsxMapper(
 
         // Map to the element name, so para and book can preserve their mapping to usx-para and usx-book
         attributes.Add(new JProperty(elem.Name.LocalName, GetAttributes(elem)));
+
+        // Add the cid to stop merging with the previous paragraph
+        JToken lastOp = newDelta.Ops.LastOrDefault();
+        if (
+            lastOp?.OpType() == Delta.InsertType
+            && JToken.DeepEquals(attributes, lastOp[Delta.Attributes])
+            && !attributes.ContainsKey("cid")
+        )
+        {
+            attributes.Add("cid", guidService.Generate());
+        }
+
         newDelta.Insert("\n", attributes);
-    }
-
-    private static void SegmentEnded(Delta newDelta, string? segRef)
-    {
-        if (segRef == null)
-            return;
-
-        if (newDelta.Ops.Count == 0)
-        {
-            newDelta.InsertBlank(segRef);
-        }
-        else
-        {
-            JToken lastOp = newDelta.Ops[^1];
-            string lastOpText = "";
-            if (lastOp[Delta.InsertType].Type == JTokenType.String)
-                lastOpText = (string)lastOp[Delta.InsertType];
-            var embed = lastOp[Delta.InsertType] as JObject;
-            var attrs = (JObject)lastOp[Delta.Attributes];
-            if (
-                (embed != null && (embed["verse"] != null || embed["chapter"] != null))
-                || (attrs != null && (attrs["book"] != null || attrs["para"] != null || attrs["table"] != null))
-                || lastOpText.EndsWith('\n')
-            )
-            {
-                newDelta.InsertBlank(segRef);
-            }
-        }
     }
 
     private static string GetParagraphRef(Dictionary<string, int> nextIds, string key, string prefix)

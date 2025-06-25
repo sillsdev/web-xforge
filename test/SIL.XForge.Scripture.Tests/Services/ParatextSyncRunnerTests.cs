@@ -3284,7 +3284,7 @@ public class ParatextSyncRunnerTests
 
         // Modify the text a bit so it will need written back to Paratext.
         const string newText = "In the beginning";
-        ops[5]["insert"] = newText;
+        ops[4]["insert"] = newText;
 
         // Make text docs out of the chapter deltas.
         var chapterDeltasAsSortedList = new SortedList<int, IDocument<TextData>>(
