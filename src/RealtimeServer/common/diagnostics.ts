@@ -2,12 +2,21 @@ import fs from 'fs';
 import inspector from 'inspector';
 import { writeHeapSnapshot } from 'node:v8';
 import path from 'path';
+import { ResourceMonitor } from './resource-monitor';
 
 const secondsToProfile = 30;
 
 // POSIX defines SIGUSR1 and SIGUSR2 as user-defined signals, but SIGUSR1 is reserved by Node.js to start the debugger.
 // Send the signal using e.g. kill -USR2 <node process id>
+// or pkill --signal USR2 --full  'node.*5002'
 process.on('SIGUSR2', () => {
+  // createHeapSnapshot();
+  recordResourceUsage();
+});
+
+console.log(`Diagnostics enabled for Node process with pid ${process.pid}`);
+
+function createHeapSnapshot() {
   console.log('Signal SIGUSR2 received; writing heap snapshot');
   const heapPath = path.join(process.cwd(), 'scriptureforge.heapsnapshot');
   // Warning: This is a synchronous operation and will block the event loop!
@@ -34,6 +43,9 @@ process.on('SIGUSR2', () => {
       }, secondsToProfile * 1000);
     });
   });
-});
+}
 
-console.log(`Diagnostics enabled for Node process with pid ${process.pid}`);
+function recordResourceUsage() {
+  console.log('Recording resource usage');
+  ResourceMonitor.instance.record();
+}
