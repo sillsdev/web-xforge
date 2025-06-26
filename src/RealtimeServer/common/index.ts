@@ -10,6 +10,7 @@ import './diagnostics';
 import { ExceptionReporter } from './exception-reporter';
 import { MetadataDB } from './metadata-db';
 import { RealtimeServer, RealtimeServerConstructor } from './realtime-server';
+import { ResourceMonitor } from './resource-monitor';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { WebSocketStreamListener } from './web-socket-stream-listener';
 
@@ -186,6 +187,7 @@ export = {
     connection.on('error', err => console.log(err));
     const index = connectionIndex++;
     connections.set(index, connection);
+    ResourceMonitor.instance.startMonitoringConnection(connection);
     callback(undefined, index);
   },
 
@@ -193,6 +195,10 @@ export = {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
+    }
+    const conn = connections.get(handle);
+    if (conn != null) {
+      ResourceMonitor.instance.stopMonitoringConnection(conn);
     }
     connections.delete(handle);
     callback(undefined, {});
