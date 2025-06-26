@@ -7,6 +7,7 @@ import { Connection, Doc, Op, RawOp } from 'sharedb/lib/client';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
 import { SchemaProperties, ValidationSchema } from './models/validation-schema';
+import { ResourceMonitor } from './resource-monitor';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
 import { createFetchQuery, docFetch } from './utils/sharedb-utils';
@@ -394,6 +395,11 @@ export class RealtimeServer extends ShareDB {
     });
 
     this.defaultConnection = this.connect();
+
+    if (!this.dataValidationDisabled) {
+      ResourceMonitor.instance.setPubSub((this as any).pubsub);
+      ResourceMonitor.instance.startMonitoringConnection(this.defaultConnection);
+    }
   }
 
   async addValidationSchema(db: Db): Promise<void> {
@@ -416,11 +422,14 @@ export class RealtimeServer extends ShareDB {
     if (connectionOrUserId instanceof Connection) {
       connection = connectionOrUserId;
     } else {
-      connection = new MigrationConnection({
+      // Temporary socket that is used in constructing the Connection, but quickly replaced with a new socket in ShareDB
+      // backend.js connect().
+      const tmpSocket = {
         close: () => {
           // do nothing
         }
-      } as WebSocket);
+      } as WebSocket;
+      connection = new MigrationConnection(tmpSocket);
       if (connectionOrUserId != null) {
         req = { userId: connectionOrUserId };
       }
@@ -429,7 +438,11 @@ export class RealtimeServer extends ShareDB {
   }
 
   listen(stream: any, req?: any): ShareDB.Agent {
+    // Streams of types WebSocketJSONStream and ServerStream are received by this method.
     const agent = new MigrationAgent(this, stream);
+    if (!this.dataValidationDisabled) {
+      ResourceMonitor.instance.monitorAgent(agent, stream);
+    }
     this.trigger('connect', agent, { stream, req }, err => {
       if (err) {
         return agent.close(err);
