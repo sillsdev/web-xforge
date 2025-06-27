@@ -177,20 +177,10 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
         this.availableTrainingFiles = [];
         this.availableTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
         if (!this.isTrainingDataInitialized) {
-          // Set the selection based on previous builds
           this.isTrainingDataInitialized = true;
-          // Get the previously selected training data files from the target project
-          const previousTrainingDataFiles: string[] =
-            projectDoc.data?.translateConfig.draftConfig.lastSelectedTrainingDataFiles ?? [];
 
-          // The intersection is all of the available training data files in the target project that match the target's
-          // previous training data files
-          const intersection: string[] = this.availableTrainingFiles
-            .map(d => d.dataId)
-            .filter(dataId => previousTrainingDataFiles.includes(dataId));
-
-          // Set the selected data files to the intersection, or if the intersection is empty, do not select any
-          this.selectedTrainingFileIds = intersection.length > 0 ? intersection : [];
+          const availableFiles: string[] = this.availableTrainingFiles.map(d => d.dataId);
+          this.selectedTrainingFileIds = availableFiles.length > 0 ? availableFiles : [];
         }
       });
   }
@@ -249,6 +239,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 
   onTrainingDataSelect(selectedTrainingDataIds: string[]): void {
     this.selectedTrainingFileIds = selectedTrainingDataIds;
+    this.changesMade = true;
   }
 
   async loadProjects(): Promise<void> {

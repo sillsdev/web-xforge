@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -18,34 +18,24 @@ import {
   TrainingDataUploadDialogData
 } from './training-data-upload-dialog.component';
 import { TrainingDataService } from './training-data.service';
-export interface TrainingDataOption {
-  value: TrainingData;
-  selected: boolean;
-}
 
 @Component({
   selector: 'app-training-data-multi-select',
   templateUrl: './training-data-multi-select.component.html',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatChipsModule, MatIconModule, SharedModule, TranslocoModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, SharedModule, TranslocoModule, MatListModule],
   styleUrls: ['./training-data-multi-select.component.scss']
 })
-export class TrainingDataMultiSelectComponent implements OnChanges {
+export class TrainingDataMultiSelectComponent {
   @Input() availableTrainingData: TrainingData[] = [];
-  @Input() selectedTrainingDataIds: string[] = [];
   @Output() trainingDataSelect = new EventEmitter<string[]>();
 
-  trainingDataOptions: TrainingDataOption[] = [];
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly dialogService: DialogService,
     private readonly trainingDataService: TrainingDataService,
     private readonly userService: UserService
   ) {}
-
-  ngOnChanges(): void {
-    this.initTrainingDataOptions();
-  }
 
   canDeleteTrainingData(trainingData: TrainingData): boolean {
     const userId: string = this.userService.currentUserId;
@@ -65,13 +55,6 @@ export class TrainingDataMultiSelectComponent implements OnChanges {
     await this.trainingDataService.deleteTrainingDataAsync(trainingData);
   }
 
-  onChipListChange(data: TrainingDataOption): void {
-    const dataIndex: number = this.trainingDataOptions.findIndex(n => n.value.dataId === data.value.dataId);
-    this.trainingDataOptions[dataIndex].selected = !this.trainingDataOptions[dataIndex].selected;
-    this.selectedTrainingDataIds = this.trainingDataOptions.filter(n => n.selected).map(n => n.value.dataId);
-    this.trainingDataSelect.emit(this.selectedTrainingDataIds);
-  }
-
   openUploadDialog(): void {
     if (this.activatedProjectService.projectId == null) return;
     const dialogConfig: MatDialogConfig<TrainingDataUploadDialogData> = {
@@ -85,14 +68,7 @@ export class TrainingDataMultiSelectComponent implements OnChanges {
       }
 
       // Emit the selection event
-      this.trainingDataSelect.emit([...this.selectedTrainingDataIds, result.dataId]);
+      this.trainingDataSelect.emit([...this.availableTrainingData.map(td => td.dataId), result.dataId]);
     });
-  }
-
-  private initTrainingDataOptions(): void {
-    this.trainingDataOptions = this.availableTrainingData.map((item: TrainingData) => ({
-      value: item,
-      selected: this.selectedTrainingDataIds.includes(item.dataId)
-    }));
   }
 }

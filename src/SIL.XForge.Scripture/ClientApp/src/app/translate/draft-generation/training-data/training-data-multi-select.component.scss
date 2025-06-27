@@ -1,23 +1,14 @@
-.flex-row {
-  margin-top: 20px;
+mat-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.mat-mdc-list-item {
+  width: unset;
 }
 
 .training-data-multi-select {
-  .mat-mdc-standard-chip {
-    &.mat-mdc-chip-selected,
-    &.mat-mdc-chip-highlighted {
-      --mdc-chip-elevated-selected-container-color: #4a79c9;
-    }
-  }
-
   button {
-    margin: 0 8px;
+    margin: 0 4px;
   }
-}
-
-/* Stop overflow of text inside the chips */
-:host ::ng-deep .mat-mdc-standard-chip .mdc-evolution-chip__cell--primary,
-:host ::ng-deep .mat-mdc-standard-chip .mdc-evolution-chip__action--primary,
-:host ::ng-deep .mat-mdc-standard-chip .mat-mdc-chip-action-label {
-  overflow: hidden;
 }
