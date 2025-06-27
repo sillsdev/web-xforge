@@ -186,64 +186,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
     this.expandCollapseState.set(node.description, isExpanded);
 
     if (isExpanded === true) {
-      if (node.children) {
-        const isLargeNodeSet = node.children.length > this.lynxInsightConfig.panelOptimizationThreshold;
-
-        if (isLargeNodeSet) {
-          this.nodesWithLargeChildSets.add(node.description);
-
-          const existingProgress = this.loadingProgressMap.get(node.description);
-
-          let countToLoad = 0;
-          let countAlreadyLoaded = 0;
-
-          for (const child of node.children) {
-            if (child.insight) {
-              if (this.textSnippetCache.has(child.insight.id)) {
-                countAlreadyLoaded++;
-              } else {
-                countToLoad++;
-              }
-            }
-          }
-
-          const totalCount = countToLoad + countAlreadyLoaded;
-
-          // Only reset progress if no existing progress or if total changed significantly
-          if (!existingProgress || Math.abs(existingProgress.total - totalCount) > 5) {
-            this.loadingProgressMap.set(node.description, {
-              completed: countAlreadyLoaded,
-              total: totalCount
-            });
-          }
-        }
-
-        // Initialize the visible subset for large node sets or show all for normal sets
-        const visibleChildren: InsightPanelNode[] = isLargeNodeSet
-          ? node.children.slice(0, this.lynxInsightConfig.panelOptimizationThreshold)
-          : node.children;
-
-        for (const child of visibleChildren) {
-          // Only update nodes that don't already have their text snippets
-          if (child.insight && !this.textSnippetCache.has(child.insight.id)) {
-            // Set initial placeholder based on bookNum and chapterNum
-            child.description = this.getPlaceholderDescription(child.insight);
-            child.isLoading = true;
-          } else if (child.insight && this.textSnippetCache.has(child.insight.id)) {
-            // Use cached text snippet if available
-            child.description = this.textSnippetCache.get(child.insight.id)!;
-            child.isLoading = false;
-          }
-        }
-      }
-
-      // Process text for children nodes progressively to avoid blocking UI
-      this.processChildrenTextProgressively(node);
-
-      // Calculate progress properties (needed for "show more" button)
-      if (node.children && node.children.length > this.lynxInsightConfig.panelOptimizationThreshold) {
-        this.calculateNodeProgressProperties(node);
-      }
+      this.processExpandedNode(node);
     }
   }
 
@@ -411,6 +354,67 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
     return groupedNodes;
   }
 
+  private processExpandedNode(node: InsightPanelNode): void {
+    if (node.children != null && node.children.length > 0) {
+      const isLargeNodeSet = node.children.length > this.lynxInsightConfig.panelOptimizationThreshold;
+
+      if (isLargeNodeSet) {
+        this.nodesWithLargeChildSets.add(node.description);
+
+        const existingProgress = this.loadingProgressMap.get(node.description);
+
+        let countToLoad = 0;
+        let countAlreadyLoaded = 0;
+
+        for (const child of node.children) {
+          if (child.insight) {
+            if (this.textSnippetCache.has(child.insight.id)) {
+              countAlreadyLoaded++;
+            } else {
+              countToLoad++;
+            }
+          }
+        }
+
+        const totalCount = countToLoad + countAlreadyLoaded;
+
+        // Only reset progress if no existing progress or if total changed significantly
+        if (!existingProgress || Math.abs(existingProgress.total - totalCount) > 5) {
+          this.loadingProgressMap.set(node.description, {
+            completed: countAlreadyLoaded,
+            total: totalCount
+          });
+        }
+      }
+
+      // Initialize the visible subset for large node sets or show all for normal sets
+      const visibleChildren: InsightPanelNode[] = isLargeNodeSet
+        ? node.children.slice(0, this.lynxInsightConfig.panelOptimizationThreshold)
+        : node.children;
+
+      for (const child of visibleChildren) {
+        // Only update nodes that don't already have their text snippets
+        if (child.insight && !this.textSnippetCache.has(child.insight.id)) {
+          // Set initial placeholder based on bookNum and chapterNum
+          child.description = this.getPlaceholderDescription(child.insight);
+          child.isLoading = true;
+        } else if (child.insight && this.textSnippetCache.has(child.insight.id)) {
+          // Use cached text snippet if available
+          child.description = this.textSnippetCache.get(child.insight.id)!;
+          child.isLoading = false;
+        }
+      }
+
+      // Process text for children nodes progressively to avoid blocking UI
+      this.processChildrenTextProgressively(node);
+
+      // Calculate progress properties (needed for "show more" button)
+      if (node.children.length > this.lynxInsightConfig.panelOptimizationThreshold) {
+        this.calculateNodeProgressProperties(node);
+      }
+    }
+  }
+
   private restoreExpandCollapseState(): void {
     if (this.expandCollapseState.size === 0 || this.tree == null) {
       return;
@@ -422,6 +426,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
 
         if (shouldBeExpanded) {
           this.tree.expand(node);
+          this.processExpandedNode(node);
         } else {
           this.tree.collapse(node);
         }

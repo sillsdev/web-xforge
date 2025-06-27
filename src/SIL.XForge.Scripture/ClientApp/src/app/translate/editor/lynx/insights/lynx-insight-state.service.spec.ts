@@ -102,13 +102,7 @@ describe('LynxInsightStateService', () => {
     );
 
     when(mockLynxWorkspaceService.rawInsightSource$).thenReturn(rawInsightSource);
-    when(mockLynxWorkspaceService.currentInsights).thenReturn(
-      new Map<string, LynxInsight[]>([
-        ['project1:MAT:1', [testInsights[0], testInsights[1]]],
-        ['project1:MAT:2', [testInsights[2]]],
-        ['project1:MRK:1', [testInsights[3]]]
-      ])
-    );
+    when(mockLynxWorkspaceService.currentInsights).thenReturn(testInsights);
     when(mockActivatedBookChapterService.activatedBookChapter$).thenReturn(activatedBookChapter);
     when(mockActivatedProjectUserConfigService.projectUserConfig$).thenReturn(projectUserConfig$);
     when(mockActivatedProjectUserConfigService.projectUserConfigDoc$).thenReturn(projectUserConfigDoc$);
@@ -174,7 +168,7 @@ describe('LynxInsightStateService', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should find insight by id from current insights map', () => {
+    it('should find insight by id', () => {
       const result = service.getInsight('test-2');
       expect(result).toBeDefined();
       expect(result?.id).toBe('test-2');

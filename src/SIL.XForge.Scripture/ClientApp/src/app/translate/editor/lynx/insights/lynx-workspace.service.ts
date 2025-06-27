@@ -10,6 +10,7 @@ import {
 } from '@sillsdev/lynx';
 import { ScriptureDeltaDocument } from '@sillsdev/lynx-delta';
 import { Canon } from '@sillsdev/scripture';
+import { groupBy } from 'lodash-es';
 import Delta, { Op } from 'quill-delta';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
@@ -18,11 +19,11 @@ import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text
 import {
   debounceTime,
   distinctUntilChanged,
-  groupBy,
   map,
   mergeMap,
   Observable,
   of,
+  groupBy as rxjsGroupBy,
   shareReplay,
   startWith,
   Subscription,
@@ -50,7 +51,8 @@ export class LynxWorkspaceService {
   private textDocId?: TextDocId;
   private textDocChangeSubscription?: Subscription;
   private projectDocChangeSubscription?: Subscription;
-  private readonly curInsights = new Map<string, LynxInsight[]>();
+  private readonly curInsightsByEventUriAndSource = new Map<string, Map<string, LynxInsight[]>>();
+  private curInsightsFlattened: LynxInsight[] = [];
   public readonly rawInsightSource$: Observable<LynxInsight[]>;
 
   /** Emits `true` while a new project's insights are loading, and `false` once the first insights arrive. */
@@ -77,7 +79,7 @@ export class LynxWorkspaceService {
     this.rawInsightSource$ = this.workspace.diagnosticsChanged$.pipe(
       // Group events by event URI, then switchMap within each group to handle the cancellation and processing
       // of only the latest event for that URI.
-      groupBy(event => event.uri),
+      rxjsGroupBy(event => event.uri),
       mergeMap(group$ => group$.pipe(switchMap(event => this.onDiagnosticsChanged(event)))),
       debounceTime(10) // Debouncing avoids emitting after each event URI when loading a new project
     );
@@ -101,9 +103,10 @@ export class LynxWorkspaceService {
     );
   }
 
-  get currentInsights(): ReadonlyMap<string, LynxInsight[]> {
-    return this.curInsights;
+  get currentInsights(): LynxInsight[] {
+    return this.curInsightsFlattened;
   }
+
   async init(): Promise<void> {
     await this.workspace.init();
     await this.workspace.changeLanguage(this.i18n.localeCode);
@@ -195,10 +198,14 @@ export class LynxWorkspaceService {
 
   private async onDiagnosticsChanged(event: DiagnosticsChanged): Promise<LynxInsight[]> {
     if (event.diagnostics.length === 0) {
-      this.curInsights.delete(event.uri);
+      this.curInsightsByEventUriAndSource.delete(event.uri);
     } else {
       const doc: ScriptureDeltaDocument | undefined = await this.documentManager.get(event.uri);
-      const insights: LynxInsight[] = [];
+
+      if (!this.curInsightsByEventUriAndSource.has(event.uri)) {
+        this.curInsightsByEventUriAndSource.set(event.uri, new Map<string, LynxInsight[]>());
+      }
+
       if (doc != null) {
         const textDocIdParts: string[] = event.uri.split(':', 3);
         const textDocId = new TextDocId(
@@ -206,53 +213,76 @@ export class LynxWorkspaceService {
           Canon.bookIdToNumber(textDocIdParts[1]),
           parseInt(textDocIdParts[2])
         );
-        for (const diagnostic of event.diagnostics) {
-          let type: LynxInsightType = 'info';
-          switch (diagnostic.severity) {
-            case DiagnosticSeverity.Information:
-            case DiagnosticSeverity.Hint:
-              type = 'info';
-              break;
-            case DiagnosticSeverity.Warning:
-              type = 'warning';
-              break;
-            case DiagnosticSeverity.Error:
-              type = 'error';
-              break;
+
+        // Group diagnostics by source because onDiagnosticsChanged event may fire multiple times
+        // for the same URI (once for each diagnostic source).
+        // This way, 'current insights' for a different diagnostic source will not be cleared and insight id
+        // will be reused if the diagnostic matches an existing insight.
+        const diagnosticsBySource = groupBy(event.diagnostics, 'source');
+
+        for (const [source, diagnosticsForSource] of Object.entries(diagnosticsBySource)) {
+          const updatedInsightsForSource: LynxInsight[] = [];
+          const currentInsightsForSource: LynxInsight[] =
+            this.curInsightsByEventUriAndSource.get(event.uri)?.get(source) ?? [];
+
+          for (const diagnostic of diagnosticsForSource) {
+            let type: LynxInsightType = 'info';
+            switch (diagnostic.severity) {
+              case DiagnosticSeverity.Information:
+              case DiagnosticSeverity.Hint:
+                type = 'info';
+                break;
+              case DiagnosticSeverity.Warning:
+                type = 'warning';
+                break;
+              case DiagnosticSeverity.Error:
+                type = 'error';
+                break;
+            }
+
+            const start: number = doc.offsetAt(diagnostic.range.start);
+            const end: number = doc.offsetAt(diagnostic.range.end);
+            const range = { index: start, length: end - start };
+
+            // Look for matching existing insight
+            const existingMatchingInsight: LynxInsight | undefined = currentInsightsForSource.find(curInsight => {
+              return (
+                curInsight.code === diagnostic.code.toString() &&
+                curInsight.type === type &&
+                curInsight.range.index === range.index &&
+                curInsight.range.length === range.length
+              );
+            });
+
+            updatedInsightsForSource.push({
+              id: existingMatchingInsight?.id ?? uuidv4(), // Reuse id if matching insight found, otherwise generate
+              type,
+              textDocId,
+              range: { index: start, length: end - start },
+              code: diagnostic.code.toString(),
+              source: diagnostic.source,
+              description: diagnostic.message,
+              moreInfo: diagnostic.moreInfo,
+              data: diagnostic.data
+            });
           }
-          const start: number = doc.offsetAt(diagnostic.range.start);
-          const end: number = doc.offsetAt(diagnostic.range.end);
-          const range = { index: start, length: end - start };
 
-          // Look for matching existing insight
-          const currentInsights: LynxInsight[] = this.curInsights.get(event.uri) ?? [];
-          const existingMatchingInsight: LynxInsight | undefined = currentInsights.find(curInsight => {
-            return (
-              curInsight.code === diagnostic.code.toString() &&
-              curInsight.source === diagnostic.source &&
-              curInsight.type === type &&
-              curInsight.range.index === range.index &&
-              curInsight.range.length === range.length
-            );
-          });
-
-          insights.push({
-            id: existingMatchingInsight?.id ?? uuidv4(), // Reuse id if matching insight found, otherwise generate
-            type,
-            textDocId,
-            range: { index: start, length: end - start },
-            code: diagnostic.code.toString(),
-            source: diagnostic.source,
-            description: diagnostic.message,
-            moreInfo: diagnostic.moreInfo,
-            data: diagnostic.data
-          });
+          // Refresh the insights for this source only
+          this.curInsightsByEventUriAndSource.get(event.uri)!.set(source, updatedInsightsForSource);
         }
       }
-      this.curInsights.set(event.uri, insights);
     }
 
-    return [...this.curInsights.values()].flat();
+    // Flatten the 2D map to a single array of insights
+    const allInsights: LynxInsight[] = [];
+    for (const uriMap of this.curInsightsByEventUriAndSource.values()) {
+      for (const sourceInsights of uriMap.values()) {
+        allInsights.push(...sourceInsights);
+      }
+    }
+
+    this.curInsightsFlattened = allInsights;
+    return allInsights;
   }
 
   private async onProjectActivated(projectDoc: SFProjectProfileDoc | undefined): Promise<void> {
@@ -260,7 +290,8 @@ export class LynxWorkspaceService {
       return;
     }
 
-    this.curInsights.clear();
+    this.curInsightsByEventUriAndSource.clear();
+    this.curInsightsFlattened = [];
 
     if (this.projectDocChangeSubscription != null) {
       this.projectDocChangeSubscription.unsubscribe();
