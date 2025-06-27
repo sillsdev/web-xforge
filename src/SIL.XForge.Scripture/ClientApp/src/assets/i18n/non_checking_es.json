@@ -373,7 +373,7 @@
   },
   "editor_draft_tab": {
     "apply_to_project": "Añadir al proyecto",
-    "cannot_import": "You cannot import this draft because you do not have permission to edit this chapter. Permissions can be updated in Paratext.",
+    "cannot_import": "No puede importar este borrador porque no tiene permiso para editar este capítulo. Los permisos pueden actualizarse en Paratext.",
     "click_book_to_preview": "Haga clic en un libro de los que aparecen a continuación para previsualizar el borrador y añadirlo a su proyecto.",
     "draft_indicator_applied": "Añadido",
     "draft_legacy_warning": "Hemos actualizado nuestra funcionalidad de borrador. Puede aprovecharla [link:generateDraftUrl]generando un nuevo borrador[/link].",
