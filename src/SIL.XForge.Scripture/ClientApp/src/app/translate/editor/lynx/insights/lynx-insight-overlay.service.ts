@@ -88,10 +88,10 @@ export class LynxInsightOverlayService {
         }
       });
 
-    // When initially displayed, scroll editor if necessary to ensure overlay is displayed within editor bounds
-    setTimeout(() => this.ensureOverlayWithinEditorBounds(overlayRef.ref));
-
     this.openRef = overlayRef;
+
+    // When initially displayed, scroll editor if necessary to ensure overlay is displayed within editor bounds
+    setTimeout(() => this.ensureOverlayWithinEditorBounds());
 
     return overlayRef;
   }
@@ -174,8 +174,10 @@ export class LynxInsightOverlayService {
   /**
    * Ensures the overlay is fully within the editor bounds.
    */
-  private ensureOverlayWithinEditorBounds(overlayRef: OverlayRef): void {
-    if (this.scrollableContainer == null) {
+  private ensureOverlayWithinEditorBounds(): void {
+    const overlayRef: OverlayRef | undefined = this.openRef?.ref;
+
+    if (this.scrollableContainer == null || overlayRef?.overlayElement == null) {
       return;
     }
 
