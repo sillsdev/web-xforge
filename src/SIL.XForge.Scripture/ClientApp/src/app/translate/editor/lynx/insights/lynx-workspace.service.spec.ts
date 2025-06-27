@@ -245,10 +245,32 @@ describe('LynxWorkspaceService', () => {
      * Add an insight directly to the service for testing.
      */
     addInsightToService(insight: LynxInsight): void {
-      const curInsights = this.service['curInsights'];
+      const curInsightsByEventUriAndSource = this.service['curInsightsByEventUriAndSource'];
       const docUri = insight.textDocId.toString();
-      const existingInsights = curInsights.get(docUri) || [];
-      curInsights.set(docUri, [...existingInsights, insight]);
+
+      if (!curInsightsByEventUriAndSource.has(docUri)) {
+        curInsightsByEventUriAndSource.set(docUri, new Map<string, LynxInsight[]>());
+      }
+
+      const uriMap = curInsightsByEventUriAndSource.get(docUri)!;
+      const existingInsights = uriMap.get(insight.source) || [];
+      uriMap.set(insight.source, [...existingInsights, insight]);
+
+      // Update the flattened cache
+      this.service['curInsightsFlattened'] = this.flattenAllInsights(curInsightsByEventUriAndSource);
+    }
+
+    /**
+     * Flattens the 2D map structure of insights into a single array.
+     */
+    private flattenAllInsights(insightsByEventUriAndSource: Map<string, Map<string, LynxInsight[]>>): LynxInsight[] {
+      const allInsights: LynxInsight[] = [];
+      for (const uriMap of insightsByEventUriAndSource.values()) {
+        for (const sourceInsights of uriMap.values()) {
+          allInsights.push(...sourceInsights);
+        }
+      }
+      return allInsights;
     }
 
     createTestInsight(options: Partial<LynxInsight> = {}): LynxInsight {
@@ -330,12 +352,12 @@ describe('LynxWorkspaceService', () => {
       const insight = env.createTestInsight();
       env.addInsightToService(insight);
 
-      expect([...env.service.currentInsights.values()].flat().length).toBeGreaterThan(0);
+      expect(env.service.currentInsights.length).toBeGreaterThan(0);
 
       env.service['projectId'] = 'different-id';
       env.triggerProjectChange('new-project');
 
-      expect([...env.service.currentInsights.values()].flat().length).toBe(0);
+      expect(env.service.currentInsights.length).toBe(0);
     }));
   });
 
@@ -627,6 +649,327 @@ describe('LynxWorkspaceService', () => {
       tick();
 
       expect(actions).toEqual([]);
+    }));
+  });
+
+  describe('2D Map Structure - Insights by URI and Source', () => {
+    it('should organize insights by URI and diagnostic source', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupActiveTextDocId();
+      const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+      const { insights, subscription } = env.captureInsights();
+
+      // Create diagnostics from different sources
+      const diagnosticsChangedEvent: DiagnosticsChanged = {
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '001',
+            source: 'source-a',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Warning from source A'
+          },
+          {
+            code: '002',
+            source: 'source-b',
+            range: { start: { line: 0, character: 6 }, end: { line: 0, character: 10 } },
+            severity: DiagnosticSeverity.Error,
+            message: 'Error from source B'
+          },
+          {
+            code: '003',
+            source: 'source-a',
+            range: { start: { line: 0, character: 11 }, end: { line: 0, character: 15 } },
+            severity: DiagnosticSeverity.Information,
+            message: 'Info from source A'
+          }
+        ]
+      };
+
+      env.diagnosticsChangedTestSubject$.next(diagnosticsChangedEvent);
+      tick(10);
+
+      // Should receive 3 insights total
+      expect(insights.length).toBe(3);
+
+      // Check that insights from source-a and source-b are properly stored
+      const curInsightsByEventUriAndSource = env.service['curInsightsByEventUriAndSource'];
+      expect(curInsightsByEventUriAndSource.has(textDocId.toString())).toBe(true);
+
+      const uriMap = curInsightsByEventUriAndSource.get(textDocId.toString())!;
+      expect(uriMap.has('source-a')).toBe(true);
+      expect(uriMap.has('source-b')).toBe(true);
+
+      const sourceAInsights = uriMap.get('source-a')!;
+      const sourceBInsights = uriMap.get('source-b')!;
+
+      expect(sourceAInsights.length).toBe(2); // Warning and Info from source-a
+      expect(sourceBInsights.length).toBe(1); // Error from source-b
+
+      subscription.unsubscribe();
+    }));
+
+    it('should preserve insights from different sources when one source is updated', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupActiveTextDocId();
+      const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+      const { insights, subscription } = env.captureInsights();
+
+      // Add insights from source-a
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '001',
+            source: 'source-a',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Warning from source A'
+          }
+        ]
+      });
+      tick(10);
+
+      // Add insights from source-b
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '002',
+            source: 'source-b',
+            range: { start: { line: 0, character: 6 }, end: { line: 0, character: 10 } },
+            severity: DiagnosticSeverity.Error,
+            message: 'Error from source B'
+          }
+        ]
+      });
+      tick(10);
+
+      expect(insights.length).toBe(2);
+
+      // Update only source-a with new diagnostic
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '003',
+            source: 'source-a',
+            range: { start: { line: 0, character: 11 }, end: { line: 0, character: 15 } },
+            severity: DiagnosticSeverity.Information,
+            message: 'Updated insight from source A'
+          }
+        ]
+      });
+      tick(10);
+
+      // Should now have insights from both sources
+      expect(insights.length).toBe(2);
+
+      const curInsightsByEventUriAndSource = env.service['curInsightsByEventUriAndSource'];
+      const uriMap = curInsightsByEventUriAndSource.get(textDocId.toString())!;
+
+      // Source-a should have new insight
+      const sourceAInsights = uriMap.get('source-a')!;
+      expect(sourceAInsights.length).toBe(1);
+      expect(sourceAInsights[0].description).toBe('Updated insight from source A');
+
+      // Source-b should still have original insight
+      const sourceBInsights = uriMap.get('source-b')!;
+      expect(sourceBInsights.length).toBe(1);
+      expect(sourceBInsights[0].description).toBe('Error from source B');
+
+      subscription.unsubscribe();
+    }));
+
+    it('should reuse insight ids for matching diagnostics within the same source', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupActiveTextDocId();
+      const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+      const { insights, subscription } = env.captureInsights();
+
+      // Send initial diagnostic
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '001',
+            source: 'source-a',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Warning message'
+          }
+        ]
+      });
+      tick(10);
+
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '002',
+            source: 'source-b',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Warning message'
+          }
+        ]
+      });
+      tick(10);
+
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '003',
+            source: 'source-c',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Warning message'
+          }
+        ]
+      });
+      tick(10);
+
+      const originalIdA = insights[0].id;
+      const originalIdB = insights[1].id;
+      const originalIdC = insights[2].id;
+
+      // Send same diagnostic again (simulating re-analysis)
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '001',
+            source: 'source-a',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Warning message'
+          }
+        ]
+      });
+      tick(10);
+
+      // Id should be preserved
+      expect(insights[0].id).toBe(originalIdA);
+      expect(insights[1].id).toBe(originalIdB);
+      expect(insights[2].id).toBe(originalIdC);
+
+      subscription.unsubscribe();
+    }));
+
+    it('should flatten 2D map correctly when returning insights', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupActiveTextDocId();
+      const textDocId1 = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+      const textDocId2 = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM + 1);
+      const { insights, subscription } = env.captureInsights();
+
+      // Add insights for multiple URIs and sources
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId1.toString(),
+        diagnostics: [
+          {
+            code: '001',
+            source: 'source-a',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Doc1 Source A'
+          },
+          {
+            code: '002',
+            source: 'source-b',
+            range: { start: { line: 0, character: 6 }, end: { line: 0, character: 10 } },
+            severity: DiagnosticSeverity.Error,
+            message: 'Doc1 Source B'
+          }
+        ]
+      });
+      tick(10);
+
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId2.toString(),
+        diagnostics: [
+          {
+            code: '003',
+            source: 'source-a',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Information,
+            message: 'Doc2 Source A'
+          }
+        ]
+      });
+      tick(10);
+
+      // Should receive all insights flattened
+      expect(insights.length).toBe(3);
+
+      const descriptions = insights.map(i => i.description).sort();
+      expect(descriptions).toEqual(['Doc1 Source A', 'Doc1 Source B', 'Doc2 Source A']);
+
+      subscription.unsubscribe();
+    }));
+
+    it('should clear all sources for a URI when empty diagnostics are received', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupActiveTextDocId();
+      const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+      const { insights, subscription } = env.captureInsights();
+
+      // Add insights from multiple sources
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '001',
+            source: 'source-a',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Source A'
+          },
+          {
+            code: '002',
+            source: 'source-b',
+            range: { start: { line: 0, character: 6 }, end: { line: 0, character: 10 } },
+            severity: DiagnosticSeverity.Error,
+            message: 'Source B'
+          }
+        ]
+      });
+      tick(10);
+
+      expect(insights.length).toBe(2);
+
+      // Send empty diagnostics
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: []
+      });
+      tick(10);
+
+      // All insights should be cleared
+      expect(insights.length).toBe(0);
+
+      const curInsightsByEventUriAndSource = env.service['curInsightsByEventUriAndSource'];
+      expect(curInsightsByEventUriAndSource.has(textDocId.toString())).toBe(false);
+
+      subscription.unsubscribe();
+    }));
+
+    it('should maintain consistent currentInsights getter behavior', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupActiveTextDocId();
+
+      // Add some insights using the internal 2D map structure
+      const insight1 = env.createTestInsight({ id: 'test-1', source: 'source-a', description: 'Test 1' });
+      const insight2 = env.createTestInsight({ id: 'test-2', source: 'source-b', description: 'Test 2' });
+
+      env.addInsightToService(insight1);
+      env.addInsightToService(insight2);
+
+      // Test currentInsights getter
+      const ids = env.service.currentInsights.map(i => i.id).sort();
+      expect(ids).toEqual(['test-1', 'test-2']);
     }));
   });
 });
