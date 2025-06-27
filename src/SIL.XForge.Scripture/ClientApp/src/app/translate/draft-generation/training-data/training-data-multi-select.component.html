@@ -1,24 +1,22 @@
 <ng-container *transloco="let t; read: 'training_data_multi_select'">
   <div class="flex-row">
-    @for (trainingData of trainingDataOptions; track trainingData.value.dataId) {
-      <mat-chip-listbox
-        class="training-data-multi-select"
-        hideSingleSelectionIndicator
-        (change)="onChipListChange(trainingData)"
-      >
-        <mat-chip-option [value]="trainingData.value" [selected]="trainingData.selected">
-          {{ trainingData.value.title }}
-          @if (canDeleteTrainingData(trainingData.value)) {
-            <button matChipRemove (click)="deleteTrainingData(trainingData.value)">
-              <mat-icon>cancel</mat-icon>
-            </button>
-          }
-        </mat-chip-option>
-      </mat-chip-listbox>
+    @if (availableTrainingData.length > 0) {
+      <mat-list class="training-data-multi-select" hideSingleSelectionIndicator>
+        @for (trainingData of availableTrainingData; track trainingData.dataId) {
+          <mat-list-item>
+            {{ trainingData.title }}
+            @if (canDeleteTrainingData(trainingData)) {
+              <button matListItemMeta mat-icon-button (click)="deleteTrainingData(trainingData)">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            }
+          </mat-list-item>
+        }
+      </mat-list>
     }
-    <button mat-flat-button (click)="openUploadDialog()" color="primary">
-      <mat-icon matChipAvatar>file_upload</mat-icon>
-      {{ t("upload_spreadsheet") }}
-    </button>
   </div>
+  <button mat-flat-button (click)="openUploadDialog()" color="primary">
+    <mat-icon>file_upload</mat-icon>
+    {{ t("upload_spreadsheet") }}
+  </button>
 </ng-container>
