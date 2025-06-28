@@ -76,32 +76,52 @@ const bookIds = [
   'REV'
 ];
 
-const booksByProjectsDraftingIt = db.event_metrics.aggregate([
-  {
-    $match: {
-      eventType: 'StartPreTranslationBuildAsync'
-    }
-  },
-  {
-    $project: {
-      projectId: '$projectId',
-      books: { $split: ['$payload.buildConfig.TranslationScriptureRange', ';'] }
-    }
-  },
-  {
-    $group: {
-      _id: '$projectId',
-      books: { $addToSet: '$books' }
-    }
-  },
-]).toArray();
+const metrics = db.event_metrics.find({ eventType: 'StartPreTranslationBuildAsync' }).toArray();
 
+const draftedBooksByProject = {};
+
+for (const metric of metrics) {
+  // Handle both payload formats
+  let books = metric.payload.buildConfig.TranslationScriptureRange ?? (metric.payload.buildConfig.TranslationScriptureRanges ?? []).map(range => range.ScriptureRange).join(';') ?? '';
+
+  books = books.split(';').filter(book => book !== '');
+
+  draftedBooksByProject[metric.projectId] ??= new Set();
+
+  for (const book of books) {
+    draftedBooksByProject[metric.projectId].add(book);
+  }
+}
+
+const projects = db.sf_projects.find({
+  _id: { $in: Object.keys(draftedBooksByProject) }
+}, {
+  name: 1,
+  shortName: 1,
+  writingSystem: 1,
+  paratextId: 1
+}).toArray();
+
+console.log('Project ID\tParatext ID\tWriting System\tShort Name\tProject Name\tJobs\tDrafted Books Count\tDrafted Books');
+for (const [projectId, books] of Object.entries(draftedBooksByProject)) {
+
+  const project = projects.find(p => p._id === projectId);
+  if (!project) {
+    console.warn(`Project ${projectId} not found in sf_projects collection.`);
+    continue;
+  }
+  const jobCount = metrics.filter(m => m.projectId === projectId).length;
+
+  console.log(`${projectId}\t${project.paratextId}\t${project.writingSystem.tag}\t${project.shortName}\t${project.name}\t${jobCount}\t${books.size}\t${Array.from(books).sort().join(', ')}`);
+}
+
+console.log('\nBook\tProjects drafting');
 for (const bookId of bookIds) {
   let count = 0;
-  for (const record of booksByProjectsDraftingIt) {
-    if (record.books != null && record.books.some(list => list != null && list.includes(bookId))) {
+  for (const books of Object.values(draftedBooksByProject)) {
+    if (books.has(bookId)) {
       count++;
     }
   }
-  print(bookId + '\t' + count);
+  console.log(`${bookId}\t${count}`);
 }
