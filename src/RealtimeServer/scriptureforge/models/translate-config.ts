@@ -35,6 +35,11 @@ export enum ParagraphBreakFormat {
   MoveToEnd = 'move_to_end'
 }
 
+export enum QuoteFormat {
+  Automatic = 'automatic',
+  Straight = 'straight'
+}
+
 export interface BaseProject {
   paratextId: string;
   shortName: string;
