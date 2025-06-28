@@ -279,6 +279,91 @@ describe('LynxInsightsPanelComponent', () => {
 
       verify(mockLynxInsightStateService.restoreDismissedInsights(deepEqual(['insight-1']))).once();
     }));
+
+    it('should call processExpandedNode when onNodeExpansionChange is called with isExpanded=true', fakeAsync(() => {
+      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const parentNode: InsightPanelNode = {
+        description: 'Parent node',
+        type: 'warning',
+        range: { index: 0, length: 5 },
+        children: [
+          {
+            description: 'Child node',
+            type: 'warning',
+            insight: testInsight1,
+            range: { index: 0, length: 5 }
+          }
+        ]
+      };
+
+      spyOn<any>(testEnvironment.component, 'processExpandedNode');
+      testEnvironment.component.onNodeExpansionChange(parentNode, true);
+
+      expect(testEnvironment.component['processExpandedNode']).toHaveBeenCalledOnceWith(parentNode);
+    }));
+
+    it('should not call processExpandedNode when onNodeExpansionChange is called with isExpanded=false', fakeAsync(() => {
+      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const parentNode: InsightPanelNode = {
+        description: 'Parent node',
+        type: 'warning',
+        range: { index: 0, length: 5 },
+        children: [
+          {
+            description: 'Child node',
+            type: 'warning',
+            insight: testInsight1,
+            range: { index: 0, length: 5 }
+          }
+        ]
+      };
+
+      spyOn<any>(testEnvironment.component, 'processExpandedNode');
+      testEnvironment.component.onNodeExpansionChange(parentNode, false);
+
+      expect(testEnvironment.component['processExpandedNode']).not.toHaveBeenCalled();
+    }));
+
+    it('should not call processExpandedNode for nodes without children', fakeAsync(() => {
+      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const leafNode: InsightPanelNode = {
+        description: 'Leaf node',
+        type: 'warning',
+        insight: testInsight1,
+        range: { index: 0, length: 5 }
+      };
+
+      spyOn<any>(testEnvironment.component, 'processExpandedNode');
+      testEnvironment.component.onNodeExpansionChange(leafNode, true);
+
+      expect(testEnvironment.component['processExpandedNode']).not.toHaveBeenCalled();
+    }));
+
+    it('should call processExpandedNode during restoreExpandCollapseState for expanded nodes', fakeAsync(() => {
+      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      testEnvironment.component['expandCollapseState'].set('Parent node', true);
+
+      const parentNode: InsightPanelNode = {
+        description: 'Parent node',
+        type: 'warning',
+        range: { index: 0, length: 5 },
+        children: [
+          {
+            description: 'Child node',
+            type: 'warning',
+            insight: testInsight1,
+            range: { index: 0, length: 5 }
+          }
+        ]
+      };
+
+      testEnvironment.component.treeDataSource = [parentNode];
+
+      spyOn<any>(testEnvironment.component, 'processExpandedNode');
+      testEnvironment.component['restoreExpandCollapseState']();
+
+      expect(testEnvironment.component['processExpandedNode']).toHaveBeenCalledOnceWith(parentNode);
+    }));
   });
 
   describe('Paged loading', () => {
