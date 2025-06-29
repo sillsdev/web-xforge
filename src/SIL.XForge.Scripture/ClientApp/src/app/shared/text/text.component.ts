@@ -816,7 +816,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   onContentChanged(delta: Delta, source: string): void {
     const preDeltaSegmentCache: IterableIterator<[string, Range]> = this.viewModel.segmentsSnapshot;
     const preDeltaEmbedCache: Readonly<Map<string, number>> = this.viewModel.embeddedElementsSnapshot;
-    this.viewModel.update(delta, source as EmitterSource, this.onlineStatusService.isOnline);
+    this.viewModel.update(delta, source as EmitterSource);
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       const isUserEdit: boolean = source === 'user';
