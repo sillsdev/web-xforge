@@ -12,11 +12,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
-import {
-  TrainingDataFileUpload,
-  TrainingDataUploadDialogComponent,
-  TrainingDataUploadDialogResult
-} from './training-data-upload-dialog.component';
+import { TrainingDataFileUpload, TrainingDataUploadDialogComponent } from './training-data-upload-dialog.component';
 import { TrainingDataService } from './training-data.service';
 
 const mockedFileService = mock(FileService);
@@ -44,8 +40,8 @@ describe('TrainingDataUploadDialogComponent', () => {
 
   it('should upload training data and return the object on save', async () => {
     const env = new TestEnvironment();
-    let result: TrainingDataUploadDialogResult = { dataId: '' };
-    env.dialogRef.afterClosed().subscribe((_result: TrainingDataUploadDialogResult) => {
+    let result: TrainingData = { dataId: '' } as TrainingData;
+    env.dialogRef.afterClosed().subscribe((_result: TrainingData) => {
       result = _result;
     });
     env.component.updateTrainingData(env.trainingDataFile);
