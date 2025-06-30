@@ -43,8 +43,8 @@
     <PackageReference Include="Serval.Client" Version="1.9.1" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
     <PackageReference Include="SIL.Machine" Version="3.6.4" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="8.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="9.0.1" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
   </ItemGroup>
   <!-- Override vulnerable versions of ParatextData dependencies -->

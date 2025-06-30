@@ -8,7 +8,7 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { type } from 'rich-text';
 import { Observable, Subject } from 'rxjs';
-import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { DocSubscriberInfo, UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { TextDoc, TextDocId, TextDocSource } from './models/text-doc';
@@ -33,7 +33,7 @@ export class TextDocService {
    * @param {TextDocSource} source The source of the op. This is sent to the server.
    */
   async overwrite(textDocId: TextDocId, newDelta: Delta, source: TextDocSource): Promise<void> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId, FETCH_WITHOUT_SUBSCRIBE);
+    const textDoc: TextDoc = await this.projectService.getText(textDocId, UNKNOWN_COMPONENT_OR_SERVICE);
 
     if (textDoc.data?.ops == null) {
       throw new Error(`No TextDoc data for ${textDocId}`);
@@ -55,11 +55,26 @@ export class TextDocService {
    * @param {SFProjectProfile | undefined} project The project.
    * @param {number | undefined} bookNum The book number.
    * @param {number | undefined} chapterNum The chapter number.
-   * @returns {boolean} A value indicating whether the chapter can be edited by the current  user.
+   * @returns {boolean} A value indicating whether the chapter can be edited by the current user.
    */
   canEdit(project: SFProjectProfile | undefined, bookNum: number | undefined, chapterNum: number | undefined): boolean {
+    return this.isUsfmValid(project, bookNum, chapterNum) && this.canRestore(project, bookNum, chapterNum);
+  }
+
+  /**
+   * Determines if the current user can restore a previous revision for the specified chapter.
+   *
+   * @param {SFProjectProfile | undefined} project The project.
+   * @param {number | undefined} bookNum The book number.
+   * @param {number | undefined} chapterNum The chapter number.
+   * @returns {boolean} A value indicating whether the chapter can be edited via history restore by the current user.
+   */
+  canRestore(
+    project: SFProjectProfile | undefined,
+    bookNum: number | undefined,
+    chapterNum: number | undefined
+  ): boolean {
     return (
-      this.isUsfmValid(project, bookNum, chapterNum) &&
       this.userHasGeneralEditRight(project) &&
       this.hasChapterEditPermission(project, bookNum, chapterNum) &&
       this.isDataInSync(project) &&

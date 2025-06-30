@@ -18,7 +18,7 @@ import { Delta } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -32,7 +32,7 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -40,7 +40,7 @@ import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, wh
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -178,24 +178,6 @@ describe('CheckingComponent', () => {
   }));
 
   describe('Interface', () => {
-    it('can navigate using next button', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER });
-      env.selectQuestion(1);
-      env.clickButton(env.nextButton);
-      tick(env.questionReadTimer);
-      const nextQuestion = env.currentQuestion;
-      expect(nextQuestion).toEqual(2);
-    }));
-
-    it('can navigate using previous button', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER });
-      env.selectQuestion(2);
-      env.clickButton(env.previousButton);
-      tick(env.questionReadTimer);
-      const nextQuestion = env.currentQuestion;
-      expect(nextQuestion).toEqual(1);
-    }));
-
     it('should display books in canonical order', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       env.waitForSliderUpdate();
@@ -216,36 +198,141 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
+    it('reroutes when no book and chapter are provided', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: undefined,
+        projectChapterRoute: undefined,
+        questionScope: 'all'
+      });
+
+      expect(env.router.url).toContain('MAT/1?scope=all');
+    }));
+
+    it('reroutes when no book is provided', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: 'MAT',
+        projectChapterRoute: undefined,
+        questionScope: 'book'
+      });
+
+      expect(env.router.url).toContain('MAT/1?scope=book');
+    }));
+
     describe('Prev/Next question buttons', () => {
+      it('can navigate using next button', fakeAsync(() => {
+        const env = new TestEnvironment({ user: ADMIN_USER });
+        env.selectQuestion(1);
+        env.clickButton(env.nextButton);
+        tick(env.questionReadTimer);
+        const nextQuestion = env.currentQuestion;
+        expect(nextQuestion).toEqual(2);
+      }));
+
+      it('can navigate using previous button', fakeAsync(() => {
+        const env = new TestEnvironment({ user: ADMIN_USER });
+        env.selectQuestion(2);
+        env.clickButton(env.previousButton);
+        tick(env.questionReadTimer);
+        const nextQuestion = env.currentQuestion;
+        expect(nextQuestion).toEqual(1);
+      }));
+
       it('prev/next disabled state based on existence of prev/next question', fakeAsync(() => {
         const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'JHN', projectChapterRoute: 1 });
         const prev = env.previousButton;
         const next = env.nextButton;
-        env.component.prevQuestion = {} as QuestionDoc;
-        env.component.nextQuestion = {} as QuestionDoc;
+
+        const getAdjacentQuestionSpy = spyOn(
+          env.component['checkingQuestionsService'] as any,
+          'queryAdjacentQuestions'
+        ).and.callThrough();
+        const adjacentQuestion = {
+          id: 'q1Id',
+          data: { text: 'Dummy Question' },
+          getAnswers: (_?: string) => {
+            return [{}] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const queryEmpty = mock(RealtimeQuery<QuestionDoc>) as RealtimeQuery<QuestionDoc>;
+        when(queryEmpty.docs).thenReturn([]);
+        when(queryEmpty.ready$).thenReturn(new BehaviorSubject<boolean>(true));
+
+        const query = mock(RealtimeQuery<QuestionDoc>) as RealtimeQuery<QuestionDoc>;
+        when(query.docs).thenReturn([adjacentQuestion]);
+        when(query.ready$).thenReturn(new BehaviorSubject<boolean>(true));
+        const activeQuestion = { id: 'activeQId', data: { text: 'Active Question' } } as QuestionDoc;
+
+        // Scenario 1: Both prev and next question exist
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(instance(query)));
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(false);
         expect(next.nativeElement.disabled).toBe(false);
-        env.component.prevQuestion = undefined;
-        env.component.nextQuestion = undefined;
+
+        // Scenario 2: Neither prev nor next question exist
+        getAdjacentQuestionSpy.and.returnValue(Promise.resolve(instance(queryEmpty)));
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(true);
         expect(next.nativeElement.disabled).toBe(true);
-        env.component.prevQuestion = undefined;
-        env.component.nextQuestion = {} as QuestionDoc;
+
+        // Scenario 3: Prev question undefined, Next question exists
+        getAdjacentQuestionSpy.and.callFake(
+          async (_p: string, _q: Question | VerseRefData, direction: 'prev' | 'next', _d: DestroyRef) => {
+            if (direction === 'prev') return Promise.resolve(instance(queryEmpty));
+            return Promise.resolve(instance(query));
+          }
+        );
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(true);
         expect(next.nativeElement.disabled).toBe(false);
-        env.component.prevQuestion = {} as QuestionDoc;
-        env.component.nextQuestion = undefined;
+
+        // Scenario 4: Prev question exists, Next question undefined
+        getAdjacentQuestionSpy.and.callFake(
+          async (_p: string, _q: Question | VerseRefData, direction: 'prev' | 'next', _d: DestroyRef) => {
+            if (direction === 'next') return Promise.resolve(instance(queryEmpty));
+            return Promise.resolve(instance(query));
+          }
+        );
+        env.component['activeQuestionDoc$'].next(activeQuestion);
+        env.fixture.detectChanges();
+        tick();
         env.fixture.detectChanges();
         expect(prev.nativeElement.disabled).toBe(false);
         expect(next.nativeElement.disabled).toBe(true);
+
         env.waitForAudioPlayer();
         discardPeriodicTasks();
         flush();
       }));
     });
+
+    it('gets adjacent question when no actively selected question', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        questionScope: 'book',
+        projectBookRoute: 'MAT',
+        projectChapterRoute: 2 // no questions on chapter 2
+      });
+      const getAdjacentQuestionSpy = spyOn(env.component as any, 'getAdjacentQuestionInScope').and.callThrough();
+      env.component.activeQuestionScope = 'all';
+      env.component['activeQuestionDoc$'].next(undefined);
+      env.fixture.detectChanges();
+      tick();
+      expect(getAdjacentQuestionSpy).toHaveBeenCalledWith(undefined, 'next');
+      flush();
+      discardPeriodicTasks();
+    }));
 
     it('should open question dialog', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER });
@@ -375,6 +462,7 @@ describe('CheckingComponent', () => {
       env.setBookChapter('JHN', 2);
       expect(env.getQuestionText(question)).toBe('John 2');
       expect(await env.getCurrentBookAndChapter()).toBe('John 2');
+      env.waitForQuestionTimersToComplete();
     }));
 
     it('start question respects route book/chapter', fakeAsync(async () => {
@@ -388,6 +476,41 @@ describe('CheckingComponent', () => {
       // Question 5 has been stored as the question to start at, but route book/chapter is forced to MAT 1,
       // so active question must be from MAT 1
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q16Id');
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('updates active question when route book/chapter changes', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'book'
+      });
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
+      env.setBookChapter('JHN', 2);
+      env.fixture.detectChanges();
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q15Id');
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('clears active question when route book/chapter changes to chapter without questions', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        projectBookRoute: 'MAT',
+        projectChapterRoute: 1,
+        questionScope: 'book'
+      });
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q16Id');
+      env.setBookChapter('MAT', 2);
+      env.fixture.detectChanges();
+      expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
+      expect(env.component.chapter).toEqual(2);
+      env.setBookChapter('MAT', 3);
+      env.fixture.detectChanges();
+      expect(env.component.questionsList!.activeQuestionDoc).toBe(undefined);
+      expect(env.component.chapter).toEqual(3);
       flush();
       discardPeriodicTasks();
     }));
@@ -570,8 +693,7 @@ describe('CheckingComponent', () => {
       expect(env.isSegmentHighlighted(1, 5)).toBe(true);
       expect(env.segmentHasQuestion(1, 5)).toBe(true);
       expect(env.component.questionVerseRefs.some(verseRef => verseRef.equals(new VerseRef('JHN 1:5')))).toBe(true);
-      tick();
-      flush();
+      env.waitForQuestionTimersToComplete();
     }));
 
     it('records audio for question when button clicked', fakeAsync(() => {
@@ -852,6 +974,38 @@ describe('CheckingComponent', () => {
       env.waitForQuestionTimersToComplete();
     }));
 
+    it('should not reset scope after a user changes chapter', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'chapter'
+      });
+      expect(env.questions.length).toEqual(14);
+      env.component.onChapterSelect(2);
+      env.setBookChapter('JHN', 2);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.activeQuestionScope).toEqual('chapter');
+      env.waitForQuestionTimersToComplete();
+    }));
+
+    it('should not reset scope after a user changes book', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'book'
+      });
+      expect(env.questions.length).toEqual(15);
+      env.component.onBookSelect(40);
+      env.setBookChapter('MAT', 1);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.activeQuestionScope).toEqual('book');
+      env.waitForQuestionTimersToComplete();
+    }));
+
     it('can narrow questions scope', fakeAsync(() => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
@@ -922,8 +1076,198 @@ describe('CheckingComponent', () => {
       env.waitForQuestionTimersToComplete();
 
       expect(spyUpdateQuestionRefs).toHaveBeenCalledTimes(1);
-      expect(spyRefreshSummary).toHaveBeenCalledTimes(1);
+      // Called at least once or more depending on if another question replaces the archived question
+      expect(spyRefreshSummary).toHaveBeenCalled();
     }));
+
+    describe('Question Filter', () => {
+      it('should filter out answered questions - "NoAnswers"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.NoAnswers;
+
+        const questionRemaining = env.getQuestionDoc('q1Id');
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{}] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions the current user has answered - "CurrentUserHasNotAnswered"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: CHECKER_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.CurrentUserHasNotAnswered;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: ADMIN_USER.id }] as Answer[]; // Answered by a different user
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: CHECKER_USER.id }] as Answer[]; // Answered by current user
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions the current user has not answered - "CurrentUserHasAnswered"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: CHECKER_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.CurrentUserHasAnswered;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: CHECKER_USER.id }] as Answer[]; // Answered by current user
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: ADMIN_USER.id }] as Answer[]; // Answered by a different user
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions with no answers - "HasAnswers"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.HasAnswers;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ ownerRef: ADMIN_USER.id }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions where no answer has status None or null - "StatusNone"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.StatusNone;
+
+        const questionRemainingNullStatus = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: undefined }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionRemainingNoneStatus = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.None }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.Exportable }] as Answer[];
+          }
+        } as QuestionDoc;
+
+        let filtered = env.component['filterQuestions']([questionRemainingNullStatus, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemainingNullStatus);
+
+        filtered = env.component['filterQuestions']([questionRemainingNoneStatus, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemainingNoneStatus);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions where no answer has status Exportable - "StatusExport"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.StatusExport;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.Exportable }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.Resolved }] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+
+      it('should filter out questions where no answer has status Resolved - "StatusResolved"', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER
+        });
+        env.component.activeQuestionFilter = QuestionFilter.StatusResolved;
+
+        const questionRemaining = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.Resolved }] as Answer[];
+          }
+        } as QuestionDoc;
+        const questionExcluded = {
+          data: {},
+          getAnswers: (_?: string) => {
+            return [{ status: AnswerStatus.None }] as Answer[];
+          }
+        } as QuestionDoc;
+
+        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        expect(filtered.length).toBe(1);
+        expect(filtered[0]).toBe(questionRemaining);
+        flush();
+        discardPeriodicTasks();
+      }));
+    });
   });
 
   describe('Answers', () => {
@@ -1914,8 +2258,9 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
+      verify(questionDoc!.updateAnswerFileCache()).times(1);
       env.simulateRemoteEditAnswer(0, 'Question 6 edited answer');
-      verify(questionDoc!.updateAnswerFileCache()).times(3);
+      verify(questionDoc!.updateAnswerFileCache()).times(2);
       expect().nothing();
       tick();
       flush();
@@ -1925,8 +2270,9 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
+      verify(questionDoc!.updateAnswerFileCache()).times(1);
       env.simulateRemoteDeleteAnswer('q6Id', 0);
-      verify(questionDoc!.updateAnswerFileCache()).times(3);
+      verify(questionDoc!.updateAnswerFileCache()).times(2);
       expect().nothing();
       tick();
       flush();
@@ -2434,14 +2780,7 @@ class TestEnvironment {
 
   private readonly testProject: SFProject = TestEnvironment.generateTestProject();
 
-  constructor({
-    user,
-    projectBookRoute = 'JHN',
-    projectChapterRoute = 1,
-    questionScope = 'book',
-    hasConnection = true,
-    testProject = undefined
-  }: {
+  constructor(options: {
     user: UserInfo;
     projectBookRoute?: string;
     projectChapterRoute?: number;
@@ -2449,6 +2788,10 @@ class TestEnvironment {
     hasConnection?: boolean;
     testProject?: SFProject;
   }) {
+    const { user, testProject, questionScope = 'book', hasConnection = true } = options;
+    const projectBookRoute = 'projectBookRoute' in options ? options.projectBookRoute : 'JHN';
+    const projectChapterRoute = 'projectChapterRoute' in options ? options.projectChapterRoute : 1;
+
     this.params$ = new BehaviorSubject<Params>({
       projectId: 'project01',
       bookId: projectBookRoute,
@@ -2493,7 +2836,7 @@ class TestEnvironment {
     this.router = TestBed.inject(Router);
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);
 
-    this.setRouteSnapshot(projectBookRoute, projectChapterRoute.toString(), questionScope);
+    this.setRouteSnapshot(projectBookRoute, projectChapterRoute?.toString(), questionScope);
     this.setupDefaultProjectData(user);
 
     // 'ready$' from SharedbRealtimeQueryAdapter (not the MemoryRealtimeQueryAdapter used in tests)
@@ -2761,7 +3104,11 @@ class TestEnvironment {
         {
           bookNum: 40,
           hasSource: false,
-          chapters: [{ number: 1, lastVerse: 28, isValid: true, permissions: {} }],
+          chapters: [
+            { number: 1, lastVerse: 28, isValid: true, permissions: {} },
+            { number: 2, lastVerse: 23, isValid: true, permissions: {} },
+            { number: 3, lastVerse: 26, isValid: true, permissions: {} }
+          ],
           permissions: {}
         }
       ],
@@ -2953,7 +3300,7 @@ class TestEnvironment {
     return this.realtimeService.get(
       QuestionDoc.COLLECTION,
       getQuestionDocId('project01', dataId),
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
   }
 
@@ -3195,7 +3542,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private setRouteSnapshot(bookId: string, chapter: string, scope: QuestionScope): void {
+  private setRouteSnapshot(bookId: string | undefined, chapter: string | undefined, scope: QuestionScope): void {
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.params = { bookId, chapter };
     snapshot.queryParams = { scope };
@@ -3267,6 +3614,16 @@ class TestEnvironment {
         id: getTextDocId(projectId, 40, 1),
         data: this.createTextDataForChapter(1),
         type: RichText.type.name
+      },
+      {
+        id: getTextDocId(projectId, 40, 2),
+        data: this.createTextDataForChapter(2),
+        type: RichText.type.name
+      },
+      {
+        id: getTextDocId(projectId, 40, 3),
+        data: this.createTextDataForChapter(3),
+        type: RichText.type.name
       }
     ]);
     when(mockedProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
@@ -3305,7 +3662,7 @@ class TestEnvironment {
       }
     ]);
     when(mockedUserService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE)
     );
 
     when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(

@@ -307,6 +307,15 @@ export class SFProjectService extends ProjectService<SFProject> {
               },
               servalConfig: {
                 bsonType: 'string'
+              },
+              usfmFormat: {
+                bsonType: 'object',
+                properties: {
+                  paragraphFormat: {
+                    bsonType: 'string'
+                  }
+                },
+                additionalProperties: false
               }
             },
             additionalProperties: false

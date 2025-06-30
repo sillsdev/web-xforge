@@ -16,7 +16,7 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -201,13 +201,13 @@ class TestEnvironment {
     this.projectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       this.PROJECT01,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
 
     when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedDialogRef));
     when(mockedUserService.currentUserId).thenReturn(this.adminUser.id);
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE)
     );
   }
 
@@ -219,7 +219,7 @@ class TestEnvironment {
     return this.realtimeService.get(
       QUESTIONS_COLLECTION,
       getQuestionDocId(this.PROJECT01, question.dataId),
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
   }
 
@@ -252,7 +252,7 @@ class TestEnvironment {
     const projectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       this.PROJECT01,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     const userRole = projectProfileDoc.data!.userRoles;
     userRole[this.adminUser.id] = role;

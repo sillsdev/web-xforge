@@ -1,17 +1,21 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
+import { MatSelectChange } from '@angular/material/select';
 import { translate } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
 import {
   asyncScheduler,
+  BehaviorSubject,
   combineLatest,
   distinctUntilChanged,
   EMPTY,
   filter,
   from,
   map,
+  merge,
   Observable,
+  observeOn,
   startWith,
   Subject,
   switchMap,
@@ -22,6 +26,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
@@ -30,6 +35,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { isString } from '../../../../type-utils';
 import { TextDocId } from '../../../core/models/text-doc';
+import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
@@ -45,11 +51,14 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @Input() chapter?: number;
   @Input() isRightToLeft!: boolean;
   @Input() fontSize?: string;
+  @Input() timestamp?: Date;
 
   @ViewChild(TextComponent) draftText!: TextComponent;
 
   inputChanged$ = new Subject<void>();
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
+  draftRevisions: Revision[] = [];
+  selectedRevision: Revision | undefined;
   bookChapterName = '';
   generateDraftUrl?: string;
   targetProject?: SFProjectProfile;
@@ -57,6 +66,18 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   isDraftReady = false;
   isDraftApplied = false;
   userAppliedDraft = false;
+
+  private selectedRevisionSubject = new BehaviorSubject<Revision | undefined>(undefined);
+  private selectedRevision$ = this.selectedRevisionSubject.asObservable();
+
+  // 'asyncScheduler' prevents ExpressionChangedAfterItHasBeenCheckedError
+  private loading$ = new BehaviorSubject<boolean>(false);
+  isLoading$: Observable<boolean> = this.loading$.pipe(observeOn(asyncScheduler));
+
+  isSelectDisabled$: Observable<boolean> = combineLatest([
+    this.isLoading$,
+    this.onlineStatusService.onlineStatus$
+  ]).pipe(map(([isLoading, isOnline]) => isLoading || !isOnline));
 
   private draftDelta?: Delta;
   private targetDelta?: Delta;
@@ -67,6 +88,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftHandlingService: DraftHandlingService,
+    readonly featureFlags: FeatureFlagService,
     readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -89,6 +111,11 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.populateDraftTextInit();
   }
 
+  async onSelectionChanged(e: MatSelectChange): Promise<void> {
+    this.selectedRevision = e.value;
+    this.selectedRevisionSubject.next(this.selectedRevision);
+  }
+
   populateDraftTextInit(): void {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
@@ -99,9 +126,44 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         quietTakeUntilDestroyed(this.destroyRef),
         filter(([isOnline]) => isOnline),
         tap(() => this.setInitialState()),
-        switchMap(() => this.draftExists()),
-        switchMap((draftExists: boolean) => {
-          if (!draftExists) {
+        switchMap(() =>
+          combineLatest([
+            merge(
+              this.draftGenerationService
+                .getGeneratedDraftHistory(
+                  this.textDocId!.projectId,
+                  this.textDocId!.bookNum,
+                  this.textDocId!.chapterNum
+                )
+                .pipe(
+                  map(revisions => {
+                    if (revisions != null) {
+                      // Sort revisions by timestamp descending
+                      this.draftRevisions = [...revisions].sort((a, b) => {
+                        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+                      });
+                      const date = this.timestamp ?? new Date();
+                      // Don't emit this.selectedRevision$, as the merge will handle this
+                      this.selectedRevision = this.findClosestRevision(date, this.draftRevisions);
+                      return date;
+                    } else {
+                      return undefined;
+                    }
+                  })
+                ),
+              this.selectedRevision$.pipe(
+                filter((rev): rev is { timestamp: string } => rev != null),
+                map(revision => new Date(revision.timestamp))
+              )
+            ),
+            this.draftExists()
+          ])
+        ),
+        switchMap(([timestamp, draftExists]) => {
+          // As getGeneratedDraftHistory() will always return a draft, we should not show a draft if the user does not
+          // have a timestamp in the query string. If a query string was specified, the user was sent from the draft
+          // history component.
+          if (!draftExists && (this.timestamp == null || timestamp == null)) {
             this.draftCheckState = 'draft-empty';
             return EMPTY;
           }
@@ -112,13 +174,14 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             tap(projectDoc => {
               this.targetProject = projectDoc.data;
             }),
-            distinctUntilChanged()
+            distinctUntilChanged(),
+            map(() => timestamp)
           );
         }),
-        switchMap(() =>
+        switchMap((timestamp: Date | undefined) =>
           combineLatest([
             this.getTargetOps(),
-            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false })
+            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false, timestamp })
           ])
         ),
         tap(([_, draft]) => {
@@ -200,6 +263,26 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   private draftExists(): Observable<boolean> {
     // This method of checking for draft may be temporary until there is a better way supplied by serval
     return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
+  }
+
+  private findClosestRevision(date: Date, revisions: Revision[]): Revision | undefined {
+    const targetTime: number = date.getTime();
+
+    let closestLater: Revision | undefined;
+    let closestEarlier: Revision | undefined;
+
+    // The revisions are sorted in descending order
+    for (const rev of revisions) {
+      const revTime = new Date(rev.timestamp).getTime();
+      if (revTime > targetTime) {
+        closestLater = rev;
+      } else {
+        closestEarlier = rev;
+        break;
+      }
+    }
+
+    return closestEarlier ?? closestLater;
   }
 
   private hasContent(delta?: DeltaOperation[]): boolean {

@@ -16,7 +16,7 @@ import { LocalPresence } from 'sharedb/lib/sharedb';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { MockConsole } from 'xforge-common/mock-console';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -215,7 +215,7 @@ describe('TextComponent', () => {
 
     let textDocBeingGotten: TextDoc = {} as TextDoc;
     instance(mockedProjectService)
-      .getText(textDocIdWithEmpty.toString(), FETCH_WITHOUT_SUBSCRIBE)
+      .getText(textDocIdWithEmpty.toString(), UNKNOWN_COMPONENT_OR_SERVICE)
       .then((value: TextDoc) => {
         textDocBeingGotten = value;
       });
@@ -1733,10 +1733,10 @@ class TestEnvironment {
     });
 
     when(mockedProjectService.getText(anything(), anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockedUserService.subscribeCurrentUser(anything())).thenCall(subscriber =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', subscriber)
@@ -1815,7 +1815,7 @@ class TestEnvironment {
   }
 
   getUserDoc(userId: string): UserDoc {
-    return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId, FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId, UNKNOWN_COMPONENT_OR_SERVICE);
   }
 
   getSegment(segmentRef: string): HTMLElement | null {
@@ -1980,7 +1980,7 @@ class TestEnvironment {
     let resolver: (_: TextDoc) => void = _ => {};
     let textDocBeingGotten: TextDoc = {} as TextDoc;
     instance(mockedProjectService)
-      .getText(textDocId.toString(), FETCH_WITHOUT_SUBSCRIBE)
+      .getText(textDocId.toString(), UNKNOWN_COMPONENT_OR_SERVICE)
       .then((value: TextDoc) => {
         textDocBeingGotten = value;
       });
@@ -1998,15 +1998,6 @@ class TestEnvironment {
     // waiting.
     resolver(textDocBeingGotten);
     this.waitForEditor();
-  }
-
-  /** Assert that in `parentNode`, there are only immediate children with name and order specified in
-   * `nodeOrderings`. */
-  private assertNodeOrder(parentNode: Node, nodeOrderings: string[]): void {
-    const childNodes: string[] = Array.from(parentNode.childNodes).map((n: ChildNode) => n.nodeName.toLowerCase());
-    expect(childNodes)
-      .withContext(`not expected list of nodes: [${childNodes}] does not match expected [${nodeOrderings}]`)
-      .toEqual(nodeOrderings);
   }
 }
 

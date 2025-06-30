@@ -15,7 +15,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
@@ -212,11 +212,15 @@ class TestEnvironment {
   }
 
   getBiblicalTermDoc(id: string): BiblicalTermDoc {
-    return this.realtimeService.get<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.get<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE);
   }
 
   getProjectDoc(id: string): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      id,
+      UNKNOWN_COMPONENT_OR_SERVICE
+    );
   }
 
   openDialog(biblicalTermId: string, userId: string = 'user01'): void {
@@ -224,7 +228,7 @@ class TestEnvironment {
       .subscribe<SFProjectUserConfigDoc>(
         SF_PROJECT_USER_CONFIGS_COLLECTION,
         getSFProjectUserConfigDocId('project01', userId),
-        FETCH_WITHOUT_SUBSCRIBE
+        UNKNOWN_COMPONENT_OR_SERVICE
       )
       .then(projectUserConfigDoc => {
         const biblicalTermDoc = this.getBiblicalTermDoc(biblicalTermId);

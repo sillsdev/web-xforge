@@ -25,7 +25,8 @@
 <div title="@SharedLocalizer[SharedResource.Keys.Language]">
     <form id="selectLanguage" asp-controller="Language" asp-action="SetLanguage" method="post" class="form-horizontal"
           role="form">
-        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+        @* Include the query string so users return to the exact page (including errors/404) after changing language. *@
+        <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
             <select name="culture" class="mdl-textfield__input" onchange="this.form.submit();"
                     asp-for="@requestCulture.RequestCulture.UICulture.Name" asp-items="cultureItems">

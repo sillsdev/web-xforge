@@ -10,7 +10,7 @@ import { firstValueFrom } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { Locale } from 'xforge-common/models/i18n-locale';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -498,7 +498,7 @@ class TestEnvironment {
     const projectDoc: SFProjectProfileDoc = this.realtimeService.get(
       SFProjectProfileDoc.COLLECTION,
       'project01',
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(
       op =>

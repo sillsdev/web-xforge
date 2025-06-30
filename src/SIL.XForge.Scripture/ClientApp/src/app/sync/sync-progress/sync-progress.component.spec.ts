@@ -6,7 +6,7 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -147,7 +147,7 @@ class HostComponent {
   constructor(private readonly projectService: SFProjectService) {}
 
   setProjectDoc(): void {
-    this.projectService.subscribe('testProject01', FETCH_WITHOUT_SUBSCRIBE).then(doc => (this.projectDoc = doc));
+    this.projectService.subscribe('testProject01', UNKNOWN_COMPONENT_OR_SERVICE).then(doc => (this.projectDoc = doc));
   }
 }
 
@@ -211,10 +211,10 @@ class TestEnvironment {
       });
     }
     when(mockedProjectService.subscribe('testProject01', anything())).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testProject01', FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testProject01', UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockedProjectService.subscribe('sourceProject02', anything())).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'sourceProject02', FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'sourceProject02', UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenResolve(this.userRoleSource[args.userId]);
 
@@ -243,23 +243,23 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 1);
     }, false);
-    this.host.syncProgress.updateProgressState(projectId, new ProgressState(percentCompleted));
+    this.host.syncProgress['updateProgressState'](projectId, new ProgressState(percentCompleted));
     tick();
     this.fixture.detectChanges();
     tick();
   }
 
   emitSyncComplete(successful: boolean, projectId: string): void {
-    this.host.syncProgress.updateProgressState(projectId, new ProgressState(1));
+    this.host.syncProgress['updateProgressState'](projectId, new ProgressState(1));
     const projectDoc = this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);

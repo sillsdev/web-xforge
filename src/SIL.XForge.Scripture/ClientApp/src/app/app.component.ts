@@ -1,5 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, DestroyRef, Inject, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
@@ -74,6 +75,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   constructor(
     private readonly router: Router,
     private readonly authService: AuthService,
+    @Inject(DOCUMENT) private readonly document: Document,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly dialogService: DialogService,
@@ -238,6 +240,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   async ngOnInit(): Promise<void> {
     await this.authService.loggedIn;
+    this.document.title = environment.siteName;
     this.featureFlags.darkMode.enabled$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(enabled => {
       this.themeService.setDarkMode(enabled);
     });

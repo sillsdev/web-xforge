@@ -124,6 +124,7 @@ describe('DraftGenerationStepsComponent', () => {
 
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockActivatedProjectService.changes$).thenReturn(targetProjectDoc$);
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
       when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
@@ -402,6 +403,7 @@ describe('DraftGenerationStepsComponent', () => {
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
+      when(mockActivatedProjectService.changes$).thenReturn(of({} as any));
       when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
       when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
@@ -657,6 +659,7 @@ describe('DraftGenerationStepsComponent', () => {
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
+      when(mockActivatedProjectService.changes$).thenReturn(of({} as any));
       when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(true));
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(
@@ -878,6 +881,7 @@ describe('DraftGenerationStepsComponent', () => {
     beforeEach(fakeAsync(() => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockActivatedProjectService.changes$).thenReturn(targetProjectDoc$);
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
       when(mockTrainingDataService.queryTrainingDataAsync(anything(), anything())).thenResolve(

@@ -13,6 +13,9 @@
   sf-draft-generation-steps;
 @use 'src/app/translate/draft-generation/confirm-sources/confirm-sources-theme' as sf-confirm-sources;
 @use 'src/app/translate/draft-generation/draft-sources/draft-sources-theme' as sf-draft-sources;
+@use 'src/app/translate/draft-generation/draft-history-list/draft-history-entry/draft-history-entry-theme' as
+  sf-draft-history-entry;
+@use 'src/app/translate/draft-generation/draft-usfm-format/draft-usfm-format-theme' as sf-draft-usfm-format;
 @use 'src/app/translate/editor/editor-theme' as sf-editor;
 @use 'src/app/translate/editor/note-dialog/note-dialog-theme' as sf-note-dialog;
 @use 'src/app/translate/editor/editor-draft/editor-draft-theme' as sf-editor-draft;
@@ -37,7 +40,9 @@
   @include sf-checking-questions.theme($theme);
   @include sf-confirm-sources.theme($theme);
   @include sf-draft-generation-steps.theme($theme);
+  @include sf-draft-history-entry.theme($theme);
   @include sf-draft-sources.theme($theme);
+  @include sf-draft-usfm-format.theme($theme);
   @include sf-editor.theme($theme);
   @include sf-editor-draft.theme($theme);
   @include sf-my-projects.theme($theme);

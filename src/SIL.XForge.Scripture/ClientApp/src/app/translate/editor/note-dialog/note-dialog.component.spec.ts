@@ -38,7 +38,7 @@ import * as RichText from 'rich-text';
 import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -1030,7 +1030,7 @@ class TestEnvironment {
     firstValueFrom(this.dialogRef.afterClosed()).then(result => (this.dialogResult = result));
 
     when(mockedUserService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.get(UserProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.get(UserProfileDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockedUserService.subscribeProfile(anything(), anything())).thenCall((id, subscriber) =>
       this.realtimeService.get(UserProfileDoc.COLLECTION, id, subscriber)
@@ -1125,7 +1125,7 @@ class TestEnvironment {
 
   getNoteThreadDoc(threadDataId: string): NoteThreadDoc {
     const id: string = getNoteThreadDocId(TestEnvironment.PROJECT01, threadDataId);
-    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE);
   }
 
   getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
@@ -1133,7 +1133,7 @@ class TestEnvironment {
     return this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
       id,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
   }
 

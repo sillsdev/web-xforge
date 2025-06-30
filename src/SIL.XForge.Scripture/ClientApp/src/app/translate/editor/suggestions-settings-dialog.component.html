@@ -6,41 +6,31 @@
         {{ t("settings_not_available_offline") }}
       </div>
     }
-    <div class="row">
-      <div class="col">
-        <mat-slide-toggle
-          id="suggestions-enabled-switch"
-          [formControl]="suggestionsEnabledSwitch"
-          (change)="setTranslationSettingsEnabled($event.checked)"
-        >
-          {{ t("translation_suggestions") }}
-        </mat-slide-toggle>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t("number_of_suggestions") }}</mat-label>
-          <mat-select
-            id="num-suggestions-select"
-            [disabled]="translationSuggestionsDisabled"
-            [(ngModel)]="numSuggestions"
-          >
-            @for (value of ["1", "2", "3", "4", "5"]; track value) {
-              <mat-option [value]="value">
-                {{ value }}
-              </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+    <mat-slide-toggle
+      id="suggestions-enabled-switch"
+      [formControl]="suggestionsEnabledSwitch"
+      (change)="setTranslationSettingsEnabled($event.checked)"
+    >
+      {{ t("show_translation_suggestions") }}
+    </mat-slide-toggle>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t("number_of_suggestions") }}</mat-label>
+      <mat-select id="num-suggestions-select" [disabled]="translationSuggestionsDisabled" [(ngModel)]="numSuggestions">
+        @for (value of ["1", "2", "3", "4", "5"]; track value) {
+          <mat-option [value]="value">{{ value }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <div class="suggestions-confidence-field">
+      <span class="minor-header">{{ t("suggestion_confidence") }}</span>
+      <div class="slider-labels">
+        <span>{{ t("more") }}</span>
+        <span>{{ confidenceThreshold }}%</span>
+        <span>{{ t("better") }}</span>
       </div>
-      <div class="suggestions-confidence-field col">
-        <span class="minor-header">{{ t("suggestion_confidence") }}</span>
-        <div class="slider-labels">
-          <span>{{ t("more") }}</span>
-          <span>{{ confidenceThreshold }}%</span>
-          <span>{{ t("better") }}</span>
-        </div>
-        <mat-slider id="confidence-threshold-slider" [disabled]="translationSuggestionsDisabled" [min]="0" [max]="100">
-          <input matSliderThumb [(ngModel)]="confidenceThreshold" (dragEnd)="confidenceThreshold = $event.value" />
-        </mat-slider>
-      </div>
+      <mat-slider id="confidence-threshold-slider" [disabled]="translationSuggestionsDisabled" [min]="0" [max]="100">
+        <input matSliderThumb [(ngModel)]="confidenceThreshold" (dragEnd)="confidenceThreshold = $event.value" />
+      </mat-slider>
     </div>
   </mat-dialog-content>
   <mat-dialog-actions>

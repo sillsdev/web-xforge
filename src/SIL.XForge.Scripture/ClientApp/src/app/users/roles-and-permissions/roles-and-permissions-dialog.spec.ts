@@ -21,7 +21,7 @@ import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -72,17 +72,21 @@ describe('RolesAndPermissionsComponent', () => {
     env.closeDialog();
   }));
 
-  it('disables the form when offline', fakeAsync(() => {
-    env.setupProjectData();
+  it('updates the form when the network connection changes', fakeAsync(() => {
+    env.setupProjectData(rolesByUser);
     env.openDialog();
 
+    expect(env.component?.isParatextUser()).toBe(true);
+    expect(env.component?.roles.disabled).toBe(true);
     expect(env.component?.form.disabled).toBe(false);
 
     env.isOnline$.next(false);
     expect(env.component?.form.disabled).toBe(true);
+    expect(env.component?.roles.disabled).toBe(true);
 
     env.isOnline$.next(true);
     expect(env.component?.form.disabled).toBe(false);
+    expect(env.component?.roles.disabled).toBe(true);
   }));
 
   it('initializes values from the project', fakeAsync(() => {
@@ -158,7 +162,11 @@ describe('RolesAndPermissionsComponent', () => {
     //prep for role change
     when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall((p, u, r) => {
       rolesByUser[u] = r;
-      const projectDoc: SFProjectDoc = env.realtimeService.get(SFProjectDoc.COLLECTION, p, FETCH_WITHOUT_SUBSCRIBE);
+      const projectDoc: SFProjectDoc = env.realtimeService.get(
+        SFProjectDoc.COLLECTION,
+        p,
+        UNKNOWN_COMPONENT_OR_SERVICE
+      );
       projectDoc.submitJson0Op(op => {
         op.set(p => p.userRoles, rolesByUser);
         op.set(p => p.userPermissions, {
@@ -241,7 +249,7 @@ class TestEnvironment {
       .subscribe<SFProjectUserConfigDoc>(
         SF_PROJECT_USER_CONFIGS_COLLECTION,
         getSFProjectUserConfigDocId('project01', userId),
-        FETCH_WITHOUT_SUBSCRIBE
+        UNKNOWN_COMPONENT_OR_SERVICE
       )
       .then(() => {
         const config: MatDialogConfig<UserData> = {

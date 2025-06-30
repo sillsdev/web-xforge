@@ -4,7 +4,7 @@ import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autoc
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { translate } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
+import { distinctUntilChanged, map, shareReplay, startWith, takeUntil, tap } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
@@ -34,8 +34,25 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   autocompleteTrigger!: MatAutocompleteTrigger;
 
   readonly paratextIdControl = new UntypedFormControl('', [SFValidators.selectableProject(true)]);
-  @Input() projects?: SelectableProject[];
-  @Input() resources?: SelectableProject[];
+  private allProjects$ = new BehaviorSubject<SelectableProject[] | undefined>(undefined);
+  private allResources$ = new BehaviorSubject<SelectableProject[] | undefined>(undefined);
+
+  @Input()
+  set projects(value: SelectableProject[] | undefined) {
+    this.allProjects$.next(value);
+  }
+  get projects(): SelectableProject[] | undefined {
+    return this.allProjects$.getValue();
+  }
+
+  @Input()
+  set resources(value: SelectableProject[] | undefined) {
+    this.allResources$.next(value);
+  }
+  get resources(): SelectableProject[] | undefined {
+    return this.allResources$.getValue();
+  }
+
   /** Projects that can be an already selected value, but not necessarily given as an option in the menu */
   @Input() nonSelectableProjects?: SelectableProject[];
   @Input() invalidMessageMapper?: { [key: string]: string };
@@ -43,18 +60,30 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
 
   hiddenParatextIds$ = new BehaviorSubject<string[]>([]);
 
+  /**
+   * The maximum number of resources to display at once. This is to prevent rendering thousands of resources in the
+   * list. This value is increased as the user scrolls down the list, and resets when the autocomplete panel is closed.
+   */
   resourceCountLimit$ = new BehaviorSubject<number>(25);
 
-  projects$: Observable<SelectableProject[]> = combineLatest([
+  filteredProjects$: Observable<SelectableProject[]> = combineLatest([
     this.paratextIdControl.valueChanges.pipe(startWith('')),
-    this.hiddenParatextIds$
-  ]).pipe(map(value => this.filterGroup(value[0], this.projects || [])));
+    this.hiddenParatextIds$,
+    this.allProjects$.pipe(startWith([]))
+  ]).pipe(
+    map(([inputValue, _hiddenIds, projects]) => this.filterGroup(inputValue, projects ?? [])),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
-  resources$: Observable<SelectableProject[]> = combineLatest([
+  filteredResources$: Observable<SelectableProject[]> = combineLatest([
     this.paratextIdControl.valueChanges.pipe(startWith('')),
     this.resourceCountLimit$,
-    this.hiddenParatextIds$
-  ]).pipe(map(value => this.filterGroup(value[0], this.resources || [], value[1])));
+    this.hiddenParatextIds$,
+    this.allResources$.pipe(startWith([]))
+  ]).pipe(
+    map(([inputValue, limit, _hiddenIds, resources]) => this.filterGroup(inputValue, resources || [], limit)),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
   projectLabel = projectLabel;
 
@@ -72,29 +101,6 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
         this.valueChange.next(value.paratextId);
         this.projectSelect.emit(value);
       });
-
-    this.projects$
-      .pipe(
-        filter(
-          p =>
-            p.length === 1 &&
-            typeof this.paratextIdControl.value === 'string' &&
-            p[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
-        ),
-        quietTakeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(projects => this.paratextIdControl.setValue(projects[0]));
-    this.resources$
-      .pipe(
-        filter(
-          r =>
-            r.length === 1 &&
-            typeof this.paratextIdControl.value === 'string' &&
-            r[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
-        ),
-        quietTakeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(resources => this.paratextIdControl.setValue(resources[0]));
   }
 
   @Input() set value(id: string | undefined) {
@@ -173,14 +179,14 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
 
   autocompleteOpened(): void {
     setTimeout(() => {
-      if (this.autocomplete && this.autocomplete.panel && this.autocompleteTrigger) {
-        fromEvent(this.autocomplete.panel.nativeElement, 'scroll')
+      if (this.autocomplete?.panel != null && this.autocompleteTrigger != null) {
+        fromEvent<Event>(this.autocomplete.panel.nativeElement, 'scroll')
           .pipe(
-            map(() => this.autocomplete.panel.nativeElement.scrollTop),
             takeUntil(this.autocompleteTrigger.panelClosingActions.pipe(tap(() => this.resourceCountLimit$.next(25))))
           )
-          .subscribe(() => {
-            const panel = this.autocomplete.panel.nativeElement;
+          .subscribe(event => {
+            const panel = event.target as HTMLElement | null;
+            if (panel == null) return;
             // if scrolled to within 100px of bottom, display more resources
             if (this.resources != null && panel.scrollHeight <= panel.scrollTop + panel.clientHeight + 100) {
               this.resourceCountLimit$.next(Math.min(this.resourceCountLimit$.getValue() + 25, this.resources.length));

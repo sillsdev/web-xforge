@@ -3,7 +3,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { UntypedFormControl } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -708,7 +708,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setControlValue(control: UntypedFormControl, value: string): void {
+  setControlValue(control: FormControl<string | null>, value: string): void {
     control.setValue(value);
     tick();
     this.fixture.detectChanges();

@@ -327,14 +327,13 @@ public class ParatextService : DisposableBase, IParatextService
                 // TODO report results
                 List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
                 bool success = false;
-                bool noErrors = SharingLogicWrapper.HandleErrors(
-                    () =>
-                        success = SharingLogicWrapper.ShareChanges(
-                            sharedPtProjectsToSr,
-                            source.AsInternetSharedRepositorySource(),
-                            out results,
-                            sharedPtProjectsToSr
-                        )
+                bool noErrors = SharingLogicWrapper.HandleErrors(() =>
+                    success = SharingLogicWrapper.ShareChanges(
+                        sharedPtProjectsToSr,
+                        source.AsInternetSharedRepositorySource(),
+                        out results,
+                        sharedPtProjectsToSr
+                    )
                 );
                 if (results == null)
                 {
@@ -1958,11 +1957,6 @@ public class ParatextService : DisposableBase, IParatextService
         // Ensure that the timestamp is UTC
         timestamp = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
 
-        // Load the Paratext project
-        string ptProjectId = projectDoc.Data.ParatextId;
-        using ScrText scrText = GetScrText(userSecret, ptProjectId);
-        VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
-
         TextSnapshot ret;
         string id = TextData.GetTextDocId(sfProjectId, book, chapter);
         Snapshot<TextData> snapshot = await connection.FetchSnapshotAsync<TextData>(id, timestamp);
@@ -1972,9 +1966,14 @@ public class ParatextService : DisposableBase, IParatextService
             // We do not have a snapshot, so retrieve the data from Paratext
             // Note: The following code is not testable due to ParatextData limitations
 
+            // Load the Paratext project
+            string ptProjectId = projectDoc.Data.ParatextId;
+            using ScrText latestScrText = GetScrText(userSecret, ptProjectId);
+            VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
+
             // Retrieve the first revision before or at the timestamp
-            VersionedText versionedText = VersioningManager.Get(scrText);
-            HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
+            VersionedText versionedText = VersioningManager.Get(latestScrText);
+            HgRevisionCollection revisionCollection = HgRevisionCollection.Get(latestScrText);
             DateTimeOffset timeStampOffset = new DateTimeOffset(timestamp, TimeSpan.Zero);
             HgRevision? revision = revisionCollection
                 .FilterRevisions(r => r.CommitTimeStamp <= timeStampOffset)
@@ -1990,7 +1989,7 @@ public class ParatextService : DisposableBase, IParatextService
             // Retrieve the USFM for the chapter, and convert to USX, then to deltas
             IGetText version = versionedText.GetVersion(revision.Id);
             string usfm = version.GetText(verseRef, true, false);
-            ChapterDelta chapterDelta = GetDeltaFromUsfm(scrText, verseRef.BookNum, usfm);
+            ChapterDelta chapterDelta = GetDeltaFromUsfm(latestScrText, verseRef.BookNum, usfm);
             ret = new TextSnapshot
             {
                 Id = id,
@@ -2002,14 +2001,13 @@ public class ParatextService : DisposableBase, IParatextService
         else
         {
             // We have the snapshot, but we need to determine if it's valid
-            var usfm = scrText.GetText(verseRef.BookNum);
-            ChapterDelta chapterDelta = GetDeltaFromUsfm(scrText, verseRef.BookNum, usfm);
+            var isValid = DeltaUsxMapper.IsDeltaValid(new Delta(snapshot.Data.Ops));
             ret = new TextSnapshot
             {
                 Id = snapshot.Id,
                 Version = snapshot.Version,
                 Data = snapshot.Data,
-                IsValid = chapterDelta.IsValid,
+                IsValid = isValid,
             };
         }
 
@@ -2132,18 +2130,20 @@ public class ParatextService : DisposableBase, IParatextService
                 continue;
             }
 
-            // If this revision modifies this chapter, emit it
-            var changesForBook = revisionSummary.GetChangesForBook(bookNum);
-            if (changesForBook.ChapterHasChange(chapter))
+            // We do not check for changes in the chapter, as ChapterHasChange() is a slow IO intensive call when
+            // performed across all revisions. This is because it loads the previous revision's USFM and the current
+            // revision's USFM and compares it. For a 1000 revision history (common for large projects), this can take
+            // up to 6 minutes on a very fast server. An execution time like this will result in Cloudflare returning
+            // a 524 error to the user before the request has finished processing.
+            //
+            // For this return revision points-in-time, a timestamp for a change made to the book is sufficient.
+            paratextUsers.TryGetValue(revision.User, out string? userId);
+            yield return new DocumentRevision
             {
-                paratextUsers.TryGetValue(revision.User, out string? userId);
-                yield return new DocumentRevision
-                {
-                    Source = OpSource.Paratext,
-                    Timestamp = revision.CommitTimeStamp.UtcDateTime,
-                    UserId = userId,
-                };
-            }
+                Source = OpSource.Paratext,
+                Timestamp = revision.CommitTimeStamp.UtcDateTime,
+                UserId = userId,
+            };
         }
 
         // Clean up the scripture text

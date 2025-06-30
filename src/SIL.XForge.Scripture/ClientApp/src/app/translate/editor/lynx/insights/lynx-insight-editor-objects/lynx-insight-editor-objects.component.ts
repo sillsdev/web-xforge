@@ -7,7 +7,7 @@ import { map, observeOn, scan } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
-import { LynxableEditor, LynxRangeConverter } from '../lynx-editor';
+import { LynxableEditor, LynxTextModelConverter } from '../lynx-editor';
 import { LynxInsight, LynxInsightDisplayState, LynxInsightRange } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
@@ -24,7 +24,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
 
   @Input() editor?: LynxableEditor;
-  @Input() lynxRangeConverter?: LynxRangeConverter;
+  @Input() lynxTextModelConverter?: LynxTextModelConverter;
 
   private isEditorMouseDown = false;
 
@@ -39,7 +39,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    if (this.editor == null || this.lynxRangeConverter == null) {
+    if (this.editor == null || this.lynxTextModelConverter == null) {
       return;
     }
 
@@ -68,7 +68,12 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
       this.insightState.filteredChapterInsights$
     ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef), observeOn(asapScheduler))
-      .subscribe(([range, insights]) => this.handleSelectionChange(range, insights));
+      .subscribe(([range, insights]) => {
+        this.handleSelectionChange(
+          range,
+          insights.map(insight => this.adjustInsightRange(insight))
+        );
+      });
 
     combineLatest([fromEvent(this.editor.root, 'mouseover'), this.insightState.filteredChapterInsights$])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
@@ -89,7 +94,12 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
           return merge(
             // Render blots when insights change
             this.insightState.filteredChapterInsights$.pipe(
-              tap(insights => this.insightRenderService.render(insights, this.editor!, this.lynxRangeConverter!))
+              tap(insights =>
+                this.insightRenderService.render(
+                  insights.map(insight => this.adjustInsightRange(insight)),
+                  this.editor!
+                )
+              )
             ),
             // Check display state to render action overlay or cursor active state
             this.insightState.displayState$.pipe(
@@ -109,6 +119,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
                     this.insightRenderService.renderActionOverlay(
                       activeInsights,
                       this.editor!,
+                      this.lynxTextModelConverter!,
                       !!curr.actionOverlayActive
                     );
                   }
@@ -196,14 +207,28 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   }
 
   private async handleTextChange(delta: Delta): Promise<void> {
-    if (this.editor == null) {
+    if (this.editor == null || this.lynxTextModelConverter == null) {
       return;
     }
 
     const edits = await this.lynxWorkspaceService.getOnTypeEdits(delta);
     for (const edit of edits) {
-      this.editor.updateContents(edit, 'user');
+      this.editor.updateContents(this.lynxTextModelConverter.dataDeltaToEditorDelta(edit), 'user');
     }
+  }
+
+  /**
+   * Translate dataRange to editorRange (adjust for note embeds)
+   */
+  private adjustInsightRange(insight: LynxInsight): LynxInsight {
+    if (this.lynxTextModelConverter == null) {
+      return insight;
+    }
+
+    return {
+      ...insight,
+      range: this.lynxTextModelConverter.dataRangeToEditorRange(insight.range)
+    };
   }
 }
 

@@ -6,10 +6,12 @@ import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { Subscription } from 'rxjs';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 
@@ -36,6 +38,7 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
   });
 
   private projectDoc?: SFProjectDoc;
+  private onlineSubscription?: Subscription;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public readonly data: UserData,
@@ -55,8 +58,13 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
       this.data.projectId,
       new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
     );
-    const project: Readonly<SFProject | undefined> = this.projectDoc.data;
 
+    this.onlineSubscription?.unsubscribe();
+    this.onlineSubscription = this.onlineService.onlineStatus$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(isOnline => this.updateFormEditability(isOnline));
+
+    const project: Readonly<SFProject | undefined> = this.projectDoc.data;
     if (project === undefined) {
       this.form.disable();
       return;
@@ -74,10 +82,11 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Edit) &&
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Delete);
     this.canManageAudio.setValue(canManageAudio);
+  }
 
-    if (this.isParatextUser()) {
-      this.roles.disable();
-    }
+  private updateFormEditability(isOnline: boolean): void {
+    isOnline ? this.form.enable() : this.form.disable();
+    this.isParatextUser() || !isOnline ? this.roles.disable() : this.roles.enable();
   }
 
   isParatextUser(): boolean {

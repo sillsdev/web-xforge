@@ -315,6 +315,10 @@ public class SFProjectsRpcController(
         {
             return NotFoundError(dnfe.Message);
         }
+        catch (InvalidOperationException e)
+        {
+            return InvalidParamsError(e.Message);
+        }
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
@@ -708,7 +712,7 @@ public class SFProjectsRpcController(
         try
         {
             // Run the background job
-            backgroundJobClient.Enqueue<MachineApiService>(r =>
+            backgroundJobClient.Enqueue<IMachineApiService>(r =>
                 r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
             );
             return Ok();
@@ -808,6 +812,30 @@ public class SFProjectsRpcController(
                     { "projectId", projectId },
                     { "servalConfig", servalConfig },
                 }
+            );
+            throw;
+        }
+    }
+
+    public async Task<IRpcMethodResult> SetUsfmConfig(string projectId, DraftUsfmConfig config)
+    {
+        try
+        {
+            await projectService.SetUsfmConfigAsync(UserId, projectId, config);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "SetUsfmConfig" }, { "projectId", projectId } }
             );
             throw;
         }

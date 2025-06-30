@@ -18,7 +18,7 @@ import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -336,7 +336,7 @@ class TestEnvironment {
   setCurrentUser(userId: string = 'user01'): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, userId, FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(UserDoc.COLLECTION, userId, UNKNOWN_COMPONENT_OR_SERVICE)
     );
   }
 
@@ -554,7 +554,7 @@ class TestEnvironment {
     const textDoc = this.realtimeService.get<TextDoc>(
       TextDoc.COLLECTION,
       getTextDocId('project01', bookNum, chapter),
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     textDoc.submit({ ops: delta.ops });
     this.waitForProjectDocChanges();
@@ -564,7 +564,7 @@ class TestEnvironment {
     const projectDoc: SFProjectProfileDoc = this.realtimeService.get(
       SFProjectProfileDoc.COLLECTION,
       'project01',
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),

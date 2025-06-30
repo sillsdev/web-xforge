@@ -115,8 +115,8 @@ public class PreTranslationServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationParametersAsync("invalid_project_id")
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetPreTranslationParametersAsync("invalid_project_id")
         );
     }
 
@@ -411,7 +411,13 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 0, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            0,
+            new DraftUsfmConfig(),
+            CancellationToken.None
+        );
         Assert.AreEqual(TestEnvironment.MatthewBookUsfm, usfm);
     }
 
@@ -424,7 +430,13 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            1,
+            new DraftUsfmConfig(),
+            CancellationToken.None
+        );
         Assert.AreEqual(TestEnvironment.MatthewChapterOneUsfm, usfm);
     }
 
@@ -437,8 +449,83 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 2, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            new DraftUsfmConfig(),
+            CancellationToken.None
+        );
         Assert.AreEqual(TestEnvironment.MatthewChapterTwoUsfm, usfm);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_ParagraphFormatSpecified()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
+        );
+
+        // SUT
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.Remove },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                PretranslationUsfmMarkerBehavior.Strip,
+                cancellationToken: CancellationToken.None
+            );
+
+        // SUT2
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.BestGuess },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                PretranslationUsfmMarkerBehavior.Preserve,
+                cancellationToken: CancellationToken.None
+            );
+
+        // SUT3
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormat.MoveToEnd },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(2)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                PretranslationUsfmMarkerBehavior.Preserve,
+                cancellationToken: CancellationToken.None
+            );
     }
 
     [Test]
@@ -450,7 +537,13 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 3, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            3,
+            new DraftUsfmConfig(),
+            CancellationToken.None
+        );
         Assert.IsEmpty(usfm);
     }
 
@@ -461,8 +554,8 @@ public class PreTranslationServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePreTranslationStatusAsync("invalid_project_id", CancellationToken.None)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdatePreTranslationStatusAsync("invalid_project_id", CancellationToken.None)
         );
     }
 
@@ -655,6 +748,7 @@ public class PreTranslationServiceTests
                     textId: "MAT",
                     textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
                     template: PretranslationUsfmTemplate.Source,
+                    paragraphMarkerBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
                     cancellationToken: CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);

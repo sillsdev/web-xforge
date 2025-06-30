@@ -4,6 +4,7 @@ import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
 import { EMPTY, firstValueFrom, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
@@ -11,10 +12,10 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { Revision } from '../../core/paratext.service';
 import { BuildDto } from '../../machine-api/build-dto';
-import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
-import { getBookFileNameDigits } from '../../shared/utils';
+import { booksFromScriptureRange, formatDateForFilename, getBookFileNameDigits } from '../../shared/utils';
 import {
   activeBuildStates,
   BuildConfig,
@@ -47,7 +48,7 @@ export class DraftGenerationService {
   pollBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return timer(0, this.options.pollRate).pipe(
       switchMap(() => this.getBuildProgress(projectId)),
-      takeWhile(job => activeBuildStates.includes(job?.state as BuildStates), true),
+      takeWhile(job => job != null && activeBuildStates.includes(job.state), true),
       distinct(job => `${job?.state}${job?.queueDepth}${job?.percentCompleted}`),
       shareReplay({ bufferSize: 1, refCount: true })
     );
@@ -65,6 +66,30 @@ export class DraftGenerationService {
       return of(undefined);
     }
     return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?pretranslate=true`).pipe(
+      map(res => res.data),
+      catchError(err => {
+        // If no build has ever been started, return undefined
+        if (err.status === 403 || err.status === 404) {
+          return of(undefined);
+        }
+
+        this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+        return of(undefined);
+      })
+    );
+  }
+
+  /**
+   * Gets pre-translation builds for specified project.
+   * @param projectId The SF project id for the target translation.
+   * @returns An observable array of BuildDto objects, describing
+   * the state and progress of past and present builds.
+   */
+  getBuildHistory(projectId: string): Observable<BuildDto[] | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
+    return this.httpClient.get<BuildDto[]>(`translation/builds/project:${projectId}?pretranslate=true`).pipe(
       map(res => res.data),
       catchError(err => {
         // If no build has ever been started, return undefined
@@ -113,7 +138,7 @@ export class DraftGenerationService {
     return this.getBuildProgress(buildConfig.projectId).pipe(
       switchMap((job: BuildDto | undefined) => {
         // If existing build is currently active, return polling observable
-        if (activeBuildStates.includes(job?.state as BuildStates)) {
+        if (job != null && activeBuildStates.includes(job.state)) {
           return this.pollBuildProgress(buildConfig.projectId);
         }
 
@@ -176,54 +201,107 @@ export class DraftGenerationService {
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
    * @param chapter The chapter number.
+   * @param timestamp The timestamp to download the draft at. If undefined, the latest draft will be downloaded.
    * @returns An array of delta operations or an empty array at if no pre-translations exist.
    * The 405 error that occurs when there is no USFM support is thrown to the caller.
    */
-  getGeneratedDraftDeltaOperations(projectId: string, book: number, chapter: number): Observable<DeltaOperation[]> {
+  getGeneratedDraftDeltaOperations(
+    projectId: string,
+    book: number,
+    chapter: number,
+    timestamp?: Date,
+    usfmConfig?: DraftUsfmConfig
+  ): Observable<DeltaOperation[]> {
     if (!this.onlineStatusService.isOnline) {
       return of([]);
     }
+    let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`;
+    const params = new URLSearchParams();
+    if (timestamp != null) {
+      params.append('timestamp', timestamp.toISOString());
+    }
+    if (usfmConfig != null) {
+      params.append('paragraphFormat', usfmConfig.paragraphFormat);
+    }
+    if (params.size > 0) {
+      url += `?${params.toString()}`;
+    }
+    return this.httpClient.get<Snapshot<TextData> | undefined>(url).pipe(
+      map(res => res.data?.data.ops ?? []),
+      catchError(err => {
+        // If no pre-translations exist, return empty array
+        if (err.status === 403 || err.status === 404 || err.status === 409) {
+          return of([]);
+        } else if (err.status === 405) {
+          // Rethrow a 405 so the frontend can use getGeneratedDraft()
+          return throwError(() => err);
+        }
+
+        this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Gets the draft revisions saved in Scripture Forge for the specified book/chapter.
+   * @param projectId The SF project id for the target translation.
+   * @param book The book number.
+   * @param chapter The chapter number.
+   * @returns The Draft revisions, or undefined if an issue occurred retrieving the revisions.
+   */
+  getGeneratedDraftHistory(projectId: string, book: number, chapter: number): Observable<Revision[] | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
     return this.httpClient
       .get<
-        Snapshot<TextData> | undefined
-      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`)
+        Revision[] | undefined
+      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/history`)
       .pipe(
-        map(res => res.data?.data.ops ?? []),
+        map(res => res?.data ?? []),
         catchError(err => {
-          // If no pre-translations exist, return empty array
+          // If no pre-translations exist, return undefined
           if (err.status === 403 || err.status === 404 || err.status === 409) {
-            return of([]);
-          } else if (err.status === 405) {
-            // Rethrow a 405 so the frontend can use getGeneratedDraft()
-            return throwError(() => err);
+            return of(undefined);
           }
 
           this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
-          return of([]);
+          return of(undefined);
         })
       );
   }
 
   /**
-   * Gets the pre-translation USFM for the specified book/chapter using the last completed build.
+   * Gets the pre-translation USFM for the specified book/chapter.
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
    * @param chapter The chapter number. Specify 0 to return all chapters in the book.
+   * @param timestamp The timestamp to download the draft at. If undefined, the latest draft will be downloaded.
    * @returns An observable string of USFM data, or undefined if no pre-translations exist.
    */
-  getGeneratedDraftUsfm(projectId: string, book: number, chapter: number): Observable<string | undefined> {
+  getGeneratedDraftUsfm(
+    projectId: string,
+    book: number,
+    chapter: number,
+    timestamp?: Date
+  ): Observable<string | undefined> {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
     }
-    return this.httpClient
-      .get<string>(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`)
-      .pipe(
-        map(res => res.data),
-        catchError(() => {
-          // If no USFM could be retrieved, return undefined
-          return of(undefined);
-        })
-      );
+    let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`;
+    const params = new URLSearchParams();
+    if (timestamp != null) {
+      params.append('timestamp', timestamp.toISOString());
+      url += `?${params.toString()}`;
+    }
+    return this.httpClient.get<string>(url).pipe(
+      map(res => res.data),
+      catchError(() => {
+        // If no USFM could be retrieved, return undefined
+        return of(undefined);
+      })
+    );
   }
 
   /**
@@ -246,27 +324,42 @@ export class DraftGenerationService {
       const projectShortName: string = projectDoc.data.shortName;
       const usfmFiles: Promise<void>[] = [];
 
-      // Build the list of book numbers
-      const books: number[] = projectDoc.data.texts.reduce<number[]>((acc, text) => {
-        if (text.chapters.some(c => c.hasDraft)) {
-          acc.push(text.bookNum);
-        }
-        return acc;
-      }, []);
-      const zipProgress: DraftZipProgress = { current: 0, total: books.length };
+      // Build the list of book numbers, first checking the build, then the project document if that is null
+      let books = new Set<number>(
+        lastCompletedBuild?.additionalInfo?.translationScriptureRanges?.flatMap(range =>
+          booksFromScriptureRange(range.scriptureRange)
+        )
+      );
+
+      // If no books were found in the build, use the project document
+      if (books.size === 0) {
+        books = new Set<number>(
+          projectDoc.data.texts.filter(text => text.chapters.some(c => c.hasDraft)).map(text => text.bookNum)
+        );
+      }
+
+      const zipProgress: DraftZipProgress = { current: 0, total: books.size };
       observer.next(zipProgress);
+
+      // Get the date the draft was generated and written to Scripture Forge
+      let dateGenerated: Date | undefined = undefined;
+      if (lastCompletedBuild?.additionalInfo?.dateGenerated != null) {
+        dateGenerated = new Date(lastCompletedBuild.additionalInfo.dateGenerated);
+      }
 
       // Create the promises to download each book's USFM
       for (const bookNum of books) {
-        const usfmFile = firstValueFrom(this.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0)).then(usfm => {
-          if (usfm != null) {
-            const fileName: string =
-              getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.SFM';
-            zip.file(fileName, usfm);
-            zipProgress.current++;
-            observer.next(zipProgress);
+        const usfmFile = firstValueFrom(this.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0, dateGenerated)).then(
+          usfm => {
+            if (usfm != null) {
+              const fileName: string =
+                getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.SFM';
+              zip.file(fileName, usfm);
+              zipProgress.current++;
+              observer.next(zipProgress);
+            }
           }
-        });
+        );
         usfmFiles.push(usfmFile);
       }
 
@@ -280,13 +373,7 @@ export class DraftGenerationService {
         // Download the zip file
         let filename: string = (projectDoc.data?.shortName ?? 'Translation') + ' Draft';
         if (lastCompletedBuild?.additionalInfo?.dateFinished != null) {
-          const date: Date = new Date(lastCompletedBuild.additionalInfo.dateFinished);
-          const year: string = date.getFullYear().toString();
-          const month: string = (date.getMonth() + 1).toString().padStart(2, '0');
-          const day: string = date.getDate().toString().padStart(2, '0');
-          const hours: string = date.getHours().toString().padStart(2, '0');
-          const minutes: string = date.getMinutes().toString().padStart(2, '0');
-          filename += ` ${year}-${month}-${day}_${hours}${minutes}`;
+          filename += ' ' + formatDateForFilename(new Date(lastCompletedBuild.additionalInfo.dateFinished));
         }
 
         filename += '.zip';

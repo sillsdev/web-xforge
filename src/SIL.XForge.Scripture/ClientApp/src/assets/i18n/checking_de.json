@@ -296,10 +296,10 @@
     "tooltip_edit": "Bearbeiten"
   },
   "checking_questions": {
-    "go_to": "Go to questions",
+    "go_to": "Zu den Fragen",
     "listen_to_question": "Anhören der Frage für {{ referenceForDisplay }}",
     "loading": "Wird geladen...",
-    "no_questions_found": "No questions found for the settings above.",
+    "no_questions_found": "Keine Fragen zu den obigen Einstellungen gefunden.",
     "scripture_audio_label": "Höre Dir {{ referenceForDisplay }} an, um die folgende Frage zu beantworten.",
     "view_answers": "Antworten ansehen"
   },
@@ -434,6 +434,7 @@
     "link_copied": "Link in die Zwischenablage kopiert",
     "link_sharing": "Links können auch ohne E-Mail-Adresse über Social Media Plattformen an Benutzer weitergegeben werden.",
     "not_inviting_already_member": "Nicht einladend: Benutzer ist bereits Mitglied in diesem Projekt",
+    "not_inviting_email_invalid": "Nicht eingeladen: Ungültige E-Mail Adresse",
     "resend": "Erneut senden",
     "send_a_link": "Link senden",
     "select_invitation_language": "Sprache für die Einladungs-E-Mail wählen",

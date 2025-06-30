@@ -18,7 +18,7 @@ import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -442,7 +442,7 @@ class TestEnvironment {
         const projectDoc: SFProjectDoc = this.realtimeService.get(
           SFProjectDoc.COLLECTION,
           projectId,
-          FETCH_WITHOUT_SUBSCRIBE
+          UNKNOWN_COMPONENT_OR_SERVICE
         );
         return projectDoc.submitJson0Op(op => op.set(p => p.userPermissions[userId], permissions));
       }
@@ -585,7 +585,7 @@ class TestEnvironment {
     const projectDoc: SFProjectDoc = this.realtimeService.get(
       SFProjectDoc.COLLECTION,
       this.project01Id,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     return projectDoc.submitJson0Op(op => {
       op.set(p => p.checkingConfig, config);

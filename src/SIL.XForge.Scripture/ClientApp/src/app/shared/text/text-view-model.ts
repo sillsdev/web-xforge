@@ -6,7 +6,7 @@ import { DeltaOperation, StringMap } from 'rich-text';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
-import { LynxRangeConverter } from '../../translate/editor/lynx/insights/lynx-editor';
+import { LynxTextModelConverter } from '../../translate/editor/lynx/insights/lynx-editor';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
 import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
@@ -42,7 +42,10 @@ const PARA_STYLES: Set<string> = new Set<string>([
   'lh',
   'li',
   'lf',
-  'lim'
+  'lim',
+
+  // Book
+  'id'
 ]);
 
 function canParaContainVerseText(style: string): boolean {
@@ -122,7 +125,7 @@ class SegmentInfo {
  * See text.component.spec.ts for some unit tests.
  */
 @Injectable()
-export class TextViewModel implements OnDestroy, LynxRangeConverter {
+export class TextViewModel implements OnDestroy, LynxTextModelConverter {
   editor?: Quill;
 
   private readonly _segments: Map<string, Range> = new Map<string, Range>();
@@ -280,7 +283,10 @@ export class TextViewModel implements OnDestroy, LynxRangeConverter {
             // clear highlight
             newAttrs = { 'highlight-segment': false };
           }
-        } else if (op.insert === '\n' || (op.attributes != null && op.attributes.para != null)) {
+        } else if (
+          op.insert === '\n' ||
+          (op.attributes != null && (op.attributes.para != null || op.attributes.book != null))
+        ) {
           if (highlightPara) {
             // highlight para
             newAttrs = { 'highlight-para': true };
@@ -320,12 +326,14 @@ export class TextViewModel implements OnDestroy, LynxRangeConverter {
 
     const highlightedSegmentIndex = delta.ops.findIndex(op => op.attributes?.['highlight-segment'] === true);
     const styleOpIndexes = delta.ops
-      .map((op, i) => ((op.attributes?.para as any)?.style ? i : -1))
+      .map((op, i) => ((op.attributes?.para ?? (op.attributes?.book as any))?.style ? i : -1))
       .filter(i => i !== -1);
 
     // This may be -1 if there is no style specified
     const indexOfParagraphStyle = Math.min(...styleOpIndexes.filter(i => i > highlightedSegmentIndex));
-    const style = (delta.ops[indexOfParagraphStyle]?.attributes?.para as any)?.style;
+    const style = (
+      delta.ops[indexOfParagraphStyle]?.attributes?.para ?? (delta.ops[indexOfParagraphStyle]?.attributes?.book as any)
+    )?.style;
     const description = USFM_STYLE_DESCRIPTIONS[style];
     if (typeof description !== 'string' || style === 'p') {
       return;
@@ -582,6 +590,10 @@ export class TextViewModel implements OnDestroy, LynxRangeConverter {
     return { index: startEditorPos, length: endEditorPos - startEditorPos };
   }
 
+  dataDeltaToEditorDelta(dataDelta: Delta): Delta {
+    return this.addEmbeddedElementsToDelta(dataDelta);
+  }
+
   private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
     const embedEditorPositions = this.embedPositions;
     // add up the leading embeds
@@ -650,8 +662,8 @@ export class TextViewModel implements OnDestroy, LynxRangeConverter {
     for (const op of delta.ops) {
       const attrs: StringMap = {};
       const len = typeof op.insert === 'string' ? op.insert.length : 1;
-      if (op.insert === '\n' || op.attributes?.para != null) {
-        const style: string | null = op.attributes?.para == null ? null : ((op.attributes.para as any).style as string);
+      if (op.insert === '\n' || op.attributes?.para != null || op.attributes?.book != null) {
+        const style: string | null = (op.attributes?.para ?? (op.attributes?.book as any))?.style;
         if (style == null || canParaContainVerseText(style)) {
           // paragraph
           for (const _ch of op.insert as any) {

@@ -27,7 +27,7 @@ import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
@@ -558,7 +558,7 @@ class TestEnvironment {
     return this.realtimeService.get(
       BiblicalTermDoc.COLLECTION,
       getBiblicalTermDocId(projectId, dataId),
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
   }
 
@@ -566,7 +566,7 @@ class TestEnvironment {
     return this.realtimeService.get<NoteThreadDoc>(
       NoteThreadDoc.COLLECTION,
       getNoteThreadDocId(projectId, threadId),
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
   }
 
@@ -575,7 +575,7 @@ class TestEnvironment {
     return this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
       id,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
   }
 

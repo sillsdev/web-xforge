@@ -2,6 +2,7 @@ import QuillScrollBlot from 'quill/blots/scroll';
 import { instance, mock } from 'ts-mockito';
 import {
   BlankEmbed,
+  BookBlock,
   ChapterEmbed,
   CharInline,
   EmptyEmbed,
@@ -67,6 +68,45 @@ describe('Quill blots', () => {
     it('should return undefined formats when not initial', () => {
       const node = BlankEmbed.create(true) as HTMLElement;
       expect(BlankEmbed.formats(node)).toBeUndefined();
+    });
+  });
+
+  describe('BookBlock', () => {
+    let mockScroll: QuillScrollBlot;
+
+    beforeEach(() => {
+      mockScroll = instance(mock(QuillScrollBlot));
+    });
+
+    it('should create book block', () => {
+      const value = { style: 'id', code: 'MAT' };
+      const node = BookBlock.create(value);
+
+      expect(node.getAttribute('data-style')).toBe('id');
+      expect(node.getAttribute('data-code')).toBe('MAT');
+    });
+
+    it('should format existing book block', () => {
+      const value = { style: 'id', code: 'MAT' };
+      const node = BookBlock.create({ style: 'id', code: 'MRK' }) as HTMLElement;
+      const paraBlock = new BookBlock(mockScroll, node);
+
+      paraBlock.format('book', value);
+
+      expect(node.getAttribute('data-style')).toBe('id');
+      expect(node.getAttribute('data-code')).toBe('MAT');
+    });
+
+    it('should handle null value', () => {
+      const node = BookBlock.create(null as any);
+      expect(node.hasAttribute('data-style')).toBe(false);
+    });
+
+    it('should return stored value', () => {
+      const value = { style: 'id', code: 'MAT' };
+      const node = BookBlock.create(value);
+      expect(BookBlock.value(node)).toEqual(value);
+      expect(BookBlock.formats(node)).toEqual(value);
     });
   });
 

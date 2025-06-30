@@ -25,10 +25,84 @@ public class ParatextControllerTests
 {
     private const string Book = "MAT";
     private const int Chapter = 1;
+    private const string Paratext01 = "paratext01";
     private const string Project01 = "project01";
     private const string User01 = "user01";
 
     private static readonly DateTime Timestamp = DateTime.UtcNow;
+
+    [Test]
+    public async Task CreateProjectAsync_Forbidden()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var settings = new SFProjectCreateSettings { ParatextId = Paratext01 };
+        env.ProjectService.CreateProjectAsync(User01, settings).ThrowsAsync(new ForbiddenException("Forbidden"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.CreateProjectAsync(settings);
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task CreateProjectAsync_Invalid()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var settings = new SFProjectCreateSettings { ParatextId = Paratext01 };
+        env.ProjectService.CreateProjectAsync(User01, settings)
+            .ThrowsAsync(new InvalidOperationException("Already Exists"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.CreateProjectAsync(settings);
+
+        Assert.IsInstanceOf<ConflictResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task CreateProjectAsync_NotFound()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var settings = new SFProjectCreateSettings { ParatextId = Paratext01 };
+        env.ProjectService.CreateProjectAsync(User01, settings).ThrowsAsync(new DataNotFoundException("Not Found"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.CreateProjectAsync(settings);
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task CreateProjectAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var settings = new SFProjectCreateSettings { ParatextId = Paratext01 };
+        env.ProjectService.CreateProjectAsync(User01, settings).Returns(Task.FromResult(Project01));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.CreateProjectAsync(settings);
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        Assert.That((actual.Result as OkObjectResult).Value, Is.EqualTo(Project01));
+    }
+
+    [Test]
+    public async Task CreateProjectAsync_Unauthorized()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var settings = new SFProjectCreateSettings { ParatextId = Paratext01 };
+        env.ProjectService.CreateProjectAsync(User01, settings)
+            .ThrowsAsync(new UnauthorizedAccessException("Forbidden"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.CreateProjectAsync(settings);
+
+        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+    }
 
     [Test]
     public async Task DownloadProjectAsync_Forbidden()
@@ -403,6 +477,59 @@ public class ParatextControllerTests
 
         // SUT
         ActionResult<Dictionary<string, string[]>> actual = await env.Controller.ResourcesAsync();
+
+        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task SyncAsync_Forbidden()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.SyncAsync(User01, Project01).ThrowsAsync(new ForbiddenException("Forbidden"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task SyncAsync_NotFound()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.SyncAsync(User01, Project01).ThrowsAsync(new DataNotFoundException("Not Found"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task SyncAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.SyncAsync(User01, Project01).Returns(Task.FromResult(Project01));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        Assert.That((actual.Result as OkObjectResult).Value, Is.EqualTo(Project01));
+    }
+
+    [Test]
+    public async Task SyncAsync_Unauthorized()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.SyncAsync(User01, Project01).ThrowsAsync(new UnauthorizedAccessException("Forbidden"));
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
 
         Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
     }

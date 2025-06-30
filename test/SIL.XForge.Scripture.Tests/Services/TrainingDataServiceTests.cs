@@ -40,8 +40,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(
-            () => env.Service.DeleteTrainingDataAsync(User01, Project01, User01, "invalid_data_id")
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.DeleteTrainingDataAsync(User01, Project01, User01, "invalid_data_id")
         );
     }
 
@@ -51,8 +51,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.DeleteTrainingDataAsync(User01, "invalid_project_id", User01, Data01)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.DeleteTrainingDataAsync(User01, "invalid_project_id", User01, Data01)
         );
     }
 
@@ -62,8 +62,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.DeleteTrainingDataAsync(User02, Project01, User01, Data01)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.DeleteTrainingDataAsync(User02, Project01, User01, Data01)
         );
     }
 
@@ -144,8 +144,8 @@ public class TrainingDataServiceTests
         var targetTexts = new List<ISFText>();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetTextsAsync(User01, "invalid_project_id", dataIds, sourceTexts, targetTexts)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetTextsAsync(User01, "invalid_project_id", dataIds, sourceTexts, targetTexts)
         );
     }
 
@@ -159,8 +159,8 @@ public class TrainingDataServiceTests
         env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(false);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts)
         );
     }
 
@@ -173,8 +173,8 @@ public class TrainingDataServiceTests
         var targetTexts = new List<ISFText>();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetTextsAsync(User03, Project01, dataIds, sourceTexts, targetTexts)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetTextsAsync(User03, Project01, dataIds, sourceTexts, targetTexts)
         );
     }
 
@@ -220,8 +220,8 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
         );
     }
 
@@ -239,8 +239,8 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
         );
     }
 
@@ -250,8 +250,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, "invalid_data_id", FileCsv)
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.SaveTrainingDataAsync(User01, Project01, "invalid_data_id", FileCsv)
         );
     }
 
@@ -261,8 +261,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, "test.doc")
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, "test.doc")
         );
     }
 
@@ -272,8 +272,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SaveTrainingDataAsync(User01, "invalid_project_id", Data01, FileCsv)
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.SaveTrainingDataAsync(User01, "invalid_project_id", Data01, FileCsv)
         );
     }
 
@@ -283,8 +283,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SaveTrainingDataAsync(User03, Project01, Data01, FileCsv)
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.SaveTrainingDataAsync(User03, Project01, Data01, FileCsv)
         );
     }
 
@@ -298,8 +298,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
+        Assert.ThrowsAsync<FormatException>(() => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
         );
     }
 
@@ -467,8 +466,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
+        Assert.ThrowsAsync<FormatException>(() => env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
         );
     }
 

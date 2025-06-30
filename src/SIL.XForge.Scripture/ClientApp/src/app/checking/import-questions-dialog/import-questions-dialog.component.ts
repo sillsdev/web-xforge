@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@ngneat/transloco';
@@ -11,7 +11,7 @@ import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
@@ -91,10 +91,10 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
   @ViewChild('selectAllCheckbox') selectAllCheckbox!: MatCheckbox;
   @ViewChild('dialogContentBody') dialogContentBody!: ElementRef;
 
-  fromControl = new UntypedFormControl('', [SFValidators.verseStr()]);
-  toControl = new UntypedFormControl('', [SFValidators.verseStr()]);
-  filterControl = new UntypedFormControl();
-  filterForm = new UntypedFormGroup({
+  fromControl = new FormControl('', [SFValidators.verseStr()]);
+  toControl = new FormControl('', [SFValidators.verseStr()]);
+  filterControl = new FormControl('');
+  filterForm = new FormGroup({
     from: this.fromControl,
     to: this.toControl,
     filter: this.filterControl
@@ -353,7 +353,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           this.checkingQuestionsService.createQuestion(
             this.data.projectId,
             newQuestion,
-            FETCH_WITHOUT_SUBSCRIBE,
+            UNKNOWN_COMPONENT_OR_SERVICE,
             undefined,
             undefined
           )

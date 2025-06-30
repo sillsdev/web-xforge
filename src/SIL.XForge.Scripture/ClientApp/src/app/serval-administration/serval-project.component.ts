@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
-import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -17,7 +17,7 @@ import { BuildDto } from '../machine-api/build-dto';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
-import { booksFromScriptureRange, projectLabel } from '../shared/utils';
+import { projectLabel } from '../shared/utils';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
@@ -29,6 +29,7 @@ interface Row {
   name: string;
   category: string;
   fileName: string;
+  languageCode: string;
 }
 
 interface ProjectAndRange {
@@ -59,8 +60,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   preTranslate = false;
   projectName = '';
 
-  headingsToDisplay = { category: 'Category', type: 'Type', name: 'Project', id: '' };
-  columnsToDisplay = ['category', 'type', 'name', 'id'];
+  headingsToDisplay = { category: 'Category', type: 'Type', name: 'Project', languageCode: 'Language tag', id: '' };
+  columnsToDisplay = ['category', 'type', 'name', 'languageCode', 'id'];
   rows: Row[] = [];
 
   trainingBooksByProject: ProjectAndRange[] = [];
@@ -78,6 +79,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
+    private readonly i18n: I18nService,
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
@@ -120,7 +122,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             type: projectType(projectDoc.data),
             name: this.projectName,
             category: 'Target Project',
-            fileName: project.shortName + '.zip'
+            fileName: project.shortName + '.zip',
+            languageCode: project.writingSystem.tag
           });
 
           let i = 1;
@@ -131,7 +134,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
               type: projectType(draftingSource),
               name: projectLabel(draftingSource),
               category: 'Drafting Source ' + i++,
-              fileName: draftingSource.shortName + '.zip'
+              fileName: draftingSource.shortName + '.zip',
+              languageCode: draftingSource.writingSystem.tag
             });
           }
 
@@ -143,7 +147,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
               type: projectType(trainingSource),
               name: projectLabel(trainingSource),
               category: 'Training Source  ' + i++,
-              fileName: trainingSource.shortName + '.zip'
+              fileName: trainingSource.shortName + '.zip',
+              languageCode: trainingSource.writingSystem.tag
             });
           }
 
@@ -155,18 +160,16 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           if (draftConfig.lastSelectedTrainingScriptureRange != null) {
             this.trainingBooksByProject.push({
               source: 'Source 1',
-              scriptureRange: booksFromScriptureRange(draftConfig.lastSelectedTrainingScriptureRange ?? '')
-                .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
-                .join(', ')
+              scriptureRange: this.i18n.formatAndLocalizeScriptureRange(
+                draftConfig.lastSelectedTrainingScriptureRange ?? ''
+              )
             });
           } else if (draftConfig.lastSelectedTrainingScriptureRanges != null) {
             let sourceCount = 1;
             for (const range of draftConfig.lastSelectedTrainingScriptureRanges) {
               this.trainingBooksByProject.push({
                 source: `Source ${sourceCount++}`,
-                scriptureRange: booksFromScriptureRange(range.scriptureRange)
-                  .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
-                  .join(', ')
+                scriptureRange: this.i18n.formatAndLocalizeScriptureRange(range.scriptureRange)
               });
             }
           }
@@ -175,18 +178,16 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           if (draftConfig.lastSelectedTranslationScriptureRange != null) {
             this.translationBooksByProject.push({
               source: 'Source 1',
-              scriptureRange: booksFromScriptureRange(draftConfig.lastSelectedTranslationScriptureRange ?? '')
-                .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
-                .join(', ')
+              scriptureRange: this.i18n.formatAndLocalizeScriptureRange(
+                draftConfig.lastSelectedTranslationScriptureRange ?? ''
+              )
             });
           } else if (draftConfig.lastSelectedTranslationScriptureRanges != null) {
             let sourceCount = 1;
             for (const range of draftConfig.lastSelectedTranslationScriptureRanges) {
               this.translationBooksByProject.push({
                 source: `Source ${sourceCount++}`,
-                scriptureRange: booksFromScriptureRange(range.scriptureRange)
-                  .map(bookNum => Canon.bookNumberToEnglishName(bookNum))
-                  .join(', ')
+                scriptureRange: this.i18n.formatAndLocalizeScriptureRange(range.scriptureRange)
               });
             }
           }

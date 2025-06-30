@@ -8,12 +8,13 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
-import { FormGroupDirective, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest } from 'rxjs';
+import { CommandError } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -36,10 +37,10 @@ export class ShareControlComponent extends ShareBaseComponent {
   @Input() defaultRole: SFProjectRole = SF_DEFAULT_SHARE_ROLE;
   @ViewChild('shareLinkField') shareLinkField?: ElementRef<HTMLInputElement>;
 
-  email = new UntypedFormControl('', [XFValidators.email, Validators.required]);
-  localeControl = new UntypedFormControl('', [Validators.required]);
-  roleControl = new UntypedFormControl('', [Validators.required]);
-  sendInviteForm: UntypedFormGroup = new UntypedFormGroup({
+  email = new FormControl('', [XFValidators.email, Validators.required]);
+  localeControl = new FormControl('', [Validators.required]);
+  roleControl = new FormControl<SFProjectRole | null>(null, [Validators.required]);
+  sendInviteForm = new FormGroup({
     email: this.email,
     role: this.roleControl,
     locale: this.localeControl
@@ -51,6 +52,7 @@ export class ShareControlComponent extends ShareBaseComponent {
 
   private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  readonly invalidEmailAddress: string = 'invalid-email-address';
 
   constructor(
     readonly i18n: I18nService,
@@ -76,7 +78,7 @@ export class ShareControlComponent extends ShareBaseComponent {
             ),
             this.projectService.isProjectAdmin(projectId, this.userService.currentUserId)
           ]);
-          this.roleControl.setValue(this.defaultShareRole);
+          this.roleControl.setValue(this.defaultShareRole ?? null);
         }
         this.projectDoc.remoteChanges$
           .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
@@ -95,7 +97,7 @@ export class ShareControlComponent extends ShareBaseComponent {
     this.projectId$.next(id);
   }
 
-  get shareRole(): SFProjectRole {
+  get shareRole(): SFProjectRole | null {
     return this.roleControl.value;
   }
 
@@ -122,11 +124,12 @@ export class ShareControlComponent extends ShareBaseComponent {
         SFProjectDomain.UserInvites,
         Operation.Create
       ) &&
+      this.shareRole != null &&
       this.userShareableRoles.includes(this.shareRole)
     );
   }
 
-  private get defaultShareRole(): string | undefined {
+  private get defaultShareRole(): SFProjectRole | undefined {
     const roles = this.userShareableRoles;
     if (this.defaultRole != null && roles.some(role => role === this.defaultRole)) {
       return this.defaultRole;
@@ -138,32 +141,51 @@ export class ShareControlComponent extends ShareBaseComponent {
   }
 
   async onEmailInput(): Promise<void> {
-    if (this._projectId == null || this.email.invalid) {
+    if (this._projectId == null || this.email.invalid || this.email.value == null) {
       return;
     }
     this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this._projectId, this.email.value);
   }
 
   async sendEmail(form: FormGroupDirective): Promise<void> {
-    if (this._projectId == null || this.email.value === '' || this.email.value == null || !this.sendInviteForm.valid) {
+    if (
+      this._projectId == null ||
+      this.email.value === '' ||
+      this.email.value == null ||
+      this.localeControl.value == null ||
+      this.shareRole == null ||
+      !this.sendInviteForm.valid
+    ) {
       return;
     }
 
     this.isSubmitted = true;
-    const response = await this.projectService.onlineInvite(
-      this._projectId,
-      this.email.value,
-      this.localeControl.value,
-      this.shareRole
-    );
-    this.isSubmitted = false;
-    this.isAlreadyInvited = false;
     let message: string;
-    if (response === this.alreadyProjectMemberResponse) {
-      message = translate('share_control.not_inviting_already_member');
-    } else {
-      message = translate('share_control.invitation_sent', { email: this.sendInviteForm.value.email });
-      this.invited.emit();
+    try {
+      const response = await this.projectService.onlineInvite(
+        this._projectId,
+        this.email.value,
+        this.localeControl.value,
+        this.shareRole
+      );
+
+      this.isSubmitted = false;
+      this.isAlreadyInvited = false;
+
+      if (response === this.alreadyProjectMemberResponse) {
+        message = translate('share_control.not_inviting_already_member');
+      } else {
+        message = translate('share_control.invitation_sent', { email: this.sendInviteForm.value.email });
+        this.invited.emit();
+      }
+    } catch (err) {
+      if (err instanceof CommandError && err.message.includes(this.invalidEmailAddress)) {
+        this.isSubmitted = false;
+        this.isAlreadyInvited = false;
+        message = translate('share_control.not_inviting_email_invalid');
+      } else {
+        throw err;
+      }
     }
 
     this.noticeService.show(message);

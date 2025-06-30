@@ -17,9 +17,16 @@ $restoreActionColor: #5485e7;
 
 .mat-tree-node {
   --mat-tree-node-min-height: none;
+  flex-direction: column; // 'Show more' button and progress bar below description
+  align-items: flex-start;
+  gap: 0.1rem;
 
   &:hover {
     background-color: #eee;
+  }
+
+  &:not(.loading) {
+    animation: fadeIn 0.3s ease-in-out;
   }
 }
 
@@ -27,7 +34,6 @@ $restoreActionColor: #5485e7;
   display: flex;
   align-items: center;
   padding: 0;
-  height: 1.5rem;
   width: 100%;
   border: 0;
   background-color: transparent;
@@ -136,4 +142,40 @@ $restoreActionColor: #5485e7;
   width: auto;
   display: flex;
   align-items: center;
+}
+
+.insight-loading-text {
+  color: #777;
+  font-style: italic;
+}
+
+.insight-loading-spinner {
+  margin-left: 8px;
+  display: inline-block;
+}
+
+.show-more-button {
+  margin-inline-start: 3rem;
+  margin-bottom: 0.2rem;
+  min-width: 7rem;
+
+  &[disabled] {
+    background-color: #fff;
+    font-style: italic;
+  }
+
+  .progress-bar {
+    position: absolute;
+    bottom: -6px;
+    border-radius: 1rem;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

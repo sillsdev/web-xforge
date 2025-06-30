@@ -5,8 +5,15 @@
       <ng-container class="primary-actions">
         @if (showImportButton) {
           <button mat-button type="button" (click)="importDialog()" id="import-btn">
-            {{ t("import_questions") }}
+            <mat-icon>file_upload</mat-icon>
+            {{ t("import") }}
           </button>
+          @if (allQuestionsCount > 0) {
+            <button mat-button type="button" (click)="downloadQuestionsCsv()" id="export-btn">
+              <mat-icon>download</mat-icon>
+              {{ t("export") }}
+            </button>
+          }
         }
         @if (!isLoadingData) {
           <button
@@ -124,7 +131,7 @@
                                 >
                                   <mat-icon>edit</mat-icon>
                                 </button>
-                                v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
+                                v{{ questionReference(questionDoc.data?.verseRef) }} -&nbsp;
                                 @if (questionDoc.data?.audioUrl) {
                                   <mat-icon class="audio-icon material-icons-outlined">audio_file</mat-icon>
                                 }

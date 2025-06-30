@@ -10,6 +10,7 @@ import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -43,18 +44,19 @@ describe('LynxWorkspaceService', () => {
   const mockActivatedProjectService = mock<ActivatedProjectService>();
   const mockActivatedBookChapterService = mock<ActivatedBookChapterService>();
   const mockDestroyRef = mock<DestroyRef>();
+  const mockFeatureFlagService = mock<FeatureFlagService>();
   const mockWorkspace = mock<Workspace<Op>>();
   const mockDocumentManager = mock<DocumentManager<ScriptureDeltaDocument, Op, Delta>>();
   const mockTextDocReader = mock<TextDocReader>();
 
-  const projectDocTestSubject$ = new BehaviorSubject<SFProjectProfileDoc | undefined>(undefined);
-  const bookChapterTestSubject$ = new BehaviorSubject<RouteBookChapter | undefined>(undefined);
-  const localeTestSubject$ = new BehaviorSubject<Locale>(defaultLocale);
-  const diagnosticsChangedTestSubject$ = new Subject<DiagnosticsChanged>();
-
   class TestEnvironment {
     service!: LynxWorkspaceService;
     realtimeService!: TestRealtimeService;
+
+    readonly projectDocTestSubject$ = new BehaviorSubject<SFProjectProfileDoc | undefined>(undefined);
+    readonly bookChapterTestSubject$ = new BehaviorSubject<RouteBookChapter | undefined>(undefined);
+    readonly localeTestSubject$ = new BehaviorSubject<Locale>(defaultLocale);
+    readonly diagnosticsChangedTestSubject$ = new Subject<DiagnosticsChanged>();
 
     constructor(autoInit = true) {
       this.setupMocks();
@@ -65,13 +67,14 @@ describe('LynxWorkspaceService', () => {
     }
 
     setupMocks(): void {
+      when(mockFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
       when(mockI18nService.localeCode).thenReturn(defaultLocale.canonicalTag);
-      when(mockI18nService.locale$).thenReturn(localeTestSubject$);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(projectDocTestSubject$);
-      when(mockActivatedBookChapterService.activatedBookChapter$).thenReturn(bookChapterTestSubject$);
+      when(mockI18nService.locale$).thenReturn(this.localeTestSubject$);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(this.projectDocTestSubject$);
+      when(mockActivatedBookChapterService.activatedBookChapter$).thenReturn(this.bookChapterTestSubject$);
       when(mockDestroyRef.onDestroy(anything())).thenCall((callback: () => void) => callback());
 
-      when(mockWorkspace.diagnosticsChanged$).thenReturn(diagnosticsChangedTestSubject$);
+      when(mockWorkspace.diagnosticsChanged$).thenReturn(this.diagnosticsChangedTestSubject$);
       when(mockWorkspace.init()).thenReturn(Promise.resolve());
       when(mockWorkspace.changeLanguage(anything())).thenReturn(Promise.resolve());
       when(mockWorkspace.getOnTypeTriggerCharacters()).thenReturn(['.', ',']);
@@ -194,10 +197,11 @@ describe('LynxWorkspaceService', () => {
         message
       }));
 
-      diagnosticsChangedTestSubject$.next({
+      this.diagnosticsChangedTestSubject$.next({
         uri: textDocId.toString(),
         diagnostics
       });
+      tick(10); // 10ms debounce time
     }
 
     setupActiveTextDocId(): void {
@@ -220,18 +224,21 @@ describe('LynxWorkspaceService', () => {
     }
 
     triggerBookChapterChange(chapter: number): void {
-      bookChapterTestSubject$.next({
+      this.bookChapterTestSubject$.next({
         bookId: Canon.bookNumberToId(BOOK_NUM),
         chapter
       });
+      tick();
     }
 
     triggerProjectChange(id: string): void {
-      projectDocTestSubject$.next(this.createMockProjectDoc(id));
+      this.projectDocTestSubject$.next(this.createMockProjectDoc(id));
+      tick();
     }
 
     triggerLocaleChange(locale: Locale): void {
-      localeTestSubject$.next(locale);
+      this.localeTestSubject$.next(locale);
+      tick();
     }
 
     /**
@@ -263,6 +270,7 @@ describe('LynxWorkspaceService', () => {
     providers: [
       LynxWorkspaceService,
       { provide: SFProjectService, useMock: mockProjectService },
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },
@@ -290,7 +298,6 @@ describe('LynxWorkspaceService', () => {
         production: true
       };
       env.triggerLocaleChange(frenchLocale);
-      tick();
 
       verify(mockWorkspace.changeLanguage('fr')).once();
     }));
@@ -303,7 +310,6 @@ describe('LynxWorkspaceService', () => {
       resetCalls(mockDocumentManager);
 
       env.triggerProjectChange(PROJECT_ID);
-      tick();
 
       verify(mockDocumentManager.reset()).once();
     }));
@@ -314,7 +320,6 @@ describe('LynxWorkspaceService', () => {
       resetCalls(mockDocumentManager);
 
       env.triggerProjectChange(PROJECT_ID);
-      tick();
 
       verify(mockDocumentManager.reset()).never();
     }));
@@ -329,9 +334,108 @@ describe('LynxWorkspaceService', () => {
 
       env.service['projectId'] = 'different-id';
       env.triggerProjectChange('new-project');
-      tick();
 
       expect([...env.service.currentInsights.values()].flat().length).toBe(0);
+    }));
+  });
+
+  describe('Task running status', () => {
+    it('should emit false when no project is active', fakeAsync(() => {
+      const env = new TestEnvironment();
+      let taskRunning: boolean | undefined;
+
+      env.service.taskRunningStatus$.subscribe(status => {
+        taskRunning = status;
+      });
+      tick();
+
+      expect(taskRunning).toBe(false);
+    }));
+
+    it('should emit true when project is activated, then false after insights arrive', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const statusValues: boolean[] = [];
+
+      env.service.taskRunningStatus$.subscribe(status => {
+        statusValues.push(status);
+      });
+
+      // Initially should be false (no project)
+      tick();
+      expect(statusValues).toEqual([false]);
+
+      // When project is activated, should emit true (task running)
+      env.triggerProjectChange(PROJECT_ID);
+      expect(statusValues).toEqual([false, true]);
+
+      // When insights arrive, should emit false (task complete)
+      env.setupActiveTextDocId();
+      env.triggerDiagnostics(['Test insight']);
+      expect(statusValues).toEqual([false, true, false]);
+    }));
+
+    it('should restart loading cycle when different project is activated', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const statusValues: boolean[] = [];
+
+      env.service.taskRunningStatus$.subscribe(status => {
+        statusValues.push(status);
+      });
+
+      // Initial state and first project
+      tick();
+      env.triggerProjectChange(PROJECT_ID);
+      env.setupActiveTextDocId();
+      env.triggerDiagnostics(['Insight for project 1']);
+      expect(statusValues).toEqual([false, true, false]);
+
+      // Switch to different project - should restart loading cycle
+      const differentProjectId = 'project02';
+      env.triggerProjectChange(differentProjectId);
+      expect(statusValues).toEqual([false, true, false, true]);
+
+      // Complete loading for second project
+      env.service['projectId'] = differentProjectId;
+      env.service['textDocId'] = new TextDocId(differentProjectId, BOOK_NUM, CHAPTER_NUM);
+      env.triggerDiagnostics(['Insight for project 2']);
+      expect(statusValues).toEqual([false, true, false, true, false]);
+    }));
+
+    it('should handle empty insights correctly', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const statusValues: boolean[] = [];
+
+      env.service.taskRunningStatus$.subscribe(status => {
+        statusValues.push(status);
+      });
+
+      tick();
+      env.triggerProjectChange(PROJECT_ID);
+      expect(statusValues).toEqual([false, true]);
+
+      // Empty diagnostics should still complete the loading task
+      env.setupActiveTextDocId();
+      env.triggerDiagnostics([]); // Empty diagnostics
+      expect(statusValues).toEqual([false, true, false]);
+    }));
+
+    it('should use shareReplay to avoid multiple subscriptions triggering multiple emissions', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const statusValues1: boolean[] = [];
+      const statusValues2: boolean[] = [];
+
+      // Create multiple subscriptions
+      env.service.taskRunningStatus$.subscribe(status => statusValues1.push(status));
+      env.service.taskRunningStatus$.subscribe(status => statusValues2.push(status));
+
+      tick();
+      env.triggerProjectChange(PROJECT_ID);
+      env.setupActiveTextDocId();
+      env.triggerDiagnostics(['Test insight']);
+
+      // Both subscriptions should receive the same values
+      expect(statusValues1).toEqual([false, true, false]);
+      expect(statusValues2).toEqual([false, true, false]);
     }));
   });
 
@@ -343,7 +447,6 @@ describe('LynxWorkspaceService', () => {
       resetCalls(mockDocumentManager);
 
       env.triggerBookChapterChange(CHAPTER_NUM + 1);
-      tick();
 
       verify(mockDocumentManager.fireClosed(anything())).once();
     }));
@@ -356,7 +459,6 @@ describe('LynxWorkspaceService', () => {
       resetCalls(mockDocumentManager);
 
       env.triggerBookChapterChange(CHAPTER_NUM);
-      tick();
 
       verify(mockDocumentManager.fireOpened(anything(), anything())).once();
     }));
@@ -367,14 +469,12 @@ describe('LynxWorkspaceService', () => {
 
       // First activate chapter 1
       env.triggerBookChapterChange(CHAPTER_NUM);
-      tick();
 
       // Verify initial state
       const initialTextDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       expect(env.service['textDocId']?.toString()).toEqual(initialTextDocId.toString());
 
       env.triggerBookChapterChange(CHAPTER_NUM + 1);
-      tick();
 
       const expectedTextDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM + 1);
       expect(env.service['textDocId']?.toString()).toEqual(expectedTextDocId.toString());
@@ -388,7 +488,6 @@ describe('LynxWorkspaceService', () => {
       const { insights, subscription } = env.captureInsights();
 
       env.triggerDiagnostics(['Test message']);
-      tick();
 
       expect(insights.length).toBe(1);
       expect(insights[0].description).toBe('Test message');
@@ -405,19 +504,16 @@ describe('LynxWorkspaceService', () => {
 
       // Info severity
       env.triggerDiagnostics(['Info message'], DiagnosticSeverity.Information);
-      tick();
       expect(insights[0].type).toBe('info');
       expect(insights[0].description).toBe('Info message');
 
       // Warning severity
       env.triggerDiagnostics(['Warning message'], DiagnosticSeverity.Warning);
-      tick();
       expect(insights[0].type).toBe('warning');
       expect(insights[0].description).toBe('Warning message');
 
       // Error severity
       env.triggerDiagnostics(['Error message'], DiagnosticSeverity.Error);
-      tick();
       expect(insights[0].type).toBe('error');
       expect(insights[0].description).toBe('Error message');
 
@@ -430,11 +526,9 @@ describe('LynxWorkspaceService', () => {
       const { insights, subscription } = env.captureInsights();
 
       env.triggerDiagnostics(['Test message']);
-      tick();
       const firstId = insights[0].id;
 
       env.triggerDiagnostics(['Test message']);
-      tick();
 
       expect(insights[0].id).toBe(firstId);
       subscription.unsubscribe();
@@ -447,12 +541,10 @@ describe('LynxWorkspaceService', () => {
 
       // Add initial insights
       env.triggerDiagnostics(['Test message']);
-      tick();
       expect(insights.length).toBe(1);
 
       // Send empty diagnostics
       env.triggerDiagnostics([]);
-      tick();
 
       expect(insights.length).toBe(0);
       subscription.unsubscribe();

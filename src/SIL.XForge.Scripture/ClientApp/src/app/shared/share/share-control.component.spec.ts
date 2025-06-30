@@ -8,7 +8,8 @@ import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/ch
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -113,6 +114,17 @@ describe('ShareControlComponent', () => {
     verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
 
     expect(capture(mockedNoticeService.show).last()[0]).toContain('is already');
+  }));
+
+  it('Invalid email address message shown if invitee has an invalid email address', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setTextFieldValue(env.emailTextField, 'invalid-email-address@example.com');
+    env.setInvitationLanguage('en');
+    env.click(env.sendButton);
+    verify(mockedNoticeService.show(anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
+
+    expect(capture(mockedNoticeService.show).last()[0]).toContain('Invalid email');
   }));
 
   it('Does not crash inviting blank email address if click Send twice', fakeAsync(() => {
@@ -333,6 +345,9 @@ class TestEnvironment {
     when(
       mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com', anything(), anything())
     ).thenResolve(this.component.alreadyProjectMemberResponse);
+    when(
+      mockedProjectService.onlineInvite(anything(), 'invalid-email-address@example.com', anything(), anything())
+    ).thenReject(new CommandError(CommandErrorCode.NotFound, this.component.invalidEmailAddress));
     when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'unknown-address@example.com')).thenResolve(false);
     when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'already@example.com')).thenResolve(true);
 
@@ -408,7 +423,7 @@ class TestEnvironment {
     const projectDoc: SFProjectProfileDoc = this.realtimeService.get(
       SFProjectProfileDoc.COLLECTION,
       'project01',
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     return projectDoc.submitJson0Op(op => op.set(p => p.checkingConfig, config));
   }

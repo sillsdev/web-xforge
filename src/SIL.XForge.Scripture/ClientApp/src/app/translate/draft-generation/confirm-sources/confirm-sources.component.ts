@@ -6,6 +6,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
+import { projectLabel } from '../../../shared/utils';
 import {
   DraftSourcesAsSelectableProjectArrays,
   draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays,
@@ -31,13 +32,17 @@ export class ConfirmSourcesComponent {
     private readonly i18nService: I18nService,
     private readonly activatedProject: ActivatedProjectService
   ) {
-    this.activatedProject.projectDoc$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
+    this.activatedProject.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
       if (projectDoc?.data != null) {
         this.draftSources = draftSourcesAsTranslateSourceArraysToDraftSourcesAsSelectableProjectArrays(
           projectToDraftSources(projectDoc?.data)
         );
       }
     });
+  }
+
+  projectLabel(project: SelectableProjectWithLanguageCode): string {
+    return projectLabel(project);
   }
 
   get trainingSources(): SelectableProjectWithLanguageCode[] {

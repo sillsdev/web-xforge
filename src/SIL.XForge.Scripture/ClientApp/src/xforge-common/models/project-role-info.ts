@@ -1,6 +1,8 @@
-export const NONE_ROLE: ProjectRoleInfo = { role: 'none', canBeShared: false };
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+
+export const NONE_ROLE: ProjectRoleInfo = { role: SFProjectRole.None, canBeShared: false };
 
 export interface ProjectRoleInfo {
-  role: string;
+  role: SFProjectRole;
   canBeShared: boolean;
 }

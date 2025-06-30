@@ -1,0 +1,84 @@
+<ng-container *transloco="let t; read: 'draft_history_entry'">
+  @if (entry != null) {
+    <mat-expansion-panel
+      [disabled]="isLatestBuild || !hasDetails"
+      [expanded]="isLatestBuild"
+      [hideToggle]="isLatestBuild || !hasDetails"
+    >
+      <mat-expansion-panel-header [collapsedHeight]="'auto'" [expandedHeight]="'auto'">
+        <mat-panel-title>
+          <span class="title">{{ scriptureRange }}</span>
+          <span class="subtitle">{{ formatDate(entry.additionalInfo?.dateFinished) }}</span>
+        </mat-panel-title>
+        <mat-panel-description>
+          <span class="status" [ngClass]="getStatus(entry.state).color">
+            <mat-icon class="status-icon">{{ getStatus(entry.state).icons }}</mat-icon>
+            {{ t(getStatus(entry.state).text) }}
+          </span>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <div class="draft-entry-body">
+        @if (canDownloadBuild) {
+          <p>{{ t("click_book_to_preview") }}</p>
+          <p class="book-buttons">
+            <app-draft-preview-books [build]="entry" />
+          </p>
+          <div class="draft-options">
+            <app-draft-download-button [build]="entry" [flat]="true" />
+            @if (featureFlags.usfmFormat.enabled && isLatestBuild) {
+              <button mat-button class="format-usfm" [routerLink]="['format']">
+                <mat-icon>settings</mat-icon>
+                {{ t("format_draft") }}
+              </button>
+            }
+          </div>
+        }
+        @if (hasTrainingConfiguration) {
+          @if (canDownloadBuild) {
+            <p>
+              <a
+                href="javascript:;"
+                (click)="trainingConfigurationOpen = !trainingConfigurationOpen"
+                class="training-configuration-link"
+              >
+                <mat-icon>expand_{{ trainingConfigurationOpen ? "less" : "more" }}</mat-icon>
+                {{
+                  t(
+                    trainingConfigurationOpen
+                      ? "hide_model_training_configuration"
+                      : "show_model_training_configuration"
+                  )
+                }}
+              </a>
+            </p>
+          }
+          @if (trainingConfigurationOpen) {
+            <p>
+              <strong>{{ t("training_model_description") }}</strong>
+            </p>
+            <table mat-table [dataSource]="trainingConfiguration">
+              <ng-container matColumnDef="scriptureRange">
+                <th mat-header-cell *matHeaderCellDef>{{ t("training_books") }}</th>
+                <td mat-cell *matCellDef="let element">{{ element.scriptureRange }}</td>
+              </ng-container>
+              <ng-container matColumnDef="source">
+                <th mat-header-cell *matHeaderCellDef>
+                  {{ i18n.getLanguageDisplayName(sourceLanguage) }}
+                </th>
+                <td mat-cell *matCellDef="let element">{{ element.source }}</td>
+              </ng-container>
+              <ng-container matColumnDef="target">
+                <th mat-header-cell *matHeaderCellDef>
+                  {{ i18n.getLanguageDisplayName(targetLanguage) }}
+                </th>
+                <td mat-cell *matCellDef="let element">{{ element.target }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+              <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
+            </table>
+          }
+        }
+      </div>
+    </mat-expansion-panel>
+  }
+</ng-container>

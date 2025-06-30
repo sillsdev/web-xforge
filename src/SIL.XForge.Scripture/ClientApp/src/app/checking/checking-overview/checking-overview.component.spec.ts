@@ -6,6 +6,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { ngfModule } from 'angular-file';
+import { saveAs } from 'file-saver';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -24,10 +25,11 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { of } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
@@ -316,6 +318,16 @@ describe('CheckingOverviewComponent', () => {
     }));
   });
 
+  describe('Export Questions', () => {
+    it('should export questions to CSV', fakeAsync(() => {
+      spyOn(saveAs, 'saveAs').and.stub();
+      const env = new TestEnvironment();
+      env.waitForQuestions();
+      env.clickElement(env.exportButton);
+      expect(saveAs).toHaveBeenCalled();
+    }));
+  });
+
   describe('for Reviewer', () => {
     it('should display "No question" message', fakeAsync(() => {
       const env = new TestEnvironment(false);
@@ -410,7 +422,7 @@ describe('CheckingOverviewComponent', () => {
       const questionDoc: QuestionDoc = env.realtimeService.get(
         QuestionDoc.COLLECTION,
         getQuestionDocId('project01', 'q7Id'),
-        FETCH_WITHOUT_SUBSCRIBE
+        UNKNOWN_COMPONENT_OR_SERVICE
       );
       await questionDoc.submitJson0Op(op => {
         op.set(d => d.isArchived, false);
@@ -607,6 +619,51 @@ describe('CheckingOverviewComponent', () => {
     });
     env.waitForQuestions();
     expect(env.component.questionCount(41, 1)).toEqual(0);
+  }));
+
+  it('should display question reference range if present', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUser(env.adminUser);
+
+    const verseRefWithRange: VerseRefData = {
+      bookNum: 40,
+      chapterNum: 1,
+      verse: '1-2',
+      verseNum: 1
+    };
+
+    env.addQuestion({
+      dataId: 'qWithVerseRange',
+      projectRef: 'project01',
+      ownerRef: env.adminUser.id,
+      text: 'Question with verse range text',
+      verseRef: verseRefWithRange,
+      answers: [],
+      isArchived: false,
+      dateCreated: '',
+      dateModified: ''
+    });
+
+    env.waitForQuestions();
+
+    env.clickExpanderAtRow(0);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    env.clickExpanderAtRow(1);
+    env.fixture.detectChanges();
+
+    let foundReference: string | undefined;
+    for (const chapterRow of env.textRows) {
+      const question = chapterRow.query(By.css('div.flex'));
+      if (question && question.nativeElement.textContent.includes('Question with verse range text')) {
+        foundReference = question?.nativeElement.textContent.trim();
+        break;
+      }
+    }
+
+    expect(foundReference).toContain('v1-2');
+    discardPeriodicTasks();
   }));
 });
 
@@ -936,7 +993,7 @@ class TestEnvironment {
         const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
           SFProjectProfileDoc.COLLECTION,
           projectId,
-          FETCH_WITHOUT_SUBSCRIBE
+          UNKNOWN_COMPONENT_OR_SERVICE
         );
         const textIndex: number = projectDoc.data!.texts.findIndex(t => t.bookNum === book);
         const chapterIndex: number = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
@@ -979,6 +1036,10 @@ class TestEnvironment {
 
   get importButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#import-btn'));
+  }
+
+  get exportButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#export-btn'));
   }
 
   get loadingQuestionsLabel(): DebugElement {
@@ -1106,7 +1167,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       'project01',
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
@@ -1120,7 +1181,7 @@ class TestEnvironment {
       const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
         SFProjectProfileDoc.COLLECTION,
         'project01',
-        FETCH_WITHOUT_SUBSCRIBE
+        UNKNOWN_COMPONENT_OR_SERVICE
       );
       projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
     });
@@ -1184,7 +1245,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       'project01',
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     const index: number = projectDoc.data!.texts.length - 1;
     projectDoc.submitJson0Op(op => op.insert(p => p.texts, index, text), false);

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef } from '@angular/core';
+import { Component, DestroyRef, Input } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -12,7 +12,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { DocSubscription, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { DocSubscription, UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -20,6 +20,8 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
+import { BuildDto } from '../../../machine-api/build-dto';
+import { booksFromScriptureRange } from '../../../shared/utils';
 import {
   DraftApplyDialogComponent,
   DraftApplyDialogConfig as DraftApplyDialogData,
@@ -46,6 +48,8 @@ export interface BookWithDraft {
   imports: [CommonModule, UICommonModule, RouterModule, TranslocoModule]
 })
 export class DraftPreviewBooksComponent {
+  @Input() build: BuildDto | undefined;
+
   booksWithDrafts$: Observable<BookWithDraft[]> = this.activatedProjectService.changes$.pipe(
     filterNullish(),
     tap(p => (this.projectParatextId = p.data?.paratextId)),
@@ -53,15 +57,34 @@ export class DraftPreviewBooksComponent {
       if (projectDoc?.data == null) {
         return [];
       }
-      const draftBooks = projectDoc.data.texts
-        .map(text => ({
-          bookNumber: text.bookNum,
-          canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
-          chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
-          draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
-        }))
-        .sort((a, b) => a.bookNumber - b.bookNumber)
-        .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
+      let draftBooks: BookWithDraft[];
+      if (this.build == null) {
+        draftBooks = projectDoc.data.texts
+          .map(text => ({
+            bookNumber: text.bookNum,
+            canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
+            chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
+            draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
+          }))
+          .sort((a, b) => a.bookNumber - b.bookNumber)
+          .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
+      } else {
+        // TODO: Support books from multiple translation projects
+        draftBooks = this.build.additionalInfo?.translationScriptureRanges
+          .flatMap(range => booksFromScriptureRange(range.scriptureRange))
+          .map(bookNum => {
+            const text: TextInfo | undefined = projectDoc.data?.texts.find(t => t.bookNum === bookNum);
+            return {
+              bookNumber: bookNum,
+              canEdit: text?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write,
+              chaptersWithDrafts: text?.chapters?.map(ch => ch.number) ?? [],
+              draftApplied: text?.chapters?.filter(ch => ch.hasDraft).every(ch => ch.draftApplied) ?? false
+            };
+          })
+          // Do not filter chapters with drafts, as the book or chapters may have been removed.
+          // We still want to display these books to the user, but disabled so they cannot interact with them.
+          .sort((a, b) => a.bookNumber - b.bookNumber) as BookWithDraft[];
+      }
       return draftBooks;
     })
   );
@@ -140,7 +163,7 @@ export class DraftPreviewBooksComponent {
       await this.projectService.onlineAddChapters(result.projectId, bookWithDraft.bookNumber, missingChapters);
       for (const chapter of missingChapters) {
         const textDocId = new TextDocId(result.projectId, bookWithDraft.bookNumber, chapter);
-        await this.textDocService.createTextDoc(textDocId, FETCH_WITHOUT_SUBSCRIBE);
+        await this.textDocService.createTextDoc(textDocId, UNKNOWN_COMPONENT_OR_SERVICE);
       }
     }
     await this.applyBookDraftAsync(bookWithDraft, result.projectId);
@@ -180,7 +203,7 @@ export class DraftPreviewBooksComponent {
 
   navigate(book: BookWithDraft): void {
     this.router.navigate(this.linkForBookAndChapter(book.bookNumber, book.chaptersWithDrafts[0]), {
-      queryParams: { 'draft-active': true }
+      queryParams: { 'draft-active': true, 'draft-timestamp': this.build?.additionalInfo?.dateGenerated }
     });
   }
 
@@ -196,8 +219,12 @@ export class DraftPreviewBooksComponent {
     draftTextDocId: TextDocId,
     targetTextDocId: TextDocId
   ): Promise<boolean> {
+    let timestamp: Date | undefined = undefined;
+    if (this.build?.additionalInfo?.dateGenerated != null) {
+      timestamp = new Date(this.build.additionalInfo.dateGenerated);
+    }
     return await this.draftHandlingService
-      .getAndApplyDraftAsync(project, draftTextDocId, targetTextDocId)
+      .getAndApplyDraftAsync(project, draftTextDocId, targetTextDocId, timestamp)
       .then(result => {
         this.updateProgress(result ? targetTextDocId.chapterNum : undefined);
         return result;

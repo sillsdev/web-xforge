@@ -10,6 +10,7 @@ import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -234,8 +235,8 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedProjectService.roles).thenReturn(
       new Map<string, ProjectRoleInfo>([
-        ['pt_administrator', { role: 'pt_administrator', canBeShared: false }],
-        ['pt_translator', { role: 'pt_translator', canBeShared: false }],
+        ['pt_administrator', { role: SFProjectRole.ParatextAdministrator, canBeShared: false }],
+        ['pt_translator', { role: SFProjectRole.ParatextTranslator, canBeShared: false }],
         [NONE_ROLE.role, NONE_ROLE]
       ])
     );

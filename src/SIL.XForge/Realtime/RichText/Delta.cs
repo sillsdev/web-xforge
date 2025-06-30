@@ -30,13 +30,13 @@ public class Delta
     /// </summary>
     public Delta() => Ops = [];
 
-    public Delta(IEnumerable<JToken> ops) => Ops = ops.ToList();
+    public Delta(IEnumerable<JToken> ops) => Ops = [.. ops];
 
-    public Delta(Delta delta) => Ops = delta.Ops.Select(op => op.DeepClone()).ToList();
+    public Delta(Delta delta) => Ops = [.. delta.Ops.Select(op => op.DeepClone())];
 
     public List<JToken> Ops { get; set; }
 
-    public Delta Insert(object text, object attributes = null)
+    public Delta Insert(object text, object? attributes = null)
     {
         if (text is not JToken textToken)
             textToken = JToken.FromObject(text);

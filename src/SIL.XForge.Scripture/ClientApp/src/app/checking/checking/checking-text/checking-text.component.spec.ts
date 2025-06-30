@@ -8,7 +8,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import * as RichText from 'rich-text';
 import { anything, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -209,7 +209,7 @@ class TestEnvironment {
       })
     });
     when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockedSFProjectService.subscribeProfile('project01', anything())).thenCall((id, subscription) =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription)

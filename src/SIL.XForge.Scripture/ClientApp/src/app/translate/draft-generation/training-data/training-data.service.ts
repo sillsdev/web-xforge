@@ -2,7 +2,7 @@ import { DestroyRef, Injectable } from '@angular/core';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -20,7 +20,7 @@ export class TrainingDataService {
       TrainingDataDoc.COLLECTION,
       docId,
       trainingData,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
   }
 
@@ -30,7 +30,7 @@ export class TrainingDataService {
     const trainingDataDoc = this.realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
       docId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     if (!trainingDataDoc.isLoaded) return;
 

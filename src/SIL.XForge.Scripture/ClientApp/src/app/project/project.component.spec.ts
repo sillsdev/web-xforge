@@ -16,7 +16,7 @@ import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scripturefo
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -277,7 +277,7 @@ class TestEnvironment {
 
   addUserToProject(projectIdSuffix: number): void {
     this.setProjectData({ memberProjectIdSuffixes: [projectIdSuffix] });
-    const userDoc: UserDoc = this.realtimeService.get(UserDoc.COLLECTION, 'user01', FETCH_WITHOUT_SUBSCRIBE);
+    const userDoc: UserDoc = this.realtimeService.get(UserDoc.COLLECTION, 'user01', UNKNOWN_COMPONENT_OR_SERVICE);
     userDoc.submitJson0Op(op => op.set(u => u.sites, { sf: { projects: [`project${projectIdSuffix}`] } }), false);
     tick();
   }

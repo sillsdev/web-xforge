@@ -1,0 +1,97 @@
+@use 'src/breakpoints';
+@use 'src/variables';
+
+:host {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.format-container {
+  display: flex;
+  flex-direction: row;
+  column-gap: 8px;
+  height: 90%;
+  margin-top: 8px;
+
+  @include breakpoints.media-breakpoint-down(sm) {
+    flex-direction: column;
+    row-gap: 8px;
+  }
+
+  .format-options {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+  }
+}
+
+.options {
+  padding: 8px 0;
+  row-gap: 8px;
+
+  span {
+    display: block;
+  }
+
+  .description {
+    color: var(--sf-draft-usfm-format-description);
+    font-size: smaller;
+  }
+}
+
+.initializing {
+  display: none;
+}
+
+.loading {
+  opacity: 0.5;
+}
+
+.text-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  @include breakpoints.media-breakpoint-down(sm) {
+    height: 600px;
+    overflow: initial;
+  }
+
+  .viewer-container {
+    overflow-y: auto;
+  }
+}
+
+mat-card-actions {
+  justify-content: space-between;
+}
+
+form {
+  width: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @include breakpoints.media-breakpoint-down(sm) {
+    width: 100%;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.new {
+  background-color: green;
+  color: white;
+  display: inline-block !important;
+  border-radius: 50px;
+  padding-inline: 6px;
+}

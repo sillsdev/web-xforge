@@ -13,10 +13,11 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
-import { DocSubscriberInfo, FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { DocSubscriberInfo, UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
@@ -83,7 +84,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   /** Returns the project profile with the project data that all project members can access. */
   getProfile(id: string): Promise<SFProjectProfileDoc> {
-    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE);
   }
 
   subscribeProfile(id: string, subscriber: DocSubscriberInfo): Promise<SFProjectProfileDoc> {
@@ -312,6 +313,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return await this.onlineInvoke<void>('setServalConfig', {
       projectId,
       servalConfig
+    });
+  }
+
+  async onlineSetUsfmConfig(projectId: string, config: DraftUsfmConfig): Promise<void> {
+    return await this.onlineInvoke<void>('setUsfmConfig', {
+      projectId,
+      config
     });
   }
 

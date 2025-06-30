@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using EdjCase.JsonRpc.Common;
 using EdjCase.JsonRpc.Router.Defaults;
 using Hangfire;
 using Hangfire.Common;
@@ -317,6 +318,21 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task Invite_InvalidEmail()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = SFProjectService.InvalidEmailAddress;
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+            .Throws(new InvalidOperationException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.Invite(Project01, Email, Locale, Role);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual((int)RpcErrorCode.InvalidParams, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
     public async Task Invite_NotFound()
     {
         var env = new TestEnvironment();
@@ -501,8 +517,8 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Controller.LinkSharingKey(Project01, Role01, ShareLinkType.Recipient, DaysBeforeExpiration)
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.LinkSharingKey(Project01, Role01, ShareLinkType.Recipient, DaysBeforeExpiration)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
@@ -637,8 +653,8 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied, lastVerse)
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied, lastVerse)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
@@ -810,6 +826,55 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task SetUsfmConfig_Success()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetUsfmConfigAsync(User01, Project01, Arg.Any<DraftUsfmConfig>())
+            .Returns(Task.FromResult(true));
+        // SUT
+        var result = await env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig());
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+    }
+
+    [Test]
+    public async Task SetUsfmConfig_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetUsfmConfigAsync(User01, Project01, Arg.Any<DraftUsfmConfig>())
+            .Throws(new ForbiddenException());
+        // SUT
+        var result = await env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig());
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetUsfmConfig_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SetUsfmConfigAsync(User01, Project01, Arg.Any<DraftUsfmConfig>())
+            .Throws(new DataNotFoundException(errorMessage));
+        // SUT
+
+        var result = await env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig());
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void SetUsfmConfig_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetUsfmConfigAsync(User01, Project01, Arg.Any<DraftUsfmConfig>())
+            .Throws(new ArgumentNullException());
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig()));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task SetRoleProjectPermissions_Forbidden()
     {
         var env = new TestEnvironment();
@@ -856,8 +921,8 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Controller.SetRoleProjectPermissions(Project01, Role01, Permissions)
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetRoleProjectPermissions(Project01, Role01, Permissions)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
@@ -909,8 +974,8 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Controller.SetUserProjectPermissions(Project01, User02, Permissions)
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetUserProjectPermissions(Project01, User02, Permissions)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }

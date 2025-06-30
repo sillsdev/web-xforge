@@ -434,6 +434,7 @@
     "link_copied": "Tautan telah disalin ke Papan-klip",
     "link_sharing": "Tautan juga dapat dibagikan kepada pengguna tanpa alamat email melalui platform media sosial.",
     "not_inviting_already_member": "Tidak mengundang: Pengguna sudah menjadi anggota proyek ini",
+    "not_inviting_email_invalid": "Not inviting: Invalid email address",
     "resend": "Kirim ulang",
     "send_a_link": "Kirim tautan",
     "select_invitation_language": "Pilih bahasa untuk surel undangan",

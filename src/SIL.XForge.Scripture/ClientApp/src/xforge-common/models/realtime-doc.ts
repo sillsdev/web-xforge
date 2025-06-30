@@ -29,7 +29,7 @@ export interface RealtimeDocConstructor {
  *
  * In principle a realtime doc can be disposed once every subscriber has unsubscribed. However, some methods only need
  * a copy of a document at a point in time (e.g. checking permissions) and don't need to be notified of changes. Those
- * methods can provide a {@link FETCH_WITHOUT_SUBSCRIBE} symbol as the subscriber to indicate that they don't need to be
+ * methods can provide a {@link UNKNOWN_COMPONENT_OR_SERVICE} symbol as the subscriber to indicate that they don't need to be
  * notified of changes, and the document is fetched and returned without subscribing to changes. Disposing such
  * documents when they have no subscribers would result in them being repeatedly fetched and disposed, which would be a
  * serious performance issue.
@@ -62,9 +62,9 @@ export class DocSubscription {
 /**
  * An alternative to a {@link DocSubscription} indicating that the document should be fetched and returned without being
  * subscribed to. */
-export const FETCH_WITHOUT_SUBSCRIBE = Symbol('FETCH_WITHOUT_SUBSCRIBE');
+export const UNKNOWN_COMPONENT_OR_SERVICE = Symbol('UNKNOWN_COMPONENT_OR_SERVICE');
 
-export type DocSubscriberInfo = DocSubscription | typeof FETCH_WITHOUT_SUBSCRIBE;
+export type DocSubscriberInfo = DocSubscription | typeof UNKNOWN_COMPONENT_OR_SERVICE;
 
 /**
  * This is the base class for all real-time data models. This class manages the interaction between offline storage of

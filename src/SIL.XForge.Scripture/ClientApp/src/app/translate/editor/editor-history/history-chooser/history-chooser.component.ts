@@ -87,8 +87,12 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   get canRestoreSnapshot(): boolean {
     return (
       this.selectedSnapshot?.data.ops != null &&
-      this.textDocService.canEdit(this.projectDoc?.data, this.bookNum, this.chapter)
+      this.textDocService.canRestore(this.projectDoc?.data, this.bookNum, this.chapter)
     );
+  }
+
+  get isSnapshotValid(): boolean {
+    return this.selectedSnapshot?.data.ops != null && this.selectedSnapshot.isValid;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -178,10 +182,10 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       // Revert to the snapshot
       const delta: Delta = new Delta(this.selectedSnapshot.data.ops);
       const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
-      if (
-        this.projectDoc.data?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
-          ?.isValid !== this.selectedSnapshot.isValid
-      ) {
+      const isCurrentValid = this.projectDoc.data?.texts
+        .find(t => t.bookNum === this.bookNum)
+        ?.chapters.find(c => c.number === this.chapter)?.isValid;
+      if (isCurrentValid !== this.selectedSnapshot.isValid) {
         await this.projectService.onlineSetIsValid(
           textDocId.projectId,
           textDocId.bookNum,

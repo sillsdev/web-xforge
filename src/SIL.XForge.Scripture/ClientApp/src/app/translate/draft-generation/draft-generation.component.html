@@ -7,17 +7,7 @@
         {{ t("generate_forward_translation_drafts_header") }}
       </h1>
     }
-    @if (showImprovedDraftGenerationNotice) {
-      <app-notice type="primary" mode="fill-dark" icon="bolt" data-test-id="improved-draft-generation-notice">
-        @for (portion of improvedDraftGenerationNotice | async; track $index) {
-          @if (portion.id === 1) {
-            <a href="mailto:{{ issueEmail }}" target="_blank" rel="noreferrer">{{ portion.text }}</a>
-          } @else if (portion.id == null) {
-            {{ portion.text }}
-          }
-        }
-      </app-notice>
-    }
+
     <section>
       @if (isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
         <div class="drafting-instructions">
@@ -211,99 +201,128 @@
           }
           @if (isPreviewSupported) {
             @if (draftJob != null) {
-              @if (isDraftQueued(draftJob)) {
-                <section>
-                  @if (isSyncing()) {
-                    <h3>{{ t("draft_syncing") }}</h3>
-                    <p>{{ t("draft_syncing_detail") }}</p>
-                  } @else {
-                    <h3>{{ t("draft_queued_header") }}</h3>
-                    @if (!hasDraftQueueDepth(draftJob)) {
-                      <p>{{ t("draft_queued_detail") }}</p>
-                    } @else {
-                      <p>
-                        {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
-                      </p>
-                    }
-                  }
-                  <app-working-animated-indicator></app-working-animated-indicator>
-                  <div class="button-strip">
-                    @if (canCancel(draftJob)) {
-                      <button mat-flat-button color="primary" (click)="cancel()">
-                        <mat-icon>close</mat-icon>
-                        {{ t("cancel_generation_button") }}
-                      </button>
-                    }
-                  </div>
-                </section>
-              } @else if (isDraftActive(draftJob)) {
-                <section class="progress-active">
-                  <h3>{{ t("draft_active_header") }}</h3>
-                  <div class="progress-text">
-                    <p>{{ t("draft_active_detail", { count: draftDurationHours | l10nNumber }) }}</p>
-                  </div>
-                  <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
-                  <div class="button-strip">
-                    @if (canCancel(draftJob)) {
-                      <button mat-flat-button color="primary" (click)="cancel()">
-                        <mat-icon>close</mat-icon>
-                        {{ t("cancel_generation_button") }}
-                      </button>
-                    }
-                  </div>
-                </section>
-              } @else if (isDraftFinishing(draftJob)) {
-                <section>
-                  <h3>{{ t("draft_finishing_header") }}</h3>
-                  <div class="progress-text">
-                    <p>{{ t("draft_finishing_detail") }}</p>
-                  </div>
-                  <app-working-animated-indicator></app-working-animated-indicator>
-                </section>
-              }
-              @if (isDraftComplete(draftJob) || hasAnyCompletedBuild) {
-                <section class="draft-complete">
-                  <mat-card class="preview-card">
-                    <mat-card-header>
-                      <mat-card-title>
-                        {{ isDraftComplete(draftJob) ? t("draft_is_ready") : t("preview_last_draft_header") }}
-                      </mat-card-title>
-                    </mat-card-header>
-                    <mat-card-content>
-                      @if (isDraftFaulted(draftJob)) {
-                        <p>{{ t("preview_last_draft_detail") }}</p>
-                      }
-                      <p>{{ t("click_book_to_preview") }}</p>
-                      <app-draft-preview-books></app-draft-preview-books>
-                    </mat-card-content>
-                    <mat-card-actions>
-                      @if (hasDraftBooksAvailable) {
-                        <button
-                          mat-button
-                          type="button"
-                          (click)="downloadDraft()"
-                          [disabled]="downloadProgress > 0"
-                          data-test-id="download-button"
-                        >
-                          @if (downloadProgress === 0) {
-                            <mat-icon class="material-icons-outlined">cloud_download</mat-icon>
-                          } @else if (downloadProgress > 0) {
-                            <mat-icon>
-                              <mat-spinner
-                                diameter="18"
-                                [value]="downloadProgress"
-                                mode="determinate"
-                                color="accent"
-                                data-test-id="download-spinner"
-                              ></mat-spinner>
-                            </mat-icon>
+              @if (isDraftInProgress(draftJob) && featureFlags.newDraftHistory.enabled) {
+                <mat-expansion-panel [expanded]="true" [hideToggle]="true" [disabled]="true">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      @if (isDraftQueued(draftJob)) {
+                        @if (isSyncing()) {
+                          <span class="title">{{ t("draft_syncing") }}</span>
+                        } @else {
+                          <span class="title">{{ t("draft_queued_header") }}</span>
+                          @if (hasDraftQueueDepth(draftJob)) {
+                            <span class="subtitle">{{
+                              t("draft_queued_multiple", { count: draftJob.queueDepth })
+                            }}</span>
                           }
-                          <span>{{ t("download_draft") }}</span>
+                        }
+                      } @else if (isDraftActive(draftJob)) {
+                        <span class="title">{{ t("draft_active_header") }}</span>
+                        <span class="subtitle">{{
+                          t("draft_percent_complete", { percent: draftJob.percentCompleted | l10nPercent })
+                        }}</span>
+                      } @else if (isDraftFinishing(draftJob)) {
+                        <span class="title"> {{ t("draft_finishing_header") }}</span>
+                      }
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      {{ getTranslationScriptureRange(draftJob) }}
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <div class="progress-wrapper">
+                    <mat-progress-bar
+                      [mode]="
+                        draftJob.percentCompleted === 0 && !isDraftActive(draftJob) ? 'indeterminate' : 'determinate'
+                      "
+                      [value]="draftJob.percentCompleted * 100"
+                    />
+                    @if (canCancel(draftJob)) {
+                      <button mat-flat-button color="primary" (click)="cancel()">
+                        {{ t("cancel_generation_button") }}
+                      </button>
+                    }
+                  </div>
+                </mat-expansion-panel>
+              } @else if (!featureFlags.newDraftHistory.enabled) {
+                @if (isDraftQueued(draftJob)) {
+                  <section>
+                    @if (isSyncing()) {
+                      <h3>{{ t("draft_syncing") }}</h3>
+                      <p>{{ t("draft_syncing_detail") }}</p>
+                    } @else {
+                      <h3>{{ t("draft_queued_header") }}</h3>
+                      @if (!hasDraftQueueDepth(draftJob)) {
+                        <p>{{ t("draft_queued_detail") }}</p>
+                      } @else {
+                        <p>
+                          {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
+                        </p>
+                      }
+                    }
+                    <app-working-animated-indicator></app-working-animated-indicator>
+                    <div class="button-strip">
+                      @if (canCancel(draftJob)) {
+                        <button mat-flat-button color="primary" (click)="cancel()">
+                          <mat-icon>close</mat-icon>
+                          {{ t("cancel_generation_button") }}
                         </button>
                       }
-                    </mat-card-actions>
-                  </mat-card>
-                </section>
+                    </div>
+                  </section>
+                } @else if (isDraftActive(draftJob)) {
+                  <section class="progress-active">
+                    <h3>{{ t("draft_active_header") }}</h3>
+                    <div class="progress-text">
+                      <p>{{ t("draft_active_detail", { count: draftDurationHours | l10nNumber }) }}</p>
+                    </div>
+                    <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
+                    <div class="button-strip">
+                      @if (canCancel(draftJob)) {
+                        <button mat-flat-button color="primary" (click)="cancel()">
+                          <mat-icon>close</mat-icon>
+                          {{ t("cancel_generation_button") }}
+                        </button>
+                      }
+                    </div>
+                  </section>
+                } @else if (isDraftFinishing(draftJob)) {
+                  <section>
+                    <h3>{{ t("draft_finishing_header") }}</h3>
+                    <div class="progress-text">
+                      <p>{{ t("draft_finishing_detail") }}</p>
+                    </div>
+                    <app-working-animated-indicator></app-working-animated-indicator>
+                  </section>
+                }
+                @if (isDraftComplete(draftJob) || hasAnyCompletedBuild) {
+                  <section class="draft-complete">
+                    <mat-card class="preview-card">
+                      <mat-card-header>
+                        <mat-card-title>
+                          {{ isDraftComplete(draftJob) ? t("draft_is_ready") : t("preview_last_draft_header") }}
+                        </mat-card-title>
+                      </mat-card-header>
+                      <mat-card-content>
+                        @if (isDraftFaulted(draftJob)) {
+                          <p>{{ t("preview_last_draft_detail") }}</p>
+                        }
+                        <p>{{ t("click_book_to_preview") }}</p>
+                        <app-draft-preview-books></app-draft-preview-books>
+                      </mat-card-content>
+                      <mat-card-actions>
+                        @if (hasDraftBooksAvailable) {
+                          <app-draft-download-button [build]="lastCompletedBuild" />
+                          @if (featureFlags.usfmFormat.enabled) {
+                            <button mat-button [routerLink]="['format']">
+                              <mat-icon>settings</mat-icon>
+                              {{ t("format_draft") }}
+                            </button>
+                          }
+                        }
+                      </mat-card-actions>
+                    </mat-card>
+                  </section>
+                }
               }
             }
           }
@@ -353,6 +372,13 @@
         }
       }
     </section>
+
+    @if (isOnline && featureFlags.newDraftHistory.enabled) {
+      <app-draft-history-list />
+      @if (isServalAdmin()) {
+        <h2>Further information</h2>
+      }
+    }
 
     @if (canShowAdditionalInfo(draftJob)) {
       <section>

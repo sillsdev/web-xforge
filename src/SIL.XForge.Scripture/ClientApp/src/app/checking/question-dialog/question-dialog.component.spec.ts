@@ -24,7 +24,7 @@ import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -605,7 +605,11 @@ class TestEnvironment {
         id: questionId,
         data: question
       });
-      questionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, questionId, FETCH_WITHOUT_SUBSCRIBE);
+      questionDoc = this.realtimeService.get<QuestionDoc>(
+        QuestionDoc.COLLECTION,
+        questionId,
+        UNKNOWN_COMPONENT_OR_SERVICE
+      );
       questionDoc.onlineFetch();
     }
     const textsByBookId = {
@@ -638,7 +642,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       'project01',
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     const config: MatDialogConfig<QuestionDialogData> = {
       data: {
@@ -678,10 +682,10 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 42, 1));
     this.addEmptyTextDoc(43);
     when(mockedProjectService.getText(anything(), anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockedProjectService.subscribeProfile(anything(), anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString(), FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString(), UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockedFileService.findOrUpdateCache(FileType.Audio, anything(), 'question01', anything())).thenResolve(
       createStorageFileData(QuestionDoc.COLLECTION, 'question01', 'test-audio-short.mp3', getAudioBlob())

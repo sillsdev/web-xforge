@@ -12,7 +12,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -317,7 +317,7 @@ class TestEnvironment {
     });
 
     when(mockedProjectService.subscribe(anyString(), anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, FETCH_WITHOUT_SUBSCRIBE)
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, UNKNOWN_COMPONENT_OR_SERVICE)
     );
 
     this.fixture = TestBed.createComponent(SyncComponent);
@@ -390,7 +390,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount, 1), false);
     this.fixture.detectChanges();
@@ -400,7 +400,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(
       SFProjectDoc.COLLECTION,
       projectId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);

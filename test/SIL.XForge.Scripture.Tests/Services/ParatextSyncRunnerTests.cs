@@ -3169,8 +3169,14 @@ public class ParatextSyncRunnerTests
 
         Assert.That(
             ops[0]["insert"].Type,
-            Is.EqualTo(JTokenType.Object),
-            "first op in list should be inserting an object, not a string like newline"
+            Is.EqualTo(JTokenType.String),
+            "first op in list should be inserting a string"
+        );
+
+        Assert.That(
+            ((JValue)ops[0]["insert"]).Value,
+            Is.EqualTo("- American Standard Version"),
+            "first op in list should be the book name"
         );
     }
 
@@ -3223,7 +3229,7 @@ public class ParatextSyncRunnerTests
                     AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     NoteTagId = 1234,
                 },
-                Texts = books.Select(b => textInfo).ToList(),
+                Texts = [.. books.Select(b => textInfo)],
                 Sync = new Sync
                 {
                     // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
@@ -3263,16 +3269,22 @@ public class ParatextSyncRunnerTests
 
         Assert.That(
             ops[0]["insert"].Type,
-            Is.EqualTo(JTokenType.Object),
-            "first op in list should be inserting an object, not a string like newline"
+            Is.EqualTo(JTokenType.String),
+            "first op in list should be inserting a string"
+        );
+
+        Assert.That(
+            ((JValue)ops[0]["insert"]).Value,
+            Is.EqualTo("- American Standard Version"),
+            "first op in list should be the book name"
         );
 
         // We have chapter deltas from the Paratext project USFM. We store the information in SF DB. In a future sync,
         // we would write the SF DB information back to the Paratext project (if the text was changed).
 
         // Modify the text a bit so it will need written back to Paratext.
-        string newText = "In the beginning";
-        ops[3]["insert"] = newText;
+        const string newText = "In the beginning";
+        ops[5]["insert"] = newText;
 
         // Make text docs out of the chapter deltas.
         var chapterDeltasAsSortedList = new SortedList<int, IDocument<TextData>>(
@@ -3286,28 +3298,22 @@ public class ParatextSyncRunnerTests
                 }
             )
         );
-        textInfo.Chapters = chapterDeltas
-            .Values.Select(
-                (ChapterDelta chapterDelta) =>
-                    new Chapter()
-                    {
-                        Number = chapterDelta.Number,
-                        IsValid = chapterDelta.IsValid,
-                        LastVerse = chapterDelta.LastVerse,
-                        Permissions = [],
-                    }
-            )
-            .ToList();
+        textInfo.Chapters =
+        [
+            .. chapterDeltas.Values.Select(chapterDelta => new Chapter
+            {
+                Number = chapterDelta.Number,
+                IsValid = chapterDelta.IsValid,
+                LastVerse = chapterDelta.LastVerse,
+                Permissions = [],
+            }),
+        ];
 
         env.RealtimeService.AddRepository(
             "users",
             OTType.Json0,
             new MemoryRepository<User>(
-                new[]
-                {
-                    new User { Id = "user01", ParatextId = "pt01" },
-                    new User { Id = "user02", ParatextId = "pt02" },
-                }
+                [new User { Id = "user01", ParatextId = "pt01" }, new User { Id = "user02", ParatextId = "pt02" }]
             )
         );
 
@@ -3745,7 +3751,7 @@ public class ParatextSyncRunnerTests
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                         NoteTagId = checkingNoteTagId,
                     },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync
                     {
                         // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
@@ -3782,7 +3788,7 @@ public class ParatextSyncRunnerTests
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
                     WritingSystem = new WritingSystem { Tag = "en" },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync { QueuedCount = 0, SyncedToRepositoryVersion = "beforeSR" },
                 },
                 new SFProject
@@ -3817,7 +3823,7 @@ public class ParatextSyncRunnerTests
                         CheckingEnabled = checkingEnabled,
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync
                     {
                         QueuedCount = 1,
@@ -3840,7 +3846,7 @@ public class ParatextSyncRunnerTests
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
                     WritingSystem = new WritingSystem { Tag = "en" },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync
                     {
                         QueuedCount = 0,
@@ -3881,7 +3887,7 @@ public class ParatextSyncRunnerTests
                         CheckingEnabled = checkingEnabled,
                         AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
-                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Texts = [.. books.Select(b => TextInfoFromBook(b))],
                     Sync = new Sync
                     {
                         QueuedCount = 1,
@@ -3950,16 +3956,18 @@ public class ParatextSyncRunnerTests
             return new TextInfo
             {
                 BookNum = Canon.BookIdToNumber(book.Id),
-                Chapters = Enumerable
-                    .Range(1, book.HighestTargetChapter)
-                    .Select(c => new Chapter
-                    {
-                        Number = c,
-                        LastVerse = 10,
-                        IsValid = !book.InvalidChapters.Contains(c),
-                        Permissions = { },
-                    })
-                    .ToList(),
+                Chapters =
+                [
+                    .. Enumerable
+                        .Range(1, book.HighestTargetChapter)
+                        .Select(c => new Chapter
+                        {
+                            Number = c,
+                            LastVerse = 10,
+                            IsValid = !book.InvalidChapters.Contains(c),
+                            Permissions = { },
+                        }),
+                ],
                 HasSource = book.HighestSourceChapter > 0,
             };
         }
@@ -4140,7 +4148,7 @@ public class ParatextSyncRunnerTests
                 ""
             )
             {
-                NoteIdsRemoved = new List<string>(noteIds),
+                NoteIdsRemoved = [.. noteIds],
             };
             SetupNoteThreadChanges([noteThreadChange], "target", 40);
         }

@@ -29,6 +29,12 @@ export enum TranslateShareLevel {
   Specific = 'specific'
 }
 
+export enum ParagraphBreakFormat {
+  BestGuess = 'best_guess',
+  Remove = 'remove',
+  MoveToEnd = 'move_to_end'
+}
+
 export interface BaseProject {
   paratextId: string;
   shortName: string;
@@ -40,6 +46,10 @@ export interface BaseProject {
 export interface ProjectScriptureRange {
   projectId: string;
   scriptureRange: string;
+}
+
+export interface DraftUsfmConfig {
+  paragraphFormat: ParagraphBreakFormat;
 }
 
 export interface DraftConfig {
@@ -58,6 +68,7 @@ export interface DraftConfig {
   lastSelectedTranslationScriptureRange?: string;
   lastSelectedTranslationScriptureRanges?: ProjectScriptureRange[];
   servalConfig?: string;
+  usfmConfig?: DraftUsfmConfig;
 }
 
 export interface TranslateConfig {

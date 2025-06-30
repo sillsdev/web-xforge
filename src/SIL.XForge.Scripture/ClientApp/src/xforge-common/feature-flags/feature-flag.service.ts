@@ -221,21 +221,21 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  private readonly showNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly showNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
     'SHOW_NMT_DRAFTING',
     'Show NMT drafting',
     2,
     this.featureFlagStore
   );
 
-  private readonly allowForwardTranslationNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly allowForwardTranslationNmtDrafting: FeatureFlag = new ServerOnlyFeatureFlag(
     'ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING',
     'Allow Forward Translation NMT drafting',
     3,
     this.featureFlagStore
   );
 
-  private readonly scriptureAudio: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly scriptureAudio: FeatureFlag = new ServerOnlyFeatureFlag(
     'SCRIPTURE_AUDIO',
     'Scripture audio',
     4,
@@ -263,49 +263,49 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  private readonly machineInProcess: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly machineInProcess: FeatureFlag = new ServerOnlyFeatureFlag(
     'MachineInProcess',
     'Use In-Process Machine for Suggestions',
     8,
     this.featureFlagStore
   );
 
-  private readonly serval: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly serval: FeatureFlag = new ServerOnlyFeatureFlag(
     'Serval',
     'Use Serval for Suggestions',
     9,
     this.featureFlagStore
   );
 
-  private readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
     'UseEchoForPreTranslation',
     'Allow Echo for Pre-Translation Drafting',
     10,
     this.featureFlagStore
   );
 
-  private readonly allowFastTraining: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly allowFastTraining: FeatureFlag = new ServerOnlyFeatureFlag(
     'ALLOW_FAST_TRAINING',
     'Allow Fast Pre-Translation Training',
     11,
     this.featureFlagStore
   );
 
-  private readonly uploadParatextZipForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly uploadParatextZipForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
     'UploadParatextZipForPreTranslation',
     'Upload Paratext Zip Files for Pre-Translation Drafting',
     12,
     this.featureFlagStore
   );
 
-  private readonly allowAdditionalTrainingSource: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly allowAdditionalTrainingSource: FeatureFlag = new ServerOnlyFeatureFlag(
     'AllowAdditionalTrainingSource',
     'Allow mixing in an additional training source',
     13,
     this.featureFlagStore
   );
 
-  private readonly updatedLearningRateForServal: FeatureFlag = new ServerOnlyFeatureFlag(
+  readonly updatedLearningRateForServal: FeatureFlag = new ServerOnlyFeatureFlag(
     'UpdatedLearningRateForServal',
     'Updated Learning Rate For Serval',
     14,
@@ -323,6 +323,20 @@ export class FeatureFlagService {
     'EnableLynxInsights',
     'Enable Lynx insights',
     16,
+    this.featureFlagStore
+  );
+
+  readonly newDraftHistory: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'NewDraftHistory',
+    'Preview new draft history interface',
+    17,
+    this.featureFlagStore
+  );
+
+  readonly usfmFormat: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'UsfmFormat',
+    'USFM Format',
+    18,
     this.featureFlagStore
   );
 

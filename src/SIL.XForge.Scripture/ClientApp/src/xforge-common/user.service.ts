@@ -12,7 +12,7 @@ import { CommandService } from './command.service';
 import { DialogService } from './dialog.service';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog/edit-name-dialog.component';
 import { LocalSettingsService } from './local-settings.service';
-import { DocSubscriberInfo, DocSubscription, FETCH_WITHOUT_SUBSCRIBE } from './models/realtime-doc';
+import { DocSubscriberInfo, DocSubscription, UNKNOWN_COMPONENT_OR_SERVICE } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
@@ -66,7 +66,7 @@ export class UserService {
 
   /** Get currently-logged in user. */
   getCurrentUser(): Promise<UserDoc> {
-    return this.get(this.currentUserId, FETCH_WITHOUT_SUBSCRIBE);
+    return this.get(this.currentUserId, UNKNOWN_COMPONENT_OR_SERVICE);
   }
 
   subscribeCurrentUser(subscriber: DocSubscriberInfo): Promise<UserDoc> {
@@ -78,7 +78,7 @@ export class UserService {
   }
 
   getProfile(id: string): Promise<UserProfileDoc> {
-    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE);
   }
 
   subscribeProfile(id: string, subscriber: DocSubscriberInfo): Promise<UserProfileDoc> {

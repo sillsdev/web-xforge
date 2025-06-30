@@ -68,8 +68,9 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -93,6 +94,7 @@ import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { ParatextService } from '../../core/paratext.service';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -106,8 +108,8 @@ import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.compone
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
+import { HistoryRevisionFormatPipe } from './editor-history/history-chooser/history-revision-format.pipe';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
-import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
 import { LynxInsightsModule } from './lynx/insights/lynx-insights.module';
 import { LynxWorkspaceService } from './lynx/insights/lynx-workspace.service';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
@@ -131,7 +133,7 @@ const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedParatextService = mock(ParatextService);
 const mockedPermissionsService = mock(PermissionsService);
 const mockedLynxWorkspaceService = mock(LynxWorkspaceService);
-const mockedLynxInsightStateService = mock(LynxInsightStateService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 class MockComponent {}
 
@@ -156,7 +158,13 @@ class MockConsole {
 
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [EditorComponent, SuggestionsComponent, TrainingProgressComponent, EditorDraftComponent],
+    declarations: [
+      EditorComponent,
+      SuggestionsComponent,
+      TrainingProgressComponent,
+      EditorDraftComponent,
+      HistoryRevisionFormatPipe
+    ],
     imports: [
       BiblicalTermsComponent,
       CopyrightBannerComponent,
@@ -192,7 +200,7 @@ describe('EditorComponent', () => {
       { provide: TabMenuService, useValue: EditorTabMenuService },
       { provide: PermissionsService, useMock: mockedPermissionsService },
       { provide: LynxWorkspaceService, useMock: mockedLynxWorkspaceService },
-      { provide: LynxInsightStateService, useMock: mockedLynxInsightStateService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -611,8 +619,7 @@ describe('EditorComponent', () => {
       });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      // showSuggestions being true doesn't mean suggestions are shown, only that they could be if visible
-      expect(env.component.showSuggestions).toBe(true);
+      expect(env.component.showSuggestions).toBe(false);
 
       // Change to the long verse
       const range = env.component.target!.getSegmentRange('verse_1_6');
@@ -623,6 +630,31 @@ describe('EditorComponent', () => {
       expect(env.component.target!.segmentRef).toBe('verse_1_6');
       expect(env.component.showSuggestions).toBe(false);
       verify(mockedNoticeService.show(anything())).never();
+
+      env.dispose();
+    }));
+
+    it('should not call getWordGraph if user has suggestions disabled', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({
+        selectedBookNum: 40,
+        selectedChapterNum: 1,
+        selectedSegment: 'verse_1_5',
+        translationSuggestionsEnabled: false
+      });
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_5');
+      expect(env.component.showSuggestions).toBe(false);
+
+      // Change to the long verse
+      const range = env.component.target!.getSegmentRange('verse_1_6');
+      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
+      env.wait();
+
+      // Verify an error did not display
+      expect(env.component.target!.segmentRef).toBe('verse_1_6');
+      expect(env.component.showSuggestions).toBe(false);
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
 
       env.dispose();
     }));
@@ -3720,16 +3752,27 @@ describe('EditorComponent', () => {
   });
 
   it('sets book and chapter according to route', fakeAsync(() => {
-    const navigationParams: Params = { projectId: 'project01', bookId: 'MRK', chapter: '2' };
+    const navigationParams: Params = { projectId: 'project01', bookId: 'MAT', chapter: '2' };
     const env = new TestEnvironment();
 
     env.setProjectUserConfig();
     env.routeWithParams(navigationParams);
     env.wait();
 
-    expect(env.bookName).toEqual('Mark');
+    expect(env.bookName).toEqual('Matthew');
     expect(env.component.chapter).toBe(2);
 
+    env.dispose();
+  }));
+
+  it('navigates to alternate chapter if specified chapter does not exist', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const nonExistentChapter = 3;
+    const routerSpy = spyOn(env.router, 'navigateByUrl').and.callThrough();
+    env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: nonExistentChapter });
+    env.wait();
+
+    expect(routerSpy).toHaveBeenCalledWith('/projects/project01/translate/MAT/1');
     env.dispose();
   }));
 
@@ -4040,7 +4083,9 @@ describe('EditorComponent', () => {
 
       it('should select the draft tab if url query param is set', fakeAsync(() => {
         const env = new TestEnvironment();
-        when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: { 'draft-active': 'true' } } as any);
+        when(mockedActivatedRoute.snapshot).thenReturn({
+          queryParams: { 'draft-active': 'true', 'draft-timestamp': new Date().toISOString() }
+        } as any);
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
@@ -4193,6 +4238,113 @@ describe('EditorComponent', () => {
         await tooltipHarness.show();
         expect(await tooltipHarness.getTooltipText()).toBe(targetProjectDoc.data?.name!);
         tooltipHarness.hide();
+        env.dispose();
+      }));
+    });
+
+    describe('lynx features', () => {
+      it('should not show lynx features when feature flag is not enabled', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(false));
+        });
+
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.showInsights).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should not show lynx features if user has no chapter edit permissions', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
+        });
+
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(false);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.showInsights).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should not show lynx features when USFM is invalid', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
+        });
+
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(false);
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(false);
+        expect(env.component.showInsights).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should not show lynx features when changing chapter from USFM valid to chapter USFM invalid', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
+        });
+
+        const textDocService = TestBed.inject(TextDocService);
+        const textDocService_isUsfmValidForText_Spy = spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+        spyOn(textDocService, 'hasChapterEditPermissionForText').and.returnValue(true); // Force edit permission true
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.showInsights).toBe(true);
+
+        // Change chapters to one with invalid USFM
+        textDocService_isUsfmValidForText_Spy.and.returnValue(false);
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(false);
+        expect(env.component.showInsights).toBe(false);
+
+        env.dispose();
+      }));
+
+      it('should show lynx features when feature flag is enabled and user has chapter edit permissions and USFM is valid', fakeAsync(async () => {
+        const env = new TestEnvironment(() => {
+          when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(true));
+        });
+
+        const textDocService = TestBed.inject(TextDocService);
+        spyOn(textDocService, 'isUsfmValidForText').and.returnValue(true);
+        env.setCurrentUser('user03');
+        env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+        env.wait();
+
+        expect(env.component.hasChapterEditPermission).toBe(true);
+        expect(env.component.isUsfmValid).toBe(true);
+        expect(env.component.showInsights).toBe(true);
+
         env.dispose();
       }));
     });
@@ -4487,11 +4639,21 @@ class TestEnvironment {
     });
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
     when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
-    when(mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
-      of([])
-    );
+    when(
+      mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).thenReturn(of([]));
+    when(mockedDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
+    when(mockedFeatureFlagService.enableLynxInsights).thenReturn(createTestFeatureFlag(false));
+    when(mockedFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
+    when(mockedLynxWorkspaceService.rawInsightSource$).thenReturn(of([]));
 
     this.realtimeService = TestBed.inject(TestRealtimeService);
 
@@ -4659,7 +4821,7 @@ class TestEnvironment {
 
   deleteText(textId: string): void {
     this.ngZone.run(() => {
-      const textDoc = this.realtimeService.get(TextDoc.COLLECTION, textId, FETCH_WITHOUT_SUBSCRIBE);
+      const textDoc = this.realtimeService.get(TextDoc.COLLECTION, textId, UNKNOWN_COMPONENT_OR_SERVICE);
       textDoc.delete();
     });
     this.wait();
@@ -4811,7 +4973,7 @@ class TestEnvironment {
     return this.realtimeService.get<SFProjectUserConfigDoc>(
       SFProjectUserConfigDoc.COLLECTION,
       getSFProjectUserConfigDocId('project01', userId),
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
   }
 
@@ -4819,7 +4981,7 @@ class TestEnvironment {
     return this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       projectId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
   }
 
@@ -4828,12 +4990,12 @@ class TestEnvironment {
   }
 
   getTextDoc(textId: TextDocId): TextDoc {
-    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), UNKNOWN_COMPONENT_OR_SERVICE);
   }
 
   getNoteThreadDoc(projectId: string, threadDataId: string): NoteThreadDoc {
     const docId: string = projectId + ':' + threadDataId;
-    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, UNKNOWN_COMPONENT_OR_SERVICE);
   }
 
   getNoteThreadIconElement(segmentRef: string, threadDataId: string): HTMLElement | null {

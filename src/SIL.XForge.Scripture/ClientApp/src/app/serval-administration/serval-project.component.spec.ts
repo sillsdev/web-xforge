@@ -10,6 +10,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -33,6 +34,7 @@ const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockActivatedRoute = mock(ActivatedRoute);
 const mockAuthService = mock(AuthService);
 const mockDraftGenerationService = mock(DraftGenerationService);
+const mockedI18nService = mock(I18nService);
 const mockNoticeService = mock(NoticeService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
@@ -45,6 +47,7 @@ describe('ServalProjectComponent', () => {
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: AuthService, useMock: mockAuthService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
+      { provide: I18nService, useMock: mockedI18nService },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
@@ -215,10 +218,10 @@ describe('ServalProjectComponent', () => {
       const env = new TestEnvironment();
       const trainingSources = env.trainingSources;
       expect(trainingSources.length).toEqual(1);
-      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis, Exodus');
+      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis - Exodus');
       const translationSources = env.translationSources;
       expect(translationSources.length).toEqual(1);
-      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus, Numbers');
+      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus - Numbers');
     }));
 
     it('shows the last draft configs multiple training sources', fakeAsync(() => {
@@ -235,11 +238,11 @@ describe('ServalProjectComponent', () => {
       });
       const trainingSources = env.trainingSources;
       expect(trainingSources.length).toEqual(2);
-      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis, Exodus');
+      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis - Exodus');
       expect(env.getTrainingSourceBookNames(trainingSources[1])).toEqual('Genesis');
       const translationSources = env.translationSources;
       expect(translationSources.length).toEqual(1);
-      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus, Numbers');
+      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus - Numbers');
     }));
   });
 
@@ -272,21 +275,24 @@ describe('ServalProjectComponent', () => {
                 paratextId: 'ptproject03',
                 projectRef: 'project03',
                 name: 'Project 03',
-                shortName: 'P3'
+                shortName: 'P3',
+                writingSystem: { tag: 'en' }
               },
               alternateTrainingSourceEnabled: true,
               alternateTrainingSource: {
                 paratextId: 'ptproject04',
                 projectRef: 'project04',
                 name: 'Project 04',
-                shortName: 'P4'
+                shortName: 'P4',
+                writingSystem: { tag: 'en' }
               },
               additionalTrainingSourceEnabled: true,
               additionalTrainingSource: {
                 paratextId: 'ptproject05',
                 projectRef: 'project05',
                 name: 'Project 05',
-                shortName: 'P5'
+                shortName: 'P5',
+                writingSystem: { tag: 'en' }
               },
               lastSelectedTrainingBooks: args.preTranslate ? [1, 2] : [],
               lastSelectedTranslationBooks: args.preTranslate ? [3, 4] : [],
@@ -320,6 +326,10 @@ describe('ServalProjectComponent', () => {
       when(mockActivatedProjectService.projectId$).thenReturn(mockProjectId$);
       when(mockActivatedProjectService.projectDoc).thenReturn(mockProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(mockProjectDoc$);
+
+      when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
+      when(mockedI18nService.formatAndLocalizeScriptureRange('GEN;EXO')).thenReturn('Genesis - Exodus');
+      when(mockedI18nService.formatAndLocalizeScriptureRange('LEV;NUM')).thenReturn('Leviticus - Numbers');
 
       when(mockDraftGenerationService.getLastCompletedBuild(this.mockProjectId)).thenReturn(
         of(args.lastCompletedBuild)

@@ -1,11 +1,15 @@
-@for (insight of insightCountsByType$ | async; track insight.type) {
-  <div class="type-count">
-    <mat-icon [svgIcon]="'lynx_' + insight.type" />
-    <span [ngClass]="insight.type">{{ insight.count }}</span>
-  </div>
-} @empty {
-  <mat-icon class="check-icon" svgIcon="lynx_checkmark" />
-  @if (isFilterHidingInsights$ | async) {
-    <mat-icon class="hidden-indicator-icon">visibility_off</mat-icon>
+@if (isLoading$ | async) {
+  <mat-icon class="update-icon">update</mat-icon>
+} @else {
+  @for (insight of insightCountsByType$ | async; track insight.type) {
+    <div class="type-count">
+      <mat-icon [svgIcon]="'lynx_' + insight.type" />
+      <span [ngClass]="insight.type">{{ insight.count }}</span>
+    </div>
+  } @empty {
+    <mat-icon class="check-icon" svgIcon="lynx_checkmark" />
+    @if (isFilterHidingInsights$ | async) {
+      <mat-icon class="hidden-indicator-icon">visibility_off</mat-icon>
+    }
   }
 }

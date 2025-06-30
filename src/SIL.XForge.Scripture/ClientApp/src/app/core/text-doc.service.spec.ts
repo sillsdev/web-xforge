@@ -7,7 +7,7 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { mock, when } from 'ts-mockito';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -94,11 +94,101 @@ describe('TextDocService', () => {
     });
   });
 
+  describe('canRestore', () => {
+    it('should return false if the project is undefined', () => {
+      const env = new TestEnvironment();
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(undefined, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return false if user does not have general edit right', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: true,
+        sync: { dataInSync: true },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextObserver }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return false if user does not have chapter edit permission', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: true,
+        sync: { dataInSync: true },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Read } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextAdministrator }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return false if data is not in sync', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: true,
+        sync: { dataInSync: false },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextAdministrator }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return false if editing is disabled', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: false,
+        sync: { dataInSync: true },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextAdministrator }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(false);
+    });
+
+    it('should return true if all conditions are met', () => {
+      const env = new TestEnvironment();
+      const project = createTestProjectProfile({
+        editable: true,
+        sync: { dataInSync: true },
+        texts: [
+          { bookNum: 1, chapters: [{ number: 1, isValid: true, permissions: { user01: TextInfoPermission.Write } }] }
+        ],
+        userRoles: { user01: SFProjectRole.ParatextAdministrator }
+      });
+
+      // SUT
+      const actual: boolean = env.textDocService.canRestore(project, 1, 1);
+      expect(actual).toBe(true);
+    });
+  });
+
   describe('createTextDoc', () => {
     it('should throw error if text doc already exists', fakeAsync(() => {
       const env = new TestEnvironment();
       expect(() => {
-        env.textDocService.createTextDoc(env.textDocId, FETCH_WITHOUT_SUBSCRIBE, getTextDoc(env.textDocId));
+        env.textDocService.createTextDoc(env.textDocId, UNKNOWN_COMPONENT_OR_SERVICE, getTextDoc(env.textDocId));
         tick();
       }).toThrowError();
     }));
@@ -106,7 +196,11 @@ describe('TextDocService', () => {
     it('creates the text doc if it does not already exist', fakeAsync(async () => {
       const env = new TestEnvironment();
       const textDocId = new TextDocId('project01', 40, 2);
-      const textDoc = await env.textDocService.createTextDoc(textDocId, FETCH_WITHOUT_SUBSCRIBE, getTextDoc(textDocId));
+      const textDoc = await env.textDocService.createTextDoc(
+        textDocId,
+        UNKNOWN_COMPONENT_OR_SERVICE,
+        getTextDoc(textDocId)
+      );
       tick();
 
       expect(textDoc.data).toBeDefined();
@@ -370,13 +464,13 @@ class TestEnvironment {
       type: RichText.type.name
     });
 
-    when(mockProjectService.getText(this.textDocId, FETCH_WITHOUT_SUBSCRIBE)).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), FETCH_WITHOUT_SUBSCRIBE)
+    when(mockProjectService.getText(this.textDocId, UNKNOWN_COMPONENT_OR_SERVICE)).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockUserService.currentUserId).thenReturn('user01');
   }
 
   getTextDoc(textId: TextDocId): TextDoc {
-    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), UNKNOWN_COMPONENT_OR_SERVICE);
   }
 }

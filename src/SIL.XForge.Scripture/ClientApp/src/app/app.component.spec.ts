@@ -25,7 +25,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
-import { FETCH_WITHOUT_SUBSCRIBE } from 'xforge-common/models/realtime-doc';
+import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -795,7 +795,7 @@ class TestEnvironment {
   }
 
   get currentUserDoc(): UserDoc {
-    return this.realtimeService.get(UserDoc.COLLECTION, 'user01', FETCH_WITHOUT_SUBSCRIBE);
+    return this.realtimeService.get(UserDoc.COLLECTION, 'user01', UNKNOWN_COMPONENT_OR_SERVICE);
   }
 
   setCurrentUser(userId: string): void {
@@ -870,7 +870,11 @@ class TestEnvironment {
       when(mockedUserService.currentProjectId(anything())).thenReturn(undefined);
     }
     this.ngZone.run(() => {
-      const projectDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, projectId, FETCH_WITHOUT_SUBSCRIBE);
+      const projectDoc = this.realtimeService.get(
+        SFProjectProfileDoc.COLLECTION,
+        projectId,
+        UNKNOWN_COMPONENT_OR_SERVICE
+      );
       projectDoc.delete();
     });
     this.wait();
@@ -880,7 +884,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       projectId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
     this.wait();
@@ -890,7 +894,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       projectId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(op => op.set<boolean>(p => p.translateConfig.preTranslate, true), false);
     this.wait();
@@ -900,7 +904,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       projectId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
@@ -911,7 +915,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
       SFProjectProfileDoc.COLLECTION,
       projectId,
-      FETCH_WITHOUT_SUBSCRIBE
+      UNKNOWN_COMPONENT_OR_SERVICE
     );
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles[userId], role), false);
     this.wait();

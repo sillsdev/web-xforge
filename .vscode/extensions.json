@@ -15,6 +15,7 @@
     "yzhang.markdown-all-in-one",
     "ms-azuretools.vscode-cosmosdb",
     "mongodb.mongodb-vscode",
-    "ms-azuretools.vscode-docker"
+    "ms-azuretools.vscode-docker",
+    "glenn2223.live-sass"
   ]
 }

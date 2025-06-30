@@ -1,36 +1,48 @@
 <ng-container *transloco="let t; read: 'lynx_insights_panel'">
   <app-lynx-insights-panel-header />
 
-  <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
-    <!-- Template for leaf nodes -->
-    <mat-tree-node *matTreeNodeDef="let node" class="level-{{ node.level }}">
-      <!-- Use a disabled button to provide padding for tree leaf -->
-      <button
-        matRipple
-        [class.dismissed]="node.isDismissed"
-        class="tree-toggle leaf"
-        (click)="onNodeClick(node, $event)"
-      >
+  <mat-tree [dataSource]="treeDataSource" [childrenAccessor]="getChildrenAccessor">
+    <!-- Template for leaf nodes (actual insights) -->
+    <mat-tree-node
+      *matTreeNodeDef="let node; let currentLevel = level"
+      class="level-{{ currentLevel }}"
+      [isExpandable]="false"
+    >
+      <button matRipple [class.dismissed]="node.isDismissed" class="tree-toggle leaf" (click)="onLeafNodeClick(node)">
         <div class="level-ref">
-          <span>
-            {{ node.description }}
-          </span>
-          <!-- TODO: Removed for MVP -->
-          <!-- <mat-icon [matTooltip]="t('restore')" (click)="restoreDismissedInsight(node.insight)" class="restore-icon">
-            visibility_on
-          </mat-icon> -->
+          @if (node.isLoading) {
+            <span class="insight-loading-text">{{ node.description }}</span>
+            <mat-spinner diameter="16" class="insight-loading-spinner"></mat-spinner>
+          } @else {
+            <span>{{ node.description }}</span>
+            @if (node.isDismissed) {
+              <mat-icon
+                [matTooltip]="t('restore')"
+                (click)="restoreDismissedInsight(node.insight!)"
+                class="restore-icon"
+              >
+                visibility_on
+              </mat-icon>
+            }
+          }
         </div>
       </button>
     </mat-tree-node>
 
-    <!-- Template for expandable nodes -->
-    <mat-tree-node *matTreeNodeDef="let node; when: hasChild" class="level-{{ node.level }}">
-      <button matTreeNodeToggle matRipple class="tree-toggle" (click)="onNodeClick(node, $event)">
+    <!-- Template for expandable group nodes -->
+    <mat-tree-node
+      #parentNodeRef="matTreeNode"
+      *matTreeNodeDef="let node; let currentLevel = level; when: isExpandableNodePredicate"
+      (expandedChange)="onNodeExpansionChange(node, $event)"
+      class="level-{{ currentLevel }}"
+      [isExpandable]="true"
+    >
+      <button matTreeNodeToggle matRipple class="tree-toggle">
         <mat-icon class="tree-toggle-icon mat-icon-rtl-mirror">
-          {{ treeControl.isExpanded(node) ? "expand_more" : "chevron_right" }}
+          {{ parentNodeRef.isExpanded ? "expand_more" : "chevron_right" }}
         </mat-icon>
 
-        @switch (node.level) {
+        @switch (currentLevel) {
           @case (0) {
             <div class="level-desc">
               <mat-icon [svgIcon]="'lynx_' + node.type" [class.dismissed]="node.isDismissed" [ngClass]="node.type" />
@@ -40,6 +52,35 @@
           }
         }
       </button>
+
+      @if (
+        parentNodeRef.isExpanded && node.children && node.children.length > lynxInsightConfig.panelOptimizationThreshold
+      ) {
+        @if (node.remainingChildCount > 0) {
+          <button
+            mat-button
+            [disabled]="node.loadingProgressPercent < 100"
+            (click)="showMoreNodes(node)"
+            class="show-more-button"
+          >
+            @if (node.loadingProgressPercent < 100) {
+              <span class="button-text">
+                {{ t("loading") }}
+              </span>
+              <mat-progress-bar
+                [value]="node.loadingProgressPercent"
+                [color]="node.loadingProgressPercent < 70 ? 'accent' : 'primary'"
+                class="progress-bar"
+              >
+              </mat-progress-bar>
+            } @else {
+              <span class="button-text">
+                {{ t("show_more") }} ({{ node.remainingChildCount }} {{ t("remaining") }})
+              </span>
+            }
+          </button>
+        }
+      }
     </mat-tree-node>
   </mat-tree>
 </ng-container>

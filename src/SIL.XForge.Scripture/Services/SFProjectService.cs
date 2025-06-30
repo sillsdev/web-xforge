@@ -32,6 +32,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 {
     public const string ErrorAlreadyConnectedKey = "error-already-connected";
     internal const string ProjectSettingValueUnset = "unset";
+    internal const string InvalidEmailAddress = "invalid-email-address";
     private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
         new DictionaryComparer<string, string>();
     private readonly IBackgroundJobClient _backgroundJobClient;
@@ -40,6 +41,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private readonly ISyncService _syncService;
     private readonly IParatextService _paratextService;
     private readonly IRepository<UserSecret> _userSecrets;
+    private readonly IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRepository<TranslateMetrics> _translateMetrics;
     private readonly IEmailService _emailService;
     private readonly ISecurityService _securityService;
@@ -75,6 +77,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _syncService = syncService;
         _paratextService = paratextService;
         _userSecrets = userSecrets;
+        _projectSecrets = projectSecrets;
         _translateMetrics = translateMetrics;
         _emailService = emailService;
         _securityService = securityService;
@@ -88,8 +91,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     protected override string ProjectAdminRole => SFProjectRole.Administrator;
 
     /// <summary>
-    /// Returns SF project id of created project.
+    /// Connects to a Paratext project,
     /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="settings">The create project settings.</param>
+    /// <returns>The Scripture Forge identifier of the created project.</returns>
+    /// <exception cref="DataNotFoundException">The user or project does not exist.</exception>
+    /// <exception cref="InvalidOperationException">The project already exists.</exception>
+    /// <exception cref="ForbiddenException">The user does not have permission to connect to the project.</exception>
     public async Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings)
     {
         Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
@@ -707,7 +716,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
+        // Validate the email address
+        if (!_emailService.ValidateEmail(email))
+            throw new InvalidOperationException(InvalidEmailAddress);
+
+        // Set the locale for the email
         CultureInfo.CurrentUICulture = new CultureInfo(locale);
+
         // Remove the user sharekey if expired
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
@@ -717,7 +732,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Invite a specific person. Reuse prior code, if any.
         SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
-            p => p.Id == projectId && !p.ShareKeys.Any(sk => sk.Email == email),
+            p => p.Id == projectId && p.ShareKeys.All(sk => sk.Email != email),
             update =>
                 update.Add(
                     p => p.ShareKeys,
@@ -1248,6 +1263,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await projectDoc.SubmitJson0OpAsync(op =>
             op.Set(p => p.TranslateConfig.DraftConfig.ServalConfig, servalConfig)
         );
+    }
+
+    public async Task SetUsfmConfigAsync(string curUserId, string projectId, DraftUsfmConfig config)
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        if (!HasParatextRole(projectDoc.Data, curUserId))
+            throw new ForbiddenException();
+        await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.TranslateConfig.DraftConfig.UsfmConfig, config));
     }
 
     protected override async Task AddUserToProjectAsync(

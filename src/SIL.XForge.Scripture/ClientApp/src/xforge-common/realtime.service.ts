@@ -2,7 +2,7 @@ import { DestroyRef, Injectable, Optional } from '@angular/core';
 import { filter, race, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
 import { FileService } from './file.service';
-import { DocSubscriberInfo, DocSubscription, FETCH_WITHOUT_SUBSCRIBE, RealtimeDoc } from './models/realtime-doc';
+import { DocSubscriberInfo, DocSubscription, RealtimeDoc, UNKNOWN_COMPONENT_OR_SERVICE } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { OfflineStore } from './offline-store';
 import { QueryParameters } from './query-parameters';
@@ -25,7 +25,7 @@ export const noopDestroyRef: DestroyRef = {
   onDestroy: _callback => () => {}
 };
 
-const NEVER_RESOLVING_DOC_SUBSCRIPTION = new DocSubscription('FETCH_WITHOUT_SUBSCRIBE', noopDestroyRef);
+const NEVER_RESOLVING_DOC_SUBSCRIPTION = new DocSubscription('UNKNOWN_COMPONENT_OR_SERVICE', noopDestroyRef);
 
 /**
  * The realtime service is responsible for retrieving and mutating realtime data models. This service transparently
@@ -144,7 +144,7 @@ export class RealtimeService {
       }
       this.docs.set(key, doc);
     }
-    if (subscriber !== FETCH_WITHOUT_SUBSCRIBE) {
+    if (subscriber !== UNKNOWN_COMPONENT_OR_SERVICE) {
       doc.addSubscriber(subscriber);
     } else {
       doc.addSubscriber(NEVER_RESOLVING_DOC_SUBSCRIPTION);

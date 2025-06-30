@@ -219,6 +219,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
+  draftTimestamp?: Date;
   showInsights = false;
 
   @ViewChild('source') source?: TextComponent;
@@ -252,7 +253,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
-  private _chapter?: number;
+  private chapter$ = new BehaviorSubject<number | undefined>(undefined);
   private _verse: string = '0';
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
@@ -273,6 +274,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private tabStateInitialized$ = new BehaviorSubject<boolean>(false);
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
+
+  /**
+   * Determines whether the user has permission to edit the currently active chapter.
+   * Returns undefined if the necessary data is not yet available.
+   */
+  hasChapterEditPermission: boolean | undefined = undefined;
+  private readonly hasChapterEditPermission$: Observable<boolean | undefined> = combineLatest([
+    this.activatedProject.changes$.pipe(filterNullish()),
+    this.chapter$
+  ]).pipe(
+    map(([_, chapterNum]) => this.textDocService.hasChapterEditPermissionForText(this.text, chapterNum)),
+    tap(hasPermission => (this.hasChapterEditPermission = hasPermission)) // Cache for non-reactive access
+  );
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -377,11 +391,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get chapter(): number | undefined {
-    return this._chapter;
+    return this.chapter$.value;
   }
 
   set chapter(value: number | undefined) {
-    if (this._chapter !== value && value != null) {
+    if (this.chapter$.value !== value && value != null) {
       // Update url to reflect current chapter, triggering ActivatedRoute
       this.router.navigateByUrl(
         `/projects/${this.projectId}/translate/${Canon.bookNumberToId(this.bookNum!)}/${value}`
@@ -425,14 +439,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.textDocService.userHasGeneralEditRight(this.projectDoc?.data);
   }
 
-  /**
-   * Determines whether the user has permission to edit the currently active chapter.
-   * Returns undefined if the necessary data is not yet available.
-   */
-  get hasChapterEditPermission(): boolean | undefined {
-    return this.textDocService.hasChapterEditPermissionForText(this.text, this.chapter);
-  }
-
   get showNoEditPermissionMessage(): boolean {
     return this.userHasGeneralEditRight && this.hasChapterEditPermission === false;
   }
@@ -451,7 +457,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       SF_PROJECT_RIGHTS.hasRight(sourceProject, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
     ) {
       // Check for chapter rights
-      const chapter = this.sourceText?.chapters.find(c => c.number === this._chapter);
+      const chapter = this.sourceText?.chapters.find(c => c.number === this.chapter);
       // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
       // is accessed after migration
       if (chapter != null && chapter.permissions != null && !this.isParatextUserRole) {
@@ -686,9 +692,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       )
       .subscribe();
 
-    this.featureFlagService.enableLynxInsights.enabled$
+    // Show insights only if the feature flag is enabled and the user has chapter edit permissions
+    combineLatest([this.featureFlagService.enableLynxInsights.enabled$, this.hasChapterEditPermission$])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(enabled => (this.showInsights = enabled));
+      .subscribe(([ffEnabled, hasEditPermission]) => {
+        this.showInsights = ffEnabled && !!hasEditPermission && this.isUsfmValid;
+        return this.showInsights;
+      });
   }
 
   ngAfterViewInit(): void {
@@ -795,11 +805,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           }
           this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
             let sourceId: TextDocId | undefined;
-            if (this.hasSource && this.text != null && this._chapter != null) {
+            if (this.hasSource && this.text != null && this.chapter != null) {
               sourceId = new TextDocId(
                 this.projectDoc!.data!.translateConfig.source!.projectRef,
                 this.text.bookNum,
-                this._chapter
+                this.chapter
               );
               if (this.source != null && !isEqual(this.source.id, sourceId)) {
                 this.sourceLoaded = false;
@@ -904,7 +914,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.text != null &&
           this.target.segmentRef !== '' &&
           (this.projectUserConfigDoc.data.selectedBookNum !== this.text.bookNum ||
-            this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
+            this.projectUserConfigDoc.data.selectedChapterNum !== this.chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
           if ((prevSegment == null || this.translator == null) && this.sourceProjectId !== undefined) {
@@ -999,7 +1009,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target != null &&
       this.target.segment != null &&
       this.target.segment.bookNum === this.bookNum &&
-      this.target.segment.chapter === this._chapter
+      this.target.segment.chapter === this.chapter
     ) {
       this.onStartTranslating();
       try {
@@ -1455,18 +1465,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private async updateAutoDraftTabVisibility(): Promise<void> {
-    const chapter: Chapter | undefined = this.text?.chapters.find(c => c.number === this._chapter);
+    const chapter: Chapter | undefined = this.text?.chapters.find(c => c.number === this.chapter);
     const hasDraft: boolean = chapter?.hasDraft ?? false;
     const draftApplied: boolean = chapter?.draftApplied ?? false;
     const existingDraftTab: { groupId: EditorTabGroupType; index: number } | undefined =
       this.tabState.getFirstTabOfTypeIndex('draft');
 
     const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams['draft-active'] === 'true';
+    if (this.activatedRoute.snapshot.queryParams['draft-timestamp'] != null) {
+      this.draftTimestamp = new Date(this.activatedRoute.snapshot.queryParams['draft-timestamp']);
+    } else {
+      this.draftTimestamp = undefined;
+    }
     const canViewDrafts: boolean = this.permissionsService.canAccessDrafts(
       this.projectDoc,
       this.userService.currentUserId
     );
-    if (hasDraft && (!draftApplied || urlDraftActive) && canViewDrafts) {
+    if (((hasDraft && !draftApplied) || urlDraftActive) && canViewDrafts) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 
@@ -1489,7 +1504,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
 
       if (urlDraftActive) {
-        // Remove 'draft-active' query string from url when another tab from group is selected
+        // Remove 'draft-active' and 'draft-timestamp' query string from url when another tab from group is selected
         this.tabState.tabs$
           .pipe(
             filter(tabs => tabs.some(tab => tab.groupId === groupIdToAddTo && tab.type !== 'draft' && tab.isSelected)),
@@ -1497,7 +1512,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           )
           .subscribe(() => {
             this.router.navigate([], {
-              queryParams: { 'draft-active': null },
+              queryParams: { 'draft-active': null, 'draft-timestamp': null },
               queryParamsHandling: 'merge',
               replaceUrl: true
             });
@@ -1531,7 +1546,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target?.editor == null ||
       this.noteThreadQuery == null ||
       this.bookNum == null ||
-      this._chapter == null ||
+      this.chapter == null ||
       this.projectDoc?.data == null
     ) {
       return;
@@ -1691,7 +1706,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private async changeText(): Promise<void> {
-    if (this.projectDoc == null || this.text == null || this._chapter == null) {
+    if (this.projectDoc == null || this.text == null || this.chapter == null) {
       this.source!.id = undefined;
       this.target!.id = undefined;
       return;
@@ -1705,11 +1720,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     if (this.source != null) {
       this.source.id = this.hasSource
-        ? new TextDocId(this.projectDoc.data!.translateConfig.source!.projectRef, this.text.bookNum, this._chapter)
+        ? new TextDocId(this.projectDoc.data!.translateConfig.source!.projectRef, this.text.bookNum, this.chapter)
         : undefined;
     }
 
-    const targetId = new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'target');
+    const targetId = new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target');
 
     if (!isEqual(targetId, this.target.id)) {
       // blur the target before switching so that scrolling is reset to the top
@@ -1733,7 +1748,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       });
     });
 
-    await this.loadNoteThreadDocs(this.projectDoc.id, this.text.bookNum, this._chapter);
+    await this.loadNoteThreadDocs(this.projectDoc.id, this.text.bookNum, this.chapter);
   }
 
   private onStartTranslating(): void {
@@ -1748,7 +1763,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       selectedSegment == null &&
       this.projectUserConfigDoc?.data != null &&
       this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum &&
-      this.projectUserConfigDoc.data.selectedChapterNum === this._chapter &&
+      this.projectUserConfigDoc.data.selectedChapterNum === this.chapter &&
       this.projectUserConfigDoc.data.selectedSegment !== ''
     ) {
       selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
@@ -1774,8 +1789,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const translator: InteractiveTranslator | undefined =
-      await this.interactiveTranslatorFactory?.create(sourceSegment);
+    let translator: InteractiveTranslator | undefined;
+    if (this.translationSuggestionsEnabled) {
+      translator = await this.interactiveTranslatorFactory?.create(sourceSegment);
+    }
     if (translator == null) {
       this.translator = undefined;
       return;
@@ -2003,19 +2020,27 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private loadProjectUserConfig(chapterFromUrl?: number): void {
-    let chapter: number = chapterFromUrl ?? (this.chapters.length > 0 ? this.chapters[0] : 1);
+    let chapter: number = chapterFromUrl ?? this.chapters[0] ?? 1;
     this.loadTranslateSuggesterConfidence();
 
-    if (this.projectUserConfigDoc?.data != null) {
+    if (chapterFromUrl == null && this.projectUserConfigDoc?.data != null) {
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
-        if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
-          // Use chapter from url if specified
-          chapter = chapterFromUrl ?? this.projectUserConfigDoc.data.selectedChapterNum;
+        if (
+          this.projectUserConfigDoc.data.selectedChapterNum != null &&
+          this.chapters.includes(this.projectUserConfigDoc.data.selectedChapterNum)
+        ) {
+          chapter = this.projectUserConfigDoc.data.selectedChapterNum;
         }
       }
     }
+
+    if (!this.chapters.includes(chapter)) {
+      this.loadingFinished();
+      this.chapter = this.chapters[0] ?? 1;
+      return;
+    }
     this.toggleNoteThreadVerses(false);
-    this._chapter = chapter;
+    this.chapter$.next(chapter);
     this.changeText();
     this.toggleNoteThreadVerses(true);
     this.updateAutoDraftTabVisibility();
@@ -2437,7 +2462,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.noteThreadQuery?.docs == null ||
       this.noteThreadQuery.docs.length < 1 ||
       this.bookNum == null ||
-      this._chapter == null
+      this.chapter == null
     ) {
       return [];
     }
