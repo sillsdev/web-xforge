@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { escapeRegExp, merge } from 'lodash-es';
@@ -12,7 +12,7 @@ import { CommandService } from './command.service';
 import { DialogService } from './dialog.service';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog/edit-name-dialog.component';
 import { LocalSettingsService } from './local-settings.service';
-import { DocSubscriberInfo, DocSubscription, UNKNOWN_COMPONENT_OR_SERVICE } from './models/realtime-doc';
+import { DocSubscriberInfo, DocSubscription } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
@@ -39,7 +39,8 @@ export class UserService {
     private readonly commandService: CommandService,
     private readonly localSettings: LocalSettingsService,
     private readonly dialogService: DialogService,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   get currentUserId(): string {
@@ -66,7 +67,7 @@ export class UserService {
 
   /** Get currently-logged in user. */
   getCurrentUser(): Promise<UserDoc> {
-    return this.get(this.currentUserId, UNKNOWN_COMPONENT_OR_SERVICE);
+    return this.get(this.currentUserId, new DocSubscription('UserService', this.destroyRef));
   }
 
   subscribeCurrentUser(subscriber: DocSubscriberInfo): Promise<UserDoc> {
@@ -78,7 +79,11 @@ export class UserService {
   }
 
   getProfile(id: string): Promise<UserProfileDoc> {
-    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE);
+    return this.realtimeService.subscribe(
+      UserProfileDoc.COLLECTION,
+      id,
+      new DocSubscription('UserService', this.destroyRef)
+    );
   }
 
   subscribeProfile(id: string, subscriber: DocSubscriberInfo): Promise<UserProfileDoc> {

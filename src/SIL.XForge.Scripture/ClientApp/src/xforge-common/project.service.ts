@@ -1,3 +1,4 @@
+import { DestroyRef } from '@angular/core';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { ProjectRole } from 'realtime-server/lib/esm/common/models/project-role';
@@ -6,7 +7,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
-import { DocSubscriberInfo, UNKNOWN_COMPONENT_OR_SERVICE } from './models/realtime-doc';
+import { DocSubscriberInfo, DocSubscription } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { QueryFilter, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
@@ -23,7 +24,8 @@ export abstract class ProjectService<
     protected readonly realtimeService: RealtimeService,
     protected readonly commandService: CommandService,
     protected readonly retryingRequestService: RetryingRequestService,
-    roles: ProjectRoleInfo[]
+    roles: ProjectRoleInfo[],
+    protected readonly destroyRef: DestroyRef
   ) {
     this.roles = new Map<string, ProjectRoleInfo>();
     this.roles.set(NONE_ROLE.role, NONE_ROLE);
@@ -35,7 +37,7 @@ export abstract class ProjectService<
   protected abstract get collection(): string;
 
   fetch(id: string): Promise<TDoc> {
-    return this.realtimeService.subscribe(this.collection, id, UNKNOWN_COMPONENT_OR_SERVICE);
+    return this.realtimeService.subscribe(this.collection, id, new DocSubscription('ProjectService', this.destroyRef));
   }
 
   subscribe(id: string, subscriber: DocSubscriberInfo): Promise<TDoc> {

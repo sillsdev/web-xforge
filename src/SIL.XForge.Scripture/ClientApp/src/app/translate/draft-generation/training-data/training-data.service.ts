@@ -2,7 +2,7 @@ import { DestroyRef, Injectable } from '@angular/core';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -12,7 +12,10 @@ import { TrainingDataDoc } from '../../../core/models/training-data-doc';
   providedIn: 'root'
 })
 export class TrainingDataService {
-  constructor(private readonly realtimeService: RealtimeService) {}
+  constructor(
+    private readonly realtimeService: RealtimeService,
+    private readonly destroyRef: DestroyRef
+  ) {}
 
   async createTrainingDataAsync(trainingData: TrainingData): Promise<void> {
     const docId: string = getTrainingDataId(trainingData.projectRef, trainingData.dataId);
@@ -20,7 +23,7 @@ export class TrainingDataService {
       TrainingDataDoc.COLLECTION,
       docId,
       trainingData,
-      UNKNOWN_COMPONENT_OR_SERVICE
+      new DocSubscription('TrainingDataService', this.destroyRef)
     );
   }
 
@@ -30,7 +33,7 @@ export class TrainingDataService {
     const trainingDataDoc = this.realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
       docId,
-      UNKNOWN_COMPONENT_OR_SERVICE
+      new DocSubscription('TrainingDataService', this.destroyRef)
     );
     if (!trainingDataDoc.isLoaded) return;
 

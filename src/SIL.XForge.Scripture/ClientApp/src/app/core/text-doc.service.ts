@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { Delta } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -8,7 +8,7 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { type } from 'rich-text';
 import { Observable, Subject } from 'rxjs';
-import { DocSubscriberInfo, UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
+import { DocSubscriberInfo, DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { TextDoc, TextDocId, TextDocSource } from './models/text-doc';
@@ -23,7 +23,8 @@ export class TextDocService {
   constructor(
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly realtimeService: RealtimeService
+    private readonly realtimeService: RealtimeService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   /**
@@ -33,7 +34,10 @@ export class TextDocService {
    * @param {TextDocSource} source The source of the op. This is sent to the server.
    */
   async overwrite(textDocId: TextDocId, newDelta: Delta, source: TextDocSource): Promise<void> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId, UNKNOWN_COMPONENT_OR_SERVICE);
+    const textDoc: TextDoc = await this.projectService.getText(
+      textDocId,
+      new DocSubscription('TextDocService', this.destroyRef)
+    );
 
     if (textDoc.data?.ops == null) {
       throw new Error(`No TextDoc data for ${textDocId}`);

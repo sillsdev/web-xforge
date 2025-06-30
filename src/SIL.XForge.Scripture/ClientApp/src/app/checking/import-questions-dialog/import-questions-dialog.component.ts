@@ -11,7 +11,7 @@ import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
@@ -353,7 +353,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           this.checkingQuestionsService.createQuestion(
             this.data.projectId,
             newQuestion,
-            UNKNOWN_COMPONENT_OR_SERVICE,
+            new DocSubscription('ImportQuestionsDialogComponent', this.destroyRef),
             undefined,
             undefined
           )

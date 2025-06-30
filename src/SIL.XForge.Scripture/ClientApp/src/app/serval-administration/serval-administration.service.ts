@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
@@ -20,9 +20,10 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
     realtimeService: RealtimeService,
     commandService: CommandService,
     protected readonly retryingRequestService: RetryingRequestService,
-    private readonly httpClient: HttpClient
+    private readonly httpClient: HttpClient,
+    destroyRef: DestroyRef
   ) {
-    super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES);
+    super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES, destroyRef);
   }
 
   /**

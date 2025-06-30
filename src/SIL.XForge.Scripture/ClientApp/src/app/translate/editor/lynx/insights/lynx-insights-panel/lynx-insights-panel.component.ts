@@ -15,7 +15,7 @@ import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/act
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { UNKNOWN_COMPONENT_OR_SERVICE } from '../../../../../../xforge-common/models/realtime-doc';
+import { DocSubscription } from '../../../../../../xforge-common/models/realtime-doc';
 import { TextDoc } from '../../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../../core/sf-project.service';
 import { getText, rangeComparer } from '../../../../../shared/text/quill-util';
@@ -769,7 +769,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
 
     // Create and cache the promise for loading the document
     const textDocPromise = this.projectService
-      .getText(insight.textDocId, UNKNOWN_COMPONENT_OR_SERVICE)
+      .getText(insight.textDocId, new DocSubscription('LynxInsightsPanelComponent', this.destroyRef))
       .then(textDoc => {
         // Update segment map for text doc
         if (textDoc.data?.ops != null) {

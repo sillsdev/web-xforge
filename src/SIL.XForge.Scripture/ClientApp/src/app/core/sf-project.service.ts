@@ -17,7 +17,7 @@ import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
-import { DocSubscriberInfo, UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
+import { DocSubscriberInfo, DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
@@ -49,9 +49,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     realtimeService: RealtimeService,
     commandService: CommandService,
     private readonly locationService: LocationService,
-    protected readonly retryingRequestService: RetryingRequestService
+    protected readonly retryingRequestService: RetryingRequestService,
+    destroyRef: DestroyRef
   ) {
-    super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES);
+    super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES, destroyRef);
   }
 
   static hasDraft(project: SFProjectProfile): boolean {
@@ -84,7 +85,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   /** Returns the project profile with the project data that all project members can access. */
   getProfile(id: string): Promise<SFProjectProfileDoc> {
-    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE);
+    return this.realtimeService.subscribe(
+      SFProjectProfileDoc.COLLECTION,
+      id,
+      new DocSubscription('SFProjectService', this.destroyRef)
+    );
   }
 
   subscribeProfile(id: string, subscriber: DocSubscriberInfo): Promise<SFProjectProfileDoc> {

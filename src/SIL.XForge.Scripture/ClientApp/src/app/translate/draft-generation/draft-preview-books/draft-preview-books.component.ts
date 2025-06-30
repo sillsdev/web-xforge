@@ -12,7 +12,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { DocSubscription, UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -163,7 +163,10 @@ export class DraftPreviewBooksComponent {
       await this.projectService.onlineAddChapters(result.projectId, bookWithDraft.bookNumber, missingChapters);
       for (const chapter of missingChapters) {
         const textDocId = new TextDocId(result.projectId, bookWithDraft.bookNumber, chapter);
-        await this.textDocService.createTextDoc(textDocId, UNKNOWN_COMPONENT_OR_SERVICE);
+        await this.textDocService.createTextDoc(
+          textDocId,
+          new DocSubscription('DraftPreviewBooksComponent', this.destroyRef)
+        );
       }
     }
     await this.applyBookDraftAsync(bookWithDraft, result.projectId);

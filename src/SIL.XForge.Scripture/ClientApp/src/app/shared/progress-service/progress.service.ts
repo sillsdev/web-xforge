@@ -3,7 +3,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { asyncScheduler, merge, startWith, Subscription, throttleTime } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { DocSubscription, UNKNOWN_COMPONENT_OR_SERVICE } from 'xforge-common/models/realtime-doc';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -136,7 +136,10 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     let numTranslatedSegments: number = 0;
     for (const chapter of book.text.chapters) {
       const textDocId = new TextDocId(project.id, book.text.bookNum, chapter.number, 'target');
-      const chapterText: TextDoc = await this.projectService.getText(textDocId, UNKNOWN_COMPONENT_OR_SERVICE);
+      const chapterText: TextDoc = await this.projectService.getText(
+        textDocId,
+        new DocSubscription('ProgressService', this.destroyRef)
+      );
 
       // Calculate Segment Count
       const { translated, blank } = chapterText.getSegmentCount();
@@ -161,7 +164,7 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         if (await this.permissionsService.canAccessText(sourceTextDocId)) {
           const sourceChapterText: TextDoc = await this.projectService.getText(
             sourceTextDocId,
-            UNKNOWN_COMPONENT_OR_SERVICE
+            new DocSubscription('ProgressService', this.destroyRef)
           );
           sourceNonEmptyVerses = sourceChapterText.getNonEmptyVerses();
         }
