@@ -15,15 +15,10 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { SharedModule } from '../../../shared/shared.module';
-import { TrainingDataService } from './training-data.service';
 
 export interface TrainingDataUploadDialogData {
   projectId: string;
   availableTrainingData: TrainingData[];
-}
-
-export interface TrainingDataUploadDialogResult {
-  dataId: string;
 }
 
 export interface TrainingDataFileUpload {
@@ -59,13 +54,9 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
   constructor(
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: TrainingDataUploadDialogData,
-    private readonly dialogRef: MatDialogRef<
-      TrainingDataUploadDialogComponent,
-      TrainingDataUploadDialogResult | undefined
-    >,
+    private readonly dialogRef: MatDialogRef<TrainingDataUploadDialogComponent, TrainingData | undefined>,
     private readonly dialogService: DialogService,
     private readonly fileService: FileService,
-    private readonly trainingDataService: TrainingDataService,
     private readonly userService: UserService
   ) {}
 
@@ -144,9 +135,8 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
       skipRows: (this.skipFirstRow?.checked ?? false) ? 1 : 0,
       title: this.trainingDataFile!.fileName!
     };
-    await this.trainingDataService.createTrainingDataAsync(trainingData);
 
-    this.dialogRef.close({ dataId });
+    this.dialogRef.close(trainingData);
   }
 
   /**
