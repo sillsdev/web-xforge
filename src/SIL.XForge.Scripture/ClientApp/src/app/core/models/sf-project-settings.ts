@@ -8,7 +8,7 @@ export interface SFProjectSettings {
   sourceParatextId?: string | null;
   biblicalTermsEnabled?: boolean | null;
 
-  additionalTrainingData?: boolean | null;
+  additionalTrainingDataFiles?: string[] | null;
   additionalTrainingSourceEnabled?: boolean | null;
   additionalTrainingSourceParatextId?: string | null;
   alternateSourceEnabled?: boolean | null;

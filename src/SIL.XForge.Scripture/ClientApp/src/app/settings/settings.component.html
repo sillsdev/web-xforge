@@ -138,22 +138,6 @@
                       </p>
                     }
                   }
-
-                  <div class="tool-setting">
-                    <div class="tool-setting-field checkbox-field">
-                      <mat-checkbox
-                        formControlName="additionalTrainingData"
-                        id="checkbox-pre-translation-additional-training-data"
-                        >{{ t("pre_translation_additional_training_data") }}</mat-checkbox
-                      >
-                      <app-info [text]="t('pre_translation_additional_training_data_info')"></app-info>
-                      <app-write-status
-                        [state]="getControlState('additionalTrainingData')"
-                        [formGroup]="form"
-                        id="pre-translation-additional-training-data-status"
-                      ></app-write-status>
-                    </div>
-                  </div>
                 }
                 @if (canUpdateServalConfig) {
                   <p

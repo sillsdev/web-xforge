@@ -12,11 +12,13 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
+import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftSourcesComponent } from '../../../translate/draft-generation/draft-sources/draft-sources.component';
+import { TrainingDataService } from '../training-data/training-data.service';
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedDestroyRef = mock(DestroyRef);
@@ -26,6 +28,8 @@ const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedRouter = mock(Router);
 const mockedAuthService = mock(AuthService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
+const mockedTrainingDataService = mock(TrainingDataService);
+const mockedUserService = mock(UserService);
 
 const blankProjectDoc = { id: 'project1', data: createTestProjectProfile() } as SFProjectProfileDoc;
 
@@ -156,6 +160,8 @@ export default {
         { provide: Router, useValue: instance(mockedRouter) },
         { provide: AuthService, useValue: instance(mockedAuthService) },
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
+        { provide: TrainingDataService, useValue: instance(mockedTrainingDataService) },
+        { provide: UserService, useValue: instance(mockedUserService) },
         defaultTranslocoMarkupTranspilers()
       ]
     })
