@@ -37,6 +37,7 @@ const NEVER_RESOLVING_DOC_SUBSCRIPTION = new DocSubscription('UNKNOWN_COMPONENT_
 })
 export class RealtimeService {
   protected readonly docs = new Map<string, RealtimeDoc>();
+  protected readonly docSubscriptions = new Set<DocSubscription>();
   protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
 
   constructor(
@@ -55,33 +56,33 @@ export class RealtimeService {
       const doc: RealtimeDoc | undefined = this.docs.get(getDocKey(collection, docId));
       await doc?.updateOfflineData();
     });
-    this.scheduleNextGarbageCollection();
+    // this.scheduleNextGarbageCollection();
   }
 
-  runGarbageCollection(): void {
-    let disposedDocs = 0;
-    const initialDocsCount = this.docs.size;
-    for (const doc of this.docs.values()) {
-      if (doc.activeDocSubscriptionsCount === 0) {
-        void doc.dispose();
-        disposedDocs++;
-      }
-    }
-    const remainingDocsCount = initialDocsCount - disposedDocs;
-    console.log(`Garbage collection: disposed ${disposedDocs} documents. ${remainingDocsCount} documents remaining.`);
+  // runGarbageCollection(): void {
+  //   let disposedDocs = 0;
+  //   const initialDocsCount = this.docs.size;
+  //   for (const doc of this.docs.values()) {
+  //     if (doc.activeDocSubscriptionsCount === 0) {
+  //       void doc.dispose();
+  //       disposedDocs++;
+  //     }
+  //   }
+  //   const remainingDocsCount = initialDocsCount - disposedDocs;
+  //   console.log(`Garbage collection: disposed ${disposedDocs} documents. ${remainingDocsCount} documents remaining.`);
 
-    this.scheduleNextGarbageCollection();
-  }
+  //   this.scheduleNextGarbageCollection();
+  // }
 
-  scheduleNextGarbageCollection(): void {
-    setTimeout(() => {
-      if (window.requestIdleCallback == null) {
-        this.runGarbageCollection();
-      } else {
-        window.requestIdleCallback(() => this.runGarbageCollection(), { timeout: 5000 });
-      }
-    }, 1000);
-  }
+  // scheduleNextGarbageCollection(): void {
+  //   setTimeout(() => {
+  //     if (window.requestIdleCallback == null) {
+  //       this.runGarbageCollection();
+  //     } else {
+  //       window.requestIdleCallback(() => this.runGarbageCollection(), { timeout: 5000 });
+  //     }
+  //   }, 1000);
+  // }
 
   get totalDocCount(): number {
     return this.docs.size;
@@ -119,7 +120,7 @@ export class RealtimeService {
       for (const subscriber of doc.docSubscriptions) {
         countsByContext[collection][subscriber.callerContext] ??= { all: 0, active: 0 };
         countsByContext[collection][subscriber.callerContext].all++;
-        if (!subscriber.isUnsubscribed) {
+        if (!subscriber.isUnsubscribed$.getValue()) {
           countsByContext[collection][subscriber.callerContext].active++;
         }
       }

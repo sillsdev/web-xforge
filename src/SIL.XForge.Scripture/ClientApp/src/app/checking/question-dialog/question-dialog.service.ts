@@ -108,11 +108,14 @@ export class QuestionDialogService {
 
   private async canCreateAndEditQuestions(projectId: string): Promise<boolean> {
     const userId = this.userService.currentUserId;
-    const project = (await this.projectService.getProfile(projectId)).data;
-    return (
+    const docSubscription = new DocSubscription('QuestionDialogService.canCreateAndEditQuestions');
+    const project = (await this.projectService.getProfile(projectId, docSubscription)).data;
+    const result =
       project != null &&
       SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create) &&
-      SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit)
-    );
+      SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit);
+
+    docSubscription.unsubscribe();
+    return result;
   }
 }

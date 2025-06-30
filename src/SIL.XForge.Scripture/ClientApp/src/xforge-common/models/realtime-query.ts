@@ -145,7 +145,8 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       this._ready$.next(true);
     } else {
       this._docs = this.adapter.docIds.map(id =>
-        this.realtimeService.get(this.collection, id, new DocSubscription('RealtimeQuery'))
+        // FIXME implement proper destroyRef handling
+        this.realtimeService.get(this.collection, id, new DocSubscription('RealtimeQuery', new Subject<void>()))
       );
       this._count = this.adapter.count;
       this._unpagedCount = this.adapter.unpagedCount;
@@ -203,7 +204,12 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     const newDocs: T[] = [];
     const promises: Promise<void>[] = [];
     for (const docId of docIds) {
-      const newDoc = this.realtimeService.get<T>(this.collection, docId, new DocSubscription('RealtimeQuery'));
+      const newDoc = this.realtimeService.get<T>(
+        this.collection,
+        docId,
+        // FIXME implement proper destroyRef handling
+        new DocSubscription('RealtimeQuery', new Subject<void>())
+      );
       promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);
       const docSubscription = newDoc.remoteChanges$.subscribe(() => {

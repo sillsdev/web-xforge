@@ -7,6 +7,7 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
+import { DocSubscription } from '../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import {
   roleCanAccessCommunityChecking,
@@ -48,22 +49,31 @@ export class PermissionsService {
   }
 
   async isUserOnProject(projectId: string): Promise<boolean> {
-    const currentUserDoc = await this.userService.getCurrentUser();
-    return currentUserDoc?.data?.sites[environment.siteId].projects.includes(projectId) ?? false;
+    const docSubscription = new DocSubscription('PermissionsService.isUserOnProject');
+    const currentUserDoc = await this.userService.getCurrentUser(docSubscription);
+    const result = currentUserDoc?.data?.sites[environment.siteId].projects.includes(projectId) ?? false;
+    docSubscription.unsubscribe();
+    return result;
   }
 
   async userHasParatextRoleOnProject(projectId: string): Promise<boolean> {
-    const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
-    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId);
-    return isParatextRole(projectDoc.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
+    const docSubscription = new DocSubscription('PermissionsService.userHasParatextRoleOnProject');
+    const currentUserDoc: UserDoc = await this.userService.getCurrentUser(docSubscription);
+    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId, docSubscription);
+    const result = isParatextRole(projectDoc.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
+    docSubscription.unsubscribe();
+    return result;
   }
 
   async canAccessText(textDocId: TextDocId): Promise<boolean> {
     // Get the project doc, if the user is on that project
     let projectDoc: SFProjectProfileDoc | undefined;
+    const docSubscription = new DocSubscription('PermissionsService.canAccessText');
     if (textDocId.projectId != null) {
       const isUserOnProject = await this.isUserOnProject(textDocId.projectId);
-      projectDoc = isUserOnProject ? await this.projectService.getProfile(textDocId.projectId) : undefined;
+      projectDoc = isUserOnProject
+        ? await this.projectService.getProfile(textDocId.projectId, docSubscription)
+        : undefined;
     }
 
     // Ensure the user has project level permission to view the text
@@ -75,12 +85,14 @@ export class PermissionsService {
       const chapter: Chapter | undefined = projectDoc.data.texts
         .find(t => t.bookNum === textDocId.bookNum)
         ?.chapters.find(c => c.number === textDocId.chapterNum);
+      docSubscription.unsubscribe();
       if (chapter != null) {
         const chapterPermission: string = chapter.permissions[this.userService.currentUserId];
         return chapterPermission === TextInfoPermission.Write || chapterPermission === TextInfoPermission.Read;
       }
     }
 
+    docSubscription.unsubscribe();
     return false;
   }
 

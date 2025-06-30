@@ -84,12 +84,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /** Returns the project profile with the project data that all project members can access. */
-  getProfile(id: string): Promise<SFProjectProfileDoc> {
-    return this.realtimeService.subscribe(
-      SFProjectProfileDoc.COLLECTION,
-      id,
-      new DocSubscription('SFProjectService', this.destroyRef)
-    );
+  getProfile(id: string, docSubscription: DocSubscription): Promise<SFProjectProfileDoc> {
+    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, docSubscription);
   }
 
   subscribeProfile(id: string, subscriber: DocSubscriberInfo): Promise<SFProjectProfileDoc> {
@@ -105,7 +101,9 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async isProjectAdmin(projectId: string, userId: string): Promise<boolean> {
-    const projectDoc = await this.getProfile(projectId);
+    const docSubscription = new DocSubscription('SFProjectService.isProjectAdmin');
+    const projectDoc = await this.getProfile(projectId, docSubscription);
+    docSubscription.unsubscribe();
     return (
       projectDoc != null &&
       projectDoc.data != null &&

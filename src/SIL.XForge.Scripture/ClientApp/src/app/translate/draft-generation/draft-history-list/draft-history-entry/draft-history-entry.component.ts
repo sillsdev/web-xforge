@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, DestroyRef, Input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
+import { DocSubscription } from '../../../../../xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
@@ -79,14 +80,23 @@ export class DraftHistoryEntryComponent {
         // The engine ID is the target project ID
         let target: SFProjectProfileDoc | undefined = undefined;
         if (this.entry?.engine.id != null) {
-          target = await this.projectService.getProfile(this.entry?.engine.id);
+          target = await this.projectService.getProfile(
+            this.entry?.engine.id,
+            new DocSubscription('DraftHistoryEntry', this.destroyRef)
+          );
         }
 
         // Get the target language, if it is not already set
         this._targetLanguage ??= target?.data?.writingSystem.tag;
 
         // Get the source project, if it is configured
-        const source = r.projectId === '' ? undefined : await this.projectService.getProfile(r.projectId);
+        const source =
+          r.projectId === ''
+            ? undefined
+            : await this.projectService.getProfile(
+                r.projectId,
+                new DocSubscription('DraftHistoryEntry', this.destroyRef)
+              );
 
         // Get the source language, if it is not already set
         this._sourceLanguage ??= source?.data?.writingSystem.tag;
@@ -156,7 +166,8 @@ export class DraftHistoryEntryComponent {
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    readonly featureFlags: FeatureFlagService
+    readonly featureFlags: FeatureFlagService,
+    readonly destroyRef: DestroyRef
   ) {}
 
   get scriptureRange(): string {

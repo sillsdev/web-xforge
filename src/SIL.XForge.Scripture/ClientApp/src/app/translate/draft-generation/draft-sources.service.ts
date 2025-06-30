@@ -97,7 +97,8 @@ export class DraftSourcesService {
     let project: SFProjectProfile | undefined;
     if (source === currentProjectDoc?.data) project = currentProjectDoc.data;
     else if (currentUser.data?.sites[environment.siteId].projects?.includes(projectId)) {
-      project = (await this.projectService.getProfile(projectId)).data;
+      project = (await this.projectService.getProfile(projectId, new DocSubscription('DraftSources', this.destroyRef)))
+        .data;
     }
 
     if (project != null) {

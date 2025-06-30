@@ -66,8 +66,9 @@ export class UserService {
   }
 
   /** Get currently-logged in user. */
-  getCurrentUser(): Promise<UserDoc> {
-    return this.get(this.currentUserId, new DocSubscription('UserService', this.destroyRef));
+  getCurrentUser(docSubscription?: DocSubscription): Promise<UserDoc> {
+    docSubscription ??= new DocSubscription('UserService.getCurrentuser', this.destroyRef);
+    return this.get(this.currentUserId, docSubscription);
   }
 
   subscribeCurrentUser(subscriber: DocSubscriberInfo): Promise<UserDoc> {
@@ -82,7 +83,7 @@ export class UserService {
     return this.realtimeService.subscribe(
       UserProfileDoc.COLLECTION,
       id,
-      new DocSubscription('UserService', this.destroyRef)
+      new DocSubscription('UserService.getProfile', this.destroyRef)
     );
   }
 
@@ -120,7 +121,9 @@ export class UserService {
   }
 
   async editDisplayName(isConfirmation: boolean): Promise<void> {
-    const currentUserDoc = await this.subscribeCurrentUser(new DocSubscription('UserService'));
+    const currentUserDoc = await this.subscribeCurrentUser(
+      new DocSubscription('UserService.editDisplayName', this.destroyRef)
+    );
     if (currentUserDoc.data == null) {
       return;
     }

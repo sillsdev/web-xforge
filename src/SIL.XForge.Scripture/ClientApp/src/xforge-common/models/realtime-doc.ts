@@ -1,5 +1,5 @@
 import { DestroyRef } from '@angular/core';
-import { merge, Observable, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, merge, Observable, Subject, Subscription } from 'rxjs';
 import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { PresenceData } from '../../app/shared/text/text.component';
@@ -26,16 +26,9 @@ export interface RealtimeDocConstructor {
  *
  * In the future this class may be changed to contain a DestroyRef, callback, or some other way of signaling that the
  * subscriber has unsubscribed.
- *
- * In principle a realtime doc can be disposed once every subscriber has unsubscribed. However, some methods only need
- * a copy of a document at a point in time (e.g. checking permissions) and don't need to be notified of changes. Those
- * methods can provide a {@link UNKNOWN_COMPONENT_OR_SERVICE} symbol as the subscriber to indicate that they don't need to be
- * notified of changes, and the document is fetched and returned without subscribing to changes. Disposing such
- * documents when they have no subscribers would result in them being repeatedly fetched and disposed, which would be a
- * serious performance issue.
  */
 export class DocSubscription {
-  isUnsubscribed: boolean = false;
+  isUnsubscribed$ = new BehaviorSubject<boolean>(false);
 
   /**
    * Creates a new DocSubscription.
@@ -43,25 +36,37 @@ export class DocSubscription {
    */
   constructor(
     readonly callerContext: string,
-    destroyRef?: DestroyRef
+    destroyRef?: DestroyRef | Observable<void>
   ) {
+    if (destroyRef == null) return;
     try {
-      destroyRef?.onDestroy(() => (this.isUnsubscribed = true));
+      if ('onDestroy' in destroyRef) destroyRef.onDestroy(() => this.complete());
+      else destroyRef.subscribe(() => this.complete());
     } catch (error) {
       if (!isNG0911Error(error)) throw error;
     }
+  }
+
+  private complete(): void {
+    this.isUnsubscribed$.next(true);
+    this.isUnsubscribed$.complete();
+  }
+
+  /**
+   * Marks the subscriber as no longer needing the document(s) subscribed to. This is an alternative to providing a
+   * DestroyRef or Observable to the constructor.
+   */
+  unsubscribe(): void {
+    this.complete();
   }
 
   /**
    * Creates a new DocSubscription that represents an unknown subscriber (a temporary solution to track subscribers
    * that don't yet provide a DestroyRef).
    */
-  static UnknownSubscriber = new DocSubscription('UnknownSubscriber');
+  static UnknownSubscriber = new DocSubscription('UnknownSubscriber', new Subject<void>());
 }
 
-/**
- * An alternative to a {@link DocSubscription} indicating that the document should be fetched and returned without being
- * subscribed to. */
 export const UNKNOWN_COMPONENT_OR_SERVICE = Symbol('UNKNOWN_COMPONENT_OR_SERVICE');
 
 export type DocSubscriberInfo = DocSubscription | typeof UNKNOWN_COMPONENT_OR_SERVICE;
@@ -239,6 +244,13 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
 
   addSubscriber(docSubscription: DocSubscription): void {
     this.docSubscriptions.push(docSubscription);
+    docSubscription.isUnsubscribed$.subscribe(() => {
+      if (this.activeDocSubscriptionsCount === 0) {
+        this.dispose().catch(error => {
+          console.error(`Error disposing RealtimeDoc ${this.id}:`, error);
+        });
+      }
+    });
   }
 
   get docSubscriptionsCount(): number {
@@ -248,7 +260,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   get activeDocSubscriptionsCount(): number {
     let count = 0;
     for (const docSubscription of this.docSubscriptions) {
-      if (!docSubscription.isUnsubscribed) count++;
+      if (!docSubscription.isUnsubscribed$.getValue()) count++;
     }
     return count;
   }
