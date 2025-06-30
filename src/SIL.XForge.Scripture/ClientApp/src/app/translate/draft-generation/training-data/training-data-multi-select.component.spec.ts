@@ -97,11 +97,15 @@ describe('TrainingDataMultiSelectComponent', () => {
   }));
 
   it('should delete training data', fakeAsync(async () => {
+    let result: TrainingData[] = [];
+    component.trainingDataSelect.subscribe((_result: TrainingData[]) => {
+      result = _result;
+    });
     await component.deleteTrainingData(mockTrainingData[0]);
     tick();
 
     verify(mockTrainingDataService.deleteTrainingDataAsync(mockTrainingData[0])).once();
-    expect().nothing();
+    expect(result).not.toContain(mockTrainingData[0]);
   }));
 
   it('should show the upload dialog', fakeAsync(() => {

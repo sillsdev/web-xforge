@@ -53,6 +53,8 @@ export class TrainingDataMultiSelectComponent {
     );
     if (!confirmation) return;
     await this.trainingDataService.deleteTrainingDataAsync(trainingData);
+
+    this.trainingDataSelect.emit([...this.availableTrainingData.filter(td => td !== trainingData)]);
   }
 
   openUploadDialog(): void {
