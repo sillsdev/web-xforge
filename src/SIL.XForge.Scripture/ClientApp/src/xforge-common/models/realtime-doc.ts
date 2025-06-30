@@ -89,7 +89,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   private subscribedState: boolean = false;
   private subscribeQueryCount: number = 0;
   private loadOfflineDataPromise?: Promise<void>;
-  docSubscriptions: DocSubscription[] = [];
+  docSubscriptions = new Set<DocSubscription>();
 
   constructor(
     protected readonly realtimeService: RealtimeService,
@@ -243,18 +243,24 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   }
 
   addSubscriber(docSubscription: DocSubscription): void {
-    this.docSubscriptions.push(docSubscription);
-    docSubscription.isUnsubscribed$.subscribe(() => {
-      if (this.activeDocSubscriptionsCount === 0) {
-        this.dispose().catch(error => {
-          console.error(`Error disposing RealtimeDoc ${this.id}:`, error);
-        });
-      }
+    this.docSubscriptions.add(docSubscription);
+    docSubscription.isUnsubscribed$.subscribe(isUnsubscribed => {
+      if (!isUnsubscribed) return;
+
+      this.docSubscriptions.delete(docSubscription);
+
+      // Add a delay to prevent thrashing if another component immediately resubscribes.
+      setTimeout(() => {
+        if (this.activeDocSubscriptionsCount === 0) {
+          console.log(`No active subscribers for ${this.collection}/${this.id}. Disposing...`);
+          this.dispose();
+        }
+      }, 5_000);
     });
   }
 
   get docSubscriptionsCount(): number {
-    return this.docSubscriptions.length;
+    return this.docSubscriptions.size;
   }
 
   get activeDocSubscriptionsCount(): number {

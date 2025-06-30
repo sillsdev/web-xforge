@@ -136,10 +136,8 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     let numTranslatedSegments: number = 0;
     for (const chapter of book.text.chapters) {
       const textDocId = new TextDocId(project.id, book.text.bookNum, chapter.number, 'target');
-      const chapterText: TextDoc = await this.projectService.getText(
-        textDocId,
-        new DocSubscription('ProgressService', this.destroyRef)
-      );
+      const docSubscriptionForSource = new DocSubscription('ProgressService');
+      const chapterText: TextDoc = await this.projectService.getText(textDocId, docSubscriptionForSource);
 
       // Calculate Segment Count
       const { translated, blank } = chapterText.getSegmentCount();
@@ -162,11 +160,13 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         // Only retrieve the source text if the user has permission
         let sourceNonEmptyVerses: string[] = [];
         if (await this.permissionsService.canAccessText(sourceTextDocId)) {
+          const docSubscriptionForTarget = new DocSubscription('ProgressService');
           const sourceChapterText: TextDoc = await this.projectService.getText(
             sourceTextDocId,
-            new DocSubscription('ProgressService', this.destroyRef)
+            docSubscriptionForTarget
           );
           sourceNonEmptyVerses = sourceChapterText.getNonEmptyVerses();
+          docSubscriptionForTarget.unsubscribe();
         }
 
         // Get the intersect of the source and target arrays of non-empty verses
@@ -178,6 +178,7 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
           this._canTrainSuggestions = true;
         }
       }
+      docSubscriptionForSource.unsubscribe();
     }
   }
 }
