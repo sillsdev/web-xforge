@@ -83,7 +83,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   trainingSources: (SelectableProjectWithLanguageCode | undefined)[] = [];
   trainingTargets: SFProjectProfile[] = [];
   draftingSources: (SelectableProjectWithLanguageCode | undefined)[] = [];
-  selectedTrainingFileIds: string[] = [];
   availableTrainingFiles: Readonly<TrainingData>[] = [];
 
   projects?: SelectableProject[];
@@ -103,9 +102,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   protected changesMade = false;
 
   private controlStates = new Map<string, ElementState>();
-  private isTrainingDataInitialized: boolean = false;
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataQuerySubscription?: Subscription;
+  private savedTrainingFiles?: Readonly<TrainingData>[];
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -159,7 +158,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   }
 
   private async initializeTrainingFiles(projectDoc: SFProjectProfileDoc): Promise<void> {
-    this.isTrainingDataInitialized = false;
     // Query for all training data files in the project
     this.trainingDataQuery?.dispose();
     this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id, this.destroyRef);
@@ -176,12 +174,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
       .subscribe(() => {
         this.availableTrainingFiles = [];
         this.availableTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
-        if (!this.isTrainingDataInitialized) {
-          this.isTrainingDataInitialized = true;
-
-          const availableFiles: string[] = this.availableTrainingFiles.map(d => d.dataId);
-          this.selectedTrainingFileIds = availableFiles.length > 0 ? availableFiles : [];
-        }
+        this.savedTrainingFiles = this.availableTrainingFiles.slice();
       });
   }
 
@@ -237,8 +230,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     return this.trainingTargets[0]!.writingSystem.tag;
   }
 
-  onTrainingDataSelect(selectedTrainingDataIds: string[]): void {
-    this.selectedTrainingFileIds = selectedTrainingDataIds;
+  onTrainingDataSelect(newTrainingFiles: TrainingData[]): void {
+    this.availableTrainingFiles = newTrainingFiles;
     this.changesMade = true;
   }
 
@@ -375,11 +368,14 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
       return;
     }
 
+    const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
+    addedFiles.forEach(f => this.trainingDataService.createTrainingDataAsync(f));
+
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
       definedReferences,
       definedSources,
       this.trainingTargets,
-      this.selectedTrainingFileIds,
+      this.availableTrainingFiles.map(td => td.dataId),
       currentProjectDoc.data.paratextId
     );
     await this.checkUpdateStatus(

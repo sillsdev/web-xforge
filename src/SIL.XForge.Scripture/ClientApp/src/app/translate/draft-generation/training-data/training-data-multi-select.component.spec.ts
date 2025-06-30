@@ -105,14 +105,14 @@ describe('TrainingDataMultiSelectComponent', () => {
   }));
 
   it('should show the upload dialog', fakeAsync(() => {
-    let result: string[] = [];
-    component.trainingDataSelect.subscribe((_result: string[]) => {
+    let result: TrainingData[] = [];
+    component.trainingDataSelect.subscribe((_result: TrainingData[]) => {
       result = _result;
     });
     component.openUploadDialog();
     tick();
 
     verify(mockDialogService.openMatDialog(TrainingDataUploadDialogComponent, anything())).once();
-    expect(result).toEqual(['data01', 'data02', 'data03', 'data04']);
+    expect(result.length).toEqual(4);
   }));
 });

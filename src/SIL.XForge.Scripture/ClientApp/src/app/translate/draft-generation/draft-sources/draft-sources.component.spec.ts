@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of, Subject } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
@@ -320,7 +321,7 @@ describe('DraftSourcesComponent', () => {
         additionalTrainingDataFiles: ['test1', 'test2']
       };
 
-      env.component.onTrainingDataSelect(['test1', 'test2']);
+      env.component.onTrainingDataSelect([{ dataId: 'test1' } as TrainingData, { dataId: 'test2' } as TrainingData]);
 
       env.component.save();
       tick();
@@ -329,6 +330,25 @@ describe('DraftSourcesComponent', () => {
         mockedSFProjectService.onlineUpdateSettings
       ).last()[1];
       expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+    }));
+
+    it('creates training data for added files', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      env.clickLanguageCodesConfirmationCheckbox();
+
+      const savedFile = {} as TrainingData;
+      when(mockTrainingDataQuery.docs).thenReturn([{ data: savedFile } as TrainingDataDoc]);
+      trainingDataQueryLocalChanges$.next();
+
+      expect(env.component.availableTrainingFiles.length).toEqual(1);
+
+      const newFile = { dataId: 'test1' } as TrainingData;
+      env.component.onTrainingDataSelect([newFile]);
+      env.component.save();
+
+      verify(mockTrainingDataService.createTrainingDataAsync(newFile)).once();
     }));
   });
 

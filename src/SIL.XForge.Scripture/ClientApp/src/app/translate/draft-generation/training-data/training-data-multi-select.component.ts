@@ -28,7 +28,7 @@ import { TrainingDataService } from './training-data.service';
 })
 export class TrainingDataMultiSelectComponent {
   @Input() availableTrainingData: TrainingData[] = [];
-  @Output() trainingDataSelect = new EventEmitter<string[]>();
+  @Output() trainingDataSelect = new EventEmitter<TrainingData[]>();
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -68,7 +68,7 @@ export class TrainingDataMultiSelectComponent {
       }
 
       // Emit the selection event
-      this.trainingDataSelect.emit([...this.availableTrainingData.map(td => td.dataId), result.dataId]);
+      this.trainingDataSelect.emit([...this.availableTrainingData, result]);
     });
   }
 }
