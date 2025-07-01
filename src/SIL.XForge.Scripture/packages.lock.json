@@ -157,6 +157,12 @@
           "icu.net": "2.9.0"
         }
       },
+      "Reinforced.Typings": {
+        "type": "Direct",
+        "requested": "[1.6.5, )",
+        "resolved": "1.6.5",
+        "contentHash": "IUoJBwl8NsbcWELUY3WaIlfPFzceShjiTeNq/a5ymzw0UsiKx+sKwD9HdWWQBwx+l+iVVBi7i5tAcmFw4eKG2A=="
+      },
       "Serval.Client": {
         "type": "Direct",
         "requested": "[1.9.1, )",
