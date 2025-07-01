@@ -308,8 +308,6 @@ public class ParatextService : DisposableBase, IParatextService
                     sharedProj.Permissions = new ParatextRegistryPermissionManager(username, permissionManager);
                 }
 
-                List<SharedProject> sharedPtProjectsToSr = [sharedProj];
-
                 // If we are in development, unlock the repo before we begin,
                 // just in case the repo is locked.
                 if (_env.IsDevelopment())
@@ -323,11 +321,13 @@ public class ParatextService : DisposableBase, IParatextService
                         // A 403 error will be thrown if the repo is not locked
                     }
                 }
+
                 // ShareChanges() will fail silently if the user is an Observer,
                 // so throw an error if the user is an Observer in the Registry
                 // and there are outgoing changes to share.
+                bool userIsAnObserver = !sharedProj.Permissions.HaveRoleNotObserver;
                 if (
-                    !sharedPtProjectsToSr.All(s => s.Permissions.HaveRoleNotObserver)
+                    userIsAnObserver
                     && (
                         syncMetrics.ParatextBooks != new SyncMetricInfo()
                         || syncMetrics.ParatextNotes != new SyncMetricInfo()
@@ -339,6 +339,7 @@ public class ParatextService : DisposableBase, IParatextService
                 }
 
                 // TODO report results
+                List<SharedProject> sharedPtProjectsToSr = [sharedProj];
                 List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
                 bool success = false;
                 bool noErrors = SharingLogicWrapper.HandleErrors(() =>
