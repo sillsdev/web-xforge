@@ -1091,7 +1091,8 @@ class TestEnvironment {
   }
 
   get basedOnSelectValue(): string {
-    return this.basedOnSelectComponent.paratextIdControl.value?.name || '';
+    const value = this.basedOnSelectComponent.paratextIdControl.value;
+    return typeof value === 'object' && value != null ? value.name : '';
   }
 
   get basedOnSelectComponent(): ProjectSelectComponent {

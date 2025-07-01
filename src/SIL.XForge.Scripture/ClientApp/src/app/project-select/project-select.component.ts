@@ -1,11 +1,12 @@
 import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnDestroy, Output, ViewChild } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ValidatorFn } from '@angular/forms';
+import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, ValidatorFn } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { translate } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, map, shareReplay, startWith, takeUntil, tap } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { hasPropWithValue } from '../../type-utils';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
 import { projectLabel } from '../shared/utils';
@@ -33,7 +34,7 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   @ViewChild(MatAutocompleteTrigger)
   autocompleteTrigger!: MatAutocompleteTrigger;
 
-  readonly paratextIdControl = new UntypedFormControl('', [SFValidators.selectableProject(true)]);
+  readonly paratextIdControl = new FormControl<string | SelectableProject>('', [SFValidators.selectableProject(true)]);
   private allProjects$ = new BehaviorSubject<SelectableProject[] | undefined>(undefined);
   private allResources$ = new BehaviorSubject<SelectableProject[] | undefined>(undefined);
 
@@ -71,7 +72,7 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
     this.hiddenParatextIds$,
     this.allProjects$.pipe(startWith([]))
   ]).pipe(
-    map(([inputValue, _hiddenIds, projects]) => this.filterGroup(inputValue, projects ?? [])),
+    map(([inputValue, _hiddenIds, projects]) => this.filterGroup(inputValue ?? '', projects ?? [])),
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
@@ -81,7 +82,7 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
     this.hiddenParatextIds$,
     this.allResources$.pipe(startWith([]))
   ]).pipe(
-    map(([inputValue, limit, _hiddenIds, resources]) => this.filterGroup(inputValue, resources || [], limit)),
+    map(([inputValue, limit, _hiddenIds, resources]) => this.filterGroup(inputValue ?? '', resources || [], limit)),
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
@@ -90,10 +91,10 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   constructor(private destroyRef: DestroyRef) {
     this.paratextIdControl.valueChanges
       .pipe(distinctUntilChanged(), quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe((value: SelectableProject | string) => {
+      .subscribe(value => {
         // When the user clears the input box, or is typing the name of a project, `value` comes in as a string. When
         // the user selects a project from the list, `value` comes in as a SelectableProject.
-        if (typeof value === 'string') {
+        if (typeof value === 'string' || value == null) {
           this.valueChange.next(undefined);
           return;
         }
@@ -104,7 +105,7 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   }
 
   @Input() set value(id: string | undefined) {
-    if (this.paratextIdControl?.value.paratextId === id) return;
+    if (hasPropWithValue(this.paratextIdControl?.value, 'paratextId', id)) return;
     const project =
       this.projects?.find(p => p.paratextId === id) ||
       this.resources?.find(r => r.paratextId === id) ||
@@ -128,10 +129,8 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   }
 
   @Input() set hiddenParatextIds(value: string[]) {
-    if (value == null) {
-      return;
-    }
-    if (value.includes(this.paratextIdControl.value?.paratextId)) {
+    value ??= [];
+    if (value.some(id => hasPropWithValue(this.paratextIdControl?.value, 'paratextId', id))) {
       this.paratextIdControl.setValue('');
     }
     this.hiddenParatextIds$.next(value);
