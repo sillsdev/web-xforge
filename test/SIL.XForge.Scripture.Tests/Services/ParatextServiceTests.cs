@@ -4098,7 +4098,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void SendReceiveAsync_ThrowsExceptionIfObserver()
+    public void SendReceiveAsync_UserIsObserver_ThrowsExceptionWithChanges()
     {
         // Setup
         var env = new TestEnvironment();
@@ -4121,21 +4121,25 @@ public class ParatextServiceTests
         );
     }
 
-    [Test]
-    public async Task SendReceiveAsync_UserIsAdministrator_Succeeds()
+    [TestCase(UserRoles.Administrator, true)]
+    [TestCase(UserRoles.TeamMember, true)]
+    [TestCase(UserRoles.Consultant, true)]
+    [TestCase(UserRoles.Observer, false)]
+    public async Task SendReceiveAsync_Succeeds(UserRoles userRole, bool hasChanges)
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
-            user01Secret,
-            UserRoles.Administrator
-        );
+        IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(user01Secret, userRole);
         env.SetupSuccessfulSendReceive();
+        var syncMetrics = new SyncMetrics
+        {
+            ParatextBooks = hasChanges ? new SyncMetricInfo(1, 0, 0) : new SyncMetricInfo(),
+        };
 
         // SUT 1
-        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
+        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, CancellationToken.None, syncMetrics);
         env.MockSharingLogicWrapper.Received(1)
             .ShareChanges(
                 Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId),
@@ -4149,17 +4153,16 @@ public class ParatextServiceTests
         // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
         // SUT 2
         ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
-            env.Service.SendReceiveAsync(
-                user01Secret,
-                "unknownPtProjectId8",
-                null,
-                default,
-                Substitute.For<SyncMetrics>()
-            )
+            env.Service.SendReceiveAsync(user01Secret, "unknownPtProjectId8", null, CancellationToken.None, syncMetrics)
         );
         Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
         env.MockSharingLogicWrapper.DidNotReceive()
-            .ShareChanges(default, Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(), default);
+            .ShareChanges(
+                Arg.Any<List<SharedProject>>(),
+                Arg.Any<SharedRepositorySource>(),
+                out Arg.Any<List<SendReceiveResult>>(),
+                Arg.Any<List<SharedProject>>()
+            );
     }
 
     [Test]
