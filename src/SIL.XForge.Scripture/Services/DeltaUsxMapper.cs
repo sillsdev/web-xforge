@@ -303,7 +303,7 @@ public class DeltaUsxMapper(
                         }
                         newChildAttributes = AddInvalidInlineAttribute(invalidNodes, elem, newChildAttributes);
                         if (!elem.Nodes().Any() && elem.Value == "")
-                            newDelta.InsertEmpty(state.CurRef, newChildAttributes);
+                            newDelta.InsertText(" ", state.CurRef, newChildAttributes);
                         else
                             ProcessChildNodes(elem, newDelta, invalidNodes, state, newChildAttributes);
                         break;
@@ -428,7 +428,7 @@ public class DeltaUsxMapper(
 
         if (newDelta.Ops.Count == 0)
         {
-            newDelta.InsertBlank(segRef);
+            newDelta.InsertText(" ", segRef);
         }
         else
         {
@@ -444,7 +444,7 @@ public class DeltaUsxMapper(
                 || lastOpText.EndsWith('\n')
             )
             {
-                newDelta.InsertBlank(segRef);
+                newDelta.InsertText(" ", segRef);
             }
         }
     }
@@ -796,7 +796,7 @@ public class DeltaUsxMapper(
 
                         case "blank":
                         case "empty":
-                            // ignore blank and empty embeds
+                            // Ignore legacy blank and empty embeds
                             break;
 
                         default:

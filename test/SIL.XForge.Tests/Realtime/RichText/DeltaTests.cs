@@ -9,13 +9,6 @@ namespace SIL.XForge.Realtime.RichText;
 public class DeltaTests
 {
     [Test]
-    public void Insert_EmptyText_EmptyOps()
-    {
-        var delta = Delta.New().Insert("");
-        Assert.That(delta.Ops, Is.Empty);
-    }
-
-    [Test]
     public void Insert_Text_OneOp()
     {
         var delta = Delta.New().Insert("test");

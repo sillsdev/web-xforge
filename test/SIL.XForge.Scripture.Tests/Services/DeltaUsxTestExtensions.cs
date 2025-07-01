@@ -110,7 +110,7 @@ public static class DeltaUsxTestExtensions
         this Delta delta,
         string style,
         string cid,
-        string segRef = null,
+        string? segRef = null,
         bool invalid = false
     )
     {
@@ -119,7 +119,7 @@ public static class DeltaUsxTestExtensions
         );
         if (invalid)
             attributes.Add(new JProperty("invalid-inline", true));
-        return delta.InsertEmpty(segRef, attributes);
+        return delta.InsertText(string.Empty, segRef, attributes);
     }
 
     public static Delta InsertCharRef(
@@ -150,7 +150,7 @@ public static class DeltaUsxTestExtensions
         if (invalid)
             attrs = new JObject(new JProperty("invalid-block", true));
         attrs.Add(new JProperty("book", obj));
-        return delta.InsertBlank($"{style}_1").Insert("\n", attrs);
+        return delta.InsertText(" ", $"{style}_1").Insert("\n", attrs);
     }
 
     public static Delta InsertChapter(this Delta delta, string number, string style = "c", bool invalid = false)
