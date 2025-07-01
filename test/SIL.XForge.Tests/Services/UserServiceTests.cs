@@ -248,7 +248,7 @@ public class UserServiceTests
         {
             await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.DisplayName, expectedInitials[i, 0]));
             await env.Service.UpdateAvatarFromDisplayNameAsync(userId, userAuth);
-            expectedAvatarUrl = $"https://cdn.auth0.com/avatars/{expectedInitials[i, 1].ToLower()}.png";
+            expectedAvatarUrl = $"https://cdn.auth0.com/avatars/{expectedInitials[i, 1].ToLowerInvariant()}.png";
             user = env.GetUser(userId);
             Assert.That(user.AvatarUrl, Is.EqualTo(expectedAvatarUrl));
         }
