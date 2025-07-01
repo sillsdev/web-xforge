@@ -308,11 +308,11 @@ export class SFProjectService extends ProjectService<SFProject> {
               servalConfig: {
                 bsonType: 'string'
               },
-              usfmFormat: {
+              usfmConfig: {
                 bsonType: 'object',
                 properties: {
                   paragraphFormat: {
-                    bsonType: 'string'
+                    enum: ['best_guess', 'remove', 'move_to_end']
                   }
                 },
                 additionalProperties: false
