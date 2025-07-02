@@ -524,7 +524,9 @@ public class MachineApiService(
                 if (hasDraftIsFalseOrNullInScriptureRange)
                 {
                     // Chapters HasDraft is missing or false but should be true, retrieve the pre-translation status to update them.
-                    await RetrievePreTranslationStatusAsync(sfProjectId, cancellationToken);
+                    backgroundJobClient.Enqueue<IMachineApiService>(r =>
+                        r.RetrievePreTranslationStatusAsync(sfProjectId, CancellationToken.None)
+                    );
                 }
 
                 buildDto = CreateDto(translationBuild);
