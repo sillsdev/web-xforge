@@ -584,6 +584,14 @@ public class MachineApiService(
                     ) ?? throw new DataNotFoundException("Entity Deleted");
             }
 
+            // Notify any SignalR clients subscribed to the project of the current build's state
+            string buildId = translationBuild.Id;
+            string buildState = translationBuild.State.ToString();
+            await hubContext.NotifyBuildProgress(
+                sfProjectId,
+                new ServalBuildState { BuildId = buildId, State = buildState }
+            );
+
             buildDto = CreateDto(translationBuild);
             buildDto = UpdateDto(buildDto, project.TranslateConfig.DraftConfig);
             buildDto = UpdateDto(buildDto, sfProjectId);
