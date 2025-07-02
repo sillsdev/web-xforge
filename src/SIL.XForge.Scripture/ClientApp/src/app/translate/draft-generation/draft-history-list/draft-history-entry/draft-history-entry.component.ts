@@ -54,8 +54,10 @@ export class DraftHistoryEntryComponent {
   @Input() set entry(value: BuildDto | undefined) {
     this._entry = value;
 
-    // See if a draft can be downloaded
-    this.canDownloadBuild = this._entry?.additionalInfo?.dateGenerated != null;
+    // Only set if a draft can be downloaded if it is not set externally
+    if (this._canDownloadBuild == null) {
+      this.canDownloadBuild = this._entry?.additionalInfo?.dateGenerated != null;
+    }
 
     // Get the user who requested the build
     this._buildRequestedByUserName = undefined;
@@ -145,7 +147,14 @@ export class DraftHistoryEntryComponent {
     return this._trainingConfiguration;
   }
 
-  @Input() canDownloadBuild = false;
+  private _canDownloadBuild: boolean | undefined;
+  @Input() set canDownloadBuild(value: boolean) {
+    this._canDownloadBuild = value;
+  }
+  get canDownloadBuild(): boolean {
+    return this._canDownloadBuild ?? false;
+  }
+
   @Input() isLatestBuild = false;
 
   trainingConfigurationOpen = false;
