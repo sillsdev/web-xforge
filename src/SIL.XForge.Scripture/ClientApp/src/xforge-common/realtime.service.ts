@@ -59,31 +59,6 @@ export class RealtimeService {
     // this.scheduleNextGarbageCollection();
   }
 
-  // runGarbageCollection(): void {
-  //   let disposedDocs = 0;
-  //   const initialDocsCount = this.docs.size;
-  //   for (const doc of this.docs.values()) {
-  //     if (doc.activeDocSubscriptionsCount === 0) {
-  //       void doc.dispose();
-  //       disposedDocs++;
-  //     }
-  //   }
-  //   const remainingDocsCount = initialDocsCount - disposedDocs;
-  //   console.log(`Garbage collection: disposed ${disposedDocs} documents. ${remainingDocsCount} documents remaining.`);
-
-  //   this.scheduleNextGarbageCollection();
-  // }
-
-  // scheduleNextGarbageCollection(): void {
-  //   setTimeout(() => {
-  //     if (window.requestIdleCallback == null) {
-  //       this.runGarbageCollection();
-  //     } else {
-  //       window.requestIdleCallback(() => this.runGarbageCollection(), { timeout: 5000 });
-  //     }
-  //   }, 1000);
-  // }
-
   get totalDocCount(): number {
     return this.docs.size;
   }

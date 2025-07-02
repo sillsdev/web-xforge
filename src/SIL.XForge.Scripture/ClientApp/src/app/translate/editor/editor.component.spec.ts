@@ -1261,7 +1261,7 @@ describe('EditorComponent', () => {
     }));
 
     it('user has no resource access', fakeAsync(() => {
-      when(mockedSFProjectService.getProfile('resource01')).thenResolve({
+      when(mockedSFProjectService.getProfile('resource01', anything())).thenResolve({
         id: 'resource01',
         data: createTestProjectProfile()
       } as SFProjectProfileDoc);
@@ -3611,7 +3611,7 @@ describe('EditorComponent', () => {
     }));
 
     it('user has no resource access', fakeAsync(() => {
-      when(mockedSFProjectService.getProfile('resource01')).thenResolve({
+      when(mockedSFProjectService.getProfile('resource01', anything())).thenResolve({
         id: 'resource01',
         data: createTestProjectProfile()
       } as SFProjectProfileDoc);
@@ -3957,7 +3957,7 @@ describe('EditorComponent', () => {
 
       it('should exclude deleted resource tabs (tabs that have "projectDoc" but not "projectDoc.data")', fakeAsync(async () => {
         const absentProjectId = 'absentProjectId';
-        when(mockedSFProjectService.getProfile(absentProjectId)).thenResolve({
+        when(mockedSFProjectService.getProfile(absentProjectId, anything())).thenResolve({
           data: undefined
         } as SFProjectProfileDoc);
         const env = new TestEnvironment();

@@ -213,16 +213,16 @@ describe('DraftSourcesService', () => {
           data: targetProject
         } as SFProjectProfileDoc)
       );
-      when(mockProjectService.getProfile('source_project')).thenResolve({
+      when(mockProjectService.getProfile('source_project', anything())).thenResolve({
         data: sourceProject
       } as SFProjectProfileDoc);
-      when(mockProjectService.getProfile('alternate_source_project')).thenResolve({
+      when(mockProjectService.getProfile('alternate_source_project', anything())).thenResolve({
         data: alternateSourceProject
       } as SFProjectProfileDoc);
-      when(mockProjectService.getProfile('alternate_training_source_project')).thenResolve({
+      when(mockProjectService.getProfile('alternate_training_source_project', anything())).thenResolve({
         data: alternateTrainingSourceProject
       } as SFProjectProfileDoc);
-      when(mockProjectService.getProfile('additional_training_source_project')).thenResolve({
+      when(mockProjectService.getProfile('additional_training_source_project', anything())).thenResolve({
         data: additionalTrainingSourceProject
       } as SFProjectProfileDoc);
       when(mockUserService.getCurrentUser()).thenResolve({

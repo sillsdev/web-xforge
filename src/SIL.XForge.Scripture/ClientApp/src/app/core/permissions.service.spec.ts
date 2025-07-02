@@ -142,7 +142,7 @@ describe('PermissionsService', () => {
     expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(true);
     env.setCurrentUser('other');
     expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(false);
-    verify(mockedProjectService.getProfile('project01')).twice();
+    verify(mockedProjectService.getProfile('project01', anything())).twice();
   }));
 
   describe('canSync', () => {
@@ -233,7 +233,7 @@ class TestEnvironment {
   constructor(readonly checkingEnabled = true) {
     this.service = TestBed.inject(PermissionsService);
 
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE)
     );
 

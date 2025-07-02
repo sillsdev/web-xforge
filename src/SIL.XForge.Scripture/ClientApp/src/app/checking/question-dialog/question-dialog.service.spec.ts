@@ -206,7 +206,7 @@ class TestEnvironment {
 
     when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedDialogRef));
     when(mockedUserService.currentUserId).thenReturn(this.adminUser.id);
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, UNKNOWN_COMPONENT_OR_SERVICE)
     );
   }

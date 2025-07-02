@@ -117,9 +117,9 @@ describe('LynxWorkspaceService', () => {
     init(): void {
       this.realtimeService = TestBed.inject<TestRealtimeService>(RealtimeService as any);
 
-      when(mockProjectService.getText(anything())).thenCall(textDocId => {
+      when(mockProjectService.getText(anything(), anything())).thenCall(textDocId => {
         const id = typeof textDocId === 'string' ? textDocId : textDocId.toString();
-        const existingDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id);
+        const existingDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id, anything());
         return Promise.resolve(existingDoc || this.createTextDoc());
       });
 
@@ -151,7 +151,7 @@ describe('LynxWorkspaceService', () => {
         data: delta
       });
 
-      return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id);
+      return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id, anything());
     }
 
     createMockProjectDoc(id: string = PROJECT_ID): SFProjectProfileDoc {
@@ -174,7 +174,7 @@ describe('LynxWorkspaceService', () => {
         data: projectData
       });
 
-      return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, id);
+      return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, id, anything());
     }
 
     createMockScriptureDeltaDoc(): any {

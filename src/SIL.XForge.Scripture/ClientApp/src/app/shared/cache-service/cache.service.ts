@@ -1,6 +1,5 @@
 import { DestroyRef, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -13,9 +12,7 @@ const KEEP_PRIOR_PROJECT_CACHED_UNTIL_NEW_PROJECT_ACTIVATED = false;
 @Injectable({ providedIn: 'root' })
 export class CacheService {
   private subscribedTexts: TextDoc[] = [];
-
-  // A subject that will emit when we should unsubscribe from all text docs.
-  private unsubscribe$ = new Subject<void>();
+  private docSubscription?: DocSubscription;
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -28,9 +25,9 @@ export class CacheService {
 
       this.uncache();
       if (projectId != null) {
-        const docSubscription = new DocSubscription('CacheService', this.unsubscribe$);
-        const project = await this.projectService.subscribeProfile(projectId, docSubscription);
-        await this.loadAllChapters(project, docSubscription);
+        this.docSubscription = new DocSubscription('CacheService');
+        const project = await this.projectService.subscribeProfile(projectId, this.docSubscription);
+        await this.loadAllChapters(project, this.docSubscription);
       }
     });
 
@@ -40,7 +37,7 @@ export class CacheService {
   }
 
   private uncache(): void {
-    this.unsubscribe$.next();
+    this.docSubscription?.unsubscribe();
     this.subscribedTexts = [];
   }
 

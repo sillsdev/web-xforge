@@ -123,11 +123,11 @@ describe('DraftHistoryEntryComponent', () => {
       const targetProjectDoc = {
         id: 'project01'
       } as SFProjectProfileDoc;
-      when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+      when(mockedSFProjectService.getProfile('project01', anything())).thenResolve(targetProjectDoc);
       const sourceProjectDoc = {
         id: 'project02'
       } as SFProjectProfileDoc;
-      when(mockedSFProjectService.getProfile('project02')).thenResolve(sourceProjectDoc);
+      when(mockedSFProjectService.getProfile('project02', anything())).thenResolve(sourceProjectDoc);
       const entry = {
         engine: {
           id: 'project01'
@@ -264,12 +264,12 @@ describe('DraftHistoryEntryComponent', () => {
       id: 'project01',
       data: createTestProjectProfile({ shortName: 'tar', writingSystem: { tag: 'en' } })
     } as SFProjectProfileDoc;
-    when(mockedSFProjectService.getProfile('project01')).thenResolve(targetProjectDoc);
+    when(mockedSFProjectService.getProfile('project01', anything())).thenResolve(targetProjectDoc);
     const sourceProjectDoc = {
       id: 'project02',
       data: createTestProjectProfile({ shortName: 'src', writingSystem: { tag: 'fr' } })
     } as SFProjectProfileDoc;
-    when(mockedSFProjectService.getProfile('project02')).thenResolve(sourceProjectDoc);
+    when(mockedSFProjectService.getProfile('project02', anything())).thenResolve(sourceProjectDoc);
     const entry = {
       engine: {
         id: 'project01'

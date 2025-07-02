@@ -208,7 +208,7 @@ class TestEnvironment {
         }
       })
     });
-    when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
+    when(mockedSFProjectService.getProfile('project01', anything())).thenCall(() =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01', UNKNOWN_COMPONENT_OR_SERVICE)
     );
     when(mockedSFProjectService.subscribeProfile('project01', anything())).thenCall((id, subscription) =>
