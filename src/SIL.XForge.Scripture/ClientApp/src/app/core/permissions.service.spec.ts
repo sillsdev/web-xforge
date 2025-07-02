@@ -282,7 +282,7 @@ class TestEnvironment {
 
   setCurrentUser(userId: string = 'user01'): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
+    when(mockedUserService.getCurrentUser(anything())).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, userId, UNKNOWN_COMPONENT_OR_SERVICE)
     );
   }

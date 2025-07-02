@@ -252,10 +252,9 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
       // Add a delay to prevent thrashing if another component immediately resubscribes.
       setTimeout(() => {
         if (this.activeDocSubscriptionsCount === 0) {
-          console.log(`No active subscribers for ${this.collection}/${this.id}. Disposing...`);
           this.dispose();
         }
-      }, 5_000);
+      }, 1_000);
     });
   }
 

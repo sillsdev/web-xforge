@@ -32,6 +32,7 @@ export const CURRENT_PROJECT_ID_SETTING = 'current_project_id';
 export class UserService {
   // TODO: if/when we enable another xForge site, remove this and get the component to provide the site info
   private siteId: string = environment.siteId;
+  private userDocSubscription = new DocSubscription('UserService', this.destroyRef);
 
   constructor(
     private readonly realtimeService: RealtimeService,
@@ -66,13 +67,8 @@ export class UserService {
   }
 
   /** Get currently-logged in user. */
-  getCurrentUser(docSubscription?: DocSubscription): Promise<UserDoc> {
-    docSubscription ??= new DocSubscription('UserService.getCurrentuser', this.destroyRef);
-    return this.get(this.currentUserId, docSubscription);
-  }
-
-  subscribeCurrentUser(subscriber: DocSubscriberInfo): Promise<UserDoc> {
-    return this.get(this.currentUserId, subscriber);
+  getCurrentUser(): Promise<UserDoc> {
+    return this.get(this.currentUserId, this.userDocSubscription);
   }
 
   get(id: string, subscriber: DocSubscriberInfo): Promise<UserDoc> {
@@ -121,9 +117,7 @@ export class UserService {
   }
 
   async editDisplayName(isConfirmation: boolean): Promise<void> {
-    const currentUserDoc = await this.subscribeCurrentUser(
-      new DocSubscription('UserService.editDisplayName', this.destroyRef)
-    );
+    const currentUserDoc = await this.getCurrentUser();
     if (currentUserDoc.data == null) {
       return;
     }

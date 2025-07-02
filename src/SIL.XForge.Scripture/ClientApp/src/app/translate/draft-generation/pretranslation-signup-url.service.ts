@@ -3,6 +3,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserService } from 'xforge-common/user.service';
+import { DocSubscription } from '../../../xforge-common/models/realtime-doc';
 
 export interface PreTranslationSignupUrlConfig {
   baseLink: string;
@@ -37,7 +38,8 @@ export class PreTranslationSignupUrlService {
   ) {}
 
   async generateSignupUrl(): Promise<string> {
-    const user: Readonly<User | undefined> = (await this.userService.getCurrentUser()).data;
+    const userDocSubscription = new DocSubscription('PreTranslationSignupUrlService');
+    const user: Readonly<User | undefined> = (await this.userService.getCurrentUser(userDocSubscription)).data;
     const project: Readonly<SFProjectProfile | undefined> = this.activatedProject.projectDoc?.data;
     const languageCode: string | undefined = project?.writingSystem.tag;
 
@@ -47,6 +49,8 @@ export class PreTranslationSignupUrlService {
     const projectNameToken: string = this.buildParam(this.linkConfig.projectParam, project?.shortName);
     const languageToken: string =
       languageCode?.length === 3 ? this.buildParam(this.linkConfig.languageParam, languageCode) : '';
+
+    userDocSubscription.unsubscribe();
 
     return `${baseLink}?${nameToken}&${emailToken}&${projectNameToken}&${languageToken}`;
   }
