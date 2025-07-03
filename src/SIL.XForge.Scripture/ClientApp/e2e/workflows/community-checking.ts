@@ -117,12 +117,11 @@ export async function communityChecking(
   const shareLinks = await createShareLinksAsAdmin(page, CHECKING_PROJECT_NAME);
 
   const link = shareLinks['Community Checker'];
-  const checkerCount = 2;
-  const answerCount = 5;
-  const checkerPromises = [];
+  const answerCounts = [30, 5]; // Number of answers each checker will add
+  const checkerPromises: Promise<void>[] = [];
   const serial = false;
-  for (let i = 0; i < checkerCount; i++) {
-    const promise = joinAsChecker(link, engine, screenshotContext, i, answerCount);
+  for (let i = 0; i < answerCounts.length; i++) {
+    const promise = joinAsChecker(link, engine, screenshotContext, i, answerCounts[i]);
     checkerPromises.push(promise);
     if (serial) await promise;
   }
@@ -134,7 +133,8 @@ export async function communityChecking(
 
   // Go to Manage questions
   await user.click(page.getByRole('link', { name: 'Manage questions' }));
-  await expect(page.locator('.card-content-answer .stat-total')).toContainText(checkerCount * answerCount + '');
+  const totalAnswers = answerCounts.reduce((a, b) => a + b, 0);
+  await expect(page.locator('.card-content-answer .stat-total')).toContainText(`${totalAnswers}`);
   await expect(page.locator('.card-content-comment .stat-total')).toContainText('2');
 }
 
@@ -167,13 +167,7 @@ async function joinAsChecker(
         await addComment('This is a nice answer.', page, user);
       }
 
-      // FIXME(application-bug) The Next button is often (always?) disabled when at the end of a chapter. Click the
-      // "Next chapter" button instead when the Next button is disabled.
-      if (await page.getByRole('button', { name: 'Next', exact: true }).isEnabled()) {
-        await user.click(page.getByRole('button', { name: 'Next', exact: true }));
-      } else {
-        await user.click(page.getByTitle('Next chapter'));
-      }
+      await user.click(page.getByRole('button', { name: 'Next', exact: true }));
 
       await page.waitForTimeout(500);
     }
