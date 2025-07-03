@@ -159,13 +159,7 @@ export class LynxInsightStateService {
   }
 
   getInsight(id: string): LynxInsight | undefined {
-    for (const insights of this.lynxWorkspaceService.currentInsights.values()) {
-      const insight = insights.find(i => i.id === id);
-      if (insight != null) {
-        return insight;
-      }
-    }
-    return undefined;
+    return this.lynxWorkspaceService.currentInsights.find(i => i.id === id);
   }
 
   setActiveInsights(ids: string[]): void {
