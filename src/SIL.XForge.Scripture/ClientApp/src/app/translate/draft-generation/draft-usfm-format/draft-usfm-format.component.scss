@@ -89,11 +89,8 @@ form {
   align-items: center;
   justify-content: flex-end;
 
-  .progress {
+  .progress:not(.saving) {
     visibility: hidden;
-    &.saving {
-      visibility: visible;
-    }
   }
 }
 

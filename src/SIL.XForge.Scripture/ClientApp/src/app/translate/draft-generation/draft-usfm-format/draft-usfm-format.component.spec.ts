@@ -148,7 +148,6 @@ describe('DraftUsfmFormatComponent', () => {
     env.fixture.detectChanges();
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, deepEqual(config))).once();
     verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(env.projectId)).once();
-    verify(mockedNoticeService.show(anything())).once();
     verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).once();
   }));
 

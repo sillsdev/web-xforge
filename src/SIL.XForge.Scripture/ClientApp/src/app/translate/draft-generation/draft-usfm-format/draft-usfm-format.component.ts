@@ -179,11 +179,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       this.saving = true;
       await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentFormat);
       this.lastSavedState = this.currentFormat;
-      // not awaited so that the user is directed to the draft generation page
-      this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId).then(() => {
-        this.router.navigate(['projects', this.projectId, 'draft-generation']);
-        this.noticeService.show(translate('draft_usfm_format.changes_have_been_saved'));
-      });
+      // The user is redirected to the draft generation page if the format is saved.
+      this.servalAdministration
+        .onlineRetrievePreTranslationStatus(this.projectId)
+        .then(() => this.router.navigate(['projects', this.projectId, 'draft-generation']));
     } catch {
       this.noticeService.showError(translate('draft_usfm-format.failed_to_save'));
     } finally {
