@@ -14,7 +14,6 @@ import { isEqual, merge } from 'lodash-es';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { StringMap } from 'rich-text';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
@@ -29,7 +28,6 @@ import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { getBrowserEngine, objectId } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
-import { isString } from '../../../type-utils';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -47,7 +45,7 @@ import { QuillFormatRegistryService } from './quill-editor-registration/quill-fo
 import { getAttributesAtPosition, getRetainCount } from './quill-util';
 import { Segment } from './segment';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
-import { EditorRange, TextViewModel } from './text-view-model';
+import { TextViewModel } from './text-view-model';
 
 // When a user is active in the editor a timer starts to mark them as inactive for remote presences
 export const PRESENCE_EDITOR_ACTIVE_TIMEOUT = 3500;
@@ -598,15 +596,8 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     return this.viewModel.getVerseSegments(verseRef);
   }
 
-  /**
-   * Get segments compatible for a given verseRef. For verses with letters, only return the segments
-   * that explicitly contain the letter or non-verse segment in the range.
-   * i.e. LUK 1:1a will match segments verse_1_1a, verse_1_1a/p1, s_1 but not verse_1_1 or verse_1_1b.
-   */
   getCompatibleSegments(verseRef: VerseRef): string[] {
-    const segments: string[] = this.getVerseSegments(verseRef);
-    const defaultValue: string = verseRef.verse;
-    return segments.filter(s => verseRef.verse === (getVerseStrFromSegmentRef(s) ?? defaultValue));
+    return this.viewModel.getCompatibleSegments(verseRef);
   }
 
   getVerseSegmentsNoHeadings(verseRef: VerseRef): string[] {
@@ -682,85 +673,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     formatName: string,
     format: any
   ): string | undefined {
-    if (this.editor == null) {
-      return undefined;
-    }
-
-    // A single verse can be associated with multiple compatible segments (e.g verse_1_1, verse_1_1/p_1)
-    const verseSegments: string[] = this.getCompatibleSegments(verseRef);
-    if (verseSegments.length === 0) {
-      return undefined;
-    }
-    let editorPosOfSegmentToModify: Range | undefined = this.getSegmentRange(verseSegments[0]);
-    let startTextPosInVerse: number = textAnchor.start;
-    if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
-      return undefined;
-    }
-
-    let embedSegmentRef: string = verseSegments[0];
-    const nextSegmentMarkerLength = 1;
-    const blankSegmentLength = 1;
-    for (const vs of verseSegments) {
-      const editorPosOfSomeSegment: Range | undefined = this.getSegmentRange(vs);
-      if (editorPosOfSomeSegment == null) {
-        break;
-      }
-      const skipBlankSegment: boolean = this.isSegmentBlank(vs) && textAnchor.length > 0;
-      if (skipBlankSegment) {
-        startTextPosInVerse -= blankSegmentLength + nextSegmentMarkerLength;
-        continue;
-      }
-
-      const segmentTextLength: number =
-        editorPosOfSomeSegment.length -
-        this.getEmbedCountInRange(editorPosOfSomeSegment.index, editorPosOfSomeSegment.length);
-      // Does the textAnchor begin in this segment?
-      if (segmentTextLength >= startTextPosInVerse) {
-        editorPosOfSegmentToModify = editorPosOfSomeSegment;
-        embedSegmentRef = vs;
-        break;
-      } else {
-        // The embed starts in a later segment. Subtract the text-only length of this segment from the start index.
-        startTextPosInVerse -= segmentTextLength + nextSegmentMarkerLength;
-      }
-    }
-
-    if (editorPosOfSegmentToModify == null) {
-      return undefined;
-    }
-
-    const editorRange: EditorRange = this.viewModel.getEditorContentRange(
-      editorPosOfSegmentToModify.index,
-      startTextPosInVerse
-    );
-    const embedInsertPos: number =
-      editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
-    let insertFormat = this.editor.getFormat(embedInsertPos);
-
-    // Include formatting from the current insert position as well as any unique formatting
-    format = { ...insertFormat, ...format };
-    this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
-    const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
-    const formatLength: number = textAnchorRange.editorLength;
-
-    // Add text anchors as a separate formatText call rather than part of insertEmbed as it needs to expand over a
-    // a length of text
-    if (role !== SFProjectRole.Commenter) {
-      // Formatting for text anchors only need the text-anchor property when inserted at position zero
-      if (textAnchor.start === 0) {
-        insertFormat = {};
-      }
-      const segmentLastPosition: number = editorPosOfSegmentToModify.index + editorPosOfSegmentToModify.length;
-      if (segmentLastPosition === embedInsertPos) {
-        // the last position needs the segment format info
-        insertFormat = { ...insertFormat, ...{ 'text-anchor': true } };
-      } else {
-        insertFormat = { 'text-anchor': true };
-      }
-      this.editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
-    }
-    this.updateSegment();
-    return embedSegmentRef;
+    return this.viewModel.embedElementInline(verseRef, id, role, textAnchor, formatName, format);
   }
 
   formatEmbed(embedId: string, embedName: string, format: any): void {
@@ -916,16 +829,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   }
 
   isSegmentBlank(ref: string): boolean {
-    const segmentDelta: Delta | undefined = this.getSegmentContents(ref);
-    if (segmentDelta?.ops == null) {
-      return false;
-    }
-    for (const op of segmentDelta.ops) {
-      if (!isString(op.insert) && op.insert?.blank != null) {
-        return true;
-      }
-    }
-    return false;
+    return this.viewModel.isSegmentBlank(ref);
   }
 
   /** Is a given selection range valid for editing the current segment? */
@@ -1789,14 +1693,6 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (!this.isValidSelectionForCurrentSegment(sel)) {
       ev.preventDefault();
     }
-  }
-
-  /** Returns the number of embedded elements that are located at or after editorStartPos, through length of editor
-   * positions to check.
-   */
-  private getEmbedCountInRange(editorStartPos: number, length: number): number {
-    const embedPositions: number[] = Array.from(this.embeddedElements.values());
-    return embedPositions.filter((pos: number) => pos >= editorStartPos && pos < editorStartPos + length).length;
   }
 
   private setHighlightMarkerPosition(): void {

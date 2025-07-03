@@ -2,6 +2,8 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { DeltaOperation, StringMap } from 'rich-text';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
@@ -253,6 +255,126 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         editor.updateContents(removeDuplicateDelta, 'api');
       }
     });
+  }
+
+  /**
+   * Embeds an element, with the specified format, into the editor, at an editor position that corresponds to
+   * the beginning of textAnchor.
+   */
+  embedElementInline(
+    verseRef: VerseRef,
+    id: string,
+    role: string,
+    textAnchor: TextAnchor,
+    formatName: string,
+    format: any
+  ): string | undefined {
+    const editor = this.checkEditor();
+
+    // A single verse can be associated with multiple compatible segments (e.g verse_1_1, verse_1_1/p_1)
+    const verseSegments: string[] = this.getCompatibleSegments(verseRef);
+    if (verseSegments.length === 0) {
+      return undefined;
+    }
+    let editorPosOfSegmentToModify: Range | undefined = this.getSegmentRange(verseSegments[0]);
+    let startTextPosInVerse: number = textAnchor.start;
+    if (Array.from(this.embeddedElements.keys()).includes(id)) {
+      return undefined;
+    }
+
+    let embedSegmentRef: string = verseSegments[0];
+    const nextSegmentMarkerLength = 1;
+    const blankSegmentLength = 1;
+    for (const vs of verseSegments) {
+      const editorPosOfSomeSegment: Range | undefined = this.getSegmentRange(vs);
+      if (editorPosOfSomeSegment == null) {
+        break;
+      }
+      const skipBlankSegment: boolean = this.isSegmentBlank(vs) && textAnchor.length > 0;
+      if (skipBlankSegment) {
+        startTextPosInVerse -= blankSegmentLength + nextSegmentMarkerLength;
+        continue;
+      }
+
+      const segmentTextLength: number =
+        editorPosOfSomeSegment.length -
+        this.getEmbedCountInRange(editorPosOfSomeSegment.index, editorPosOfSomeSegment.length);
+      // Does the textAnchor begin in this segment?
+      if (segmentTextLength >= startTextPosInVerse) {
+        editorPosOfSegmentToModify = editorPosOfSomeSegment;
+        embedSegmentRef = vs;
+        break;
+      } else {
+        // The embed starts in a later segment. Subtract the text-only length of this segment from the start index.
+        startTextPosInVerse -= segmentTextLength + nextSegmentMarkerLength;
+      }
+    }
+
+    if (editorPosOfSegmentToModify == null) {
+      return undefined;
+    }
+
+    const editorRange: EditorRange = this.getEditorContentRange(editorPosOfSegmentToModify.index, startTextPosInVerse);
+    const embedInsertPos: number =
+      editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
+    let insertFormat = editor.getFormat(embedInsertPos);
+
+    // Include formatting from the current insert position as well as any unique formatting
+    format = { ...insertFormat, ...format };
+    editor.insertEmbed(embedInsertPos, formatName, format, 'api');
+    const textAnchorRange = this.getEditorContentRange(embedInsertPos, textAnchor.length);
+    const formatLength: number = textAnchorRange.editorLength;
+
+    // Add text anchors as a separate formatText call rather than part of insertEmbed as it needs to expand over a
+    // a length of text
+    if (role !== SFProjectRole.Commenter && formatName === 'note-thread-embed') {
+      // Formatting for text anchors only need the text-anchor property when inserted at position zero
+      if (textAnchor.start === 0) {
+        insertFormat = {};
+      }
+      const segmentLastPosition: number = editorPosOfSegmentToModify.index + editorPosOfSegmentToModify.length;
+      if (segmentLastPosition === embedInsertPos) {
+        // the last position needs the segment format info
+        insertFormat = { ...insertFormat, ...{ 'text-anchor': true } };
+      } else {
+        insertFormat = { 'text-anchor': true };
+      }
+      editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
+    }
+    this.updateSegments(editor);
+    return embedSegmentRef;
+  }
+
+  /**
+   * Get segments compatible for a given verseRef. For verses with letters, only return the segments
+   * that explicitly contain the letter or non-verse segment in the range.
+   * i.e. LUK 1:1a will match segments verse_1_1a, verse_1_1a/p1, s_1 but not verse_1_1 or verse_1_1b.
+   */
+  getCompatibleSegments(verseRef: VerseRef): string[] {
+    const segments: string[] = this.getVerseSegments(verseRef);
+    const defaultValue: string = verseRef.verse;
+    return segments.filter(s => verseRef.verse === (getVerseStrFromSegmentRef(s) ?? defaultValue));
+  }
+
+  /** Returns the number of embedded elements that are located at or after editorStartPos, through length of editor
+   * positions to check.
+   */
+  private getEmbedCountInRange(editorStartPos: number, length: number): number {
+    const embedPositions: number[] = Array.from(this.embeddedElements.values());
+    return embedPositions.filter((pos: number) => pos >= editorStartPos && pos < editorStartPos + length).length;
+  }
+
+  isSegmentBlank(ref: string): boolean {
+    const segmentDelta: Delta | undefined = this.getSegmentContents(ref);
+    if (segmentDelta?.ops == null) {
+      return false;
+    }
+    for (const op of segmentDelta.ops) {
+      if (!isString(op.insert) && op.insert?.blank != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   highlight(segmentRefs: string[]): void {
