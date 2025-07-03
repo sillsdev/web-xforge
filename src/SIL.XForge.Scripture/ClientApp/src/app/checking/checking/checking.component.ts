@@ -762,16 +762,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           this.prevQuestionOutOfScope = undefined;
           this.prevQuestion$ = of(prevInScope);
         } else {
-          this.prevQuestionOutOfScope = await this.checkingQuestionsService.queryAdjacentQuestions(
+          const prevQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
             this.projectDoc!.id,
             relativeTo,
             'prev',
             this.destroyRef
           );
-          this.prevQuestionOutOfScope.ready$
+          this.prevQuestionOutOfScope = prevQuestionQuery;
+          prevQuestionQuery.ready$
             .pipe(
               filter(ready => ready),
-              map(() => this.prevQuestionOutOfScope!),
+              map(() => prevQuestionQuery),
               quietTakeUntilDestroyed(this.destroyRef)
             )
             .subscribe(async query => {
@@ -785,16 +786,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           this.nextQuestionOutOfScope = undefined;
           this.nextQuestion$ = of(nextInScope);
         } else {
-          this.nextQuestionOutOfScope = await this.checkingQuestionsService.queryAdjacentQuestions(
+          const nextQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
             this.projectDoc!.id,
             relativeTo,
             'next',
             this.destroyRef
           );
-          this.nextQuestionOutOfScope.ready$
+          this.nextQuestionOutOfScope = nextQuestionQuery;
+          nextQuestionQuery.ready$
             .pipe(
               filter(ready => ready),
-              map(() => this.nextQuestionOutOfScope!),
+              map(() => nextQuestionQuery),
               quietTakeUntilDestroyed(this.destroyRef)
             )
             .subscribe(async query => {
