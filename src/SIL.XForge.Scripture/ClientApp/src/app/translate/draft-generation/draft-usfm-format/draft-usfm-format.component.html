@@ -55,18 +55,18 @@
             </mat-radio-group>
           </mat-card-content>
         </mat-card>
-
-        <div class="actions">
-          <button mat-button class="back" (click)="close()"><mat-icon>close</mat-icon>{{ t("cancel") }}</button>
-          <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
-            <mat-icon>check</mat-icon>
-            {{ t("save_changes") }}
-          </button>
-          <div class="progress" [ngClass]="{ saving: saving }">
-            <mat-spinner diameter="24"></mat-spinner>
-          </div>
-        </div>
       </form>
+
+      <div class="actions">
+        <button mat-button class="back" (click)="close()"><mat-icon>close</mat-icon>{{ t("cancel") }}</button>
+        <button mat-flat-button class="save" color="primary" (click)="saveChanges()">
+          <mat-icon>check</mat-icon>
+          {{ t("save_changes") }}
+        </button>
+        <div class="progress" [class.saving]="saving">
+          <mat-spinner diameter="24"></mat-spinner>
+        </div>
+      </div>
     </div>
     <div class="text-container">
       <app-book-chapter-chooser
