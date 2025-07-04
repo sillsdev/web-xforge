@@ -179,36 +179,6 @@
           </button>
         </div>
       </mat-step>
-      @if (trainingDataFilesAvailable) {
-        <mat-step [completed]="true">
-          <ng-template matStepLabel>
-            {{ t("choose_additional_training_data_files_header") }}
-          </ng-template>
-          <h1>{{ t("choose_additional_training_data_files_title") }}</h1>
-          <app-training-data-multi-select
-            [availableTrainingData]="availableTrainingFiles"
-            [selectedTrainingDataIds]="selectedTrainingFileIds"
-            (trainingDataSelect)="onTrainingDataSelect($event)"
-            data-test-id="draft-stepper-training-data-files"
-          ></app-training-data-multi-select>
-          <div class="button-strip">
-            <button mat-stroked-button matStepperPrevious>
-              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
-              {{ t("back") }}
-            </button>
-            <button
-              mat-flat-button
-              (click)="tryAdvanceStep()"
-              color="primary"
-              class="advance-button"
-              [disabled]="isStepsCompleted"
-            >
-              {{ t("next") }}
-              <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
-            </button>
-          </div>
-        </mat-step>
-      }
       @if (featureFlags.showDeveloperTools.enabled) {
         <mat-step [completed]="true">
           <ng-template matStepLabel>
