@@ -308,8 +308,6 @@ public class ParatextService : DisposableBase, IParatextService
                     sharedProj.Permissions = new ParatextRegistryPermissionManager(username, permissionManager);
                 }
 
-                List<SharedProject> sharedPtProjectsToSr = [sharedProj];
-
                 // If we are in development, unlock the repo before we begin,
                 // just in case the repo is locked.
                 if (_env.IsDevelopment())
@@ -324,7 +322,24 @@ public class ParatextService : DisposableBase, IParatextService
                     }
                 }
 
+                // ShareChanges() will fail silently if the user is an Observer,
+                // so throw an error if the user is an Observer in the Registry
+                // and there are outgoing changes to share.
+                bool userIsAnObserver = !sharedProj.Permissions.HaveRoleNotObserver;
+                if (
+                    userIsAnObserver
+                    && (
+                        syncMetrics.ParatextBooks != new SyncMetricInfo()
+                        || syncMetrics.ParatextNotes != new SyncMetricInfo()
+                        || syncMetrics.ParatextBiblicalTerms != new SyncMetricInfo()
+                    )
+                )
+                {
+                    throw new InvalidOperationException("User does not have permission to share changes.");
+                }
+
                 // TODO report results
+                List<SharedProject> sharedPtProjectsToSr = [sharedProj];
                 List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
                 bool success = false;
                 bool noErrors = SharingLogicWrapper.HandleErrors(() =>
@@ -1623,17 +1638,22 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="userSecret">The user secret.</param>
     /// <param name="paratextId">The Paratext identifier.</param>
     /// <param name="biblicalTerms">The Biblical Terms to update in Paratext.</param>
-    public void UpdateBiblicalTerms(UserSecret userSecret, string paratextId, IReadOnlyList<BiblicalTerm> biblicalTerms)
+    public SyncMetricInfo UpdateBiblicalTerms(
+        UserSecret userSecret,
+        string paratextId,
+        IReadOnlyList<BiblicalTerm> biblicalTerms
+    )
     {
+        var syncMetricInfo = new SyncMetricInfo();
         if (!biblicalTerms.Any())
         {
-            return;
+            return syncMetricInfo;
         }
 
         using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, paratextId);
         if (scrText is null)
         {
-            return;
+            return syncMetricInfo;
         }
 
         // Get and update the term renderings
@@ -1643,13 +1663,31 @@ public class ParatextService : DisposableBase, IParatextService
             foreach (BiblicalTerm biblicalTerm in biblicalTerms)
             {
                 TermRendering termRendering = termRenderings.GetRendering(biblicalTerm.TermId);
+
+                // Cache the old values for comparison
+                string oldNotes = termRendering.Notes;
+                string oldRenderings = termRendering.RenderingsInternal;
+                bool oldGuess = termRendering.Guess;
+
+                // Update the term rendering with the new values
                 termRendering.Notes = biblicalTerm.Description;
                 termRendering.RenderingsEntries = biblicalTerm.Renderings;
                 termRendering.Guess = false;
+
+                // Check the new values against the old values
+                if (
+                    termRendering.Notes != oldNotes
+                    || termRendering.RenderingsInternal != oldRenderings
+                    || termRendering.Guess != oldGuess
+                )
+                {
+                    syncMetricInfo.Updated++;
+                }
             }
         }
 
         termRenderings.Save();
+        return syncMetricInfo;
     }
 
     /// <summary>

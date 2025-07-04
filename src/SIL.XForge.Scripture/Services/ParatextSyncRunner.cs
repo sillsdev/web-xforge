@@ -692,7 +692,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         LogMetric("Saving Paratext biblical terms");
         await NotifySyncProgress(syncPhase, 75);
-        _paratextService.UpdateBiblicalTerms(_userSecret, paratextId, biblicalTermsToUpdate);
+        _syncMetrics.ParatextBiblicalTerms += _paratextService.UpdateBiblicalTerms(
+            _userSecret,
+            paratextId,
+            biblicalTermsToUpdate
+        );
         return biblicalTermDocs;
     }
 

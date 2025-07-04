@@ -22,13 +22,47 @@ public record SyncMetrics : IIdentifiable
     public string UserRef { get; set; }
 
     // Sync Statistics
+
+    /// <summary>
+    /// Gets or sets the info for changes to biblical terms incoming from Paratext.
+    /// </summary>
     public SyncMetricInfo BiblicalTerms { get; set; } = new SyncMetricInfo();
+
+    /// <summary>
+    /// Gets or sets the info for changes to books incoming from Paratext.
+    /// </summary>
     public SyncMetricInfo Books { get; set; } = new SyncMetricInfo();
+
+    /// <summary>
+    /// Gets or sets the info for changes to notes incoming from Paratext.
+    /// </summary>
     public NoteSyncMetricInfo Notes { get; set; } = new NoteSyncMetricInfo();
+
+    /// <summary>
+    /// Gets or sets the info for changes to note threads incoming from Paratext.
+    /// </summary>
     public SyncMetricInfo NoteThreads { get; set; } = new SyncMetricInfo();
+
+    /// <summary>
+    /// Gets or sets the info for changes to biblical terms outgoing to Paratext.
+    /// </summary>
+    public SyncMetricInfo ParatextBiblicalTerms { get; set; } = new SyncMetricInfo();
+
+    /// <summary>
+    /// Gets or sets the info for changes to books outgoing to Paratext.
+    /// </summary>
     public SyncMetricInfo ParatextBooks { get; set; } = new SyncMetricInfo();
+
+    /// <summary>
+    /// Gets or sets the info for changes to notes outgoing to Paratext.
+    /// </summary>
     public SyncMetricInfo ParatextNotes { get; set; } = new SyncMetricInfo();
+
+    /// <summary>
+    /// Gets or sets the info for changes to questions incoming from Paratext.
+    /// </summary>
     public SyncMetricInfo Questions { get; set; } = new SyncMetricInfo();
+
     public bool RepositoryBackupCreated { get; set; }
     public bool RepositoryRestoredFromBackup { get; set; }
     public SyncMetricInfo ResourceUsers { get; set; } = new SyncMetricInfo();
