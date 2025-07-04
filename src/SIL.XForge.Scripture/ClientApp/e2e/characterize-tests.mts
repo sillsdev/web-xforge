@@ -32,7 +32,7 @@ while (true) {
     await saveResult("failure", testName);
     const tracePath = `${preset.outputDir}/characterization-trace-${testName}-${Utils.formatDate(new Date())}.zip`;
     console.log(`Saving trace to ${tracePath}`);
-    browserContext.tracing.stop({ path: tracePath });
+    await browserContext.tracing.stop({ path: tracePath });
   } finally {
     await browserContext.close();
     await browser.close();
