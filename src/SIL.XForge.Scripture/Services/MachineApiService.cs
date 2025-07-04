@@ -523,7 +523,9 @@ public class MachineApiService(
                 if (hasDraftIsFalseOrNullInScriptureRange)
                 {
                     // Chapters HasDraft is missing or false but should be true, retrieve the pre-translation status to update them.
-                    await RetrievePreTranslationStatusAsync(sfProjectId, cancellationToken);
+                    backgroundJobClient.Enqueue<IMachineApiService>(r =>
+                        r.RetrievePreTranslationStatusAsync(sfProjectId, CancellationToken.None)
+                    );
                 }
 
                 buildDto = CreateDto(translationBuild);
@@ -580,6 +582,14 @@ public class MachineApiService(
                         b => b.DateFinished
                     ) ?? throw new DataNotFoundException("Entity Deleted");
             }
+
+            // Notify any SignalR clients subscribed to the project of the current build's state
+            string buildId = translationBuild.Id;
+            string buildState = translationBuild.State.ToString();
+            await hubContext.NotifyBuildProgress(
+                sfProjectId,
+                new ServalBuildState { BuildId = buildId, State = buildState }
+            );
 
             buildDto = CreateDto(translationBuild);
             buildDto = UpdateDto(buildDto, project.TranslateConfig.DraftConfig);
