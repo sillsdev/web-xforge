@@ -210,7 +210,7 @@ public class UserService : IUserService
             userDoc
                 .Data.DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .Where(x => x.Length > 1 && char.IsLetter(x[0]))
-                .Select(x => char.ToLower(x[0]))
+                .Select(x => char.ToLowerInvariant(x[0]))
         );
         if (initials.Length == 0)
         {

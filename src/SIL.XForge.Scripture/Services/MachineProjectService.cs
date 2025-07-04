@@ -2028,15 +2028,10 @@ public class MachineProjectService(
         stream.Seek(0, SeekOrigin.Begin);
 
         // Calculate the checksum from the stream
-        using MD5 md5 = MD5.Create();
-        StringBuilder sb = new StringBuilder();
-        foreach (var hashByte in await md5.ComputeHashAsync(stream, cancellationToken))
-        {
-            sb.Append(hashByte.ToString("X2").ToLower());
-        }
+        byte[] hashBytes = await MD5.HashDataAsync(stream, cancellationToken);
+        string checksum = Convert.ToHexString(hashBytes).ToLowerInvariant();
 
         // See if the file has changed
-        string checksum = sb.ToString();
         if (servalCorpusFile.FileChecksum == checksum)
         {
             // No update, so do not upload

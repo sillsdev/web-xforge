@@ -2287,14 +2287,15 @@ public class ParatextService : DisposableBase, IParatextService
     /// </summary>
     /// <param name="languageCode">The Paratext Language code</param>
     /// <returns>The language-country code</returns>
-    private static string FixLanguageCode(string languageCode) =>
-        languageCode.ToLower() switch
+    /// <remarks>This function is internal for unit testing.</remarks>
+    internal static string FixLanguageCode(string languageCode) =>
+        languageCode.ToLowerInvariant() switch
         {
             "zh-hans" => "zh-CN",
             "zh-hant" => "zh-TW",
             "pt" => "pt-PT",
             "" => string.Empty,
-            _ => char.ToLower(languageCode[0]) + (languageCode.Length == 1 ? string.Empty : languageCode[1..]),
+            _ => char.ToLowerInvariant(languageCode[0]) + (languageCode.Length == 1 ? string.Empty : languageCode[1..]),
         };
 
     /// <summary>

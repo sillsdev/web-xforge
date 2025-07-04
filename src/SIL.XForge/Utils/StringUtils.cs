@@ -1,3 +1,4 @@
+using System;
 using System.Security.Cryptography;
 using System.Text;
 using MongoDB.Bson;
@@ -11,16 +12,9 @@ public static class StringUtils
 
     public static string ComputeMd5Hash(string message)
     {
-        using MD5 md5 = MD5.Create();
-        byte[] input = Encoding.ASCII.GetBytes(message);
-        byte[] hash = md5.ComputeHash(input);
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < hash.Length; i++)
-        {
-            sb.Append(hash[i].ToString("X2"));
-        }
-        return sb.ToString().ToLower();
+        byte[] inputBytes = Encoding.UTF8.GetBytes(message);
+        byte[] hashBytes = MD5.HashData(inputBytes);
+        return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
     /// <summary>

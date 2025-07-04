@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -40,6 +41,7 @@ using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
+using TextInfo = SIL.XForge.Scripture.Models.TextInfo;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -6408,6 +6410,32 @@ public class ParatextServiceTests
         username = env.Service.GetParatextUsername(userSecret);
         Assert.AreEqual(forcedUsername, username);
         env.Service.ClearForcedUsernames();
+    }
+
+    [TestCase("zh-hans", "zh-CN")]
+    [TestCase("zh-hant", "zh-TW")]
+    [TestCase("pt", "pt-PT")]
+    [TestCase("", "")]
+    [TestCase("a", "a")]
+    [TestCase("Id", "id")]
+    [TestCase("en-NZ", "en-NZ")]
+    public void FixLanguageCode_DefaultCulture(string languageCode, string expected) =>
+        Assert.That(ParatextService.FixLanguageCode(languageCode), Is.EqualTo(expected));
+
+    [TestCase("zh-hans", "zh-CN")]
+    [TestCase("zh-hant", "zh-TW")]
+    [TestCase("pt", "pt-PT")]
+    [TestCase("", "")]
+    [TestCase("a", "a")]
+    [TestCase("Id", "id")]
+    [TestCase("en-NZ", "en-NZ")]
+    public void FixLanguageCode_Azerbaijani(string languageCode, string expected)
+    {
+        // Azerbaijani uses ı instead of i
+        CultureInfo previousCulture = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("az");
+        Assert.That(ParatextService.FixLanguageCode(languageCode), Is.EqualTo(expected));
+        CultureInfo.CurrentCulture = previousCulture;
     }
 
     private class TestEnvironment : IDisposable
