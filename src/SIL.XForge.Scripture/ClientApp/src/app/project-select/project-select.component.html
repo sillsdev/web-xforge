@@ -6,7 +6,8 @@
       [placeholder]="placeholder"
       [formControl]="paratextIdControl"
       [matAutocomplete]="auto"
-      (click)="inputClicked()"
+      (click)="inputClicked($event)"
+      (blur)="inputBlurred()"
       [errorStateMatcher]="matcher"
     />
     <mat-error id="invalidSelection">{{ invalidMessage }}</mat-error>

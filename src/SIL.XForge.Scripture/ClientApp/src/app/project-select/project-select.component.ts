@@ -37,6 +37,7 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   readonly paratextIdControl = new FormControl<string | SelectableProject>('', [SFValidators.selectableProject(true)]);
   private allProjects$ = new BehaviorSubject<SelectableProject[] | undefined>(undefined);
   private allResources$ = new BehaviorSubject<SelectableProject[] | undefined>(undefined);
+  private inputSelected = false;
 
   @Input()
   set projects(value: SelectableProject[] | undefined) {
@@ -159,7 +160,7 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
     this.value = value;
   }
 
-  destroyed = false;
+  private destroyed = false;
   ngOnDestroy(): void {
     this.destroyed = true;
   }
@@ -195,8 +196,18 @@ export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
     });
   }
 
-  inputClicked(): void {
+  inputBlurred(): void {
+    this.inputSelected = false;
+  }
+
+  inputClicked(event: MouseEvent): void {
     this.autocompleteTrigger.openPanel();
+    const input = event.target as HTMLInputElement;
+    if (!this.inputSelected) {
+      // Select all the text on first click so the user can begin typing to replace it
+      input.select();
+      this.inputSelected = true;
+    }
   }
 
   nullableLength(project: SelectableProject[] | null): number {
