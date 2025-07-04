@@ -5,7 +5,11 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { DraftUsfmConfig, ParagraphBreakFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import {
+  DraftUsfmConfig,
+  ParagraphBreakFormat,
+  QuoteFormat
+} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -94,9 +98,10 @@ describe('DraftUsfmFormatComponent', () => {
     verify(mockedDraftHandlingService.getDraft(anything(), anything())).thrice();
   }));
 
-  it('should initialize and default to best guess', fakeAsync(async () => {
+  it('should initialize and default to best guess and automatic quotes', fakeAsync(async () => {
     const env = new TestEnvironment();
     expect(env.component.paragraphFormat.value).toBe(ParagraphBreakFormat.BestGuess);
+    expect(env.component.quoteFormat.value).toBe(QuoteFormat.Automatic);
     expect(await env.component.confirmLeave()).toBe(true);
   }));
 
@@ -143,7 +148,7 @@ describe('DraftUsfmFormatComponent', () => {
     env.fixture.detectChanges();
     verify(mockedProjectService.onlineSetUsfmConfig(env.projectId, deepEqual(config))).once();
     verify(mockedServalAdministration.onlineRetrievePreTranslationStatus(env.projectId)).once();
-    verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).never();
+    verify(mockedRouter.navigate(deepEqual(['projects', env.projectId, 'draft-generation']))).once();
   }));
 
   it('should not save if format is empty', fakeAsync(() => {
@@ -183,6 +188,7 @@ class TestEnvironment {
     this.onlineStatusService.setIsOnline(true);
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
+    when(mockedServalAdministration.onlineRetrievePreTranslationStatus(anything())).thenResolve();
     this.setupProject(args.config);
     this.fixture = TestBed.createComponent(DraftUsfmFormatComponent);
     this.component = this.fixture.componentInstance;
