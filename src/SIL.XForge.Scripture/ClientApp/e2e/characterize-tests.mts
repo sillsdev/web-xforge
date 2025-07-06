@@ -6,14 +6,14 @@ import { numberOfTimesToAttemptTest } from "./pass-probability.ts";
 import { ScreenshotContext } from "./presets.ts";
 import { tests } from "./test-definitions.ts";
 
+const retriesToStopAt = 3; // Stop characterization after a test is reliable enough to only need this many retries
 const resultFilePath = "test_characterization.json";
 const testNames = Object.keys(tests) as (keyof typeof tests)[];
 let mostRecentResultData = JSON.parse(await Deno.readTextFile(resultFilePath));
 
 printRetriesForEachTest();
 
-while (true) {
-  const testName = nextTestToRun();
+for (let testName = nextTestToRun(); testName !== null; testName = nextTestToRun()) {
   const testFunction = tests[testName];
   const browser = await chromium.launch({ headless: true });
   const browserContext = await browser.newContext();
@@ -40,6 +40,10 @@ while (true) {
   }
 }
 
+console.log("Characterization tests completed.");
+console.log("Final results:");
+printRetriesForEachTest();
+
 async function saveResult(result: "success" | "failure", testName: string): Promise<void> {
   mostRecentResultData = JSON.parse(await Deno.readTextFile(resultFilePath));
   mostRecentResultData[testName] ??= {};
@@ -52,13 +56,15 @@ async function saveResult(result: "success" | "failure", testName: string): Prom
   );
 }
 
-function nextTestToRun(): keyof typeof tests {
-  return testNames
-    .slice()
-    .sort(
-      (a, b) =>
-        numberOfTimesToAttemptTest(b, mostRecentResultData) - numberOfTimesToAttemptTest(a, mostRecentResultData)
-    )[0];
+function nextTestToRun(): keyof typeof tests | null {
+  const testWithMostAttempts = testNames
+    .map(testName => ({
+      name: testName,
+      attempts: numberOfTimesToAttemptTest(testName, mostRecentResultData)
+    }))
+    .sort((a, b) => b.attempts - a.attempts)[0];
+
+  return testWithMostAttempts.attempts <= retriesToStopAt ? null : testWithMostAttempts.name;
 }
 
 function printRetriesForEachTest(): void {
