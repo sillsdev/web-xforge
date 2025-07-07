@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
 
 namespace SIL.XForge.Scripture.Models;
 
 public class DraftConfig
 {
-    [Obsolete("For backwards compatibility with older frontend clients. Deprecated June 2025.")]
-    public bool AdditionalTrainingData { get; set; }
     public bool AdditionalTrainingSourceEnabled { get; set; }
     public TranslateSource? AdditionalTrainingSource { get; set; }
     public bool AlternateSourceEnabled { get; set; }

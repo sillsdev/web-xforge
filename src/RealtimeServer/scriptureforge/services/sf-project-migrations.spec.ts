@@ -610,6 +610,23 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.translateConfig.draftConfig.usfmConfig).toBeUndefined();
     });
   });
+
+  describe('version 24', () => {
+    it('removes additionalTrainingData from draftConfig', async () => {
+      const env = new TestEnvironment(23);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { additionalTrainingData: true } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingData).toBe(true);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingData).toBeUndefined();
+    });
+  });
 });
 
 class TestEnvironment {
