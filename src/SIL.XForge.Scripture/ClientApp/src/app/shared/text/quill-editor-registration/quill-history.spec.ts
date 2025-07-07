@@ -56,12 +56,12 @@ describe('Quill history', () => {
       },
       {
         name: 'mixed text and embeds with trailing text',
-        delta: new Delta().insert({ blank: true }).insert('text').insert({ image: 'test.jpg' }).insert('more'),
+        delta: new Delta().insert({ image: 'test1.jpg' }).insert('text').insert({ image: 'test.jpg' }).insert('more'),
         expected: 10
       },
       {
         name: 'mixed text and embeds with trailing embed',
-        delta: new Delta().insert({ blank: true }).insert('text').insert({ image: 'test.jpg' }),
+        delta: new Delta().insert({ image: 'test1.jpg' }).insert('text').insert({ image: 'test.jpg' }),
         expected: 5
       },
       {
