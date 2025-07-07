@@ -987,8 +987,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  async onSourceUpdated(textChange: boolean): Promise<void> {
-    if (!textChange) {
+  async onSourceUpdated(delta: Delta | undefined): Promise<void> {
+    // We do not count insertion of blank ops by the view model
+    if (
+      delta == null ||
+      (delta.ops?.some(op => (op.insert as any)?.blank === false) && delta.ops.some(op => op.retain != null))
+    ) {
       return;
     }
 
@@ -1897,6 +1901,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.translator == null) {
       return;
     }
+
+    // If we have no prefix, ensure it is present, otherwise the segment will not be translated
+    if (this.target != null && this.translator.prefixWordRanges.length === 0) {
+      const text = this.target.getSegmentText(segment.ref);
+      this.translator?.setPrefix(text);
+    }
+
     await this.translator.approve(true);
     segment.acceptChanges();
     this.console.log(
@@ -2348,6 +2359,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         let length = 0;
         if (typeof insertOp === 'string') {
           length = insertOp.length;
+        } else if (insertOp['blank'] === false) {
+          // Ignore blanks in the view model
+          continue;
         } else if (insertOp['note-thread-embed'] != null) {
           const embedId = insertOp['note-thread-embed']['threadid'];
           if (embedId != null) {

@@ -104,7 +104,7 @@
                       [isReadOnly]="true"
                       [highlightSegment]="targetFocused"
                       (loaded)="onTextLoaded('source')"
-                      (updated)="onSourceUpdated($event.delta != null)"
+                      (updated)="onSourceUpdated($event.delta)"
                       [isRightToLeft]="isSourceRightToLeft"
                       [fontSize]="sourceFontSize"
                       [style.--project-font]="fontService.getFontFamilyFromProject(sourceProjectDoc)"

@@ -733,15 +733,19 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       editorPosOfSegmentToModify.index,
       startTextPosInVerse
     );
+    // Insert at the start of the segment and before any other embeds in the segment
     const embedInsertPos: number =
-      editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
+      editorRange.startEditorPosition +
+      editorRange.editorLength +
+      editorRange.trailingEmbedCount -
+      editorRange.blanksWithinRange;
     let insertFormat = this.editor.getFormat(embedInsertPos);
 
     // Include formatting from the current insert position as well as any unique formatting
     format = { ...insertFormat, ...format };
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
     const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
-    const formatLength: number = textAnchorRange.editorLength;
+    const formatLength: number = textAnchorRange.editorLength - editorRange.blanksWithinRange;
 
     // Add text anchors as a separate formatText call rather than part of insertEmbed as it needs to expand over a
     // a length of text
@@ -816,7 +820,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   onContentChanged(delta: Delta, source: string): void {
     const preDeltaSegmentCache: IterableIterator<[string, Range]> = this.viewModel.segmentsSnapshot;
     const preDeltaEmbedCache: Readonly<Map<string, number>> = this.viewModel.embeddedElementsSnapshot;
-    this.viewModel.update(delta, source as EmitterSource, this.onlineStatusService.isOnline);
+    this.viewModel.update(delta, source as EmitterSource);
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       const isUserEdit: boolean = source === 'user';
@@ -872,15 +876,19 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
     let previousEmbedIndex = -1;
     const deleteDelta = new Delta();
-    for (const embedIndex of this.viewModel.embeddedElements.values()) {
-      const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
-      if (lengthBetweenEmbeds > 0) {
-        // retain elements other than notes between the previous and current embed
-        deleteDelta.retain(lengthBetweenEmbeds);
+    for (const [embedId, embedIndex] of this.viewModel.embeddedElements) {
+      // Do not remove any blank embeds
+      if (!embedId.startsWith('blank_')) {
+        const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
+        if (lengthBetweenEmbeds > 0) {
+          // retain elements other than notes between the previous and current embed
+          deleteDelta.retain(lengthBetweenEmbeds);
+        }
+        deleteDelta.delete(1);
+        previousEmbedIndex = embedIndex;
       }
-      deleteDelta.delete(1);
-      previousEmbedIndex = embedIndex;
     }
+
     deleteDelta.chop();
     if (deleteDelta.ops != null && deleteDelta.ops.length > 0) {
       this.editor.updateContents(deleteDelta, 'api');
@@ -1471,12 +1479,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         // Embedding notes into quill makes quill emit deltas when it registers that content has changed
         // but quill incorrectly interprets the change when the selection is within the updated segment.
         // Content coming after the selection gets moved before the selection. This moves the selection back.
-        const curSegmentRange: Range = this.segment.range;
-        const insertionPoint: number = getRetainCount(delta.ops[0]) ?? 0;
-        const segmentEndPoint: number = curSegmentRange.index + curSegmentRange.length - 1;
-        if (insertionPoint >= curSegmentRange.index && insertionPoint <= segmentEndPoint) {
-          this._editor.setSelection(segmentEndPoint);
-        }
+        this._editor.setSelection(this.segment.range.index + this.segment.range.length);
       }
       // get currently selected segment ref
       const selection = this._editor.getSelection();
@@ -1571,7 +1574,9 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         if (range != null) {
           // setTimeout seems necessary to ensure that the editor is focused
           setTimeout(() => {
-            if (this._editor != null) {
+            // Get the range again so it is up-to-date with any inserted blanks
+            const range = this.viewModel.getSegmentRange(segmentRef);
+            if (this._editor != null && range != null) {
               this._editor.setSelection(end ? range.index + range.length : range.index, 0, 'user');
             }
           });
