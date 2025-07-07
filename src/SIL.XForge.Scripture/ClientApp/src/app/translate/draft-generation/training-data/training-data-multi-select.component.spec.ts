@@ -104,7 +104,6 @@ describe('TrainingDataMultiSelectComponent', () => {
     await component.deleteTrainingData(mockTrainingData[0]);
     tick();
 
-    verify(mockTrainingDataService.deleteTrainingDataAsync(mockTrainingData[0])).once();
     expect(result).not.toContain(mockTrainingData[0]);
   }));
 

@@ -10,6 +10,7 @@ import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FileService } from 'xforge-common/file.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
@@ -30,6 +31,7 @@ const mockedAuthService = mock(AuthService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedTrainingDataService = mock(TrainingDataService);
 const mockedUserService = mock(UserService);
+const mockedFileService = mock(FileService);
 
 const blankProjectDoc = { id: 'project1', data: createTestProjectProfile() } as SFProjectProfileDoc;
 
@@ -162,6 +164,7 @@ export default {
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
         { provide: TrainingDataService, useValue: instance(mockedTrainingDataService) },
         { provide: UserService, useValue: instance(mockedUserService) },
+        { provide: FileService, useValue: instance(mockedFileService) },
         defaultTranslocoMarkupTranspilers()
       ]
     })

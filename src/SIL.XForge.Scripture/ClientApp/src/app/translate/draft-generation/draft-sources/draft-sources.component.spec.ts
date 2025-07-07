@@ -14,7 +14,9 @@ import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -59,6 +61,7 @@ const mockedSFUserProjectsService = mock(SFUserProjectsService);
 const mockedAuthService = mock(AuthService);
 const mockedDialogService = mock(DialogService);
 const mockTrainingDataService = mock(TrainingDataService);
+const mockedFileService = mock(FileService);
 
 const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
 const trainingDataQueryLocalChanges$: Subject<void> = new Subject<void>();
@@ -88,7 +91,8 @@ describe('DraftSourcesComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
-      { provide: ErrorReportingService, useMock: mock(ErrorReportingService) }
+      { provide: ErrorReportingService, useMock: mock(ErrorReportingService) },
+      { provide: FileService, useMock: mockedFileService }
     ]
   }));
 
@@ -349,6 +353,77 @@ describe('DraftSourcesComponent', () => {
       env.component.save();
 
       verify(mockTrainingDataService.createTrainingDataAsync(newFile)).once();
+    }));
+
+    it('deletes training data for removed files', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      env.clickLanguageCodesConfirmationCheckbox();
+
+      const savedFile1 = { dataId: 'file1' } as TrainingData;
+      const savedFile2 = { dataId: 'file2' } as TrainingData;
+      when(mockTrainingDataQuery.docs).thenReturn([
+        { data: savedFile1 } as TrainingDataDoc,
+        { data: savedFile2 } as TrainingDataDoc
+      ]);
+      trainingDataQueryLocalChanges$.next();
+      tick();
+
+      expect(env.component.availableTrainingFiles.length).toEqual(2);
+
+      env.component.onTrainingDataSelect([savedFile1]);
+      env.component.save();
+      tick();
+
+      verify(mockTrainingDataService.deleteTrainingDataAsync(savedFile2)).once();
+      verify(mockTrainingDataService.deleteTrainingDataAsync(savedFile1)).never();
+      verify(mockTrainingDataService.createTrainingDataAsync(anything())).never();
+    }));
+
+    it('deletes added files on discard from confirmLeave', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+      env.clickLanguageCodesConfirmationCheckbox();
+      when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
+
+      const savedFile = { dataId: 'saved_file', ownerRef: 'user01' } as TrainingData;
+      when(mockTrainingDataQuery.docs).thenReturn([{ data: savedFile } as TrainingDataDoc]);
+      trainingDataQueryLocalChanges$.next();
+      tick();
+
+      expect(env.component.availableTrainingFiles.length).toEqual(1);
+
+      const newFile = { dataId: 'new_file', ownerRef: 'user01' } as TrainingData;
+      env.component.onTrainingDataSelect([savedFile, newFile]);
+      env.component['changesMade'] = true;
+      tick();
+
+      // SUT
+      env.component.confirmLeave();
+      tick();
+
+      verify(
+        mockedFileService.deleteFile(
+          FileType.TrainingData,
+          env.activatedProjectDoc.id,
+          TrainingDataDoc.COLLECTION,
+          newFile.dataId,
+          newFile.ownerRef
+        )
+      ).once();
+      verify(
+        mockedFileService.deleteFile(
+          FileType.TrainingData,
+          env.activatedProjectDoc.id,
+          TrainingDataDoc.COLLECTION,
+          savedFile.dataId,
+          savedFile.ownerRef
+        )
+      ).never();
+      verify(mockTrainingDataService.createTrainingDataAsync(anything())).never();
+      verify(mockTrainingDataService.deleteTrainingDataAsync(anything())).never();
     }));
   });
 

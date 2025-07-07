@@ -17,8 +17,10 @@ import { isNetworkError } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FileService } from 'xforge-common/file.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -118,7 +120,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     private readonly onlineStatus: OnlineStatusService,
     readonly i18n: I18nService,
     noticeService: NoticeService,
-    private readonly errorReportingService: ErrorReportingService
+    private readonly errorReportingService: ErrorReportingService,
+    private readonly fileService: FileService
   ) {
     super(noticeService);
 
@@ -172,7 +175,6 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     )
       .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
       .subscribe(() => {
-        this.availableTrainingFiles = [];
         this.availableTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
         this.savedTrainingFiles = this.availableTrainingFiles.slice();
       });
@@ -333,14 +335,29 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     this.navigateToDrafting();
   }
 
-  confirmLeave(): Promise<boolean> {
+  async confirmLeave(): Promise<boolean> {
     if (this.changesMade && this.getControlState('projectSettings') == null) {
-      return this.dialogService.confirm(
+      const confirmed = await this.dialogService.confirm(
         this.i18n.translate('draft_sources.discard_changes_confirmation'),
         this.i18n.translate('draft_sources.leave_and_discard'),
         this.i18n.translate('draft_sources.stay_on_page')
       );
+      if (confirmed) {
+        const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
+        addedFiles.forEach(f =>
+          this.fileService.deleteFile(
+            FileType.TrainingData,
+            this.activatedProjectService.projectId!,
+            TrainingDataDoc.COLLECTION,
+            f.dataId,
+            f.ownerRef
+          )
+        );
+      }
+
+      return confirmed;
     }
+
     return Promise.resolve(true);
   }
 
@@ -368,7 +385,10 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
       return;
     }
 
+    const removedFiles = this.savedTrainingFiles?.filter(saved => !this.availableTrainingFiles.includes(saved)) ?? [];
     const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
+
+    removedFiles.forEach(f => this.trainingDataService.deleteTrainingDataAsync(f));
     addedFiles.forEach(f => this.trainingDataService.createTrainingDataAsync(f));
 
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
