@@ -194,19 +194,22 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
 
     this.textDocId = textDocId;
     this.textDoc = textDoc;
-    editor.setContents(this.textDoc.data as Delta);
+    const deltaWithBlanks: Delta = this.addBlanksToDelta(textDoc.data as Delta);
+    editor.setContents(deltaWithBlanks);
     editor.history.clear();
 
     if (subscribeToUpdates) {
       this.changesSub = this.textDoc.remoteChanges$.subscribe(ops => {
-        const deltaWithEmbeds: Delta = this.addEmbeddedElementsToDelta(ops as Delta);
+        const deltaWithBlanks: Delta = this.addBlanksToDelta(ops as Delta);
+        const deltaWithEmbeds = this.addEmbeddedElementsToDelta(deltaWithBlanks);
         editor.updateContents(deltaWithEmbeds, 'api');
       });
     }
 
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
-        editor.setContents(textDoc.data as Delta);
+        const deltaWithBlanks: Delta = this.addBlanksToDelta(textDoc.data as Delta);
+        editor.setContents(deltaWithBlanks);
       }
       editor.history.clear();
     });
@@ -634,7 +637,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         }
         (modelDelta as any).push(modelOp);
       }
-      // Remove Paratext notes from model delta
+      // Remove blanks and Paratext notes from model delta
       modelDelta = this.removeEmbeddedElementsFromDelta(modelDelta);
     }
     return modelDelta.chop();
@@ -890,13 +893,84 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         if (cloneOp.delete < 1) {
           cloneOp = undefined;
         }
-      } else if (cloneOp.insert != null && cloneOp.insert['note-thread-embed'] != null) {
+      } else if (
+        cloneOp.insert != null &&
+        (cloneOp.insert['note-thread-embed'] != null || cloneOp.insert['blank'] != null)
+      ) {
         cloneOp = undefined;
       }
 
       if (cloneOp != null) {
         (adjustedDelta as any).push(cloneOp);
       }
+    }
+
+    return adjustedDelta;
+  }
+
+  /**
+   * Adds blanks to deltas. This must be done before adding embedded elements to give the correct segments to reference.
+   * @param modelDelta The model delta.
+   * @returns The view model delta.
+   */
+  private addBlanksToDelta(modelDelta: Delta): Delta {
+    if (modelDelta.ops == null || modelDelta.ops.length < 1) {
+      return new Delta();
+    }
+
+    const nextIds = new Map<string, number>();
+    let chapter = '';
+    let curRef = '';
+    let curRefHasContent = false;
+    const adjustedDelta = new Delta();
+    for (const op of modelDelta.ops) {
+      const cloneOp: DeltaOperation = cloneDeep(op);
+      let newCurRef = '';
+      if (op.insert === '\n' || op.attributes?.para != null || op.attributes?.book != null) {
+        const style: string = (op.attributes?.para ?? (op.attributes?.book as any))?.style ?? 'p';
+        if (op.attributes?.table != null && op.attributes?.row != null && op.attributes?.cell != null) {
+          // table cell
+          newCurRef =
+            (op.attributes.row as any).id.replace('row', 'cell') +
+            '_' +
+            (op.attributes.cell as any).style[(op.attributes.cell as any).style.length - 1];
+        } else if (canParaContainVerseText(style)) {
+          // paragraph
+          if (curRef !== '') {
+            newCurRef = curRef;
+            const slashIndex = curRef.indexOf('/');
+            if (slashIndex !== -1) newCurRef = newCurRef.substring(0, slashIndex);
+            newCurRef = getParagraphRef(nextIds, newCurRef, newCurRef + '/' + style);
+          } else {
+            newCurRef = getParagraphRef(nextIds, style, style);
+          }
+        } else {
+          // blank line or title/header
+          newCurRef = '';
+        }
+      } else if ((op.insert as any).chapter != null) {
+        // chapter
+        chapter = (op.insert as any).chapter.number;
+        newCurRef = '';
+      } else if ((op.insert as any).verse != null) {
+        // verse
+        newCurRef = 'verse_' + chapter + '_' + (op.insert as any).verse.number;
+      } else {
+        // segment - ignore
+        curRefHasContent = true;
+      }
+
+      if (newCurRef !== curRef) {
+        console.log(newCurRef);
+        if (!curRefHasContent && newCurRef !== '') {
+          adjustedDelta.insert({ blank: true }, { segment: newCurRef });
+        }
+
+        curRef = newCurRef;
+        curRefHasContent = false;
+      }
+
+      adjustedDelta.push(cloneOp);
     }
 
     return adjustedDelta;
