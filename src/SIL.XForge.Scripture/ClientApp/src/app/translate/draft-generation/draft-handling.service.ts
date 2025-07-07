@@ -35,34 +35,6 @@ export class DraftHandlingService {
   ) {}
 
   /**
-   * Whether draft has any pretranslation segments that are not already translated in target ops.
-   * @param draft dictionary of segment refs to pretranslations
-   * @param targetOps current delta ops for target editor
-   */
-  hasDraftOps(draft: DraftSegmentMap, targetOps: DeltaOperation[]): boolean {
-    // Check for empty draft
-    if (Object.keys(draft).length === 0) {
-      return false;
-    }
-
-    return targetOps.some(op => {
-      if (op.insert == null) {
-        return false;
-      }
-
-      const draftSegmentText: string | undefined = draft[op.attributes?.segment as string];
-      const isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
-
-      // Can populate draft if insert is a blank string OR insert is object that has 'blank: true' property.
-      // Other objects are not draftable (e.g. 'note-thread-embed').
-      const isInsertBlank =
-        (isString(op.insert) && op.insert.trim().length === 0) || (!isString(op.insert) && op.insert.blank === true);
-
-      return isSegmentDraftAvailable && isInsertBlank;
-    });
-  }
-
-  /**
    * Returns array of target ops with draft pretranslation copied
    * to corresponding target op segments that are not already translated.
    * @param draft dictionary of segment refs to pretranslations

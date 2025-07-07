@@ -36,34 +36,6 @@ describe('DraftHandlingService', () => {
     service = TestBed.inject(DraftHandlingService);
   });
 
-  describe('hasDraftOps', () => {
-    it('should return false if draft is empty', () => {
-      const draft: DraftSegmentMap = {};
-      const targetOps: DeltaOperation[] = [];
-      expect(service.hasDraftOps(draft, targetOps)).toBeFalse();
-    });
-
-    it('should return false if all target ops have existing translation', () => {
-      const draft: DraftSegmentMap = { verse_1_1: 'In the beginning' };
-      const targetOps: DeltaOperation[] = [{ insert: 'existing translation', attributes: { segment: 'verse_1_1' } }];
-      expect(service.hasDraftOps(draft, targetOps)).toBeFalse();
-    });
-
-    it('should return false for ops with insert object that is not { blank: true}', () => {
-      const draft: DraftSegmentMap = { verse_1_1: 'In the beginning' };
-      const targetOps: DeltaOperation[] = [
-        { insert: { 'note-thread-embed': {} }, attributes: { segment: 'verse_1_1' } }
-      ];
-      expect(service.hasDraftOps(draft, targetOps)).toBeFalse();
-    });
-
-    it('should return true if there is a target op without existing translation', () => {
-      const draft: DraftSegmentMap = { verse_1_1: 'In the beginning' };
-      const targetOps: DeltaOperation[] = [{ insert: '', attributes: { segment: 'verse_1_1' } }];
-      expect(service.hasDraftOps(draft, targetOps)).toBeTrue();
-    });
-  });
-
   describe('getDraft', () => {
     it('should get a draft', () => {
       const textDocId = new TextDocId('project01', 1, 1);
