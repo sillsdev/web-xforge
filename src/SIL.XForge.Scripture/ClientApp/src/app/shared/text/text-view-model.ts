@@ -88,6 +88,8 @@ export interface EditorRange {
   leadingEmbedCount: number;
   /** Count of sequential embeds immediately following the range */
   trailingEmbedCount: number;
+  /** Count of the blanks in the range. */
+  blanksWithinRange: number;
 }
 
 /** Represents the position of an embed. */
@@ -128,7 +130,6 @@ class SegmentInfo {
 export class TextViewModel implements OnDestroy, LynxTextModelConverter {
   editor?: Quill;
 
-  private readonly _segments: Map<string, Range> = new Map<string, Range>();
   private changesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
@@ -137,7 +138,8 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
    * A mapping of IDs of elements embedded into the quill editor to their positions.
    * These elements are in addition to the text data i.e. Note threads
    */
-  private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
+  private _embeddedElements = new Map<string, EmbedPosition>();
+  private _segments = new Map<string, Range>();
 
   segments$ = new BehaviorSubject<ReadonlyMap<string, Range>>(this._segments);
 
@@ -177,6 +179,14 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     return this.textDoc?.isLoaded === true && this.textDoc.data?.ops != null && isBadDelta(this.textDoc.data.ops);
   }
 
+  private get blankPositions(): number[] {
+    return this.embeddedElementPositions(
+      Array.from(this._embeddedElements.entries())
+        .filter(([key, _]) => key.startsWith('blank_'))
+        .map(([_, value]) => value)
+    );
+  }
+
   private get embedPositions(): number[] {
     return this.embeddedElementPositions(Array.from(this._embeddedElements.values()));
   }
@@ -194,19 +204,25 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
 
     this.textDocId = textDocId;
     this.textDoc = textDoc;
-    editor.setContents(this.textDoc.data as Delta);
+    const deltaWithBlanks: Delta = this.addBlanksToDelta(textDoc.data as Delta);
+    editor.setContents(deltaWithBlanks);
     editor.history.clear();
 
     if (subscribeToUpdates) {
-      this.changesSub = this.textDoc.remoteChanges$.subscribe(ops => {
-        const deltaWithEmbeds: Delta = this.addEmbeddedElementsToDelta(ops as Delta);
-        editor.updateContents(deltaWithEmbeds, 'api');
+      this.changesSub = textDoc.remoteChanges$.subscribe(() => {
+        // Transform the editor rather than use the incoming ops
+        const oldEditor: Delta = editor.getContents();
+        const newData: Delta = textDoc.data as Delta;
+        const newEditor: Delta = this.addBlanksToDelta(newData as Delta);
+        const updateDelta = oldEditor.diff(newEditor);
+        editor.updateContents(updateDelta, 'api');
       });
     }
 
-    this.onCreateSub = this.textDoc.create$.subscribe(() => {
+    this.onCreateSub = textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
-        editor.setContents(textDoc.data as Delta);
+        const deltaWithBlanks: Delta = this.addBlanksToDelta(textDoc.data as Delta);
+        editor.setContents(deltaWithBlanks);
       }
       editor.history.clear();
     });
@@ -229,9 +245,8 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
    *
    * @param {Delta} delta The view model delta.
    * @param {EmitterSource} source The source of the change.
-   * @param {boolean} isOnline Whether the user is online.
    */
-  update(delta: Delta, source: EmitterSource, isOnline: boolean): void {
+  update(delta: Delta, source: EmitterSource): void {
     const editor = this.checkEditor();
     if (this.textDoc == null) {
       return;
@@ -246,11 +261,11 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     }
 
     // Re-compute segment boundaries so the insertion point stays in the right place.
-    this.updateSegments(editor, isOnline);
+    this.updateSegments(editor, undefined);
 
     // Defer the update, since it might cause the segment ranges to be out-of-sync with the view model
     Promise.resolve().then(() => {
-      const updateDelta = this.updateSegments(editor, isOnline);
+      const updateDelta = this.updateSegments(editor, undefined);
       if (updateDelta.ops != null && updateDelta.ops.length > 0) {
         // Clean up blanks in quill editor. This may result in re-entering the update() method.
         editor.updateContents(updateDelta, source);
@@ -470,27 +485,42 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
 
   /** Returns editor range information that corresponds to a text position past an editor position. */
   getEditorContentRange(startEditorPosition: number, textPosPast: number): EditorRange {
+    // Cache these getters so they are not recalculated each time
+    const blankEditorPositions: number[] = this.blankPositions;
     const embedEditorPositions: number[] = this.embedPositions;
-    const leadingEmbedCount: number = this.countSequentialEmbedsStartingAt(startEditorPosition);
-    let resultingEditorPos = startEditorPosition + leadingEmbedCount;
-    let textCharactersFound = 0;
+
+    // Get the leading number of embeds in the range. This will include the number of blanks
+    const leadingEmbedCount: number = this.countSequentialEmbedsStartingAt(startEditorPosition, embedEditorPositions);
     let embedsWithinRange = leadingEmbedCount;
+    let resultingEditorPos = startEditorPosition + leadingEmbedCount;
+
+    // Get the leading number of blanks in the range. This is a subset of embedsWithinRange.
+    const leadingBlankCount: number = this.countSequentialEmbedsStartingAt(startEditorPosition, blankEditorPositions);
+    let blanksWithinRange = leadingBlankCount;
+
+    // Get number of characters, embeds, and blanks inside the range
+    let textCharactersFound = 0;
     while (textCharactersFound < textPosPast) {
       if (!embedEditorPositions.includes(resultingEditorPos)) {
         textCharactersFound++;
       } else {
         embedsWithinRange++;
+        if (blankEditorPositions.includes(resultingEditorPos)) {
+          blanksWithinRange++;
+        }
       }
+
       resultingEditorPos++;
     }
     // trailing embeds do not count towards embedsWithinRange
-    const trailingEmbedCount: number = this.countSequentialEmbedsStartingAt(resultingEditorPos);
+    const trailingEmbedCount: number = this.countSequentialEmbedsStartingAt(resultingEditorPos, embedEditorPositions);
     return {
       startEditorPosition,
       editorLength: resultingEditorPos - startEditorPosition,
       embedsWithinRange,
       leadingEmbedCount,
-      trailingEmbedCount
+      trailingEmbedCount,
+      blanksWithinRange
     };
   }
 
@@ -594,8 +624,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     return this.addEmbeddedElementsToDelta(dataDelta);
   }
 
-  private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
-    const embedEditorPositions = this.embedPositions;
+  private countSequentialEmbedsStartingAt(startEditorPosition: number, embedEditorPositions: number[]): number {
     // add up the leading embeds
     let leadingEmbedCount = 0;
     while (embedEditorPositions.includes(startEditorPosition + leadingEmbedCount)) {
@@ -634,7 +663,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         }
         (modelDelta as any).push(modelOp);
       }
-      // Remove Paratext notes from model delta
+      // Remove blanks and Paratext notes from model delta
       modelDelta = this.removeEmbeddedElementsFromDelta(modelDelta);
     }
     return modelDelta.chop();
@@ -644,16 +673,17 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
    * Re-generate segment boundaries from quill editor ops. Return ops to clean up where and whether blanks are
    * represented.
    */
-  private updateSegments(editor: Quill, isOnline: boolean): Delta {
+  private updateSegments(editor?: Quill, delta?: Delta): Delta {
     const convertDelta = new Delta();
     let fixDelta = new Delta();
     let fixOffset = 0;
-    const delta = editor.getContents();
-    this._segments.clear();
-    this._embeddedElements.clear();
-    if (delta.ops == null) {
+    delta ??= editor?.getContents();
+    if (delta?.ops == null) {
       return convertDelta;
     }
+
+    const segments = new Map<string, Range>();
+    const embeddedElements = new Map<string, EmbedPosition>();
     const nextIds = new Map<string, number>();
     let paraSegments: SegmentInfo[] = [];
     let chapter = '';
@@ -687,12 +717,12 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
             }
 
             for (const paraSegment of paraSegments) {
-              if (this._segments.has(paraSegment.ref) && paraSegment.ref.startsWith('verse')) {
+              if (segments.has(paraSegment.ref) && paraSegment.ref.startsWith('verse')) {
                 paraSegment.ref = getParagraphRef(nextIds, paraSegment.ref, paraSegment.ref + '/' + style);
               }
 
-              [fixDelta, fixOffset] = this.fixSegment(editor, paraSegment, fixDelta, fixOffset, isOnline);
-              this._segments.set(paraSegment.ref, { index: paraSegment.index, length: paraSegment.length });
+              [fixDelta, fixOffset] = this.fixSegment(editor, paraSegment, fixDelta, fixOffset);
+              segments.set(paraSegment.ref, { index: paraSegment.index, length: paraSegment.length });
             }
             paraSegments = [];
             curIndex++;
@@ -712,12 +742,15 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
           // title/header
           curSegment ??= new SegmentInfo('', curIndex);
           curSegment.ref = getParagraphRef(nextIds, style, style);
-          [fixDelta, fixOffset] = this.fixSegment(editor, curSegment, fixDelta, fixOffset, isOnline);
-          this._segments.set(curSegment.ref, { index: curSegment.index, length: curSegment.length });
+          [fixDelta, fixOffset] = this.fixSegment(editor, curSegment, fixDelta, fixOffset);
+          segments.set(curSegment.ref, { index: curSegment.index, length: curSegment.length });
           paraSegments = [];
           curIndex += curSegment.length + len;
           curSegment = undefined;
         }
+      } else if (op.delete != null || op.retain != null) {
+        // Corrupt op
+        continue;
       } else if ((op.insert as any).chapter != null) {
         // chapter
         chapter = (op.insert as any).chapter.number;
@@ -747,6 +780,26 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         }
         curSegment.length += len;
         if ((op.insert as any)?.blank != null) {
+          // record the presence of a blank in the segment, if it was generated by the view model
+          if ((op.insert as any)?.blank === false) {
+            const position: number = curIndex + curSegment.length - 1;
+            const id = `blank_${position}`;
+            let embedPosition: EmbedPosition | undefined = id == null ? undefined : embeddedElements.get(id);
+            if (embedPosition == null && id != null) {
+              embedPosition = { position };
+              embeddedElements.set(id, embedPosition);
+            } else {
+              if (embedPosition != null) {
+                if (embedPosition.duplicatePosition != null) {
+                  console.warn(
+                    'Warning: text-view-model.updateSegments() did not expect to encounter an embed with >2 positions'
+                  );
+                }
+                embedPosition.duplicatePosition = position;
+              }
+            }
+          }
+
           curSegment.containsBlank = true;
           if (op.attributes != null && op.attributes['initial'] === true) {
             curSegment.hasInitialFormat = true;
@@ -754,11 +807,11 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         } else if (op.insert != null && op.insert['note-thread-embed'] != null) {
           // record the presence of an embedded note in the segment
           const id: string | undefined = op.attributes?.['threadid'] as string | undefined;
-          let embedPosition: EmbedPosition | undefined = id == null ? undefined : this._embeddedElements.get(id);
+          let embedPosition: EmbedPosition | undefined = id == null ? undefined : embeddedElements.get(id);
           const position: number = curIndex + curSegment.length - 1;
           if (embedPosition == null && id != null) {
             embedPosition = { position };
-            this._embeddedElements.set(id, embedPosition);
+            embeddedElements.set(id, embedPosition);
           } else {
             if (embedPosition != null) {
               if (embedPosition.duplicatePosition != null) {
@@ -775,46 +828,55 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
       convertDelta.retain(len, attrs);
     }
 
-    this.segments$.next(this._segments);
-
+    const updateViewModel: boolean = editor != null;
+    if (updateViewModel) {
+      this._segments.clear();
+      this._segments = segments;
+      this._embeddedElements = embeddedElements;
+      this.segments$.next(this._segments);
+    }
     return convertDelta.compose(fixDelta).chop();
   }
 
   /** Computes and adds to `fixDelta` a change to add or remove a blank indication as needed on `segment`, and other
    * fixes. */
   private fixSegment(
-    editor: Quill,
+    editor: Quill | undefined,
     segment: SegmentInfo,
     fixDelta: Delta,
-    fixOffset: number,
-    isOnline: boolean
+    fixOffset: number
   ): [Delta, number] {
     // inserting blank embeds onto text docs while offline creates a scenario where quill misinterprets
     // the diff delta and can cause merge issues when returning online and duplicating verse segments
-    if (segment.length - segment.notesCount === 0 && isOnline) {
+    if (segment.length - segment.notesCount === 0) {
       // insert blank
       const delta = new Delta();
       // insert blank after any existing notes
-      delta.retain(segment.index + segment.notesCount + fixOffset);
+      const position = segment.index + fixOffset + segment.notesCount;
+      delta.retain(position);
       const attrs: any = { segment: segment.ref, 'para-contents': true, 'direction-segment': 'auto' };
       if (segment.isInitial) {
         attrs.initial = true;
       }
-      delta.insert({ blank: true }, attrs);
+      delta.insert({ blank: false }, attrs);
+      segment.containsBlank = true;
       fixDelta = fixDelta.compose(delta);
       fixOffset++;
     } else if (segment.containsBlank && segment.length - segment.notesCount > 1) {
       // The segment contains a blank and there is text other than translation notes
       // delete blank
-      const delta = new Delta().retain(segment.index + fixOffset + segment.notesCount).delete(1);
+      const position = segment.index + fixOffset + segment.notesCount;
+      const delta = new Delta().retain(position).delete(1);
       fixDelta = fixDelta.compose(delta);
       fixOffset--;
-      const sel = editor.getSelection();
+
+      // Update the selection
+      const sel = editor?.getSelection();
       if (sel != null && sel.index === segment.index && sel.length === 0) {
         // if the segment is no longer blank, ensure that the selection is at the end of the segment.
         // Sometimes after typing in a blank segment, the selection will be at the beginning. This seems to be a bug
         // in Quill.
-        Promise.resolve().then(() => editor.setSelection(segment.index + segment.length - 1, 0, 'user'));
+        Promise.resolve().then(() => editor?.setSelection(segment.index + segment.length - 1, 0, 'user'));
       }
     } else if (segment.containsBlank && segment.length === 1 && !segment.hasInitialFormat && segment.isInitial) {
       const delta = new Delta();
@@ -890,13 +952,128 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         if (cloneOp.delete < 1) {
           cloneOp = undefined;
         }
-      } else if (cloneOp.insert != null && cloneOp.insert['note-thread-embed'] != null) {
+      } else if (
+        cloneOp.insert != null &&
+        (cloneOp.insert['note-thread-embed'] != null || cloneOp.insert['blank'] != null)
+      ) {
         cloneOp = undefined;
       }
 
       if (cloneOp != null) {
         (adjustedDelta as any).push(cloneOp);
       }
+    }
+
+    return adjustedDelta;
+  }
+
+  /**
+   * Adds blanks to deltas. This must be done before adding embedded elements to give the correct segments to reference.
+   * @param modelDelta The model delta.
+   * @returns The view model delta.
+   */
+  private addBlanksToDelta(modelDelta: Delta): Delta {
+    if (modelDelta == null || modelDelta.ops == null || modelDelta.ops.length < 1) {
+      return new Delta();
+    }
+
+    const nextIds = new Map<string, number>();
+    let chapter = '';
+    let curRef = '';
+    const segmentsWithContent: string[] = [];
+    const adjustedDelta = new Delta();
+    const ops = cloneDeep(modelDelta.ops);
+    for (let i = 0; i < ops.length; i++) {
+      const op: DeltaOperation = cloneDeep(ops[i]);
+      let newCurRef = '';
+
+      // Split two or more \n characters into multiple ops we will iterate over
+      if (typeof op.insert === 'string' && /^\n{2,}$/.test(op.insert)) {
+        const newlineCount = op.insert.length;
+
+        // Change current op to just the first \n, and insert additional ops after the current op
+        op.insert = '\n';
+        const extraOps = Array.from({ length: newlineCount - 1 }, () => ({
+          insert: '\n',
+          attributes: op.attributes
+        }));
+
+        ops.splice(i + 1, 0, ...extraOps);
+      }
+
+      if (op.insert === '\n' || op.attributes?.para != null || op.attributes?.book != null) {
+        const style: string = (op.attributes?.para ?? (op.attributes?.book as any))?.style ?? 'p';
+        if (op.attributes?.table != null && op.attributes?.row != null && op.attributes?.cell != null) {
+          // table cell
+          newCurRef =
+            (op.attributes.row as any).id.replace('row', 'cell') +
+            '_' +
+            (op.attributes.cell as any).style[(op.attributes.cell as any).style.length - 1];
+
+          // Insert a blank if the new cur ref does not have content
+          if (newCurRef !== '' && !segmentsWithContent.includes(newCurRef)) {
+            adjustedDelta.insert({ blank: false }, { segment: newCurRef });
+            segmentsWithContent.push(newCurRef);
+          }
+        } else if (canParaContainVerseText(style)) {
+          // paragraph
+          if (curRef !== '') {
+            newCurRef = curRef;
+            const slashIndex = curRef.indexOf('/');
+            if (slashIndex !== -1) newCurRef = newCurRef.substring(0, slashIndex);
+            newCurRef = getParagraphRef(nextIds, newCurRef, newCurRef + '/' + style);
+          } else {
+            newCurRef = getParagraphRef(nextIds, style, style);
+          }
+        } else {
+          // blank line or title/header
+          newCurRef = getParagraphRef(nextIds, style, style);
+
+          // Insert a blank if the new cur ref does not have content
+          if (newCurRef !== '' && !segmentsWithContent.includes(newCurRef)) {
+            adjustedDelta.insert({ blank: false }, { segment: newCurRef });
+            segmentsWithContent.push(newCurRef);
+          }
+        }
+      } else if ((op.insert as any)?.chapter != null) {
+        // chapter
+        chapter = (op.insert as any)?.chapter.number;
+        newCurRef = '';
+      } else if ((op.insert as any)?.verse != null) {
+        // verse
+        newCurRef = 'verse_' + chapter + '_' + (op.insert as any).verse.number;
+      } else {
+        // segment - ignore
+        if ((op.attributes as any)?.segment == null) {
+          // This is an op to be applied to a delta
+        } else {
+          // If we have content for the cur ref, ensure we are tracking the right reference
+          curRef = (op.attributes as any).segment;
+          segmentsWithContent.push(curRef);
+          newCurRef = curRef;
+        }
+      }
+
+      if (newCurRef !== curRef) {
+        // NOTE: The blank must go before if the para has no content, or after if the para has content
+
+        // Insert a blank if the cur ref does not have content
+        if (!segmentsWithContent.includes(curRef) && curRef !== '') {
+          adjustedDelta.insert({ blank: false }, { segment: curRef });
+          segmentsWithContent.push(curRef);
+        }
+
+        curRef = newCurRef;
+      }
+
+      adjustedDelta.push(op);
+    }
+
+    // Update the segments
+    const updateDelta = this.updateSegments(this.editor, adjustedDelta);
+    if (updateDelta.ops != null && updateDelta.ops.length > 0) {
+      // Clean up blanks in quill editor. This may result in re-entering the update() method.
+      return adjustedDelta.compose(updateDelta);
     }
 
     return adjustedDelta;
@@ -952,7 +1129,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
 
     editorStartPos = curIndex + embedsUpToIndex;
     // remove any embeds subsequent the previous insert so they can be redrawn
-    const embedsAfterLastEdit = this.countSequentialEmbedsStartingAt(editorStartPos);
+    const embedsAfterLastEdit = this.countSequentialEmbedsStartingAt(editorStartPos, this.embedPositions);
     if (embedsAfterLastEdit > 0 && previousOp === 'insert') {
       (adjustedDelta as any).push({ delete: embedsAfterLastEdit } as DeltaOperation);
     }
