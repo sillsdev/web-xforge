@@ -1283,10 +1283,10 @@ describe('TextComponent', () => {
     env.fixture.detectChanges();
     verse3Contents = env.component.getSegmentContents('verse_1_3')!;
     // blank exists
-    expect(verse3Contents.ops![0].insert).toEqual({ blank: true });
+    expect(verse3Contents.ops![0].insert).toEqual({ blank: false });
     verse1Contents = env.component.getSegmentContents('verse_1_1')!;
     // blank restored to verse 1
-    expect(verse1Contents.ops![0].insert).toEqual({ blank: true });
+    expect(verse1Contents.ops![0].insert).toEqual({ blank: false });
     TestEnvironment.waitForPresenceTimer();
   }));
 

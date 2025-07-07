@@ -733,15 +733,19 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       editorPosOfSegmentToModify.index,
       startTextPosInVerse
     );
+    // Insert at the start of the segment and before any other embeds in the segment
     const embedInsertPos: number =
-      editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
+      editorRange.startEditorPosition +
+      editorRange.editorLength +
+      editorRange.trailingEmbedCount -
+      editorRange.blanksWithinRange;
     let insertFormat = this.editor.getFormat(embedInsertPos);
 
     // Include formatting from the current insert position as well as any unique formatting
     format = { ...insertFormat, ...format };
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
     const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
-    const formatLength: number = textAnchorRange.editorLength;
+    const formatLength: number = textAnchorRange.editorLength - editorRange.blanksWithinRange;
 
     // Add text anchors as a separate formatText call rather than part of insertEmbed as it needs to expand over a
     // a length of text
@@ -872,15 +876,19 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
     let previousEmbedIndex = -1;
     const deleteDelta = new Delta();
-    for (const embedIndex of this.viewModel.embeddedElements.values()) {
-      const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
-      if (lengthBetweenEmbeds > 0) {
-        // retain elements other than notes between the previous and current embed
-        deleteDelta.retain(lengthBetweenEmbeds);
+    for (const [embedId, embedIndex] of this.viewModel.embeddedElements) {
+      // Do not remove any blank embeds
+      if (!embedId.startsWith('blank_')) {
+        const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
+        if (lengthBetweenEmbeds > 0) {
+          // retain elements other than notes between the previous and current embed
+          deleteDelta.retain(lengthBetweenEmbeds);
+        }
+        deleteDelta.delete(1);
+        previousEmbedIndex = embedIndex;
       }
-      deleteDelta.delete(1);
-      previousEmbedIndex = embedIndex;
     }
+
     deleteDelta.chop();
     if (deleteDelta.ops != null && deleteDelta.ops.length > 0) {
       this.editor.updateContents(deleteDelta, 'api');
@@ -1471,12 +1479,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         // Embedding notes into quill makes quill emit deltas when it registers that content has changed
         // but quill incorrectly interprets the change when the selection is within the updated segment.
         // Content coming after the selection gets moved before the selection. This moves the selection back.
-        const curSegmentRange: Range = this.segment.range;
-        const insertionPoint: number = getRetainCount(delta.ops[0]) ?? 0;
-        const segmentEndPoint: number = curSegmentRange.index + curSegmentRange.length - 1;
-        if (insertionPoint >= curSegmentRange.index && insertionPoint <= segmentEndPoint) {
-          this._editor.setSelection(segmentEndPoint);
-        }
+        this._editor.setSelection(this.segment.range.index + this.segment.range.length);
       }
       // get currently selected segment ref
       const selection = this._editor.getSelection();

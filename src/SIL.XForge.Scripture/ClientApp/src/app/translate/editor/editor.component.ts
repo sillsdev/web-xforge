@@ -2348,6 +2348,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         let length = 0;
         if (typeof insertOp === 'string') {
           length = insertOp.length;
+        } else if (insertOp['blank'] === false) {
+          // Ignore blanks in the view model
+          continue;
         } else if (insertOp['note-thread-embed'] != null) {
           const embedId = insertOp['note-thread-embed']['threadid'];
           if (embedId != null) {

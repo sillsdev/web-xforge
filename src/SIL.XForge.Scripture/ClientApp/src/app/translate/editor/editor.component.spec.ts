@@ -420,7 +420,7 @@ describe('EditorComponent', () => {
       let segmentRange = env.component.target!.segment!.range;
       let segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
       let op = segmentContents.ops![0];
-      expect((op.insert as any).blank).toBe(true);
+      expect((op.insert as any).blank).toBe(true); // Blank from model
       expect(op.attributes!.segment).toEqual('p_1');
 
       const index = env.typeCharacters('t');
@@ -435,7 +435,7 @@ describe('EditorComponent', () => {
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
       op = segmentContents.ops![0];
-      expect((op.insert as any).blank).toBe(true);
+      expect((op.insert as any).blank).toBe(false); // Blank from view model
       expect(op.attributes!.segment).toEqual('p_1');
 
       env.dispose();
@@ -494,7 +494,7 @@ describe('EditorComponent', () => {
         }
       });
       op = segmentContents.ops![1];
-      expect((op.insert as any).blank).toBe(true);
+      expect((op.insert as any).blank).toBe(false);
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
       env.dispose();
@@ -1688,7 +1688,7 @@ describe('EditorComponent', () => {
       const noteStart5 = env.component.target!.getSegmentRange('verse_1_4')!.index + doc.data!.position.start;
       // positions are 11, 34, 55, 56, 94
       const expected = [noteStart1, noteStart2, noteStart3, noteStart4, noteStart5];
-      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual(expected);
+      expect(env.getNoteThreadEditorPositions()).toEqual(expected);
       env.dispose();
     }));
 
@@ -1939,12 +1939,12 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([11, 34, 55, 56, 94]);
+      expect(env.getNoteThreadEditorPositions()).toEqual([11, 34, 55, 56, 94]);
 
       // deletes just the note icon
       env.targetEditor.setSelection(11, 1, 'user');
       env.deleteCharacters();
-      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([11, 34, 55, 56, 94]);
+      expect(env.getNoteThreadEditorPositions()).toEqual([11, 34, 55, 56, 94]);
       const textDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
       expect(textDoc.data!.ops![3].insert).toBe('target: chapter 1, verse 1.');
 
@@ -1954,7 +1954,7 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
       env.typeCharacters('t');
       // 4 characters deleted and 1 character inserted
-      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([10, 31, 52, 53, 91]);
+      expect(env.getNoteThreadEditorPositions()).toEqual([10, 31, 52, 53, 91]);
       expect(noteThreadDoc.data!.position).toEqual({ start: 7, length: 7 });
       expect(textDoc.data!.ops![3].insert).toBe('targettapter 1, verse 1.');
 
@@ -1965,7 +1965,7 @@ describe('EditorComponent', () => {
 
       env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
-      expect(Array.from(env.component!.target!.embeddedElements.values())).toEqual([10, 31, 52, 53, 91]);
+      expect(env.getNoteThreadEditorPositions()).toEqual([10, 31, 52, 53, 91]);
       env.dispose();
     }));
 
@@ -2284,7 +2284,7 @@ describe('EditorComponent', () => {
       const range = env.component.target!.getSegmentRange('verse_1_4')!;
       env.targetEditor.setSelection(range.index, range.length, 'user');
       env.deleteCharacters();
-      expect(noteThreadDoc.data!.position).toEqual({ start: 2, length: 9 });
+      expect(noteThreadDoc.data!.position).toEqual({ start: 1, length: 9 });
 
       // switch to a new book and back
       env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
@@ -5004,6 +5004,12 @@ class TestEnvironment {
   /** Editor position of note thread. */
   getNoteThreadEditorPosition(threadDataId: string): number {
     return this.component.target!.embeddedElements.get(threadDataId)!;
+  }
+
+  getNoteThreadEditorPositions(): number[] {
+    return Array.from(this.component.target!.embeddedElements.entries())
+      .filter(([key, _]) => !key.startsWith('blank_'))
+      .map(([_, value]) => value);
   }
 
   getRemoteEditPosition(notePosition: number, positionAfter: number, noteCount: number): number {
