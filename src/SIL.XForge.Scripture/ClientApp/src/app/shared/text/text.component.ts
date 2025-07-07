@@ -733,15 +733,17 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       editorPosOfSegmentToModify.index,
       startTextPosInVerse
     );
+    // Insert at the start of the segment and before any other embeds in the segment
     const embedInsertPos: number =
-      editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
+      editorRange.startEditorPosition +
+      editorRange.editorLength +
+      editorRange.trailingEmbedCount -
+      editorRange.embedsWithinRange;
     let insertFormat = this.editor.getFormat(embedInsertPos);
 
     // Include formatting from the current insert position as well as any unique formatting
     format = { ...insertFormat, ...format };
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
-    const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
-    const formatLength: number = textAnchorRange.editorLength;
 
     // Add text anchors as a separate formatText call rather than part of insertEmbed as it needs to expand over a
     // a length of text
@@ -757,7 +759,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       } else {
         insertFormat = { 'text-anchor': true };
       }
-      this.editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
+      this.editor.formatText(embedInsertPos, 1, insertFormat, 'api');
     }
     this.updateSegment();
     return embedSegmentRef;
@@ -872,15 +874,19 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
     let previousEmbedIndex = -1;
     const deleteDelta = new Delta();
-    for (const embedIndex of this.viewModel.embeddedElements.values()) {
-      const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
-      if (lengthBetweenEmbeds > 0) {
-        // retain elements other than notes between the previous and current embed
-        deleteDelta.retain(lengthBetweenEmbeds);
+    for (const [embedId, embedIndex] of this.viewModel.embeddedElements) {
+      // Do not remove any blank embeds
+      if (!embedId.startsWith('blank_')) {
+        const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
+        if (lengthBetweenEmbeds > 0) {
+          // retain elements other than notes between the previous and current embed
+          deleteDelta.retain(lengthBetweenEmbeds);
+        }
+        deleteDelta.delete(1);
+        previousEmbedIndex = embedIndex;
       }
-      deleteDelta.delete(1);
-      previousEmbedIndex = embedIndex;
     }
+
     deleteDelta.chop();
     if (deleteDelta.ops != null && deleteDelta.ops.length > 0) {
       this.editor.updateContents(deleteDelta, 'api');
