@@ -17,7 +17,6 @@ import {
   TrainingDataUploadDialogComponent,
   TrainingDataUploadDialogData
 } from './training-data-upload-dialog.component';
-import { TrainingDataService } from './training-data.service';
 
 @Component({
   selector: 'app-training-data-multi-select',
@@ -33,7 +32,6 @@ export class TrainingDataMultiSelectComponent {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly dialogService: DialogService,
-    private readonly trainingDataService: TrainingDataService,
     private readonly userService: UserService
   ) {}
 
@@ -52,7 +50,6 @@ export class TrainingDataMultiSelectComponent {
       'training_data_multi_select.delete'
     );
     if (!confirmation) return;
-    await this.trainingDataService.deleteTrainingDataAsync(trainingData);
 
     this.trainingDataSelect.emit([...this.availableTrainingData.filter(td => td !== trainingData)]);
   }
