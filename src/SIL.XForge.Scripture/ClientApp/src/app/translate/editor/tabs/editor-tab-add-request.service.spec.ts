@@ -50,7 +50,7 @@ describe('EditorTabAddRequestService', () => {
     when(permissionsService.isUserOnProject(anything())).thenResolve(true);
 
     service.handleTabAddRequest('project-resource').subscribe(result => {
-      expect(result).toEqual({ projectId: 'testId1', headerText: 'testName1', tooltip: 'testFullName1' });
+      expect(result).toEqual({ projectId: 'testId1', headerText$: jasmine.any(Object), tooltip: 'testFullName1' });
       done();
     });
   });

@@ -72,8 +72,8 @@ export class TabGroupComponent implements OnChanges {
       });
   }
 
-  async addTab(newTabType: string, tabOptions: any = {}): Promise<void> {
-    const tab = await this.tabFactory.createTab(newTabType, tabOptions);
+  addTab(newTabType: string, tabOptions: any = {}): void {
+    const tab = this.tabFactory.createTab(newTabType, tabOptions);
     this.tabState.addTab(this.groupId, tab);
   }
 
