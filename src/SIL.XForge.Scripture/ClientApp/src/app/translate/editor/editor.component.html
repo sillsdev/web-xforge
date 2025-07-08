@@ -68,7 +68,7 @@
               } @else if (tab.icon) {
                 <mat-icon>{{ tab.icon }}</mat-icon>
               }
-              {{ tab.headerText }}
+              {{ tab.headerText$ | async }}
             </ng-template>
             @switch (tab.type) {
               @case ("biblical-terms") {
