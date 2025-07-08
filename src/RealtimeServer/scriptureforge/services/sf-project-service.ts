@@ -128,9 +128,6 @@ export class SFProjectService extends ProjectService<SFProject> {
           draftConfig: {
             bsonType: 'object',
             properties: {
-              additionalTrainingData: {
-                bsonType: 'bool'
-              },
               additionalTrainingSourceEnabled: {
                 bsonType: 'bool'
               },
