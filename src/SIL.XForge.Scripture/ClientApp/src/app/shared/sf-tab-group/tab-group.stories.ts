@@ -95,7 +95,7 @@ export default {
                   tab = {
                     id: uuid(),
                     type: 'blank',
-                    headerText: 'New tab',
+                    headerText$: 'New tab',
                     closeable: true,
                     movable: true
                   };
@@ -104,7 +104,7 @@ export default {
                   tab = {
                     id: uuid(),
                     type: 'type-a',
-                    headerText: 'Tab A',
+                    headerText$: 'Tab A',
                     closeable: true,
                     movable: true
                   };
@@ -114,7 +114,7 @@ export default {
                   tab = {
                     id: uuid(),
                     type: 'type-b',
-                    headerText: 'Tab B',
+                    headerText$: 'Tab B',
                     closeable: true,
                     movable: true
                   };
@@ -137,21 +137,21 @@ const tabGroups: TabGroup<string, TabInfo<string>>[] = [
     {
       id: uuid(),
       type: 'type-a',
-      headerText: 'Uncloseable, unmovable Tab 1 is great!',
+      headerText$: 'Uncloseable, unmovable Tab 1 is great!',
       closeable: false,
       movable: false
     },
     {
       id: uuid(),
       type: 'type-b',
-      headerText: 'Tab 2 <em>wow!</em>',
+      headerText$: 'Tab 2 <em>wow!</em>',
       closeable: true,
       movable: true
     },
     {
       id: uuid(),
       type: 'type-c',
-      headerText: 'Tab 3',
+      headerText$: 'Tab 3',
       icon: 'book',
       closeable: true,
       movable: true
@@ -189,13 +189,13 @@ export const TabReorderAndMove: Story = {
         {
           id: uuid(),
           type: 'type-a',
-          headerText: 'Uncloseable, unmovable Tab 1',
+          headerText$: 'Uncloseable, unmovable Tab 1',
           closeable: false,
           movable: false
         },
-        { id: uuid(), type: 'type-b', headerText: 'Tab 2', closeable: true, movable: true },
-        { id: uuid(), type: 'type-c', headerText: 'Tab 3', closeable: true, movable: true },
-        { id: uuid(), type: 'type-c', headerText: 'Tab 4', closeable: true, movable: true }
+        { id: uuid(), type: 'type-b', headerText$: 'Tab 2', closeable: true, movable: true },
+        { id: uuid(), type: 'type-c', headerText$: 'Tab 3', closeable: true, movable: true },
+        { id: uuid(), type: 'type-c', headerText$: 'Tab 4', closeable: true, movable: true }
       ])
     ]
   }

@@ -40,7 +40,7 @@ describe('EditorTabMenuService', () => {
 
   it('should get "history", "draft", and "project-resource" menu items', done => {
     const env = new TestEnvironment();
-    env.setExistingTabs([{ id: uuid(), type: 'history', headerText: 'History', closeable: true, movable: true }]);
+    env.setExistingTabs([{ id: uuid(), type: 'history', headerText$: of('History'), closeable: true, movable: true }]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
     service['canShowBiblicalTerms'] = () => false;
@@ -57,9 +57,9 @@ describe('EditorTabMenuService', () => {
   it('should get "history", "project-resource", and not "draft" (tab already exists) menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([
-      { id: uuid(), type: 'history', headerText: 'History', closeable: true, movable: true },
-      { id: uuid(), type: 'draft', headerText: 'Draft', closeable: true, movable: true, unique: true },
-      { id: uuid(), type: 'project-resource', headerText: 'ABC', closeable: true, movable: true }
+      { id: uuid(), type: 'history', headerText$: of('History'), closeable: true, movable: true },
+      { id: uuid(), type: 'draft', headerText$: of('Draft'), closeable: true, movable: true, unique: true },
+      { id: uuid(), type: 'project-resource', headerText$: of('ABC'), closeable: true, movable: true }
     ]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
@@ -75,7 +75,7 @@ describe('EditorTabMenuService', () => {
 
   it('should get "history" (enabled), not "draft" (no draft build), and not "project-resource" menu items', done => {
     const env = new TestEnvironment(TestEnvironment.projectDocNoDraft);
-    env.setExistingTabs([{ id: uuid(), type: 'history', headerText: 'History', closeable: true, movable: true }]);
+    env.setExistingTabs([{ id: uuid(), type: 'history', headerText$: of('History'), closeable: true, movable: true }]);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => false;
     service['canShowBiblicalTerms'] = () => false;
