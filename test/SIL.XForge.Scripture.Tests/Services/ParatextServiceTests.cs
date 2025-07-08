@@ -4098,20 +4098,48 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task SendReceiveAsync_UserIsAdministrator_Succeeds()
+    public void SendReceiveAsync_UserIsObserver_ThrowsExceptionWithChanges()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // Create a project with a user that is an observer
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(user01Secret, UserRoles.Observer);
+
+        // SUT
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.SendReceiveAsync(
+                user01Secret,
+                ptProjectId,
+                null,
+                CancellationToken.None,
+                new SyncMetrics { ParatextBooks = new SyncMetricInfo(0, 0, 1) }
+            )
+        );
+    }
+
+    [TestCase(UserRoles.Administrator, true)]
+    [TestCase(UserRoles.TeamMember, true)]
+    [TestCase(UserRoles.Consultant, true)]
+    [TestCase(UserRoles.Observer, false)]
+    public async Task SendReceiveAsync_Succeeds(UserRoles userRole, bool hasChanges)
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
-            user01Secret,
-            UserRoles.Administrator
-        );
+        IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(user01Secret, userRole);
         env.SetupSuccessfulSendReceive();
+        var syncMetrics = new SyncMetrics
+        {
+            ParatextBooks = hasChanges ? new SyncMetricInfo(1, 0, 0) : new SyncMetricInfo(),
+        };
 
         // SUT 1
-        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
+        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, CancellationToken.None, syncMetrics);
         env.MockSharingLogicWrapper.Received(1)
             .ShareChanges(
                 Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId),
@@ -4125,17 +4153,16 @@ public class ParatextServiceTests
         // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
         // SUT 2
         ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
-            env.Service.SendReceiveAsync(
-                user01Secret,
-                "unknownPtProjectId8",
-                null,
-                default,
-                Substitute.For<SyncMetrics>()
-            )
+            env.Service.SendReceiveAsync(user01Secret, "unknownPtProjectId8", null, CancellationToken.None, syncMetrics)
         );
         Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
         env.MockSharingLogicWrapper.DidNotReceive()
-            .ShareChanges(default, Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(), default);
+            .ShareChanges(
+                Arg.Any<List<SharedProject>>(),
+                Arg.Any<SharedRepositorySource>(),
+                out Arg.Any<List<SendReceiveResult>>(),
+                Arg.Any<List<SharedProject>>()
+            );
     }
 
     [Test]
@@ -6302,8 +6329,13 @@ public class ParatextServiceTests
         IReadOnlyList<BiblicalTerm> biblicalTerms = [new BiblicalTerm()];
 
         // SUT
-        env.Service.UpdateBiblicalTerms(userSecret, env.PTProjectIds[env.Project01].Id, biblicalTerms);
+        SyncMetricInfo actual = env.Service.UpdateBiblicalTerms(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            biblicalTerms
+        );
         env.MockScrTextCollection.Received(1).FindById(Arg.Any<string>(), Arg.Any<string>());
+        Assert.That(actual, Is.EqualTo(new SyncMetricInfo()));
     }
 
     [Test]
@@ -6314,8 +6346,68 @@ public class ParatextServiceTests
         IReadOnlyList<BiblicalTerm> biblicalTerms = [];
 
         // SUT
-        env.Service.UpdateBiblicalTerms(userSecret, env.PTProjectIds[env.Project01].Id, biblicalTerms);
+        SyncMetricInfo actual = env.Service.UpdateBiblicalTerms(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            biblicalTerms
+        );
         env.MockScrTextCollection.DidNotReceive().FindById(Arg.Any<string>(), Arg.Any<string>());
+        Assert.That(actual, Is.EqualTo(new SyncMetricInfo()));
+    }
+
+    [Test]
+    public void UpdateBiblicalTerms_NoChange()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Setup term rendering
+        const string termId = "Ἀβιά-1";
+        const string rendering = "Abijah";
+        const string notes = "Notes";
+        env.ProjectFileManager.GetXml<TermRenderingsList>(Arg.Any<string>())
+            .Returns(
+                new TermRenderingsList
+                {
+                    RenderingsInternal =
+                    [
+                        new TermRendering
+                        {
+                            Id = termId,
+                            RenderingsInternal = rendering,
+                            Notes = notes,
+                        },
+                    ],
+                }
+            );
+
+        IReadOnlyList<BiblicalTerm> biblicalTerms =
+        [
+            new BiblicalTerm
+            {
+                TermId = termId,
+                Renderings = [rendering],
+                Description = notes,
+            },
+        ];
+
+        // SUT
+        SyncMetricInfo actual = env.Service.UpdateBiblicalTerms(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            biblicalTerms
+        );
+        env.ProjectFileManager.Received(1)
+            .SetXml(
+                Arg.Is<TermRenderingsList>(r =>
+                    r.Renderings.Single().Id == termId
+                    && r.Renderings.Single().RenderingsEntries.Single() == rendering
+                    && r.Renderings.Single().Notes == notes
+                ),
+                "TermRenderings.xml"
+            );
+        Assert.That(actual, Is.EqualTo(new SyncMetricInfo()));
     }
 
     [Test]
@@ -6356,7 +6448,11 @@ public class ParatextServiceTests
         ];
 
         // SUT
-        env.Service.UpdateBiblicalTerms(userSecret, env.PTProjectIds[env.Project01].Id, biblicalTerms);
+        SyncMetricInfo actual = env.Service.UpdateBiblicalTerms(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            biblicalTerms
+        );
         env.ProjectFileManager.Received(1)
             .SetXml(
                 Arg.Is<TermRenderingsList>(r =>
@@ -6366,6 +6462,7 @@ public class ParatextServiceTests
                 ),
                 "TermRenderings.xml"
             );
+        Assert.That(actual, Is.EqualTo(new SyncMetricInfo(0, 0, 1)));
     }
 
     [Test]
