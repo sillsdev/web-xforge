@@ -87,7 +87,13 @@ form {
   display: flex;
   column-gap: 8px;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+
+  .save-container {
+    display: flex;
+    column-gap: 8px;
+    align-items: center;
+  }
 
   .progress:not(.saving) {
     visibility: hidden;
