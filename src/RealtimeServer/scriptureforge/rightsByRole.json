@@ -73,7 +73,6 @@
     "notes": ["view", "create", "edit_own", "delete_own"],
     "text_audio": ["view"],
     "text_documents": ["view", "edit"],
-    "training_data": ["view", "create", "edit_own", "delete_own"],
     "drafts": ["view"]
   },
   "pt_administrator": {
