@@ -370,6 +370,10 @@ export class FeatureFlagService {
 
     return versionNumber;
   }
+
+  getEnabledFlags(): string[] {
+    return this.featureFlags.filter(flag => flag.enabled).map(flag => flag.key);
+  }
 }
 
 export function createTestFeatureFlag(value: boolean): ObservableFeatureFlag {

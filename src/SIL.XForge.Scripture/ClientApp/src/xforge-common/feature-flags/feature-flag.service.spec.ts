@@ -152,6 +152,20 @@ describe('FeatureFlagService', () => {
       ])
     ).toEqual(twoPower31 + 1); // First and last bits
   }));
+
+  it('getEnabledFlags returns an empty array when no feature flags are selected', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.service.getEnabledFlags()).toEqual([]);
+  }));
+
+  it('getEnabledFlags returns an array of strings when feature flags are loaded', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.service.darkMode.enabled = true;
+    expect(env.service.getEnabledFlags()).toEqual(['DarkMode']);
+
+    // Clean up
+    env.service.darkMode.enabled = false;
+  }));
 });
 
 class TestEnvironment {

@@ -11,6 +11,7 @@ import { CONSOLE } from './browser-globals';
 import { DialogService } from './dialog.service';
 import { ErrorAlertData, ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { ErrorReportingService } from './error-reporting.service';
+import { FeatureFlagService } from './feature-flags/feature-flag.service';
 import { NoticeService } from './notice.service';
 import { PwaService } from './pwa.service';
 import { COMMAND_API_NAMESPACE } from './url-constants';
@@ -150,12 +151,14 @@ export class ExceptionHandlingService {
     let dialogService: DialogService;
     let errorReportingService: ErrorReportingService;
     let pwaService: PwaService;
+    let featureFlagService: FeatureFlagService;
     try {
       ngZone = this.injector.get(NgZone);
       noticeService = this.injector.get(NoticeService);
       dialogService = this.injector.get(DialogService);
       errorReportingService = this.injector.get(ErrorReportingService);
       pwaService = this.injector.get(PwaService);
+      featureFlagService = this.injector.get(FeatureFlagService);
       this.console = this.injector.get(CONSOLE);
     } catch {
       this.console.log(`Error occurred. Unable to report to Bugsnag, because dependency injection failed.`);
@@ -241,7 +244,11 @@ export class ExceptionHandlingService {
       } finally {
         // add the pwa installed status here at the moment of reporting an error since the app can be
         // installed or uninstalled at any time
-        errorReportingService.addMeta({ eventId, isPwaInstalled: pwaService.isRunningInstalledApp });
+        errorReportingService.addMeta({
+          eventId,
+          isPwaInstalled: pwaService.isRunningInstalledApp,
+          featureFlags: featureFlagService.getEnabledFlags().join(',')
+        });
         this.sendReport(errorReportingService, error);
       }
     } finally {
