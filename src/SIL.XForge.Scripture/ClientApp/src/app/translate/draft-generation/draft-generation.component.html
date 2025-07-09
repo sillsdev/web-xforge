@@ -346,7 +346,12 @@
         hasAnyCompletedBuild &&
         isSourcesConfigurationComplete
       ) {
-        <button mat-flat-button color="primary" type="button" (click)="generateDraft({ withConfirm: true })">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="generateDraft({ withConfirm: !featureFlags.newDraftHistory.enabled })"
+        >
           <mat-icon>add</mat-icon>
           {{ t("generate_new_draft") }}
         </button>
