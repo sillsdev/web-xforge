@@ -758,8 +758,9 @@ public class MachineApiService(
             }
             else
             {
-                // If the webhook is running, display that as a build state to the user
-                if (preTranslate && projectSecret.ServalData.PreTranslationsRetrieved == false)
+                // If the webhook is running, and no build is queued, display that as a build state to the user
+                // We don't show this if a build is queued, as we will want that build's state to be displayed
+                if (preTranslate && queuedAt is null && projectSecret.ServalData.PreTranslationsRetrieved == false)
                 {
                     buildDto = new ServalBuildDto
                     {
