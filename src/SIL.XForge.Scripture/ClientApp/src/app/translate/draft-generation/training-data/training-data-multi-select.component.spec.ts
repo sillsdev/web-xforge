@@ -12,7 +12,7 @@ import { Locale } from 'xforge-common/models/i18n-locale';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { TrainingDataMultiSelectComponent, TrainingDataOption } from './training-data-multi-select.component';
+import { TrainingDataMultiSelectComponent } from './training-data-multi-select.component';
 import { TrainingDataUploadDialogComponent } from './training-data-upload-dialog.component';
 import { TrainingDataService } from './training-data.service';
 
@@ -44,12 +44,7 @@ describe('TrainingDataMultiSelectComponent', () => {
     })
   } as SFProjectProfileDoc;
   const mockProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockProjectDoc);
-  const mockTrainingData: TrainingData[] = [
-    { dataId: 'data01', fileUrl: '', mimeType: '', skipRows: 0, title: '', projectRef: '', ownerRef: '' },
-    { dataId: 'data02', fileUrl: '', mimeType: '', skipRows: 0, title: '', projectRef: '', ownerRef: '' },
-    { dataId: 'data03', fileUrl: '', mimeType: '', skipRows: 0, title: '', projectRef: '', ownerRef: '' }
-  ];
-  const mockSelectedTrainingDataIds: string[] = ['data01', 'data03'];
+  let mockTrainingData: TrainingData[];
 
   configureTestingModule(() => ({
     imports: [TestTranslocoModule],
@@ -63,6 +58,11 @@ describe('TrainingDataMultiSelectComponent', () => {
   }));
 
   beforeEach(fakeAsync(() => {
+    mockTrainingData = [
+      { dataId: 'data01', fileUrl: '', mimeType: '', skipRows: 0, title: '', projectRef: '', ownerRef: 'user01' },
+      { dataId: 'data02', fileUrl: '', mimeType: '', skipRows: 0, title: '', projectRef: '', ownerRef: 'user01' },
+      { dataId: 'data03', fileUrl: '', mimeType: '', skipRows: 0, title: '', projectRef: '', ownerRef: 'user01' }
+    ];
     when(mockActivatedProjectService.projectId).thenReturn(mockProjectId);
     when(mockActivatedProjectService.projectId$).thenReturn(mockProjectId$);
     when(mockActivatedProjectService.projectDoc).thenReturn(mockProjectDoc);
@@ -78,7 +78,6 @@ describe('TrainingDataMultiSelectComponent', () => {
     fixture = TestBed.createComponent(TrainingDataMultiSelectComponent);
     component = fixture.componentInstance;
     component.availableTrainingData = mockTrainingData;
-    component.selectedTrainingDataIds = mockSelectedTrainingDataIds;
     fixture.detectChanges();
     tick();
   }));
@@ -97,47 +96,26 @@ describe('TrainingDataMultiSelectComponent', () => {
     expect(canDelete).toBeFalsy();
   }));
 
-  it('can emit chip list change events', fakeAsync(async () => {
-    let result: string[] = [];
-    component.trainingDataSelect.subscribe((_result: string[]) => {
+  it('should delete training data', fakeAsync(async () => {
+    let result: TrainingData[] = [];
+    component.trainingDataSelect.subscribe((_result: TrainingData[]) => {
       result = _result;
     });
-    component.ngOnChanges();
-    component.onChipListChange({ selected: true, value: mockTrainingData[2] });
-    tick();
-
-    expect(result).toEqual(['data01']);
-  }));
-
-  it('should delete training data', fakeAsync(async () => {
     await component.deleteTrainingData(mockTrainingData[0]);
     tick();
 
-    verify(mockTrainingDataService.deleteTrainingDataAsync(mockTrainingData[0])).once();
-    expect().nothing();
+    expect(result).not.toContain(mockTrainingData[0]);
   }));
 
-  it('should initialize training data options on ngOnChanges', () => {
-    const mockTrainingDataOptions: TrainingDataOption[] = [
-      { value: mockTrainingData[0], selected: true },
-      { value: mockTrainingData[1], selected: false },
-      { value: mockTrainingData[2], selected: true }
-    ];
-
-    component.ngOnChanges();
-
-    expect(component.trainingDataOptions).toEqual(mockTrainingDataOptions);
-  });
-
   it('should show the upload dialog', fakeAsync(() => {
-    let result: string[] = [];
-    component.trainingDataSelect.subscribe((_result: string[]) => {
+    let result: TrainingData[] = [];
+    component.trainingDataSelect.subscribe((_result: TrainingData[]) => {
       result = _result;
     });
     component.openUploadDialog();
     tick();
 
     verify(mockDialogService.openMatDialog(TrainingDataUploadDialogComponent, anything())).once();
-    expect(result).toEqual([...mockSelectedTrainingDataIds, 'data04']);
+    expect(result.length).toEqual(4);
   }));
 });

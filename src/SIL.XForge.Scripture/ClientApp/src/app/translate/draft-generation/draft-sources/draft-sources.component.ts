@@ -10,14 +10,18 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { filter } from 'rxjs';
+import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
+import { filter, merge, Subscription } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { isNetworkError } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FileService } from 'xforge-common/file.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
+import { FileType } from 'xforge-common/models/file-offline-data';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -25,6 +29,7 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { hasData, notNull } from '../../../../type-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService, SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
@@ -36,6 +41,8 @@ import {
   translateSourceToSelectableProjectWithLanguageTag
 } from '../draft-utils';
 import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
+import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
+import { TrainingDataService } from '../training-data/training-data.service';
 /** Status for a project, which may or may not be at SF. */
 export interface ProjectStatus {
   shortName: string;
@@ -59,7 +66,8 @@ export interface ProjectStatus {
     TranslocoModule,
     MatCheckboxModule,
     MatProgressSpinnerModule,
-    LanguageCodesConfirmationComponent
+    LanguageCodesConfirmationComponent,
+    TrainingDataMultiSelectComponent
   ],
   templateUrl: './draft-sources.component.html',
   styleUrl: './draft-sources.component.scss'
@@ -77,6 +85,7 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   trainingSources: (SelectableProjectWithLanguageCode | undefined)[] = [];
   trainingTargets: SFProjectProfile[] = [];
   draftingSources: (SelectableProjectWithLanguageCode | undefined)[] = [];
+  availableTrainingFiles: Readonly<TrainingData>[] = [];
 
   projects?: SelectableProject[];
   resources?: SelectableProject[];
@@ -95,6 +104,9 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
   protected changesMade = false;
 
   private controlStates = new Map<string, ElementState>();
+  private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
+  private trainingDataQuerySubscription?: Subscription;
+  private savedTrainingFiles?: Readonly<TrainingData>[];
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -103,15 +115,17 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
     private readonly userProjectsService: SFUserProjectsService,
+    private readonly trainingDataService: TrainingDataService,
     private readonly router: Router,
     private readonly onlineStatus: OnlineStatusService,
     readonly i18n: I18nService,
     noticeService: NoticeService,
-    private readonly errorReportingService: ErrorReportingService
+    private readonly errorReportingService: ErrorReportingService,
+    private readonly fileService: FileService
   ) {
     super(noticeService);
 
-    this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(projectDoc => {
+    this.activatedProjectService.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projectDoc => {
       if (projectDoc?.data != null) {
         const { trainingSources, trainingTargets, draftingSources } = projectToDraftSources(projectDoc.data);
         if (trainingSources.length > 2) throw new Error('More than 2 training sources is not supported');
@@ -126,6 +140,8 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 
         if (this.draftingSources.length < 1) this.draftingSources.push(undefined);
         if (this.trainingSources.length < 1) this.trainingSources.push(undefined);
+
+        await this.initializeTrainingFiles(projectDoc);
       }
     });
 
@@ -142,6 +158,26 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
         filter(isOnline => isOnline)
       )
       .subscribe(() => this.loadProjects());
+  }
+
+  private async initializeTrainingFiles(projectDoc: SFProjectProfileDoc): Promise<void> {
+    // Query for all training data files in the project
+    this.trainingDataQuery?.dispose();
+    this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id, this.destroyRef);
+    this.trainingDataQuerySubscription?.unsubscribe();
+
+    // Subscribe to the training data query results changes
+    this.trainingDataQuerySubscription = merge(
+      this.trainingDataQuery.localChanges$,
+      this.trainingDataQuery.ready$,
+      this.trainingDataQuery.remoteChanges$,
+      this.trainingDataQuery.remoteDocChanges$
+    )
+      .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
+      .subscribe(() => {
+        this.availableTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
+        this.savedTrainingFiles = this.availableTrainingFiles.slice();
+      });
   }
 
   get appOnline(): boolean {
@@ -194,6 +230,11 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
 
   get targetLanguageTag(): string {
     return this.trainingTargets[0]!.writingSystem.tag;
+  }
+
+  onTrainingDataSelect(newTrainingFiles: TrainingData[]): void {
+    this.availableTrainingFiles = newTrainingFiles;
+    this.changesMade = true;
   }
 
   async loadProjects(): Promise<void> {
@@ -294,14 +335,29 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     this.navigateToDrafting();
   }
 
-  confirmLeave(): Promise<boolean> {
+  async confirmLeave(): Promise<boolean> {
     if (this.changesMade && this.getControlState('projectSettings') == null) {
-      return this.dialogService.confirm(
+      const confirmed = await this.dialogService.confirm(
         this.i18n.translate('draft_sources.discard_changes_confirmation'),
         this.i18n.translate('draft_sources.leave_and_discard'),
         this.i18n.translate('draft_sources.stay_on_page')
       );
+      if (confirmed) {
+        const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
+        addedFiles.forEach(f =>
+          this.fileService.deleteFile(
+            FileType.TrainingData,
+            this.activatedProjectService.projectId!,
+            TrainingDataDoc.COLLECTION,
+            f.dataId,
+            f.ownerRef
+          )
+        );
+      }
+
+      return confirmed;
     }
+
     return Promise.resolve(true);
   }
 
@@ -329,10 +385,17 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
       return;
     }
 
+    const removedFiles = this.savedTrainingFiles?.filter(saved => !this.availableTrainingFiles.includes(saved)) ?? [];
+    const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
+
+    removedFiles.forEach(f => this.trainingDataService.deleteTrainingDataAsync(f));
+    addedFiles.forEach(f => this.trainingDataService.createTrainingDataAsync(f));
+
     const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
       definedReferences,
       definedSources,
       this.trainingTargets,
+      this.availableTrainingFiles.map(td => td.dataId),
       currentProjectDoc.data.paratextId
     );
     await this.checkUpdateStatus(
@@ -408,6 +471,7 @@ export interface DraftSourcesSettingsChange {
   alternateSourceParatextId?: string;
   alternateTrainingSourceEnabled: boolean;
   alternateTrainingSourceParatextId?: string;
+  additionalTrainingDataFiles: string[];
 }
 
 /** Convert some arrays of drafting sources to a settings object that can be applied to a SF project. */
@@ -417,6 +481,7 @@ export function sourceArraysToSettingsChange(
    * empty setting for drafting source. */
   draftingSources: SelectableProject[],
   trainingTargets: SelectableProject[],
+  selectedTrainingFileIds: string[],
   currentProjectParatextId: string
 ): DraftSourcesSettingsChange {
   // Extra precaution on array lengths for now in case the type system is being bypassed.
@@ -455,7 +520,8 @@ export function sourceArraysToSettingsChange(
     alternateTrainingSourceEnabled: alternateTrainingEnabled,
     alternateTrainingSourceParatextId: alternateTrainingEnabled
       ? alternateTrainingSource?.paratextId
-      : DraftSourcesComponent.projectSettingValueUnset
+      : DraftSourcesComponent.projectSettingValueUnset,
+    additionalTrainingDataFiles: selectedTrainingFileIds
   };
   return config;
 }

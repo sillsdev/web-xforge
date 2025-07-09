@@ -13,14 +13,14 @@ import { getTrainingDataId, TRAINING_DATA_COLLECTION, TrainingData } from '../mo
 import { TrainingDataService } from './training-data-service';
 
 describe('TrainingDataService', () => {
-  it('allows translator to view training data', async () => {
+  it('does not allow translator to view training data', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
     const conn = clientConnect(env.server, 'translator');
     await expect(
       fetchDoc(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'))
-    ).resolves.not.toThrow();
+    ).rejects.toThrow();
   });
 
   it('allows administrator to edit training data', async () => {
@@ -42,18 +42,6 @@ describe('TrainingDataService', () => {
     const conn = clientConnect(env.server, 'consultant');
     await expect(
       fetchDoc(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'))
-    ).rejects.toThrow();
-  });
-
-  it('does not allow translator to edit another users training data', async () => {
-    const env = new TestEnvironment();
-    await env.createData();
-
-    const conn = clientConnect(env.server, 'translator');
-    await expect(
-      submitJson0Op<TrainingData>(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'), op =>
-        op.set<number>(n => n.skipRows, 1)
-      )
     ).rejects.toThrow();
   });
 });
