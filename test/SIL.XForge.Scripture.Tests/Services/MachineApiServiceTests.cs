@@ -161,7 +161,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData.PreTranslationEngineId));
-        await env.QueueBuildAsync(Project01, preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
@@ -178,7 +178,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
         env.ConfigureTranslationBuild();
 
         // SUT
@@ -597,7 +597,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -625,7 +625,7 @@ public class MachineApiServiceTests
         const string trainingScriptureRange = "GEN;EXO";
         const string translationScriptureRange = "LEV;NUM";
         DateTime requestedDateTime = DateTime.UtcNow;
-        await env.QueueBuildAsync(Project01, preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -2634,7 +2634,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: false);
+        await env.QueueBuildAsync(Project01, preTranslate: false, dateTime: DateTime.UtcNow);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
@@ -2709,7 +2709,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: true);
+        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
@@ -2736,7 +2736,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project02, preTranslate: true);
+        await env.QueueBuildAsync(Project02, preTranslate: true, dateTime: DateTime.UtcNow);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
@@ -4093,7 +4093,7 @@ public class MachineApiServiceTests
         public async Task QueueBuildAsync(
             string sfProjectId,
             bool preTranslate,
-            DateTime? dateTime = null,
+            DateTime? dateTime,
             string? errorMessage = null,
             bool? preTranslationsRetrieved = null
         ) =>
@@ -4104,7 +4104,7 @@ public class MachineApiServiceTests
                     if (preTranslate)
                     {
                         u.Set(p => p.ServalData.PreTranslationJobId, JobId);
-                        u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime ?? DateTime.UtcNow);
+                        u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime);
                         u.Set(p => p.ServalData.PreTranslationsRetrieved, preTranslationsRetrieved);
                         if (string.IsNullOrWhiteSpace(errorMessage))
                         {
@@ -4118,7 +4118,7 @@ public class MachineApiServiceTests
                     else
                     {
                         u.Set(p => p.ServalData.TranslationJobId, JobId);
-                        u.Set(p => p.ServalData.TranslationQueuedAt, dateTime ?? DateTime.UtcNow);
+                        u.Set(p => p.ServalData.TranslationQueuedAt, dateTime);
                         if (string.IsNullOrWhiteSpace(errorMessage))
                         {
                             u.Unset(p => p.ServalData.TranslationErrorMessage);
