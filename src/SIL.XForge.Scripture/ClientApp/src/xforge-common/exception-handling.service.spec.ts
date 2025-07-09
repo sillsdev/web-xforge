@@ -14,6 +14,7 @@ import { DialogService } from './dialog.service';
 import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { ErrorReportingService } from './error-reporting.service';
 import { ExceptionHandlingService } from './exception-handling.service';
+import { FeatureFlagService } from './feature-flags/feature-flag.service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
 import { PwaService } from './pwa.service';
@@ -27,6 +28,7 @@ const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
 const mockedCookieService = mock(CookieService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 // suppress any expected logging so it won't be shown in the test results
 class MockConsole {
@@ -63,7 +65,8 @@ describe('ExceptionHandlingService', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: CONSOLE, useValue: new MockConsole() },
-      { provide: CookieService, useMock: mockedCookieService }
+      { provide: CookieService, useMock: mockedCookieService },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ],
     imports: [TestTranslocoModule]
   }));
@@ -258,6 +261,8 @@ class TestEnvironment {
     when(mockedErrorReportingService.notify(anything(), anything())).thenCall((error: NotifiableError) =>
       this.errorReports.push({ error })
     );
+
+    when(mockedFeatureFlagService.getEnabledFlags()).thenReturn([]);
   }
 
   get oneAndOnlyReport(): { error: any } {
