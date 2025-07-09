@@ -8,6 +8,7 @@ import { EventMetricsAuthGuard } from './event-metrics/event-metrics-auth.guard'
 import { EventMetricsComponent } from './event-metrics/event-metrics.component';
 import { JoinComponent } from './join/join.component';
 import { MyProjectsComponent } from './my-projects/my-projects.component';
+import { PermissionsViewerComponent } from './permissions-viewer/permissions-viewer.component';
 import { ProjectComponent } from './project/project.component';
 import { ServalAdminAuthGuard } from './serval-administration/serval-admin-auth.guard';
 import { ServalAdministrationComponent } from './serval-administration/serval-administration.component';
@@ -28,6 +29,7 @@ const routes: Routes = [
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SyncAuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: MyProjectsComponent, canActivate: [AuthGuard] },
+  { path: 'system-administration/permissions-viewer', component: PermissionsViewerComponent },
   { path: 'serval-administration/:projectId', component: ServalProjectComponent, canActivate: [ServalAdminAuthGuard] },
   { path: 'serval-administration', component: ServalAdministrationComponent, canActivate: [ServalAdminAuthGuard] },
   { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },
