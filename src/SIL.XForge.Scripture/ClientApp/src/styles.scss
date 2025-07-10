@@ -25,7 +25,11 @@ html {
 body {
   margin: 0;
   font-family: Roboto, sans-serif;
-  overflow-x: hidden;
+
+  // prevents a horizontal scroll bar in RTL mode
+  .cdk-visually-hidden {
+    inset-inline-start: 0;
+  }
 }
 
 as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
