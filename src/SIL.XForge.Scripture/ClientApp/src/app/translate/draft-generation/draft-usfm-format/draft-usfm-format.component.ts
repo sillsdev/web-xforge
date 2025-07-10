@@ -182,8 +182,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       // The user is redirected to the draft generation page if the format is saved.
       await this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId);
       this.router.navigate(['projects', this.projectId, 'draft-generation']);
-    } catch {
-      console.error(`Failed to update webhook status`);
+    } catch (err) {
+      console.error('Error occurred while saving draft format', err);
       this.noticeService.showError(this.i18n.translateStatic('draft_usfm_format.failed_to_save'));
     } finally {
       this.saving = false;
