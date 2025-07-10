@@ -18,7 +18,6 @@ import { UntypedFormControl, Validators } from '@angular/forms';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import {
   InteractiveTranslator,
   InteractiveTranslatorFactory,
@@ -547,7 +546,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get writingSystemWarningMessage(): string {
-    return translate('editor.browser_warning_banner', {
+    return this.i18n.translateStatic('editor.browser_warning_banner', {
       firefoxLink: browserLinks().firefoxLink,
       safari: browserLinks().safariLink
     });
@@ -1168,7 +1167,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     if (!this.target.contentShowing) {
-      this.noticeService.show(translate('editor.navigate_to_a_valid_text'));
+      this.noticeService.show(this.i18n.translateStatic('editor.navigate_to_a_valid_text'));
       return;
     }
     let verseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
@@ -1781,7 +1780,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     } else if (!translator.isSegmentValid) {
       this.translator = undefined;
       if (this.translationSuggestionsEnabled) {
-        this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
+        this.noticeService.show(this.i18n.translateStatic('editor.verse_too_long_for_suggestions'));
       }
       return;
     }
@@ -2072,7 +2071,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const notes: Note[] = threadDoc.notesInOrderClone(threadDoc.data!.notes);
     let preview: string = notes[0].content != null ? stripHtml(notes[0].content.trim()) : '';
     if (notes.length > 1) {
-      preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
+      preview += '\n' + this.i18n.translateStatic('editor.more_notes', { count: notes.length - 1 });
     }
     const verseRef: VerseRef | undefined = threadDoc.currentVerseRef();
     if (threadDoc.data == null || verseRef == null) {

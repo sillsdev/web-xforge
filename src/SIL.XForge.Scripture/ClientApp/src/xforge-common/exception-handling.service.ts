@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, Injector, NgZone } from '@angular/core';
 import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
-import { translate } from '@ngneat/transloco';
 import { firstValueFrom } from 'rxjs';
+import { I18nService } from 'xforge-common/i18n.service';
 import versionData from '../../../version.json';
 import { MACHINE_API_BASE_URL } from '../app/machine-api/http-client';
 import { environment } from '../environments/environment';
@@ -140,7 +140,10 @@ export class ExceptionHandlingService {
   private alertQueue: ErrorAlertData[] = [];
   private dialogOpen = false;
 
-  constructor(private readonly injector: Injector) {}
+  constructor(
+    private readonly injector: Injector,
+    private readonly i18n: I18nService
+  ) {}
 
   async handleError(originalError: unknown, silently: boolean = false): Promise<void> {
     // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
@@ -180,12 +183,14 @@ export class ExceptionHandlingService {
       error.error.target instanceof XMLHttpRequest &&
       error.error.target.status === 0
     ) {
-      ngZone.run(() => noticeService.showError(translate('exception_handling_service.network_request_failed')));
+      ngZone.run(() =>
+        noticeService.showError(this.i18n.translateStatic('exception_handling_service.network_request_failed'))
+      );
       return;
     }
 
     if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.name === 'DataError')) {
-      ngZone.run(() => noticeService.showError(translate('exception_handling_service.out_of_space')));
+      ngZone.run(() => noticeService.showError(this.i18n.translateStatic('exception_handling_service.out_of_space')));
       return;
     }
 
@@ -223,12 +228,12 @@ export class ExceptionHandlingService {
       .map(key => (hasStringProp(error, key) ? error[key].split('\n')[0] : null))
       .filter((s): s is string => s != null);
 
-    let message = messages[0] ?? translate<string>('exception_handling_service.unknown_error');
+    let message = messages[0] ?? this.i18n.translateStatic('exception_handling_service.unknown_error');
     if (
       message.includes('A mutation operation was attempted on a database that did not allow mutations.') &&
       window.navigator.userAgent.includes('Gecko/')
     ) {
-      message = translate('exception_handling_service.firefox_private_browsing_or_no_space');
+      message = this.i18n.translateStatic('exception_handling_service.firefox_private_browsing_or_no_space');
     }
 
     // try/finally blocks are to prevent an exception from preventing reporting or logging of an error

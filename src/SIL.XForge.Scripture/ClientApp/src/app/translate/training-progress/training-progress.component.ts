@@ -1,5 +1,4 @@
 import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { BehaviorSubject, Subscription, timer } from 'rxjs';
@@ -8,6 +7,8 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+
+import { I18nService } from 'xforge-common/i18n.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -35,7 +36,8 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
     private readonly projectService: SFProjectService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private readonly i18n: I18nService
   ) {
     super(noticeService);
   }
@@ -138,10 +140,10 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
           complete: () => {
             // training completed successfully
             if (this.trainingProgressClosed) {
-              this.noticeService.show(translate('training_progress.training_completed_successfully'));
+              this.noticeService.show(this.i18n.translateStatic('training_progress.training_completed_successfully'));
               this.trainingProgressClosed = false;
             } else {
-              this.trainingMessage = translate('training_progress.completed_successfully');
+              this.trainingMessage = this.i18n.translateStatic('training_progress.completed_successfully');
               this.trainingCompletedTimeout = setTimeout(() => {
                 this.showTrainingProgress = false;
                 this.trainingCompletedTimeout = undefined;

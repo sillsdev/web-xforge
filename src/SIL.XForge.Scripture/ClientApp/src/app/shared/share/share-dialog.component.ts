@@ -1,6 +1,5 @@
 import { Component, DestroyRef, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -168,7 +167,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
       return;
     }
     this.navigator.clipboard.writeText(this.shareableLink).then(async () => {
-      await this.noticeService.show(translate('share_control.link_copied'));
+      await this.noticeService.show(this.i18n.translateStatic('share_control.link_copied'));
       await this.reserveShareLink();
     });
   }
@@ -189,9 +188,9 @@ export class ShareDialogComponent extends ShareBaseComponent {
     };
     this.navigator
       .share({
-        title: translate('share_control.share_title', params),
+        title: this.i18n.translateStatic('share_control.share_title', params),
         url: this.shareableLink,
-        text: translate(
+        text: this.i18n.translateStatic(
           this.shareLinkType === ShareLinkType.Anyone
             ? 'share_control.share_text_anyone'
             : 'share_control.share_text_single',

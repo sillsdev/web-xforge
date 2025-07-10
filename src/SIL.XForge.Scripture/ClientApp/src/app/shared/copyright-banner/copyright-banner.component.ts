@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { translate } from '@ngneat/transloco';
 import { of } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -23,7 +22,7 @@ export class CopyrightBannerComponent {
   ) {}
 
   get moreInfo(): string {
-    return translate('editor.more_info');
+    return this.i18n.translateStatic('editor.more_info');
   }
 
   get showMoreInfo(): boolean {

@@ -9,7 +9,6 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
-import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
@@ -113,7 +112,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     return this._questionDoc.data.text
       ? this._questionDoc.data.text
       : this._questionDoc.data.audioUrl != null
-        ? translate('checking_questions.listen_to_question', {
+        ? this.i18n.translateStatic('checking_questions.listen_to_question', {
             referenceForDisplay: this.referenceForDisplay
           })
         : '';
