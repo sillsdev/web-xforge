@@ -26,6 +26,11 @@ const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: str
   FINISHING: { icons: 'hourglass_empty', text: 'draft_pending', color: 'grey' }
 };
 
+interface BuildFaultedRow {
+  heading: string;
+  details: string;
+}
+
 interface TrainingConfigurationRow {
   scriptureRange: string;
   source: string;
@@ -75,13 +80,13 @@ export class DraftHistoryEntryComponent {
     this._trainingConfiguration = [];
 
     // Get the books used in the training configuration
-    const trainingScriptureRanges = this.entry?.additionalInfo?.trainingScriptureRanges ?? [];
+    const trainingScriptureRanges = this._entry?.additionalInfo?.trainingScriptureRanges ?? [];
     Promise.all(
       trainingScriptureRanges.map(async r => {
         // The engine ID is the target project ID
         let target: SFProjectProfileDoc | undefined = undefined;
-        if (this.entry?.engine.id != null) {
-          target = await this.projectService.getProfile(this.entry?.engine.id);
+        if (this._entry?.engine.id != null) {
+          target = await this.projectService.getProfile(this._entry.engine.id);
         }
 
         // Get the target language, if it is not already set
@@ -109,9 +114,61 @@ export class DraftHistoryEntryComponent {
         this.trainingConfigurationOpen = true;
       }
     });
+
+    // Populate the exception details, if possible
+    if (this._entry?.state === BuildStates.Faulted && this._entry.message != null) {
+      this._buildFaulted = true;
+
+      // NOTE: We will not localize the headings, as these are technical details which are primarily for a screenshot
+      this._buildFaultDetails.push({
+        heading: 'Error\u00A0Message',
+        details: this._entry.message
+      });
+      this._buildFaultDetails.push({
+        heading: 'Project\u00A0Id',
+        details: this._entry.engine.id
+      });
+      if (this._entry.additionalInfo?.translationEngineId != null) {
+        this._buildFaultDetails.push({
+          heading: 'Translation\u00A0Engine\u00A0Id',
+          details: this._entry.additionalInfo.translationEngineId
+        });
+      }
+      if (this._entry.additionalInfo?.buildId != null && this._entry.additionalInfo?.buildId !== '') {
+        this._buildFaultDetails.push({
+          heading: 'Build\u00A0Id',
+          details: this._entry.additionalInfo.buildId
+        });
+      }
+      if (this._entry.additionalInfo?.corporaIds != null) {
+        this._buildFaultDetails.push({
+          heading: 'Corpora\u00A0Id',
+          details: this._entry.additionalInfo.corporaIds?.join(', ')
+        });
+      }
+      if (this._entry.additionalInfo?.parallelCorporaIds != null) {
+        this._buildFaultDetails.push({
+          heading: 'Parallel\u00A0Corpora\u00A0Id',
+          details: this._entry.additionalInfo.parallelCorporaIds?.join(', ')
+        });
+      }
+    } else {
+      this._buildFaulted = false;
+      this._buildFaultDetails = [];
+    }
   }
   get entry(): BuildDto | undefined {
     return this._entry;
+  }
+
+  private _buildFaulted: boolean = false;
+  get buildFaulted(): boolean {
+    return this._buildFaulted;
+  }
+
+  private _buildFaultDetails: BuildFaultedRow[] = [];
+  get buildFaultDetails(): BuildFaultedRow[] {
+    return this._buildFaultDetails;
   }
 
   private _buildRequestedByUserName: string | undefined;
@@ -125,7 +182,7 @@ export class DraftHistoryEntryComponent {
   }
 
   get hasDetails(): boolean {
-    return this.hasTrainingConfiguration || this.canDownloadBuild;
+    return this.hasTrainingConfiguration || this.canDownloadBuild || this.buildFaulted;
   }
 
   get hasTrainingConfiguration(): boolean {
