@@ -1,7 +1,6 @@
 import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
@@ -44,8 +43,8 @@ export class QuestionDialogComponent implements OnInit {
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
   modeLabel =
     this.data && this.data.questionDoc != null
-      ? translate('question_dialog.edit_question')
-      : translate('question_dialog.new_question');
+      ? this.i18n.translateStatic('question_dialog.edit_question')
+      : this.i18n.translateStatic('question_dialog.new_question');
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   versesForm: FormGroup = new FormGroup(
     {
@@ -91,19 +90,19 @@ export class QuestionDialogComponent implements OnInit {
   }
 
   get scriptureInputErrorMessages(): { startError: string; endError: string } {
-    let start: string = translate('question_dialog.required_with_asterisk');
+    let start: string = this.i18n.translateStatic('question_dialog.required_with_asterisk');
     if (this.scriptureStart.hasError('verseFormat')) {
-      start = translate('question_dialog.example_verse');
+      start = this.i18n.translateStatic('question_dialog.example_verse');
     } else if (this.scriptureStart.hasError('verseRange')) {
-      start = translate('question_dialog.must_be_inside_verse_range');
+      start = this.i18n.translateStatic('question_dialog.must_be_inside_verse_range');
     }
     let end: string = '';
     if (this.scriptureEnd.hasError('verseFormat')) {
-      end = translate('question_dialog.example_verse');
+      end = this.i18n.translateStatic('question_dialog.example_verse');
     } else if (this.scriptureEnd.hasError('verseRange')) {
-      end = translate('question_dialog.must_be_inside_verse_range');
+      end = this.i18n.translateStatic('question_dialog.must_be_inside_verse_range');
     } else if (this.versesForm.hasError('verseDifferentBookOrChapter')) {
-      end = translate('question_dialog.must_be_same_book_and_chapter');
+      end = this.i18n.translateStatic('question_dialog.must_be_same_book_and_chapter');
     }
     return { startError: start, endError: end };
   }

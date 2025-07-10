@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
-import { translate } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -241,7 +240,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       this.isDraftApplied = true;
       this.userAppliedDraft = true;
     } catch (err) {
-      this.noticeService.showError(translate('editor_draft_tab.error_applying_draft'));
+      this.noticeService.showError(this.i18n.translateStatic('editor_draft_tab.error_applying_draft'));
       if (!isNetworkError(err)) {
         this.errorReportingService.silentError(
           'Error applying a draft to a chapter',

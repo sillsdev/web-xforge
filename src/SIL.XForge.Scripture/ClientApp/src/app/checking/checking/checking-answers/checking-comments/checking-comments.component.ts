@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { translate } from '@ngneat/transloco';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -8,6 +7,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { debounceTime } from 'rxjs/operators';
 import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../../core/models/question-doc';
@@ -44,7 +44,8 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
 
   constructor(
     private readonly dialogService: DialogService,
-    private userService: UserService
+    private userService: UserService,
+    private readonly i18n: I18nService
   ) {
     super();
   }
@@ -64,9 +65,9 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     }
 
     if (unread > 0) {
-      return translate('checking_comments.show_more_comments_and_unread', { count, unread });
+      return this.i18n.translateStatic('checking_comments.show_more_comments_and_unread', { count, unread });
     } else {
-      return translate('checking_comments.show_more_comments', { count });
+      return this.i18n.translateStatic('checking_comments.show_more_comments', { count });
     }
   }
 

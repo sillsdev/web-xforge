@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
-import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -18,6 +17,7 @@ import {
 import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -70,7 +70,8 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
-    private readonly errorReportingService: ErrorReportingService
+    private readonly errorReportingService: ErrorReportingService,
+    private readonly i18n: I18nService
   ) {}
 
   get canRestoreSnapshot(): boolean {
@@ -140,7 +141,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
 
   async revertToSnapshot(): Promise<void> {
     if (!this.onlineStatusService.isOnline) {
-      this.noticeService.show(translate('history_chooser.please_connect'));
+      this.noticeService.show(this.i18n.translateStatic('history_chooser.please_connect'));
       return;
     }
     // Ensure the user wants to proceed
@@ -160,7 +161,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       this.chapter == null ||
       !this.canRestoreSnapshot
     ) {
-      this.noticeService.showError(translate('history_chooser.error'));
+      this.noticeService.showError(this.i18n.translateStatic('history_chooser.error'));
       return;
     }
 
@@ -181,11 +182,11 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       }
       await this.textDocService.overwrite(textDocId, delta, 'History');
 
-      this.noticeService.show(translate('history_chooser.revert_successful'));
+      this.noticeService.show(this.i18n.translateStatic('history_chooser.revert_successful'));
       // Force the history editor to reload
       this.revisionSelect.emit({ revision: this.selectedRevision, snapshot: this.selectedSnapshot });
     } catch (err) {
-      this.noticeService.showError(translate('history_chooser.revert_error'));
+      this.noticeService.showError(this.i18n.translateStatic('history_chooser.revert_error'));
       if (!isNetworkError(err)) {
         this.errorReportingService.silentError(
           'Error occurred restoring a snapshot',

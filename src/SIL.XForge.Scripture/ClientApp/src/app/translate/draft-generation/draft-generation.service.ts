@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
@@ -8,6 +7,8 @@ import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { DeltaOperation } from 'rich-text';
 import { EMPTY, firstValueFrom, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
+
+import { I18nService } from 'xforge-common/i18n.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -35,7 +36,8 @@ export class DraftGenerationService {
     private readonly httpClient: HttpClient,
     private readonly noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
-    @Inject(DRAFT_GENERATION_SERVICE_OPTIONS) private readonly options: DraftGenerationServiceOptions
+    @Inject(DRAFT_GENERATION_SERVICE_OPTIONS) private readonly options: DraftGenerationServiceOptions,
+    private readonly i18n: I18nService
   ) {}
 
   /**
@@ -73,7 +75,7 @@ export class DraftGenerationService {
           return of(undefined);
         }
 
-        this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+        this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
         return of(undefined);
       })
     );
@@ -97,7 +99,7 @@ export class DraftGenerationService {
           return of(undefined);
         }
 
-        this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+        this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
         return of(undefined);
       })
     );
@@ -123,7 +125,7 @@ export class DraftGenerationService {
             return of(undefined);
           }
 
-          this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+          this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
           return of(undefined);
         })
       );
@@ -190,7 +192,7 @@ export class DraftGenerationService {
             return of({});
           }
 
-          this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+          this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
           return of({});
         })
       );
@@ -237,7 +239,7 @@ export class DraftGenerationService {
           return throwError(() => err);
         }
 
-        this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+        this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
         return of([]);
       })
     );
@@ -266,7 +268,7 @@ export class DraftGenerationService {
             return of(undefined);
           }
 
-          this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+          this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
           return of(undefined);
         })
       );
@@ -316,7 +318,7 @@ export class DraftGenerationService {
   ): Observable<DraftZipProgress> {
     return new Observable<DraftZipProgress>(observer => {
       if (projectDoc?.data == null) {
-        observer.error(translate('draft_generation.info_alert_download_error'));
+        observer.error(this.i18n.translateStatic('draft_generation.info_alert_download_error'));
         return;
       }
 
@@ -366,7 +368,7 @@ export class DraftGenerationService {
       Promise.all(usfmFiles).then(() => {
         if (Object.keys(zip.files).length === 0) {
           observer.next({ current: 0, total: 0 });
-          observer.error(translate('draft_generation.info_alert_download_error'));
+          observer.error(this.i18n.translateStatic('draft_generation.info_alert_download_error'));
           return;
         }
 
