@@ -33,6 +33,20 @@
             }
           </div>
         }
+        @if (buildFaulted) {
+          <p>
+            <strong>{{ t("error_details") }}</strong>
+          </p>
+          <table mat-table [dataSource]="buildFaultDetails">
+            <ng-container matColumnDef="heading">
+              <td mat-cell *matCellDef="let element">{{ element.heading }}</td>
+            </ng-container>
+            <ng-container matColumnDef="details">
+              <td mat-cell *matCellDef="let element">{{ element.details }}</td>
+            </ng-container>
+            <tr mat-row *matRowDef="let row; columns: ['heading', 'details']"></tr>
+          </table>
+        }
         @if (hasTrainingConfiguration) {
           @if (canDownloadBuild) {
             <p>
