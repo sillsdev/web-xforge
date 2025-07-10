@@ -10,7 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
-import { translate, TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import {
@@ -180,11 +180,11 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
       await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentFormat);
       this.lastSavedState = this.currentFormat;
       // The user is redirected to the draft generation page if the format is saved.
-      this.servalAdministration
-        .onlineRetrievePreTranslationStatus(this.projectId)
-        .then(() => this.router.navigate(['projects', this.projectId, 'draft-generation']));
+      await this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId);
+      this.router.navigate(['projects', this.projectId, 'draft-generation']);
     } catch {
-      this.noticeService.showError(translate('draft_usfm-format.failed_to_save'));
+      console.error(`Failed to update webhook status`);
+      this.noticeService.showError(this.i18n.translateStatic('draft_usfm_format.failed_to_save'));
     } finally {
       this.saving = false;
     }
