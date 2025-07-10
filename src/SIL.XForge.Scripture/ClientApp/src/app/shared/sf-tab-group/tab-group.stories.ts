@@ -36,8 +36,8 @@ import {
       >
         @for (tab of tabGroup.value.tabs; track tab.id) {
           <app-tab [closeable]="tab.closeable" [movable]="tab.movable">
-            <ng-template sf-tab-header><div [innerHTML]="tab.headerText"></div></ng-template>
-            <p><span [innerHTML]="tab.headerText"></span> in {{ tabGroup.key }}</p>
+            <ng-template sf-tab-header><div [innerHTML]="tab.headerText$ | async"></div></ng-template>
+            <p><span [innerHTML]="tab.headerText$ | async"></span> in {{ tabGroup.key }}</p>
           </app-tab>
         }
       </app-tab-group>
