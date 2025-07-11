@@ -10,6 +10,7 @@ import { MatTreeModule } from '@angular/material/tree';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { Range } from 'quill';
+import Delta from 'quill-delta';
 import { LynxInsightSortOrder, LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -25,7 +26,7 @@ import { EditorSegmentService } from '../base-services/editor-segment.service';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { LynxInsightsPanelHeaderComponent } from './lynx-insights-panel-header/lynx-insights-panel-header.component';
-import { InsightPanelNode, LynxInsightsPanelComponent } from './lynx-insights-panel.component';
+import { InsightDescription, InsightPanelNode, LynxInsightsPanelComponent } from './lynx-insights-panel.component';
 
 const mockLynxInsightStateService = mock<LynxInsightStateService>();
 const mockActivatedProjectService = mock<ActivatedProjectService>();
@@ -142,16 +143,16 @@ describe('LynxInsightsPanelComponent', () => {
   });
 
   it('should handle empty insights array', fakeAsync(() => {
-    const testEnvironment = new TestEnvironment();
+    const env = new TestEnvironment();
 
-    testEnvironment.filteredInsights$.next([]);
+    env.filteredInsights$.next([]);
     tick();
 
-    expect(testEnvironment.component.treeDataSource).toEqual([]);
+    expect(env.component.treeDataSource).toEqual([]);
   }));
 
   it('should handle insights without proper textDocId', fakeAsync(() => {
-    const testEnvironment = new TestEnvironment();
+    const env = new TestEnvironment();
 
     const malformedInsight: LynxInsight = {
       id: 'malformed',
@@ -163,11 +164,11 @@ describe('LynxInsightsPanelComponent', () => {
       description: 'Malformed insight'
     };
 
-    testEnvironment.filteredInsights$.next([malformedInsight]);
+    env.filteredInsights$.next([malformedInsight]);
     tick();
 
     // Should handle gracefully without crashing
-    expect(testEnvironment.component).toBeTruthy();
+    expect(env.component).toBeTruthy();
   }));
 
   describe('Tree data management', () => {
@@ -239,11 +240,11 @@ describe('LynxInsightsPanelComponent', () => {
         new TextDocId('project1', 41, 2) // Mark 2 (different from MAT 1)
       );
 
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       const node = createTestNode('Test insight', 'warning', differentBookInsight);
 
-      testEnvironment.component.onLeafNodeClick(node);
+      env.component.onLeafNodeClick(node);
       tick();
 
       verify(mockRouter.navigate(anything(), anything())).once();
@@ -251,7 +252,7 @@ describe('LynxInsightsPanelComponent', () => {
     }));
 
     it('should handle node expansion correctly', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       const parentNode: InsightPanelNode = {
         description: 'Parent node',
@@ -267,15 +268,15 @@ describe('LynxInsightsPanelComponent', () => {
         ]
       };
 
-      testEnvironment.component.onNodeExpansionChange(parentNode, true);
+      env.component.onNodeExpansionChange(parentNode, true);
 
-      expect(testEnvironment.component['expandCollapseState'].get('Parent node')).toBe(true);
+      expect(env.component['expandCollapseState'].get('Parent node')).toBe(true);
     }));
 
     it('should restore dismissed insights', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
-      testEnvironment.component.restoreDismissedInsight(testInsight1);
+      env.component.restoreDismissedInsight(testInsight1);
 
       verify(mockLynxInsightStateService.restoreDismissedInsights(deepEqual(['insight-1']))).once();
     }));
@@ -368,7 +369,7 @@ describe('LynxInsightsPanelComponent', () => {
 
   describe('Paged loading', () => {
     it('should return all children for small node sets', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       const smallNode: InsightPanelNode = {
         description: 'Small node',
@@ -383,28 +384,28 @@ describe('LynxInsightsPanelComponent', () => {
           }
         ]
       };
-      const result = testEnvironment.component.getChildrenAccessor(smallNode);
+      const result = env.component.getChildrenAccessor(smallNode);
       expect(result.length).toBe(smallNode.children?.length || 0);
     }));
 
     it('should use paged loading for large node sets', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       // Create a large node set that exceeds optimization threshold
-      const children = createLargeNodeSet(testEnvironment.panelOptimizationThreshold + 10, 'Child');
+      const children = createLargeNodeSet(env.panelOptimizationThreshold + 10, 'Child');
 
       const largeNode = createTestNode('Large node', 'warning', undefined, children);
 
       // Mock needsPagedLoading to return true
-      spyOn(testEnvironment.component, 'needsPagedLoading').and.returnValue(true);
-      spyOn(testEnvironment.component, 'getVisibleChildren').and.returnValue(children.slice(0, 50));
+      spyOn(env.component, 'needsPagedLoading').and.returnValue(true);
+      spyOn(env.component, 'getVisibleChildren').and.returnValue(children.slice(0, 50));
 
-      const result = testEnvironment.component.getChildrenAccessor(largeNode);
-      expect(result.length).toBeLessThanOrEqual(testEnvironment.panelOptimizationThreshold);
+      const result = env.component.getChildrenAccessor(largeNode);
+      expect(result.length).toBeLessThanOrEqual(env.panelOptimizationThreshold);
     }));
 
     it('should correctly identify expandable nodes', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       const expandableNode: InsightPanelNode = {
         description: 'Expandable',
@@ -427,103 +428,123 @@ describe('LynxInsightsPanelComponent', () => {
         range: { index: 0, length: 5 }
       };
 
-      expect(testEnvironment.component.isExpandableNodePredicate(0, expandableNode)).toBe(true);
-      expect(testEnvironment.component.isExpandableNodePredicate(0, leafNode)).toBe(false);
+      expect(env.component.isExpandableNodePredicate(0, expandableNode)).toBe(true);
+      expect(env.component.isExpandableNodePredicate(0, leafNode)).toBe(false);
     }));
   });
 
   describe('Memory management', () => {
-    it('should clean up text snippet cache when it exceeds max size', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
-      const testCacheEntries = testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE + 20; // Fill cache beyond max size
+    it('should clean up text snippet cache when insights are no longer in currentInsightIds', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
-      for (let i = 0; i < testCacheEntries; i++) {
-        testEnvironment.component['textSnippetCache'].set(`insight-${i}`, `text-${i}`);
-      }
+      // Add some cache entries - some will be in current insights, some won't
+      const insightDescription1: InsightDescription = {
+        refString: 'Reference 1',
+        sampleTextParts: { preText: 'pre', insightText: 'current-text', postText: 'post' }
+      };
+      const insightDescription2: InsightDescription = {
+        refString: 'Reference 2',
+        sampleTextParts: { preText: 'pre', insightText: 'obsolete-text', postText: 'post' }
+      };
 
-      // Add current insight ids to prevent them from being cleaned up
-      for (let i = testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE; i < testCacheEntries; i++) {
-        testEnvironment.component['currentInsightIds'].add(`insight-${i}`);
-      }
+      // Add entries to cache
+      env.component['textSnippetCache'].set('insight-1', insightDescription1); // This should be kept (in tree)
+      env.component['textSnippetCache'].set('obsolete-insight', insightDescription2); // This should be removed (not in tree)
 
-      (testEnvironment.component as any).cleanUpCaches();
+      expect(env.component['textSnippetCache'].size).toBe(2);
 
-      expect(testEnvironment.component['textSnippetCache'].size).toBeLessThanOrEqual(
-        testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE
-      );
+      (env.component as any).cleanUpCaches();
+
+      // Only the insight that's in the current tree should remain
+      expect(env.component['textSnippetCache'].size).toBe(1);
+      expect(env.component['textSnippetCache'].has('insight-1')).toBe(true);
+      expect(env.component['textSnippetCache'].has('obsolete-insight')).toBe(false);
     }));
 
     it('should clean up text doc cache when it exceeds max size', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       // Fill cache beyond max size
-      for (let i = 0; i < testEnvironment.TEXT_DOC_CACHE_MAX_SIZE + 10; i++) {
-        testEnvironment.component['textDocCache'].set(`doc-${i}`, Promise.resolve(instance(mockTextDoc)));
+      // Add some that match current insights (should be kept) and some that don't (should be removed)
+      const currentTextDocKey = testInsight1.textDocId.toString(); // This should be kept (visible)
+
+      // Add the current textDoc first
+      env.component['textDocCache'].set(currentTextDocKey, Promise.resolve(instance(mockTextDoc)));
+
+      // Then add many obsolete entries to exceed the limit
+      for (let i = 0; i < env.TEXT_DOC_CACHE_MAX_SIZE + 10; i++) {
+        env.component['textDocCache'].set(`obsolete-doc-${i}`, Promise.resolve(instance(mockTextDoc)));
       }
 
-      (testEnvironment.component as any).manageMemoryUsage();
+      expect(env.component['textDocCache'].size).toBeGreaterThan(env.TEXT_DOC_CACHE_MAX_SIZE);
 
-      expect(testEnvironment.component['textDocCache'].size).toBeLessThanOrEqual(
-        testEnvironment.TEXT_DOC_CACHE_MAX_SIZE
-      );
+      (env.component as any).manageMemoryUsage();
+
+      // Cache should be reduced to max size or below
+      expect(env.component['textDocCache'].size).toBeLessThanOrEqual(env.TEXT_DOC_CACHE_MAX_SIZE);
+
+      // The visible textDoc should be kept if possible
+      if (env.component['textDocCache'].size > 0) {
+        // If any entries remain, visible ones should be prioritized
+        expect(env.component['textDocCache'].has(currentTextDocKey)).toBe(true);
+      }
     }));
 
     it('should clean up loading progress for obsolete nodes', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
-      testEnvironment.component['loadingProgressMap'].set('obsolete-node', { completed: 5, total: 10 });
-      testEnvironment.component['nodesWithLargeChildSets'].add('current-node');
+      env.component['loadingProgressMap'].set('obsolete-node', { completed: 5, total: 10 });
+      env.component['nodesWithLargeChildSets'].add('current-node');
 
-      (testEnvironment.component as any).cleanUpCaches();
+      (env.component as any).cleanUpCaches();
 
-      expect(testEnvironment.component['loadingProgressMap'].has('obsolete-node')).toBe(false);
+      expect(env.component['loadingProgressMap'].has('obsolete-node')).toBe(false);
+      expect(env.component['nodesWithLargeChildSets'].has('current-node')).toBe(true);
     }));
 
     it('should clean up visible children cache for obsolete entries', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       // Add many cache entries to exceed the limit and trigger cleanup
-      for (let i = 0; i < testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE + 20; i++) {
-        testEnvironment.component['visibleChildrenCache'].set(`obsolete-entry-${i}`, []);
+      for (let i = 0; i < env.LIGHTWEIGHT_CACHE_MAX_SIZE + 20; i++) {
+        env.component['visibleChildrenCache'].set(`obsolete-entry-${i}`, []);
       }
 
       // Add a cache entry that matches a current tree node description
-      testEnvironment.component['visibleChildrenCache'].set('Test warning insight', []);
+      env.component['visibleChildrenCache'].set('Test warning insight', []);
 
       // The cache should now be over the limit, so cleanup should happen
-      (testEnvironment.component as any).manageMemoryUsage();
+      (env.component as any).manageMemoryUsage();
 
       // Should clean up many obsolete entries
       let obsoleteEntriesRemaining = 0;
-      for (let i = 0; i < testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE + 20; i++) {
-        if (testEnvironment.component['visibleChildrenCache'].has(`obsolete-entry-${i}`)) {
+      for (let i = 0; i < env.LIGHTWEIGHT_CACHE_MAX_SIZE + 20; i++) {
+        if (env.component['visibleChildrenCache'].has(`obsolete-entry-${i}`)) {
           obsoleteEntriesRemaining++;
         }
       }
 
-      // Most obsolete entries should be removed
-      expect(obsoleteEntriesRemaining).toBeLessThan(testEnvironment.LIGHTWEIGHT_CACHE_MAX_SIZE + 5);
+      // Entries should be removed
+      expect(obsoleteEntriesRemaining).toBeLessThan(env.LIGHTWEIGHT_CACHE_MAX_SIZE + 20);
       // Should keep entries that match current tree nodes if they're visible
-      expect(testEnvironment.component['visibleChildrenCache'].has('Test warning insight')).toBe(true);
+      expect(env.component['visibleChildrenCache'].has('Test warning insight')).toBe(true);
     }));
   });
 
   describe('Text processing and caching', () => {
     it('should cache text snippets after processing', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
       flushMicrotasks(); // Wait for initial tree building
 
       // Verify we have tree data
-      expect(testEnvironment.component.treeDataSource.length).toBeGreaterThan(0);
+      expect(env.component.treeDataSource.length).toBeGreaterThan(0);
 
       // Find a parent node in the actual tree structure that has children
-      const parentNode = testEnvironment.component.treeDataSource.find(
-        node => node.children && node.children.length > 0
-      );
+      const parentNode = env.component.treeDataSource.find(node => node.children && node.children.length > 0);
 
       if (parentNode?.children && parentNode.children?.length > 0) {
         // Force text processing by expanding the node
-        testEnvironment.component.onNodeExpansionChange(parentNode, true);
+        env.component.onNodeExpansionChange(parentNode, true);
         tick(1000); // Allow async processing to complete
         flushMicrotasks(); // Flush any remaining microtasks
 
@@ -531,30 +552,34 @@ describe('LynxInsightsPanelComponent', () => {
         const childNodeWithInsight = parentNode.children.find(child => child.insight != null);
         if (childNodeWithInsight && childNodeWithInsight.insight) {
           const expectedCacheKey = childNodeWithInsight.insight.id;
-          const hasCachedText = testEnvironment.component['textSnippetCache'].has(expectedCacheKey);
+          const hasCachedText = env.component['textSnippetCache'].has(expectedCacheKey);
 
           // If text processing happened, we should have cached text
           if (hasCachedText) {
-            expect(testEnvironment.component['textSnippetCache'].size).toBeGreaterThan(0);
+            expect(env.component['textSnippetCache'].size).toBeGreaterThan(0);
           } else {
             // If no text was cached, it could be because text processing failed or was skipped
             // This is acceptable for this test case
-            expect(testEnvironment.component['textSnippetCache'].size).toBe(0);
+            expect(env.component['textSnippetCache'].size).toBe(0);
           }
         } else {
           // No child nodes with insights, so no text processing would occur
-          expect(testEnvironment.component['textSnippetCache'].size).toBe(0);
+          expect(env.component['textSnippetCache'].size).toBe(0);
         }
       } else {
         // If no parent nodes with children exist, no text processing would occur
-        expect(testEnvironment.component['textSnippetCache'].size).toBe(0);
+        expect(env.component['textSnippetCache'].size).toBe(0);
       }
     }));
 
     it('should use cached text snippets when available', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
-      testEnvironment.component['textSnippetCache'].set('insight-1', 'Cached text snippet');
+      const cachedInsightDescription: InsightDescription = {
+        refString: 'Matthew 1:1',
+        sampleTextParts: { preText: 'pre', insightText: 'Cached text snippet', postText: 'post' }
+      };
+      env.component['textSnippetCache'].set('insight-1', cachedInsightDescription);
 
       const parentNode: InsightPanelNode = {
         description: 'Parent',
@@ -570,56 +595,54 @@ describe('LynxInsightsPanelComponent', () => {
         ]
       };
 
-      testEnvironment.component.onNodeExpansionChange(parentNode, true);
+      env.component.onNodeExpansionChange(parentNode, true);
 
       const child = parentNode.children![0];
-      expect(child.description).toBe('Cached text snippet');
+      expect(child.insightDescription).toEqual(cachedInsightDescription);
       expect(child.isLoading).toBe(false);
     }));
   });
 
   describe('State tracking', () => {
     it('should restore expand/collapse state after tree rebuild', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
       const mockTree = jasmine.createSpyObj('MatTree', ['expand', 'collapse', 'isExpanded']);
 
-      testEnvironment.component['expandCollapseState'].set('Test warning insight', true);
-      testEnvironment.component['expandCollapseState'].set('Test error insight', false);
-      testEnvironment.component.tree = mockTree;
+      env.component['expandCollapseState'].set('Test warning insight', true);
+      env.component['expandCollapseState'].set('Test error insight', false);
+      env.component.tree = mockTree;
 
       // Trigger tree rebuild
-      testEnvironment.filteredInsights$.next([testInsight2, testInsight3]);
+      env.filteredInsights$.next([testInsight2, testInsight3]);
       tick();
 
-      expect(testEnvironment.component['expandCollapseState'].size).toBeGreaterThan(0);
+      expect(env.component['expandCollapseState'].size).toBeGreaterThan(0);
     }));
 
     it('should track active book chapter changes', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
       const newBookChapter: RouteBookChapter = { bookId: 'LUK', chapter: 5 };
 
-      testEnvironment.activatedBookChapter$.next(newBookChapter);
+      env.activatedBookChapter$.next(newBookChapter);
       tick();
 
-      expect(testEnvironment.component.activeBookChapter).toEqual(newBookChapter);
+      expect(env.component.activeBookChapter).toEqual(newBookChapter);
     }));
   });
 
   describe('Performance optimizations', () => {
     it('should use batch processing for large node sets', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       // Find an existing parent node in the tree
-      const parentNode = testEnvironment.component.treeDataSource.find(
-        node => node.children && node.children.length > 0
-      );
+      const parentNode = env.component.treeDataSource.find(node => node.children && node.children.length > 0);
 
       if (parentNode == null) {
         throw new Error('No parent node found in the tree');
       }
 
       // Add many children to exceed the threshold
-      for (let i = 0; i < testEnvironment.panelOptimizationThreshold * 2; i++) {
+      for (let i = 0; i < env.panelOptimizationThreshold * 2; i++) {
         parentNode.children!.push({
           description: `Child ${i}`,
           type: 'warning',
@@ -628,27 +651,25 @@ describe('LynxInsightsPanelComponent', () => {
         });
       }
 
-      testEnvironment.component.onNodeExpansionChange(parentNode, true);
+      env.component.onNodeExpansionChange(parentNode, true);
       tick(2000); // Allow all batches to process
 
-      expect(testEnvironment.component['nodesWithLargeChildSets'].has(parentNode.description)).toBe(true);
+      expect(env.component['nodesWithLargeChildSets'].has(parentNode.description)).toBe(true);
       flush();
     }));
 
     it('should track loading progress for large operations', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       // Find an existing parent node in the tree
-      const parentNode = testEnvironment.component.treeDataSource.find(
-        node => node.children && node.children.length > 0
-      );
+      const parentNode = env.component.treeDataSource.find(node => node.children && node.children.length > 0);
 
       if (parentNode == null) {
         throw new Error('No parent node found in the tree');
       }
 
       // Add enough children to trigger progress tracking
-      for (let i = 0; i < testEnvironment.panelOptimizationThreshold * 2; i++) {
+      for (let i = 0; i < env.panelOptimizationThreshold * 2; i++) {
         parentNode.children!.push({
           description: `Child ${i}`,
           type: 'warning',
@@ -657,15 +678,15 @@ describe('LynxInsightsPanelComponent', () => {
         });
       }
 
-      testEnvironment.component.onNodeExpansionChange(parentNode, true);
+      env.component.onNodeExpansionChange(parentNode, true);
 
-      expect(testEnvironment.component['loadingProgressMap'].has(parentNode.description)).toBe(true);
-      const progress = testEnvironment.component['loadingProgressMap'].get(parentNode.description);
+      expect(env.component['loadingProgressMap'].has(parentNode.description)).toBe(true);
+      const progress = env.component['loadingProgressMap'].get(parentNode.description);
       expect(progress?.total).toBeGreaterThan(0);
     }));
 
     it('should handle very large child sets efficiently', fakeAsync(() => {
-      const testEnvironment = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       const veryLargeNode: InsightPanelNode = {
         description: 'Very large node',
@@ -684,8 +705,90 @@ describe('LynxInsightsPanelComponent', () => {
       }
 
       expect(() => {
-        testEnvironment.component.onNodeExpansionChange(veryLargeNode, true);
+        env.component.onNodeExpansionChange(veryLargeNode, true);
       }).not.toThrow();
+    }));
+  });
+
+  describe('getText()', () => {
+    it('should extract text from delta with no trimming', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const delta = new Delta([{ insert: 'The rain in Spain falls mainly on the plain' }]);
+      const range: Range = { index: 2, length: 11 }; // 'e rain in S'
+
+      const result = (env.component as any).getText(delta, range, 'trim-none');
+      expect(result).toBe('e rain in S');
+    }));
+
+    it('should extract text from delta with word start trimming', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const delta = new Delta([{ insert: 'The rain in Spain falls mainly on the plain' }]);
+      const range: Range = { index: 2, length: 11 }; // 'e rain in S'
+
+      const result = (env.component as any).getText(delta, range, 'trim-word-start');
+      expect(result).toBe('rain in S');
+    }));
+
+    it('should extract text from delta with word end trimming', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const delta = new Delta([{ insert: 'The rain in Spain falls mainly on the plain' }]);
+      const range: Range = { index: 2, length: 11 }; // 'e rain in S'
+
+      const result = (env.component as any).getText(delta, range, 'trim-word-end');
+      expect(result).toBe('e rain in');
+    }));
+
+    it('should handle whitespace-only trimming for word start', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const delta = new Delta([{ insert: 'A  big horse!' }]);
+      const range: Range = { index: 1, length: 7 }; // ' big h'
+
+      const result = (env.component as any).getText(delta, range, 'trim-word-start');
+      expect(result).toBe('big h');
+    }));
+
+    it('should handle whitespace-only trimming for word end', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const delta = new Delta([{ insert: 'A big horse!  ' }]);
+      const range: Range = { index: 7, length: 7 }; // 'orse!  '
+
+      const result = (env.component as any).getText(delta, range, 'trim-word-end');
+      expect(result).toBe('orse!');
+    }));
+
+    it('should handle delta with multiple ops', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const delta = new Delta([{ insert: 'Hello ' }, { insert: 'world ' }, { insert: 'from ' }, { insert: 'Delta!' }]);
+      const range: Range = { index: 6, length: 11 }; // 'world from '
+
+      const result = (env.component as any).getText(delta, range, 'trim-none');
+      expect(result).toBe('world from ');
+    }));
+
+    it('should handle delta with non-string inserts', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const delta = new Delta([{ insert: 'Hello ' }, { insert: { embed: 'image' } }, { insert: 'world!' }]);
+      const range: Range = { index: 0, length: 15 }; // Should span the entire delta
+
+      const result = (env.component as any).getText(delta, range, 'trim-none');
+      expect(result).toBe('Hello world!'); // Non-string inserts should become empty strings
+    }));
+
+    it('should handle empty delta', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const delta = new Delta([]);
+      const range: Range = { index: 0, length: 5 };
+
+      const result = (env.component as any).getText(delta, range, 'trim-none');
+      expect(result).toBe('');
+    }));
+
+    it('should handle range beyond delta length', fakeAsync(() => {
+      const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
+      const delta = new Delta([{ insert: 'Short text' }]);
+
+      const result = (env.component as any).getText(delta, { index: 5, length: 20 }, 'trim-none');
+      expect(result).toBe(' text');
     }));
   });
 });

@@ -15,19 +15,37 @@ import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/act
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { isWhitespace } from 'xforge-common/util/string-util';
 import { TextDoc } from '../../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../../core/sf-project.service';
-import { getText, rangeComparer } from '../../../../../shared/text/quill-util';
+import { rangeComparer } from '../../../../../shared/text/quill-util';
 import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../shared/utils';
 import { EditorSegmentService } from '../base-services/editor-segment.service';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightRange } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
+
+/**
+ * The sample text surrounding an insight, broken into pre-text, insight text, and post-text.
+ */
+export interface InsightRangeSampleText {
+  preText: string;
+  insightText: string;
+  postText: string;
+}
+
+export interface InsightDescription {
+  /** Formatted as `{Book name} {Chapter}:{Verse}` */
+  refString: string;
+  /** The sample text surrounding the insight. */
+  sampleTextParts: InsightRangeSampleText;
+}
 
 export interface InsightPanelNode {
   description: string;
   type: LynxInsightType;
   children?: InsightPanelNode[];
   insight?: LynxInsight;
+  insightDescription?: InsightDescription;
   range: Range;
   count?: number;
   isDismissed?: boolean;
@@ -37,7 +55,7 @@ export interface InsightPanelNode {
 }
 
 interface LynxInsightWithText extends LynxInsight {
-  rangeText: string;
+  sampleTextParts: InsightRangeSampleText;
 }
 
 @Component({
@@ -58,8 +76,8 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   /** Map of TextDocId string -> (Map of segment ref -> segment range). */
   private textDocSegments = new Map<string, Map<string, LynxInsightRange>>();
 
-  /** Maps insight id to text snippet. */
-  private textSnippetCache = new Map<string, string>();
+  /** Maps insight id to `InsightDescription` (containing the text snippet). */
+  private textSnippetCache = new Map<string, InsightDescription>();
 
   /** Maps TextDocId string to TextDoc promise. */
   private textDocCache = new Map<string, Promise<TextDoc>>();
@@ -315,15 +333,14 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
           descGroupNodeContainsAllDismissed = false;
         }
 
-        const placeholderDescription = this.getPlaceholderDescription(insight);
-
-        const cachedSnippet = this.textSnippetCache.get(insight.id);
-        const isLoading = !cachedSnippet;
+        const cachedInsightDescription: InsightDescription | undefined = this.textSnippetCache.get(insight.id);
+        const isLoading: boolean = !cachedInsightDescription;
 
         return {
-          description: cachedSnippet || placeholderDescription,
+          description: '', // Only used for parent nodes
           type: insight.type,
           insight,
+          insightDescription: cachedInsightDescription || this.getPlaceholderDescription(insight),
           range: insight.range,
           isDismissed,
           isLoading
@@ -396,11 +413,11 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
         // Only update nodes that don't already have their text snippets
         if (child.insight && !this.textSnippetCache.has(child.insight.id)) {
           // Set initial placeholder based on bookNum and chapterNum
-          child.description = this.getPlaceholderDescription(child.insight);
+          child.insightDescription = this.getPlaceholderDescription(child.insight);
           child.isLoading = true;
         } else if (child.insight && this.textSnippetCache.has(child.insight.id)) {
           // Use cached text snippet if available
-          child.description = this.textSnippetCache.get(child.insight.id)!;
+          child.insightDescription = this.textSnippetCache.get(child.insight.id)!;
           child.isLoading = false;
         }
       }
@@ -435,36 +452,41 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   }
 
   /**
-   * Create a placeholder description for an insight while its text is loading.
+   * Create a placeholder InsightDescription for an insight while its text is loading.
    */
-  private getPlaceholderDescription(insight: LynxInsight): string {
+  private getPlaceholderDescription(insight: LynxInsight): InsightDescription {
+    let refString: string;
+
     if (insight.textDocId == null) {
-      return this.i18n.translateStatic('lynx_insights_panel.unknown_insight_location');
-    }
+      refString = this.i18n.translateStatic('lynx_insights_panel.unknown_insight_location');
+    } else {
+      const bookName = this.i18n.localizeBook(insight.textDocId.bookNum);
+      const chapterNum = insight.textDocId.chapterNum;
+      let verseNum = '';
 
-    const bookName = this.i18n.localizeBook(insight.textDocId.bookNum);
-    const chapterNum = insight.textDocId.chapterNum;
-    let verseNum = '';
+      const textDocIdStr = insight.textDocId.toString();
+      const editorSegments = this.textDocSegments.get(textDocIdStr);
 
-    const textDocIdStr = insight.textDocId.toString();
-    const editorSegments = this.textDocSegments.get(textDocIdStr);
+      if (editorSegments) {
+        const segmentRefs = this.editorSegmentService.getSegmentRefs(insight.range, editorSegments);
 
-    if (editorSegments) {
-      const segmentRefs = this.editorSegmentService.getSegmentRefs(insight.range, editorSegments);
-      if (segmentRefs.length > 0) {
-        const segmentRef = segmentRefs[0];
-        const verseRef = getVerseRefFromSegmentRef(insight.textDocId.bookNum, segmentRef);
-        if (verseRef) {
-          verseNum = verseRef.verseNum.toString();
+        if (segmentRefs.length > 0) {
+          const segmentRef = segmentRefs[0];
+          const verseRef = getVerseRefFromSegmentRef(insight.textDocId.bookNum, segmentRef);
+
+          if (verseRef) {
+            verseNum = verseRef.verseNum.toString();
+          }
         }
       }
+
+      refString = verseNum ? `${bookName} ${chapterNum}:${verseNum}` : `${bookName} ${chapterNum}`;
     }
 
-    const reference = verseNum ? `${bookName} ${chapterNum}:${verseNum}` : `${bookName} ${chapterNum}`;
-    const loadingText = this.i18n.translateStatic('lynx_insights_panel.loading');
-
-    // Format as {bookName} {chapterNum}:{verseNum} — Loading...
-    return `${reference} — ${loadingText}`;
+    return {
+      refString,
+      sampleTextParts: { preText: '', insightText: '', postText: '' }
+    };
   }
 
   private hasChildren(node: InsightPanelNode): boolean {
@@ -510,12 +532,12 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   }
 
   /**
-   * Get the link text for an insight.  The format is as follows:
-   * - If the range is within a single verse, the link text is the verse reference followed by a text sample.
-   * - If the range spans multiple verses, the link text is a list of verse references followed by a text sample.
+   * Generate the description (link text) for an insight.  The format for the verse reference is as follows:
+   * - If the range is within a single verse, `refString` is the verse reference (Example: `Mark 12:7`).
+   * - If the range spans multiple verses, `refString` should reflect that (Example: `Mark 12:7-9`).
    * - Non-verse segments are included as [segment_ref] in the place of verse references.
    */
-  private getLinkText(insight: LynxInsightWithText): string {
+  private createInsightDescription(insight: LynxInsightWithText): InsightDescription {
     let textDocIdStr: string = '';
 
     if (this.activatedProject.projectId != null) {
@@ -525,12 +547,15 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
     const editorSegments = this.textDocSegments.get(textDocIdStr);
 
     if (editorSegments == null) {
-      return '…'; // '\u2026'
+      return {
+        refString: insight.textDocId?.toString(),
+        sampleTextParts: { preText: '', insightText: '…', postText: '' } // '\u2026'
+      };
     }
 
-    const linkItems: string[] = [];
     const segmentRefs: string[] = this.editorSegmentService.getSegmentRefs(insight.range, editorSegments);
     let combinedVerseRef: VerseRef | undefined;
+    let refString: string = '';
 
     for (const segmentRef of segmentRefs) {
       const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(insight.textDocId.bookNum, segmentRef);
@@ -541,42 +566,28 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
         } else {
           combinedVerseRef = verseRef;
         }
-      } else {
-        if (combinedVerseRef != null) {
-          linkItems.push(
-            `${this.i18n.localizeReference(combinedVerseRef)} ${this.getTextSample(insight, combinedVerseRef.toString(), false)}`
-          );
-          combinedVerseRef = undefined;
-        }
-
-        const bookChapter: string = this.i18n.localizeBookChapter(
-          insight.textDocId.bookNum,
-          insight.textDocId.chapterNum
-        );
-
-        linkItems.push(`${bookChapter}:${this.getTextSample(insight, segmentRef, true)}`);
       }
     }
 
     if (combinedVerseRef != null) {
-      linkItems.push(
-        `${this.i18n.localizeReference(combinedVerseRef)} ${this.getTextSample(insight, combinedVerseRef.toString(), false)}`
+      refString = this.i18n.localizeReference(combinedVerseRef);
+    } else if (segmentRefs.length > 0) {
+      const bookChapter: string = this.i18n.localizeBookChapter(
+        insight.textDocId.bookNum,
+        insight.textDocId.chapterNum
       );
+      refString = `${bookChapter}:[${segmentRefs[0]}]`;
+    } else {
+      refString = insight.textDocId?.toString() || 'Unknown';
     }
 
-    return linkItems.join(', ');
-  }
+    // Use the pre-calculated sample text parts from processInsightText
+    const sampleTextParts = insight.sampleTextParts || { preText: '', insightText: '…', postText: '' };
 
-  /**
-   * Get a window of text from the segmentRef that contains insight range.
-   */
-  private getTextSample(insight: LynxInsightWithText, segmentRef: string, includeRef: boolean): string {
-    if (insight.rangeText == null) {
-      return segmentRef;
-    }
-
-    const prefix: string = includeRef ? `[${segmentRef}] ` : '';
-    return `${prefix}— "${insight.rangeText}"`;
+    return {
+      refString,
+      sampleTextParts
+    };
   }
 
   /**
@@ -709,52 +720,102 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
 
   /**
    * Processes a single insight to extract appropriate text snippet.
+   * Breaks the snippet text into pre, insight, and post parts.
    */
-  private processInsightText(insight: LynxInsight, textDoc: TextDoc): Promise<LynxInsightWithText> {
-    return new Promise<LynxInsightWithText>(resolve => {
-      const textGoalLength = this.lynxInsightConfig.panelLinkTextGoalLength;
+  private processInsightText(insight: LynxInsight, textDoc: TextDoc): LynxInsightWithText {
+    const textGoalLength = this.lynxInsightConfig.panelLinkTextGoalLength;
 
-      if (!textDoc.data?.ops?.length) {
-        resolve({ ...insight, rangeText: '' });
-        return;
-      }
+    if (!textDoc.data?.ops?.length) {
+      return {
+        ...insight,
+        sampleTextParts: { preText: '', insightText: '', postText: '' }
+      };
+    }
 
-      const delta = new Delta(textDoc.data.ops);
-      const originalRange: LynxInsightRange = insight.range;
+    const delta = new Delta(textDoc.data.ops);
+    const insightText: string = this.getText(delta, insight.range, 'trim-none');
 
-      // Get original insight text
-      const originalText: string = getText(delta, originalRange);
+    // Pad up to the goal length (and at least 10 characters)
+    const padding: number = Math.max(10, textGoalLength - insightText.length);
 
-      // If original text is long enough, use it directly
-      if (originalText.length >= textGoalLength * 0.7) {
-        resolve({ ...insight, rangeText: originalText });
-        return;
-      }
+    const prePadIndex: number = insight.range.index - padding;
+    const prePadRange: Range = {
+      index: Math.max(0, prePadIndex),
+      length: prePadIndex < 0 ? padding - insight.range.index : padding
+    };
+    const preText: string = this.getText(delta, prePadRange, 'trim-word-start');
 
-      // Get expanded text with padding
-      const padding: number = Math.floor((textGoalLength - originalText.length) / 2);
-      const expandedStart: number = Math.max(0, originalRange.index - padding);
-      const expandedEnd: number = Math.min(delta.length(), originalRange.index + originalRange.length + padding);
-      const expandedRange: LynxInsightRange = { index: expandedStart, length: expandedEnd - expandedStart };
+    const postPadRange: Range = { index: insight.range.index + insight.range.length, length: padding };
+    const postText: string = this.getText(delta, postPadRange, 'trim-word-end');
 
-      const expandedText: string = getText(delta, expandedRange);
+    return {
+      ...insight,
+      sampleTextParts: { preText, insightText, postText }
+    };
+  }
 
-      const firstSpace: number = expandedText.indexOf(' ');
-      const lastSpace: number = expandedText.lastIndexOf(' ');
+  /**
+   * Extracts text from a delta at the given range, trimming if specified.
+   * @param delta The Delta object to extract text from.
+   * @param range Optional range to limit the text extraction.
+   * @param trimOption Trim start of range, end of range, or no trim.
+   * @returns The extracted text, trimmed according to the specified option.
+   * @example
+   *   getText(
+   *       'The rain in Spain falls mainly on the plain',
+   *       { index: 2, length: 11 },  // 'e rain in S'
+   *       'trim-word-start'
+   *   ) // returns: 'rain in S'
+   *
+   *   getText(
+   *       'The rain in Spain falls mainly on the plain',
+   *       { index: 2, length: 11 },  // 'e rain in S'
+   *       'trim-word-end'
+   *   ) // returns: 'e rain in'
+   *
+   *   getText(
+   *       'A big horse!',
+   *       { index: 1, length: 6 },  // ' big h'
+   *       trim-none
+   *   ) // returns: ' big h'
+   */
+  private getText(delta: Delta, range: Range, trimOption: 'trim-none' | 'trim-word-start' | 'trim-word-end'): string {
+    const text = delta
+      .slice(range.index, range.index + range.length)
+      .map(op => (typeof op.insert === 'string' ? op.insert : ''))
+      .join('');
 
-      // Trim back toward original text stopping at first space (on both ends)
-      const adjustedStart: number =
-        firstSpace >= 0 ? Math.min(originalRange.index, expandedStart + firstSpace) : expandedStart;
-      const adjustedEnd: number = Math.max(
-        originalRange.index + originalRange.length,
-        lastSpace >= 0 ? expandedStart + lastSpace : expandedEnd
-      );
+    switch (trimOption) {
+      case 'trim-word-start':
+        if (isWhitespace(text[0])) {
+          return text.trimStart();
+        }
 
-      const adjustedRange = { index: adjustedStart, length: adjustedEnd - adjustedStart };
-      const adjustedExpandedText: string = getText(delta, adjustedRange);
+        let startIndex: number = 1;
 
-      resolve({ ...insight, rangeText: adjustedExpandedText });
-    });
+        // Find the first whitespace character to determine word bound
+        while (startIndex < text.length && !isWhitespace(text[startIndex])) {
+          startIndex++;
+        }
+
+        return text.substring(startIndex).trimStart();
+      case 'trim-word-end':
+        if (isWhitespace(text[text.length - 1])) {
+          return text.trimEnd();
+        }
+
+        let endIndex: number = text.length - 2;
+
+        // Find the last whitespace  character to determine word bound
+        while (endIndex >= 0 && !isWhitespace(text[endIndex])) {
+          endIndex--;
+        }
+
+        return text.substring(0, endIndex).trimEnd();
+      case 'trim-none':
+      default:
+        return text;
+    }
   }
 
   /**
@@ -1063,9 +1124,9 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
 
   private async processNodeAsync(node: InsightPanelNode, insight: LynxInsight): Promise<void> {
     try {
-      // Check if we already have a cached snippet
+      // Check if we already have a cached insight description (snippet)
       if (this.textSnippetCache.has(insight.id)) {
-        node.description = this.textSnippetCache.get(insight.id)!;
+        node.insightDescription = this.textSnippetCache.get(insight.id)!;
         node.isLoading = false;
         return;
       }
@@ -1075,16 +1136,20 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
 
       // Get and process the text document
       const textDoc = await this.loadTextDocLazily(insight);
-      const insightWithText = await this.processInsightText(insight, textDoc);
-      const linkText = this.getLinkText(insightWithText);
+      const insightWithText = this.processInsightText(insight, textDoc);
+      const insightDescription = this.createInsightDescription(insightWithText);
 
-      // Cache the link text and update the UI
-      this.textSnippetCache.set(insight.id, linkText);
-      node.description = linkText;
+      // Cache the insight description and update the UI
+      this.textSnippetCache.set(insight.id, insightDescription);
+      node.insightDescription = insightDescription;
       node.isLoading = false;
     } catch {
-      // Set fallback text and remove loading state
-      node.description = `${insight.textDocId?.toString() || 'Unknown'} — Error loading`;
+      // Set fallback description and remove loading state
+      const fallbackDescription: InsightDescription = {
+        refString: insight.textDocId?.toString() || 'Unknown',
+        sampleTextParts: { preText: '', insightText: 'Error loading', postText: '' }
+      };
+      node.insightDescription = fallbackDescription;
       node.isLoading = false;
     }
   }
