@@ -11,10 +11,24 @@
       <button matRipple [class.dismissed]="node.isDismissed" class="tree-toggle leaf" (click)="onLeafNodeClick(node)">
         <div class="level-ref">
           @if (node.isLoading) {
-            <span class="insight-loading-text">{{ node.description }}</span>
-            <mat-spinner diameter="16" class="insight-loading-spinner"></mat-spinner>
+            <div>
+              <span class="verse-ref">{{ node.insightDescription!.refString }}</span>
+              <span class="insight-desc-divider">—</span>
+              <span class="insight-loading-text">{{ t("loading") }}</span>
+              <mat-spinner diameter="16" class="insight-loading-spinner"></mat-spinner>
+            </div>
           } @else {
-            <span>{{ node.description }}</span>
+            <div>
+              <span class="verse-ref">{{ node.insightDescription!.refString }}</span>
+              <span class="insight-desc-divider">—</span>
+              <span class="sample-text"
+                >{{ node.insightDescription!.sampleTextParts.preText
+                }}<span class="lynx-insight" [class]="node.insight.type">{{
+                  node.insightDescription!.sampleTextParts.insightText
+                }}</span
+                >{{ node.insightDescription!.sampleTextParts.postText }}</span
+              >
+            </div>
             @if (node.isDismissed) {
               <mat-icon
                 [matTooltip]="t('restore')"
