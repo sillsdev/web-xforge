@@ -353,7 +353,8 @@
     "hour_range": "{{ min }} a {{ max }} horas",
     "learn_more": "Más información",
     "minute_range": "{{ min }} a {{ max }} minutos",
-    "upcoming_maintenance": "Scripture Forge estará inactiva por mantenimiento durante aproximadamente {{ duration }} a partir de {{ startTime }}."
+    "upcoming_maintenance": "Scripture Forge estará inactiva por mantenimiento durante aproximadamente {{ duration }} a partir de {{ startTime }}.",
+    "dbl_maintenance": "La Biblioteca Digital de la Biblia estará inactiva por mantenimiento durante aproximadamente {{ duration }} a partir de {{ startTime }}. Durante este tiempo no podrá conectar los recursos de la Biblioteca Digital de la Biblia a su proyecto."
   },
   "issue_email": {
     "heading": "Por favor, explíquenos el problema.",
