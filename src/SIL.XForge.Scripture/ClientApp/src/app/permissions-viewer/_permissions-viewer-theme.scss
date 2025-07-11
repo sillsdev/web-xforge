@@ -1,0 +1,48 @@
+@use '@angular/material' as mat;
+
+@mixin color($theme) {
+  $is-dark: mat.get-theme-type($theme) == dark;
+
+  .permissions-table {
+    tr:nth-child(even) {
+      background-color: if($is-dark, #2a2a2a, #f9f9f9);
+    }
+    th {
+      background-color: if($is-dark, #222, #f2f2f2);
+    }
+    td,
+    th {
+      border-color: if($is-dark, #444, #ddd);
+    }
+  }
+
+  .operation-tag {
+    background-color: if($is-dark, transparent, #e0e0e0);
+    color: inherit;
+    &.view,
+    &.view_own {
+      background-color: if($is-dark, #22543a, #d4edda);
+      color: if($is-dark, #d4edda, #155724);
+    }
+    &.create {
+      background-color: if($is-dark, #1e3a5c, #cce5ff);
+      color: if($is-dark, #cce5ff, #004085);
+    }
+    &.edit,
+    &.edit_own {
+      background-color: if($is-dark, #665c1e, #fff3cd);
+      color: if($is-dark, #fff3cd, #856404);
+    }
+    &.delete,
+    &.delete_own {
+      background-color: if($is-dark, #5c1e22, #f8d7da);
+      color: if($is-dark, #f8d7da, #721c24);
+    }
+  }
+}
+
+@mixin theme($theme) {
+  @if mat.theme-has($theme, color) {
+    @include color($theme);
+  }
+}

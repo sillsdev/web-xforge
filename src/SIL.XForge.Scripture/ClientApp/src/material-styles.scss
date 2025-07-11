@@ -21,6 +21,7 @@
 @use 'src/app/translate/editor/editor-draft/editor-draft-theme' as sf-editor-draft;
 @use 'src/app/translate/biblical-terms/biblical-terms-theme' as sf-biblical-terms;
 @use 'src/app/translate/translate-overview/translate-overview.component' as sf-translate-overview;
+@use 'src/app/permissions-viewer/permissions-viewer-theme' as sf-permissions-viewer;
 
 @use 'text' as sf-text;
 
@@ -51,6 +52,7 @@
   @include sf-tab-group.theme($theme);
   @include sf-text.theme($theme);
   @include sf-translate-overview.theme($theme);
+  @include sf-permissions-viewer.theme($theme);
 
   // Custom variables
   --sf-disabled-foreground: #{mat.get-theme-color($theme, neutral, 70)};
