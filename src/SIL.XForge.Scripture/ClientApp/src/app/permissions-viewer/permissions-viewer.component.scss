@@ -1,3 +1,5 @@
+@import './_permissions-viewer-theme.scss';
+
 .permissions-viewer-container {
   padding: 20px;
   overflow-x: auto;
@@ -5,66 +7,37 @@
   h1 {
     margin-bottom: 20px;
   }
-}
 
-.permissions-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+  .permissions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
 
-  th,
-  td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
   }
 
-  th {
-    background-color: #f2f2f2;
-    position: sticky;
-    top: 0;
-    z-index: 1;
+  .operations-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
   }
 
-  tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-}
-
-.operations-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.operation-tag {
-  background-color: #e0e0e0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-  display: inline-block;
-  margin: 2px;
-
-  &.view,
-  &.view_own {
-    background-color: #d4edda;
-    color: #155724;
-  }
-
-  &.create {
-    background-color: #cce5ff;
-    color: #004085;
-  }
-
-  &.edit,
-  &.edit_own {
-    background-color: #fff3cd;
-    color: #856404;
-  }
-
-  &.delete,
-  &.delete_own {
-    background-color: #f8d7da;
-    color: #721c24;
+  .operation-tag {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: inline-block;
+    margin: 2px;
   }
 }
