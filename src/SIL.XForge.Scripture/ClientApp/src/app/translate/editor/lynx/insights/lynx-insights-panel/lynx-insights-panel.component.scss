@@ -80,7 +80,7 @@ $restoreActionColor: #5485e7;
   align-items: center;
   gap: 1rem;
 
-  > span:first-child {
+  > div:first-child {
     display: flex;
     align-items: center;
 
@@ -89,6 +89,21 @@ $restoreActionColor: #5485e7;
       margin-right: 0.6em;
       font-size: 1.5em;
     }
+  }
+
+  .verse-ref {
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .insight-desc-divider {
+    margin: 0 0.5rem;
+    color: #999;
+    font-weight: 500;
+  }
+
+  .sample-text {
+    white-space: nowrap;
   }
 }
 

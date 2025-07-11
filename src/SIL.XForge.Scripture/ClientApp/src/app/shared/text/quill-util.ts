@@ -1,4 +1,4 @@
-import Quill, { Delta, Range } from 'quill';
+import Quill, { Range } from 'quill';
 import { DeltaOperation, StringMap } from 'rich-text';
 
 /**
@@ -57,18 +57,4 @@ export function rangeComparer(a: { range: Range }, b: { range: Range }): number 
   }
 
   return a.range.length - b.range.length;
-}
-
-/**
- * Extracts text from a delta. If range is provided, extracts only text within that range.
- */
-export function getText(delta: Delta, range?: Range): string {
-  // Slice the delta if range is provided
-  const targetDelta: Delta = range ? delta.slice(range.index, range.index + range.length) : delta;
-
-  // Extract text from operations
-  return targetDelta
-    .filter(op => typeof op.insert === 'string')
-    .map(op => op.insert)
-    .join('');
 }
