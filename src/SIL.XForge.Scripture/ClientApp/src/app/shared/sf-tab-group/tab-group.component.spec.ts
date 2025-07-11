@@ -58,12 +58,12 @@ describe('TabGroupComponent', () => {
     expect(component.addTab).toHaveBeenCalledWith(newTabType, tabOptions);
   });
 
-  it('should add tab using TabFactory and TabStateService when addTab is called', async () => {
+  it('should add tab using TabFactory and TabStateService when addTab is called', () => {
     const newTabType = 'test';
     const tab: TabInfo<string> = {
       id: uuid(),
       type: 'test',
-      headerText: 'Tab Header',
+      headerText$: of('Tab Header'),
       closeable: false,
       movable: true
     };
@@ -71,10 +71,10 @@ describe('TabGroupComponent', () => {
     const tabFactory = TestBed.inject(TabFactoryService);
     const tabStateService = TestBed.inject(TabStateService);
 
-    spyOn(tabFactory, 'createTab').and.returnValue(Promise.resolve(tab));
+    spyOn(tabFactory, 'createTab').and.returnValue(tab);
     spyOn(tabStateService, 'addTab');
 
-    await component.addTab(newTabType);
+    component.addTab(newTabType);
 
     expect(tabFactory.createTab).toHaveBeenCalledWith(newTabType, {});
     expect(tabStateService.addTab).toHaveBeenCalledWith(component.groupId, tab);

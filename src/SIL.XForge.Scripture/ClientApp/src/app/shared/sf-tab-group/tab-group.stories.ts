@@ -36,8 +36,8 @@ import {
       >
         @for (tab of tabGroup.value.tabs; track tab.id) {
           <app-tab [closeable]="tab.closeable" [movable]="tab.movable">
-            <ng-template sf-tab-header><div [innerHTML]="tab.headerText"></div></ng-template>
-            <p><span [innerHTML]="tab.headerText"></span> in {{ tabGroup.key }}</p>
+            <ng-template sf-tab-header><div [innerHTML]="tab.headerText$ | async"></div></ng-template>
+            <p><span [innerHTML]="tab.headerText$ | async"></span> in {{ tabGroup.key }}</p>
           </app-tab>
         }
       </app-tab-group>
@@ -95,7 +95,7 @@ export default {
                   tab = {
                     id: uuid(),
                     type: 'blank',
-                    headerText: 'New tab',
+                    headerText$: of('New tab'),
                     closeable: true,
                     movable: true
                   };
@@ -104,7 +104,7 @@ export default {
                   tab = {
                     id: uuid(),
                     type: 'type-a',
-                    headerText: 'Tab A',
+                    headerText$: of('Tab A'),
                     closeable: true,
                     movable: true
                   };
@@ -114,7 +114,7 @@ export default {
                   tab = {
                     id: uuid(),
                     type: 'type-b',
-                    headerText: 'Tab B',
+                    headerText$: of('Tab B'),
                     closeable: true,
                     movable: true
                   };
@@ -137,21 +137,21 @@ const tabGroups: TabGroup<string, TabInfo<string>>[] = [
     {
       id: uuid(),
       type: 'type-a',
-      headerText: 'Uncloseable, unmovable Tab 1 is great!',
+      headerText$: of('Uncloseable, unmovable Tab 1 is great!'),
       closeable: false,
       movable: false
     },
     {
       id: uuid(),
       type: 'type-b',
-      headerText: 'Tab 2 <em>wow!</em>',
+      headerText$: of('Tab 2 <em>wow!</em>'),
       closeable: true,
       movable: true
     },
     {
       id: uuid(),
       type: 'type-c',
-      headerText: 'Tab 3',
+      headerText$: of('Tab 3'),
       icon: 'book',
       closeable: true,
       movable: true
@@ -189,13 +189,13 @@ export const TabReorderAndMove: Story = {
         {
           id: uuid(),
           type: 'type-a',
-          headerText: 'Uncloseable, unmovable Tab 1',
+          headerText$: of('Uncloseable, unmovable Tab 1'),
           closeable: false,
           movable: false
         },
-        { id: uuid(), type: 'type-b', headerText: 'Tab 2', closeable: true, movable: true },
-        { id: uuid(), type: 'type-c', headerText: 'Tab 3', closeable: true, movable: true },
-        { id: uuid(), type: 'type-c', headerText: 'Tab 4', closeable: true, movable: true }
+        { id: uuid(), type: 'type-b', headerText$: of('Tab 2'), closeable: true, movable: true },
+        { id: uuid(), type: 'type-c', headerText$: of('Tab 3'), closeable: true, movable: true },
+        { id: uuid(), type: 'type-c', headerText$: of('Tab 4'), closeable: true, movable: true }
       ])
     ]
   }

@@ -19,94 +19,106 @@ describe('EditorTabFactoryService', () => {
     when(mockI18nService.translate(anything())).thenReturn(of('Test Header Text'));
   });
 
-  it('should create a "biblical terms" tab', async () => {
-    const tab = await service.createTab('biblical-terms');
+  it('should create a "biblical terms" tab', done => {
+    const tab = service.createTab('biblical-terms');
     expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.type).toEqual('biblical-terms');
     expect(tab.svgIcon).toEqual('biblical_terms');
-    expect(tab.headerText).toEqual('Test Header Text');
     expect(tab.closeable).toEqual(true);
     expect(tab.movable).toEqual(true);
     expect(tab.unique).toEqual(true);
+    tab.headerText$.subscribe(headerText => {
+      expect(headerText).toEqual('Test Header Text');
+      done();
+    });
   });
 
-  it('should create a "history" tab', async () => {
-    const tab = await service.createTab('history');
+  it('should create a "history" tab', done => {
+    const tab = service.createTab('history');
     expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.type).toEqual('history');
     expect(tab.icon).toEqual('history');
-    expect(tab.headerText).toEqual('Test Header Text');
     expect(tab.closeable).toEqual(true);
     expect(tab.movable).toEqual(true);
     expect(tab.unique).toBeFalsy();
+    tab.headerText$.subscribe(headerText => {
+      expect(headerText).toEqual('Test Header Text');
+      done();
+    });
   });
 
-  it('should create a "draft" tab', async () => {
-    const tab = await service.createTab('draft');
+  it('should create a "draft" tab', done => {
+    const tab = service.createTab('draft');
     expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.type).toEqual('draft');
     expect(tab.icon).toEqual('auto_awesome');
-    expect(tab.headerText).toEqual('Test Header Text');
     expect(tab.closeable).toEqual(true);
     expect(tab.movable).toEqual(true);
     expect(tab.unique).toEqual(true);
+    tab.headerText$.subscribe(headerText => {
+      expect(headerText).toEqual('Test Header Text');
+      done();
+    });
   });
 
-  it('should create a "project-target" tab', async () => {
-    const tab = await service.createTab('project-target', { projectId: 'project1', headerText: 'Project 1' });
+  it('should create a "project-target" tab', done => {
+    const tab = service.createTab('project-target', { projectId: 'project1', headerText$: of('Project 1') });
     expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.projectId).toEqual('project1');
     expect(tab.type).toEqual('project-target');
     expect(tab.icon).toEqual('book');
-    expect(tab.headerText).toEqual('Project 1');
     expect(tab.closeable).toEqual(false);
     expect(tab.movable).toEqual(false);
     expect(tab.unique).toEqual(true);
+    tab.headerText$.subscribe(headerText => {
+      expect(headerText).toEqual('Project 1');
+      done();
+    });
   });
 
-  it('should create a "project-source" tab', async () => {
-    const tab = await service.createTab('project-source', { projectId: 'project1', headerText: 'Project 1' });
+  it('should create a "project-source" tab', done => {
+    const tab = service.createTab('project-source', { projectId: 'project1', headerText$: of('Project 1') });
     expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.projectId).toEqual('project1');
     expect(tab.type).toEqual('project-source');
     expect(tab.icon).toEqual('book');
-    expect(tab.headerText).toEqual('Project 1');
     expect(tab.closeable).toEqual(false);
     expect(tab.movable).toEqual(false);
     expect(tab.unique).toEqual(true);
+    tab.headerText$.subscribe(headerText => {
+      expect(headerText).toEqual('Project 1');
+      done();
+    });
   });
 
-  it('should create a "project-resource" tab', async () => {
-    const tab = await service.createTab('project-resource', { projectId: 'project1', headerText: 'Project 1' });
+  it('should create a "project-resource" tab', done => {
+    const tab = service.createTab('project-resource', { projectId: 'project1', headerText$: of('Project 1') });
     expect(tab.id?.length).toBeGreaterThan(0);
     expect(tab.projectId).toEqual('project1');
     expect(tab.type).toEqual('project-resource');
     expect(tab.icon).toEqual('library_books');
-    expect(tab.headerText).toEqual('Project 1');
     expect(tab.closeable).toEqual(true);
     expect(tab.movable).toEqual(true);
     expect(tab.unique).toBeFalsy();
+    tab.headerText$.subscribe(headerText => {
+      expect(headerText).toEqual('Project 1');
+      done();
+    });
   });
 
-  it('should throw error for unknown tab type', async () => {
-    await expectAsync(service.createTab('unknown' as EditorTabType)).toBeRejectedWithError('Unknown TabType: unknown');
+  it('should throw error for unknown tab type', () => {
+    expect(() => service.createTab('unknown' as EditorTabType)).toThrowError('Unknown TabType: unknown');
   });
 
-  it('should throw error for "project-target" tab without projectId', async () => {
-    await expectAsync(service.createTab('project-target')).toBeRejectedWithError(
-      "'tabOptions' must include 'projectId'"
-    );
+  it('should throw error for "project-target" tab without projectId', () => {
+    expect(() => service.createTab('project-target')).toThrowError("'tabOptions' must include 'projectId'");
   });
 
-  it('should throw error for "project-source" tab without projectId', async () => {
-    await expectAsync(service.createTab('project-source')).toBeRejectedWithError(
-      "'tabOptions' must include 'projectId'"
-    );
+  it('should throw error for "project-source" tab without projectId', () => {
+    expect(() => service.createTab('project-source')).toThrowError("'tabOptions' must include 'projectId'");
   });
 
-  it('should throw error for "project-resource" tab without projectId', async () => {
-    await expectAsync(service.createTab('project-resource')).toBeRejectedWithError(
-      "'tabOptions' must include 'projectId'"
-    );
+  it('should throw error for "project-resource" tab without projectId', () => {
+    expect(() => service.createTab('project-resource')).toThrowError("'tabOptions' must include 'projectId'");
   });
 });

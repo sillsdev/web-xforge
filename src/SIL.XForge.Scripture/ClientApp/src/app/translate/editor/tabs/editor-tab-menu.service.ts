@@ -5,8 +5,8 @@ import {
   editorTabTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
-import { shareReplay, switchMap, take } from 'rxjs/operators';
+import { combineLatest, map, Observable, of } from 'rxjs';
+import { shareReplay, switchMap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -88,7 +88,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
           }
         }
 
-        return items.length > 0 ? forkJoin(items) : of([]);
+        return items.length > 0 ? combineLatest(items) : of([]);
       }),
       shareReplay({ bufferSize: 1, refCount: true })
     );
@@ -98,7 +98,6 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     switch (tabType) {
       case 'biblical-terms':
         return this.i18n.translate('editor_tabs_menu.biblical_terms_menu_item').pipe(
-          take(1),
           map(localizedMenuItemText => ({
             type: 'biblical-terms',
             svgIcon: 'biblical_terms',
@@ -107,7 +106,6 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         );
       case 'history':
         return this.i18n.translate('editor_tabs_menu.history_menu_item').pipe(
-          take(1),
           map(localizedMenuItemText => ({
             type: 'history',
             icon: 'history',
@@ -116,7 +114,6 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         );
       case 'draft':
         return this.i18n.translate('editor_tabs_menu.draft_menu_item').pipe(
-          take(1),
           map(localizedMenuItemText => ({
             type: 'draft',
             icon: 'auto_awesome',
@@ -125,7 +122,6 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         );
       case 'project-resource':
         return this.i18n.translate('editor_tabs_menu.project_resource_menu_item').pipe(
-          take(1),
           map(localizedMenuItemText => ({
             type: 'project-resource',
             icon: 'library_books',

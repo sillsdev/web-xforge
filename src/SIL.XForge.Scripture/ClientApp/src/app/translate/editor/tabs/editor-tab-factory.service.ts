@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { isUndefined, omitBy } from 'lodash-es';
 import { EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
-import { firstValueFrom } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { I18nService } from 'xforge-common/i18n.service';
 import { TabFactoryService } from '../../../shared/sf-tab-group';
@@ -12,7 +11,7 @@ import { EditorTabInfo } from './editor-tabs.types';
 })
 export class EditorTabFactoryService implements TabFactoryService<EditorTabType, EditorTabInfo> {
   constructor(private readonly i18n: I18nService) {}
-  async createTab(tabType: EditorTabType, tabOptions?: Partial<EditorTabInfo>): Promise<EditorTabInfo> {
+  createTab(tabType: EditorTabType, tabOptions?: Partial<EditorTabInfo>): EditorTabInfo {
     // Remove undefined options
     tabOptions = omitBy(tabOptions, isUndefined);
 
@@ -26,9 +25,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
             id,
             type: 'biblical-terms',
             svgIcon: 'biblical_terms',
-            headerText: await firstValueFrom(
-              this.i18n.translate('editor_tab_factory.default_biblical_terms_tab_header')
-            ),
+            headerText$: this.i18n.translate('editor_tab_factory.default_biblical_terms_tab_header'),
             closeable: true,
             movable: true,
             persist: true,
@@ -42,7 +39,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
             id,
             type: 'history',
             icon: 'history',
-            headerText: await firstValueFrom(this.i18n.translate('editor_tab_factory.default_history_tab_header')),
+            headerText$: this.i18n.translate('editor_tab_factory.default_history_tab_header'),
             closeable: true,
             movable: true,
             persist: true
@@ -55,7 +52,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
             id,
             type: 'draft',
             icon: 'auto_awesome',
-            headerText: await firstValueFrom(this.i18n.translate('editor_tab_factory.draft_tab_header')),
+            headerText$: this.i18n.translate('editor_tab_factory.draft_tab_header'),
             closeable: true,
             movable: true,
             unique: true
@@ -73,7 +70,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
             id,
             type: tabType,
             icon: 'book',
-            headerText: await firstValueFrom(this.i18n.translate('editor_tab_factory.default_project_tab_header')),
+            headerText$: this.i18n.translate('editor_tab_factory.default_project_tab_header'),
             closeable: false,
             movable: false,
             unique: true
@@ -90,7 +87,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
             id,
             type: tabType,
             icon: 'library_books',
-            headerText: await firstValueFrom(this.i18n.translate('editor_tab_factory.default_resource_tab_header')),
+            headerText$: this.i18n.translate('editor_tab_factory.default_resource_tab_header'),
             closeable: true,
             movable: true,
             unique: false,
