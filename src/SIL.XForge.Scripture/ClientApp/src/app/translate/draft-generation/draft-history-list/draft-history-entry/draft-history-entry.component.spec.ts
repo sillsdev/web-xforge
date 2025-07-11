@@ -217,6 +217,46 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.hasDetails).toBe(false);
       expect(component.entry).toBe(entry);
     });
+
+    it('should handle faulted builds with additional info', () => {
+      const entry = {
+        state: BuildStates.Faulted,
+        message: 'An error occurred',
+        engine: { id: 'project01' },
+        additionalInfo: {
+          translationEngineId: 'translationEngine01',
+          buildId: 'build01',
+          corporaIds: ['corpora01'],
+          parallelCorporaIds: ['parallelCorpora01']
+        }
+      } as BuildDto;
+      component.entry = entry;
+      expect(component.scriptureRange).toEqual('');
+      expect(component.buildRequestedByUserName).toBeUndefined();
+      expect(component.buildRequestedByDate).toBe('');
+      expect(component.canDownloadBuild).toBe(false);
+      expect(component.hasDetails).toBe(true);
+      expect(component.entry).toBe(entry);
+      expect(component.buildFaulted).toBe(true);
+      expect(component.buildFaultDetails.length).toBe(6);
+    });
+
+    it('should handle faulted builds without additional info', () => {
+      const entry = {
+        state: BuildStates.Faulted,
+        message: 'An error occurred',
+        engine: { id: 'project01' }
+      } as BuildDto;
+      component.entry = entry;
+      expect(component.scriptureRange).toEqual('');
+      expect(component.buildRequestedByUserName).toBeUndefined();
+      expect(component.buildRequestedByDate).toBe('');
+      expect(component.canDownloadBuild).toBe(false);
+      expect(component.hasDetails).toBe(true);
+      expect(component.entry).toBe(entry);
+      expect(component.buildFaulted).toBe(true);
+      expect(component.buildFaultDetails.length).toBe(2);
+    });
   });
 
   describe('formatDate', () => {

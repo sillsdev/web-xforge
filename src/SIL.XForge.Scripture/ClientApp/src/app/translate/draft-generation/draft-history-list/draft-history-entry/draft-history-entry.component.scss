@@ -67,3 +67,8 @@ strong {
 .red {
   color: var(--draft-history-entry-red-color);
 }
+
+/* Styling for the error details table */
+.mat-column-heading {
+  font-weight: bolder;
+}

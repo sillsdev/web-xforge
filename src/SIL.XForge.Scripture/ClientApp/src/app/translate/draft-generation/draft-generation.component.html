@@ -146,7 +146,9 @@
                     ><transloco
                       key="draft_generation.warning_generation_faulted"
                       [params]="{
-                        generateButtonText: t('generate_draft_button')
+                        generateButtonText: featureFlags.newDraftHistory.enabled
+                          ? t('generate_new_draft')
+                          : t('generate_draft_button')
                       }"
                     ></transloco
                   ></span>
@@ -155,27 +157,29 @@
                   </a>
                 </div>
               </app-notice>
-              <section data-test-id="technical-details">
-                <div>
-                  <p class="error-text">Technical details:</p>
+              @if (!featureFlags.newDraftHistory.enabled) {
+                <section data-test-id="technical-details">
                   <div>
-                    <div><strong>Message:</strong> {{ draftJob?.message ?? "unknown" }}</div>
+                    <p class="error-text">Technical details:</p>
                     <div>
-                      <strong>Translation Engine Id:</strong>
-                      {{ draftJob?.additionalInfo?.translationEngineId ?? "unknown" }}
-                    </div>
-                    <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId ?? "unknown" }}</div>
-                    <div>
-                      <strong>Corpora Ids:</strong>
-                      {{ draftJob?.additionalInfo?.corporaIds?.join(", ") ?? "unknown" }}
-                    </div>
-                    <div>
-                      <strong>Parallel Corpora Ids:</strong>
-                      {{ draftJob?.additionalInfo?.parallelCorporaIds?.join(", ") ?? "unknown" }}
+                      <div><strong>Message:</strong> {{ draftJob?.message ?? "unknown" }}</div>
+                      <div>
+                        <strong>Translation Engine Id:</strong>
+                        {{ draftJob?.additionalInfo?.translationEngineId ?? "unknown" }}
+                      </div>
+                      <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId ?? "unknown" }}</div>
+                      <div>
+                        <strong>Corpora Ids:</strong>
+                        {{ draftJob?.additionalInfo?.corporaIds?.join(", ") ?? "unknown" }}
+                      </div>
+                      <div>
+                        <strong>Parallel Corpora Ids:</strong>
+                        {{ draftJob?.additionalInfo?.parallelCorporaIds?.join(", ") ?? "unknown" }}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              }
             }
             @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
               <section class="action-button-strip">
@@ -346,7 +350,12 @@
         hasAnyCompletedBuild &&
         isSourcesConfigurationComplete
       ) {
-        <button mat-flat-button color="primary" type="button" (click)="generateDraft({ withConfirm: true })">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="generateDraft({ withConfirm: !featureFlags.newDraftHistory.enabled })"
+        >
           <mat-icon>add</mat-icon>
           {{ t("generate_new_draft") }}
         </button>
