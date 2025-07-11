@@ -1,17 +1,12 @@
 <ng-container *transloco="let t; read: 'global_notices'">
-  @if (showDowntimeNotice) {
+  @if (showNotice) {
     <app-notice class="downtime-notice" type="warning" mode="fill-dark" icon="construction">
       <div class="downtime-notice-content-wrapper">
         <div>
-          {{
-            t("upcoming_maintenance", {
-              duration,
-              startTime: i18n.formatDate(upcomingDowntime.start, { showTimeZone: true })
-            })
-          }}
+          {{ t(messageKey, { duration, startTime: i18n.formatDate(upcomingDowntime.start, { showTimeZone: true }) }) }}
           <a [href]="upcomingDowntime.detailsUrl" target="_blank">{{ t("learn_more") }}</a>
         </div>
-        <button mat-icon-button (click)="showDowntimeNotice = false" [matTooltip]="t('close')">
+        <button mat-icon-button (click)="hideNotice = true" [matTooltip]="t('close')">
           <mat-icon>close</mat-icon>
         </button>
       </div>
