@@ -353,7 +353,8 @@
     "hour_range": "{{ min }} ke {{ max }} jam",
     "learn_more": "Pelajari lebih lanjut",
     "minute_range": "{{ min }} ke {{ max }} menit",
-    "upcoming_maintenance": "Scripture Forge akan berhenti beroperasi untuk pemeliharaan selama sekitar {{ duration }} mulai dari {{ startTime }}."
+    "upcoming_maintenance": "Scripture Forge akan berhenti beroperasi untuk pemeliharaan selama sekitar {{ duration }} mulai dari {{ startTime }}.",
+    "dbl_maintenance": "The Digital Bible Library will be down for maintenance for about {{ duration }} starting {{ startTime }}. You will not be able to connect Digital Bible Library resources to your project during this time."
   },
   "issue_email": {
     "heading": "Tolong jelaskan masalahnya.",

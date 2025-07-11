@@ -187,9 +187,11 @@
     "draft_is_ready": "Your draft is ready",
     "draft_syncing": "Draft initializing",
     "draft_syncing_detail": "Your project is being synced before queuing the draft.",
+    "draft_percent_complete": "{{ percent }} complete",
     "draft_queued_detail_multiple": "The translation draft generation is number {{ count }} in the queue, and will begin once the server is finished with other projects. Please check back later.",
     "draft_queued_detail": "Generation of the translation draft has been queued, and will begin once the server is finished with another project. Please check back later.",
     "draft_queued_header": "Draft queued",
+    "draft_queued_multiple": "This draft is number {{ count }} in the queue",
     "format_draft": "Format draft",
     "generate_back_translation_drafts_header": "Generate back translation drafts",
     "generate_draft_button": "Generate draft",
@@ -225,8 +227,6 @@
     "back": "Back",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
     "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
-    "choose_additional_training_data_files_header": "Additional training",
-    "choose_additional_training_data_files_title": "Choose additional files for training the language model",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
     "choose_books_for_training_header": "Training",
     "choose_books_for_training_no_books_error": "No books are available for training. Your project must have at least one translated book to use for training.",
@@ -328,6 +328,7 @@
     "state_syncing": "Syncing",
     "stay_on_page": "Stay on page",
     "target_language_data": "Target language data",
+    "training_files_description": "Upload any further data that can be used to train the language model. These files must contain paired text in {{ sourceLanguageDisplayName }} and {{ targetLanguageDisplayName }} based on the projects selected.",
     "training_language_model": "Training the language model",
     "unknown_language_code": "unknown"
   },
@@ -646,8 +647,6 @@
     "exporting_answers": "Exporting Answers",
     "log_in_with_paratext": "Log in to Paratext",
     "pre_translation_drafting": "Translation draft generation",
-    "pre_translation_additional_training_data": "Allow additional training data",
-    "pre_translation_additional_training_data_info": "These are two column CSV files specially crafted to provide training data pairs.",
     "pre_translation_alternate_source_info": "Select a different source for drafting, if your currently selected source is not to be used for pre-translation drafting.",
     "pre_translation_alternate_training_source_info": "Selecting a separate translation for training, such as a back translation, can improve drafting quality.",
     "pre_translation_alternate_training_source_text_placeholder": "Alternate training source text (optional)",
@@ -752,7 +751,6 @@
   "training_data_multi_select": {
     "confirm_delete": "Are you sure you want to permanently delete this training data?",
     "delete": "ລຶບ",
-    "file_information": "The file should be a spreadsheet that has two columns of text: the first column in {{ sourceLanguage }}, the second in {{ targetLanguage }}.",
     "upload_spreadsheet": "Upload spreadsheet"
   },
   "training_data_upload_dialog": {

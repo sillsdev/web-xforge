@@ -187,9 +187,11 @@
     "draft_is_ready": "Dein Entwurf ist bereit",
     "draft_syncing": "Generieren Entwurf starten",
     "draft_syncing_detail": "Dein Projekt wird synchronisiert, bevor der Entwurf in die Warteschlange gestellt wird.",
+    "draft_percent_complete": "{{ percent }} abgeschlossen",
     "draft_queued_detail_multiple": "Das Generieren des Übersetzungsentwurf ist die Nummer {{ count }} in der Warteschlange und wird beginnen, sobald der Server mit anderen Projekten fertig ist. Bitte überprüfe später erneut.",
     "draft_queued_detail": "Das Generieren des Übersetzungsentwurfs wurde in die Warteschlange eingereiht und wird beginnen, sobald der Server mit einem anderen Projekt fertig ist. Bitte schaue später wieder vorbei.",
     "draft_queued_header": "Entwurf in Warteschlange",
+    "draft_queued_multiple": "Dieser Entwurf ist Nummer {{ count }} in der Warteschlange",
     "format_draft": "Entwurf formatieren",
     "generate_back_translation_drafts_header": "Rückübersetzungsentwurf generieren",
     "generate_draft_button": "Entwurf generieren",
@@ -225,8 +227,6 @@
     "back": "Zurück",
     "books_are_hidden_hide_explanation": "{{ numBooks }} Bücher sind versteckt. {{ underlineStart }}Erklärung ausblenden{{ underlineEnd }}",
     "books_are_hidden_show_why": "{{ numBooks }} Bücher sind versteckt. {{ underlineStart }}Grund anzeigen{{ underlineEnd }}",
-    "choose_additional_training_data_files_header": "Zusätzliche Schulung",
-    "choose_additional_training_data_files_title": "Zusätzliche Dateien für die Schulung des Sprachmodells wählen",
     "choose_books_for_training_error": "Keine Bücher ausgewählt. Wähle Bücher für die Schulung aus, um fortzufahren.",
     "choose_books_for_training_header": "Schulung",
     "choose_books_for_training_no_books_error": "Für die Schulung sind keine Bücher verfügbar. Dein Projekt muss mindestens ein übersetztes Buch für die Schulung haben.",
@@ -328,6 +328,7 @@
     "state_syncing": "Wird synchronisiert",
     "stay_on_page": "Bleibe auf dieser Seite",
     "target_language_data": "Daten in der Zielsprache",
+    "training_files_description": "Lade alle weiteren Daten hoch, die zum Trainieren des Sprachmodells verwendet werden können. Diese Dateien müssen den passenden Text in {{ sourceLanguageDisplayName }} und {{ targetLanguageDisplayName }} enthalten, der auf den ausgewählten Projekten basiert.",
     "training_language_model": "Sprachmodell schulen",
     "unknown_language_code": "unbekannt"
   },
@@ -646,8 +647,6 @@
     "exporting_answers": "Antworten exportieren",
     "log_in_with_paratext": "Bei Paratext anmelden",
     "pre_translation_drafting": "Generierung eines Übersetzungsentwurfs",
-    "pre_translation_additional_training_data": "Zusätzliche Schulungsdaten zulassen",
-    "pre_translation_additional_training_data_info": "Dies sind zweispaltige CSV-Dateien, die speziell für die Bereitstellung von Schulungsdatenpaaren erstellt wurden.",
     "pre_translation_alternate_source_info": "Wähle einen anderen Ausgangstext für den Entwurf aus, wenn der aktuell ausgewählte Ausgangstext nicht für den Entwurf der Vorübersetzung verwendet werden soll.",
     "pre_translation_alternate_training_source_info": "Die Auswahl einer separaten Übersetzung für die Schulung, z. B. einer Rückübersetzung, kann die Qualität des Entwurfs verbessern.",
     "pre_translation_alternate_training_source_text_placeholder": "Alternativer Ausgangstext für die Schulung (optional)",
@@ -752,7 +751,6 @@
   "training_data_multi_select": {
     "confirm_delete": "Bist Du sicher, dass Du diese Schulungsdaten dauerhaft löschen möchtest?",
     "delete": "Löschen",
-    "file_information": "Die Datei sollte eine Tabelle mit zwei Textspalten sein: die erste Spalte in {{ sourceLanguage }}, die zweite in {{ targetLanguage }}.",
     "upload_spreadsheet": "Tabelle hochladen"
   },
   "training_data_upload_dialog": {

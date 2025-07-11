@@ -187,9 +187,11 @@
     "draft_is_ready": "Su borrador está listo",
     "draft_syncing": "Inicialización del borrador",
     "draft_syncing_detail": "Tu proyecto está siendo sincronizado antes de poner en cola el borrador.",
+    "draft_percent_complete": "{{ percent }}% completado",
     "draft_queued_detail_multiple": "La generación del borrador de traducción es el número {{ count }} en la cola, y comenzará una vez que el servidor haya terminado con otros proyectos. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_detail": "La generación del borrador de traducción se ha puesto en cola y comenzará una vez que el servidor haya terminado con otro proyecto. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_header": "Borrador en cola",
+    "draft_queued_multiple": "Este borrador es el número {{ count }} en la cola",
     "format_draft": "Formatear borrador",
     "generate_back_translation_drafts_header": "Generar borradores de retrotraducción",
     "generate_draft_button": "Generar borrador",
@@ -225,8 +227,6 @@
     "back": "Atrás",
     "books_are_hidden_hide_explanation": "{{ numBooks }} libros están ocultos. {{ underlineStart }}Ocultar explicación{{ underlineEnd }}",
     "books_are_hidden_show_why": "{{ numBooks }} libros están ocultos. {{ underlineStart }}Demuestre por qué{{ underlineEnd }}",
-    "choose_additional_training_data_files_header": "Entrenamiento adicional",
-    "choose_additional_training_data_files_title": "Elija archivos adicionales para entrenar el modelo lingüístico",
     "choose_books_for_training_error": "No hay libros seleccionados. Seleccione libros de formación para continuar.",
     "choose_books_for_training_header": "Entrenamiento",
     "choose_books_for_training_no_books_error": "No hay libros disponibles para la formación. Su proyecto debe tener al menos un libro traducido para utilizarlo en la formación.",
@@ -328,6 +328,7 @@
     "state_syncing": "Sincronizando",
     "stay_on_page": "Permanecer en la página",
     "target_language_data": "Datos de idioma de destino",
+    "training_files_description": "Cargue cualquier dato adicional que pueda utilizarse para entrenar el modelo lingüístico. Estos archivos deben contener texto emparejado en {{ sourceLanguageDisplayName }} y {{ targetLanguageDisplayName }} basado en los proyectos seleccionados.",
     "training_language_model": "Entrenamiento del modelo de idioma",
     "unknown_language_code": "desconocido"
   },
@@ -646,8 +647,6 @@
     "exporting_answers": "Exportando respuestas",
     "log_in_with_paratext": "Iniciar sesión en Paratext",
     "pre_translation_drafting": "Generación de borradores de traducción",
-    "pre_translation_additional_training_data": "Permitir datos de formación adicionales",
-    "pre_translation_additional_training_data_info": "Se trata de archivos CSV de dos columnas especialmente elaborados para proporcionar pares de datos de entrenamiento.",
     "pre_translation_alternate_source_info": "Seleccione un origen diferente para la redacción, si el origen seleccionado actualmente no se va a utilizar para la redacción previa a la traducción.",
     "pre_translation_alternate_training_source_info": "La selección de una traducción distinta para la formación, como una traducción inversa, puede mejorar la calidad de la redacción.",
     "pre_translation_alternate_training_source_text_placeholder": "Texto alternativo de la fuente de formación (opcional)",
@@ -752,7 +751,6 @@
   "training_data_multi_select": {
     "confirm_delete": "¿Está seguro de que desea eliminar permanentemente estos datos de entrenamiento?",
     "delete": "Eliminar",
-    "file_information": "El archivo debe ser una hoja de cálculo que tenga dos columnas de texto: la primera columna en {{ sourceLanguage }}, la segunda en {{ targetLanguage }}.",
     "upload_spreadsheet": "Cargar hoja de cálculo"
   },
   "training_data_upload_dialog": {

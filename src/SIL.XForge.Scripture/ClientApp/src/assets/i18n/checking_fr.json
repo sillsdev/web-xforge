@@ -353,7 +353,8 @@
     "hour_range": "{{ min }} à {{ max }} heures",
     "learn_more": "En savoir plus",
     "minute_range": "{{ min }} à {{ max }} minutes",
-    "upcoming_maintenance": "Scripture Forge sera indisponible pour maintenance pendant environ {{ duration }} à partir de {{ startTime }}."
+    "upcoming_maintenance": "Scripture Forge sera indisponible pour maintenance pendant environ {{ duration }} à partir de {{ startTime }}.",
+    "dbl_maintenance": "The Digital Bible Library will be down for maintenance for about {{ duration }} starting {{ startTime }}. You will not be able to connect Digital Bible Library resources to your project during this time."
   },
   "issue_email": {
     "heading": "Veuillez expliquer le problème.",
