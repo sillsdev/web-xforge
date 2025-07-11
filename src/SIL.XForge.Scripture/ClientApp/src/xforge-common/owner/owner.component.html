@@ -11,7 +11,7 @@
   <div class="owner-text">
     <div class="name">{{ name }}</div>
     @if (dateTime) {
-      <div class="date-time">{{ i18n.formatDate(date) }}</div>
+      <div class="date-time">{{ i18n.formatDate(date, { showTimeZone }) }}</div>
     }
   </div>
 </div>

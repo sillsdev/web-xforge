@@ -19,6 +19,7 @@ export class OwnerComponent implements OnInit {
   @Input() includeAvatar: boolean = false;
   @Input() dateTime: string = '';
   @Input() layoutStacked: boolean = false;
+  @Input() showTimeZone: boolean = false;
   private ownerDoc?: UserProfileDoc;
 
   constructor(
