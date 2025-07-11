@@ -10,10 +10,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
-import { translate, TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { DraftUsfmConfig, ParagraphBreakFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import {
+  DraftUsfmConfig,
+  ParagraphBreakFormat,
+  QuoteFormat
+} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, first, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -59,11 +63,16 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   chapters: number[] = [];
   isInitializing: boolean = true;
   paragraphBreakFormat = ParagraphBreakFormat;
+  quoteStyleFormat = QuoteFormat;
 
   paragraphFormat = new FormControl<ParagraphBreakFormat>(ParagraphBreakFormat.BestGuess);
+  quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Automatic);
   usfmFormatForm: FormGroup = new FormGroup({
-    paragraphFormat: this.paragraphFormat
+    paragraphFormat: this.paragraphFormat,
+    quoteFormat: this.quoteFormat
   });
+
+  protected saving = false;
 
   private updateDraftConfig$: Subject<DraftUsfmConfig | undefined> = new Subject<DraftUsfmConfig | undefined>();
   private lastSavedState?: DraftUsfmConfig;
@@ -167,14 +176,17 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
     if (this.projectId == null || !this.isOnline || this.currentFormat == null) return;
 
     try {
+      this.saving = true;
       await this.projectService.onlineSetUsfmConfig(this.projectId, this.currentFormat);
       this.lastSavedState = this.currentFormat;
-      // not awaited so that the user is directed to the draft generation page
-      this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId).then(() => {
-        this.noticeService.show(translate('draft_usfm_format.changes_have_been_saved'));
-      });
-    } catch {
-      this.noticeService.showError(translate('draft_usfm-format.failed_to_save'));
+      // The user is redirected to the draft generation page if the format is saved.
+      await this.servalAdministration.onlineRetrievePreTranslationStatus(this.projectId);
+      this.router.navigate(['projects', this.projectId, 'draft-generation']);
+    } catch (err) {
+      console.error('Error occurred while saving draft format', err);
+      this.noticeService.showError(this.i18n.translateStatic('draft_usfm_format.failed_to_save'));
+    } finally {
+      this.saving = false;
     }
   }
 
@@ -189,7 +201,8 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     this.usfmFormatForm.setValue({
-      paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.BestGuess
+      paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.BestGuess,
+      quoteFormat: QuoteFormat.Automatic
     });
     this.lastSavedState = this.currentFormat;
 
