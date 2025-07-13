@@ -218,4 +218,9 @@ mat-panel-description {
   display: flex;
   align-items: center;
   gap: 24px;
+
+  /* Do not allow the cancel button text to split onto two lines */
+  button {
+    white-space: nowrap;
+  }
 }
