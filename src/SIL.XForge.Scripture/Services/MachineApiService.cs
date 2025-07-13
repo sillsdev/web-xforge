@@ -42,6 +42,7 @@ public class MachineApiService(
     IParatextService paratextService,
     IPreTranslationService preTranslationService,
     IRepository<SFProjectSecret> projectSecrets,
+    ISFProjectRights projectRights,
     ISFProjectService projectService,
     IRealtimeService realtimeService,
     IOptions<ServalOptions> servalOptions,
@@ -1169,8 +1170,11 @@ public class MachineApiService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // Ensure that the user has permission on the project
-        MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
+        // Ensure that the user has permission to create drafts (as the logic for SMT builds is shared with draft generation)
+        if (!projectRights.HasRight(projectDoc.Data, curUserId, SFProjectDomain.Drafts, Operation.Create))
+        {
+            throw new ForbiddenException();
+        }
 
         // Sync the source and target before running the build
         // We use project service, as it provides permission and token checks
@@ -1272,8 +1276,11 @@ public class MachineApiService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // Ensure that the user has permission on the project
-        MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
+        // Ensure that the user has permission to create drafts
+        if (!projectRights.HasRight(projectDoc.Data, curUserId, SFProjectDomain.Drafts, Operation.Create))
+        {
+            throw new ForbiddenException();
+        }
 
         // Save the selected books
         await projectDoc.SubmitJson0OpAsync(op =>
@@ -1533,8 +1540,11 @@ public class MachineApiService(
             throw new DataNotFoundException("The parallel corpus ID cannot be found.");
         }
 
-        // Ensure that the user has permission on the project
-        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+        // Ensure that the selected user has permission to create drafts
+        if (!projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.Drafts, Operation.Create))
+        {
+            throw new ForbiddenException();
+        }
 
         // For every text we have a draft applied to, get the pre-translation
         foreach (TextInfo textInfo in projectDoc.Data.Texts.Where(t => t.Chapters.Any(c => c.HasDraft == true)))
@@ -1862,10 +1872,10 @@ public class MachineApiService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // Check for permission
-        if (!isServalAdmin)
+        // If the user is not a serval admin, ensure that the user has permission to create drafts
+        if (!isServalAdmin && !projectRights.HasRight(project, curUserId, SFProjectDomain.Drafts, Operation.Create))
         {
-            MachineApi.EnsureProjectPermission(curUserId, project);
+            throw new ForbiddenException();
         }
 
         // Return the project, in case the caller needs it

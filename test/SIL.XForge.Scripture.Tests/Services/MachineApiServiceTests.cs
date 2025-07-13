@@ -3879,6 +3879,20 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void UpdatePreTranslationTextDocumentsAsync_UserCannotCreateDrafts()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectRights.HasRight(Arg.Any<SFProject>(), User01, SFProjectDomain.Drafts, Operation.Create)
+            .Returns(false);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.UpdatePreTranslationTextDocumentsAsync(Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
     public async Task UpdatePreTranslationTextDocumentsAsync_UpdatesExistingDocument()
     {
         // Set up test environment
@@ -3989,6 +4003,10 @@ public class MachineApiServiceTests
                 ]
             );
             TextDocuments = new MemoryRepository<TextDocument>();
+            ProjectRights = Substitute.For<ISFProjectRights>();
+            ProjectRights
+                .HasRight(Arg.Any<SFProject>(), User01, SFProjectDomain.Drafts, Operation.Create)
+                .Returns(true);
             ProjectService = Substitute.For<ISFProjectService>();
             ProjectService.SyncAsync(User01, Arg.Any<string>()).Returns(Task.FromResult(JobId));
             RealtimeService = new SFMemoryRealtimeService();
@@ -4031,6 +4049,7 @@ public class MachineApiServiceTests
                 ParatextService,
                 PreTranslationService,
                 ProjectSecrets,
+                ProjectRights,
                 ProjectService,
                 RealtimeService,
                 servalOptions,
@@ -4051,6 +4070,7 @@ public class MachineApiServiceTests
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MemoryRepository<TextDocument> TextDocuments { get; }
+        public ISFProjectRights ProjectRights { get; }
         public ISFProjectService ProjectService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
         public MachineApiService Service { get; }
