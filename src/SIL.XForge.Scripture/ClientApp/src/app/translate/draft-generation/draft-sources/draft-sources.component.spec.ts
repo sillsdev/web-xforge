@@ -425,6 +425,49 @@ describe('DraftSourcesComponent', () => {
       verify(mockTrainingDataService.createTrainingDataAsync(anything())).never();
       verify(mockTrainingDataService.deleteTrainingDataAsync(anything())).never();
     }));
+
+    it('preserves unsaved training file changes when query updates', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.fixture.detectChanges();
+
+      const initialFile1 = { dataId: 'file1' } as TrainingData;
+      const initialFile2 = { dataId: 'file2' } as TrainingData;
+      when(mockTrainingDataQuery.docs).thenReturn([
+        { data: initialFile1 } as TrainingDataDoc,
+        { data: initialFile2 } as TrainingDataDoc
+      ]);
+      trainingDataQueryLocalChanges$.next();
+      tick();
+
+      expect(env.component.availableTrainingFiles).toEqual([initialFile1, initialFile2]);
+      expect(env.component['savedTrainingFiles']).toEqual([initialFile1, initialFile2]);
+
+      // User removes a file and adds a new one
+      const addedFile = { dataId: 'added_file' } as TrainingData;
+      env.component.onTrainingDataSelect([initialFile2, addedFile]);
+      tick();
+
+      expect(env.component.availableTrainingFiles).toEqual([initialFile2, addedFile]);
+
+      // Another client updates the query
+      const remoteFile = { dataId: 'remote_file' } as TrainingData;
+      when(mockTrainingDataQuery.docs).thenReturn([
+        { data: initialFile1 } as TrainingDataDoc,
+        { data: initialFile2 } as TrainingDataDoc,
+        { data: remoteFile } as TrainingDataDoc
+      ]);
+      trainingDataQueryLocalChanges$.next();
+      tick();
+
+      // The user's unsaved changes should be preserved
+      expect(env.component.availableTrainingFiles.map(f => f.dataId).sort()).toEqual(
+        ['added_file', 'file2', 'remote_file'].sort()
+      );
+      expect(env.component['savedTrainingFiles']!.map(f => f.dataId).sort()).toEqual(
+        ['file1', 'file2', 'remote_file'].sort()
+      );
+    }));
   });
 
   describe('sourceArraysToSettingsChange', () => {
