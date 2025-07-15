@@ -63,8 +63,6 @@ public class DeltaUsxMapper(
         "lim",
         // Should not contain verse text, but sometimes do
         "b",
-        // Book
-        "id",
     ];
 
     private class ParseState
