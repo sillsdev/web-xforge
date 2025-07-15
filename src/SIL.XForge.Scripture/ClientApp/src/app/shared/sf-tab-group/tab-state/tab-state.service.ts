@@ -13,7 +13,7 @@ export type FlatTabInfo<TGroupId extends string, T extends TabInfo<string>> = T 
 export interface TabInfo<TType extends string> {
   id: string;
   type: TType;
-  headerText: string;
+  headerText$: Observable<string>;
 
   /** Optional text to display on hover of the tab header. */
   tooltip?: string;

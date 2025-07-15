@@ -3878,7 +3878,7 @@ describe('EditorComponent', () => {
         env.wait();
         expect(spyCreateTab).toHaveBeenCalledWith('project-source', {
           projectId: projectDoc.data?.translateConfig.source?.projectRef,
-          headerText: projectDoc.data?.translateConfig.source?.shortName,
+          headerText$: jasmine.any(Object),
           tooltip: projectDoc.data?.translateConfig.source?.name
         });
         discardPeriodicTasks();
@@ -3892,7 +3892,7 @@ describe('EditorComponent', () => {
         env.wait();
         expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', {
           projectId: projectDoc.data?.translateConfig.source?.projectRef,
-          headerText: projectDoc.data?.translateConfig.source?.shortName,
+          headerText$: jasmine.any(Object),
           tooltip: projectDoc.data?.translateConfig.source?.name
         });
         discardPeriodicTasks();
@@ -3915,7 +3915,7 @@ describe('EditorComponent', () => {
         env.wait();
         expect(spyCreateTab).toHaveBeenCalledWith('project-target', {
           projectId: projectDoc.id,
-          headerText: projectDoc.data?.shortName,
+          headerText$: jasmine.any(Object),
           tooltip: projectDoc.data?.name
         });
         discardPeriodicTasks();
@@ -4066,11 +4066,11 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should not add draft tab if draft exists and draft tab is already present', fakeAsync(async () => {
+      it('should not add draft tab if draft exists and draft tab is already present', fakeAsync(() => {
         const env = new TestEnvironment();
         env.wait();
 
-        env.component.tabState.addTab('target', await env.tabFactory.createTab('draft'));
+        env.component.tabState.addTab('target', env.tabFactory.createTab('draft'));
         const addTab = spyOn(env.component.tabState, 'addTab');
 
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });

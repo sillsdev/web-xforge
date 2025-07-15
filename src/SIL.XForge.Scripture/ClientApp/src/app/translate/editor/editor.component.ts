@@ -63,6 +63,7 @@ import {
   lastValueFrom,
   merge,
   Observable,
+  of,
   Subject,
   Subscription,
   timer
@@ -1228,7 +1229,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   async onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): Promise<void> {
     if (revision != null) {
       const separator: string = this.i18n.isRtl ? `${RIGHT_TO_LEFT_MARK} - ` : ' - ';
-      tab.headerText = `${this.targetLabel}${separator}${this.editorHistoryService.formatTimestamp(revision.timestamp)}`;
+      tab.headerText$ = of(
+        `${this.targetLabel}${separator}${this.editorHistoryService.formatTimestamp(revision.timestamp)}`
+      );
       tab.tooltip = `${this.projectDoc?.data?.name}${separator}${this.editorHistoryService.formatTimestamp(
         revision.timestamp,
         true
@@ -1237,7 +1240,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const historyDefaultTabHeader: string = await firstValueFrom(
         this.i18n.translate('editor_tab_factory.default_history_tab_header')
       );
-      tab.headerText = `${this.targetLabel} - ${historyDefaultTabHeader}`;
+      tab.headerText$ = of(`${this.targetLabel} - ${historyDefaultTabHeader}`);
       tab.tooltip = `${this.projectDoc?.data?.name} - ${historyDefaultTabHeader}`;
     }
 
@@ -1283,18 +1286,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
         if (projectSource != null && canViewSource) {
           sourceTabGroup.addTab(
-            await this.editorTabFactory.createTab('project-source', {
+            this.editorTabFactory.createTab('project-source', {
               projectId: projectSource.projectRef,
-              headerText: projectSource.shortName,
+              headerText$: of(projectSource.shortName),
               tooltip: projectSource.name
             })
           );
         }
 
         targetTabGroup.addTab(
-          await this.editorTabFactory.createTab('project-target', {
+          this.editorTabFactory.createTab('project-target', {
             projectId: projectDoc.id,
-            headerText: projectDoc.data?.shortName,
+            headerText$: projectDoc.data?.shortName == null ? undefined : of(projectDoc.data.shortName),
             tooltip: projectDoc?.data?.name
           })
         );
@@ -1315,9 +1318,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           }
 
           // Create the tab
-          const tab: EditorTabInfo = await this.editorTabFactory.createTab(tabData.tabType, {
+          const tab: EditorTabInfo = this.editorTabFactory.createTab(tabData.tabType, {
             projectId: tabData.projectId,
-            headerText: tabData.projectDoc?.data?.shortName,
+            headerText$:
+              tabData?.projectDoc?.data?.shortName == null ? undefined : of(tabData.projectDoc.data.shortName),
             tooltip: tabData.projectDoc?.data?.name
           });
 
@@ -1474,7 +1478,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
         this.tabState.addTab(
           groupIdToAddTo,
-          await this.editorTabFactory.createTab('draft', {
+          this.editorTabFactory.createTab('draft', {
             tooltip: `Draft - ${this.editorHistoryService.formatTimestamp(
               draftBuild?.additionalInfo?.dateFinished,
               true
@@ -1516,7 +1520,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
     ) {
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
-      this.tabState.addTab(groupIdToAddTo, await this.editorTabFactory.createTab('biblical-terms'), false);
+      this.tabState.addTab(groupIdToAddTo, this.editorTabFactory.createTab('biblical-terms'), false);
       await this.projectUserConfigDoc?.submitJson0Op(op => op.unset(p => p.biblicalTermsEnabled));
     }
   }
