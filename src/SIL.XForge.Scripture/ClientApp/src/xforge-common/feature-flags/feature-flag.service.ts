@@ -1,5 +1,5 @@
 import { DestroyRef, Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, Observable, Subject } from 'rxjs';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -17,6 +17,8 @@ export interface ObservableFeatureFlag extends FeatureFlag {
 }
 
 interface IFeatureFlagStore {
+  destroyRef: DestroyRef;
+  enabled$: Observable<{ key: string; value: boolean }>;
   isEnabled(key: string): boolean;
   isReadOnly(key: string): boolean;
   setEnabled(key: string, value: boolean): void;
@@ -29,17 +31,21 @@ export class FeatureFlagStore implements IFeatureFlagStore {
   static readonly keyPrefix = 'SF_FEATURE_FLAG_';
   private localFlags: { [key: string]: boolean } = {};
   private remoteFlags: { [key: string]: boolean } = {};
-  private remoteFlagCacheExpiry: Date = new Date();
+  private remoteFlagCacheExpiry?: Date = undefined;
+  private enabledSource$ = new Subject<{ key: string; value: boolean }>();
+  enabled$ = this.enabledSource$.asObservable();
 
   constructor(
     private readonly anonymousService: AnonymousService,
     private readonly onlineStatusService: OnlineStatusService,
-    private destroyRef: DestroyRef
+    readonly destroyRef: DestroyRef
   ) {
     // Cause the flags to be reloaded when coming online
-    onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(status => {
-      if (status) this.remoteFlagCacheExpiry = new Date();
-    });
+    onlineStatusService.onlineStatus$
+      .pipe(distinctUntilChanged(), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(status => {
+        if (status) this.remoteFlagCacheExpiry = new Date();
+      });
   }
 
   isEnabled(key: string): boolean {
@@ -55,6 +61,7 @@ export class FeatureFlagStore implements IFeatureFlagStore {
     // Keys are only set locally
     this.localFlags[key] = value;
     localStorage.setItem(this.getLocalStorageKey(key), JSON.stringify(value));
+    this.enabledSource$.next({ key, value });
   }
 
   private getFromLocalStorage(key: string): boolean {
@@ -96,7 +103,12 @@ export class FeatureFlagStore implements IFeatureFlagStore {
   }
 
   private retrieveFeatureFlagsIfMissing(): void {
-    if (this.remoteFlagCacheExpiry <= new Date() && this.onlineStatusService.isOnline) {
+    // remoteFlagCacheExpiry will be null on startup until Scripture Forge comes online
+    if (
+      this.remoteFlagCacheExpiry != null &&
+      this.remoteFlagCacheExpiry <= new Date() &&
+      this.onlineStatusService.isOnline
+    ) {
       // Set to the next remote flag cache expiry timestamp for 1 hour so that the null check above returns false
       this.remoteFlagCacheExpiry = new Date(new Date().getTime() + 3_600_000);
       this.anonymousService
@@ -107,6 +119,8 @@ export class FeatureFlagStore implements IFeatureFlagStore {
           Object.entries(this.remoteFlags).forEach(([key, value]) => {
             if (this.isLocalPresent(key)) {
               this.setEnabled(key, value);
+            } else {
+              this.enabledSource$.next({ key, value });
             }
           });
         })
@@ -134,7 +148,13 @@ class FeatureFlagFromStorage implements ObservableFeatureFlag {
     readonly description: string,
     readonly position: number,
     private readonly featureFlagStore: IFeatureFlagStore
-  ) {}
+  ) {
+    this.featureFlagStore.enabled$.pipe(quietTakeUntilDestroyed(featureFlagStore.destroyRef)).subscribe(change => {
+      if (change.key === this.key) {
+        this.enabledSource$.next(change.value);
+      }
+    });
+  }
 
   get readonly(): boolean {
     return this.featureFlagStore.isReadOnly(this.key);
@@ -146,12 +166,14 @@ class FeatureFlagFromStorage implements ObservableFeatureFlag {
 
   set enabled(value: boolean) {
     this.featureFlagStore.setEnabled(this.key, value);
-    this.enabledSource$.next(value);
   }
 }
 
 class StaticFeatureFlagStore implements IFeatureFlagStore {
   private readonly = false;
+  private enabledSource$ = new Subject<{ key: string; value: boolean }>();
+  enabled$ = this.enabledSource$.asObservable();
+  destroyRef: DestroyRef = { onDestroy: (_cb: () => void) => () => {} };
 
   constructor(
     private enabled: boolean,
