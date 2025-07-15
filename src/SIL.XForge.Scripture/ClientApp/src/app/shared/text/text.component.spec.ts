@@ -341,8 +341,9 @@ describe('TextComponent', () => {
     env.fixture.detectChanges();
     expect(env.isSegmentHighlighted(1, '1')).toBe(true);
     expect(env.isSegmentHighlighted(1, '1/q_1')).toBe(true);
-    expect(env.isSegmentHighlighted(1, '1/q_2')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '1/b_2')).toBe(true);
     expect(env.isSegmentHighlighted(1, '1/q_3')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '1/q_4')).toBe(true);
 
     TestEnvironment.waitForPresenceTimer();
   }));
@@ -414,8 +415,8 @@ describe('TextComponent', () => {
     env.waitForEditor();
 
     const verseSegments: string[] = env.component.getVerseSegments(new VerseRef('LUK 1:1'));
-    expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/q_2', 'verse_1_1/q_3']);
-    const segmentText = env.component.getSegmentText('verse_1_1/q_2');
+    expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/b_2', 'verse_1_1/q_3', 'verse_1_1/q_4']);
+    const segmentText = env.component.getSegmentText('verse_1_1/q_3');
     expect(segmentText).toEqual('Poetry third line');
   }));
 
