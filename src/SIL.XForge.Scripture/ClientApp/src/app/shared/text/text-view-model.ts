@@ -44,8 +44,8 @@ const PARA_STYLES: Set<string> = new Set<string>([
   'lf',
   'lim',
 
-  // Book
-  'id'
+  // Should not contain verse text, but sometimes do
+  'b'
 ]);
 
 function canParaContainVerseText(style: string): boolean {
