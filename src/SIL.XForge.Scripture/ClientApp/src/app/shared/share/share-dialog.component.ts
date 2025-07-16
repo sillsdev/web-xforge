@@ -26,8 +26,9 @@ export enum ShareLinkType {
 }
 
 @Component({
-  templateUrl: './share-dialog.component.html',
-  styleUrls: ['./share-dialog.component.scss']
+    templateUrl: './share-dialog.component.html',
+    styleUrls: ['./share-dialog.component.scss'],
+    standalone: false
 })
 export class ShareDialogComponent extends ShareBaseComponent {
   // this is duplicated with the strings to ease their translation

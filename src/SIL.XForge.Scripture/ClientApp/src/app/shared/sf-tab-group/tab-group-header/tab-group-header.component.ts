@@ -30,9 +30,10 @@ import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.typ
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
 @Component({
-  selector: 'app-tab-group-header',
-  templateUrl: './tab-group-header.component.html',
-  styleUrls: ['./tab-group-header.component.scss']
+    selector: 'app-tab-group-header',
+    templateUrl: './tab-group-header.component.html',
+    styleUrls: ['./tab-group-header.component.scss'],
+    standalone: false
 })
 export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit, OnDestroy {
   @Input() groupId: string = '';
