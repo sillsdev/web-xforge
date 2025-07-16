@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { APP_INITIALIZER, ModuleWithProviders, NgModule } from '@angular/core';
+import { ModuleWithProviders, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { QuillModule } from 'ngx-quill';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
@@ -48,14 +48,12 @@ export class SharedModule {
     return {
       ngModule: SharedModule,
       providers: [
-        {
-          provide: APP_INITIALIZER,
-          useFactory: (formatRegistry: QuillFormatRegistryService) => () => {
+        provideAppInitializer(() => {
+        const initializerFn = ((formatRegistry: QuillFormatRegistryService) => () => {
             registerScriptureFormats(formatRegistry);
-          },
-          deps: [QuillFormatRegistryService],
-          multi: true
-        }
+          })(inject(QuillFormatRegistryService));
+        return initializerFn();
+      })
       ]
     };
   }

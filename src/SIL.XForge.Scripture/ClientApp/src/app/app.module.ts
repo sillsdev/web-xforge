@@ -1,7 +1,7 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { DatePipe } from '@angular/common';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { APP_ID, APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
+import { APP_ID, ErrorHandler, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { MatRipple } from '@angular/material/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -97,12 +97,10 @@ import { UsersModule } from './users/users.module';
     { provide: ErrorHandler, useClass: ExceptionHandlingService },
     { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
     provideHttpClient(withInterceptorsFromDi()),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: preloadEnglishTranslations,
-      deps: [TranslocoService],
-      multi: true
-    }
+    provideAppInitializer(() => {
+        const initializerFn = (preloadEnglishTranslations)(inject(TranslocoService));
+        return initializerFn();
+      })
   ]
 })
 export class AppModule {}
