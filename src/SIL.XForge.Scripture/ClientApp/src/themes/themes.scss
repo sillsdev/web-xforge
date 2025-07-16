@@ -3,7 +3,8 @@
 
 /* All themes share the common default Material structure */
 html {
-  @include mat.core();
+  @include mat.elevation-classes();
+  @include mat.app-background();
   @include mat.all-component-themes($default-theme);
   @include mat.all-component-typographies($default-theme);
   @include mat.typography-hierarchy($default-theme);
