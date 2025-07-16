@@ -81,12 +81,12 @@ public class TrainingDataServiceTests
     public async Task GetTextsAsync_DoesNotGenerateTextsIfTooFewColumns()
     {
         var env = new TestEnvironment();
-        var dataIds = new string[] { Data01 };
-        var sourceTexts = new List<ISFText>();
-        var targetTexts = new List<ISFText>();
+        string[] dataIds = [Data01];
+        List<ISFText> sourceTexts = [];
+        List<ISFText> targetTexts = [];
 
         // Set up the training data files
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Line1\nLine2"));
+        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Line1\nLine2"));
         env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data01)), FileMode.Open).Returns(fileStream);
 
         // SUT
@@ -99,16 +99,16 @@ public class TrainingDataServiceTests
     public async Task GetTextsAsync_GeneratesSourceAndTargetTexts()
     {
         var env = new TestEnvironment();
-        var dataIds = new string[] { Data01, Data02 };
-        var sourceTexts = new List<ISFText>();
-        var targetTexts = new List<ISFText>();
+        string[] dataIds = [Data01, Data02];
+        List<ISFText> sourceTexts = [];
+        List<ISFText> targetTexts = [];
 
         // Set up the training data files
-        await using MemoryStream fileStream1 = new MemoryStream(
+        await using var fileStream1 = new MemoryStream(
             Encoding.UTF8.GetBytes("D1Source1,D1Target1\nD1Source2,D1Target2")
         );
         env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data01)), FileMode.Open).Returns(fileStream1);
-        await using MemoryStream fileStream2 = new MemoryStream(
+        await using var fileStream2 = new MemoryStream(
             Encoding.UTF8.GetBytes("Source_Heading\tTarget_Heading\n\"D2 Source 1\"\t\"D2 Target 1\"")
         );
         env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data02)), FileMode.Open).Returns(fileStream2);
@@ -139,9 +139,9 @@ public class TrainingDataServiceTests
     public void GetTextsAsync_MissingProject()
     {
         var env = new TestEnvironment();
-        var dataIds = new string[] { Data01 };
-        var sourceTexts = new List<ISFText>();
-        var targetTexts = new List<ISFText>();
+        string[] dataIds = [Data01];
+        List<ISFText> sourceTexts = [];
+        List<ISFText> targetTexts = [];
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
@@ -153,9 +153,9 @@ public class TrainingDataServiceTests
     public void GetTextsAsync_MissingTrainingDataDirectory()
     {
         var env = new TestEnvironment();
-        var dataIds = new string[] { Data01 };
-        var sourceTexts = new List<ISFText>();
-        var targetTexts = new List<ISFText>();
+        string[] dataIds = [Data01];
+        List<ISFText> sourceTexts = [];
+        List<ISFText> targetTexts = [];
         env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(false);
 
         // SUT
@@ -168,9 +168,9 @@ public class TrainingDataServiceTests
     public void GetTextsAsync_NoPermission()
     {
         var env = new TestEnvironment();
-        var dataIds = new string[] { Data01 };
-        var sourceTexts = new List<ISFText>();
-        var targetTexts = new List<ISFText>();
+        string[] dataIds = [Data01];
+        List<ISFText> sourceTexts = [];
+        List<ISFText> targetTexts = [];
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() =>
@@ -182,9 +182,9 @@ public class TrainingDataServiceTests
     public async Task GetTextsAsync_SkipsMissingDataId()
     {
         var env = new TestEnvironment();
-        var dataIds = new string[] { "missing_data_id" };
-        var sourceTexts = new List<ISFText>();
-        var targetTexts = new List<ISFText>();
+        string[] dataIds = ["missing_data_id"];
+        List<ISFText> sourceTexts = [];
+        List<ISFText> targetTexts = [];
 
         // SUT
         await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
@@ -197,9 +197,9 @@ public class TrainingDataServiceTests
     {
         var env = new TestEnvironment();
         env.FileSystemService.FileExists(Arg.Any<string>()).Returns(false);
-        var dataIds = new string[] { Data01, Data02 };
-        var sourceTexts = new List<ISFText>();
-        var targetTexts = new List<ISFText>();
+        string[] dataIds = [Data01, Data02];
+        List<ISFText> sourceTexts = [];
+        List<ISFText> targetTexts = [];
 
         // SUT
         await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
@@ -213,8 +213,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // Create the input file
-        await using MemoryStream fileStream = new MemoryStream();
-        using IWorkbook workbook = new HSSFWorkbook();
+        await using var fileStream = new MemoryStream();
+        using var workbook = new HSSFWorkbook();
         workbook.Write(fileStream, leaveOpen: true);
         fileStream.Seek(0, SeekOrigin.Begin);
         env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
@@ -231,8 +231,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // Create the input file
-        await using MemoryStream fileStream = new MemoryStream();
-        using IWorkbook workbook = new HSSFWorkbook();
+        await using var fileStream = new MemoryStream();
+        using var workbook = new HSSFWorkbook();
         workbook.CreateSheet("Sheet1");
         workbook.Write(fileStream, leaveOpen: true);
         fileStream.Seek(0, SeekOrigin.Begin);
@@ -294,7 +294,7 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // Set up the input file
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test"));
+        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test"));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // SUT
@@ -308,7 +308,7 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // Set up the input file
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
+        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // We will also check that the directory is created
@@ -335,7 +335,7 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // Set up the input file
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test\tData"));
+        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test\tData"));
         env.FileSystemService.OpenFile(FileTsv, FileMode.Open).Returns(fileStream);
 
         // SUT
@@ -357,7 +357,7 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // Set up the input file
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test;Data"));
+        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test;Data"));
         env.FileSystemService.OpenFile(FileTxt, FileMode.Open).Returns(fileStream);
 
         // SUT
@@ -378,8 +378,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // Create the input file
-        await using MemoryStream fileStream = new MemoryStream();
-        using IWorkbook workbook = new HSSFWorkbook();
+        await using var fileStream = new MemoryStream();
+        using var workbook = new HSSFWorkbook();
         ISheet sheet = workbook.CreateSheet("Sheet1");
         IRow row = sheet.CreateRow(0);
         row.CreateCell(0).SetCellValue("Test"); // A1
@@ -395,7 +395,7 @@ public class TrainingDataServiceTests
             Project01,
             $"{User01}_{Data01}.csv"
         );
-        await using NonDisposingMemoryStream outputStream = new NonDisposingMemoryStream();
+        await using var outputStream = new NonDisposingMemoryStream();
         env.FileSystemService.CreateFile(path).Returns(outputStream);
 
         // SUT
@@ -407,7 +407,7 @@ public class TrainingDataServiceTests
             Is.True
         );
 
-        using StreamReader reader = new StreamReader(outputStream);
+        using var reader = new StreamReader(outputStream);
         string text = await reader.ReadToEndAsync();
         text = text.TrimEnd(); // Remove trailing new lines
         Assert.AreEqual("Test,Data", text);
@@ -420,8 +420,8 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // Create the input file
-        await using MemoryStream fileStream = new MemoryStream();
-        using IWorkbook workbook = new XSSFWorkbook();
+        await using var fileStream = new MemoryStream();
+        using var workbook = new XSSFWorkbook();
         ISheet sheet = workbook.CreateSheet("Output");
         IRow row = sheet.CreateRow(1);
         row.CreateCell(1).SetCellValue("Test"); // B2
@@ -437,7 +437,7 @@ public class TrainingDataServiceTests
             Project01,
             $"{User01}_{Data01}.csv"
         );
-        await using NonDisposingMemoryStream outputStream = new NonDisposingMemoryStream();
+        await using var outputStream = new NonDisposingMemoryStream();
         env.FileSystemService.CreateFile(path).Returns(outputStream);
 
         // SUT
@@ -449,7 +449,7 @@ public class TrainingDataServiceTests
             Is.True
         );
 
-        using StreamReader reader = new StreamReader(outputStream);
+        using var reader = new StreamReader(outputStream);
         string text = await reader.ReadToEndAsync();
         text = text.TrimEnd(); // Remove trailing new lines
         Assert.AreEqual("Test,Data", text);
@@ -462,7 +462,7 @@ public class TrainingDataServiceTests
         var env = new TestEnvironment();
 
         // Set up the input file
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data,More"));
+        await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data,More"));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // SUT
@@ -548,7 +548,11 @@ public class TrainingDataServiceTests
             var realtimeService = new SFMemoryRealtimeService();
             realtimeService.AddRepository("sf_projects", OTType.Json0, projects);
             realtimeService.AddRepository("training_data", OTType.Json0, trainingData);
-            Service = new TrainingDataService(FileSystemService, realtimeService, SiteOptions);
+            var projectRights = Substitute.For<ISFProjectRights>();
+            projectRights
+                .HasRight(Arg.Any<SFProject>(), User01, SFProjectDomain.TrainingData, Arg.Any<string>())
+                .Returns(true);
+            Service = new TrainingDataService(FileSystemService, realtimeService, projectRights, SiteOptions);
         }
 
         public IFileSystemService FileSystemService { get; }

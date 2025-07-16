@@ -73,7 +73,8 @@
     "notes": ["view", "create", "edit_own", "delete_own"],
     "text_audio": ["view"],
     "text_documents": ["view", "edit"],
-    "drafts": ["view"]
+    "training_data": ["view"],
+    "drafts": ["view", "create"]
   },
   "pt_administrator": {
     "project_user_configs": ["view_own", "edit_own"],
@@ -91,7 +92,7 @@
     "text_audio": ["view", "edit", "create", "delete"],
     "text_documents": ["view", "edit"],
     "training_data": ["view", "create", "edit", "delete"],
-    "drafts": ["view"],
+    "drafts": ["view", "create"],
     "user_invites": ["create"]
   },
   "none": {}

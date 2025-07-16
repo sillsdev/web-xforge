@@ -13,14 +13,14 @@ import { getTrainingDataId, TRAINING_DATA_COLLECTION, TrainingData } from '../mo
 import { TrainingDataService } from './training-data-service';
 
 describe('TrainingDataService', () => {
-  it('does not allow translator to view training data', async () => {
+  it('allows translator to view training data', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
     const conn = clientConnect(env.server, 'translator');
     await expect(
       fetchDoc(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'))
-    ).rejects.toThrow();
+    ).resolves.not.toThrow();
   });
 
   it('allows administrator to edit training data', async () => {

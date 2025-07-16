@@ -21,6 +21,7 @@ namespace SIL.XForge.Scripture.Services;
 public class TrainingDataService(
     IFileSystemService fileSystemService,
     IRealtimeService realtimeService,
+    ISFProjectRights projectRights,
     IOptions<SiteOptions> siteOptions
 ) : ITrainingDataService
 {
@@ -102,8 +103,11 @@ public class TrainingDataService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // Ensure permission to access the Machine API
-        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+        // Ensure permission to delete training data
+        if (!projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.TrainingData, Operation.Delete))
+        {
+            throw new ForbiddenException();
+        }
 
         // Ensure the user is the owner of the file, or an administrator
         if (
@@ -146,7 +150,11 @@ public class TrainingDataService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+        // Ensure permission to view training data
+        if (!projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.TrainingData, Operation.View))
+        {
+            throw new ForbiddenException();
+        }
 
         // Ensure that the training data directory exists
         string trainingDataDir = Path.Join(siteOptions.Value.SiteDir, DirectoryName, projectId);
@@ -244,7 +252,11 @@ public class TrainingDataService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+        // Ensure permission to create training data
+        if (!projectRights.HasRight(projectDoc.Data, userId, SFProjectDomain.TrainingData, Operation.Create))
+        {
+            throw new ForbiddenException();
+        }
 
         if (!StringUtils.ValidateId(dataId))
         {
