@@ -6,9 +6,10 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base.component';
 
 @Component({
-  selector: 'app-audio-player',
-  templateUrl: './audio-player.component.html',
-  styleUrls: ['./audio-player.component.scss']
+    selector: 'app-audio-player',
+    templateUrl: './audio-player.component.html',
+    styleUrls: ['./audio-player.component.scss'],
+    standalone: false
 })
 export class AudioPlayerComponent extends AudioPlayerBaseComponent implements OnDestroy {
   private _currentTime: number = 0;

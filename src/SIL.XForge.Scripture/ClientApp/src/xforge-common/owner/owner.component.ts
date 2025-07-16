@@ -8,11 +8,10 @@ import { UserProfileDoc } from '../models/user-profile-doc';
 import { UserService } from '../user.service';
 
 @Component({
-  selector: 'app-owner',
-  templateUrl: './owner.component.html',
-  styleUrls: ['./owner.component.scss'],
-  standalone: true,
-  imports: [AvatarComponent, CommonModule]
+    selector: 'app-owner',
+    templateUrl: './owner.component.html',
+    styleUrls: ['./owner.component.scss'],
+    imports: [AvatarComponent, CommonModule]
 })
 export class OwnerComponent implements OnInit {
   @Input() ownerRef?: string;

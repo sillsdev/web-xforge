@@ -24,9 +24,10 @@ interface ConnectProjectFormValues {
 }
 
 @Component({
-  selector: 'app-connect-project',
-  templateUrl: './connect-project.component.html',
-  styleUrls: ['./connect-project.component.scss']
+    selector: 'app-connect-project',
+    templateUrl: './connect-project.component.html',
+    styleUrls: ['./connect-project.component.scss'],
+    standalone: false
 })
 export class ConnectProjectComponent extends DataLoadingComponent implements OnInit {
   static readonly errorAlreadyConnectedKey: string = 'error-already-connected';

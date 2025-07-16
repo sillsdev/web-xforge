@@ -3,9 +3,10 @@ import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 
 @Component({
-  selector: 'app-text-and-audio',
-  templateUrl: './text-and-audio.component.html',
-  styleUrls: ['./text-and-audio.component.scss']
+    selector: 'app-text-and-audio',
+    templateUrl: './text-and-audio.component.html',
+    styleUrls: ['./text-and-audio.component.scss'],
+    standalone: false
 })
 export class TextAndAudioComponent implements AfterViewInit, OnInit, OnDestroy {
   @Input() input?: { text?: string; audioUrl?: string };

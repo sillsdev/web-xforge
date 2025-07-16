@@ -11,9 +11,10 @@ import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-p
 import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.utils';
 
 @Component({
-  selector: 'app-checking-scripture-audio-player',
-  templateUrl: './checking-scripture-audio-player.component.html',
-  styleUrls: ['./checking-scripture-audio-player.component.scss']
+    selector: 'app-checking-scripture-audio-player',
+    templateUrl: './checking-scripture-audio-player.component.html',
+    styleUrls: ['./checking-scripture-audio-player.component.scss'],
+    standalone: false
 })
 export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
   @Input() canClose: boolean = true;

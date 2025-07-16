@@ -19,11 +19,10 @@ import {
 } from './training-data-upload-dialog.component';
 
 @Component({
-  selector: 'app-training-data-multi-select',
-  templateUrl: './training-data-multi-select.component.html',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, SharedModule, TranslocoModule, MatListModule],
-  styleUrls: ['./training-data-multi-select.component.scss']
+    selector: 'app-training-data-multi-select',
+    templateUrl: './training-data-multi-select.component.html',
+    imports: [CommonModule, MatButtonModule, MatIconModule, SharedModule, TranslocoModule, MatListModule],
+    styleUrls: ['./training-data-multi-select.component.scss']
 })
 export class TrainingDataMultiSelectComponent {
   @Input() availableTrainingData: TrainingData[] = [];

@@ -12,11 +12,10 @@ import { DraftZipProgress } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 
 @Component({
-  selector: 'app-draft-download-button',
-  templateUrl: './draft-download-button.component.html',
-  styleUrls: ['./draft-download-button.component.scss'],
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoModule]
+    selector: 'app-draft-download-button',
+    templateUrl: './draft-download-button.component.html',
+    styleUrls: ['./draft-download-button.component.scss'],
+    imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoModule]
 })
 export class DraftDownloadButtonComponent {
   /**

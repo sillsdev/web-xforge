@@ -183,7 +183,8 @@ class TestEnvironment {
 class DialogTestModule {}
 
 @Component({
-  template: `<button (click)="openDialog()"></button>`
+    template: `<button (click)="openDialog()"></button>`,
+    standalone: false
 })
 class DialogOpenerComponent {
   publicName: string = 'Simon Says';

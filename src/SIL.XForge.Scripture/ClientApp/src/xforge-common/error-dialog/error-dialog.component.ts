@@ -11,8 +11,9 @@ export interface ErrorAlertData {
 }
 
 @Component({
-  templateUrl: './error-dialog.component.html',
-  styleUrls: ['./error-dialog.component.scss']
+    templateUrl: './error-dialog.component.html',
+    styleUrls: ['./error-dialog.component.scss'],
+    standalone: false
 })
 export class ErrorDialogComponent implements OnInit {
   initComplete = false;

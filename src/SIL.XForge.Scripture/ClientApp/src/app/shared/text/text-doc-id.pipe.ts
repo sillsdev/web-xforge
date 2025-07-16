@@ -3,7 +3,8 @@ import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import { TextDocId } from '../../core/models/text-doc';
 
 @Pipe({
-  name: 'textDocId'
+    name: 'textDocId',
+    standalone: false
 })
 export class TextDocIdPipe implements PipeTransform {
   transform(

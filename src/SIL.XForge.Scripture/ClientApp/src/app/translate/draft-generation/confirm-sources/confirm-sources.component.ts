@@ -14,11 +14,10 @@ import {
 } from '../draft-utils';
 
 @Component({
-  selector: 'app-confirm-sources',
-  standalone: true,
-  imports: [TranslocoModule, MatCheckboxModule, MatIconModule],
-  templateUrl: './confirm-sources.component.html',
-  styleUrl: './confirm-sources.component.scss'
+    selector: 'app-confirm-sources',
+    imports: [TranslocoModule, MatCheckboxModule, MatIconModule],
+    templateUrl: './confirm-sources.component.html',
+    styleUrl: './confirm-sources.component.scss'
 })
 export class ConfirmSourcesComponent {
   draftSources: DraftSourcesAsSelectableProjectArrays = {
