@@ -175,8 +175,14 @@ export class DraftSourcesComponent extends DataLoadingComponent implements Confi
     )
       .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
       .subscribe(() => {
-        this.availableTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
-        this.savedTrainingFiles = this.availableTrainingFiles.slice();
+        const removedFiles =
+          this.savedTrainingFiles?.filter(saved => !this.availableTrainingFiles.includes(saved)) ?? [];
+        const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
+
+        this.savedTrainingFiles = this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
+        this.availableTrainingFiles = this.savedTrainingFiles
+          .filter(d => removedFiles.findIndex(f => f.dataId === d.dataId) === -1)
+          .concat(addedFiles);
       });
   }
 
