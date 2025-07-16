@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -1471,6 +1473,104 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public void GetTranslationBuildConfig_AddsTagForDev()
+    {
+        // Set up test environment
+        var env = new TestEnvironment { Environment = { EnvironmentName = Environments.Development } };
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            new ServalData(),
+            servalConfig: null,
+            new BuildConfig(),
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(MachineProjectService.TagDevelopment, (string)(actual.Options as JObject)?["tags"]);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_AddsTagForTest()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            new ServalData(),
+            servalConfig: null,
+            new BuildConfig(),
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(MachineProjectService.TagTest, (string)(actual.Options as JObject)?["tags"]);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_AddsTagForStaging()
+    {
+        // Set up test environment
+        var env = new TestEnvironment { Environment = { EnvironmentName = Environments.Staging } };
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            new ServalData(),
+            servalConfig: null,
+            new BuildConfig(),
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(MachineProjectService.TagStaging, (string)(actual.Options as JObject)?["tags"]);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_AddsTagForProduction()
+    {
+        // Set up test environment
+        var env = new TestEnvironment { Environment = { EnvironmentName = Environments.Production } };
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            new ServalData(),
+            servalConfig: null,
+            new BuildConfig(),
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(MachineProjectService.TagProduction, (string)(actual.Options as JObject)?["tags"]);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_DoesNotAddTagIfAlreadyInServalConfigAsArray()
+    {
+        // Set up test environment
+        var env = new TestEnvironment { Environment = { EnvironmentName = Environments.Production } };
+        const string servalConfig = $$"""{"tags":["{{MachineProjectService.TagProduction}}"]}""";
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            new ServalData(),
+            servalConfig,
+            new BuildConfig(),
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(new JArray(MachineProjectService.TagProduction), (JArray)(actual.Options as JObject)?["tags"]);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_DoesNotReplaceTagIfAlreadyInServalConfigAsString()
+    {
+        // Set up test environment
+        var env = new TestEnvironment { Environment = { EnvironmentName = Environments.Production } };
+        const string servalConfig = $$"""{"tags":"{{MachineProjectService.TagProduction}}"}""";
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            new ServalData(),
+            servalConfig,
+            new BuildConfig(),
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(MachineProjectService.TagProduction, (string)(actual.Options as JObject)?["tags"]);
+    }
+
+    [Test]
     public void GetTranslationBuildConfig_DoesNotSpecifyAdditionalTrainingDataIfNoFilesSpecified()
     {
         // Set up test environment
@@ -1512,6 +1612,49 @@ public class MachineProjectServiceTests
             corporaSyncInfo: []
         );
         Assert.AreEqual(20, (int)(actual.Options as JObject)?["max_steps"]);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_MergesTagFromServalConfig()
+    {
+        // Set up test environment
+        var env = new TestEnvironment { Environment = { EnvironmentName = Environments.Production } };
+        const string tag = "my_project";
+        const string servalConfig = $$"""{"tags":"{{tag}}"}""";
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            new ServalData(),
+            servalConfig,
+            new BuildConfig(),
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(
+            new JArray(tag, MachineProjectService.TagProduction),
+            (JArray)(actual.Options as JObject)?["tags"]
+        );
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_MergesTagsFromServalConfig()
+    {
+        // Set up test environment
+        var env = new TestEnvironment { Environment = { EnvironmentName = Environments.Production } };
+        const string tag1 = "my_first_tag";
+        const string tag2 = "my_second_tag";
+        const string servalConfig = $$"""{"tags":["{{tag1}}", "{{tag2}}"]}""";
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            new ServalData(),
+            servalConfig,
+            new BuildConfig(),
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(
+            new JArray(tag1, tag2, MachineProjectService.TagProduction),
+            (JArray)(actual.Options as JObject)?["tags"]
+        );
     }
 
     [Test]
@@ -3849,6 +3992,7 @@ public class MachineProjectServiceTests
         public TestEnvironment(TestEnvironmentOptions? options = null)
         {
             options ??= new TestEnvironmentOptions();
+            Environment = Substitute.For<IWebHostEnvironment>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             MockLogger = new MockLogger<MachineProjectService>();
             CorporaClient = Substitute.For<ICorporaClient>();
@@ -4103,6 +4247,7 @@ public class MachineProjectServiceTests
             Service = Substitute.ForPartsOf<MachineProjectService>(
                 CorporaClient,
                 DataFilesClient,
+                Environment,
                 ExceptionHandler,
                 FileSystemService,
                 MockLogger,
@@ -4119,6 +4264,7 @@ public class MachineProjectServiceTests
         public MachineProjectService Service { get; }
         public ICorporaClient CorporaClient { get; }
         public IDataFilesClient DataFilesClient { get; }
+        public IWebHostEnvironment Environment { get; }
         public IFileSystemService FileSystemService { get; }
         public IParatextService ParatextService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }

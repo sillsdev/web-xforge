@@ -8,7 +8,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Autofac.Extras.DynamicProxy;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -36,6 +38,7 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineProjectService(
     ICorporaClient corporaClient,
     IDataFilesClient dataFilesClient,
+    IWebHostEnvironment env,
     IExceptionHandler exceptionHandler,
     IFileSystemService fileSystemService,
     ILogger<MachineProjectService> logger,
@@ -53,6 +56,12 @@ public class MachineProjectService(
     internal const string Echo = "echo";
     internal const string Nmt = "nmt";
     internal const string SmtTransfer = "smt-transfer";
+
+    // These tags are used for the ClearML task to differentiate Scripture Forge jobs
+    internal const string TagDevelopment = "sf-dev";
+    internal const string TagTest = "sf-test";
+    internal const string TagStaging = "sf-qa";
+    internal const string TagProduction = "sf-live";
 
     /// <summary>
     /// Adds the SMT project to Serval, if the required data is present.
@@ -588,7 +597,7 @@ public class MachineProjectService(
         else
         {
             translationEngineId = projectSecret.ServalData.TranslationEngineId!;
-            translationBuildConfig = new TranslationBuildConfig();
+            translationBuildConfig = new TranslationBuildConfig { Options = AddTags() };
         }
 
         // Start the build
@@ -1112,19 +1121,14 @@ public class MachineProjectService(
     )
     {
         // Load the Serval Config from the Draft Config
-        JObject? options = null;
-        if (!string.IsNullOrWhiteSpace(servalConfig))
-        {
-            options = JObject.Parse(servalConfig);
-        }
+        JObject? options = !string.IsNullOrWhiteSpace(servalConfig) ? JObject.Parse(servalConfig) : [];
+
+        // Add the tags
+        AddTags(options);
 
         // If Fast Training is enabled, override the max_steps
         if (buildConfig.FastTraining)
         {
-            // Ensure that there is a servalConfig JSON object
-            options ??= [];
-
-            // 20 is the number of steps used on Serval QA by default
             options["max_steps"] = 20;
         }
 
@@ -2127,6 +2131,54 @@ public class MachineProjectService(
         await using Stream stream = new MemoryStream(buffer, false);
         await UploadFileAsync(servalCorpusFile, stream, FileFormat.Text, cancellationToken);
         return true;
+    }
+
+    /// <summary>
+    /// Adds the tags to the build_options
+    /// </summary>
+    /// <param name="options">The build options.</param>
+    /// <returns>The build options</returns>
+    private JObject AddTags(JObject? options = null)
+    {
+        // Generate the tag based on the environment
+        string tag;
+        if (env.EnvironmentName == Environments.Production)
+        {
+            tag = TagProduction;
+        }
+        else if (env.EnvironmentName == Environments.Staging)
+        {
+            tag = TagStaging;
+        }
+        else if (env.EnvironmentName == Environments.Development)
+        {
+            tag = TagDevelopment;
+        }
+        else
+        {
+            tag = TagTest;
+        }
+
+        // Set the tag in the options, taking into account potential existing values
+        options ??= [];
+        if (options["tags"] == null)
+        {
+            options["tags"] = tag;
+        }
+        else if (options["tags"].Type == JTokenType.String && options["tags"].ToString() != tag)
+        {
+            options["tags"] = new JArray(options["tags"].ToString(), tag);
+        }
+        else if (options["tags"].Type == JTokenType.Array)
+        {
+            JArray tags = (JArray)options["tags"];
+            if (!tags.Any(t => t.Type == JTokenType.String && t.ToString() == tag))
+            {
+                tags.Add(tag);
+            }
+        }
+
+        return options;
     }
 
     /// <summary>
