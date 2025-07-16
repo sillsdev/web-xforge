@@ -96,17 +96,19 @@ export function getShortAudioBlob(): Blob {
 }
 
 @Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective'
+    // es lint complains that a directive should be used as an attribute
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: 'viewContainerDirective',
+    standalone: false
 })
 export class ViewContainerDirective {
   constructor(public viewContainerRef: ViewContainerRef) {}
 }
 
 @Component({
-  selector: 'app-view-container',
-  template: '<viewContainerDirective></viewContainerDirective>'
+    selector: 'app-view-container',
+    template: '<viewContainerDirective></viewContainerDirective>',
+    standalone: false
 })
 export class ChildViewContainerComponent {
   @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
@@ -134,8 +136,9 @@ export function arrayOfIntsFromOne(size: number): number[] {
  * Ignore the transloco directive and any usage of the {{ t('key') }} function.
  */
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[transloco]'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[transloco]',
+    standalone: false
 })
 export class MockTranslocoDirective {
   @Input() translocoRead?: string;

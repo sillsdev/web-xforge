@@ -11,11 +11,10 @@ import { ParatextService } from '../../core/paratext.service';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 
 @Component({
-  selector: 'app-font-unsupported-message',
-  standalone: true,
-  imports: [CommonModule, NoticeComponent, TranslocoModule],
-  templateUrl: './font-unsupported-message.component.html',
-  styleUrl: './font-unsupported-message.component.scss'
+    selector: 'app-font-unsupported-message',
+    imports: [CommonModule, NoticeComponent, TranslocoModule],
+    templateUrl: './font-unsupported-message.component.html',
+    styleUrl: './font-unsupported-message.component.scss'
 })
 export class FontUnsupportedMessageComponent {
   constructor(

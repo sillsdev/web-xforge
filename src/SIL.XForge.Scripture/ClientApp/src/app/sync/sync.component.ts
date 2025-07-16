@@ -25,9 +25,10 @@ enum SyncErrorCodes {
 }
 
 @Component({
-  selector: 'app-sync',
-  templateUrl: './sync.component.html',
-  styleUrls: ['./sync.component.scss']
+    selector: 'app-sync',
+    templateUrl: './sync.component.html',
+    styleUrls: ['./sync.component.scss'],
+    standalone: false
 })
 export class SyncComponent extends DataLoadingComponent implements OnInit {
   isAppOnline: boolean = false;

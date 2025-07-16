@@ -21,9 +21,10 @@ import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 /** Presents user with list of available projects to open or connect to. */
 @Component({
-  selector: 'app-my-projects',
-  templateUrl: './my-projects.component.html',
-  styleUrls: ['./my-projects.component.scss']
+    selector: 'app-my-projects',
+    templateUrl: './my-projects.component.html',
+    styleUrls: ['./my-projects.component.scss'],
+    standalone: false
 })
 export class MyProjectsComponent implements OnInit {
   /** PT projects that the user can access. */

@@ -10,9 +10,10 @@ export interface AudioAttachment {
 }
 
 @Component({
-  selector: 'app-checking-audio-player',
-  templateUrl: './checking-audio-player.component.html',
-  styleUrls: ['./checking-audio-player.component.scss']
+    selector: 'app-checking-audio-player',
+    templateUrl: './checking-audio-player.component.html',
+    styleUrls: ['./checking-audio-player.component.scss'],
+    standalone: false
 })
 export class CheckingAudioPlayerComponent implements AfterViewInit {
   private _isAudioAvailable = false;

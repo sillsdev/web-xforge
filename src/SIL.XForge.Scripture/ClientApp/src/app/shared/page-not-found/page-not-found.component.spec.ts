@@ -27,7 +27,8 @@ describe('PageNotFoundComponent', () => {
 });
 
 @Component({
-  template: `<app-page-not-found></app-page-not-found>`
+    template: `<app-page-not-found></app-page-not-found>`,
+    standalone: false
 })
 class PageNotFoundHostComponent {
   @ViewChild(PageNotFoundComponent) pageNotFoundComponent!: PageNotFoundComponent;

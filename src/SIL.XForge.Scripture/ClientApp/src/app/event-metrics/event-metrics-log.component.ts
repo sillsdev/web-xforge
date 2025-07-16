@@ -26,11 +26,10 @@ interface Row {
 }
 
 @Component({
-  selector: 'app-event-metrics-log',
-  templateUrl: './event-metrics-log.component.html',
-  styleUrls: ['./event-metrics-log.component.scss'],
-  standalone: true,
-  imports: [OwnerComponent, TranslocoModule, UICommonModule]
+    selector: 'app-event-metrics-log',
+    templateUrl: './event-metrics-log.component.html',
+    styleUrls: ['./event-metrics-log.component.scss'],
+    imports: [OwnerComponent, TranslocoModule, UICommonModule]
 })
 export class EventMetricsLogComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = ['successful', 'scope', 'eventType', 'author'];

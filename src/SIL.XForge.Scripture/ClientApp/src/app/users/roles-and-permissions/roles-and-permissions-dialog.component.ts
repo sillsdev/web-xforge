@@ -21,9 +21,10 @@ export interface UserData {
 }
 
 @Component({
-  selector: 'app-roles-and-permissions',
-  templateUrl: './roles-and-permissions-dialog.component.html',
-  styleUrls: ['./roles-and-permissions-dialog.component.scss']
+    selector: 'app-roles-and-permissions',
+    templateUrl: './roles-and-permissions-dialog.component.html',
+    styleUrls: ['./roles-and-permissions-dialog.component.scss'],
+    standalone: false
 })
 export class RolesAndPermissionsDialogComponent implements OnInit {
   readonly roles: FormControl<any> = new FormControl<string>('');

@@ -3,10 +3,9 @@ import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobi
 import { ServalProjectsComponent } from './serval-projects.component';
 
 @Component({
-  selector: 'app-serval-administration',
-  templateUrl: './serval-administration.component.html',
-  styleUrls: ['./serval-administration.component.scss'],
-  standalone: true,
-  imports: [ServalProjectsComponent, MobileNotSupportedComponent]
+    selector: 'app-serval-administration',
+    templateUrl: './serval-administration.component.html',
+    styleUrls: ['./serval-administration.component.scss'],
+    imports: [ServalProjectsComponent, MobileNotSupportedComponent]
 })
 export class ServalAdministrationComponent {}
