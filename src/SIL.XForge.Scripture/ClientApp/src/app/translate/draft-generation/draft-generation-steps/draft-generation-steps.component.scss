@@ -130,6 +130,10 @@ app-notice {
   background-color: initial;
 }
 
+.mat-mdc-table .mdc-data-table__row {
+  height: auto;
+}
+
 .confirm-translate {
   padding-inline-start: 16px;
 }
@@ -141,4 +145,13 @@ app-notice {
 .confirm-books {
   padding-block: 4px;
   font-size: 16px;
+}
+
+.filename {
+  font-size: 16px;
+}
+
+.filename-cell {
+  --mat-table-row-item-outline-width: 0;
+  padding-top: 16px;
 }

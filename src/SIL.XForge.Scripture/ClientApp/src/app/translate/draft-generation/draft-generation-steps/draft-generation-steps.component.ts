@@ -3,16 +3,19 @@ import { MatStepper } from '@angular/material/stepper';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest } from 'rxjs';
+import { combineLatest, merge, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { SharedModule } from '../../../shared/shared.module';
@@ -20,6 +23,7 @@ import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
+import { TrainingDataService } from '../training-data/training-data.service';
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
   trainingScriptureRanges: ProjectScriptureRange[];
@@ -92,6 +96,10 @@ export class DraftGenerationStepsComponent implements OnInit {
   protected trainingSources: DraftSource[] = [];
   protected trainingTargets: DraftSource[] = [];
   protected translatedBooksWithNoSource: number[] = [];
+  protected trainingDataFiles: Readonly<TrainingData>[] = [];
+
+  private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
+  private trainingDataQuerySubscription?: Subscription;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -102,7 +110,8 @@ export class DraftGenerationStepsComponent implements OnInit {
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
-    private readonly progressService: ProgressService
+    private readonly progressService: ProgressService,
+    private readonly trainingFileService: TrainingDataService
   ) {}
 
   ngOnInit(): void {
@@ -149,6 +158,21 @@ export class DraftGenerationStepsComponent implements OnInit {
           for (const source of this.trainingSources) {
             this.availableTrainingBooks[source?.projectRef] = [];
           }
+
+          this.trainingDataQuery?.dispose();
+          this.trainingDataQuery = await this.trainingFileService.queryTrainingDataAsync(projectId!, this.destroyRef);
+          this.trainingDataQuerySubscription?.unsubscribe();
+
+          this.trainingDataQuerySubscription = merge(
+            this.trainingDataQuery.localChanges$,
+            this.trainingDataQuery.ready$,
+            this.trainingDataQuery.remoteChanges$,
+            this.trainingDataQuery.remoteDocChanges$
+          )
+            .pipe(quietTakeUntilDestroyed(this.destroyRef, { logWarnings: false }))
+            .subscribe(() => {
+              this.trainingDataFiles = this.trainingDataQuery?.docs.map(doc => doc.data).filter(d => d != null) ?? [];
+            });
 
           // If book exists in both target and source, add to available books.
           // Otherwise, add to unusable books.

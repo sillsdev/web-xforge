@@ -10,11 +10,13 @@ import { AuthService } from 'xforge-common/auth.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftSourcesService } from '../draft-sources.service';
 import { LanguageCodesConfirmationComponent } from '../language-codes-confirmation/language-codes-confirmation.component';
+import { TrainingDataService } from '../training-data/training-data.service';
 import { ConfirmSourcesComponent } from './confirm-sources.component';
 
 const mockDraftService = mock(DraftSourcesService);
 const mockActivatedProject = mock(ActivatedProjectService);
 const mockAuthService = mock(AuthService);
+const mockTrainingService = mock(TrainingDataService);
 
 when(mockActivatedProject.changes$).thenReturn(
   of({
@@ -74,7 +76,8 @@ const meta: Meta = {
       providers: [
         { provide: DraftSourcesService, useValue: instance(mockDraftService) },
         { provide: ActivatedProjectService, useValue: instance(mockActivatedProject) },
-        { provide: AuthService, useValue: instance(mockAuthService) }
+        { provide: AuthService, useValue: instance(mockAuthService) },
+        { provide: TrainingDataService, useValue: instance(mockTrainingService) }
       ]
     })
   ]
