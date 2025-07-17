@@ -124,11 +124,6 @@ export async function connectProject(page: Page, shortName: string, source?: str
 
   if (source != null) {
     await page.getByRole('combobox', { name: 'Source text (optional)' }).click();
-    // FIXME(application-bug) The source text combobox is not always ready to be used immediately after opening the
-    // connect project page because resources are still loading, and if they load after the user types, the filtering
-    // doesn't happen until further input.
-    await page.waitForTimeout(5000);
-    await page.getByRole('combobox', { name: 'Source text (optional)' }).click();
     await page.keyboard.type(source);
     await page.getByRole('option', { name: `${source} - ` }).click();
   }
