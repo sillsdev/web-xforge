@@ -252,6 +252,19 @@
               <tr mat-row *matRowDef="let row; columns: ['book', 'source', 'target']"></tr>
             </table>
           }
+
+          @if (this.trainingDataFiles.length > 0) {
+            <table mat-table [dataSource]="this.trainingDataFiles">
+              <ng-container matColumnDef="file">
+                <th mat-header-cell *matHeaderCellDef>Training files</th>
+                <td mat-cell class="filename-cell" *matCellDef="let element">
+                  <div class="filename">{{ element.title }}</div>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="['file']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['file']" class="row"></tr>
+            </table>
+          }
         </mat-card>
 
         <h2>
