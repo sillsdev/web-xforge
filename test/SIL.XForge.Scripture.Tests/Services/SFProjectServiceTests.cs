@@ -39,6 +39,8 @@ public class SFProjectServiceTests
     private const string Resource01 = "resource_project";
     private const string SourceOnly = "source_only";
     private const string Resource01PTId = "resid_is_16_char";
+    private const string ResourceNeedsSync = "resource_sync_needed";
+    private const string ResourceNeedsSyncPTId = "resource_sync_id";
     private const string User01 = "user01";
     private const string User02 = "user02";
     private const string User03 = "user03";
@@ -2421,6 +2423,40 @@ public class SFProjectServiceTests
             env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
             Is.True
         );
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeAlternateSource_SyncProjectWhenSyncFailed()
+    {
+        var env = new TestEnvironment();
+        const string newProjectParatextId = ResourceNeedsSyncPTId;
+
+        // Ensure that the new project does not exist
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
+            Is.True
+        );
+
+        // SUT
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateSourceParatextId = newProjectParatextId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef, Is.Not.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.EqualTo(newProjectParatextId));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.Name, Is.EqualTo("Resource Needs Sync"));
+
+        SFProject alternateSourceProject = env.GetProject(
+            project.TranslateConfig.DraftConfig.AlternateSource!.ProjectRef
+        );
+        Assert.That(alternateSourceProject.ParatextId, Is.EqualTo(newProjectParatextId));
+        Assert.That(alternateSourceProject.Name, Is.EqualTo("Resource Needs Sync"));
+
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -4972,6 +5008,15 @@ public class SFProjectServiceTests
                             ShortName = "DSP",
                             UserRoles = { { User01, SFProjectRole.Administrator } },
                         },
+                        new SFProject
+                        {
+                            Id = ResourceNeedsSync,
+                            ParatextId = ResourceNeedsSyncPTId,
+                            Name = "Resource Needs Sync",
+                            ShortName = "RNSP",
+                            UserRoles = { { User01, SFProjectRole.Administrator } },
+                            Sync = new Sync { LastSyncSuccessful = false },
+                        },
                     ]
                 )
             );
@@ -5295,6 +5340,12 @@ public class SFProjectServiceTests
                     LanguageTag = "qaa",
                 },
                 new ParatextResource { ParatextId = GetProject(Resource01).ParatextId },
+                new ParatextResource
+                {
+                    ParatextId = ResourceNeedsSyncPTId,
+                    Name = "Resource Needs Sync",
+                    LanguageTag = "en",
+                },
             ];
             ParatextService.GetResourcesAsync(Arg.Any<string>()).Returns(ptResources);
             ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(true));
@@ -5420,6 +5471,10 @@ public class SFProjectServiceTests
                 .Returns(callInfo =>
                     callInfo.ArgAt<string?>(0)?.Length == SFInstallableDblResource.ResourceIdentifierLength
                 );
+
+            ParatextService
+                .GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+                .Returns(TextInfoPermission.Read);
 
             Service = new SFProjectService(
                 RealtimeService,
