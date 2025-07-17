@@ -1,7 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -159,7 +158,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         if (error instanceof HttpErrorResponse && error.status === 401) {
           this.authService.requestParatextCredentialUpdate();
         } else {
-          this.noticeService.showError(translate('translate_overview.training_unavailable'));
+          this.noticeService.showError(this.i18n.translateStatic('translate_overview.training_unavailable'));
         }
       })
       .then(() => this.listenForStatus());

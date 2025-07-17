@@ -1,11 +1,10 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
-import { en } from 'xforge-common/i18n.service';
+import { en, I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -53,6 +52,7 @@ export class MyProjectsComponent implements OnInit {
     private readonly permissions: PermissionsService,
     private readonly noticeService: NoticeService,
     private readonly router: Router,
+    private readonly i18n: I18nService,
     private destroyRef: DestroyRef
   ) {}
 
@@ -109,11 +109,11 @@ export class MyProjectsComponent implements OnInit {
     const isTranslateAccessible = this.permissions.canAccessTranslate(sfProject);
     const isCheckingAccessible = this.permissions.canAccessCommunityChecking(sfProject) ?? false;
 
-    const drafting = isTranslateAccessible ? translate('my_projects.drafting') : '';
+    const drafting = isTranslateAccessible ? this.i18n.translateStatic('my_projects.drafting') : '';
     const checking = isCheckingAccessible
       ? isTranslateAccessible
-        ? ' • ' + translate('app.community_checking')
-        : translate('app.community_checking')
+        ? ' • ' + this.i18n.translateStatic('app.community_checking')
+        : this.i18n.translateStatic('app.community_checking')
       : '';
 
     return `${drafting}${checking}`;
@@ -126,7 +126,7 @@ export class MyProjectsComponent implements OnInit {
       await this.projectService.onlineAddCurrentUser(projectId);
       this.router.navigate(['projects', projectId]);
     } catch {
-      this.noticeService.show(translate('my_projects.failed_to_join_project'));
+      this.noticeService.show(this.i18n.translateStatic('my_projects.failed_to_join_project'));
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);
       this.joiningProjects.pop();
@@ -137,11 +137,11 @@ export class MyProjectsComponent implements OnInit {
     try {
       this.noticeService.loadingStarted(this.constructor.name);
       await this.projectService.onlineSyncUserRole(projectId);
-      this.noticeService.show(translate('my_projects.user_role_updated'));
+      this.noticeService.show(this.i18n.translateStatic('my_projects.user_role_updated'));
       const project = this.userParatextProjects.find(project => project.projectId === projectId);
       if (project != null) project.hasUserRoleChanged = false;
     } catch {
-      this.noticeService.showError(translate('my_projects.failed_to_update_user_role'));
+      this.noticeService.showError(this.i18n.translateStatic('my_projects.failed_to_update_user_role'));
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);
     }

@@ -132,9 +132,9 @@ export class I18nService {
     private readonly transloco: TranslocoService,
     private readonly cookieService: CookieService,
     private readonly reportingService: ErrorReportingService,
-    private readonly featureFlags: FeatureFlagService,
     @Inject(DOCUMENT) private readonly document: Document,
-    @Optional() @Inject(IGNORE_COOKIE_LOCALE) ignoreCookieLocale: boolean = false
+    @Optional() @Inject(IGNORE_COOKIE_LOCALE) ignoreCookieLocale: boolean = false,
+    @Optional() private readonly featureFlags?: FeatureFlagService
   ) {
     // This will set the locale to what is specified in the URL first, or fallback to the cookie
     const urlLocale = new URLSearchParams(locationService.search).get('locale');
@@ -178,7 +178,7 @@ export class I18nService {
 
   get locales(): Locale[] {
     return I18nService.locales.filter(
-      locale => locale.production || this.featureFlags.showNonPublishedLocalizations.enabled
+      locale => locale.production || this.featureFlags?.showNonPublishedLocalizations.enabled === true
     );
   }
 
@@ -301,9 +301,11 @@ export class I18nService {
     return this.transloco.selectTranslate<string>(key, params);
   }
 
-  /** Returns a translation for the given I18nKey. A string is returned, so this cannot be used to keep a localization
+  /**
+   * Returns a translation for the given I18nKey. A string is returned, so this cannot be used to keep a localization
    * updated without re-calling this whenever the locale changes. Avoid using this when observing a localization is
-   * possible. */
+   * possible.
+   */
   translateStatic(key: I18nKey, params: object = {}): string {
     return this.transloco.translate(key, params);
   }

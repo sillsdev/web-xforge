@@ -9,7 +9,6 @@ import {
   ViewChild
 } from '@angular/core';
 import { FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
-import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -169,16 +168,18 @@ export class ShareControlComponent extends ShareBaseComponent {
       this.isAlreadyInvited = false;
 
       if (response === this.alreadyProjectMemberResponse) {
-        message = translate('share_control.not_inviting_already_member');
+        message = this.i18n.translateStatic('share_control.not_inviting_already_member');
       } else {
-        message = translate('share_control.invitation_sent', { email: this.sendInviteForm.value.email });
+        message = this.i18n.translateStatic('share_control.invitation_sent', {
+          email: this.sendInviteForm.value.email
+        });
         this.invited.emit();
       }
     } catch (err) {
       if (err instanceof CommandError && err.message.includes(this.invalidEmailAddress)) {
         this.isSubmitted = false;
         this.isAlreadyInvited = false;
-        message = translate('share_control.not_inviting_email_invalid');
+        message = this.i18n.translateStatic('share_control.not_inviting_email_invalid');
       } else {
         throw err;
       }

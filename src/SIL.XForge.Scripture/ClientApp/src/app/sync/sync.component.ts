@@ -1,6 +1,5 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -66,9 +65,11 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     }
     const dateLastSynced = this.projectDoc.data.sync.dateLastSuccessfulSync;
     if (dateLastSynced == null || dateLastSynced === '' || Date.parse(dateLastSynced) <= 0) {
-      return translate('sync.never_been_synced');
+      return this.i18n.translateStatic('sync.never_been_synced');
     } else {
-      return translate('sync.last_synced_time_stamp', { timeStamp: this.i18n.formatDate(new Date(dateLastSynced)) });
+      return this.i18n.translateStatic('sync.last_synced_time_stamp', {
+        timeStamp: this.i18n.formatDate(new Date(dateLastSynced))
+      });
     }
   }
 
@@ -106,7 +107,9 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
         )
       ) {
         if (this.projectDoc.data.sync.lastSyncSuccessful) {
-          this.noticeService.show(translate('sync.successfully_synchronized_with_paratext', { projectName }));
+          this.noticeService.show(
+            this.i18n.translateStatic('sync.successfully_synchronized_with_paratext', { projectName })
+          );
           this.previousLastSyncDate = this.lastSyncDate;
         } else if (this.showSyncUserPermissionsFailureMessage) {
           this.dialogService.message(this.i18n.translate('sync.user_permissions_failure_dialog_message'));

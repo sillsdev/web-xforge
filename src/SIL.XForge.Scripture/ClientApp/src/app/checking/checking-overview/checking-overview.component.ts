@@ -1,6 +1,5 @@
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
@@ -270,14 +269,16 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   questionCountLabel(count: number): string {
-    return translate('checking_overview.question_count_label', { count: count });
+    return this.i18n.translateStatic('checking_overview.question_count_label', { count: count });
   }
 
   timeArchivedStamp(date: string | undefined): string {
     if (date == null) {
       return '';
     }
-    return translate('checking_overview.time_archived_stamp', { timeStamp: this.i18n.formatDate(new Date(date)) });
+    return this.i18n.translateStatic('checking_overview.time_archived_stamp', {
+      timeStamp: this.i18n.formatDate(new Date(date))
+    });
   }
 
   bookAnswerCount(text: TextInfo): number {
@@ -306,7 +307,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   answerCountLabel(count?: number): string {
     return count != null && count > 0
-      ? translate('checking_overview.answer_count_label', { count: this.l10nNumberPipe.transform(count) })
+      ? this.i18n.translateStatic('checking_overview.answer_count_label', {
+          count: this.l10nNumberPipe.transform(count)
+        })
       : '';
   }
 

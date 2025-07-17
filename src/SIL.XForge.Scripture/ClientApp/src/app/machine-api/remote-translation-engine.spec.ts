@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { TranslationSources, WordGraph } from '@sillsdev/machine';
 import { of, throwError } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { BuildDto } from './build-dto';
@@ -404,6 +405,7 @@ class TestEnvironment {
   readonly client: RemoteTranslationEngine;
   readonly mockedNoticeService: NoticeService;
   readonly mockedRouter: Router;
+  readonly mockedI18nService: I18nService;
   readonly ngZone: NgZone;
 
   constructor() {
@@ -425,11 +427,13 @@ class TestEnvironment {
     );
     this.mockedNoticeService = mock(NoticeService);
     this.mockedRouter = mock(Router);
+    this.mockedI18nService = mock(I18nService);
     this.client = new RemoteTranslationEngine(
       'project01',
       instance(this.mockedHttpClient),
       instance(this.mockedNoticeService),
-      instance(this.mockedRouter)
+      instance(this.mockedRouter),
+      instance(this.mockedI18nService)
     );
 
     this.ngZone = TestBed.inject(NgZone);

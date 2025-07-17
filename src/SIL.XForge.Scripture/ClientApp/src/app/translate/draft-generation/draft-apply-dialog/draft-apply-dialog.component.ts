@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { translate, TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -62,10 +62,12 @@ export class DraftApplyDialogComponent implements OnInit {
     undefined
   );
   invalidMessageMapper: { [key: string]: string } = {
-    invalidProject: translate('draft_apply_dialog.please_select_valid_project'),
-    bookNotFound: translate('draft_apply_dialog.book_does_not_exist', { bookName: this.bookName }),
-    noWritePermissions: translate('draft_apply_dialog.no_write_permissions'),
-    missingChapters: translate('draft_apply_dialog.project_has_chapters_missing', { bookName: this.bookName })
+    invalidProject: this.i18n.translateStatic('draft_apply_dialog.please_select_valid_project'),
+    bookNotFound: this.i18n.translateStatic('draft_apply_dialog.book_does_not_exist', { bookName: this.bookName }),
+    noWritePermissions: this.i18n.translateStatic('draft_apply_dialog.no_write_permissions'),
+    missingChapters: this.i18n.translateStatic('draft_apply_dialog.project_has_chapters_missing', {
+      bookName: this.bookName
+    })
   };
 
   // the project id to add the draft to

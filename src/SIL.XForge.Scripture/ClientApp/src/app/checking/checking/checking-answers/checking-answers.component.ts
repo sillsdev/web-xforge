@@ -10,7 +10,6 @@ import {
   ViewChildren
 } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
-import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -454,9 +453,9 @@ export class CheckingAnswersComponent implements OnInit {
         answer
       });
     } else if (likeAnswerResponse === LikeAnswerResponse.DeniedOwnAnswer) {
-      this.noticeService.show(translate('checking_answers.cannot_like_own_answer'));
+      this.noticeService.show(this.i18n.translateStatic('checking_answers.cannot_like_own_answer'));
     } else if (likeAnswerResponse === LikeAnswerResponse.DeniedNoPermission) {
-      this.noticeService.show(translate('checking_answers.no_permission_to_like'));
+      this.noticeService.show(this.i18n.translateStatic('checking_answers.no_permission_to_like'));
     }
   }
 

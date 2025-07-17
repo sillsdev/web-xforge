@@ -1,7 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -272,7 +271,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       );
       this._userRows = userRows.concat(invitees);
     } catch {
-      this.noticeService.show(translate('collaborators.problem_loading_invited_users'));
+      this.noticeService.show(this.i18n.translateStatic('collaborators.problem_loading_invited_users'));
     }
   }
 }
