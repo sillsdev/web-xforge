@@ -27,9 +27,7 @@
             "index": "src/index.html",
             "tsConfig": "src/tsconfig.app.json",
             "progress": true,
-            "polyfills": [
-              "src/polyfills.ts"
-            ],
+            "polyfills": ["src/polyfills.ts"],
             "assets": [
               "src/favicon.ico",
               "src/assets",
@@ -39,10 +37,7 @@
             ],
             "styles": ["src/styles.scss", "src/material-styles.scss", "src/themes/themes.scss"],
             "stylePreprocessorOptions": {
-              "includePaths": [
-                "node_modules",
-                "."
-              ]
+              "includePaths": ["node_modules", "."]
             },
             "allowedCommonJsDependencies": [
               "@bugsnag/browser",
@@ -88,7 +83,7 @@
               "outputHashing": "all",
               "namedChunks": true,
               "aot": true,
-              "serviceWorker": true
+              "serviceWorker": "ngsw-config.json"
             },
             "staging": {
               "budgets": [
@@ -107,7 +102,7 @@
               "outputHashing": "all",
               "namedChunks": true,
               "aot": true,
-              "serviceWorker": true
+              "serviceWorker": "ngsw-config.json"
             },
             "pwaTest": {
               "fileReplacements": [
@@ -118,7 +113,7 @@
               ],
               "outputHashing": "all",
               "namedChunks": true,
-              "serviceWorker": true
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {}
           },
