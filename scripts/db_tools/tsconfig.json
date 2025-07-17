@@ -4,7 +4,6 @@
     "compilerOptions": {
       "module": "commonjs"
     }
-
   },
   "compilerOptions": {
     "baseUrl": "./",
@@ -23,24 +22,17 @@
     "module": "ES2020",
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
-    "lib": [
-      "es2018",
-      "dom"
-    ],
+    "lib": ["es2018", "dom"],
     "emitDecoratorMetadata": true,
-    "suppressImplicitAnyIndexErrors": true,
     "esModuleInterop": true,
-    "typeRoots": ["node_modules/@types", "../../src/RealtimeServer/typings",
-    ],
+    "typeRoots": ["node_modules/@types", "../../src/RealtimeServer/typings"],
     "resolveJsonModule": true,
     "paths": {
-      "xforge-common/*": [
-        "../../src/SIL.XForge.Scripture/ClientApp/src/xforge-common/*"
-      ],
-      "*": [ "../../src/RealtimeServer/typings/*"]
+      "xforge-common/*": ["../../src/SIL.XForge.Scripture/ClientApp/src/xforge-common/*"],
+      "*": ["../../src/RealtimeServer/typings/*"]
     },
     "inlineSourceMap": false,
     "inlineSources": true,
-    "noEmit": false,
+    "noEmit": false
   }
 }
