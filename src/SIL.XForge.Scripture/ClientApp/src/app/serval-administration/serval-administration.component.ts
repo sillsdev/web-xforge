@@ -11,10 +11,11 @@ import { ServalProjectsComponent } from './serval-projects.component';
  * Supports URL parameters for filtering by project ID and selecting specific tabs.
  */
 @Component({
-    selector: 'app-serval-administration',
-    templateUrl: './serval-administration.component.html',
-    styleUrls: ['./serval-administration.component.scss'],
-    imports: [ServalProjectsComponent, MobileNotSupportedComponent, DraftJobsComponent, MatTabsModule, UICommonModule]
+  selector: 'app-serval-administration',
+  templateUrl: './serval-administration.component.html',
+  styleUrls: ['./serval-administration.component.scss'],
+  imports: [ServalProjectsComponent, MobileNotSupportedComponent, DraftJobsComponent, MatTabsModule, UICommonModule],
+  standalone: true
 })
 export class ServalAdministrationComponent implements OnInit {
   selectedTabIndex = 0;
