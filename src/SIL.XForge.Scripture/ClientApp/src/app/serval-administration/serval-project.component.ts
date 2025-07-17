@@ -43,17 +43,18 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
 }
 
 @Component({
-    selector: 'app-serval-project',
-    templateUrl: './serval-project.component.html',
-    styleUrls: ['./serval-project.component.scss'],
-    imports: [
-        CommonModule,
-        NoticeComponent,
-        SharedModule,
-        UICommonModule,
-        DraftInformationComponent,
-        MobileNotSupportedComponent
-    ]
+  selector: 'app-serval-project',
+  templateUrl: './serval-project.component.html',
+  styleUrls: ['./serval-project.component.scss'],
+  imports: [
+    CommonModule,
+    NoticeComponent,
+    SharedModule,
+    UICommonModule,
+    DraftInformationComponent,
+    MobileNotSupportedComponent
+  ],
+  standalone: true
 })
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
   @Input() showProjectTitle = true;
