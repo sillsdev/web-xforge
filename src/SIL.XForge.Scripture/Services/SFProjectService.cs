@@ -172,7 +172,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     curUserId,
                     projectDoc.Id,
                     settings.SourceParatextId,
-                    syncIfCreated: false,
+                    skipSync: true,
                     updatePermissions: false,
                     ptProjects,
                     resources
@@ -418,7 +418,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 curUserId,
                 projectId,
                 settings.SourceParatextId,
-                syncIfCreated: false,
+                skipSync: true,
                 updatePermissions: true,
                 ptProjects,
                 resources,
@@ -440,7 +440,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 curUserId,
                 projectId,
                 settings.AlternateSourceParatextId,
-                syncIfCreated: true,
+                skipSync: false,
                 // Only update permissions if this project is different to the preceding project
                 updatePermissions: settings.SourceParatextId != settings.AlternateSourceParatextId,
                 ptProjects,
@@ -463,7 +463,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 curUserId,
                 projectId,
                 settings.AlternateTrainingSourceParatextId,
-                syncIfCreated: true,
+                skipSync: false,
                 // Only update permissions if this project is different to the preceding projects
                 updatePermissions: settings.SourceParatextId != settings.AlternateTrainingSourceParatextId
                     && settings.AlternateSourceParatextId != settings.AlternateTrainingSourceParatextId,
@@ -487,7 +487,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 curUserId,
                 projectId,
                 settings.AdditionalTrainingSourceParatextId,
-                syncIfCreated: true,
+                skipSync: false,
                 // Only update permissions if this project is different to the preceding projects
                 updatePermissions: settings.SourceParatextId != settings.AdditionalTrainingSourceParatextId
                     && settings.AlternateSourceParatextId != settings.AdditionalTrainingSourceParatextId
@@ -1927,7 +1927,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="paratextId">The paratext identifier.</param>
-    /// <param name="syncIfCreated">If <c>true</c> sync the project if it is created.</param>
+    /// <param name="skipSync">If <c>true</c> the project will not be synced even if it is not already synced.</param>
     /// <param name="updatePermissions">If <c>true</c> update the project's permissions.</param>
     /// <param name="ptProjects">The paratext projects.</param>
     /// <param name="resources">The paratext resources.</param>
@@ -1939,7 +1939,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string curUserId,
         string sfProjectId,
         string paratextId,
-        bool syncIfCreated,
+        bool skipSync,
         bool updatePermissions,
         IEnumerable<ParatextProject> ptProjects,
         IEnumerable<ParatextResource> resources,
@@ -1948,25 +1948,25 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     {
         ParatextProject sourcePTProject = ptProjects.SingleOrDefault(p => p.ParatextId == paratextId);
         string sourceProjectRef;
-        if (sourcePTProject == null)
+        if (sourcePTProject is null)
         {
             // If it is not a project, see if there is a matching resource
             sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
-            if (sourcePTProject == null)
+            if (sourcePTProject is null)
             {
                 throw new DataNotFoundException("The source paratext project does not exist.");
             }
         }
 
         // Get the users who will access this source resource or project
-        IEnumerable<string> userIds = userRoles != null ? userRoles.Keys : [curUserId];
+        IEnumerable<string> userIds = userRoles is not null ? userRoles.Keys : [curUserId];
 
         // Get the project reference
         SFProject sourceProject = RealtimeService
             .QuerySnapshots<SFProject>()
             .FirstOrDefault(p => p.ParatextId == paratextId);
         bool projectCreated;
-        if (sourceProject != null)
+        if (sourceProject is not null)
         {
             sourceProjectRef = sourceProject.Id;
             projectCreated = false;
@@ -1983,7 +1983,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             try
             {
                 // Add the user to the project, if the user does not have a role in it
-                if (sourceProject == null || !sourceProject.UserRoles.ContainsKey(userId))
+                if (sourceProject is null || !sourceProject.UserRoles.ContainsKey(userId))
                 {
                     await AddUserAsync(conn, userId, sourceProjectRef, null);
                 }
@@ -1994,9 +1994,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
-        // If the project is created, sync it only if we need to
+        // If the project is created or the last sync was not successful, sync it unless explicitly skipped.
         // This is usually because this is an alternate source for drafting
-        if (projectCreated && syncIfCreated)
+        bool syncNeeded =
+            projectCreated || (sourceProject is not null && sourceProject.Sync.LastSyncSuccessful == false);
+        if (syncNeeded && !skipSync)
         {
             string jobId = await _syncService.SyncAsync(
                 new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId }
