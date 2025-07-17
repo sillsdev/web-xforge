@@ -213,7 +213,7 @@
           } @else if (getControlState("projectSettings") === ElementState.Submitted) {
             <mat-icon class="success">checkmark</mat-icon> {{ t("all_changes_saved") }}
           } @else {
-            <mat-icon class="failure">error</mat-icon> Failed to save changes
+            <mat-icon class="failure">error</mat-icon> {{ t("failed_to_save_changes") }}
           }
         </div>
         @for (entry of syncStatus | keyvalue; track entry.key) {
