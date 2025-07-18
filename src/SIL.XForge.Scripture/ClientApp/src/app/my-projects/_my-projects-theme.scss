@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use '@angular/material' as mat;
 @use 'src/_variables' as variables;
 
@@ -20,13 +21,17 @@
   }
   // TODO: Investigate formal way to implement info type cards a button colors that aren't part of the theme palette
   .user-update-project {
-    background-color: #{if($is-dark, darken(variables.$info-color, 30%), lighten(variables.$info-color, 40%))};
+    background-color: #{if(
+        $is-dark,
+        color.scale(variables.$info-color, $lightness: -30%),
+        color.scale(variables.$info-color, $lightness: 40%)
+      )};
   }
   .user-update-project-btn:not(:disabled) {
     --mdc-filled-button-label-text-color: #{mat.get-theme-color($theme, primary, 100)};
     --mdc-filled-button-container-color: #{variables.$info-color};
     &:hover {
-      --mdc-filled-button-container-color: #{darken(variables.$info-color, 10%)};
+      --mdc-filled-button-container-color: #{color.scale(variables.$info-color, $lightness: -10%)};
     }
   }
 }
