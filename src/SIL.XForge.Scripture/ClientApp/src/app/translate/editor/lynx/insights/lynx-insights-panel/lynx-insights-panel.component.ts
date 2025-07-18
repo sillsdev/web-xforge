@@ -10,13 +10,14 @@ import {
   LynxInsightType,
   LynxInsightTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
-import { asapScheduler, combineLatest, map, observeOn, tap } from 'rxjs';
+import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { DeltaOperation } from 'rich-text';
+import { asapScheduler, combineLatest, debounceTime, map, tap } from 'rxjs';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { isWhitespace } from 'xforge-common/util/string-util';
-import { TextDoc } from '../../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../../core/sf-project.service';
 import { rangeComparer } from '../../../../../shared/text/quill-util';
 import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../shared/utils';
@@ -79,8 +80,8 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   /** Maps insight id to `InsightDescription` (containing the text snippet). */
   private textSnippetCache = new Map<string, InsightDescription>();
 
-  /** Maps TextDocId string to TextDoc promise. */
-  private textDocCache = new Map<string, Promise<TextDoc>>();
+  /** Maps TextDocId string to TextData. */
+  private textDocDataCache = new Map<string, TextData>();
 
   /** Set of all insight ids currently in the tree (used for cache cleanup). */
   private currentInsightIds = new Set<string>();
@@ -118,6 +119,8 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   /** Num items processed since last memory cleanup. */
   private numItemsProcessedSinceCleanup = 0;
 
+  private readonly TREE_REBUILD_DEBOUNCE_MS = 500;
+
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly editorInsightState: LynxInsightStateService,
@@ -139,7 +142,9 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
         map(([insights, orderBy, dismissedIds]) => this.buildTreeNodes(insights, orderBy, dismissedIds)),
-        observeOn(asapScheduler) // Avoids ExpressionChangedAfterItHasBeenCheckedError
+        // Debounce avoids excessive tree rebuilds while typing,
+        // and asapScheduler avoids ExpressionChangedAfterItHasBeenCheckedError.
+        debounceTime(this.TREE_REBUILD_DEBOUNCE_MS, asapScheduler)
       )
       .subscribe(treeNodes => {
         this.treeDataSource = treeNodes;
@@ -571,14 +576,13 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
 
     if (combinedVerseRef != null) {
       refString = this.i18n.localizeReference(combinedVerseRef);
-    } else if (segmentRefs.length > 0) {
+    } else {
       const bookChapter: string = this.i18n.localizeBookChapter(
         insight.textDocId.bookNum,
         insight.textDocId.chapterNum
       );
-      refString = `${bookChapter}:[${segmentRefs[0]}]`;
-    } else {
-      refString = insight.textDocId?.toString() || 'Unknown';
+
+      refString = `${bookChapter}:[${segmentRefs.length > 0 ? segmentRefs[0] : 'Unknown'}]`;
     }
 
     // Use the pre-calculated sample text parts from processInsightText
@@ -675,10 +679,10 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
     const { visibleTextDocIds, visibleNodeDescriptions } = this.collectVisibleItems(this.treeDataSource);
 
     // Clean up text document cache if it exceeds the limit
-    if (this.textDocCache.size > this.TEXT_DOC_CACHE_MAX_SIZE) {
+    if (this.textDocDataCache.size > this.TEXT_DOC_CACHE_MAX_SIZE) {
       // Remove docs not currently visible, keeping most recently used
-      const entriesToKeep: Array<[string, Promise<TextDoc>]> = [];
-      for (const [key, value] of this.textDocCache) {
+      const entriesToKeep: Array<[string, TextData]> = [];
+      for (const [key, value] of this.textDocDataCache) {
         if (visibleTextDocIds.has(key)) {
           entriesToKeep.push([key, value]);
         }
@@ -689,9 +693,9 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
         entriesToKeep.splice(0, entriesToKeep.length - this.TEXT_DOC_CACHE_MAX_SIZE);
       }
 
-      this.textDocCache.clear();
+      this.textDocDataCache.clear();
       for (const [key, value] of entriesToKeep) {
-        this.textDocCache.set(key, value);
+        this.textDocDataCache.set(key, value);
       }
     }
 
@@ -722,17 +726,17 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
    * Processes a single insight to extract appropriate text snippet.
    * Breaks the snippet text into pre, insight, and post parts.
    */
-  private processInsightText(insight: LynxInsight, textDoc: TextDoc): LynxInsightWithText {
+  private processInsightText(insight: LynxInsight, textDocData: TextData): LynxInsightWithText {
     const textGoalLength = this.lynxInsightConfig.panelLinkTextGoalLength;
 
-    if (!textDoc.data?.ops?.length) {
+    if (!textDocData?.ops?.length) {
       return {
         ...insight,
         sampleTextParts: { preText: '', insightText: '', postText: '' }
       };
     }
 
-    const delta = new Delta(textDoc.data.ops);
+    const delta = new Delta(textDocData.ops);
     const insightText: string = this.getText(delta, insight.range, 'trim-none');
 
     // Pad up to the goal length (and at least 10 characters)
@@ -819,35 +823,43 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
   }
 
   /**
-   * Loads a TextDoc lazily when needed.
+   * Loads a TextDoc data lazily when needed.
    * This is part of the lazy-loading strategy to only fetch documents when a node is expanded.
    * @param insight The insight that contains the TextDocId.
-   * @returns Promise resolving to the loaded TextDoc.
+   * @returns Promise resolving to the loaded TextDoc data.
    */
-  private loadTextDocLazily(insight: LynxInsight): Promise<TextDoc> {
+  private async loadTextDocLazily(insight: LynxInsight): Promise<TextData | undefined> {
     const textDocIdStr = insight.textDocId.toString();
 
     // Check if we're already loading this text doc
-    if (this.textDocCache.has(textDocIdStr)) {
-      return this.textDocCache.get(textDocIdStr)!;
+    if (this.textDocDataCache.has(textDocIdStr)) {
+      return Promise.resolve(this.textDocDataCache.get(textDocIdStr)!);
     }
 
     // Create and cache the promise for loading the document
-    const textDocPromise = this.projectService.getText(insight.textDocId).then(textDoc => {
-      // Update segment map for text doc
-      if (textDoc.data?.ops != null) {
-        this.textDocSegments.set(textDocIdStr, this.editorSegmentService.parseSegments(textDoc.data.ops));
-      } else {
-        this.textDocSegments.set(textDocIdStr, new Map());
+    return this.projectService.getText(insight.textDocId).then(textDoc => {
+      const textDocData: TextData | undefined = textDoc.data;
+
+      if (textDocData != null) {
+        this.textDocDataCache.set(textDocIdStr, textDocData);
+
+        if (textDocData.ops != null) {
+          this.textDocSegments.set(textDocIdStr, this.editorSegmentService.parseSegments(textDocData.ops));
+        }
       }
 
-      return textDoc;
+      // On text edits, update cached text doc data and segment map for text doc
+      textDoc.changes$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe((changes: TextData) => {
+        if (changes?.ops != null) {
+          const prevDocOps: DeltaOperation[] | undefined = this.textDocDataCache.get(textDocIdStr)?.ops;
+          const newTextDocData: TextData = new Delta(prevDocOps).compose(new Delta(changes.ops));
+          this.textDocDataCache.set(textDocIdStr, newTextDocData);
+          this.textDocSegments.set(textDocIdStr, this.editorSegmentService.parseSegments(newTextDocData.ops ?? []));
+        }
+      });
+
+      return this.textDocDataCache.get(textDocIdStr);
     });
-
-    // Cache the promise so multiple requests for the same doc return the same promise
-    this.textDocCache.set(textDocIdStr, textDocPromise);
-
-    return textDocPromise;
   }
 
   /**
@@ -1135,8 +1147,12 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
       this.currentInsightIds.add(insight.id);
 
       // Get and process the text document
-      const textDoc = await this.loadTextDocLazily(insight);
-      const insightWithText = this.processInsightText(insight, textDoc);
+      const textDocData: TextData | undefined = await this.loadTextDocLazily(insight);
+      if (textDocData == null) {
+        throw new Error('Text document data is undefined');
+      }
+
+      const insightWithText = this.processInsightText(insight, textDocData);
       const insightDescription = this.createInsightDescription(insightWithText);
 
       // Cache the insight description and update the UI
