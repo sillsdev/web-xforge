@@ -1,3 +1,4 @@
+@use 'src/variables';
 @use '../checking-global-vars' as checking-vars;
 @use 'src/breakpoints';
 
@@ -65,7 +66,7 @@
       }
     }
     .liked {
-      color: checking-vars.$likes;
+      color: variables.$likes;
     }
     .answer-detail {
       flex: 1;
