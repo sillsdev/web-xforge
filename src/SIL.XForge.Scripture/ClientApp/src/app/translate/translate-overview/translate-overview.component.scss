@@ -1,6 +1,6 @@
 @use 'sass:color';
 @use '@angular/material' as mat;
-@import 'src/variables';
+@use 'src/variables' as *;
 
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
