@@ -1,8 +1,8 @@
 @use 'src/variables';
 @use 'src/breakpoints';
 @use '@angular/material' as mat;
-@import 'quill/dist/quill.snow.css';
-@import 'usx';
+@use 'quill/dist/quill.snow.css';
+@use 'usx';
 
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
