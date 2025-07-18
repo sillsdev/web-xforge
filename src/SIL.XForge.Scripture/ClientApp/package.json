@@ -61,6 +61,7 @@
     "bowser": "^2.11.0",
     "bson-objectid": "^2.0.3",
     "buffer": "^5.7.1",
+    "comlink": "^4.4.2",
     "crc-32": "^1.2.2",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",

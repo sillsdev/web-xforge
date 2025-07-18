@@ -81,6 +81,7 @@ public class Startup
     private static readonly HashSet<string> ProductionSpaPostRoutes = [];
     private static readonly HashSet<string> SpaPostRoutes = [];
     private const string SpaGetRoutesLynxPrefix = "node_modules_sillsdev_lynx";
+    private const string SpaGetRoutesWorkerSuffix = "worker_ts.js";
 
     public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
     {
@@ -345,8 +346,16 @@ public class Startup
             int periodIndex = path.IndexOf(".");
             prefix = prefix[..(periodIndex - 1)];
         }
-        if (context.Request.Method == HttpMethods.Get && prefix.StartsWith(SpaGetRoutesLynxPrefix))
+
+        bool isLazyChunkRoute =
+            context.Request.Method == HttpMethods.Get
+            && (prefix.StartsWith(SpaGetRoutesLynxPrefix) || prefix.EndsWith(SpaGetRoutesWorkerSuffix));
+
+        if (isLazyChunkRoute)
+        {
             return true;
+        }
+
         return (context.Request.Method == HttpMethods.Get && SpaGetRoutes.Contains(prefix))
             || (context.Request.Method == HttpMethods.Post && SpaPostRoutes.Contains(prefix));
     }
