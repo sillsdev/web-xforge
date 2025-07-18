@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use 'src/variables';
 
 .container {
@@ -133,7 +134,7 @@
     background-color: variables.$red;
   }
   50% {
-    background-color: lighten(variables.$red, 10%);
+    background-color: color.scale(variables.$red, $lightness: 10%);
   }
   100% {
     background-color: variables.$red;
