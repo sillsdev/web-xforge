@@ -1,4 +1,4 @@
-@use 'src/variables' as vars;
+@use 'src/variables';
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
 @mixin targetOnly {
