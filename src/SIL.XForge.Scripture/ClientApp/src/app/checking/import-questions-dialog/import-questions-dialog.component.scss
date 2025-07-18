@@ -117,10 +117,10 @@
     mat-form-field:not(.mdc-text-field--textarea) {
       height: 36px;
       flex: 1;
+      max-width: 70%;
       @include breakpoints.media-breakpoint-up(sm) {
         max-width: unset;
       }
-      max-width: 70%;
       // below is to make denser
       .mat-mdc-text-field-wrapper {
         div.mat-mdc-form-field-infix {
