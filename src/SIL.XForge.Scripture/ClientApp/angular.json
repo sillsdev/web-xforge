@@ -63,7 +63,8 @@
             "buildOptimizer": false,
             "sourceMap": true,
             "optimization": false,
-            "namedChunks": true
+            "namedChunks": true,
+            "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
             "production": {
@@ -157,7 +158,8 @@
               "includePaths": ["node_modules"]
             },
             "assets": ["src/favicon.ico", "src/assets", "src/manifest.json"],
-            "sourceMap": false
+            "sourceMap": false,
+            "webWorkerTsConfig": "tsconfig.worker.json"
           }
         },
         "lint": {
