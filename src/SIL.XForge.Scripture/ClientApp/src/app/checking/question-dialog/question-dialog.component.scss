@@ -1,4 +1,4 @@
-@use 'src/variables';
+@use 'src/variables' as *;
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
 .mat-mdc-dialog-content.content-padding {

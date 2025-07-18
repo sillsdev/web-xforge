@@ -1,4 +1,4 @@
-@import 'src/variables';
+@use 'src/variables' as *;
 
 $progressBackgroundColor: rgba(205, 219, 204, 0.33);
 

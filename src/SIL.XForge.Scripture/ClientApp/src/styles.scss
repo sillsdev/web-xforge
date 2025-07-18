@@ -7,8 +7,8 @@
 
 @use 'app/translate/editor/lynx/insights/lynx-insights';
 
-@import 'fonts';
-@import 'text';
+@use 'fonts';
+@use 'text';
 
 // Reset all elements to border-box
 html {
