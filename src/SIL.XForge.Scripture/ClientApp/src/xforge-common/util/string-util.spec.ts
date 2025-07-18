@@ -1,4 +1,4 @@
-import { areStringArraysEqual, stripHtml } from './string-util';
+import { areStringArraysEqual, isWhitespace, stripHtml } from './string-util';
 
 describe('areStringArraysEqual', () => {
   it('should return true if two empty arrays are compared', () => {
@@ -73,5 +73,36 @@ describe('stripHtml', () => {
     expect(stripHtml('<style>body{color:red}</style>')).toBe('body{color:red}');
     expect(stripHtml('<iframe src="evil.html">')).toBe('');
     expect(stripHtml('<object data="evil.swf">')).toBe('');
+  });
+});
+
+describe('isWhitespace', () => {
+  it('returns true for empty string', () => {
+    expect(isWhitespace('')).toBe(true);
+  });
+
+  it('returns false for null or undefined', () => {
+    expect(isWhitespace(null as any)).toBe(false);
+    expect(isWhitespace(undefined as any)).toBe(false);
+  });
+
+  it('returns true for strings with only whitespace characters', () => {
+    expect(isWhitespace(' ')).toBe(true);
+    expect(isWhitespace('\n')).toBe(true);
+    expect(isWhitespace('\t')).toBe(true);
+    expect(isWhitespace(' \n\t ')).toBe(true);
+    expect(isWhitespace('   \n\t   ')).toBe(true);
+    expect(isWhitespace(' \r\n\t ')).toBe(true);
+    expect(isWhitespace(' \f ')).toBe(true); // Form feed
+    expect(isWhitespace(' \v ')).toBe(true); // Vertical tab
+    expect(isWhitespace(' \u00A0 ')).toBe(true); // Non-breaking space
+  });
+
+  it('returns false for non-whitespace strings', () => {
+    expect(isWhitespace('hello')).toBe(false);
+    expect(isWhitespace('"')).toBe(false);
+    expect(isWhitespace(' blah')).toBe(false);
+    expect(isWhitespace('blah ')).toBe(false);
+    expect(isWhitespace('\na\n')).toBe(false);
   });
 });

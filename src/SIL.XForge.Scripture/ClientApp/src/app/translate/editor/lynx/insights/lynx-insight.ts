@@ -66,7 +66,7 @@ export const EDITOR_INSIGHT_DEFAULTS = new InjectionToken<LynxInsightConfig>('ED
     sortOrder: 'severity',
     queryParamName: 'insight',
     actionOverlayApplyPrimaryActionChord: { altKey: true, shiftKey: true, key: 'Enter' },
-    panelLinkTextGoalLength: 30,
+    panelLinkTextGoalLength: 25,
     panelOptimizationThreshold: 100
   })
 });
