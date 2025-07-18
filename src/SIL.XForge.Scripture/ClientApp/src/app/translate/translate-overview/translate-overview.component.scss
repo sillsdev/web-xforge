@@ -1,10 +1,15 @@
+@use 'sass:color';
 @use '@angular/material' as mat;
 @import 'src/variables';
 
 @mixin color($theme) {
   $is-dark: mat.get-theme-type($theme) == dark;
 
-  --sf-list-item-hover-color: #{if($is-dark, mat.get-theme-color($theme, neutral, 17), lighten($sf_grey, 75%))};
+  --sf-list-item-hover-color: #{if(
+      $is-dark,
+      mat.get-theme-color($theme, neutral, 17),
+      color.scale($sf_grey, $lightness: 75%)
+    )};
 }
 
 @mixin theme($theme) {
