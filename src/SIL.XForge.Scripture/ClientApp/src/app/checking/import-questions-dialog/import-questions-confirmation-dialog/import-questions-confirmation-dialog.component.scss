@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 .mat-mdc-dialog-content {
   max-width: 560px;
   display: flex;
@@ -10,7 +12,7 @@
 }
 
 .mat-mdc-header-cell {
-  background-color: darken(#fff, 10%);
+  background-color: color.scale(#fff, $lightness: -10%);
 }
 
 .mat-mdc-dialog-actions {
