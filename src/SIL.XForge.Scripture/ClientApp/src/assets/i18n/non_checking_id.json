@@ -272,6 +272,7 @@
     "draft_faulted": "Gagal",
     "draft_pending": "Tertunda",
     "draft_unknown": "tidak diketahui",
+    "error_details": "Please include these details when contacting support for assistance",
     "format_draft": "Format draft",
     "hide_model_training_configuration": "Menyembunyikan konfigurasi pelatihan model",
     "show_model_training_configuration": "Menampilkan konfigurasi pelatihan model",
