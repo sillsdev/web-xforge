@@ -64,3 +64,7 @@ This repository contains three interconnected applications:
 
 - All code that you write should be able to pass eslint linting tests for TypeScript, or csharpier for C#.
 - Don't merely write code for the local context, but make changes that are good overall considering the architecture of the application and structure of the files and classes.
+
+# Running commands
+
+- If you run frontend tests, run them in the `src/SIL.XForge.Scripture/ClientApp` directory with a command such as `npm run test:headless -- --watch=false --include '**/text.component.spec.ts' --include '**/settings.component.spec.ts'`
