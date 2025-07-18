@@ -1,5 +1,5 @@
 @use 'sass:color';
-@import 'src/variables';
+@use 'src/variables' as *;
 
 $questionReadBGColor: #fcfdff;
 $questionReadTextColor: #555;
