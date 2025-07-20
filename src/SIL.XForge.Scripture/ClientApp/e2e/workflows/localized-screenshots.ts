@@ -205,8 +205,9 @@ export async function localizedScreenshots(
     await screenshot(page, { ...context, pageName: 'configure_sources_button', locale });
   });
 
-  // Make the viewport taller to fit the "confirm languages" area
-  await page.setViewportSize({ width: 1280, height: 900 });
+  const originalViewportSize = await page.viewportSize();
+  // Increase the height of the viewport to ensure all elements are visible
+  await page.setViewportSize({ width: originalViewportSize.width, height: 1200 });
 
   await page.locator('[data-test-id="configure-button"]').click();
   await forEachLocale(async locale => {
@@ -317,6 +318,9 @@ export async function localizedScreenshots(
       { margin: 8 }
     );
   });
+
+  // Reset the viewport size to the original size full page screenshots aren't excessively tall
+  await page.setViewportSize(originalViewportSize);
 
   // Generate the draft
 
