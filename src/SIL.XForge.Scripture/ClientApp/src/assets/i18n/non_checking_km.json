@@ -272,6 +272,7 @@
     "draft_faulted": "Failed",
     "draft_pending": "Pending",
     "draft_unknown": "Unknown",
+    "error_details": "Please include these details when contacting support for assistance",
     "format_draft": "Format draft",
     "hide_model_training_configuration": "Hide model training configuration",
     "show_model_training_configuration": "Show model training configuration",

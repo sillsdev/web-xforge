@@ -272,6 +272,7 @@
     "draft_faulted": "Échoué",
     "draft_pending": "En attente",
     "draft_unknown": "Inconnu",
+    "error_details": "Please include these details when contacting support for assistance",
     "format_draft": "Formater l'ébauche",
     "hide_model_training_configuration": "Masquer la configuration de l'apprentissage du modèle",
     "show_model_training_configuration": "Afficher la configuration de l'entraînement au modèle",

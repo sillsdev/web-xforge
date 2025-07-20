@@ -272,6 +272,7 @@
     "draft_faulted": "Failed",
     "draft_pending": "Pending",
     "draft_unknown": "desconhecido",
+    "error_details": "Please include these details when contacting support for assistance",
     "format_draft": "Format draft",
     "hide_model_training_configuration": "Hide model training configuration",
     "show_model_training_configuration": "Show model training configuration",
@@ -390,16 +391,16 @@
     "offline_notice": "Editor history is not available offline."
   },
   "editor_tabs_menu": {
-    "biblical_terms_menu_item": "Biblical Terms",
-    "history_menu_item": "History",
+    "biblical_terms_menu_item": "Termos bíblicos",
+    "history_menu_item": "Histórico",
     "draft_menu_item": "Generated draft",
-    "project_resource_menu_item": "Resource..."
+    "project_resource_menu_item": "Recurso..."
   },
   "editor_tab_factory": {
-    "default_biblical_terms_tab_header": "Biblical Terms",
-    "default_history_tab_header": "History",
-    "default_project_tab_header": "Project",
-    "default_resource_tab_header": "Resource",
+    "default_biblical_terms_tab_header": "Termos bíblicos",
+    "default_history_tab_header": "Histórico",
+    "default_project_tab_header": "Projeto",
+    "default_resource_tab_header": "Recurso",
     "draft_tab_header": "Generated draft"
   },
   "event_metric_dialog": {
@@ -534,7 +535,7 @@
     "filter_menu_sort_appearance": "Appearance in text",
     "scope_chapter": "Chapter",
     "scope_book": "Livro",
-    "scope_project": "Project"
+    "scope_project": "Projeto"
   },
   "multi_viewer": {
     "other_viewers": "{{ count }} outros observadores"
