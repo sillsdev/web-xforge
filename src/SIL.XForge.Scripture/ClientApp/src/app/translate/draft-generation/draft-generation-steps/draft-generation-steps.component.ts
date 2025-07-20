@@ -1,6 +1,6 @@
 import { Component, DestroyRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
-import { translate, TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
@@ -439,7 +439,7 @@ export class DraftGenerationStepsComponent implements OnInit {
       this.stepper.next();
     } else {
       if (!this.onlineStatusService.isOnline) {
-        this.noticeService.show(translate('draft_generation.offline_message'));
+        this.noticeService.show(this.i18n.translateStatic('draft_generation.offline_message'));
         return;
       }
 

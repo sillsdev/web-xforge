@@ -12,11 +12,12 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { translate, TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule } from '@ngneat/transloco';
 import { interval, Observable, Subscription, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import {
   BrowserIssue,
@@ -90,7 +91,8 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly dialogService: DialogService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: DestroyRef,
+    private readonly i18n: I18nService
   ) {
     this.showCountdown = data?.countdown ?? false;
     this._requireSave = data?.requireSave ?? false;
@@ -232,9 +234,9 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     this.audio = { status: 'denied' };
 
     if (error.code === DOMException.NOT_FOUND_ERR) {
-      this.noticeService.show(translate('checking_audio_recorder.mic_not_found'));
+      this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_not_found'));
     } else {
-      this.noticeService.show(translate('checking_audio_recorder.mic_access_denied'));
+      this.noticeService.show(this.i18n.translateStatic('checking_audio_recorder.mic_access_denied'));
     }
   }
 

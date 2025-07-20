@@ -8,6 +8,7 @@ import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/mode
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Observable } from 'rxjs';
 import { filter, share } from 'rxjs/operators';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -16,6 +17,7 @@ import { HttpClient } from '../machine-api/http-client';
 import { RemoteTranslationEngine } from '../machine-api/remote-translation-engine';
 import { EDITED_SEGMENTS, EditedSegmentData } from './models/edited-segment-data';
 import { SFProjectService } from './sf-project.service';
+
 /**
  * A service to access features for translation suggestions and training the translation engine
  */
@@ -38,7 +40,8 @@ export class TranslationEngineService {
     private readonly machineHttp: HttpClient,
     private readonly noticeService: NoticeService,
     private readonly router: Router,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private readonly i18n: I18nService
   ) {
     this.onlineStatus$ = this.onlineStatusService.onlineStatus$.pipe(
       filter(online => online),
@@ -57,7 +60,7 @@ export class TranslationEngineService {
     if (!this.translationEngines.has(projectId)) {
       this.translationEngines.set(
         projectId,
-        new RemoteTranslationEngine(projectId, this.machineHttp, this.noticeService, this.router)
+        new RemoteTranslationEngine(projectId, this.machineHttp, this.noticeService, this.router, this.i18n)
       );
     }
     return this.translationEngines.get(projectId)!;

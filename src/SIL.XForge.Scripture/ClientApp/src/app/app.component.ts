@@ -4,7 +4,6 @@ import { Component, DestroyRef, Inject, OnDestroy, OnInit } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
-import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -356,12 +355,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (this.currentUser == null) {
       return;
     } else if (!this.isAppOnline) {
-      this.noticeService.show(translate('app.action_not_available_offline'));
+      this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
     } else {
       this.authService
         .changePassword(this.currentUser.email)
         .then(() => {
-          this.noticeService.show(translate('app.password_reset_email_sent'));
+          this.noticeService.show(this.i18n.translateStatic('app.password_reset_email_sent'));
         })
         .catch(() => {
           this.dialogService.message('app.cannot_change_password');
@@ -373,7 +372,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (this.isAppOnline) {
       this.userService.editDisplayName(false);
     } else {
-      this.noticeService.show(translate('app.action_not_available_offline'));
+      this.noticeService.show(this.i18n.translateStatic('app.action_not_available_offline'));
     }
   }
 

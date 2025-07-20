@@ -1,5 +1,4 @@
 import { Router } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import {
   createRange,
   InteractiveTranslationEngine,
@@ -13,6 +12,7 @@ import {
 } from '@sillsdev/machine';
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, expand, filter, map, mergeMap, share, startWith, takeWhile } from 'rxjs/operators';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { AlignedWordPairDto } from './aligned-word-pair-dto';
 import { BuildDto } from './build-dto';
@@ -35,7 +35,8 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
     public readonly projectId: string,
     private readonly httpClient: HttpClient,
     private readonly noticeService: NoticeService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly i18n: I18nService
   ) {}
 
   async translate(segment: string): Promise<TranslationResult> {
@@ -97,14 +98,14 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
     } catch (err: any) {
       if (err.status === 403 || err.status === 404 || err.status === 409) {
         this.noticeService.showError(
-          translate('error_messages.suggestion_engine_requires_retrain'),
-          translate('error_messages.go_to_retrain'),
+          this.i18n.translateStatic('error_messages.suggestion_engine_requires_retrain'),
+          this.i18n.translateStatic('error_messages.go_to_retrain'),
           () => {
             this.router.navigate(['projects', this.projectId, 'translate']);
           }
         );
       } else {
-        this.noticeService.showError(translate('error_messages.failed_to_retrieve_suggestions'));
+        this.noticeService.showError(this.i18n.translateStatic('error_messages.failed_to_retrieve_suggestions'));
       }
     }
 

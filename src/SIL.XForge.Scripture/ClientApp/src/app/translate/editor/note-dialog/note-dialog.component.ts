@@ -1,7 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { sortBy } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -166,7 +165,7 @@ export class NoteDialogComponent implements OnInit {
   }
 
   get verseRefDisplay(): string {
-    if (this.isBiblicalTermNote) return translate('note_dialog.biblical_term');
+    if (this.isBiblicalTermNote) return this.i18n.translateStatic('note_dialog.biblical_term');
     const verseRef: VerseRef | undefined = this.verseRef;
     return verseRef == null ? '' : this.i18n.localizeReference(verseRef);
   }
@@ -317,14 +316,14 @@ export class NoteDialogComponent implements OnInit {
     if (assignedNoteUserRef == null) return undefined;
     switch (assignedNoteUserRef) {
       case AssignedUsers.TeamUser:
-        return translate('note_dialog.team');
+        return this.i18n.translateStatic('note_dialog.team');
       case AssignedUsers.Unspecified:
-        return translate('note_dialog.unassigned');
+        return this.i18n.translateStatic('note_dialog.unassigned');
     }
     const paratextUser: ParatextUserProfile | undefined = this.paratextProjectUsers?.find(
       u => u.opaqueUserId === assignedNoteUserRef
     );
-    return paratextUser?.username ?? translate('note_dialog.paratext_user');
+    return paratextUser?.username ?? this.i18n.translateStatic('note_dialog.paratext_user');
   }
 
   close(): void {
@@ -421,12 +420,12 @@ export class NoteDialogComponent implements OnInit {
   private noteTitle(note: Note): string {
     switch (note.status) {
       case NoteStatus.Todo:
-        return translate('note_dialog.status_to_do');
+        return this.i18n.translateStatic('note_dialog.status_to_do');
       case NoteStatus.Done:
       case NoteStatus.Resolved:
-        return translate('note_dialog.status_resolved');
+        return this.i18n.translateStatic('note_dialog.status_resolved');
     }
-    return note.reattached != null ? translate('note_dialog.note_reattached') : '';
+    return note.reattached != null ? this.i18n.translateStatic('note_dialog.note_reattached') : '';
   }
 
   /**
@@ -460,17 +459,17 @@ export class NoteDialogComponent implements OnInit {
       syncUser.sfUserId === ownerDoc.id // The note is not editable, but the sync user is the owner, so use the SF owner
     ) {
       return this.userService.currentUserId === ownerDoc.id
-        ? translate('checking.me') // "Me", i.e. the current user
+        ? this.i18n.translateStatic('checking.me') // "Me", i.e. the current user
         : (ownerDoc.data?.displayName ?? // Another user
             syncUser?.username ?? // Fallback to the sync user
-            translate('checking.unknown_author')); // An "unknown author" (there is no sync user)
+            this.i18n.translateStatic('checking.unknown_author')); // An "unknown author" (there is no sync user)
     }
 
     // The note was created in Paratext, so see if we have a profile for the sync user
     const syncUserProfile: UserProfileDoc | undefined =
       syncUser.sfUserId == null ? undefined : await this.userService.getProfile(syncUser.sfUserId);
     return this.userService.currentUserId === syncUserProfile?.id
-      ? translate('checking.me') // "Me", i.e. the current user
+      ? this.i18n.translateStatic('checking.me') // "Me", i.e. the current user
       : (syncUserProfile?.data?.displayName ?? syncUser.username); // Another user, or fallback to the sync user
   }
 
@@ -507,7 +506,7 @@ export class NoteDialogComponent implements OnInit {
       const verseStr: string = reattachedParts[0];
       const vref: VerseRef = new VerseRef(verseStr);
       const verseRef: string = this.i18n.localizeReference(vref);
-      const reattached: string = translate('note_dialog.reattached');
+      const reattached: string = this.i18n.translateStatic('note_dialog.reattached');
       return `${verseRef} ${reattached}`;
     } catch {
       // Ignore any errors parsing the re-attached verse
