@@ -1700,7 +1700,7 @@ describe('EditorComponent', () => {
       const range: Range = env.component.target!.getSegmentRange('verse_1_3')!;
       const contents = env.targetEditor.getContents(range.index, range.length);
       // The footnote starts after a note thread in the segment
-      expect(contents.ops![1].insert).toEqual({ note: { caller: '*' } });
+      expect(contents.ops![1].insert).toEqual({ note: { caller: '*', style: 'f' } });
       const note2Position = env.getNoteThreadEditorPosition('dataid02');
       expect(range.index).toEqual(note2Position);
       const noteThreadDoc3 = env.getNoteThreadDoc('project01', 'dataid03');
@@ -5185,6 +5185,16 @@ class TestEnvironment {
   }
 
   addTextDoc(id: TextDocId, textType: TextType = 'target', corrupt: boolean = false, tooLong: boolean = false): void {
+    /* USFM:
+    \c 1
+    \p
+    \v 1 target: chapter 1, verse 1.
+    \v 2
+    \v 3 \f * \f* target: chapter 1, verse 3.
+    \v 4 target: chapter 1, verse 4.
+    \p Paragraph break.
+    \v 5 target: chapter 1,
+    */
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ blank: true }, { segment: 'p_1' });
@@ -5200,7 +5210,7 @@ class TestEnvironment {
         break;
     }
     delta.insert({ verse: { number: '3', style: 'v' } });
-    delta.insert({ note: { caller: '*' } });
+    delta.insert({ note: { caller: '*', style: 'f' } }, { segment: `verse_${id.chapterNum}_3` });
     delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 3.`, { segment: `verse_${id.chapterNum}_3` });
     delta.insert({ verse: { number: '4', style: 'v' } });
     delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 4.`, { segment: `verse_${id.chapterNum}_4` });
