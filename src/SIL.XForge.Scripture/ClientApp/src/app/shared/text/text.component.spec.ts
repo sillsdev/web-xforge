@@ -264,14 +264,22 @@ describe('TextComponent', () => {
     env.id = new TextDocId('project01', 40, 1);
     env.waitForEditor();
     expect(env.component.editor?.getText()).withContext('setup').toContain('chapter 1, verse 6.');
-    expect(env.component.editor?.getContents().ops?.length).withContext('setup').toEqual(25);
+    expect(env.component.editor?.getContents().ops?.length).withContext('setup').toEqual(27);
 
-    env.component.editor?.updateContents(new Delta().retain(109).retain(31, { para: null }));
+    // Check the update's validity
+    const updateDelta = new Delta().retain(109).retain(31, { para: null });
+    const preUpdateOps = env.component.editor?.getContents().ops!;
+    expect(preUpdateOps[16].attributes).not.toBeUndefined();
+    const postUpdateOps = new Delta(preUpdateOps).compose(updateDelta).ops;
+    expect(postUpdateOps[16].attributes).toBeUndefined();
+
+    // Perform the update
+    env.component.editor?.updateContents(updateDelta);
     flush();
 
     const ops = env.component.editor?.getContents().ops;
     if (ops != null) {
-      const lastPara = ops[18];
+      const lastPara = ops[16];
       expect(lastPara.attributes).not.toBeNull();
     } else {
       fail('should not get here if test is working properly!');

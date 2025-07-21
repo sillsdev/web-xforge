@@ -5,6 +5,22 @@ import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import { TextDocId } from '../core/models/text-doc';
 import { RIGHT_TO_LEFT_MARK } from './utils';
 
+/* USFM:
+\s Title for chapter 1
+\c 1
+\p
+\v 1 target: chapter 1, verse 1.
+\v 2
+\v 3 target: chapter 1, verse 3.
+\v 4 target: chapter 1, verse 4.
+\p
+\v 5 target: chapter 1,
+\p
+\v 6 target: chapter 1, verse 6.
+\p
+\v 7 target: chapter 1, verse 7.
+\p target: chapter 1, verse 7 - 2nd paragraph.
+*/
 export function getTextDoc(id: TextDocId): TextData {
   const delta = new Delta();
   delta.insert(`Title for chapter ${id.chapterNum}`, { segment: 's_1' });
@@ -28,14 +44,30 @@ export function getTextDoc(id: TextDocId): TextData {
   delta.insert({ verse: { number: '6', style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 6. `, { segment: `verse_${id.chapterNum}_6` });
   delta.insert('\n', { para: { style: 'p' } });
+  delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_6/p_1` });
+  delta.insert({ verse: { number: '7', style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 7.`, { segment: `verse_${id.chapterNum}_7` });
   delta.insert('\n', { para: { style: 'p' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 7 - 2nd paragraph.`, {
     segment: `verse_${id.chapterNum}_7/p_1`
   });
+  delta.insert('\n', { para: { style: 'p' } });
   return delta;
 }
 
+/* USFM
+\s Title for chapter 1
+\c 1
+\p
+\v 1 target: chapter 1, verse 1.
+\v 2-3 target: chapter 1, verse 2-3.
+\s Text in section heading
+\p
+\v 4 target: chapter 1, verse 4.
+\v 5,7 target: chapter 1, verse 5,7.
+\v 6a target: chapter 1, verse 6a.
+\v 6b target: chapter 1, verse 6b.
+*/
 export function getCombinedVerseTextDoc(id: TextDocId, rtl: boolean = false): TextData {
   const verse2Str: string = rtl ? `2${RIGHT_TO_LEFT_MARK}-3` : '2-3';
   const verse5Str: string = rtl ? `5${RIGHT_TO_LEFT_MARK},7` : '5,7';
@@ -68,6 +100,16 @@ export function getCombinedVerseTextDoc(id: TextDocId, rtl: boolean = false): Te
   return delta;
 }
 
+/* USFM:
+\s Title for chapter 1
+\c 1
+\q
+\v 1 Poetry first line
+\q Poetry second line
+\b
+\q Poetry third line
+\q Poetry fourth line
+*/
 export function getPoetryVerseTextDoc(id: TextDocId): TextData {
   const delta = new Delta();
   delta.insert(`Title for chapter ${id.chapterNum}`, { segment: 's_1' });
@@ -79,14 +121,26 @@ export function getPoetryVerseTextDoc(id: TextDocId): TextData {
   delta.insert('\n', { para: { style: 'q' } });
   delta.insert('Poetry second line', { segment: `verse_${id.chapterNum}_1/q_1` });
   delta.insert('\n', { para: { style: 'q' } });
+  delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_1/b_2` });
   delta.insert('\n', { para: { style: 'b' } });
-  delta.insert('Poetry third line', { segment: `verse_${id.chapterNum}_1/q_2` });
+  delta.insert('Poetry third line', { segment: `verse_${id.chapterNum}_1/q_3` });
   delta.insert('\n', { para: { style: 'q' } });
-  delta.insert('Poetry fourth line.', { segment: `verse_${id.chapterNum}_1/q_3` });
+  delta.insert('Poetry fourth line.', { segment: `verse_${id.chapterNum}_1/q_4` });
   delta.insert('\n', { para: { style: 'q' } });
   return delta;
 }
 
+/* USFM:
+\s
+\c 1
+\s
+\p
+\v 1
+\v 2
+\s
+\p
+\v 3
+*/
 export function getEmptyChapterDoc(id: TextDocId): TextData {
   const delta = new Delta();
   delta.insert({ blank: true }, { segment: 's_1' });
