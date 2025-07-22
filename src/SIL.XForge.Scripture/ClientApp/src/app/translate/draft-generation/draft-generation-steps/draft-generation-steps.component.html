@@ -256,7 +256,7 @@
           @if (this.trainingDataFiles.length > 0) {
             <table mat-table [dataSource]="this.trainingDataFiles">
               <ng-container matColumnDef="file">
-                <th mat-header-cell *matHeaderCellDef>Training files</th>
+                <th mat-header-cell *matHeaderCellDef>{{ t("training_files") }}</th>
                 <td mat-cell class="filename-cell" *matCellDef="let element">
                   <div class="filename">{{ element.title }}</div>
                 </td>
