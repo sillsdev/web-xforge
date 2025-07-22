@@ -1,6 +1,9 @@
+import { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -22,6 +25,7 @@ import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './dra
 describe('DraftGenerationStepsComponent', () => {
   let component: DraftGenerationStepsComponent;
   let fixture: ComponentFixture<DraftGenerationStepsComponent>;
+  let loader: HarnessLoader;
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockFeatureFlagService = mock(FeatureFlagService);
@@ -638,19 +642,37 @@ describe('DraftGenerationStepsComponent', () => {
     };
 
     beforeEach(fakeAsync(() => {
+      const mockTargetProjectDoc = {
+        id: 'project01',
+        data: createTestProjectProfile({
+          ...config.trainingTargets[0],
+          translateConfig: {
+            draftConfig: {
+              fastTraining: true,
+              useEcho: true
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
-      when(mockActivatedProjectService.projectDoc$).thenReturn(of({} as any));
-      when(mockActivatedProjectService.changes$).thenReturn(of({} as any));
-      when(mockActivatedProjectService.projectDoc).thenReturn({} as any);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      when(mockActivatedProjectService.changes$).thenReturn(of(mockTargetProjectDoc));
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(true));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      loader = TestbedHarnessEnvironment.loader(fixture);
       component = fixture.componentInstance;
       fixture.detectChanges();
       tick();
     }));
 
-    it('should emit the fast training value if checked', () => {
+    it('should set fast training and echo engine correctly', fakeAsync(() => {
+      expect(component.fastTraining).toBe(true);
+      expect(component.useEcho).toBe(true);
+    }));
+
+    it('should emit the fast training value if checked', async () => {
       component.onTranslateBookSelect([2], config.draftingSources[0]);
       component.onTranslatedBookSelect([3, 9, 10]);
       component.onSourceTrainingBookSelect([3, 9, 10], config.trainingSources[0]);
@@ -663,9 +685,12 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
 
-      // Tick the checkbox
-      const fastTrainingCheckbox = fixture.nativeElement.querySelector('mat-checkbox.fast-training input');
-      fastTrainingCheckbox.click();
+      // Tick the fast training checkbox
+      const fastTrainingHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.fast-training' }));
+      await fastTrainingHarness.check();
+
+      const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
+      await echoHarness.uncheck();
 
       // Click next on the final step to generate the draft
       fixture.detectChanges();
@@ -684,7 +709,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(generateDraftButton['disabled']).toBe(true);
     });
 
-    it('should emit the use echo value if checked', () => {
+    it('should emit the use echo value if checked', async () => {
       component.onTranslateBookSelect([2], config.draftingSources[0]);
       component.onTranslatedBookSelect([3, 9, 10]);
       component.onSourceTrainingBookSelect([3, 9, 10], config.trainingSources[0]);
@@ -697,9 +722,12 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
       component.tryAdvanceStep();
 
-      // Tick the checkbox
-      const useEchoCheckbox = fixture.nativeElement.querySelector('mat-checkbox.use-echo input');
-      useEchoCheckbox.click();
+      // Tick the echo checkbox
+      const fastTrainingHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.fast-training' }));
+      await fastTrainingHarness.uncheck();
+
+      const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
+      await echoHarness.check();
 
       // Click next on the final step to generate the draft
       fixture.detectChanges();
@@ -776,6 +804,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;

@@ -302,6 +302,12 @@ export class SFProjectService extends ProjectService<SFProject> {
                   additionalProperties: false
                 }
               },
+              fastTraining: {
+                bsonType: 'bool'
+              },
+              useEcho: {
+                bsonType: 'bool'
+              },
               servalConfig: {
                 bsonType: 'string'
               },
