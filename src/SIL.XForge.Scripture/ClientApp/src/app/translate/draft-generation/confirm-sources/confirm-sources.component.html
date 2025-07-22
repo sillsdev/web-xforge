@@ -32,7 +32,7 @@
     </div>
     @if (this.trainingDataFiles.length > 0) {
       <div class="training-files">
-        <h3>Training files</h3>
+        <h3>{{ t("training_files") }}</h3>
         <div class="files-list">
           @for (file of trainingDataFiles; track file) {
             <span class="project-name">{{ file.title }}</span>
