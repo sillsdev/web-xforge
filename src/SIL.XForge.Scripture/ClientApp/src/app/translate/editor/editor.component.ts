@@ -1901,6 +1901,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.translator == null) {
       return;
     }
+
+    // If we have no prefix, ensure it is present, otherwise the segment will not be translated
+    if (this.target != null && this.translator.prefixWordRanges.length === 0) {
+      const text = this.target.getSegmentText(segment.ref);
+      this.translator?.setPrefix(text);
+    }
+
     await this.translator.approve(true);
     segment.acceptChanges();
     this.console.log(

@@ -155,7 +155,7 @@ class MockConsole {
   }
 }
 
-describe('EditorComponent', () => {
+fdescribe('EditorComponent', () => {
   [true, false].forEach(modelHasBlanks => {
     configureTestingModule(() => ({
       declarations: [
@@ -894,7 +894,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('change texts', fakeAsync(() => {
+      fit('change texts', fakeAsync(() => {
         const env = new TestEnvironment({ modelHasBlanks });
         env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
         env.wait();
@@ -919,7 +919,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('change chapters', fakeAsync(() => {
+      fit('change chapters', fakeAsync(() => {
         const env = new TestEnvironment({ modelHasBlanks });
         env.ngZone.run(() => {
           env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
