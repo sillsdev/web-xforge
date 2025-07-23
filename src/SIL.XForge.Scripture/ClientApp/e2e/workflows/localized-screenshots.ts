@@ -272,6 +272,10 @@ export async function localizedScreenshots(
   // FIXME(application-bug) This sometimes fails when "You have no books available for drafting." is shown
   await expect(page.getByRole('heading', { name: 'Review draft setup' })).toBeVisible();
   await forEachLocale(async locale => {
+    await user.hover(
+      page.locator('app-draft-generation-steps .button-strip').getByRole('button').last(),
+      defaultArrowLocation
+    );
     await screenshotElements(
       page,
       [page.locator('app-draft-generation')],
@@ -334,6 +338,56 @@ export async function localizedScreenshots(
   await navLocator(page, 'settings').click();
   await page.getByRole('combobox', { name: 'Source text (optional)' }).fill('ntv');
   await page.getByRole('option', { name: 'NTV - ' }).click();
+
+  // While we're on the settings page, take screenshots of settings
+  const settingsSectionTitles = await page.locator('app-settings mat-card-title').allInnerTexts();
+
+  // Community Checking settings
+  const indexOfCommunityCheckingSettings = settingsSectionTitles.indexOf('Community Checking');
+  const communityCheckingSettingsLocator = page.locator('app-settings mat-card').nth(indexOfCommunityCheckingSettings);
+  await forEachLocale(async locale => {
+    await communityCheckingSettingsLocator.evaluate(element => element.scrollIntoView({ block: 'center' }));
+    await user.hover(page.locator('#checkbox-community-checking'), defaultArrowLocation);
+    await screenshotElements(
+      page,
+      [communityCheckingSettingsLocator],
+      { ...context, pageName: 'settings_community_checking', locale },
+      { margin: 8 }
+    );
+    await user.hover(page.locator('#checkbox-see-others-responses'), defaultArrowLocation);
+    await screenshotElements(
+      page,
+      [communityCheckingSettingsLocator],
+      { ...context, pageName: 'checking_enable_see_others_responses', locale },
+      { margin: 8 }
+    );
+  });
+
+  // Sharing settings
+  const indexOfSharingSettings = settingsSectionTitles.indexOf('Sharing Settings');
+  const sharingSettingsLocator = page.locator('app-settings mat-card').nth(indexOfSharingSettings);
+  await page.locator('#checkbox-community-checkers-share').getByRole('checkbox').check();
+  await forEachLocale(async locale => {
+    await sharingSettingsLocator.evaluate(element => element.scrollIntoView({ block: 'center' }));
+    await user.hover(page.locator('#checkbox-community-checkers-share'), { ...defaultArrowLocation, y: 0.4 });
+    await screenshotElements(
+      page,
+      [sharingSettingsLocator],
+      { ...context, pageName: 'settings_sharing', locale },
+      { margin: 8 }
+    );
+  });
+
+  // Go to users page
+  await navLocator(page, 'users').click();
+  const sharingLocator = page.locator('app-share-control');
+  await forEachLocale(async locale => {
+    await sharingLocator.evaluate(element => element.scrollIntoView({ block: 'center' }));
+    await user.hover(sharingLocator.getByRole('button').last(), defaultArrowLocation);
+    await screenshotElements(page, [sharingLocator], { ...context, pageName: 'invite_users', locale }, { margin: 8 });
+  });
+
+  // Wait for sync to finish
   await page.waitForSelector('#sync-icon:not(.sync-in-progress)', { timeout: E2E_SYNC_DEFAULT_TIMEOUT });
 
   // Go back to the draft generation page
