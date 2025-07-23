@@ -1,20 +1,40 @@
-use('xforge')
+use("xforge");
 
 // This query prints the time when each project in the database was created, in chronological order.
 // This is useful for graphing the number of projects over time.
 // Excludes DBL resources and test/demo projects as much as possible.
 
-db.sf_projects.find({
-  paratextId: /^.{40}$/,
-  name: { $not: /demo|training|test/i }
-}, {
-  _id: 0,
-  "_m.ctime": 1
-})
+// A list of test projects can be found by running the following command:
+// grep '<Visibility>Test</Visibility>' /var/lib/scriptureforge/sync/**/target/Settings.xml | cut -d'/' -f6
+
+const ignoredIds = ``.split("\n");
+
+db.sf_projects
+  .aggregate([
+    {
+      $match: {
+        paratextId: { $not: { $in: ignoredIds } }
+      }
+    },
+    {
+      $match: {
+        paratextId: /^.{40}$/,
+        name: { $not: /demo|training|test/i }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        "_m.ctime": 1
+      }
+    },
+    {
+      $sort: { "_m.ctime": 1 }
+    }
+  ])
   .toArray()
-  .sort((a, b) => a._m.ctime - b._m.ctime)
   .map(
     // Strip off the Z from the end of the date string so Google Docs will recognize it as a date
     p => new Date(p._m.ctime).toISOString().slice(0, -1)
   )
-  .join('\n')
+  .join("\n");
