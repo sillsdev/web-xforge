@@ -849,8 +849,8 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
       if (segment.isInitial) {
         attrs.initial = true;
       }
-      // TODO: Insert into the embed?
       delta.insert({ blank: false }, attrs);
+      segment.containsBlank = true;
       fixDelta = fixDelta.compose(delta);
       fixOffset++;
     } else if (segment.containsBlank && segment.length - segment.notesCount > 1) {
@@ -973,8 +973,9 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     let curRef = '';
     const segmentsWithContent: string[] = [];
     const adjustedDelta = new Delta();
-    for (let i = 0; i < modelDelta.ops.length; i++) {
-      const op: DeltaOperation = cloneDeep(modelDelta.ops[i]);
+    const ops = cloneDeep(modelDelta.ops);
+    for (let i = 0; i < ops.length; i++) {
+      const op: DeltaOperation = cloneDeep(ops[i]);
       let newCurRef = '';
 
       // Split two or more \n characters into multiple ops we will iterate over
@@ -988,7 +989,7 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
           attributes: op.attributes
         }));
 
-        modelDelta.ops.splice(i + 1, 0, ...extraOps);
+        ops.splice(i + 1, 0, ...extraOps);
       }
 
       if (op.insert === '\n' || op.attributes?.para != null || op.attributes?.book != null) {

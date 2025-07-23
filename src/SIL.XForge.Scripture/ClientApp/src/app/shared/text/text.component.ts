@@ -1574,7 +1574,9 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         if (range != null) {
           // setTimeout seems necessary to ensure that the editor is focused
           setTimeout(() => {
-            if (this._editor != null) {
+            // Get the range again so it is up-to-date with any inserted blanks
+            const range = this.viewModel.getSegmentRange(segmentRef);
+            if (this._editor != null && range != null) {
               this._editor.setSelection(end ? range.index + range.length : range.index, 0, 'user');
             }
           });

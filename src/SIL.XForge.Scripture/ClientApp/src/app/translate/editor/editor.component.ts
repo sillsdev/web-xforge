@@ -987,8 +987,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  async onSourceUpdated(textChange: boolean): Promise<void> {
-    if (!textChange) {
+  async onSourceUpdated(delta: Delta | undefined): Promise<void> {
+    // We do not count insertion of blank ops by the view model
+    if (
+      delta == null ||
+      (delta.ops?.some(op => (op.insert as any)?.blank === false) && delta.ops.some(op => op.retain != null))
+    ) {
       return;
     }
 
