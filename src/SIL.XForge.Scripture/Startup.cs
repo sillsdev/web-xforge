@@ -48,6 +48,8 @@ public class Startup
         "vendor.js.map",
         "main.js",
         "main.js.map",
+        "@vite",
+        "@fs",
         "manifest.json",
         "sockjs-node",
         "3rdpartylicenses.txt",
@@ -309,6 +311,9 @@ public class Startup
                             string npmScript = "start";
                             Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
                             spa.UseAngularCliServer(npmScript);
+                            // Note that dotnet will need to see and parse a line like
+                            // "open your browser on http://localhost:4200/ "
+                            // (https://stackoverflow.com/q/60189930).
                             break;
 
                         case SpaDevServerStartup.Listen:

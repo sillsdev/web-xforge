@@ -5,8 +5,7 @@
   "license": "MIT",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "start:no-progress": "ng serve --progress=false",
+    "start": "echo 'open your browser on http://localhost:4200/ '; ng serve",
     "start:no-reload": "ng serve --liveReload=false",
     "build": "ng build",
     "test": "ng test --source-map",
