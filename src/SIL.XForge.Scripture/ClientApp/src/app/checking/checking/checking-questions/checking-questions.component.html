@@ -1,8 +1,9 @@
 <ng-container *transloco="let t; read: 'checking_questions'">
   @if (hasQuestions) {
-    <mat-list>
+    <mat-action-list>
       @for (questionDoc of questionDocs; track questionDoc.id) {
-        <mat-list-item
+        <button
+          mat-list-item
           (click)="activateQuestion(questionDoc)"
           [ngClass]="{
             'question-read': hasUserReadQuestion(questionDoc),
@@ -25,16 +26,16 @@
               }
             </div>
           </div>
-        </mat-list-item>
+        </button>
       }
-    </mat-list>
+    </mat-action-list>
   }
   @if (!hasQuestions && haveQuestionsLoaded) {
     <div>
       <div class="no-questions-found">{{ t("no_questions_found") }}</div>
       @if (hasUnansweredQuestion) {
         <div class="next-question">
-          <a mat-flat-button (click)="activateFirstUnansweredQuestion()">{{ t("go_to") }}</a>
+          <button mat-flat-button (click)="activateFirstUnansweredQuestion()">{{ t("go_to") }}</button>
         </div>
       }
     </div>
