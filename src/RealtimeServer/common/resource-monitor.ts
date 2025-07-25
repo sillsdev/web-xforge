@@ -8,6 +8,11 @@ import v8 from 'v8';
 import vm from 'vm';
 import { ConnectSession } from './connect-session';
 
+function sizeof(obj: unknown): number {
+  if (obj == null) return 0;
+  return jsonSizeOf(obj);
+}
+
 /**
  * Defines some fields on the ShareDB Connection type in connection.js, to be used for measuring purposes.
  */
@@ -207,15 +212,12 @@ export class ResourceMonitor {
       // Just measure data items to avoid circular reference.
       collectionsDocsBytes: Object.values(conn.collections).reduce(
         (collectionsBytes, coll) =>
-          collectionsBytes + Object.values(coll).reduce((docsBytes, doc) => docsBytes + jsonSizeOf(doc.data), 0),
+          collectionsBytes + Object.values(coll).reduce((docsBytes, doc) => docsBytes + sizeof(doc.data), 0),
         0
       ),
       queriesCount: Object.keys(conn.queries).length,
       // Avoid circular reference.
-      queriesBytes: Object.values(conn.queries).reduce(
-        (totalBytes, query) => totalBytes + jsonSizeOf(query.results),
-        0
-      ),
+      queriesBytes: Object.values(conn.queries).reduce((totalBytes, query) => totalBytes + sizeof(query.results), 0),
       presencesCount: Object.keys(conn._presences).length,
       snapshotRequestsCount: Object.keys(conn._snapshotRequests).length
     };
@@ -224,10 +226,10 @@ export class ResourceMonitor {
 
   private reportOnAgent(agent: ShareDB.Agent): AgentInfo {
     const ag: AgentInternal = agent as unknown as AgentInternal;
-    // QueryEmitter has a circular reference and so we can not use jsonSizeOf. Substitute in a sum of the interesting
+    // QueryEmitter has a circular reference and so we can not use sizeof. Substitute in a sum of the interesting
     // field sizes.
     const subscribedQueriesBytes: number = Object.values(ag.subscribedQueries).reduce(
-      (sum, queryEmitter) => sum + jsonSizeOf(queryEmitter.query) + jsonSizeOf(queryEmitter.streams),
+      (sum, queryEmitter) => sum + sizeof(queryEmitter.query) + sizeof(queryEmitter.streams),
       0
     );
     const agentInfo: AgentInfo = {
@@ -237,9 +239,9 @@ export class ResourceMonitor {
       connectTime: ag.connectTime,
       connectSessionUserId: ag.connectSession?.userId,
       subscribedDocsCount: Object.keys(ag.subscribedDocs).length,
-      subscribedDocsBytes: jsonSizeOf(ag.subscribedDocs),
+      subscribedDocsBytes: sizeof(ag.subscribedDocs),
       subscribedPresencesCount: Object.keys(ag.subscribedPresences).length,
-      subscribedPresencesBytes: jsonSizeOf(ag.subscribedPresences),
+      subscribedPresencesBytes: sizeof(ag.subscribedPresences),
       subscribedQueriesCount: Object.keys(ag.subscribedQueries).length,
       subscribedQueriesBytes
     };
@@ -252,9 +254,9 @@ export class ResourceMonitor {
       timestamp: new Date().toISOString(),
       nextStreamId: ps.nextStreamId,
       streamsCount: ps.streamsCount,
-      streamsBytes: jsonSizeOf(ps.streams),
+      streamsBytes: sizeof(ps.streams),
       subscribedCount: Object.keys(ps.subscribed).length,
-      subscribedBytes: jsonSizeOf(ps.subscribed)
+      subscribedBytes: sizeof(ps.subscribed)
     };
     return pubsubInfo;
   }
