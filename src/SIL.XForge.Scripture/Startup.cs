@@ -50,24 +50,15 @@ public class Startup
         "main.js.map",
         "@vite",
         "@fs",
-        "manifest.json",
         "sockjs-node",
         "3rdpartylicenses.txt",
     ];
 
     // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
-    private static readonly HashSet<string> ProductionSpaGetRoutes =
-    [
-        "polyfills-es2015",
-        "polyfills-es5",
-        "runtime-es2015",
-        "runtime-es5",
-        "main-es2015",
-        "main-es5",
-        "styles",
-    ];
+    private static readonly HashSet<string> ProductionSpaGetRoutes = ["polyfills", "main", "chunk", "styles"];
     private static readonly HashSet<string> SpaGetRoutes =
     [
+        "manifest.json",
         "callback",
         "connect-project",
         "login",
@@ -348,7 +339,7 @@ public class Startup
             )
         )
         {
-            int periodIndex = path.IndexOf(".");
+            int periodIndex = path.IndexOf("-");
             prefix = prefix[..(periodIndex - 1)];
         }
 
