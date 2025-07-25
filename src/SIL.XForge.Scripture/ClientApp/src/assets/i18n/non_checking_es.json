@@ -111,6 +111,7 @@
     "references_heading": "Referencias ({{ referenceLanguage }})",
     "review_draft_setup": "Revisar la configuración del borrador",
     "targets_heading": "Proyecto de traducción ({{ targetLanguage }})",
+    "training_files": "Archivos de entrenamiento",
     "training_language_model": "Entrenamiento del modelo de idioma"
   },
   "connect_project": {
@@ -257,6 +258,7 @@
     "these_source_books_cannot_be_used_for_translating": "Los siguientes libros no pueden traducirse porque no se encuentran en el texto fuente de redacción ({{ draftingSourceProjectName }}).",
     "training_books_will_appear": "Los libros de formación aparecerán cuando selecciones los libros traducidos",
     "training_books": "Libros de formación",
+    "training_files": "Archivos de entrenamiento",
     "translated_book_selected_no_training_pair": "Algunos de los libros de formación que ha seleccionado no tienen libros de referencia correspondientes. Por favor, seleccione los libros de referencia correspondientes.",
     "translated_books": "Libros traducidos",
     "unusable_target_books": "¿No encuentras el libro que buscas? Asegúrate de que el libro se ha creado en Paratext y, a continuación, sincroniza tu proyecto.",
@@ -301,6 +303,7 @@
     "confirm_language_codes": "Por favor, confirme que los códigos de idioma son correctos antes de guardar.",
     "discard_changes_confirmation": "¿Está seguro de que desea salir de la página con cambios sin guardar?",
     "draft_source": "Fuente del borrador",
+    "failed_to_save_changes": "Error al guardar los cambios.",
     "generate_draft_from_language_model": "Generar borrador a partir del modelo de idioma",
     "language_code": "Código de idioma: ",
     "leave_and_discard": "Dejar y descartar cambios",
@@ -334,7 +337,6 @@
     "unknown_language_code": "desconocido"
   },
   "draft_usfm_format": {
-    "changes_have_been_saved": "Se han guardado los cambios",
     "cancel": "Cancelar",
     "connect_to_the_internet": "Conéctate a Internet para cambiar el formato USFM de tu borrador",
     "draft_format_description": "El borrador ha sido creado. Aquí hay algunas opciones de formato para el texto. Puede probar cada opción para ver la diferencia que hace.",
@@ -664,7 +666,7 @@
     "settings": "Configuración",
     "sharing_administrators": "Permitir a los administradores invitar a cualquier rol de invitado",
     "sharing_commenters": "Permitir que los comentaristas inviten a comentaristas",
-    "sharing_community_checkers": "Permitir que los inspectores comunitarios inviten a inspectores comunitarios",
+    "sharing_community_checkers": "Permitir que los revisores de la comunidad inviten a revisores de la comunidad",
     "sharing_description": "Cualquier persona invitada a estos roles de invitado puede unirse al proyecto en Scripture Forge sin tener una cuenta Paratext.",
     "sharing_paratext_members": "Miembros de Paratext",
     "sharing_scripture_forge_guests": "Invitados a Scripture Forge",
