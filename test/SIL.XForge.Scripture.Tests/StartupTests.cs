@@ -106,8 +106,9 @@ public class StartupTests
     [Test]
     public void IsSpaRoute_ProductionPath_IsRoute()
     {
+        // These are files like chunk-FO3Z2R2V.js, polyfills-DL4GMTU5.js, and main-4DFYH4AF.js.
         var env = new TestEnvironment(Environments.Production);
-        env.Context.Request.Path = new PathString("/styles.a2f070be0b37085d72ba.css");
+        env.Context.Request.Path = new PathString("/chunk-FO3Z2R2V.js");
 
         // SUT
         bool actual = env.Startup.IsSpaRoute(env.Context);
