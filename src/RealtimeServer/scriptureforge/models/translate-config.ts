@@ -71,6 +71,8 @@ export interface DraftConfig {
   lastSelectedTranslationBooks: number[];
   lastSelectedTranslationScriptureRange?: string;
   lastSelectedTranslationScriptureRanges?: ProjectScriptureRange[];
+  fastTraining?: boolean;
+  useEcho?: boolean;
   servalConfig?: string;
   usfmConfig?: DraftUsfmConfig;
 }

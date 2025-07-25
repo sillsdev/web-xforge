@@ -232,6 +232,13 @@ export class DraftGenerationStepsComponent implements OnInit {
             bookNum => !targetBooks.has(bookNum) && Canon.isCanonical(bookNum)
           );
 
+          // set developer settings
+          if (this.featureFlags.showDeveloperTools.enabled) {
+            this.fastTraining =
+              this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.fastTraining ?? false;
+            this.useEcho = this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.useEcho ?? false;
+          }
+
           this.hasLoaded = true;
         }
       );

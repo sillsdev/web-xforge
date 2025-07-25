@@ -17,6 +17,8 @@ public class DraftConfig
     public IList<int> LastSelectedTranslationBooks { get; set; } = [];
     public string? LastSelectedTranslationScriptureRange { get; set; }
     public IList<ProjectScriptureRange> LastSelectedTranslationScriptureRanges { get; set; } = [];
+    public bool? FastTraining { get; set; }
+    public bool? UseEcho { get; set; }
     public string? ServalConfig { get; set; }
     public DraftUsfmConfig? UsfmConfig { get; set; }
 }

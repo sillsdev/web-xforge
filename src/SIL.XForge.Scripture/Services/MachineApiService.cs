@@ -1329,6 +1329,8 @@ public class MachineApiService(
                 [.. buildConfig.TranslationScriptureRanges],
                 _listProjectScriptureRangeComparer
             );
+            op.Set(p => p.TranslateConfig.DraftConfig.FastTraining, buildConfig.FastTraining);
+            op.Set(p => p.TranslateConfig.DraftConfig.UseEcho, buildConfig.UseEcho);
             if (!projectDoc.Data.TranslateConfig.PreTranslate)
             {
                 op.Set(p => p.TranslateConfig.PreTranslate, true);

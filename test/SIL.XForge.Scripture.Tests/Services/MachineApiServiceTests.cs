@@ -3457,6 +3457,37 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_SavesEchoAndFastTraining()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        SFProject project = env.Projects.Get(Project02);
+        Assert.IsNull(project.TranslateConfig.DraftConfig.FastTraining);
+        Assert.IsNull(project.TranslateConfig.DraftConfig.UseEcho);
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig
+            {
+                ProjectId = Project02,
+                FastTraining = true,
+                UseEcho = true,
+            },
+            CancellationToken.None
+        );
+
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+
+        project = env.Projects.Get(Project02);
+        Assert.IsTrue(project.TranslateConfig.DraftConfig.FastTraining);
+        Assert.IsTrue(project.TranslateConfig.DraftConfig.UseEcho);
+    }
+
+    [Test]
     public async Task StartPreTranslationBuildAsync_OnlySyncsEachProjectOnce()
     {
         // Set up test environment
