@@ -305,14 +305,15 @@ export class DraftGenerationStepsComponent implements OnInit {
     const contiguousGroups: TrainingGroup[] = [];
     for (const projectRef in this.availableTrainingBooks) {
       if (projectRef === this.activatedProject.projectId) continue; //target would be a duplicate here
-      const sourceShortName = this.trainingSources.find(s => s.projectRef === projectRef)!.shortName;
+      const source = this.trainingSources.find(s => s.projectRef === projectRef);
+      if (source == null) return []; // during updates, trainingSources can briefly differ from availableTrainingBooks
 
       const currentGroup: Book[] = [];
       for (const book of this.availableTrainingBooks[projectRef].filter(b => b.selected)) {
         const isBookConsecutive = book.number === currentGroup[currentGroup.length - 1]?.number + 1;
         if (currentGroup.length > 0 && !isBookConsecutive) {
           //process and reset current group
-          addGroup(currentGroup, sourceShortName, this.i18n);
+          addGroup(currentGroup, source.shortName, this.i18n);
           currentGroup.length = 0;
         }
         //add book to current group
@@ -321,7 +322,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
       //add last group
       if (currentGroup.length > 0) {
-        addGroup(currentGroup, sourceShortName, this.i18n);
+        addGroup(currentGroup, source.shortName, this.i18n);
       }
     }
 
