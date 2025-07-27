@@ -111,6 +111,7 @@
     "references_heading": "Bezug auf ({{ referenceLanguage }})",
     "review_draft_setup": "Einstellung für Entwürfe überprüfen",
     "targets_heading": "Übersetzungsprojekt ({{ targetLanguage }})",
+    "training_files": "Schulungsdateien",
     "training_language_model": "Sprachmodell schulen"
   },
   "connect_project": {
@@ -257,6 +258,7 @@
     "these_source_books_cannot_be_used_for_translating": "Die folgenden Bücher können nicht übersetzt werden, da sie nicht im Ausgangstext für Entwürfe ({{ draftingSourceProjectName }}) enthalten sind.",
     "training_books_will_appear": "Bücher für die Schulung werden angezeigt, wenn Du Bücher unter übersetzten Büchern auswählst",
     "training_books": "Bücher für die Schulung",
+    "training_files": "Schulungsdateien",
     "translated_book_selected_no_training_pair": "Für einige der von Dir ausgewählten Bücher für die Schulung sind keine passenden Referenzbücher ausgewählt. Bitte wähle passende Referenzbücher aus.",
     "translated_books": "Übersetzte Bücher",
     "unusable_target_books": "Du kannst das Buch nicht finden? Stelle sicher, dass das Buch in Paratext erstellt wurde und synchronisiere Dein Projekt.",
@@ -301,6 +303,7 @@
     "confirm_language_codes": "Bitte bestätige vor dem Speichern, dass die Sprachcodes korrekt sind.",
     "discard_changes_confirmation": "Bist Du sicher, dass Du die Seite mit ungespeicherten Änderungen verlassen willst?",
     "draft_source": "Quelle zum Erstellen von Entwürfen",
+    "failed_to_save_changes": "Änderungen konnten nicht gespeichert werden.",
     "generate_draft_from_language_model": "Entwurf aus Sprachmodell generieren",
     "language_code": "Sprachcode: ",
     "leave_and_discard": "Verlassen und Änderungen verwerfen",
@@ -334,7 +337,6 @@
     "unknown_language_code": "unbekannt"
   },
   "draft_usfm_format": {
-    "changes_have_been_saved": "Änderungen wurden gespeichert",
     "cancel": "Abbrechen",
     "connect_to_the_internet": "Bitte stelle eine Verbindung zum Internet her, um das USFM-Format für Deinen Entwurf zu ändern",
     "draft_format_description": "Der Entwurf wurde generiert. Hier findest Du einige Formatierungsoptionen für den Text. Du kannst jede Option ausprobieren, um zu sehen, wie sie sich auswirkt.",

@@ -111,6 +111,7 @@
     "references_heading": "References ({{ referenceLanguage }})",
     "review_draft_setup": "Review draft setup",
     "targets_heading": "Translation project ({{ targetLanguage }})",
+    "training_files": "Training files",
     "training_language_model": "Training the language model"
   },
   "connect_project": {
@@ -257,6 +258,7 @@
     "these_source_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
     "training_books_will_appear": "Training books will appear as you select books under translated books",
     "training_books": "Training books",
+    "training_files": "Training files",
     "translated_book_selected_no_training_pair": "Some of the training books you selected have no matching reference books selected. Please select matching reference books.",
     "translated_books": "Translated books",
     "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project.",
@@ -301,6 +303,7 @@
     "confirm_language_codes": "Please confirm that the language codes are correct before saving.",
     "discard_changes_confirmation": "Are you sure you want to leave the page with unsaved changes?",
     "draft_source": "Draft source",
+    "failed_to_save_changes": "Failed to save changes.",
     "generate_draft_from_language_model": "Generate draft from language model",
     "language_code": "Language code: ",
     "leave_and_discard": "Leave & discard changes",
@@ -334,7 +337,6 @@
     "unknown_language_code": "unknown"
   },
   "draft_usfm_format": {
-    "changes_have_been_saved": "Changes have been saved",
     "cancel": "रद्द गर्नुहोस्",
     "connect_to_the_internet": "Please connect to the internet to change the USFM format for your draft",
     "draft_format_description": "The draft has been created. Here are some formatting options for the text. You can try each option to see the difference it makes.",
