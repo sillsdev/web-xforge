@@ -528,6 +528,58 @@ public class PreTranslationServiceTests
             );
     }
 
+    // TODO: Update test when feature is on Serval
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_QuoteFormatSpecified()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { MockPreTranslationParameters = true, UseParatextZipFile = true }
+        );
+
+        // SUT
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { QuoteFormat = QuoteStyle.Straight },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                PretranslationUsfmMarkerBehavior.Preserve,
+                // PretranslationUsfmQuoteFormat.Straight,
+                cancellationToken: CancellationToken.None
+            );
+
+        // SUT2
+        await env.Service.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            2,
+            config: new DraftUsfmConfig { QuoteFormat = QuoteStyle.Automatic },
+            CancellationToken.None
+        );
+        await env
+            .TranslationEnginesClient.Received(1)
+            .GetPretranslatedUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                "MAT",
+                Arg.Any<PretranslationUsfmTextOrigin>(),
+                Arg.Any<PretranslationUsfmTemplate>(),
+                PretranslationUsfmMarkerBehavior.Preserve,
+                // PretranslationUsfmQuoteFormat.Automatic,
+                cancellationToken: CancellationToken.None
+            );
+    }
+
     [Test]
     public async Task GetPreTranslationUsfmAsync_ReturnsEmptyStringForMissingChapter()
     {
