@@ -317,6 +317,9 @@ export class SFProjectService extends ProjectService<SFProject> {
                 properties: {
                   paragraphFormat: {
                     enum: ['best_guess', 'remove', 'move_to_end']
+                  },
+                  quoteFormat: {
+                    enum: ['automatic', 'straight']
                   }
                 },
                 additionalProperties: false
