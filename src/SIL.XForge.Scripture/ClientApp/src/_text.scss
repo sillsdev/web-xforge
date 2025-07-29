@@ -165,27 +165,15 @@ quill-editor {
   }
 }
 
-quill-editor.ltr {
+quill-editor {
   .question-segment[data-question-count] {
-    margin-left: 1.75em;
+    margin-inline-start: 1.75em;
 
     &:before {
-      left: -2.25em;
+      inset-inline-start: -2.25em;
     }
     &:after {
-      left: -1.5em;
-    }
-  }
-}
-quill-editor.rtl {
-  .question-segment[data-question-count] {
-    margin-right: 1.75em;
-    &:before {
-      right: -2.25em;
-    }
-
-    &:after {
-      right: -1.5em;
+      inset-inline-start: -1.5em;
     }
   }
 }
@@ -255,7 +243,7 @@ quill-editor.rtl {
     border-left: 4px solid var(--sf-quill-highlight-marker-color);
     position: absolute;
     top: 0;
-    left: 6px;
+    inset-inline-start: 6px;
   }
 }
 
@@ -305,11 +293,8 @@ usx-segment {
   position: relative;
 }
 
-quill-editor.ltr .highlight-para usx-segment:first-child:before {
-  left: -1em;
-}
-quill-editor.rtl .highlight-para usx-segment:first-child:before {
-  right: -1em;
+quill-editor .highlight-para usx-segment:first-child:before {
+  inset-inline-start: -1em;
 }
 
 usx-segment.draft {
