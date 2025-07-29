@@ -179,7 +179,7 @@ public class Startup
         if (SpaDevServerStartup == SpaDevServerStartup.None)
         {
             // In production, the Angular files will be served from this directory
-            services.AddSpaStaticFiles(configuration => configuration.RootPath = "ClientApp/dist");
+            services.AddSpaStaticFiles(configuration => configuration.RootPath = "ClientApp/dist/browser");
         }
 
         services.AddSFMachine(Configuration, Environment);
