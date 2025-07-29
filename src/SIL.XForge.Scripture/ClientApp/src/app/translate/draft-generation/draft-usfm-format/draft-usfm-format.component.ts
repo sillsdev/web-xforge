@@ -16,7 +16,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import {
   DraftUsfmConfig,
   ParagraphBreakFormat,
-  QuoteFormat
+  QuoteStyle
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, first, Subject, switchMap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -63,10 +63,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   chapters: number[] = [];
   isInitializing: boolean = true;
   paragraphBreakFormat = ParagraphBreakFormat;
-  quoteStyleFormat = QuoteFormat;
+  quoteStyle = QuoteStyle;
 
   paragraphFormat = new FormControl<ParagraphBreakFormat>(ParagraphBreakFormat.BestGuess);
-  quoteFormat = new FormControl<QuoteFormat>(QuoteFormat.Automatic);
+  quoteFormat = new FormControl<QuoteStyle>(QuoteStyle.Automatic);
   usfmFormatForm: FormGroup = new FormGroup({
     paragraphFormat: this.paragraphFormat,
     quoteFormat: this.quoteFormat
@@ -111,7 +111,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   private get currentFormat(): DraftUsfmConfig | undefined {
     const paragraphFormat = this.paragraphFormat.value;
-    return paragraphFormat == null ? undefined : { paragraphFormat };
+    const quoteFormat = this.quoteFormat.value;
+    // both values must be set to be valid
+    if (paragraphFormat == null || quoteFormat == null) return undefined;
+    return { paragraphFormat, quoteFormat };
   }
 
   ngAfterViewInit(): void {
@@ -191,7 +194,12 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   async confirmLeave(): Promise<boolean> {
-    if (this.lastSavedState?.paragraphFormat === this.currentFormat?.paragraphFormat) return true;
+    if (
+      this.lastSavedState?.paragraphFormat === this.currentFormat?.paragraphFormat &&
+      this.lastSavedState?.quoteFormat === this.currentFormat?.quoteFormat
+    ) {
+      return true;
+    }
     return this.dialogService.confirm(
       this.i18n.translate('draft_sources.discard_changes_confirmation'),
       this.i18n.translate('draft_sources.leave_and_discard'),
@@ -202,7 +210,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   private setUsfmConfig(config?: DraftUsfmConfig): void {
     this.usfmFormatForm.setValue({
       paragraphFormat: config?.paragraphFormat ?? ParagraphBreakFormat.BestGuess,
-      quoteFormat: QuoteFormat.Automatic
+      quoteFormat: config?.quoteFormat ?? QuoteStyle.Automatic
     });
     this.lastSavedState = this.currentFormat;
 
