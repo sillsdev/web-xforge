@@ -982,7 +982,6 @@ class TestEnvironment {
     TestEnvironment.testProject.translateConfig.defaultNoteTagId = noteTagId;
     this.dialogRef = TestBed.inject(MatDialog).open(NoteDialogComponent, { data: configData });
     this.component = this.dialogRef.componentInstance;
-    tick();
 
     if (includeSnapshots) {
       this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
@@ -1034,6 +1033,7 @@ class TestEnvironment {
 
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
 
+    tick();
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
