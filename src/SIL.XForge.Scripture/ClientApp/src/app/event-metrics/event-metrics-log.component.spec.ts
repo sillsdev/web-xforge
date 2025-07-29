@@ -142,11 +142,9 @@ describe('EventMetricsLogComponent', () => {
     env.component.updatePage(0, 2);
     env.wait();
     env.wait();
-
-    expect(env.nextButton.nativeElement.disabled).toBeFalse();
+    expect(env.nextButton.nativeElement.getAttribute('aria-disabled')).toBeNull();
     env.clickButton(env.nextButton);
-
-    expect(env.nextButton.nativeElement.disabled).toBeTrue();
+    expect(env.nextButton.nativeElement.getAttribute('aria-disabled')).toBe('true');
     expect(env.rows.length).toEqual(2);
   }));
 
