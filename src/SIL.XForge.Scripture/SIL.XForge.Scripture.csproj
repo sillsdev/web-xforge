@@ -7,7 +7,6 @@
     <SpaRoot>ClientApp\</SpaRoot>
     <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
     <!-- Set this to true if you enable server-side prerendering -->
-    <BuildServerSideRenderer>false</BuildServerSideRenderer>
     <UserSecretsId>4d0606c3-0fc7-4d76-b43b-236485004e81</UserSecretsId>
     <RealtimeServerRoot>..\RealtimeServer\</RealtimeServerRoot>
     <AngularConfig>production</AngularConfig>
@@ -184,15 +183,22 @@
     <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="npm install" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --configuration=$(AngularConfig)" />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build:ssr -- --configuration=$(AngularConfig)" Condition=" '$(BuildServerSideRenderer)' == 'true' " />
     <!-- Include the newly-built files in the publish output -->
     <ItemGroup>
-      <DistFiles Include="$(SpaRoot)dist\**; $(SpaRoot)dist-server\**" />
-      <DistFiles Include="$(SpaRoot)node_modules\**" Condition="'$(BuildServerSideRenderer)' == 'true'" />
-      <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
-        <RelativePath>%(DistFiles.Identity)</RelativePath>
+      <DistRootFiles Include="$(SpaRoot)dist\*" Exclude="$(SpaRoot)dist\browser\**" />
+      <DistBrowserFiles Include="$(SpaRoot)dist\browser\**" />
+
+      <!-- Map dist root files to browser/ subdirectory -->
+      <ResolvedFileToPublish Include="@(DistRootFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>$(SpaRoot)dist\browser\%(Filename)%(Extension)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </ResolvedFileToPublish>
+
+      <ResolvedFileToPublish Include="@(DistBrowserFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>%(DistBrowserFiles.Identity)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+
       <RealtimeFiles Include="$(RealtimeServerRoot)**\*" />
       <ResolvedFileToPublish Include="@(RealtimeFiles)" Exclude="@(ResolvedFileToPublish)">
         <RelativePath>RealtimeServer\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
