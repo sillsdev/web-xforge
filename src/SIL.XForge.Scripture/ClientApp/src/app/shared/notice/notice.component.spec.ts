@@ -50,8 +50,9 @@ describe('NoticeComponent', () => {
 });
 
 @Component({
-    selector: 'app-host', template: '',
-    standalone: false
+  selector: 'app-host',
+  template: '',
+  standalone: false
 })
 class HostComponent {
   @ViewChild(NoticeComponent, { static: true }) component!: NoticeComponent;

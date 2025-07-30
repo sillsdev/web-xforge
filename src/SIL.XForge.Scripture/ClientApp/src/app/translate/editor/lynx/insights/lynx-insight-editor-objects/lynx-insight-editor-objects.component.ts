@@ -26,9 +26,9 @@ import { LynxWorkspaceService } from '../lynx-workspace.service';
 import { LynxInsightBlot } from '../quill-services/blots/lynx-insight-blot';
 
 @Component({
-    selector: 'app-lynx-insight-editor-objects',
-    templateUrl: './lynx-insight-editor-objects.component.html',
-    standalone: false
+  selector: 'app-lynx-insight-editor-objects',
+  templateUrl: './lynx-insight-editor-objects.component.html',
+  standalone: false
 })
 export class LynxInsightEditorObjectsComponent implements OnChanges, OnInit, OnDestroy {
   readonly insightSelector = `.${LynxInsightBlot.superClassName}`;

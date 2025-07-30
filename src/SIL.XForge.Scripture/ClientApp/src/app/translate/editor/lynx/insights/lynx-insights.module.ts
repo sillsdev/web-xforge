@@ -75,15 +75,15 @@ export class LynxInsightsModule {
         },
         {
         provideAppInitializer(() => {
-        const initializerFn = (moduleInit)(inject(LynxWorkspaceService));
-        return initializerFn();
-      }),
+          const initializerFn = moduleInit(inject(LynxWorkspaceService));
+          return initializerFn();
+        }),
         provideAppInitializer(() => {
-        const initializerFn = ((formatRegistry: QuillFormatRegistryService) => () => {
+          const initializerFn = ((formatRegistry: QuillFormatRegistryService) => () => {
             formatRegistry.registerFormats(lynxInsightBlots);
           })(inject(QuillFormatRegistryService));
-        return initializerFn();
-      }),
+          return initializerFn();
+        }),
         { provide: EditorReadyService, useClass: QuillEditorReadyService },
         { provide: InsightRenderService, useClass: QuillInsightRenderService },
         { provide: EditorSegmentService, useClass: QuillEditorSegmentService }

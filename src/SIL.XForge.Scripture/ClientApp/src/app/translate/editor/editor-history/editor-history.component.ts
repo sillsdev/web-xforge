@@ -23,10 +23,10 @@ import { TextComponent } from '../../../shared/text/text.component';
 import { EditorHistoryService } from './editor-history.service';
 import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/history-chooser.component';
 @Component({
-    selector: 'app-editor-history',
-    templateUrl: './editor-history.component.html',
-    styleUrls: ['./editor-history.component.scss'],
-    standalone: false
+  selector: 'app-editor-history',
+  templateUrl: './editor-history.component.html',
+  styleUrls: ['./editor-history.component.scss'],
+  standalone: false
 })
 export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit {
   @Input() projectId?: string;

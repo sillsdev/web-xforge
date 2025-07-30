@@ -264,10 +264,10 @@ describe('ShareControlComponent', () => {
 class TestModule {}
 
 @Component({
-    template: `
+  template: `
     <app-share-control [projectId]="projectId" [defaultRole]="defaultRole" (invited)="onInvited()"></app-share-control>
   `,
-    standalone: false
+  standalone: false
 })
 class TestHostComponent {
   @ViewChild(ShareControlComponent) component!: ShareControlComponent;

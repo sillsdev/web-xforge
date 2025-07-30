@@ -85,10 +85,10 @@ enum LikeAnswerResponse {
  * them or visits again. These are referred to here
  * as "remote" answers.*/
 @Component({
-    selector: 'app-checking-answers',
-    templateUrl: './checking-answers.component.html',
-    styleUrls: ['./checking-answers.component.scss'],
-    standalone: false
+  selector: 'app-checking-answers',
+  templateUrl: './checking-answers.component.html',
+  styleUrls: ['./checking-answers.component.scss'],
+  standalone: false
 })
 export class CheckingAnswersComponent implements OnInit {
   @ViewChild(CheckingInputFormComponent) answerInput?: CheckingInputFormComponent;

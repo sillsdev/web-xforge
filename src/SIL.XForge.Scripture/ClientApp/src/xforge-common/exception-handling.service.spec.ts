@@ -217,8 +217,8 @@ interface BreadcrumbTests {
 }
 
 @Component({
-    selector: 'app-host',
-    template: `
+  selector: 'app-host',
+  template: `
     <button class="mdc-button plain-text">Plain text</button>
     <button class="mdc-button include-icon"><i>icon_name</i><span>Inside span</span></button>
     <button class="mdc-button child-element"><i>icon_name</i><span>Child</span></button>
@@ -234,7 +234,7 @@ interface BreadcrumbTests {
       <span>Ripple text</span>
     </button>
   `,
-    standalone: false
+  standalone: false
 })
 class HostComponent {}
 
