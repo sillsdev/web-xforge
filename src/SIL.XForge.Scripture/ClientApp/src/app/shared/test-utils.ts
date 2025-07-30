@@ -145,7 +145,7 @@ export function getPoetryVerseTextDoc(id: TextDocId, modelHasBlanks: boolean = f
 \p
 \v 3
 */
-export function getEmptyChapterDoc(id: TextDocId, modelHasBlanks: boolean = false): TextData {
+export function getEmptyChapterDoc(id: TextDocId, modelHasBlanks: boolean): TextData {
   const delta = new Delta();
   if (modelHasBlanks) delta.insert({ blank: true }, { segment: 's_1' });
   delta.insert('\n', { para: { style: 's' } });

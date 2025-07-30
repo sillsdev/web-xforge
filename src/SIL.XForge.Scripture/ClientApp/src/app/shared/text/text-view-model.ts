@@ -784,8 +784,8 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
           if ((op.insert as any)?.blank === false) {
             const position: number = curIndex + curSegment.length - 1;
             const id = `blank_${position}`;
-            let embedPosition: EmbedPosition | undefined = id == null ? undefined : embeddedElements.get(id);
-            if (embedPosition == null && id != null) {
+            let embedPosition: EmbedPosition | undefined = embeddedElements.get(id);
+            if (embedPosition == null) {
               embedPosition = { position };
               embeddedElements.set(id, embedPosition);
             } else {
