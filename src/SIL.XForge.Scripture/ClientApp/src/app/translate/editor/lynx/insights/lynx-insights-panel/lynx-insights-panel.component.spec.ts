@@ -1,5 +1,13 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  discardPeriodicTasks,
+  fakeAsync,
+  flush,
+  flushMicrotasks,
+  TestBed,
+  tick
+} from '@angular/core/testing';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -149,6 +157,8 @@ describe('LynxInsightsPanelComponent', () => {
     tick();
 
     expect(env.component.treeDataSource).toEqual([]);
+
+    discardPeriodicTasks();
   }));
 
   it('should handle insights without proper textDocId', fakeAsync(() => {
@@ -169,6 +179,8 @@ describe('LynxInsightsPanelComponent', () => {
 
     // Should handle gracefully without crashing
     expect(env.component).toBeTruthy();
+
+    discardPeriodicTasks();
   }));
 
   describe('Tree data management', () => {
@@ -222,11 +234,13 @@ describe('LynxInsightsPanelComponent', () => {
       const newInsights = [testInsight2];
       env.setInsights(newInsights);
       flushMicrotasks();
-      tick();
+      tick(env.component['TREE_REBUILD_DEBOUNCE_MS']);
 
       // Caches should be significantly reduced after cleanup
       expect(env.component['visibleChildrenCache'].size).toBeLessThan(env.LIGHTWEIGHT_CACHE_MAX_SIZE);
       expect(env.component['pagedLoadingCache'].size).toBeLessThan(env.LIGHTWEIGHT_CACHE_MAX_SIZE);
+
+      discardPeriodicTasks();
     }));
   });
 
@@ -461,7 +475,7 @@ describe('LynxInsightsPanelComponent', () => {
       expect(env.component['textSnippetCache'].has('obsolete-insight')).toBe(false);
     }));
 
-    it('should clean up text doc cache when it exceeds max size', fakeAsync(() => {
+    it('should clean up text doc data cache when it exceeds max size', fakeAsync(() => {
       const env = new TestEnvironment({ insights: [testInsight1, testInsight2] });
 
       // Fill cache beyond max size
@@ -469,24 +483,24 @@ describe('LynxInsightsPanelComponent', () => {
       const currentTextDocKey = testInsight1.textDocId.toString(); // This should be kept (visible)
 
       // Add the current textDoc first
-      env.component['textDocCache'].set(currentTextDocKey, Promise.resolve(instance(mockTextDoc)));
+      env.component['textDocDataCache'].set(currentTextDocKey, mockTextDoc.data!);
 
       // Then add many obsolete entries to exceed the limit
       for (let i = 0; i < env.TEXT_DOC_CACHE_MAX_SIZE + 10; i++) {
-        env.component['textDocCache'].set(`obsolete-doc-${i}`, Promise.resolve(instance(mockTextDoc)));
+        env.component['textDocDataCache'].set(`obsolete-doc-${i}`, mockTextDoc.data!);
       }
 
-      expect(env.component['textDocCache'].size).toBeGreaterThan(env.TEXT_DOC_CACHE_MAX_SIZE);
+      expect(env.component['textDocDataCache'].size).toBeGreaterThan(env.TEXT_DOC_CACHE_MAX_SIZE);
 
       (env.component as any).manageMemoryUsage();
 
       // Cache should be reduced to max size or below
-      expect(env.component['textDocCache'].size).toBeLessThanOrEqual(env.TEXT_DOC_CACHE_MAX_SIZE);
+      expect(env.component['textDocDataCache'].size).toBeLessThanOrEqual(env.TEXT_DOC_CACHE_MAX_SIZE);
 
       // The visible textDoc should be kept if possible
-      if (env.component['textDocCache'].size > 0) {
+      if (env.component['textDocDataCache'].size > 0) {
         // If any entries remain, visible ones should be prioritized
-        expect(env.component['textDocCache'].has(currentTextDocKey)).toBe(true);
+        expect(env.component['textDocDataCache'].has(currentTextDocKey)).toBe(true);
       }
     }));
 
@@ -617,6 +631,7 @@ describe('LynxInsightsPanelComponent', () => {
       tick();
 
       expect(env.component['expandCollapseState'].size).toBeGreaterThan(0);
+      discardPeriodicTasks();
     }));
 
     it('should track active book chapter changes', fakeAsync(() => {
@@ -908,7 +923,7 @@ class TestEnvironment {
     tick();
     this.fixture.detectChanges();
     flushMicrotasks(); // Flush Promise.resolve() calls
-    tick(); // Allow any async operations to complete
+    tick(this.component['TREE_REBUILD_DEBOUNCE_MS']); // Allow any async operations to complete
   }
 
   setInsights(insights: LynxInsight[]): void {
