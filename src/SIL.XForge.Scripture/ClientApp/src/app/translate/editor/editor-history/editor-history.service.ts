@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
+import { cloneDeep } from 'lodash-es';
 import { Delta } from 'quill';
+import { DeltaOperation } from 'rich-text';
 import { I18nService } from 'xforge-common/i18n.service';
 
 const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
@@ -42,6 +44,10 @@ export class EditorHistoryService {
     deltaA.forEach(obj => this.removeCid(obj));
     deltaB.forEach(obj => this.removeCid(obj));
 
+    // Remove the blanks from the deltas
+    deltaA = this.removeBlanks(deltaA);
+    deltaB = this.removeBlanks(deltaB);
+
     const diff: Delta = deltaA.diff(deltaB);
 
     // Process each op in the diff
@@ -69,5 +75,20 @@ export class EditorHistoryService {
     for (const subObj in obj) {
       if (typeof obj[subObj] === 'object' && obj[subObj] != null) this.removeCid(obj[subObj]);
     }
+  }
+
+  removeBlanks(modelDelta: Delta): Delta {
+    if (modelDelta.ops == null || modelDelta.ops.length < 1) {
+      return new Delta();
+    }
+    const adjustedDelta = new Delta();
+    for (const op of modelDelta.ops) {
+      const cloneOp: DeltaOperation | undefined = cloneDeep(op);
+      if (!(cloneOp.insert != null && cloneOp.insert['blank'] != null)) {
+        (adjustedDelta as any).push(cloneOp);
+      }
+    }
+
+    return adjustedDelta;
   }
 }
