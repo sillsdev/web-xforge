@@ -145,7 +145,7 @@ export function getPoetryVerseTextDoc(id: TextDocId, modelHasBlanks: boolean = f
 \p
 \v 3
 */
-export function getEmptyChapterDoc(id: TextDocId, modelHasBlanks: boolean = false): TextData {
+export function getEmptyChapterDoc(id: TextDocId, modelHasBlanks: boolean): TextData {
   const delta = new Delta();
   if (modelHasBlanks) delta.insert({ blank: true }, { segment: 's_1' });
   delta.insert('\n', { para: { style: 's' } });
@@ -163,7 +163,7 @@ export function getEmptyChapterDoc(id: TextDocId, modelHasBlanks: boolean = fals
   if (modelHasBlanks) delta.insert({ blank: true }, { segment: 'p_2' });
   delta.insert({ verse: { number: '3', style: 'v' } });
   if (modelHasBlanks) delta.insert({ blank: true }, { segment: 'verse_1_3' });
-  delta.insert('\n', { para: { style: 'p' } });
+  delta.insert('\n\n', { para: { style: 'p' } });
   return delta;
 }
 
