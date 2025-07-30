@@ -28,10 +28,10 @@ interface Row {
 }
 
 @Component({
-    selector: 'app-sa-users',
-    templateUrl: './sa-users.component.html',
-    styleUrls: ['./sa-users.component.scss'],
-    standalone: false
+  selector: 'app-sa-users',
+  templateUrl: './sa-users.component.html',
+  styleUrls: ['./sa-users.component.scss'],
+  standalone: false
 })
 export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   @HostBinding('class') classes = 'flex-column';

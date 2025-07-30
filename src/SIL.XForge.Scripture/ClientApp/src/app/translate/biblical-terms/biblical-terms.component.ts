@@ -171,10 +171,10 @@ class Row {
 }
 
 @Component({
-    selector: 'app-biblical-terms',
-    templateUrl: './biblical-terms.component.html',
-    styleUrls: ['./biblical-terms.component.scss'],
-    imports: [CommonModule, TranslocoModule, UICommonModule]
+  selector: 'app-biblical-terms',
+  templateUrl: './biblical-terms.component.html',
+  styleUrls: ['./biblical-terms.component.scss'],
+  imports: [CommonModule, TranslocoModule, UICommonModule]
 })
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {
   categories: string[] = [];

@@ -190,8 +190,8 @@ describe('ProjectSelectComponent', () => {
 });
 
 @Component({
-    selector: 'app-host',
-    template: `<form [formGroup]="connectProjectForm">
+  selector: 'app-host',
+  template: `<form [formGroup]="connectProjectForm">
     <app-project-select
       formControlName="sourceParatextId"
       placeholder="Based on"
@@ -202,7 +202,7 @@ describe('ProjectSelectComponent', () => {
       [isDisabled]="isDisabled"
     ></app-project-select>
   </form>`,
-    standalone: false
+  standalone: false
 })
 class HostComponent {
   readonly sourceParatextId = new UntypedFormControl(undefined);

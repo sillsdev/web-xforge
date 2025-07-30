@@ -136,8 +136,8 @@ describe('SyncProgressComponent', () => {
 });
 
 @Component({
-    template: `<app-sync-progress [projectDoc]="projectDoc" (inProgress)="inProgress = $event"></app-sync-progress>`,
-    standalone: false
+  template: `<app-sync-progress [projectDoc]="projectDoc" (inProgress)="inProgress = $event"></app-sync-progress>`,
+  standalone: false
 })
 class HostComponent {
   projectDoc?: SFProjectDoc;

@@ -38,20 +38,20 @@ interface TrainingConfigurationRow {
 }
 
 @Component({
-    selector: 'app-draft-history-entry',
-    imports: [
-        CommonModule,
-        DraftDownloadButtonComponent,
-        DraftPreviewBooksComponent,
-        MatButtonModule,
-        MatExpansionModule,
-        MatIconModule,
-        MatTableModule,
-        TranslocoModule,
-        RouterModule
-    ],
-    templateUrl: './draft-history-entry.component.html',
-    styleUrl: './draft-history-entry.component.scss'
+  selector: 'app-draft-history-entry',
+  imports: [
+    CommonModule,
+    DraftDownloadButtonComponent,
+    DraftPreviewBooksComponent,
+    MatButtonModule,
+    MatExpansionModule,
+    MatIconModule,
+    MatTableModule,
+    TranslocoModule,
+    RouterModule
+  ],
+  templateUrl: './draft-history-entry.component.html',
+  styleUrl: './draft-history-entry.component.scss'
 })
 export class DraftHistoryEntryComponent {
   private _entry?: BuildDto;

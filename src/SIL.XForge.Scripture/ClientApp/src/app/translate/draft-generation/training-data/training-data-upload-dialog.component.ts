@@ -28,19 +28,19 @@ export interface TrainingDataFileUpload {
 }
 
 @Component({
-    selector: 'app-training-data-upload-dialog',
-    templateUrl: './training-data-upload-dialog.component.html',
-    imports: [
-        CommonModule,
-        MatButtonModule,
-        MatCheckboxModule,
-        MatDialogModule,
-        MatIconModule,
-        MatProgressSpinnerModule,
-        SharedModule,
-        TranslocoModule
-    ],
-    styleUrls: ['./training-data-upload-dialog.component.scss']
+  selector: 'app-training-data-upload-dialog',
+  templateUrl: './training-data-upload-dialog.component.html',
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatDialogModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    SharedModule,
+    TranslocoModule
+  ],
+  styleUrls: ['./training-data-upload-dialog.component.scss']
 })
 export class TrainingDataUploadDialogComponent implements AfterViewInit {
   @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;

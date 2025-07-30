@@ -34,9 +34,9 @@ export interface TextSelection {
 }
 
 @Component({
-    templateUrl: './text-chooser-dialog.component.html',
-    styleUrls: ['./text-chooser-dialog.component.scss'],
-    standalone: false
+  templateUrl: './text-chooser-dialog.component.html',
+  styleUrls: ['./text-chooser-dialog.component.scss'],
+  standalone: false
 })
 export class TextChooserDialogComponent {
   @ViewChild(TextComponent, { read: ElementRef }) scriptureText?: ElementRef;

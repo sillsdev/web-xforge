@@ -34,10 +34,10 @@ export interface RevisionSelectEvent {
 }
 
 @Component({
-    selector: 'app-history-chooser',
-    templateUrl: './history-chooser.component.html',
-    styleUrls: ['./history-chooser.component.scss'],
-    standalone: false
+  selector: 'app-history-chooser',
+  templateUrl: './history-chooser.component.html',
+  styleUrls: ['./history-chooser.component.scss'],
+  standalone: false
 })
 export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   @Input() projectId?: string;

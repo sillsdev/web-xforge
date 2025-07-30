@@ -1,8 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-    name: 'audioTime',
-    standalone: false
+  name: 'audioTime',
+  standalone: false
 })
 export class AudioTimePipe implements PipeTransform {
   transform(seconds: number, ..._args: any[]): string {

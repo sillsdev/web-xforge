@@ -6,9 +6,9 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { BuildDto } from '../../../machine-api/build-dto';
 
 @Component({
-    selector: 'app-draft-information',
-    imports: [UICommonModule, CommonModule],
-    templateUrl: './draft-information.component.html'
+  selector: 'app-draft-information',
+  imports: [UICommonModule, CommonModule],
+  templateUrl: './draft-information.component.html'
 })
 export class DraftInformationComponent {
   @Input() draftJob?: BuildDto;

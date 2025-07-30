@@ -158,10 +158,10 @@ class TestEnvironment {
 }
 
 @Component({
-    template: `<app-single-button-audio-player #player [source]="source" [start]="start" [end]="end">
+  template: `<app-single-button-audio-player #player [source]="source" [start]="start" [end]="end">
     <mat-icon id="content">play</mat-icon>
   </app-single-button-audio-player>`,
-    standalone: false
+  standalone: false
 })
 class MockComponent {
   @ViewChild('player') player!: TestComponent;

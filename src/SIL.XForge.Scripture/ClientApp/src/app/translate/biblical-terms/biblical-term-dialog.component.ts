@@ -15,9 +15,9 @@ export interface BiblicalTermDialogData {
 }
 
 @Component({
-    templateUrl: './biblical-term-dialog.component.html',
-    styleUrls: ['./biblical-term-dialog.component.scss'],
-    standalone: false
+  templateUrl: './biblical-term-dialog.component.html',
+  styleUrls: ['./biblical-term-dialog.component.scss'],
+  standalone: false
 })
 export class BiblicalTermDialogComponent {
   definition: string = '';

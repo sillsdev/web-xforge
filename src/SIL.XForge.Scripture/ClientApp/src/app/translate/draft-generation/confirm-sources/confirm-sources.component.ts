@@ -19,10 +19,10 @@ import {
 import { TrainingDataService } from '../training-data/training-data.service';
 
 @Component({
-    selector: 'app-confirm-sources',
-    imports: [TranslocoModule, MatCheckboxModule, MatIconModule],
-    templateUrl: './confirm-sources.component.html',
-    styleUrl: './confirm-sources.component.scss'
+  selector: 'app-confirm-sources',
+  imports: [TranslocoModule, MatCheckboxModule, MatIconModule],
+  templateUrl: './confirm-sources.component.html',
+  styleUrl: './confirm-sources.component.scss'
 })
 export class ConfirmSourcesComponent {
   draftSources: DraftSourcesAsSelectableProjectArrays = {

@@ -19,11 +19,11 @@ export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
 
 /** This component can be used within a form to list projects and resources from which a user can make a selection. */
 @Component({
-    selector: 'app-project-select',
-    templateUrl: 'project-select.component.html',
-    styleUrls: ['project-select.component.scss'],
-    providers: [PROJECT_SELECT_VALUE_ACCESSOR],
-    standalone: false
+  selector: 'app-project-select',
+  templateUrl: 'project-select.component.html',
+  styleUrls: ['project-select.component.scss'],
+  providers: [PROJECT_SELECT_VALUE_ACCESSOR],
+  standalone: false
 })
 export class ProjectSelectComponent implements ControlValueAccessor, OnDestroy {
   @Output() valueChange: EventEmitter<string | undefined> = new EventEmitter<string | undefined>(true);

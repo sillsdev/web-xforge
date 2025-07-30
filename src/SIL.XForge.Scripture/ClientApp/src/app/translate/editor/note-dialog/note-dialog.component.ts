@@ -62,9 +62,9 @@ type SaveOption = 'save' | 'resolve';
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
 // TODO: Refactor to have a Biblical Term Note Dialog subclass (will require spec.ts refactoring too)
 @Component({
-    templateUrl: './note-dialog.component.html',
-    styleUrls: ['./note-dialog.component.scss'],
-    standalone: false
+  templateUrl: './note-dialog.component.html',
+  styleUrls: ['./note-dialog.component.scss'],
+  standalone: false
 })
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;

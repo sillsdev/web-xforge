@@ -56,10 +56,10 @@ interface Summary {
 }
 
 @Component({
-    selector: 'app-checking',
-    templateUrl: './checking.component.html',
-    styleUrls: ['./checking.component.scss'],
-    standalone: false
+  selector: 'app-checking',
+  templateUrl: './checking.component.html',
+  styleUrls: ['./checking.component.scss'],
+  standalone: false
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {

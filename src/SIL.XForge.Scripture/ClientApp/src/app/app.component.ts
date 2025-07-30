@@ -47,10 +47,10 @@ import { checkAppAccess } from './shared/utils';
 declare function gtag(...args: any): void;
 
 @Component({
-    selector: 'app-root',
-    templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
-    standalone: false
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
+  standalone: false
 })
 export class AppComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   version: string = versionData.version;
