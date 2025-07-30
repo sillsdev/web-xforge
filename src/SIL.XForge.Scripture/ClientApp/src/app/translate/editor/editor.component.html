@@ -142,6 +142,11 @@
                       {{ t("project_data_out_of_sync") }}
                     </app-notice>
                   }
+                  @if (updateRequired && hasEditRight) {
+                    <app-notice mode="fill-dark" type="warning" icon="warning" class="update-required-warning">
+                      {{ t("update_required") }}
+                    </app-notice>
+                  }
                   @if (target.areOpsCorrupted && hasEditRight) {
                     <app-notice mode="fill-dark" type="error" icon="error" class="doc-corrupted-warning">
                       {{ t("text_doc_corrupted") }}

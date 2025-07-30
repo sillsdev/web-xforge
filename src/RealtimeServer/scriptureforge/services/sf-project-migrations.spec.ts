@@ -885,6 +885,69 @@ describe('SFProjectMigrations', () => {
       ]);
     });
   });
+
+  describe('version 27', () => {
+    it('migrates editable to editingRequires when true', async () => {
+      const env = new TestEnvironment(26);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        editable: true
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBe(true);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBe(false);
+      expect(projectDoc.data.editingRequires).toBe(3);
+    });
+
+    it('migrates editable to editingRequires when false', async () => {
+      const env = new TestEnvironment(26);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        editable: false
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBe(false);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBe(false);
+      expect(projectDoc.data.editingRequires).toBe(2);
+    });
+
+    it('migrates editable to editingRequires when null', async () => {
+      const env = new TestEnvironment(26);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBe(false);
+      expect(projectDoc.data.editingRequires).toBe(3);
+    });
+
+    it('does not remigrate editingRequires', async () => {
+      const env = new TestEnvironment(26);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { editingRequires: 6 });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBeUndefined();
+      expect(projectDoc.data.editingRequires).toBe(6);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBeUndefined();
+      expect(projectDoc.data.editingRequires).toBe(6);
+    });
+  });
 });
 
 class TestEnvironment {
