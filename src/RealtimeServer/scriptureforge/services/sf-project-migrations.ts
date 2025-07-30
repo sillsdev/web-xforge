@@ -4,6 +4,7 @@ import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationLis
 import { Operation } from '../../common/models/project-rights';
 import { submitMigrationOp } from '../../common/realtime-server';
 import { NoteTag } from '../models/note-tag';
+import { EditingRequires } from '../models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
@@ -453,6 +454,39 @@ class SFProjectMigration24 extends DocMigration {
   }
 }
 
+class SFProjectMigration25 extends DocMigration {
+  static readonly VERSION = 25;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+
+    if (doc.data.editingRequires == null) {
+      const editable: boolean = doc.data.editable !== false;
+      if (doc.data.editable == null) {
+        ops.push({
+          p: ['editable'],
+          oi: false
+        });
+      } else if (doc.data.editable == true) {
+        ops.push({
+          p: ['editable'],
+          od: true,
+          oi: false
+        });
+      }
+
+      ops.push({
+        p: ['editingRequires'],
+        oi: (editable ? EditingRequires.ParatextEditingEnabled : 0) | EditingRequires.ViewModelBlankSupport
+      });
+    }
+
+    if (ops.length > 0) {
+      await submitMigrationOp(SFProjectMigration25.VERSION, doc, ops);
+    }
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncreasingMigrationList([
   SFProjectMigration1,
   SFProjectMigration2,
@@ -477,5 +511,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = monotonicallyIncrea
   SFProjectMigration21,
   SFProjectMigration22,
   SFProjectMigration23,
-  SFProjectMigration24
+  SFProjectMigration24,
+  SFProjectMigration25
 ]);

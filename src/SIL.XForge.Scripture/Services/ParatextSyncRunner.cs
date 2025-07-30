@@ -1770,7 +1770,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
                 // Set the right-to-left language flag
                 op.Set(pd => pd.IsRightToLeft, settings.IsRightToLeft);
-                op.Set(pd => pd.Editable, settings.Editable);
+                op.Set(
+                    pd => pd.EditingRequires,
+                    EditingRequires.ViewModelBlankSupport
+                        | (settings.Editable ? EditingRequires.ParatextEditingEnabled : EditingRequires.None)
+                );
                 op.Set(pd => pd.DefaultFont, settings.DefaultFont);
                 op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
                 if (settings.NoteTags != null)
