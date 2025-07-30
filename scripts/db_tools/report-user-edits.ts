@@ -231,7 +231,7 @@ class UserEditReport {
    * Formats a date to a string in the format 'YYYY-MM-DD'.
    */
   private formatDate(date: Date | undefined | null): string | undefined {
-    return date?.toLocaleDateString('en-CA', { year: 'numeric', month: 'numeric', day: 'numeric' });
+    return date?.toLocaleDateString('en-CA', { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'UTC' });
   }
 
   /**
@@ -259,7 +259,13 @@ class UserEditReport {
     const [year, month, day] = dateToken.split('-').map(Number);
 
     const normalizedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-    const timeSuffix = timeToken ? `T${timeToken}` : '';
+    let timeSuffix = timeToken ? `T${timeToken}` : '';
+
+    // If timeSuffix contains timezone info ('+', '-', or ends with 'Z'), don't modify, as user has specified time zone.
+    // Otherwise, append 'Z' to indicate UTC time.
+    if (timeSuffix !== '' && !/[+\-Z]/.test(timeSuffix)) {
+      timeSuffix += 'Z';
+    }
 
     return normalizedDate + timeSuffix;
   }
@@ -275,12 +281,12 @@ class UserEditReport {
     const normalizedDateString: string = this.normalizeDateString(dateString);
     let timeString: string = '';
 
-    // Add time if not already present in date string
+    // Add time if not already present in date string.  Use UTC.
     if (!normalizedDateString.includes('T')) {
-      timeString = `T${time === 'start-of-day' ? '00:00' : '23:59:59'}`;
+      timeString = `T${time === 'start-of-day' ? '00:00Z' : '23:59:59Z'}`;
     }
 
-    return new Date(this.normalizeDateString(normalizedDateString) + timeString);
+    return new Date(normalizedDateString + timeString);
   }
 
   /**
@@ -389,7 +395,9 @@ class UserEditReport {
         description: 'Whether to log the word diff between snapshots'
       })
       .check(argv => {
-        const dateFormatRegex = /^\d{4}-\d{1,2}-\d{1,2}(T\d{2}:\d{2}(:\d{2})?)?$/;
+        // Flexibility for month and day (1 or 2 digits), as this will be normalized later.  Optional timezone suffix.
+        const dateFormatRegex =
+          /^\d{4}-\d{1,2}-\d{1,2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{3})?)?(?:Z|[+\-]\d{2}:?\d{2})?)?$/;
 
         if (argv.from && !dateFormatRegex.test(argv.from)) {
           throw new Error("The 'from' date must be in the format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS");
