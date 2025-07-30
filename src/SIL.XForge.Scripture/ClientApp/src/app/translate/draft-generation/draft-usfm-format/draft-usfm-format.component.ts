@@ -36,24 +36,24 @@ import { TextComponent } from '../../../shared/text/text.component';
 import { DraftHandlingService } from '../draft-handling.service';
 
 @Component({
-    selector: 'app-draft-usfm-format',
-    imports: [
-        MatButtonModule,
-        MatCardModule,
-        MatCheckboxModule,
-        MatIconModule,
-        MatProgressSpinnerModule,
-        MatSelectModule,
-        CommonModule,
-        FormsModule,
-        ReactiveFormsModule,
-        SharedModule,
-        TranslocoModule,
-        MatFormFieldModule,
-        MatRadioModule
-    ],
-    templateUrl: './draft-usfm-format.component.html',
-    styleUrl: './draft-usfm-format.component.scss'
+  selector: 'app-draft-usfm-format',
+  imports: [
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    SharedModule,
+    TranslocoModule,
+    MatFormFieldModule,
+    MatRadioModule
+  ],
+  templateUrl: './draft-usfm-format.component.html',
+  styleUrl: './draft-usfm-format.component.scss'
 })
 export class DraftUsfmFormatComponent extends DataLoadingComponent implements AfterViewInit, ConfirmOnLeave {
   @ViewChild(TextComponent) draftText!: TextComponent;

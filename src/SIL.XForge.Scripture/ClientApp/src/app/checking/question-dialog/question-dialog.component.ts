@@ -36,9 +36,9 @@ export interface QuestionDialogResult {
 }
 
 @Component({
-    templateUrl: './question-dialog.component.html',
-    styleUrls: ['./question-dialog.component.scss'],
-    standalone: false
+  templateUrl: './question-dialog.component.html',
+  styleUrls: ['./question-dialog.component.scss'],
+  standalone: false
 })
 export class QuestionDialogComponent implements OnInit {
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
