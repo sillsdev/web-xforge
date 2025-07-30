@@ -27,8 +27,8 @@ import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
 @Component({
-    template: '',
-    standalone: false
+  template: '',
+  standalone: false
 })
 class EmptyComponent {}
 

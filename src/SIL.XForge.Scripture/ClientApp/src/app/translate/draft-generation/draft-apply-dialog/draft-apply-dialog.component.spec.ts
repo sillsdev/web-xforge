@@ -31,8 +31,8 @@ const mockedDialogRef = mock(MatDialogRef);
 const mockedTextDocService = mock(TextDocService);
 
 @Component({
-    template: `<div>Mock</div>`,
-    standalone: false
+  template: `<div>Mock</div>`,
+  standalone: false
 })
 class MockComponent {}
 
