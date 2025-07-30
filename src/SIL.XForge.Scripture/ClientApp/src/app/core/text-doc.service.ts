@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Delta } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import {
+  EditingRequires,
+  MaxSupportedEditingRequiresValue,
+  SFProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -104,13 +108,28 @@ export class TextDocService {
   }
 
   /**
+   * Determines if an update is required to allow editing.
+   *
+   * @param {SFProjectProfile | undefined} project The project.
+   * @returns {boolean} A value indicating whether the app must be updated.
+   */
+  isUpdateRequired(project: SFProjectProfile | undefined): boolean {
+    return (project?.editingRequires ?? 0) > MaxSupportedEditingRequiresValue;
+  }
+
+  /**
    * Determines if editing is disabled for a project.
    *
    * @param {SFProjectProfile | undefined} project The project.
    * @returns {boolean} A value indicating whether editing is disabled for the project.
    */
   isEditingDisabled(project: SFProjectProfile | undefined): boolean {
-    return project?.editable === false;
+    return (
+      project != null &&
+      (this.isUpdateRequired(project) ||
+        (project.editingRequires & EditingRequires.ViewModelBlankSupport) !== EditingRequires.ViewModelBlankSupport ||
+        (project.editingRequires & EditingRequires.ParatextEditingEnabled) !== EditingRequires.ParatextEditingEnabled)
+    );
   }
 
   /**

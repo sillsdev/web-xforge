@@ -697,7 +697,7 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
         SFProject project = env.GetProject("project01");
-        Assert.That(project.Editable, Is.True, "setup");
+        Assert.That(project.EditingRequires.HasFlag(EditingRequires.ParatextEditingEnabled), Is.True, "setup");
         env.ParatextService.GetParatextUsersAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Is((SFProject project) => project.ParatextId == "target"),
@@ -712,7 +712,7 @@ public class ParatextSyncRunnerTests
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         await env.ParatextService.DidNotReceiveWithAnyArgs().PutBookText(default, default, default, default, default);
         project = env.VerifyProjectSync(true);
-        Assert.That(project.Editable, Is.False);
+        Assert.That(project.EditingRequires.HasFlag(EditingRequires.ParatextEditingEnabled), Is.False);
     }
 
     [Test]
@@ -3742,6 +3742,7 @@ public class ParatextSyncRunnerTests
                     IsRightToLeft = false,
                     DefaultFontSize = 10,
                     DefaultFont = ProjectSettings.defaultFontName,
+                    EditingRequires = EditingRequires.ParatextEditingEnabled | EditingRequires.ViewModelBlankSupport,
                     TranslateConfig = new TranslateConfig
                     {
                         TranslationSuggestionsEnabled = translationSuggestionsEnabled,

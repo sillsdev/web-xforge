@@ -42,6 +42,7 @@ export interface SFProjectProfile extends Project {
   noteTags?: NoteTag[];
   sync: Sync;
   editable: boolean;
+  editingRequires: EditingRequires;
   defaultFontSize?: number;
   defaultFont?: string;
   maxGeneratedUsersPerShareKey?: number;
@@ -66,3 +67,26 @@ export function isResource(project: SFProjectProfile): boolean {
   const resourceIdLength: number = DBL_RESOURCE_ID_LENGTH;
   return project.paratextId.length === resourceIdLength;
 }
+
+/**
+ * A bitwise-flag enumeration to represent what frontend features are required to edit this project's text documents.
+ *
+ * To add more required features, add as follows:
+ *
+ * FutureFeatureA = 1 << 2, // 4
+ * FutureFeatureB = 1 << 3, // 8
+ *
+ * NOTE: Adding a new required feature and migrating editingRequires to include it will block older editors.
+ *       The new required featured should be added to the MaxSupportedEditingRequiresValue below.
+ */
+export enum EditingRequires {
+  ParatextEditingEnabled = 1 << 0, // 1
+  ViewModelBlankSupport = 1 << 1 // 2
+}
+
+/**
+ * This value is by the frontend to determine if a feature has been added
+ * which should disable editing on the frontend until it is updated.
+ */
+export const MaxSupportedEditingRequiresValue: EditingRequires =
+  EditingRequires.ParatextEditingEnabled | EditingRequires.ViewModelBlankSupport;
