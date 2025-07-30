@@ -2086,8 +2086,8 @@ describe('EditorComponent', () => {
           // Editor position immediately following the end of the anchoring. Note that both the thread1 and thread6 note
           // icon embeds need to be accounted for.
           const immediatelyAfter: number = thread1Position + embedLength * 2 + thread1Doc.data!.position.length;
-          // Test insert at index one character outside the text anchor. So not immediately after the anchoring, but another
-          // character past that.
+          // Test insert at index one character outside the text anchor. So not immediately after the anchoring,
+          // but another character past that.
           env.targetEditor.setSelection(immediatelyAfter + 1, 0, 'user');
           env.typeCharacters('a');
           expect(thread1Doc.data!.position).toEqual({ start: 8, length: 9 });

@@ -661,6 +661,20 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.editingRequires).toBe(2);
     });
 
+    it('migrates editable to editingRequires when null', async () => {
+      const env = new TestEnvironment(24);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBe(false);
+      expect(projectDoc.data.editingRequires).toBe(3);
+    });
+
     it('does not remigrate editingRequires', async () => {
       const env = new TestEnvironment(24);
       const conn = env.server.connect();
