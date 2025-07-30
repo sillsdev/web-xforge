@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SIL.XForge.Models;
 
@@ -20,7 +21,10 @@ public class SFProject : Project
     /// Paratext users on this SF project that are associated with a project component (e.g. a note)
     /// </summary>
     public List<ParatextUserProfile> ParatextUsers { get; set; } = [];
-    public bool Editable { get; set; } = true;
+
+    [Obsolete("To disable editing on older frontend clients. Deprecated August 2025.")]
+    public bool Editable { get; set; }
+    public EditingRequires EditingRequires { get; set; }
     public int? DefaultFontSize { get; set; }
     public string? DefaultFont { get; set; }
     public List<NoteTag> NoteTags { get; set; } = [];
