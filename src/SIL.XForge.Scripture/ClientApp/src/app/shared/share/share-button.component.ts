@@ -6,9 +6,9 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ShareDialogComponent, ShareDialogData } from './share-dialog.component';
 
 @Component({
-    selector: 'app-share-button',
-    templateUrl: './share-button.component.html',
-    standalone: false
+  selector: 'app-share-button',
+  templateUrl: './share-button.component.html',
+  standalone: false
 })
 export class ShareButtonComponent implements OnInit {
   @Input() defaultRole?: SFProjectRole;

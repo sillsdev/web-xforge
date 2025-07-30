@@ -18,9 +18,9 @@ export interface NoteDialogData {
 }
 
 @Component({
-    templateUrl: './text-note-dialog.component.html',
-    styleUrls: ['./text-note-dialog.component.scss'],
-    standalone: false
+  templateUrl: './text-note-dialog.component.html',
+  styleUrls: ['./text-note-dialog.component.scss'],
+  standalone: false
 })
 export class TextNoteDialogComponent {
   constructor(

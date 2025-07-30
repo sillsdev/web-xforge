@@ -4,10 +4,10 @@ import { ICONS_TO_MIRROR_RTL } from '../utils';
 import { NoticeMode, NoticeType } from './notice.types';
 
 @Component({
-    selector: 'app-notice',
-    templateUrl: './notice.component.html',
-    styleUrls: ['./notice.component.scss'],
-    imports: [MatIconModule]
+  selector: 'app-notice',
+  templateUrl: './notice.component.html',
+  styleUrls: ['./notice.component.scss'],
+  imports: [MatIconModule]
 })
 export class NoticeComponent implements OnChanges {
   @Input() type: NoticeType = 'primary';

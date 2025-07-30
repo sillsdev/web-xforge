@@ -79,8 +79,9 @@ describe('OwnerComponent', () => {
 });
 
 @Component({
-    selector: 'app-host', template: '',
-    standalone: false
+  selector: 'app-host',
+  template: '',
+  standalone: false
 })
 class HostComponent {
   @ViewChild(OwnerComponent) checkingOwner!: OwnerComponent;

@@ -3,10 +3,10 @@ import { v4 as uuid } from 'uuid';
 import { TabHeaderDirective } from '../tab-header/tab-header.directive';
 
 @Component({
-    selector: 'app-tab',
-    templateUrl: './tab.component.html',
-    styleUrls: ['./tab.component.scss'],
-    standalone: false
+  selector: 'app-tab',
+  templateUrl: './tab.component.html',
+  styleUrls: ['./tab.component.scss'],
+  standalone: false
 })
 export class TabComponent {
   @Input() closeable: boolean = true;
