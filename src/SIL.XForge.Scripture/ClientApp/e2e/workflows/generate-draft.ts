@@ -74,14 +74,12 @@ export async function generateDraft(
   await expect(closeLocator).toBeVisible({ timeout: 5 * 60_000 });
   await user.click(closeLocator);
 
-  // The stepper renders every step to the page at once, so we need to keep track of which step we're on
-  let currentStep = 0;
+  // The stepper renders every step to the page at once. Get the step we're on.
   function getStep(): Locator {
-    return page.locator(`#cdk-step-content-0-${currentStep}`);
+    return page.locator('.mat-horizontal-stepper-content-current');
   }
   async function goToNextStepExpectingHeading(expectedHeading: string): Promise<void> {
     await user.click(getStep().getByRole('button', { name: 'Next' }));
-    currentStep++;
     await expect(getStep().getByRole('heading', { name: expectedHeading })).toBeVisible();
     await user.wait(1500);
   }
