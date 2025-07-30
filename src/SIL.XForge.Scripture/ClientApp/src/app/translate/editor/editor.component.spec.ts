@@ -46,7 +46,7 @@ import {
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { EditingRequires, SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   createTestProject,
@@ -1198,7 +1198,7 @@ describe('EditorComponent', () => {
 
         it('user cannot edit a text that is not editable', fakeAsync(() => {
           const env = new TestEnvironment({ modelHasBlanks });
-          env.setupProject({ editable: false });
+          env.setupProject({ editingRequires: EditingRequires.ViewModelBlankSupport });
           env.setProjectUserConfig();
           env.wait();
 
@@ -3783,6 +3783,19 @@ describe('EditorComponent', () => {
           env.dispose();
         }));
 
+        it('prevents editing and informs user when app requires an update', fakeAsync(() => {
+          const env = new TestEnvironment({ modelHasBlanks });
+          env.setupProject({ translateConfig: defaultTranslateConfig, editingRequires: Number.MAX_SAFE_INTEGER });
+          env.setProjectUserConfig();
+          env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+          env.wait();
+          expect(env.component.hasEditRight).toBe(true);
+          expect(env.component.canEdit).toBe(false);
+          expect(env.component.updateRequired).toBe(true);
+          expect(env.updateRequiredWarning).not.toBeNull();
+          env.dispose();
+        }));
+
         it('shows translator settings when suggestions are enabled for the project and user can edit project', fakeAsync(() => {
           const projectConfig = {
             translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true }
@@ -4848,6 +4861,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.out-of-sync-warning'));
   }
 
+  get updateRequiredWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.update-required-warning'));
+  }
+
   get noChapterEditPermissionMessage(): DebugElement {
     return this.fixture.debugElement.query(By.css('.no-edit-permission-message'));
   }
@@ -4960,8 +4977,8 @@ class TestEnvironment {
     if (data.isRightToLeft != null) {
       projectProfileData.isRightToLeft = data.isRightToLeft;
     }
-    if (data.editable != null) {
-      projectProfileData.editable = data.editable;
+    if (data.editingRequires != null) {
+      projectProfileData.editingRequires = data.editingRequires;
     }
     if (data.defaultFontSize != null) {
       projectProfileData.defaultFontSize = data.defaultFontSize;

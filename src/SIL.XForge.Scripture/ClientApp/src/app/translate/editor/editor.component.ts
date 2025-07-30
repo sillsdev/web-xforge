@@ -541,6 +541,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.textDocService.isDataInSync(this.projectDoc?.data);
   }
 
+  get updateRequired(): boolean {
+    return this.textDocService.isUpdateRequired(this.projectDoc?.data);
+  }
+
   get issueEmailLink(): string {
     return getLinkHTML(environment.issueEmail, issuesEmailTemplate());
   }
