@@ -31,13 +31,13 @@ const defaultInsightConfig: LynxInsightConfig = {
 };
 
 @Component({
-    template: `<app-lynx-insight-overlay
+  template: `<app-lynx-insight-overlay
     #overlay
     [insights]="insights"
     [editor]="editor"
     [textModelConverter]="textModelConverter"
   ></app-lynx-insight-overlay>`,
-    standalone: false
+  standalone: false
 })
 class HostComponent {
   @ViewChild('overlay') component!: LynxInsightOverlayComponent;

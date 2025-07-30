@@ -18,10 +18,10 @@ export interface DiagnosticOverlayData {
 const diagnosticOverlayCollapsedKey = 'DIAGNOSTIC_OVERLAY_COLLAPSED';
 
 @Component({
-    selector: 'app-diagnostic-overlay',
-    templateUrl: './diagnostic-overlay.component.html',
-    styleUrl: './diagnostic-overlay.component.scss',
-    imports: [OverlayModule, CommonModule, UICommonModule]
+  selector: 'app-diagnostic-overlay',
+  templateUrl: './diagnostic-overlay.component.html',
+  styleUrl: './diagnostic-overlay.component.scss',
+  imports: [OverlayModule, CommonModule, UICommonModule]
 })
 export class DiagnosticOverlayComponent {
   isExpanded: boolean = true;

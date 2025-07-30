@@ -49,11 +49,11 @@ export class SharedModule {
       ngModule: SharedModule,
       providers: [
         provideAppInitializer(() => {
-        const initializerFn = ((formatRegistry: QuillFormatRegistryService) => () => {
+          const initializerFn = ((formatRegistry: QuillFormatRegistryService) => () => {
             registerScriptureFormats(formatRegistry);
           })(inject(QuillFormatRegistryService));
-        return initializerFn();
-      })
+          return initializerFn();
+        })
       ]
     };
   }

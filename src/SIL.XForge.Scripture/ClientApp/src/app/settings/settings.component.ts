@@ -32,10 +32,10 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
 @Component({
-    selector: 'app-settings',
-    templateUrl: './settings.component.html',
-    styleUrls: ['./settings.component.scss'],
-    standalone: false
+  selector: 'app-settings',
+  templateUrl: './settings.component.html',
+  styleUrls: ['./settings.component.scss'],
+  standalone: false
 })
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new FormControl(false);

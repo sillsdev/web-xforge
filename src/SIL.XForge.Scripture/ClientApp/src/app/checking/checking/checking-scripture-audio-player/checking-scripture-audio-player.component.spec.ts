@@ -236,17 +236,18 @@ describe('ScriptureAudioComponent', () => {
 });
 
 @Component({
-    selector: 'app-host', template: '',
-    standalone: false
+  selector: 'app-host',
+  template: '',
+  standalone: false
 })
 class HostComponent {
   @ViewChild(CheckingScriptureAudioPlayerComponent) audioPlayer!: CheckingScriptureAudioPlayerComponent;
 }
 
 @Component({
-    selector: 'app-audio-player',
-    template: '<p>Mock Audio Player</p>',
-    standalone: false
+  selector: 'app-audio-player',
+  template: '<p>Mock Audio Player</p>',
+  standalone: false
 })
 class AudioPlayerStubComponent {
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(

@@ -5,8 +5,8 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { AudioPlayer, AudioStatus } from '../audio-player';
 
 @Component({
-    template: ``,
-    standalone: false
+  template: ``,
+  standalone: false
 })
 export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable implements OnDestroy {
   readonly isAudioAvailable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);

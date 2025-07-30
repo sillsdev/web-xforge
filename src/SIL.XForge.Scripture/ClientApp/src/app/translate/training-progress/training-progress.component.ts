@@ -14,10 +14,10 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 @Component({
-    selector: 'app-training-progress',
-    templateUrl: './training-progress.component.html',
-    styleUrls: ['./training-progress.component.scss'],
-    standalone: false
+  selector: 'app-training-progress',
+  templateUrl: './training-progress.component.html',
+  styleUrls: ['./training-progress.component.scss'],
+  standalone: false
 })
 export class TrainingProgressComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   showTrainingProgress: boolean = false;

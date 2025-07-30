@@ -7,10 +7,10 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EventMetric } from './event-metric';
 
 @Component({
-    selector: 'app-event-metric-dialog',
-    templateUrl: './event-metric-dialog.component.html',
-    styleUrls: ['./event-metric-dialog.component.scss'],
-    imports: [CommonModule, MatDialogModule, TranslocoModule, UICommonModule]
+  selector: 'app-event-metric-dialog',
+  templateUrl: './event-metric-dialog.component.html',
+  styleUrls: ['./event-metric-dialog.component.scss'],
+  imports: [CommonModule, MatDialogModule, TranslocoModule, UICommonModule]
 })
 export class EventMetricDialogComponent {
   constructor(

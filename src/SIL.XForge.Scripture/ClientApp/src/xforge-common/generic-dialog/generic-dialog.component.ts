@@ -21,9 +21,9 @@ export interface GenericDialogRef<T> {
 }
 
 @Component({
-    selector: 'app-generic-dialog',
-    templateUrl: './generic-dialog.component.html',
-    standalone: false
+  selector: 'app-generic-dialog',
+  templateUrl: './generic-dialog.component.html',
+  standalone: false
 })
 export class GenericDialogComponent<T> {
   constructor(@Inject(MAT_DIALOG_DATA) private readonly data: GenericDialogOptions<T>) {}

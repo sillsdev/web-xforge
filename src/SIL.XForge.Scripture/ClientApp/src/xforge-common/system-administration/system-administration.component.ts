@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 
 @Component({
-    selector: 'app-system-administration',
-    templateUrl: './system-administration.component.html',
-    styleUrls: ['./system-administration.component.scss'],
-    standalone: false
+  selector: 'app-system-administration',
+  templateUrl: './system-administration.component.html',
+  styleUrls: ['./system-administration.component.scss'],
+  standalone: false
 })
 export class SystemAdministrationComponent {}

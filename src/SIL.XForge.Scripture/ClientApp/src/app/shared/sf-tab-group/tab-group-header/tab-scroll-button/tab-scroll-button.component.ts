@@ -3,10 +3,10 @@ import { Component, DestroyRef, EventEmitter, HostBinding, Inject, Input, OnInit
 import { BehaviorSubject, distinctUntilChanged, fromEvent, merge } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 @Component({
-    selector: 'app-tab-scroll-button',
-    templateUrl: './tab-scroll-button.component.html',
-    styleUrls: ['./tab-scroll-button.component.scss'],
-    standalone: false
+  selector: 'app-tab-scroll-button',
+  templateUrl: './tab-scroll-button.component.html',
+  styleUrls: ['./tab-scroll-button.component.scss'],
+  standalone: false
 })
 export class TabScrollButtonComponent implements OnInit {
   @Input() disabled = false;

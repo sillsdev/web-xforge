@@ -64,8 +64,8 @@ const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
 
 @Component({
-    template: `<div>Mock</div>`,
-    standalone: false
+  template: `<div>Mock</div>`,
+  standalone: false
 })
 class MockComponent {}
 

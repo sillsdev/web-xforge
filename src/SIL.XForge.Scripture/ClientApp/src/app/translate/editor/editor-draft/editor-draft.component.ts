@@ -42,10 +42,10 @@ import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 @Component({
-    selector: 'app-editor-draft',
-    templateUrl: './editor-draft.component.html',
-    styleUrls: ['./editor-draft.component.scss'],
-    standalone: false
+  selector: 'app-editor-draft',
+  templateUrl: './editor-draft.component.html',
+  styleUrls: ['./editor-draft.component.scss'],
+  standalone: false
 })
 export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @Input() projectId?: string;

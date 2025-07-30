@@ -25,10 +25,10 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { ShareBaseComponent } from './share-base.component';
 /** UI to share project access with new users, such as by sending an invitation email. */
 @Component({
-    selector: 'app-share-control',
-    templateUrl: './share-control.component.html',
-    styleUrls: ['./share-control.component.scss'],
-    standalone: false
+  selector: 'app-share-control',
+  templateUrl: './share-control.component.html',
+  styleUrls: ['./share-control.component.scss'],
+  standalone: false
 })
 export class ShareControlComponent extends ShareBaseComponent {
   /** Fires when an invitation is sent. */

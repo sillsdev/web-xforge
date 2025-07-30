@@ -53,8 +53,8 @@ const mockedUserService = mock(UserService);
 const mockedDialog = mock(MatDialog);
 
 @Component({
-    template: `<div>Mock</div>`,
-    standalone: false
+  template: `<div>Mock</div>`,
+  standalone: false
 })
 class MockComponent {}
 

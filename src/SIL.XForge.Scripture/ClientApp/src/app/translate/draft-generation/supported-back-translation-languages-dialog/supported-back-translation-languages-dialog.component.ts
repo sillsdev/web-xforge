@@ -7,11 +7,11 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NLLB_LANGUAGES, NllbLanguage, NllbLanguageDict } from '../../nllb-languages';
 
 @Component({
-    selector: 'app-supported-back-translation-languages-dialog',
-    imports: [MatIconModule, MatDialogModule, MatButtonModule, TranslocoModule],
-    templateUrl: './supported-back-translation-languages-dialog.component.html',
-    styleUrls: ['./supported-back-translation-languages-dialog.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-supported-back-translation-languages-dialog',
+  imports: [MatIconModule, MatDialogModule, MatButtonModule, TranslocoModule],
+  templateUrl: './supported-back-translation-languages-dialog.component.html',
+  styleUrls: ['./supported-back-translation-languages-dialog.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SupportedBackTranslationLanguagesDialogComponent {
   supportedLanguages: NllbLanguage[] = Object.values(this.nllbLanguages);

@@ -194,8 +194,8 @@ describe('RolesAndPermissionsComponent', () => {
 });
 
 @Component({
-    selector: 'app-avatar',
-    standalone: false
+  selector: 'app-avatar',
+  standalone: false
 })
 class FakeAvatarComponent {
   @Input() user?: UserProfile;
