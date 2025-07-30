@@ -257,7 +257,7 @@ export async function deleteProject(page: Page, shortName: string): Promise<void
   const projectName = (await paragraph.textContent())?.match(/delete the (.*) project/)?.[1];
   if (projectName == null) throw new Error('Project name not found');
   await page.getByRole('textbox', { name: 'Project name' }).fill(projectName);
-  await page.getByRole('button', { name: 'Delete this project' }).click();
+  await page.getByRole('button', { name: 'I understand the consequences, delete this project' }).click();
 
   // Wait for the project to be fully deleted and user redirected to my projects page
   await page.waitForURL(url => /\/projects\/?$/.test(url.pathname));
