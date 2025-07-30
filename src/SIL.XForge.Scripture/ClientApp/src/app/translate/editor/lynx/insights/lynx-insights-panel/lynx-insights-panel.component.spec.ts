@@ -514,8 +514,6 @@ describe('LynxInsightsPanelComponent', () => {
 
       expect(env.component['loadingProgressMap'].has('obsolete-node')).toBe(false);
       expect(env.component['nodesWithLargeChildSets'].has('current-node')).toBe(true);
-
-      // tick(500);
     }));
 
     it('should clean up visible children cache for obsolete entries', fakeAsync(() => {
