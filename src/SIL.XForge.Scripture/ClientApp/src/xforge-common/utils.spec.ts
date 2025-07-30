@@ -64,7 +64,7 @@ describe('quietTakeUntilDestroyed', () => {
 });
 
 @Component({
-    standalone: false
+  standalone: false
 })
 class QuietTakeUntilDestroyedTestComponent implements OnDestroy {
   mainSubjectCompleted = false;

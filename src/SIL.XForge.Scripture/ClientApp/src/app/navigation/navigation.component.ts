@@ -17,10 +17,10 @@ import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 
 @Component({
-    selector: 'app-navigation',
-    templateUrl: './navigation.component.html',
-    styleUrls: ['./navigation.component.scss'],
-    standalone: false
+  selector: 'app-navigation',
+  templateUrl: './navigation.component.html',
+  styleUrls: ['./navigation.component.scss'],
+  standalone: false
 })
 export class NavigationComponent {
   canSeeSettings$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(

@@ -53,23 +53,23 @@ export interface ProjectStatus {
 
 /** Enables user to configure settings for drafting. */
 @Component({
-    selector: 'app-draft-sources',
-    imports: [
-        MatButtonModule,
-        MatFormFieldModule,
-        MatIconModule,
-        XForgeCommonModule,
-        MatRippleModule,
-        MatCardModule,
-        CommonModule,
-        TranslocoModule,
-        MatCheckboxModule,
-        MatProgressSpinnerModule,
-        LanguageCodesConfirmationComponent,
-        TrainingDataMultiSelectComponent
-    ],
-    templateUrl: './draft-sources.component.html',
-    styleUrl: './draft-sources.component.scss'
+  selector: 'app-draft-sources',
+  imports: [
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    XForgeCommonModule,
+    MatRippleModule,
+    MatCardModule,
+    CommonModule,
+    TranslocoModule,
+    MatCheckboxModule,
+    MatProgressSpinnerModule,
+    LanguageCodesConfirmationComponent,
+    TrainingDataMultiSelectComponent
+  ],
+  templateUrl: './draft-sources.component.html',
+  styleUrl: './draft-sources.component.scss'
 })
 export class DraftSourcesComponent extends DataLoadingComponent implements ConfirmOnLeave {
   /** Indicator that a project setting change is for clearing a value. */

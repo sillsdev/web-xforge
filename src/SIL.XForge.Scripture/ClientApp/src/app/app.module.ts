@@ -98,9 +98,9 @@ import { UsersModule } from './users/users.module';
     { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
     provideHttpClient(withInterceptorsFromDi()),
     provideAppInitializer(() => {
-        const initializerFn = (preloadEnglishTranslations)(inject(TranslocoService));
-        return initializerFn();
-      })
+      const initializerFn = preloadEnglishTranslations(inject(TranslocoService));
+      return initializerFn();
+    })
   ]
 })
 export class AppModule {}
