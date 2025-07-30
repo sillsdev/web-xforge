@@ -316,6 +316,21 @@ public class ParatextControllerTests
     }
 
     [Test]
+    public async Task GetSnapshotAsync_DeltaIsNotADocument()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ParatextService.GetSnapshotAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter, Timestamp)
+            .Throws(new ArgumentException(@"The delta is not a document."));
+
+        // SUT
+        ActionResult<TextSnapshot> actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ArgumentException>());
+        Assert.IsInstanceOf<ConflictResult>(actual.Result);
+    }
+
+    [Test]
     public async Task GetSnapshotAsync_Forbidden()
     {
         // Set up test environment
@@ -565,14 +580,14 @@ public class ParatextControllerTests
 
         public TestEnvironment()
         {
-            IExceptionHandler exceptionHandler = Substitute.For<IExceptionHandler>();
+            ExceptionHandler = Substitute.For<IExceptionHandler>();
 
             UserAccessor = Substitute.For<IUserAccessor>();
             UserAccessor.UserId.Returns(User01);
             UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
 
             MemoryRepository<UserSecret> userSecrets = new MemoryRepository<UserSecret>(
-                new[] { new UserSecret { Id = User01 } }
+                [new UserSecret { Id = User01 }]
             );
 
             MachineProjectService = Substitute.For<IMachineProjectService>();
@@ -600,7 +615,7 @@ public class ParatextControllerTests
             ProjectService = Substitute.For<ISFProjectService>();
 
             Controller = new ParatextController(
-                exceptionHandler,
+                ExceptionHandler,
                 MachineProjectService,
                 ParatextService,
                 ProjectService,
@@ -610,6 +625,7 @@ public class ParatextControllerTests
         }
 
         public ParatextController Controller { get; }
+        public IExceptionHandler ExceptionHandler { get; }
         public IMachineProjectService MachineProjectService { get; }
         public IParatextService ParatextService { get; }
         public ISFProjectService ProjectService { get; }
