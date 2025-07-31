@@ -1,12 +1,52 @@
-import { CdkScrollable, Overlay, OverlayConfig, OverlayRef, PositionStrategy } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef, PositionStrategy, ScrollStrategy } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { ScrollDispatcher } from '@angular/cdk/scrolling';
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { asyncScheduler, observeOn, Subject, take, takeUntil } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LynxEditor, LynxTextModelConverter } from './lynx-editor';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
+
+/**
+ * Custom scroll strategy that listens to a specific scroll container and repositions the overlay.
+ * This replaces the need for CdkScrollable registration with ScrollDispatcher.
+ */
+class OverlayScrollStrategy implements ScrollStrategy {
+  private _scrollContainer: Element;
+  private _overlayRef?: OverlayRef;
+  private _scrollListener?: () => void;
+
+  constructor(scrollContainer: Element) {
+    this._scrollContainer = scrollContainer;
+  }
+
+  attach(overlayRef: OverlayRef): void {
+    this._overlayRef = overlayRef;
+    this._scrollListener = () => {
+      // Check if overlay is still attached before updating position
+      if (this._overlayRef != null && this._overlayRef.hasAttached()) {
+        this._overlayRef.updatePosition();
+      }
+    };
+    this._scrollContainer.addEventListener('scroll', this._scrollListener);
+  }
+
+  enable(): void {
+    // Already enabled when attached
+  }
+
+  disable(): void {
+    if (this._scrollListener != null) {
+      this._scrollContainer.removeEventListener('scroll', this._scrollListener);
+      this._scrollListener = undefined;
+    }
+  }
+
+  detach(): void {
+    this.disable();
+    this._overlayRef = undefined;
+  }
+}
 
 export interface LynxInsightOverlayRef {
   ref: OverlayRef;
@@ -19,12 +59,10 @@ export interface LynxInsightOverlayRef {
 })
 export class LynxInsightOverlayService {
   private openRef?: LynxInsightOverlayRef;
-  private scrollableContainer?: CdkScrollable;
+  private overlayScrollStrategy?: OverlayScrollStrategy;
 
   constructor(
     private overlay: Overlay,
-    private scrollDispatcher: ScrollDispatcher,
-    private ngZone: NgZone,
     private i18n: I18nService
   ) {}
 
@@ -45,9 +83,8 @@ export class LynxInsightOverlayService {
     // Close any existing overlay
     this.close();
 
-    this.registerScrollable(editor.getScrollingContainer());
-
-    const overlayRef: LynxInsightOverlayRef = this.createOverlayRef(origin);
+    const scrollContainer = editor.getScrollingContainer() as HTMLElement;
+    const overlayRef: LynxInsightOverlayRef = this.createOverlayRef(origin, scrollContainer);
     const componentRef = overlayRef.ref.attach(new ComponentPortal(LynxInsightOverlayComponent));
 
     componentRef.instance.insights = insights;
@@ -93,7 +130,7 @@ export class LynxInsightOverlayService {
     this.openRef = overlayRef;
 
     // When initially displayed, scroll editor if necessary to ensure overlay is displayed within editor bounds
-    setTimeout(() => this.ensureOverlayWithinEditorBounds());
+    setTimeout(() => this.ensureOverlayWithinEditorBounds(scrollContainer));
 
     return overlayRef;
   }
@@ -105,39 +142,37 @@ export class LynxInsightOverlayService {
       this.openRef?.closed$.complete(); // Need null safe operator in case 'closed$.next()' triggers a 'close()' call
       this.openRef = undefined;
 
-      if (this.scrollableContainer != null) {
-        this.scrollDispatcher.deregister(this.scrollableContainer);
-        this.scrollableContainer = undefined;
+      if (this.overlayScrollStrategy != null) {
+        this.overlayScrollStrategy.detach();
+        this.overlayScrollStrategy = undefined;
       }
     }
   }
 
   /**
-   * Create an overlay ref with an 'on close' callback.
+   * Create an overlay ref with configuration and lifecycle subjects.
    */
-  private createOverlayRef(origin: HTMLElement): LynxInsightOverlayRef {
+  private createOverlayRef(origin: HTMLElement, scrollContainer: HTMLElement): LynxInsightOverlayRef {
     return {
-      ref: this.overlay.create(this.getConfig(origin)),
+      ref: this.overlay.create(this.getConfig(origin, scrollContainer)),
       closed$: new Subject<void>(),
       hoverMultiInsight$: new Subject<LynxInsight | null>()
     };
   }
 
-  private getConfig(origin: HTMLElement): OverlayConfig {
+  private getConfig(origin: HTMLElement, scrollContainer: HTMLElement): OverlayConfig {
+    this.overlayScrollStrategy = new OverlayScrollStrategy(scrollContainer);
+
     return {
       positionStrategy: this.getPositionStrategy(origin),
       panelClass: 'lynx-insight-overlay-panel',
-      scrollStrategy: this.overlay.scrollStrategies.reposition(),
+      scrollStrategy: this.overlayScrollStrategy,
       direction: this.i18n.direction
     };
   }
 
   private getPositionStrategy(origin: HTMLElement): PositionStrategy {
-    if (this.scrollableContainer == null) {
-      throw new Error('Scrollable container is not registered');
-    }
-
-    const positionStrategy = this.overlay
+    return this.overlay
       .position()
       .flexibleConnectedTo(origin)
       .withPositions([
@@ -147,55 +182,30 @@ export class LynxInsightOverlayService {
         { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom' }
       ])
       .withGrowAfterOpen(true);
-
-    return positionStrategy;
   }
 
   /**
-   * Converts the scroll container element into a CdkScrollable and registers it with the ScrollDispatcher.
-   * This allows the overlay to reposition itself when the scroll container is scrolled.
-   * @param scrollContainer The scrolling element that contains the insight.
+   * Ensures the overlay is fully within the editor bounds by scrolling if necessary.
+   * Called after overlay is attached and positioned to prevent content from being cut off.
    */
-  private registerScrollable(scrollContainer: Element): void {
-    if (this.scrollableContainer?.getElementRef().nativeElement === scrollContainer) {
-      return;
-    }
-
-    if (this.scrollableContainer != null) {
-      this.scrollDispatcher.deregister(this.scrollableContainer);
-    }
-
-    this.scrollableContainer = new CdkScrollable(
-      { nativeElement: scrollContainer as HTMLElement },
-      this.scrollDispatcher,
-      this.ngZone
-    );
-
-    this.scrollDispatcher.register(this.scrollableContainer);
-  }
-
-  /**
-   * Ensures the overlay is fully within the editor bounds.
-   */
-  private ensureOverlayWithinEditorBounds(): void {
+  private ensureOverlayWithinEditorBounds(scrollContainer: Element): void {
     const overlayRef: OverlayRef | undefined = this.openRef?.ref;
 
-    if (this.scrollableContainer == null || overlayRef?.overlayElement == null) {
+    if (overlayRef?.overlayElement == null) {
       return;
     }
 
     const SCROLL_CUSHION = 10; // Extra cushion from container edge
-    const container = this.scrollableContainer.getElementRef().nativeElement;
     const overlayElement = overlayRef.overlayElement;
 
     // Get element positions
-    const containerRect = container.getBoundingClientRect();
+    const containerRect = scrollContainer.getBoundingClientRect();
     const overlayRect = overlayElement.getBoundingClientRect();
 
     // Check if overlay is not fully above bottom of editor bounds (top case is unnecessary)
     if (overlayRect.bottom > containerRect.bottom) {
       const additionalScroll = overlayRect.bottom - containerRect.bottom + SCROLL_CUSHION;
-      container.scrollTop += additionalScroll;
+      scrollContainer.scrollTop += additionalScroll;
     }
   }
 }
