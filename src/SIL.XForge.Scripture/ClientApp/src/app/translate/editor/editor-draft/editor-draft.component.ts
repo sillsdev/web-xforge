@@ -158,10 +158,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           ])
         ),
         switchMap(([timestamp, draftExists]) => {
-          // As getGeneratedDraftHistory() will always return a draft, we should not show a draft if the user does not
-          // have a timestamp in the query string. If a query string was specified, the user was sent from the draft
-          // history component.
-          if (!draftExists && (this.timestamp == null || timestamp == null)) {
+          const initialTimestamp: Date | undefined = timestamp ?? this.timestamp;
+          // If an earlier draft exists, hide it if the draft history feature is not enabled
+          if (!draftExists && (!this.featureFlags.newDraftHistory.enabled || initialTimestamp == null)) {
             this.draftCheckState = 'draft-empty';
             return EMPTY;
           }
@@ -173,7 +172,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
               this.targetProject = projectDoc.data;
             }),
             distinctUntilChanged(),
-            map(() => timestamp)
+            map(() => initialTimestamp)
           );
         }),
         switchMap((timestamp: Date | undefined) =>
