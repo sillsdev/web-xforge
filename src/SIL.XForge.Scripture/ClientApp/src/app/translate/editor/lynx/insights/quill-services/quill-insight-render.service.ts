@@ -44,6 +44,12 @@ export class QuillInsightRenderService extends InsightRenderService implements O
     }
   }
 
+  ngOnDestroy(): void {
+    if (this.workerApi != null) {
+      this.workerApi[Comlink.releaseProxy]();
+    }
+  }
+
   /**
    * Renders the insights in the editor, applying formatting, action menus, and attention (opacity overlay).
    */
@@ -94,12 +100,6 @@ export class QuillInsightRenderService extends InsightRenderService implements O
 
     // Update editor
     editor.updateContents(resultDelta, 'api');
-  }
-
-  ngOnDestroy(): void {
-    if (this.workerApi != null) {
-      this.workerApi[Comlink.releaseProxy]();
-    }
   }
 
   private getFormatsToRemove(): StringMap {
