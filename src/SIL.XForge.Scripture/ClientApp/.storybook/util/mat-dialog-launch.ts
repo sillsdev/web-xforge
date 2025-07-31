@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, InjectionToken, Injector, OnInit, Provider } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { StoryFn } from '@storybook/angular';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { hasProp } from '../../src/type-utils';
+import { DialogService } from '../../src/xforge-common/dialog.service';
 
 export function getOverlays(element: HTMLElement): HTMLElement[] {
   return Array.from(element.ownerDocument.querySelectorAll('.cdk-overlay-container .cdk-overlay-pane'));
@@ -31,7 +32,6 @@ export interface MatDialogStoryConfig {
 @Component({ template: '' })
 export class MatDialogLaunchComponent implements OnInit {
   constructor(
-    private dialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     @Inject(COMPONENT_UNDER_TEST) private component: any,
     @Inject(COMPONENT_PROPS) private props: any,
@@ -39,7 +39,8 @@ export class MatDialogLaunchComponent implements OnInit {
   ) {}
 
   public ngOnInit(): void {
-    const dialogRef = this.dialog.open(this.component, {
+    const dialogService = this.injector.get(DialogService);
+    const dialogRef = dialogService.openMatDialog(this.component, {
       data: this.data,
       injector: Injector.create({ providers: [], parent: this.injector })
     });
