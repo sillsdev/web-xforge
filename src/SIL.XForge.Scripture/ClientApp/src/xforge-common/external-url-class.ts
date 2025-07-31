@@ -23,16 +23,8 @@ export class ExternalUrls {
     return localeUrlPortion === '' ? this.options.helpUrl : `${this.options.helpUrl}/${localeUrlPortion}`;
   }
 
-  get manual(): string {
-    return this.helps + '/manual';
-  }
-
   get autoDrafts(): string {
     return this.helps + '/understanding-drafts';
-  }
-
-  get rolesHelpPage(): string {
-    return this.manual + '/#t=concepts%2Froles.htm';
   }
 
   get transceleratorImportHelpPage(): string {

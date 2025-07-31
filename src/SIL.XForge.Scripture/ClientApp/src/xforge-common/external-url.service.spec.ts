@@ -14,14 +14,4 @@ describe('ExternalUrlService', () => {
     const service = new ExternalUrlService(stubbedI18nService('es'));
     expect(service.helps).toEqual('https://github-action-preview--scriptureforgehelp.netlify.app/es');
   });
-
-  it('should provide the manual URL for English', () => {
-    const service = new ExternalUrlService(stubbedI18nService(''));
-    expect(service.manual).toEqual('https://github-action-preview--scriptureforgehelp.netlify.app/manual');
-  });
-
-  it('should provide the localized manual URL', () => {
-    const service = new ExternalUrlService(stubbedI18nService('es'));
-    expect(service.manual).toEqual('https://github-action-preview--scriptureforgehelp.netlify.app/es/manual');
-  });
 });

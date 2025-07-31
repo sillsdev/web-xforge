@@ -704,7 +704,6 @@ class TestEnvironment {
     when(mockedUrlService.helps).thenReturn('helps');
     when(mockedUrlService.announcementPage).thenReturn('community-announcements');
     when(mockedUrlService.communitySupport).thenReturn('community-support');
-    when(mockedUrlService.manual).thenReturn('manual');
 
     if (initialConnectionStatus === 'offline') {
       this.goFullyOffline();
