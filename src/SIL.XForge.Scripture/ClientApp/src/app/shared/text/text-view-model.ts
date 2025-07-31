@@ -952,7 +952,8 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
         }
       } else if (
         cloneOp.insert != null &&
-        (cloneOp.insert['note-thread-embed'] != null || cloneOp.insert['blank'] != null)
+        // Only remove notes or the view model created blanks
+        (cloneOp.insert['note-thread-embed'] != null || cloneOp.insert['blank'] === false)
       ) {
         cloneOp = undefined;
       }
@@ -1070,7 +1071,6 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
     // Update the segments
     const updateDelta = this.updateSegments(this.editor, adjustedDelta);
     if (updateDelta.ops != null && updateDelta.ops.length > 0) {
-      // Clean up blanks in quill editor. This may result in re-entering the update() method.
       return adjustedDelta.compose(updateDelta);
     }
 
