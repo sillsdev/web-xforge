@@ -3153,14 +3153,14 @@ describe('EditorComponent', () => {
 
       const hasSelectionAnchors = env.getSegmentElement('verse_1_1')!.querySelector('display-text-anchor');
       expect(hasSelectionAnchors).toBeNull();
-      const verseElem: HTMLElement = env.getSegmentElement('verse_1_1')!;
+      let verseElem: HTMLElement = env.getSegmentElement('verse_1_1')!;
       expect(verseElem.classList).not.toContain('commenter-selection');
 
       // select verse 1
       verseElem.click();
       env.wait();
       expect(verseElem.classList).toContain('commenter-selection');
-      let verse2Elem: HTMLElement = env.getSegmentElement('verse_1_2')!;
+      const verse2Elem: HTMLElement = env.getSegmentElement('verse_1_2')!;
 
       // select verse 2, deselect verse one
       verse2Elem.click();
@@ -3173,16 +3173,19 @@ describe('EditorComponent', () => {
       env.wait();
       expect(verse2Elem.classList).not.toContain('commenter-selection');
 
-      // reselect verse 2, check that it is not selected when moving to a new book
-      verse2Elem.click();
-      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
+      // reselect verse 1, check that it is not selected when moving to a new book
+      verseElem.click();
       env.wait();
-      verse2Elem = env.getSegmentElement('verse_1_2')!;
-      expect(verse2Elem.classList).not.toContain('commenter-selection');
-      const verse3Elem: HTMLElement = env.getSegmentElement('verse_1_3')!;
-      verse3Elem.click();
-      expect(verse3Elem.classList).toContain('commenter-selection');
-      expect(verse2Elem.classList).not.toContain('commenter-selection');
+      expect(verseElem.classList).toContain('commenter-selection');
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      verseElem = env.getSegmentElement('verse_1_1')!;
+      expect(verseElem.classList).not.toContain('commenter-selection');
+      const verse2and3Elem: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
+      verse2and3Elem.click();
+      env.wait();
+      expect(verse2and3Elem.classList).toContain('commenter-selection');
+      expect(verseElem.classList).not.toContain('commenter-selection');
       env.dispose();
     }));
 
@@ -3266,6 +3269,46 @@ describe('EditorComponent', () => {
         const verse2Elem: HTMLElement = env.getSegmentElement('verse_2_2')!;
         expect(verse2Elem.classList).toContain('commenter-selection');
       });
+      env.dispose();
+    }));
+
+    it('does not allow selecting a verse for a note when the format is invalid', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+
+      expect(env.component.canEdit).toBe(false);
+      expect(env.invalidWarning).not.toBeNull();
+      const verseElem: HTMLElement = env.getSegmentElement('verse_1_1')!;
+      expect(verseElem.classList).not.toContain('commenter-selection');
+
+      // select verse 1
+      env.clickSegmentRef('verse_1_1');
+      env.wait();
+      expect(verseElem.classList).not.toContain('commenter-selection');
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
+
+      env.dispose();
+    }));
+
+    it('does not show note fab after closing a note thread format is invalid', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.addParatextNoteThread('threadOnMark', 'MRK 1:1', '', { start: 0, length: 0 }, ['user01']);
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+
+      expect(env.invalidWarning).not.toBeNull();
+      const noteEmbed = env.getNoteThreadIconElement('verse_1_1', 'dataidthreadOnMark');
+      noteEmbed!.click();
+      tick();
+      env.fixture.detectChanges();
+      env.mockNoteDialogRef.close();
+      tick();
+      env.fixture.detectChanges();
+
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
       env.dispose();
     }));
 
@@ -4620,6 +4663,8 @@ class TestEnvironment {
     when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
     when(mockedMatDialog.open(NoteDialogComponent, anything())).thenCall(() => {
       this.openNoteDialogs.push(this.mockNoteDialogRef);
+      const dialogIndex = this.openNoteDialogs.indexOf(this.mockNoteDialogRef);
+      this.mockNoteDialogRef.onClose = () => this.openNoteDialogs.splice(dialogIndex, 1);
       return this.mockNoteDialogRef;
     });
     when(mockedMatDialog.closeAll()).thenCall(() => {

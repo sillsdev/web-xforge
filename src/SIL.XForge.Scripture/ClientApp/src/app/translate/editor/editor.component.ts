@@ -563,12 +563,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   get showAddCommentUI(): boolean {
     if (this.projectDoc?.data == null) return false;
 
-    return SF_PROJECT_RIGHTS.hasRight(
-      this.projectDoc.data,
-      this.userService.currentUserId,
-      SFProjectDomain.SFNoteThreads,
-      Operation.Create
-    );
+    return canInsertNote(this.projectDoc.data, this.userService.currentUserId);
   }
 
   get projectId(): string | undefined {
@@ -600,20 +595,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const projects = this.currentUser.sites[environment.siteId].projects;
       return (this.text?.hasSource && projects.includes(this.sourceProjectId)) || this.isParatextUserRole;
     }
-  }
-
-  private get isInsertNoteFabEnabled(): boolean {
-    return this.canShowInsertNoteFab && !this.isCommenterOnMobileDevice;
-  }
-
-  private get isCommenterOnMobileDevice(): boolean {
-    return (
-      !this.hasEditRight && this.breakpointObserver.isMatched(this.mediaBreakpointService.width('<', Breakpoint.LG))
-    );
-  }
-
-  private get canShowInsertNoteFab(): boolean {
-    return this.targetLoaded && this.dialogService.openDialogCount < 1;
   }
 
   get hasSourceCopyrightBanner(): boolean {
@@ -657,6 +638,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const languageCode = writingSystemTag?.split(/-_/)[0] ?? '';
     const unsupportedLanguageCode = UNSUPPORTED_LANGUAGE_CODES.includes(languageCode);
     return isBlink() && writingSystemTag != null && unsupportedLanguageCode && this.canEdit;
+  }
+
+  private get isInsertNoteFabEnabled(): boolean {
+    return this.canShowInsertNoteFab && !this.isCommenterOnMobileDevice;
+  }
+
+  private get canShowInsertNoteFab(): boolean {
+    return this.commentingIsEnabled && this.targetLoaded && this.dialogService.openDialogCount < 1;
+  }
+
+  private get commentingIsEnabled(): boolean {
+    return this.showAddCommentUI && this.isUsfmValid && !this.target?.areOpsCorrupted && this.dataInSync;
+  }
+
+  private get isCommenterOnMobileDevice(): boolean {
+    return (
+      !this.hasEditRight && this.breakpointObserver.isMatched(this.mediaBreakpointService.width('<', Breakpoint.LG))
+    );
   }
 
   /**
@@ -1591,7 +1590,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const currentVerseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
     this.setNoteFabVisibility('hidden');
     const result: NoteDialogResult | undefined = await lastValueFrom(dialogRef.afterClosed());
-
     if (result != null) {
       if (result.noteContent != null || result.status != null) {
         await this.saveNote({
@@ -2207,9 +2205,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target == null ||
       !this.targetLoaded ||
       this.userRole == null ||
-      !this.showAddCommentUI
-    )
+      !this.commentingIsEnabled
+    ) {
       return;
+    }
     const verseSegments: string[] = this.target.getCompatibleSegments(verseRef);
     const segmentElement: Element | null = this.target.getSegmentElement(verseSegments[0]);
     if (segmentElement == null) {
