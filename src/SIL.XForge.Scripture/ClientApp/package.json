@@ -160,7 +160,7 @@
     "storybook": "^8.5.8",
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.7.0",
-    "typescript": "~5.5.4",
+    "typescript": "~5.7.3",
     "webpack-bundle-analyzer": "^4.5.0"
   },
   "browser": {
