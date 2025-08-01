@@ -6,7 +6,7 @@ import { ServalProjectsComponent } from './serval-projects.component';
   selector: 'app-serval-administration',
   templateUrl: './serval-administration.component.html',
   styleUrls: ['./serval-administration.component.scss'],
-  standalone: true,
-  imports: [ServalProjectsComponent, MobileNotSupportedComponent]
+  imports: [ServalProjectsComponent, MobileNotSupportedComponent],
+  standalone: true
 })
 export class ServalAdministrationComponent {}

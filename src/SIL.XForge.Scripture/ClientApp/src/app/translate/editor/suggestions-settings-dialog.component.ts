@@ -16,7 +16,8 @@ export interface SuggestionsSettingsDialogData {
 
 @Component({
   templateUrl: './suggestions-settings-dialog.component.html',
-  styleUrls: ['./suggestions-settings-dialog.component.scss']
+  styleUrls: ['./suggestions-settings-dialog.component.scss'],
+  standalone: false
 })
 export class SuggestionsSettingsDialogComponent {
   suggestionsEnabledSwitch = new UntypedFormControl({ disabled: !this.onlineStatusService.isOnline });

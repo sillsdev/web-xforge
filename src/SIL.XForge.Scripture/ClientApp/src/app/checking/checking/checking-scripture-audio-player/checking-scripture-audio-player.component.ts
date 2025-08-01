@@ -13,7 +13,8 @@ import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.uti
 @Component({
   selector: 'app-checking-scripture-audio-player',
   templateUrl: './checking-scripture-audio-player.component.html',
-  styleUrls: ['./checking-scripture-audio-player.component.scss']
+  styleUrls: ['./checking-scripture-audio-player.component.scss'],
+  standalone: false
 })
 export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
   @Input() canClose: boolean = true;

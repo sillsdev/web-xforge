@@ -52,7 +52,6 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
   selector: 'app-draft-generation',
   templateUrl: './draft-generation.component.html',
   styleUrls: ['./draft-generation.component.scss'],
-  standalone: true,
   imports: [
     CommonModule,
     UICommonModule,
