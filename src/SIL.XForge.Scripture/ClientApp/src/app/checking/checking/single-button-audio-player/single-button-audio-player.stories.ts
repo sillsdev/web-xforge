@@ -12,7 +12,8 @@ import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.c
   selector: 'app-audio-player-test',
   template: `<app-single-button-audio-player source="./test-audio-player.webm" #player (click)="togglePlay()">
     <mat-icon>{{ player.playing ? 'stop' : 'play_arrow' }}</mat-icon>
-  </app-single-button-audio-player>`
+  </app-single-button-audio-player>`,
+  standalone: false
 })
 class TestComponent {
   @ViewChild('player') player!: SingleButtonAudioPlayerComponent;
