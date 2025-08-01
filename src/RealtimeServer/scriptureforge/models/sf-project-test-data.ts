@@ -1,7 +1,7 @@
 import merge from 'lodash/merge';
 import { RecursivePartial } from '../../common/utils/type-utils';
 import { CheckingAnswerExport } from './checking-config';
-import { SFProject, SFProjectProfile } from './sf-project';
+import { EditingRequires, SFProject, SFProjectProfile } from './sf-project';
 
 function testProjectProfile(ordinal: number): SFProjectProfile {
   return {
@@ -44,7 +44,8 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
       biblicalTermsEnabled: false,
       hasRenderings: false
     },
-    editable: true,
+    editable: false,
+    editingRequires: EditingRequires.ParatextEditingEnabled | EditingRequires.ViewModelBlankSupport,
     defaultFontSize: 12,
     defaultFont: 'Charis SIL',
     maxGeneratedUsersPerShareKey: 250
