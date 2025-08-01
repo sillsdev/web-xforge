@@ -41,15 +41,15 @@ describe('DraftGenerationComponent', () => {
   let mockDialogService: jasmine.SpyObj<DialogService>;
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
   let mockDraftSourcesService: jasmine.SpyObj<DraftSourcesService>;
-  let mockDraftHandlingService: jasmine.SpyObj<DraftHandlingService>;
+  const mockDraftHandlingService: jasmine.SpyObj<DraftHandlingService> | undefined = undefined;
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
-  let mockProjectService: jasmine.SpyObj<SFProjectService>;
+  const mockProjectService: jasmine.SpyObj<SFProjectService> | undefined = undefined;
   let mockUserService: jasmine.SpyObj<UserService>;
-  let mockTextDocService: jasmine.SpyObj<TextDocService>;
+  const mockTextDocService: jasmine.SpyObj<TextDocService> | undefined = undefined;
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
-  let mockProgressService: jasmine.SpyObj<ProgressService>;
+  const mockProgressService: jasmine.SpyObj<ProgressService> | undefined = undefined;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
 
   const buildDto: BuildDto = {
