@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
+import * as Comlink from 'comlink';
 import Quill, { Delta } from 'quill';
 import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { StringMap } from 'rich-text';
@@ -10,22 +11,43 @@ import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insigh
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 import { getLeadingInsight, getMostNestedInsight } from '../lynx-insight-util';
 import { LynxInsightBlot } from './blots/lynx-insight-blot';
+import { FormatOperation, processFormatOperations, WorkerLynxInsight } from './insight-formatting-utils';
+import { InsightFormattingWorkerApi } from './insight-formatting.worker';
 import { QuillLynxEditorAdapter } from './quill-lynx-editor-adapter';
 
 @Injectable({
   providedIn: 'root'
 })
-export class QuillInsightRenderService extends InsightRenderService {
+export class QuillInsightRenderService extends InsightRenderService implements OnDestroy {
   readonly prefix = 'lynx-insight';
   readonly editorAttentionClass = `${this.prefix}-attention`;
   readonly activeInsightClass = `action-overlay-active`;
   readonly cursorActiveClass = `cursor-active`;
+
+  private workerApi?: Comlink.Remote<InsightFormattingWorkerApi>;
 
   constructor(
     private readonly overlayService: LynxInsightOverlayService,
     private insightState: LynxInsightStateService
   ) {
     super();
+
+    // Create worker if browser supports it
+    if (Worker != null) {
+      try {
+        const worker = new Worker(new URL('./insight-formatting.worker', import.meta.url));
+        this.workerApi = Comlink.wrap<InsightFormattingWorkerApi>(worker);
+      } catch (error) {
+        // Log the error for debugging but continue gracefully
+        console.error('Failed to initialize insight-formatting worker:', error);
+      }
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.workerApi != null) {
+      this.workerApi[Comlink.releaseProxy]();
+    }
   }
 
   /**
@@ -57,19 +79,50 @@ export class QuillInsightRenderService extends InsightRenderService {
    * Creates a delta with all the insights' formatting applied, and sets the editor contents to that delta.
    * This avoids multiple calls to quill `formatText`, which will re-render the DOM after each call.
    */
-  private refreshInsightFormatting(insights: LynxInsight[], editor: Quill): void {
+  private async refreshInsightFormatting(insights: LynxInsight[], editor: Quill): Promise<void> {
+    const formatsToRemove: StringMap = this.getFormatsToRemove();
+    const formatOperations: FormatOperation[] = this.prepareFormatOperations(insights);
+
+    let resultDelta: Delta | null = null;
+
+    // Try worker first if available
+    if (this.workerApi != null) {
+      try {
+        resultDelta = await this.workerApi.formatInsights(editor.getLength(), formatsToRemove, formatOperations);
+      } catch (error) {
+        // Worker failed, will fall back to main thread below
+        console.error('Insight formatting worker failed, falling back to main thread processing.', error);
+      }
+    }
+
+    // Use main thread if worker unavailable or failed
+    resultDelta ??= this.formatInsightsOnMainThread(editor.getLength(), formatsToRemove, formatOperations);
+
+    // Update editor
+    editor.updateContents(resultDelta, 'api');
+  }
+
+  private getFormatsToRemove(): StringMap {
+    const formatsToRemove: StringMap = {};
+    for (const type of LynxInsightTypes) {
+      formatsToRemove[`${this.prefix}-${type}`] = null;
+    }
+    return formatsToRemove;
+  }
+
+  private prepareFormatOperations(insights: LynxInsight[]): FormatOperation[] {
     // Group insights by type and range
     const insightsByTypeAndRange = new Map<string, Map<string, LynxInsight[]>>();
 
     for (const insight of insights) {
-      const typeKey = `${this.prefix}-${insight.type}`;
-      const rangeKey = `${insight.range.index}:${insight.range.length}`;
+      const typeKey: string = `${this.prefix}-${insight.type}`;
+      const rangeKey: string = `${insight.range.index}:${insight.range.length}`;
 
       if (!insightsByTypeAndRange.has(typeKey)) {
         insightsByTypeAndRange.set(typeKey, new Map<string, LynxInsight[]>());
       }
 
-      const rangeMap = insightsByTypeAndRange.get(typeKey)!;
+      const rangeMap: Map<string, LynxInsight[]> = insightsByTypeAndRange.get(typeKey)!;
 
       if (!rangeMap.has(rangeKey)) {
         rangeMap.set(rangeKey, []);
@@ -78,33 +131,36 @@ export class QuillInsightRenderService extends InsightRenderService {
       rangeMap.get(rangeKey)!.push(insight);
     }
 
-    // Prepare formats to remove
-    const formatsToRemove: StringMap = {};
-    for (const type of LynxInsightTypes) {
-      formatsToRemove[`${this.prefix}-${type}`] = null;
-    }
+    const formatOperations: FormatOperation[] = [];
 
-    // Apply removal of formats
-    let delta = new Delta().retain(editor.getLength(), formatsToRemove);
-
-    // Apply formats by group, merging each format op with the result of the prev (let quill handle overlapping formats)
     for (const [typeKey, rangeMap] of insightsByTypeAndRange.entries()) {
       for (const [rangeKey, rangeInsights] of rangeMap.entries()) {
-        const [indexStr, lengthStr] = rangeKey.split(':');
-        const index = parseInt(indexStr, 10);
-        const length = parseInt(lengthStr, 10);
+        const [indexStr, lengthStr]: string[] = rangeKey.split(':');
+        const index: number = Number.parseInt(indexStr, 10);
+        const length: number = Number.parseInt(lengthStr, 10);
+        const formatValue: WorkerLynxInsight[] = rangeInsights as WorkerLynxInsight[];
 
-        // Pass single insight or array based on count
-        const formatValue = rangeInsights.length === 1 ? rangeInsights[0] : rangeInsights;
-
-        const deltaToApply = new Delta().retain(index).retain(length, { [typeKey]: formatValue });
-
-        delta = delta.compose(deltaToApply);
+        formatOperations.push({
+          typeKey,
+          index,
+          length,
+          formatValue
+        });
       }
     }
 
-    // Update editor
-    editor.updateContents(delta, 'api');
+    return formatOperations;
+  }
+
+  private formatInsightsOnMainThread(
+    editorLength: number,
+    formatsToRemove: StringMap,
+    formatOperations: FormatOperation[]
+  ): Delta {
+    // Apply removal of formats
+    const baseDelta: Delta = new Delta().retain(editorLength, formatsToRemove);
+
+    return processFormatOperations(baseDelta, formatOperations);
   }
 
   renderActionOverlay(
@@ -114,7 +170,7 @@ export class QuillInsightRenderService extends InsightRenderService {
     actionOverlayActive: boolean
   ): void {
     this.overlayService.close();
-    let editorAttention = false;
+    let editorAttention: boolean = false;
 
     if (actionOverlayActive) {
       const leadingInsight: LynxInsight | undefined = getLeadingInsight(insights);
