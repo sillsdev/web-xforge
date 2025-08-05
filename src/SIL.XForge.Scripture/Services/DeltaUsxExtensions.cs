@@ -12,22 +12,11 @@ public static class DeltaUsxExtensions
         return delta.Insert("\n", attributes);
     }
 
-    public static Delta InsertText(this Delta delta, string text, string? segRef = null, JObject? attributes = null)
-    {
-        if (segRef != null)
-        {
-            attributes = (JObject)attributes?.DeepClone() ?? [];
-            attributes.Add(new JProperty("segment", segRef));
-        }
-        return delta.Insert(text, attributes);
-    }
+    public static Delta InsertText(this Delta delta, string text, string? segRef = null, JObject? attributes = null) =>
+        delta.Insert(text, attributes);
 
-    public static Delta InsertEmpty(this Delta delta, string segRef, JObject? attributes = null)
-    {
-        attributes = (JObject)attributes?.DeepClone() ?? [];
-        attributes.Add(new JProperty("segment", segRef));
-        return delta.Insert(new { empty = true }, attributes);
-    }
+    public static Delta InsertEmpty(this Delta delta, string segRef, JObject? attributes = null) =>
+        delta.Insert(new { empty = true }, attributes);
 
     public static Delta InsertEmbed(
         this Delta delta,
@@ -35,16 +24,5 @@ public static class DeltaUsxExtensions
         JObject obj,
         string? segRef = null,
         JObject? attributes = null
-    )
-    {
-        var embed = new JObject(new JProperty(type, obj));
-
-        if (segRef != null)
-        {
-            attributes = (JObject)attributes?.DeepClone() ?? [];
-            attributes.Add(new JProperty("segment", segRef));
-        }
-
-        return delta.Insert(embed, attributes);
-    }
+    ) => delta.Insert(new JObject(new JProperty(type, obj)), attributes);
 }

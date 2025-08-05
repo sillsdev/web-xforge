@@ -734,6 +734,7 @@ public class DeltaUsxMapper(
                                 break;
 
                             case "segment":
+                                // Legacy support for ops with segment references.
                                 if (attrs.Count == 1)
                                     childNodes.Peek().Add(new XText(text));
                                 break;
