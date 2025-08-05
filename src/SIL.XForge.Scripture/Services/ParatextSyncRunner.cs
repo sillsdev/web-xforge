@@ -2139,16 +2139,15 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         if (_projectDoc is not null)
         {
+            double progressPercent = (progress > 1.0 ? progress / 100.0 : progress);
             await _hubContext.NotifySyncProgress(
                 _projectDoc.Id,
                 new ProgressState
                 {
                     // The fraction is based on the number of phases
-                    ProgressValue =
-                        1.0 / _numberOfPhases * (double)syncPhase
-                        + (progress > 1.0 ? progress / 100.0 : progress) * 1.0 / _numberOfPhases,
+                    ProgressValue = 1.0 / _numberOfPhases * (double)syncPhase + progressPercent * 1.0 / _numberOfPhases,
                     SyncPhase = syncPhase,
-                    SyncProgress = progress,
+                    SyncProgress = progressPercent,
                 }
             );
         }
