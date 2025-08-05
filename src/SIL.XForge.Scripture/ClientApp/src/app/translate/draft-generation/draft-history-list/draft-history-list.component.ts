@@ -2,8 +2,10 @@ import { Component, DestroyRef } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { take } from 'rxjs';
+import { NoticeComponent } from 'src/app/shared/notice/notice.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { I18nService } from '../../../../xforge-common/i18n.service';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
@@ -14,19 +16,21 @@ import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-
 @Component({
   selector: 'app-draft-history-list',
   standalone: true,
-  imports: [MatIconModule, DraftHistoryEntryComponent, TranslocoModule],
+  imports: [MatIconModule, DraftHistoryEntryComponent, TranslocoModule, NoticeComponent],
   templateUrl: './draft-history-list.component.html',
   styleUrl: './draft-history-list.component.scss'
 })
 export class DraftHistoryListComponent {
   history: BuildDto[] = [];
+  readonly draftHistoryCutoffDate: string = this.i18n.formatDate(new Date('2024-12-03T12:00:00.000Z'));
 
   constructor(
     activatedProject: ActivatedProjectService,
     private destroyRef: DestroyRef,
     private readonly draftGenerationService: DraftGenerationService,
     projectNotificationService: ProjectNotificationService,
-    private readonly transloco: TranslocoService
+    private readonly transloco: TranslocoService,
+    private readonly i18n: I18nService
   ) {
     activatedProject.projectId$
       .pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1))
@@ -75,12 +79,19 @@ export class DraftHistoryListComponent {
     }
   }
 
-  get historicalBuilds(): BuildDto[] {
-    return this.latestBuild == null ? this.nonActiveBuilds : this.nonActiveBuilds.slice(1);
-  }
-
   get isBuildActive(): boolean {
     return this.history.some(entry => activeBuildStates.includes(entry.state)) ?? false;
+  }
+
+  get savedHistoricalBuilds(): BuildDto[] {
+    // The date generated is available if the draft has been stored in the realtime database.
+    return this.historicalBuilds.filter(
+      entry => entry.state !== BuildStates.Completed || entry.additionalInfo?.dateGenerated != null
+    );
+  }
+
+  private get historicalBuilds(): BuildDto[] {
+    return this.latestBuild == null ? this.nonActiveBuilds : this.nonActiveBuilds.slice(1);
   }
 
   loadHistory(projectId: string): void {
