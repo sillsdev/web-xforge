@@ -22,12 +22,6 @@ public static class DeltaUsxExtensions
         return delta.Insert(text, attributes);
     }
 
-    public static Delta InsertBlank(this Delta delta, string segRef)
-    {
-        var attrs = new JObject(new JProperty("segment", segRef));
-        return delta.Insert(new { blank = true }, attrs);
-    }
-
     public static Delta InsertEmpty(this Delta delta, string segRef, JObject? attributes = null)
     {
         attributes = (JObject)attributes?.DeepClone() ?? [];
