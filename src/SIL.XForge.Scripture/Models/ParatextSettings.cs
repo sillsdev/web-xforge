@@ -39,4 +39,5 @@ public class ParatextSettings
     public string? CopyrightBanner { get; init; }
     public string? CopyrightNotice { get; init; }
     public ScrVers? Versification { get; init; }
+    public string Visibility { get; init; } = string.Empty;
 }

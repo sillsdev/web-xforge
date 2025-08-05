@@ -1005,6 +1005,7 @@ public class ParatextService : DisposableBase, IParatextService
             CopyrightBanner = copyrightBanner,
             CopyrightNotice = copyrightNotice,
             Versification = scrText.Settings.Versification,
+            Visibility = scrText.Settings.Visibility.ToString(),
         };
     }
 

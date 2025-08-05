@@ -48,6 +48,7 @@ export interface SFProjectProfile extends Project {
   biblicalTermsConfig: BiblicalTermsConfig;
   copyrightBanner?: string;
   copyrightNotice?: string;
+  visibility?: string;
 }
 
 export interface SFProject extends SFProjectProfile {
