@@ -18,39 +18,32 @@ export default {
       </div>
       `
     )
-  ]
+  ],
+  parameters: {
+    chromatic: { disableSnapshot: true }
+  }
 } as Meta;
 
 type Story = StoryObj;
 
 export const MatRaisedButton: Story = {
-  render: () => ({
-    template: `<button mat-raised-button sfBubbleButton color="primary">Mat raised button</button>`
-  })
+  render: () => ({ template: `<button mat-raised-button sfBubbleButton color="primary">Mat raised button</button>` })
 };
 
 export const MatFlatButton: Story = {
-  render: () => ({
-    template: `<button mat-flat-button sfBubbleButton color="primary">Mat flat button</button>`
-  })
+  render: () => ({ template: `<button mat-flat-button sfBubbleButton color="primary">Mat flat button</button>` })
 };
 
 export const MatStrokedButton: Story = {
-  render: () => ({
-    template: `<button mat-stroked-button sfBubbleButton color="primary">Mat stroked button</button>`
-  })
+  render: () => ({ template: `<button mat-stroked-button sfBubbleButton color="primary">Mat stroked button</button>` })
 };
 
 export const MatButton: Story = {
-  render: () => ({
-    template: `<button mat-button sfBubbleButton color="primary">Mat button</button>`
-  })
+  render: () => ({ template: `<button mat-button sfBubbleButton color="primary">Mat button</button>` })
 };
 
 export const VanillaButton: Story = {
-  render: () => ({
-    template: `<button sfBubbleButton color="primary">Vanilla button</button>`
-  })
+  render: () => ({ template: `<button sfBubbleButton color="primary">Vanilla button</button>` })
 };
 
 export const LongTextButton: Story = {
@@ -60,7 +53,5 @@ export const LongTextButton: Story = {
 };
 
 export const ShortTextButton: Story = {
-  render: () => ({
-    template: `<button mat-flat-button sfBubbleButton color="primary">Ok</button>`
-  })
+  render: () => ({ template: `<button mat-flat-button sfBubbleButton color="primary">Ok</button>` })
 };

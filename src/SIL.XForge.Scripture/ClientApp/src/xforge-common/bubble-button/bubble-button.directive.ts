@@ -14,7 +14,10 @@ export class BubbleButtonDirective implements OnInit {
   cssButtonStyleClass = 'sf-bubble-button';
   cssButtonAnimationClass = 'sf-bubble-animate';
 
-  constructor(private readonly el: ElementRef, private readonly renderer: Renderer2) {}
+  constructor(
+    private readonly el: ElementRef,
+    private readonly renderer: Renderer2
+  ) {}
 
   ngOnInit(): void {
     const hostElement = this.el.nativeElement;
