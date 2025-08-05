@@ -7,13 +7,13 @@
   grid-row-gap: 1em;
   align-items: start;
   grid-template-columns: 1fr 2fr;
-  grid-template-areas: 'title title' 'accordion overview' 'codes codes' 'footer footer';
+  grid-template-areas: 'title title' 'accordion overview' 'confirmation confirmation' 'footer footer';
 }
 
 @include breakpoints.media-breakpoint-down(lg) {
   :host {
     grid-template-columns: auto;
-    grid-template-areas: 'title' 'accordion' 'codes' 'footer';
+    grid-template-areas: 'title' 'accordion' 'overview' 'confirmation' 'footer';
   }
 }
 
@@ -195,9 +195,6 @@ strong {
     grid-template-columns: auto;
   }
 
-  .overview {
-    display: none;
-  }
   .draft-sources-stepper {
     width: unset;
   }
@@ -208,7 +205,7 @@ strong {
 }
 
 .confirm-language-codes {
-  grid-area: codes;
+  grid-area: confirmation;
 }
 
 :host:has(.saving) > :not(.saving):not(h1) {
