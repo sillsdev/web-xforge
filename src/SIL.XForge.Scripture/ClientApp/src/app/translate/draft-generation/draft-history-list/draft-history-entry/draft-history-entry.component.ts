@@ -176,7 +176,7 @@ export class DraftHistoryEntryComponent {
     return this._buildRequestedByUserName;
   }
 
-  get buildRequestedByDate(): string {
+  get buildRequestedAtDate(): string {
     if (this._entry?.additionalInfo?.dateRequested == null) return '';
     return this.i18n.formatDate(new Date(this._entry?.additionalInfo?.dateRequested));
   }
