@@ -866,6 +866,7 @@ public class ParatextSyncRunnerTests
         Assert.IsNull(project.WritingSystem.Tag);
         Assert.IsNull(project.CopyrightBanner);
         Assert.IsNull(project.CopyrightNotice);
+        Assert.IsNull(project.Visibility);
         Assert.That(project.TranslateConfig.Source.WritingSystem.Tag, Is.EqualTo(sourceWritingSystemTag));
         const int newFontSize = 16;
         const string newFont = "Doulos SIL";
@@ -887,6 +888,7 @@ public class ParatextSyncRunnerTests
         string newBaseProjectShortName = "BPT";
         const string newCopyrightBanner = "Copyright Banner Goes Here";
         const string newCopyrightNotice = $"<p>Notification: {newCopyrightBanner}</p><p>Copyright Notice Goes Here</p>";
+        const string newVisibility = "Confidential";
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
             .Returns(
                 new ParatextSettings
@@ -902,6 +904,7 @@ public class ParatextSyncRunnerTests
                     BaseProjectShortName = newBaseProjectShortName,
                     CopyrightBanner = newCopyrightBanner,
                     CopyrightNotice = newCopyrightNotice,
+                    Visibility = newVisibility,
                 }
             );
 
@@ -920,6 +923,7 @@ public class ParatextSyncRunnerTests
         Assert.That(project.TranslateConfig.BaseProject.ShortName, Is.EqualTo(newBaseProjectShortName));
         Assert.That(project.CopyrightBanner, Is.EqualTo(newCopyrightBanner));
         Assert.That(project.CopyrightNotice, Is.EqualTo(newCopyrightNotice));
+        Assert.That(project.Visibility, Is.EqualTo(newVisibility));
 
         // Change the base project configuration and remove copyright banner & message
         newProjectType = ProjectType.Daughter.ToString();

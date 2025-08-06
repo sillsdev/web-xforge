@@ -1831,6 +1831,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     // There is no longer a copyright notice, so remove it
                     op.Unset(pd => pd.CopyrightNotice);
                 }
+
+                op.Set(pd => pd.Visibility, settings.Visibility);
             }
 
             // The source can be null if there was an error getting a resource from the DBL

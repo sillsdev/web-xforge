@@ -45,4 +45,11 @@ public class SFProject : Project
     /// <value>The copyright notice.</value>
     /// <remarks>This is may be plain text or HTML formatted.</remarks>
     public string? CopyrightNotice { get; set; }
+
+    /// <summary>
+    /// Gets or sets the project visibility
+    /// </summary>
+    /// <value>The project visibility.</value>
+    /// <remarks>This will be one of the following: "Public", "Test", or "Confidential".</remarks>
+    public string? Visibility { get; set; }
 }

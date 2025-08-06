@@ -36,7 +36,8 @@ const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   sync: true,
   noteTags: true,
   copyrightBanner: true,
-  copyrightNotice: true
+  copyrightNotice: true,
+  visibility: true
 };
 
 /**
@@ -543,6 +544,9 @@ export class SFProjectService extends ProjectService<SFProject> {
       copyrightNotice: {
         bsonType: 'string'
       },
+      visibility: {
+        bsonType: 'string'
+      },
       paratextUsers: {
         bsonType: 'array',
         items: {
@@ -579,7 +583,8 @@ export class SFProjectService extends ProjectService<SFProject> {
       this.pathTemplate(p => p.shortName),
       this.pathTemplate(p => p.writingSystem),
       this.pathTemplate(p => p.copyrightBanner),
-      this.pathTemplate(p => p.copyrightNotice)
+      this.pathTemplate(p => p.copyrightNotice),
+      this.pathTemplate(p => p.visibility)
     ];
     this.immutableProps.push(...immutableProps);
   }
