@@ -9,6 +9,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -320,8 +321,8 @@ class TestEnvironment {
         }
       }
     });
-    when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall((projectId, subscription) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscription)
     );
     when(mockedUserService.currentUserId).thenReturn(args.userId!);
     when(mockedProjectService.onlineGetLinkSharingKey(args.projectId!, anything(), anything(), anything())).thenResolve(
@@ -420,7 +421,11 @@ class TestEnvironment {
   }
 
   updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
     return projectDoc.submitJson0Op(op => op.set(p => p.checkingConfig, config));
   }
 

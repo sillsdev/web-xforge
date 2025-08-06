@@ -21,6 +21,7 @@ import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -161,7 +162,7 @@ describe('RolesAndPermissionsComponent', () => {
     //prep for role change
     when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall((p, u, r) => {
       rolesByUser[u] = r;
-      const projectDoc: SFProjectDoc = env.realtimeService.get(SFProjectDoc.COLLECTION, p);
+      const projectDoc: SFProjectDoc = env.realtimeService.get(SFProjectDoc.COLLECTION, p, new DocSubscription('spec'));
       projectDoc.submitJson0Op(op => {
         op.set(p => p.userRoles, rolesByUser);
         op.set(p => p.userPermissions, {
@@ -218,8 +219,8 @@ class TestEnvironment {
 
   constructor() {
     when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline$.asObservable());
-    when(mockedProjectService.get(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedProjectService.subscribe(anything(), anything())).thenCall((projectId, subscription) =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId, subscription)
     );
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -246,7 +247,8 @@ class TestEnvironment {
     this.realtimeService
       .subscribe<SFProjectUserConfigDoc>(
         SF_PROJECT_USER_CONFIGS_COLLECTION,
-        getSFProjectUserConfigDocId('project01', userId)
+        getSFProjectUserConfigDocId('project01', userId),
+        new DocSubscription('spec')
       )
       .then(() => {
         const config: MatDialogConfig<UserData> = {

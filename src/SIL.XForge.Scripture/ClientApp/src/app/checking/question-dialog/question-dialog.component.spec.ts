@@ -24,6 +24,7 @@ import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -413,7 +414,7 @@ describe('QuestionDialogComponent', () => {
     tick(500);
     const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
-    verify(mockedProjectService.getText(deepEqual(textDocId))).once();
+    verify(mockedProjectService.getText(deepEqual(textDocId), anything())).once();
     expect(env.isSegmentHighlighted('1')).toBe(true);
     expect(env.isSegmentHighlighted('2')).toBe(false);
   }));
@@ -436,7 +437,7 @@ describe('QuestionDialogComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
     env.fixture.detectChanges();
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
-    verify(mockedProjectService.getText(deepEqual(textDocId))).once();
+    verify(mockedProjectService.getText(deepEqual(textDocId), anything())).once();
     expect(env.component.selection!.toString()).toEqual('LUK 1:3');
     expect(env.component.textAndAudio?.input?.audioUrl).toBeDefined();
   }));
@@ -604,7 +605,11 @@ class TestEnvironment {
         id: questionId,
         data: question
       });
-      questionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, questionId);
+      questionDoc = this.realtimeService.get<QuestionDoc>(
+        QuestionDoc.COLLECTION,
+        questionId,
+        new DocSubscription('spec')
+      );
       questionDoc.onlineFetch();
     }
     const textsByBookId = {
@@ -634,7 +639,11 @@ class TestEnvironment {
       id: 'project01',
       data: createTestProjectProfile({ texts: Object.values(textsByBookId) })
     });
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
     const config: MatDialogConfig<QuestionDialogData> = {
       data: {
         questionDoc,
@@ -672,17 +681,17 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 40, 1));
     this.addTextDoc(new TextDocId('project01', 42, 1));
     this.addEmptyTextDoc(43);
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedProjectService.getText(anything(), anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), new DocSubscription('spec'))
     );
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString())
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString(), new DocSubscription('spec'))
     );
     when(mockedFileService.findOrUpdateCache(FileType.Audio, anything(), 'question01', anything())).thenResolve(
       createStorageFileData(QuestionDoc.COLLECTION, 'question01', 'test-audio-short.mp3', getAudioBlob())
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'))
     );
     this.fixture.detectChanges();
   }

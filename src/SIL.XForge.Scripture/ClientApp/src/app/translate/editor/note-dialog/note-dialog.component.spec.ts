@@ -38,10 +38,11 @@ import * as RichText from 'rich-text';
 import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ChildViewContainerComponent, configureTestingModule, matDialogCloseDelay } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
@@ -73,6 +74,7 @@ describe('NoteDialogComponent', () => {
     if (env.dialogContentArea != null) {
       env.closeDialog();
     }
+    flush();
   }));
 
   it('show selected text and toggle visibility of related segment', fakeAsync(() => {
@@ -1027,8 +1029,8 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn(currentUserId);
     firstValueFrom(this.dialogRef.afterClosed()).then(result => (this.dialogResult = result));
 
-    when(mockedUserService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
+    when(mockedUserService.getProfile(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.get(UserProfileDoc.COLLECTION, id, subscriber)
     );
 
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
@@ -1098,7 +1100,7 @@ class TestEnvironment {
 
   closeDialog(): void {
     this.overlayContainerElement.query(By.css('.close-button')).nativeElement.click();
-    tick(matDialogCloseDelay);
+    flush();
   }
 
   clickEditNote(): void {
@@ -1121,12 +1123,16 @@ class TestEnvironment {
 
   getNoteThreadDoc(threadDataId: string): NoteThreadDoc {
     const id: string = getNoteThreadDocId(TestEnvironment.PROJECT01, threadDataId);
-    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id);
+    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id, new DocSubscription('spec'));
   }
 
   getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
     const id: string = getSFProjectUserConfigDocId(projectId, userId);
-    return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
+    return this.realtimeService.get<SFProjectUserConfigDoc>(
+      SFProjectUserConfigDoc.COLLECTION,
+      id,
+      new DocSubscription('spec')
+    );
   }
 
   getNoteContent(noteNumber: number): string {
@@ -1149,7 +1155,7 @@ class TestEnvironment {
 
   submit(): void {
     this.saveButton.nativeElement.click();
-    tick(matDialogCloseDelay);
+    flush();
   }
 
   toggleSegmentButton(): void {

@@ -9,6 +9,7 @@ import * as RichText from 'rich-text';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -470,15 +471,14 @@ class TestEnvironment {
       })
     });
 
-    when(mockedSFProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedSFProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
-    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
-    when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString())
+    when(mockedSFProjectService.getProfile(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, id.toString(), subscriber)
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'))
     );
 
     this.sourceFixture = TestBed.createComponent(TextComponent);

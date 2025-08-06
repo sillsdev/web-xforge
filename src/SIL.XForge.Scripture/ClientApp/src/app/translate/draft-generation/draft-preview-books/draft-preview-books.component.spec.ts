@@ -255,7 +255,7 @@ describe('DraftPreviewBooks', () => {
         { bookNum: 1, chapters: [{ number: 1, lastVerse: 0 }], permissions: { user01: TextInfoPermission.Write } }
       ]
     });
-    when(mockedProjectService.getProfile(projectEmptyBook)).thenResolve({
+    when(mockedProjectService.getProfile(projectEmptyBook, anything())).thenResolve({
       id: projectEmptyBook,
       data: projectWithChaptersMissing
     } as SFProjectProfileDoc);
@@ -265,7 +265,7 @@ describe('DraftPreviewBooks', () => {
     verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
     verify(mockedProjectService.onlineAddChapters(projectEmptyBook, anything(), anything())).once();
     // needs to create 2 texts
-    verify(mockedTextService.createTextDoc(anything())).twice();
+    verify(mockedTextService.createTextDoc(anything(), anything())).twice();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).times(
       env.booksWithDrafts[0].chaptersWithDrafts.length
     );
@@ -457,7 +457,7 @@ class TestEnvironment {
     ).thenResolve();
     when(mockedActivatedProjectService.projectId).thenReturn('project01');
     when(mockedUserService.currentUserId).thenReturn('user01');
-    when(mockedProjectService.getProfile(anything())).thenResolve(this.mockProjectDoc);
+    when(mockedProjectService.getProfile(anything(), anything())).thenResolve(this.mockProjectDoc);
     this.fixture = TestBed.createComponent(DraftPreviewBooksComponent);
     this.component = this.fixture.componentInstance;
     this.component.build = build;

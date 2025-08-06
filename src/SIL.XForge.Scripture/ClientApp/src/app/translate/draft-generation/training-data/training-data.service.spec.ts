@@ -3,6 +3,7 @@ import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptu
 import { anything, mock, verify } from 'ts-mockito';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
@@ -70,7 +71,8 @@ describe('TrainingDataService', () => {
 
     const trainingDataDoc = realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data03')
+      getTrainingDataId('project01', 'data03'),
+      new DocSubscription('spec')
     );
     expect(trainingDataDoc.data).toEqual(newTrainingData);
   }));
@@ -79,7 +81,8 @@ describe('TrainingDataService', () => {
     // Verify the document exists
     const existingTrainingDataDoc = realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data01')
+      getTrainingDataId('project01', 'data01'),
+      new DocSubscription('spec')
     );
     expect(existingTrainingDataDoc.data?.dataId).toBe('data01');
     expect(existingTrainingDataDoc.data?.projectRef).toBe('project01');
@@ -99,7 +102,8 @@ describe('TrainingDataService', () => {
 
     const trainingDataDoc = realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data01')
+      getTrainingDataId('project01', 'data01'),
+      new DocSubscription('spec')
     );
     expect(trainingDataDoc.data).toBeUndefined();
     verify(

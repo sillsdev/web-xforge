@@ -6,7 +6,8 @@ import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -187,7 +188,7 @@ describe('TextDocService', () => {
     it('should throw error if text doc already exists', fakeAsync(() => {
       const env = new TestEnvironment();
       expect(() => {
-        env.textDocService.createTextDoc(env.textDocId, getTextDoc(env.textDocId));
+        env.textDocService.createTextDoc(env.textDocId, new DocSubscription('spec'), getTextDoc(env.textDocId));
         tick();
       }).toThrowError();
     }));
@@ -195,7 +196,11 @@ describe('TextDocService', () => {
     it('creates the text doc if it does not already exist', fakeAsync(async () => {
       const env = new TestEnvironment();
       const textDocId = new TextDocId('project01', 40, 2);
-      const textDoc = await env.textDocService.createTextDoc(textDocId, getTextDoc(textDocId));
+      const textDoc = await env.textDocService.createTextDoc(
+        textDocId,
+        new DocSubscription('spec'),
+        getTextDoc(textDocId)
+      );
       tick();
 
       expect(textDoc.data).toBeDefined();
@@ -459,13 +464,13 @@ class TestEnvironment {
       type: RichText.type.name
     });
 
-    when(mockProjectService.getText(this.textDocId)).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockProjectService.getText(this.textDocId, anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), new DocSubscription('spec'))
     );
     when(mockUserService.currentUserId).thenReturn('user01');
   }
 
   getTextDoc(textId: TextDocId): TextDoc {
-    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
+    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), new DocSubscription('spec'));
   }
 }

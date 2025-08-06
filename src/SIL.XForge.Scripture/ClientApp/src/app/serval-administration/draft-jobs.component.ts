@@ -12,6 +12,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { DocSubscription } from '../../xforge-common/models/realtime-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from '../event-metrics/event-metric';
 import { NoticeComponent } from '../shared/notice/notice.component';
@@ -150,7 +151,10 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
           this.filteredProjectName = projectFilterId ?? '';
           if (projectFilterId) {
             try {
-              const projectDoc = await this.servalAdministrationService.get(projectFilterId);
+              const projectDoc = await this.servalAdministrationService.subscribe(
+                projectFilterId,
+                new DocSubscription('DraftJobsComponent', this.destroyRef)
+              );
               this.filteredProjectName = projectDoc?.data != null ? projectLabel(projectDoc.data) : projectFilterId;
             } catch (error) {
               // We can filter for a now-deleted project, so an error here is not unexpected and fully supported
@@ -695,7 +699,10 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
     // Fetch project data for each unique project ID
     for (const projectId of projectIds) {
-      const projectDoc = await this.servalAdministrationService.get(projectId);
+      const projectDoc = await this.servalAdministrationService.subscribe(
+        projectId,
+        new DocSubscription('DraftJobsComponent')
+      );
       if (projectDoc?.data != null) {
         this.projectNames.set(projectId, projectLabel(projectDoc.data));
         this.projectShortNames.set(projectId, projectDoc.data.shortName || null);
