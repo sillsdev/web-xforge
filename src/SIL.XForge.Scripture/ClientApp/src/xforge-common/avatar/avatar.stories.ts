@@ -31,7 +31,7 @@ export const WithFailedImage: Story = {
   args: {
     user: createTestUserProfile({
       displayName: 'John Doe',
-      avatarUrl: 'https://example.com/non-existent.png'
+      avatarUrl: 'https://localhost/non-existent.png'
     })
   }
 };
@@ -73,7 +73,7 @@ export const WithVariedSizes: Story = {
       }),
       user3: createTestUserProfile({
         displayName: '李小龙',
-        avatarUrl: 'https://example.com/non-existent.png'
+        avatarUrl: 'https://localhost/non-existent.png'
       })
     },
     template: `
