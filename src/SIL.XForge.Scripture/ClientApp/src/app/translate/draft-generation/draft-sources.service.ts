@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, defer, from, Observable } from 'rxjs';
 import { switchMap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../../environments/environment';
@@ -30,14 +31,16 @@ export interface DraftSourcesAsArrays {
   providedIn: 'root'
 })
 export class DraftSourcesService {
-  private readonly currentUser$: Observable<UserDoc> = defer(() => from(this.userService.getCurrentUser()));
-  /** Duration to throttle large amounts of incoming project changes. 100 is a guess for what may be useful. */
+  private readonly currentUser$: Observable<UserDoc> = defer(() =>
+    from(this.userService.getCurrentUser())
+  ); /** Duration to throttle large amounts of incoming project changes. 100 is a guess for what may be useful. */
   private readonly projectChangeThrottlingMs = 100;
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   /**
@@ -86,6 +89,7 @@ export class DraftSourcesService {
     source: TranslateSource | SFProjectProfile,
     currentProjectDoc: SFProjectProfileDoc
   ): Promise<DraftSource> {
+    const docSubscription = new DocSubscription('DraftSources', this.destroyRef);
     const currentUser = await this.userService.getCurrentUser();
     const projectId = hasStringProp(source, 'projectRef') ? source.projectRef : currentProjectDoc.id;
 
@@ -94,7 +98,7 @@ export class DraftSourcesService {
     let project: SFProjectProfile | undefined;
     if (source === currentProjectDoc?.data) project = currentProjectDoc.data;
     else if (currentUser.data?.sites[environment.siteId].projects?.includes(projectId)) {
-      project = (await this.projectService.getProfile(projectId)).data;
+      project = (await this.projectService.getProfile(projectId, docSubscription)).data;
     }
 
     if (project != null) {

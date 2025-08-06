@@ -1,8 +1,10 @@
-import { merge, Observable, Subject, Subscription } from 'rxjs';
+import { DestroyRef } from '@angular/core';
+import { BehaviorSubject, merge, Observable, Subject, Subscription } from 'rxjs';
 import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { PresenceData } from '../../app/shared/text/text.component';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
+import { isNG0911Error } from '../util/rxjs-util';
 import { RealtimeOfflineData } from './realtime-offline-data';
 import { Snapshot } from './snapshot';
 
@@ -13,6 +15,50 @@ export interface RealtimeDocConstructor {
   readonly INDEX_PATHS: (string | { [x: string]: number | string } | [string, unknown])[];
 
   new (realtimeService: RealtimeService, adapter: RealtimeDocAdapter): RealtimeDoc;
+}
+
+/**
+ * Represents information about the subscriber to a realtime document.
+ *
+ * This includes:
+ * - The context in which the subscription was created (e.g. component name). This is used for debugging purposes.
+ * - A flag indicating whether the subscriber has unsubscribed.
+ *
+ * In the future this class may be changed to contain a DestroyRef, callback, or some other way of signaling that the
+ * subscriber has unsubscribed.
+ */
+export class DocSubscription {
+  isUnsubscribed$ = new BehaviorSubject<boolean>(false);
+
+  /**
+   * Creates a new DocSubscription.
+   * @param callerContext A description of the context in which the subscription was created (e.g. component name).
+   */
+  constructor(
+    readonly callerContext: string,
+    destroyRef?: DestroyRef | Observable<void>
+  ) {
+    if (destroyRef == null) return;
+    try {
+      if ('onDestroy' in destroyRef) destroyRef.onDestroy(() => this.complete());
+      else destroyRef.subscribe(() => this.complete());
+    } catch (error) {
+      if (!isNG0911Error(error)) throw error;
+    }
+  }
+
+  private complete(): void {
+    this.isUnsubscribed$.next(true);
+    this.isUnsubscribed$.complete();
+  }
+
+  /**
+   * Marks the subscriber as no longer needing the document(s) subscribed to. This is an alternative to providing a
+   * DestroyRef or Observable to the constructor.
+   */
+  unsubscribe(): void {
+    this.complete();
+  }
 }
 
 /**
@@ -33,6 +79,10 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   private subscribedState: boolean = false;
   private subscribeQueryCount: number = 0;
   private loadOfflineDataPromise?: Promise<void>;
+
+  /** Indicates whether the document is in the process of being disposed. It completes when disposing is finished.*/
+  private readonly isDisposing$ = new BehaviorSubject<boolean>(false);
+  docSubscriptions = new Set<DocSubscription>();
 
   constructor(
     protected readonly realtimeService: RealtimeService,
@@ -89,6 +139,26 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
 
   get delete$(): Observable<void> {
     return this._delete$;
+  }
+
+  /**
+   * Indicates whether the document is in the process of being disposed. This is important because when a document is
+   * being disposed, it will still be in some places where it is expected (e.g. in the RealtimeService's docs list), but
+   * subscribing to it would not work as expected.
+   */
+  get isDisposing(): boolean {
+    return this.isDisposing$.getValue();
+  }
+
+  /**
+   * A promise that resolves when the document is fully disposed. See `isDisposing`. When getting a realtime document
+   * from the RealtimeService, this promise can be used to wait for the document to be fully disposed before proceeding,
+   * rather than returning a document that is in the process of being disposed.
+   */
+  get disposeCompleted(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.isDisposing$.subscribe({ complete: resolve, error: reject });
+    });
   }
 
   /**
@@ -175,6 +245,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
    * @returns {Promise<void>} Resolves when the data has been successfully disposed.
    */
   async dispose(): Promise<void> {
+    this.isDisposing$.next(true);
     if (this.subscribePromise != null) {
       await this.subscribePromise;
     }
@@ -183,6 +254,35 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     await this.adapter.destroy();
     this.subscribedState = false;
     await this.realtimeService.onLocalDocDispose(this);
+    this.isDisposing$.complete();
+  }
+
+  addSubscriber(docSubscription: DocSubscription): void {
+    this.docSubscriptions.add(docSubscription);
+
+    docSubscription.isUnsubscribed$.subscribe(isUnsubscribed => {
+      if (!isUnsubscribed) return;
+
+      this.docSubscriptions.delete(docSubscription);
+
+      if (this.activeDocSubscriptionsCount === 0) {
+        console.log(`No active subscribers for ${this.collection}:${this.id}. Disposing.`);
+        this.realtimeService.docLifecycleMonitor.docDestroyed(`${this.collection}:${this.id}`);
+        this.dispose();
+      }
+    });
+  }
+
+  get docSubscriptionsCount(): number {
+    return this.docSubscriptions.size;
+  }
+
+  get activeDocSubscriptionsCount(): number {
+    let count = 0;
+    for (const docSubscription of this.docSubscriptions) {
+      if (!docSubscription.isUnsubscribed$.getValue()) count++;
+    }
+    return count;
   }
 
   protected prepareDataForStore(data: T): any {
