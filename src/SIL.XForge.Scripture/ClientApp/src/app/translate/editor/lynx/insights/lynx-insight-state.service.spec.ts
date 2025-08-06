@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { LynxInsightFilter, LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { BehaviorSubject, firstValueFrom, Subject } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
@@ -7,8 +9,6 @@ import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/act
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { createTestProject } from '../../../../../../../../RealtimeServer/scriptureforge/models/sf-project-test-data';
-import { createTestProjectUserConfig } from '../../../../../../../../RealtimeServer/scriptureforge/models/sf-project-user-config-test-data';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
