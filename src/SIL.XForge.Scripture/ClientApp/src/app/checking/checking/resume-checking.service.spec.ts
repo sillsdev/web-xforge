@@ -67,7 +67,7 @@ describe('ResumeCheckingService', () => {
     when(mockRouter.events).thenReturn(routerEvents$);
 
     when(mockUserService.currentUserId).thenReturn('user01');
-    when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
+    when(mockProjectService.getUserConfig(anything(), anything(), anything())).thenResolve({
       changes$: of([]) as Observable<OtJson0Op[]>,
       data: {} as SFProjectUserConfig
     } as SFProjectUserConfigDoc);
@@ -96,7 +96,7 @@ describe('ResumeCheckingService', () => {
   });
 
   it('should create link using last location if it is present', fakeAsync(async () => {
-    when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
+    when(mockProjectService.getUserConfig(anything(), anything(), anything())).thenResolve({
       changes$: of([]) as Observable<OtJson0Op[]>,
       data: { selectedBookNum: 40, selectedChapterNum: 2 } as SFProjectUserConfig
     } as SFProjectUserConfigDoc);
@@ -115,7 +115,7 @@ describe('ResumeCheckingService', () => {
   }));
 
   it('should create link using first unanswered question if last location is invalid', fakeAsync(async () => {
-    when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
+    when(mockProjectService.getUserConfig(anything(), anything(), anything())).thenResolve({
       changes$: of([]) as Observable<OtJson0Op[]>,
       data: { selectedBookNum: 5, selectedChapterNum: 2 } as SFProjectUserConfig
     } as SFProjectUserConfigDoc);

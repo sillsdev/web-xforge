@@ -6,6 +6,7 @@ import { SFProjectService } from '../app/core/sf-project.service';
 import { compareProjectsForSorting } from '../app/shared/utils';
 import { environment } from '../environments/environment';
 import { AuthService, LoginResult } from './auth.service';
+import { DocSubscription } from './models/realtime-doc';
 import { UserDoc } from './models/user-doc';
 import { UserService } from './user.service';
 /** Service that maintains an up-to-date set of SF project docs that the current user has access to. */
@@ -62,7 +63,9 @@ export class SFUserProjectsService {
     const docFetchPromises: Promise<SFProjectProfileDoc>[] = [];
     for (const id of currentProjectIds) {
       if (!this.projectDocs.has(id)) {
-        docFetchPromises.push(this.projectService.getProfile(id));
+        docFetchPromises.push(
+          this.projectService.getProfile(id, new DocSubscription('SFUserProjectsService', this.destroyRef))
+        );
       }
     }
 

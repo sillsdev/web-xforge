@@ -4,6 +4,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { asyncScheduler, merge, startWith, Subscription, tap, throttleTime } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -206,15 +207,11 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
       .pipe(
         startWith(this.activatedProject.projectDoc),
         filterNullish(),
-        tap(async project => {
-          this.initialize(project.id);
-        }),
+        tap(async project => this.initialize(project.id)),
         throttleTime(1000, asyncScheduler, { leading: false, trailing: true }),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(project => {
-        this.initialize(project.id);
-      });
+      .subscribe(project => this.initialize(project.id));
   }
 
   get texts(): TextProgress[] {
@@ -232,7 +229,10 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
 
   private async initialize(projectId: string): Promise<void> {
     this._canTrainSuggestions = false;
-    this._projectDoc = await this.projectService.getProfile(projectId);
+    this._projectDoc = await this.projectService.getProfile(
+      projectId,
+      new DocSubscription('ProgressService', this.destroyRef)
+    );
 
     // If we are offline, just update the progress with what we have
     if (!this.onlineStatusService.isOnline) {
@@ -243,7 +243,9 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     for (const book of this._projectDoc.data!.texts) {
       for (const chapter of book.chapters) {
         const textDocId = new TextDocId(this._projectDoc.id, book.bookNum, chapter.number, 'target');
-        chapterDocPromises.push(this.projectService.getText(textDocId));
+        chapterDocPromises.push(
+          this.projectService.getText(textDocId, new DocSubscription('ProgressService', this.destroyRef))
+        );
       }
     }
 
@@ -284,7 +286,8 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     let numTranslatedSegments: number = 0;
     for (const chapter of book.text.chapters) {
       const textDocId = new TextDocId(project.id, book.text.bookNum, chapter.number, 'target');
-      const chapterText: TextDoc = await this.projectService.getText(textDocId);
+      const docSubscriptionForSource = new DocSubscription('ProgressService');
+      const chapterText: TextDoc = await this.projectService.getText(textDocId, docSubscriptionForSource);
 
       // Calculate Segment Count
       const { translated, blank } = chapterText.getSegmentCount();
@@ -305,8 +308,13 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         // Only retrieve the source text if the user has permission
         let sourceNonEmptyVerses: string[] = [];
         if (await this.permissionsService.canAccessText(sourceTextDocId)) {
-          const sourceChapterText: TextDoc = await this.projectService.getText(sourceTextDocId);
+          const docSubscriptionForTarget = new DocSubscription('ProgressService');
+          const sourceChapterText: TextDoc = await this.projectService.getText(
+            sourceTextDocId,
+            docSubscriptionForTarget
+          );
           sourceNonEmptyVerses = sourceChapterText.getNonEmptyVerses();
+          docSubscriptionForTarget.unsubscribe();
         }
 
         // Get the intersect of the source and target arrays of non-empty verses
@@ -318,6 +326,7 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
           this._canTrainSuggestions = true;
         }
       }
+      docSubscriptionForSource.unsubscribe();
     }
 
     // Add the book to the overall progress
