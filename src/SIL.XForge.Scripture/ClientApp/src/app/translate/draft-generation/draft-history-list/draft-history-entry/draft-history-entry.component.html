@@ -8,7 +8,9 @@
       <mat-expansion-panel-header [collapsedHeight]="'auto'" [expandedHeight]="'auto'">
         <mat-panel-title>
           <span class="title">{{ scriptureRange }}</span>
-          <span class="subtitle">{{ formatDate(entry.additionalInfo?.dateFinished) }}</span>
+          <span class="subtitle">{{
+            t("finished_at", { finishedAtTime: formatDate(entry.additionalInfo?.dateFinished) })
+          }}</span>
         </mat-panel-title>
         <mat-panel-description>
           <span class="status" [ngClass]="getStatus(entry.state).color">
@@ -93,14 +95,14 @@
               <p>
                 {{
                   t("requested_by", {
-                    requestedAtDate: buildRequestedAtDate,
+                    requestedAtTime: buildRequestedAtDate,
                     requestedByUserName: buildRequestedByUserName
                   })
                 }}
               </p>
             } @else if (buildRequestedAtDate != null) {
               <p>
-                {{ t("requested_at", { requestedAtDate: buildRequestedAtDate }) }}
+                {{ t("requested_at", { requestedAtTime: buildRequestedAtDate }) }}
               </p>
             }
           }

@@ -274,10 +274,11 @@
     "draft_pending": "Pending",
     "draft_unknown": "Unknown",
     "error_details": "Please include these details when contacting support for assistance",
+    "finished_at": "Finished at {{ finishedAtTime }}",
     "format_draft": "Format draft",
     "hide_model_training_configuration": "Hide model training configuration",
-    "requested_at": "Requested at {{ requestedAtDate }}.",
-    "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtDate }}.",
+    "requested_at": "Requested {{ requestedAtTime }}.",
+    "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
     "show_model_training_configuration": "Show model training configuration",
     "training_books": "Training books",
     "training_model_description": "The language model was trained on this configuration"
