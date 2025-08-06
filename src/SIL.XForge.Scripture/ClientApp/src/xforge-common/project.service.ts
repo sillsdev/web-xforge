@@ -1,3 +1,4 @@
+import { DestroyRef } from '@angular/core';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { ProjectRole } from 'realtime-server/lib/esm/common/models/project-role';
@@ -6,6 +7,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
+import { DocSubscription } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { QueryFilter, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
@@ -22,7 +24,8 @@ export abstract class ProjectService<
     protected readonly realtimeService: RealtimeService,
     protected readonly commandService: CommandService,
     protected readonly retryingRequestService: RetryingRequestService,
-    roles: ProjectRoleInfo[]
+    roles: ProjectRoleInfo[],
+    protected readonly destroyRef: DestroyRef
   ) {
     this.roles = new Map<string, ProjectRoleInfo>();
     this.roles.set(NONE_ROLE.role, NONE_ROLE);
@@ -33,8 +36,8 @@ export abstract class ProjectService<
 
   protected abstract get collection(): string;
 
-  get(id: string): Promise<TDoc> {
-    return this.realtimeService.subscribe(this.collection, id);
+  subscribe(id: string, subscriber: DocSubscription): Promise<TDoc> {
+    return this.realtimeService.subscribe(this.collection, id, subscriber);
   }
 
   onlineQuery(
@@ -53,7 +56,11 @@ export abstract class ProjectService<
             $or: termMatchProperties.map(prop => ({ [prop]: { $regex: term, $options: 'i' } }))
           };
         }
-        return this.realtimeService.onlineQuery<TDoc>(this.collection, merge(filters, queryParameters));
+        return this.realtimeService.onlineQuery<TDoc>(
+          this.collection,
+          'query_projects_a',
+          merge(filters, queryParameters)
+        );
       })
     );
   }
@@ -62,7 +69,9 @@ export abstract class ProjectService<
     if (projectIds.length === 0) {
       return [];
     }
-    const results = await this.realtimeService.onlineQuery<TDoc>(this.collection, { _id: { $in: projectIds } });
+    const results = await this.realtimeService.onlineQuery<TDoc>(this.collection, 'query_projects_b', {
+      _id: { $in: projectIds }
+    });
     return results.docs as TDoc[];
   }
 

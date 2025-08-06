@@ -886,7 +886,7 @@ class TestEnvironment {
     when(mockTextDoc.data).thenReturn(mockTextDocData);
 
     // This is the critical fix - ensure getText returns a Promise, not null
-    when(mockSFProjectService.getText(anything())).thenResolve(instance(mockTextDoc));
+    when(mockSFProjectService.getText(anything(), anything())).thenResolve(instance(mockTextDoc));
     when(mockTextDoc.getSegmentText(anything())).thenReturn('Sample text content for testing');
 
     when(mockRouter.navigate(anything(), anything())).thenResolve(true);

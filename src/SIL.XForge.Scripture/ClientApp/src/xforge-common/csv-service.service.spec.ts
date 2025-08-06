@@ -28,7 +28,7 @@ describe('FileService', () => {
     expect(result).toEqual(expectedOutput);
   });
 
-  it('should fail when no body returned', fakeAsync(() => {
+  it('should fail when no body returned', fakeAsync(async () => {
     const env = new TestEnvironment();
     const excelFile = new File(['EXCEL DATA GOES HERE'], 'test.xls', { type: 'application/vnd.ms-excel' });
     when(mockedHttpClient.post<HttpResponse<string>>(anything(), anything(), anything())).thenReturn(
@@ -36,13 +36,11 @@ describe('FileService', () => {
     );
 
     // SUT
-    expect(() => {
-      env.service.convert(excelFile);
-      tick();
-    }).toThrowError();
+    await expectAsync(env.service.convert(excelFile)).toBeRejected();
+    tick();
   }));
 
-  it('should fail when the API call fails', fakeAsync(() => {
+  it('should fail when the API call fails', fakeAsync(async () => {
     const env = new TestEnvironment();
     const excelFile = new File(['EXCEL DATA GOES HERE'], 'test.xls', { type: 'application/vnd.ms-excel' });
     when(mockedHttpClient.post<HttpResponse<string>>(anything(), anything(), anything())).thenReturn(
@@ -50,10 +48,8 @@ describe('FileService', () => {
     );
 
     // SUT
-    expect(() => {
-      env.service.convert(excelFile);
-      tick();
-    }).toThrowError();
+    await expectAsync(env.service.convert(excelFile)).toBeRejected();
+    tick();
   }));
 
   it('should parse a CSV file correctly', async () => {

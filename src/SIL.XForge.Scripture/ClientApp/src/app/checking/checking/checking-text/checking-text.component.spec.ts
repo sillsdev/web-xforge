@@ -7,8 +7,9 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import * as RichText from 'rich-text';
 import { firstValueFrom } from 'rxjs';
-import { anything, mock, when } from 'ts-mockito';
+import { anyString, anything, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -208,14 +209,14 @@ class TestEnvironment {
         }
       })
     });
-    when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.getProfile(anyString(), anything())).thenCall((id, subscription) =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscription)
     );
-    when(mockedSFProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedSFProjectService.getText(anything(), anything())).thenCall((id, subscriber) =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), subscriber)
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'))
     );
 
     this.fixture = TestBed.createComponent(CheckingTextComponent);

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { SystemAdminAuthGuard } from 'xforge-common/system-admin-auth.guard';
 import { SystemAdministrationComponent } from 'xforge-common/system-administration/system-administration.component';
+import { BlankPageComponent } from './shared/blank-page/blank-page.component';
 import { CheckingOverviewComponent } from './checking/checking-overview/checking-overview.component';
 import { CheckingComponent } from './checking/checking/checking.component';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
@@ -36,6 +37,7 @@ import { TranslateOverviewComponent } from './translate/translate-overview/trans
 import { UsersComponent } from './users/users.component';
 
 export const APP_ROUTES: Routes = [
+  { path: 'blank-page', component: BlankPageComponent },
   { path: 'callback/auth0', component: MyProjectsComponent, canActivate: [AuthGuard] },
   { path: 'connect-project', component: ConnectProjectComponent, canActivate: [AuthGuard] },
   { path: 'login', redirectTo: 'projects', pathMatch: 'full' },

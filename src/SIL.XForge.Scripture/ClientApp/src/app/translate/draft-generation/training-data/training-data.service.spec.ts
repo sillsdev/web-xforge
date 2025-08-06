@@ -2,6 +2,8 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
@@ -87,9 +89,10 @@ describe('TrainingDataService', () => {
     await trainingDataService.createTrainingDataAsync(newTrainingData);
     tick();
 
-    const trainingDataDoc = realtimeService.get<TrainingDataDoc>(
+    const trainingDataDoc = await realtimeService.get<TrainingDataDoc>(
       TrainingDataDoc.COLLECTION,
-      getTrainingDataId('project01', 'data03')
+      getTrainingDataId('project01', 'data03'),
+      new DocSubscription('spec')
     );
     expect(trainingDataDoc.data).toEqual(newTrainingData);
   }));

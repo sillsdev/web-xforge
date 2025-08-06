@@ -6,6 +6,7 @@ import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { Subject } from 'rxjs';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ComparisonOperator, QueryParameters, Sort } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -74,7 +75,12 @@ export class CheckingQuestionsService {
       queryParams.$sort = this.getQuestionSortParams('ascending');
     }
 
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
+    return this.realtimeService.subscribeQuery(
+      QuestionDoc.COLLECTION,
+      'query_questions ' + JSON.stringify(options),
+      queryParams,
+      destroyRef
+    );
   }
 
   /**
@@ -144,7 +150,12 @@ export class CheckingQuestionsService {
       $sort: this.getQuestionSortParams(prevOrNext === 'next' ? 'ascending' : 'descending')
     };
 
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
+    return this.realtimeService.subscribeQuery(
+      QuestionDoc.COLLECTION,
+      'query_adjacent_questions',
+      queryParams,
+      destroyRef
+    );
   }
 
   async queryFirstUnansweredQuestion(
@@ -166,12 +177,18 @@ export class CheckingQuestionsService {
       $sort: this.getQuestionSortParams('ascending'),
       $limit: 1
     };
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
+    return this.realtimeService.subscribeQuery(
+      QuestionDoc.COLLECTION,
+      'query_first_unanswered_question',
+      queryParams,
+      destroyRef
+    );
   }
 
   async createQuestion(
     id: string,
     question: Question,
+    subscriber: DocSubscription,
     audioFileName?: string,
     audioBlob?: Blob
   ): Promise<QuestionDoc | undefined> {
@@ -202,7 +219,7 @@ export class CheckingQuestionsService {
     });
 
     return this.realtimeService
-      .create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question)
+      .create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question, subscriber)
       .then((questionDoc: QuestionDoc) => {
         this.afterQuestionCreated$.next(questionDoc);
         return questionDoc;

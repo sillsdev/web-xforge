@@ -91,10 +91,10 @@ describe('EventMetricsAuthGuard', () => {
       when(mockedAuthService.currentUserRoles).thenReturn([role]);
       when(mockedUserService.currentUserId).thenReturn(user01);
 
-      when(mockedProjectService.getProfile(project01)).thenResolve({
+      when(mockedProjectService.getProfile(project01, anything())).thenResolve({
         data: createTestProjectProfile({ userRoles: { user01: SFProjectRole.ParatextAdministrator } })
       } as SFProjectProfileDoc);
-      when(mockedProjectService.getProfile(project02)).thenResolve({
+      when(mockedProjectService.getProfile(project02, anything())).thenResolve({
         data: createTestProjectProfile()
       } as SFProjectProfileDoc);
     }
