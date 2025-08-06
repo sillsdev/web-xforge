@@ -17,6 +17,7 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -750,7 +751,7 @@ class TestEnvironment {
       .map(o => {
         // Run it into and out of realtime service so it has fields like `remoteChanges$`.
         this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, o);
-        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id);
+        return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, o.id, new DocSubscription('spec'));
       })
       .filter(hasData)
       .map(o => ({

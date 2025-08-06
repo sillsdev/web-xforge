@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { isEqual, isUndefined, omitBy } from 'lodash-es';
 import { editorTabTypes } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
-import { Observable, Subject, Subscription, combineLatest, firstValueFrom, of, startWith, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, Observable, of, startWith, Subject, Subscription, switchMap, tap } from 'rxjs';
 import { distinctUntilChanged, finalize, shareReplay } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -27,7 +28,8 @@ export class EditorTabPersistenceService {
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     private readonly userService: UserService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   /**
@@ -56,7 +58,13 @@ export class EditorTabPersistenceService {
       this.activatedProject.projectId$.pipe(filterNullish()),
       pucChanged$.pipe(startWith(undefined))
     ]).pipe(
-      switchMap(([projectId]) => this.projectService.getUserConfig(projectId, this.userService.currentUserId)),
+      switchMap(([projectId]) =>
+        this.projectService.getUserConfig(
+          projectId,
+          this.userService.currentUserId,
+          new DocSubscription('EditorTabPersistenceService', this.destroyRef)
+        )
+      ),
       tap(pucDoc => {
         pucChangesSub?.unsubscribe();
         pucChangesSub = pucDoc.changes$.subscribe(() => {
