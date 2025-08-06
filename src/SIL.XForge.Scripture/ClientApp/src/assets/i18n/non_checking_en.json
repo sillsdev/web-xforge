@@ -276,6 +276,8 @@
     "error_details": "Please include these details when contacting support for assistance",
     "format_draft": "Format draft",
     "hide_model_training_configuration": "Hide model training configuration",
+    "requested_at": "Requested at {{ requestedAtDate }}.",
+    "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtDate }}.",
     "show_model_training_configuration": "Show model training configuration",
     "training_books": "Training books",
     "training_model_description": "The language model was trained on this configuration"
