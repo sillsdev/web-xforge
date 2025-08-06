@@ -14,6 +14,7 @@ import * as RichText from 'rich-text';
 import { firstValueFrom, of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { DOCUMENT } from 'xforge-common/browser-globals';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
@@ -473,7 +474,7 @@ class TestEnvironment {
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'))
     );
 
     this.fixture.detectChanges();

@@ -238,7 +238,7 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.importFromTransceleratorButton);
     env.selectQuestion(env.tableRows[0]);
     env.click(env.importSelectedQuestionsButton);
-    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion('project01', anything(), anything(), undefined, undefined)).once();
     const question = capture(mockedQuestionsService.createQuestion).last()[1];
     expect(question.projectRef).toBe('project01');
     expect(question.text).toBe('Transcelerator question 1:1');
@@ -256,7 +256,7 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.importFromTransceleratorButton);
     env.selectQuestion(env.tableRows[1]);
     env.click(env.importSelectedQuestionsButton);
-    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion('project01', anything(), anything(), undefined, undefined)).once();
     const question = capture(mockedQuestionsService.createQuestion).last()[1];
     expect(question.verseRef).toEqual({
       bookNum: 40,
@@ -296,13 +296,13 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.importSelectedQuestionsButton.textContent).toContain('1');
 
     env.click(env.importSelectedQuestionsButton);
-    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion('project01', anything(), anything(), undefined, undefined)).once();
   }));
 
   it('allows canceling the import of questions', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    when(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).thenCall(
+    when(mockedQuestionsService.createQuestion('project01', anything(), anything(), undefined, undefined)).thenCall(
       () => new Promise(resolve => setTimeout(resolve, 5000))
     );
     expect(env.tableRows.length).toBe(2);
@@ -314,12 +314,12 @@ describe('ImportQuestionsDialogComponent', () => {
     env.importSelectedQuestionsButton.click();
 
     tick(4000);
-    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion('project01', anything(), anything(), undefined, undefined)).once();
 
     // cancel while the first question is still being imported
     env.cancelButton.click();
     tick(12000);
-    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion('project01', anything(), anything(), undefined, undefined)).once();
   }));
 
   it('can import from a CSV file', fakeAsync(() => {

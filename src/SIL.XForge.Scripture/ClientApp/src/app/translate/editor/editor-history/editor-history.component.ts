@@ -16,6 +16,7 @@ import { Delta } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -42,7 +43,7 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
   public set projectId(value: string | undefined) {
     this._projectId = value;
     if (value != null) {
-      this.projectService.getProfile(value).then(
+      this.projectService.getProfile(value, new DocSubscription('EditorHistoryComponent', this.destroyRef)).then(
         p => (this.projectDoc = p),
         () => (this.projectDoc = undefined)
       );
@@ -115,7 +116,10 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
 
         // Show the diff, if requested
         if (showDiff && this.diffText?.id != null) {
-          const textDoc: TextDoc = await this.projectService.getText(this.diffText.id);
+          const textDoc: TextDoc = await this.projectService.getText(
+            this.diffText.id,
+            new DocSubscription('EditorHistoryComponent', this.destroyRef)
+          );
           const targetContents: Delta = new Delta(textDoc.data?.ops);
           const diff = this.editorHistoryService.processDiff(snapshotContents, targetContents);
 

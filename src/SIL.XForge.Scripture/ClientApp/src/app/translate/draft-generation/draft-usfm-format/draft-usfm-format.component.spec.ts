@@ -21,6 +21,7 @@ import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -354,7 +355,7 @@ class TestEnvironment {
       of(this.getTestBuildDto(args.canDenormalizeQuotes ?? true))
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, this.userId)
+      this.realtimeService.subscribe(UserDoc.COLLECTION, this.userId, new DocSubscription('spec'))
     );
     when(mockedDraftHandlingService.getDraft(anything(), anything())).thenReturn(
       of([
@@ -442,7 +443,7 @@ class TestEnvironment {
       id: 'source01',
       data: createTestProjectProfile({ texts })
     } as SFProjectProfileDoc;
-    when(mockedProjectService.getProfile('source01')).thenResolve(translateSourceProjectDoc);
+    when(mockedProjectService.getProfile('source01', anything())).thenResolve(translateSourceProjectDoc);
 
     const draftSources: DraftSourcesAsArrays = {
       trainingSources: [

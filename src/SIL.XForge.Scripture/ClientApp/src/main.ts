@@ -36,6 +36,7 @@ import { provideCustomIcons } from './app/shared/custom-icons';
 import { provideSFTabs } from './app/shared/sf-tab-group';
 import { provideQuillRegistrations } from './app/shared/text/quill-editor-registration/quill-providers';
 import { preloadEnglishTranslations } from './app/shared/utils';
+import { CacheService } from './app/shared/cache-service/cache.service';
 import { provideLynxInsights } from './app/translate/editor/lynx/insights/lynx-insights-providers';
 import { environment } from './environments/environment';
 
@@ -48,6 +49,11 @@ if (environment.production || environment.pwaTest) {
 }
 
 ExceptionHandlingService.initBugsnag();
+
+/** Initialization function for any services that need to be run but are not depended on by any component. */
+function initializeGlobalServicesFactory(_cacheService: CacheService): () => Promise<any> {
+  return () => Promise.resolve();
+}
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -86,6 +92,10 @@ bootstrapApplication(AppComponent, {
     { provide: ErrorHandler, useClass: ExceptionHandlingService },
     { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
     provideHttpClient(withInterceptorsFromDi()),
+    provideAppInitializer(() => {
+      const initializerFn = initializeGlobalServicesFactory(inject(CacheService));
+      return initializerFn();
+    }),
     provideAppInitializer(() => {
       const initializerFn = preloadEnglishTranslations(inject(TranslocoService));
       return initializerFn();

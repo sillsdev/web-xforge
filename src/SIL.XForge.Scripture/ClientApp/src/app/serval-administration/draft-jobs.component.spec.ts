@@ -834,7 +834,7 @@ class TestEnvironment {
     // Mock project names via ServalAdministrationService for projects in JSON
     const projectIds = [...new Set(eventMetrics.map(e => e.projectId).filter((id): id is string => id != null))];
     projectIds.forEach(projectId => {
-      when(mockedServalAdministrationService.get(projectId)).thenResolve({
+      when(mockedServalAdministrationService.subscribe(projectId, anything())).thenResolve({
         id: projectId,
         data: { name: `Project ${projectId.substring(0, 8)}`, shortName: projectId.substring(0, 4) }
       } as any);

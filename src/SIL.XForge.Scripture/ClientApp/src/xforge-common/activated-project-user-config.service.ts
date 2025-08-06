@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { Observable, map, of, shareReplay, startWith, switchMap } from 'rxjs';
+import { map, Observable, of, shareReplay, startWith, switchMap } from 'rxjs';
 import { SFProjectUserConfigDoc } from '../app/core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { ActivatedProjectService } from './activated-project.service';
+import { DocSubscription } from './models/realtime-doc';
 import { UserService } from './user.service';
 
 @Injectable({
@@ -13,7 +14,13 @@ export class ActivatedProjectUserConfigService {
   readonly projectUserConfigDoc$: Observable<SFProjectUserConfigDoc | undefined> =
     this.activatedProject.projectId$.pipe(
       switchMap(projectId =>
-        projectId != null ? this.projectService.getUserConfig(projectId, this.userService.currentUserId) : of(undefined)
+        projectId != null
+          ? this.projectService.getUserConfig(
+              projectId,
+              this.userService.currentUserId,
+              new DocSubscription('ActivatedProjectUserConfigService', this.destroyRef)
+            )
+          : of(undefined)
       ),
       switchMap(
         projectUserConfigDoc =>
@@ -33,6 +40,7 @@ export class ActivatedProjectUserConfigService {
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly destroyRef: DestroyRef
   ) {}
 }

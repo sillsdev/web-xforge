@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
@@ -20,9 +20,10 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
     realtimeService: RealtimeService,
     commandService: CommandService,
     protected readonly retryingRequestService: RetryingRequestService,
-    private readonly httpClient: HttpClient
+    private readonly httpClient: HttpClient,
+    destroyRef: DestroyRef
   ) {
-    super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES);
+    super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES, destroyRef);
   }
 
   /**
@@ -52,9 +53,13 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
    * @returns A promise containing the project document, or undefined if not found.
    */
   async getByParatextId(paratextId: string): Promise<SFProjectProfileDoc | undefined> {
-    const query = await this.realtimeService.onlineQuery<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, {
-      paratextId
-    });
+    const query = await this.realtimeService.onlineQuery<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'ServalAdministrationService.getByParatextId',
+      {
+        paratextId
+      }
+    );
     return query.docs.length > 0 ? query.docs[0] : undefined;
   }
 }

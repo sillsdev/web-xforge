@@ -21,6 +21,7 @@ import { Subscription } from 'rxjs';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -72,16 +73,19 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public readonly data: UserData,
     public readonly urls: ExternalUrlService,
     public readonly i18n: I18nService,
-    private readonly onlineService: OnlineStatusService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly destroyRef: DestroyRef
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.projectDoc = await this.projectService.get(this.data.projectId);
+    this.projectDoc = await this.projectService.subscribe(
+      this.data.projectId,
+      new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
+    );
 
     this.onlineSubscription?.unsubscribe();
-    this.onlineSubscription = this.onlineService.onlineStatus$
+    this.onlineSubscription = this.onlineStatusService.onlineStatus$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(isOnline => this.updateFormEditability(isOnline));
 
@@ -121,7 +125,10 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
 
     const selectedRole = this.roles.value;
     await this.projectService.onlineUpdateUserRole(this.data.projectId, this.data.userId, selectedRole);
-    this.projectDoc = await this.projectService.get(this.data.projectId);
+    this.projectDoc = await this.projectService.subscribe(
+      this.data.projectId,
+      new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
+    );
 
     const permissions = new Set((this.projectDoc?.data?.userPermissions ?? {})[this.data.userId] ?? []);
 
