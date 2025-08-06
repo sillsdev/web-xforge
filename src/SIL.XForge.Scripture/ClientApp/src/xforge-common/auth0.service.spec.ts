@@ -34,10 +34,10 @@ describe('Auth0Service', () => {
     tick();
   }));
 
-  it('should generate a new change password request', fakeAsync(() => {
+  it('should generate a new change password request', fakeAsync(async () => {
     const env = new TestEnvironment();
     const email = 'test@example.com';
-    env.service.changePassword(email);
+    await env.service.changePassword(email);
     const httpOptions = capture(mockedHttpClient.post).last();
     expect(httpOptions[0].includes('dbconnections/change_password')).toBe(true);
     expect(httpOptions[1]).toEqual({
@@ -47,7 +47,7 @@ describe('Auth0Service', () => {
     });
   }));
 
-  it('should authenticate transparently with a cookie', fakeAsync(() => {
+  it('should authenticate transparently with a cookie', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupAuthenticationCookie();
     const expectedResponse: GetTokenSilentlyVerboseResponse = {
@@ -66,36 +66,33 @@ describe('Auth0Service', () => {
         })
       )
     ).thenReturn(of(JSON.stringify(expectedResponse)));
-    env.service.tryTransparentAuthentication().then(response => {
-      expect(response).toEqual(expectedResponse);
-      verify(mockedReportingService.silentError(anything(), anything())).never();
-    });
+    const response = await env.service.tryTransparentAuthentication();
+    expect(response).toEqual(expectedResponse);
+    verify(mockedReportingService.silentError(anything(), anything())).never();
     tick();
   }));
 
-  it('should not try and authenticate transparently if no cookie is set', fakeAsync(() => {
+  it('should not try and authenticate transparently if no cookie is set', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.service.tryTransparentAuthentication().then(response => {
-      verify(mockedCookieService.check(TransparentAuthenticationCookie)).once();
-      verify(mockedCookieService.get(TransparentAuthenticationCookie)).never();
-      expect(response).toBeUndefined();
-      resetCalls(mockedCookieService);
-    });
+    const response = await env.service.tryTransparentAuthentication();
+    verify(mockedCookieService.check(TransparentAuthenticationCookie)).once();
+    verify(mockedCookieService.get(TransparentAuthenticationCookie)).never();
+    expect(response).toBeUndefined();
+    resetCalls(mockedCookieService);
     tick();
   }));
 
-  it('should silently return when authentication fails', fakeAsync(() => {
+  it('should silently return when authentication fails', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupAuthenticationCookie();
     when(mockedHttpClient.post(anything(), anything(), anything())).thenThrow(
       new GenericError('login_required', 'Not logged in')
     );
-    env.service.tryTransparentAuthentication().then(response => {
-      verify(mockedCookieService.check(TransparentAuthenticationCookie)).once();
-      verify(mockedCookieService.get(TransparentAuthenticationCookie)).once();
-      verify(mockedReportingService.silentError(anything(), anything())).once();
-      expect(response).toBeUndefined();
-    });
+    const response = await env.service.tryTransparentAuthentication();
+    verify(mockedCookieService.check(TransparentAuthenticationCookie)).once();
+    verify(mockedCookieService.get(TransparentAuthenticationCookie)).once();
+    verify(mockedReportingService.silentError(anything(), anything())).once();
+    expect(response).toBeUndefined();
     tick();
   }));
 });

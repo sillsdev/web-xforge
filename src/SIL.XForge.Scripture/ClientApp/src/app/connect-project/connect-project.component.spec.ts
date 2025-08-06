@@ -10,6 +10,7 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -148,7 +149,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('offline');
   }));
 
-  it('should create when non-existent project is selected', fakeAsync(() => {
+  it('should create when non-existent project is selected', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
@@ -165,8 +166,8 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('connecting');
     expect(env.submitButton).toBeNull();
     expect(env.progressBar).not.toBeNull();
-    env.setQueuedCount();
-    env.emitSyncComplete();
+    await env.setQueuedCount();
+    await env.emitSyncComplete();
 
     const settings: SFProjectCreateSettings = {
       paratextId: 'pt01',
@@ -177,7 +178,7 @@ describe('ConnectProjectComponent', () => {
     verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
-  it('should create when no setting is selected', fakeAsync(() => {
+  it('should create when no setting is selected', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
@@ -189,8 +190,8 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('connecting');
     expect(env.progressBar).not.toBeNull();
-    env.setQueuedCount();
-    env.emitSyncComplete();
+    await env.setQueuedCount();
+    await env.emitSyncComplete();
 
     const project: SFProjectCreateSettings = {
       paratextId: 'pt01',
@@ -235,7 +236,7 @@ describe('ConnectProjectComponent', () => {
     verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).never();
   }));
 
-  it('shows error message when resources fail to load, but still allows selecting a based on project', fakeAsync(() => {
+  it('shows error message when resources fail to load, but still allows selecting a based on project', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
     when(mockedParatextService.getResources()).thenReject(new Error('Failed to fetch resources'));
@@ -250,8 +251,8 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
 
     expect(env.component.state).toEqual('connecting');
-    env.setQueuedCount();
-    env.emitSyncComplete();
+    await env.setQueuedCount();
+    await env.emitSyncComplete();
 
     const settings: SFProjectCreateSettings = {
       paratextId: 'pt01',
@@ -352,7 +353,7 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(params: TestEnvironmentParams = { paratextId: null }) {
-    when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
+    when(mockedSFProjectService.onlineCreate(anything())).thenCall(async (settings: SFProjectCreateSettings) => {
       const newProject: SFProject = createTestProject({
         paratextId: settings.paratextId,
         translateConfig: {
@@ -377,11 +378,12 @@ class TestEnvironment {
         },
         paratextUsers: [{ sfUserId: 'user01', username: 'ptuser01', opaqueUserId: 'opaqueuser01' }]
       });
-      this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject);
-      return Promise.resolve('project01');
+      await this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject, new DocSubscription('spec'));
+      return 'project01';
     });
-    when(mockedSFProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.subscribe('project01', anything())).thenCall(
+      async () =>
+        await this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01', new DocSubscription('spec'))
     );
     if (params.paratextId === undefined) {
       when(mockedRouter.getCurrentNavigation()).thenReturn({ extras: {} } as any);
@@ -483,16 +485,24 @@ class TestEnvironment {
     return element.nativeElement.querySelector('input') as HTMLInputElement;
   }
 
-  setQueuedCount(): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount, 1), false);
+  async setQueuedCount(): Promise<void> {
+    const projectDoc = await this.realtimeService.get<SFProjectDoc>(
+      SFProjectDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
+    await projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount, 1), false);
     tick();
     this.fixture.detectChanges();
   }
 
-  emitSyncComplete(): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(op => {
+  async emitSyncComplete(): Promise<void> {
+    const projectDoc = await this.realtimeService.get<SFProjectDoc>(
+      SFProjectDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
+    await projectDoc.submitJson0Op(op => {
       op.set<number>(p => p.sync.queuedCount, 0);
       op.set<boolean>(p => p.sync.lastSyncSuccessful!, true);
       op.set(p => p.sync.dateLastSuccessfulSync!, new Date().toJSON());

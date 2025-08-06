@@ -9,6 +9,7 @@ import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scripture
 import { Subscription } from 'rxjs';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -50,7 +51,14 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.projectDoc = await this.projectService.get(this.data.projectId);
+    this.onlineService.onlineStatus$.subscribe(isOnline => {
+      isOnline ? this.form.enable() : this.form.disable();
+    });
+
+    this.projectDoc = await this.projectService.subscribe(
+      this.data.projectId,
+      new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
+    );
 
     this.onlineSubscription?.unsubscribe();
     this.onlineSubscription = this.onlineService.onlineStatus$
@@ -93,7 +101,10 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
 
     const selectedRole = this.roles.value;
     await this.projectService.onlineUpdateUserRole(this.data.projectId, this.data.userId, selectedRole);
-    this.projectDoc = await this.projectService.get(this.data.projectId);
+    this.projectDoc = await this.projectService.subscribe(
+      this.data.projectId,
+      new DocSubscription('RolesAndPermissionsDialogComponent', this.destroyRef)
+    );
 
     const permissions = new Set((this.projectDoc?.data?.userPermissions ?? {})[this.data.userId] ?? []);
 

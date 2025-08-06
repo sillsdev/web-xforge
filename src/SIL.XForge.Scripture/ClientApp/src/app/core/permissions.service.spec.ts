@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { User } from '@bugsnag/js';
 import { cloneDeep } from 'lodash-es';
@@ -7,11 +9,14 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './models/sf-type-registry';
@@ -22,13 +27,18 @@ import { SFProjectService } from './sf-project.service';
 
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
+const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
+
 describe('PermissionsService', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestTranslocoModule],
     providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
       { provide: UserService, useMock: mockedUserService },
-      { provide: SFProjectService, useMock: mockedProjectService }
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: SFUserProjectsService, useMock: mockedUserProjectsService }
     ]
   }));
 
@@ -159,7 +169,7 @@ describe('PermissionsService', () => {
     expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(true);
     env.setCurrentUser('other');
     expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(false);
-    verify(mockedProjectService.getProfile('project01')).twice();
+    verify(mockedProjectService.getProfile('project01', anything())).twice();
   }));
 
   describe('canSync', () => {
@@ -250,12 +260,8 @@ class TestEnvironment {
   constructor(readonly checkingEnabled = true) {
     this.service = TestBed.inject(PermissionsService);
 
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
-    );
-
-    when(mockedProjectService.get(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(
+      async id => await this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, new DocSubscription('spec'))
     );
 
     this.setProjectProfile();
@@ -268,42 +274,49 @@ class TestEnvironment {
     const projectId: string = 'project01';
     const permission: TextInfoPermission = textPermission ?? TextInfoPermission.Write;
 
-    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
-      id: projectId,
-      data: createTestProjectProfile({
-        translateConfig: {},
-        userRoles: {
-          user01: SFProjectRole.ParatextTranslator,
-          user02: SFProjectRole.ParatextConsultant
-        },
-        texts: [
-          {
-            bookNum: 41,
-            chapters: [
-              {
-                number: 1,
-                lastVerse: 3,
-                isValid: true,
-                permissions: {
-                  user01: permission,
-                  user02: permission
+    const projectProfileDocs: SFProjectProfileDoc[] = [
+      {
+        id: projectId,
+        data: createTestProjectProfile({
+          translateConfig: {},
+          userRoles: {
+            user01: SFProjectRole.ParatextTranslator,
+            user02: SFProjectRole.ParatextConsultant
+          },
+          texts: [
+            {
+              bookNum: 41,
+              chapters: [
+                {
+                  number: 1,
+                  lastVerse: 3,
+                  isValid: true,
+                  permissions: {
+                    user01: permission,
+                    user02: permission
+                  }
                 }
+              ],
+              hasSource: true,
+              permissions: {
+                user01: permission,
+                user02: permission
               }
-            ],
-            hasSource: true,
-            permissions: {
-              user01: permission,
-              user02: permission
             }
-          }
-        ]
-      })
-    });
+          ]
+        })
+      }
+    ] as SFProjectProfileDoc[];
+
+    this.realtimeService.addSnapshots<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, projectProfileDocs);
+    when(mockedUserProjectsService.projectDocs$).thenReturn(of(projectProfileDocs));
   }
 
   setCurrentUser(userId: string = 'user01'): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedUserService.getCurrentUser()).thenCall(
+      async () => await this.realtimeService.subscribe(UserDoc.COLLECTION, userId, new DocSubscription('spec'))
+    );
   }
 
   setupUserData(userId: string = 'user01', projects: string[] = ['project01']): void {

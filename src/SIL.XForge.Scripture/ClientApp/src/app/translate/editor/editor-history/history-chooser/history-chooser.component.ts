@@ -1,4 +1,13 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
 import { Canon } from '@sillsdev/scripture';
 import { Delta } from 'quill';
@@ -18,6 +27,7 @@ import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -72,7 +82,8 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     private readonly errorReportingService: ErrorReportingService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   get canRestoreSnapshot(): boolean {
@@ -114,7 +125,10 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       if (isOnline && this.projectId != null && this.bookNum != null && this.chapter != null) {
         this.loading$.next(true);
         try {
-          this.projectDoc = await this.projectService.getProfile(this.projectId);
+          this.projectDoc = await this.projectService.getProfile(
+            this.projectId,
+            new DocSubscription('HistoryChooserComponent', this.destroyRef)
+          );
           if (this.historyRevisions.length === 0) {
             this.historyRevisions =
               (await this.paratextService.getRevisions(this.projectId, this.bookId, this.chapter)) ?? [];
