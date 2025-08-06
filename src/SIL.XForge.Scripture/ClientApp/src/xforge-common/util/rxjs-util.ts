@@ -13,6 +13,10 @@ export function filterNullish<T>(): OperatorFunction<T | undefined | null, T> {
   return filter((value): value is T => value != null);
 }
 
+export function isNG0911Error(error: unknown): boolean {
+  return hasStringProp(error, 'message') && error.message.includes('NG0911');
+}
+
 /**
  * Like `takeUntilDestroyed`, but catches and logs NG0911 errors (unless `options.logWarnings` is false).
  */
@@ -26,11 +30,10 @@ export function quietTakeUntilDestroyed<T>(
       try {
         return destroyRef.onDestroy(callback);
       } catch (error) {
-        const isNG0911 = hasStringProp(error, 'message') && error.message.includes('NG0911');
-        if (isNG0911 && options.logWarnings) {
+        if (isNG0911Error(error) && options.logWarnings) {
           console.warn('NG0911 error caught and ignored. Original stack: ', stack);
         }
-        if (!isNG0911) throw error;
+        if (!isNG0911Error(error)) throw error;
         callback();
         return () => {};
       }

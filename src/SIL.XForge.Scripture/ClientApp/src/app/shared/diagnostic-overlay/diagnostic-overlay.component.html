@@ -1,3 +1,5 @@
+{{ digestCycleCounter }}
+
 <div class="wrapper" [class.collapsed]="!isExpanded">
   <div class="header">
     @if (isExpanded) {
@@ -15,44 +17,148 @@
     </button>
   </div>
   @if (isExpanded) {
-    <h3>{{ totalDocsCount | l10nNumber }} documents tracked by realtime service</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Collection</th>
-          <th>Docs</th>
-          <th>Subscribers</th>
-          <th>Queries</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (docType of docCountsByCollection | keyvalue; track docType.key) {
-          <tr>
-            <td>{{ docType.key }}</td>
-            <td>{{ docType.value.docs | l10nNumber }}</td>
-            <td>{{ docType.value.subscribers | l10nNumber }}</td>
-            <td>{{ docType.value.queries | l10nNumber }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <div class="nav-and-content-wrapper">
+      <div class="nav-wrapper">
+        <span (click)="tab = 0" [class.active]="tab === 0">Realtime server</span>
+        <span (click)="tab = 1" [class.active]="tab === 1">Doc recreates</span>
+        <span (click)="tab = 2" [class.active]="tab === 2">Loading</span>
+        <span (click)="tab = 3" [class.active]="tab === 3">Digest cycles</span>
+      </div>
+      <div class="tab-content">
+        @if (tab === 0) {
+          <h3>{{ totalDocsCount | l10nNumber }} documents tracked by realtime service</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Collection</th>
+                <th>Docs</th>
+                <th>Subscribers</th>
+                <th>Active Subs</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (docType of docCountsByCollection | keyvalue; track docType.key) {
+                <tr>
+                  <td>{{ docType.key }}</td>
+                  <td>{{ docType.value.docs | l10nNumber }}</td>
+                  <td>{{ docType.value.subscribers | l10nNumber }}</td>
+                  <td>{{ docType.value.activeDocSubscriptionsCount | l10nNumber }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
 
-    <h3>Components affecting loading indicator</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Component</th>
-          <th>Count</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (component of noticeService.loadingCountsByCallerId | keyvalue; track component.key) {
-          <tr [class.bold]="component.value > 0">
-            <td>{{ component.key }}</td>
-            <td>{{ component.value | l10nNumber }}</td>
-          </tr>
+          <h3>Realtime doc subscribers</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Collection</th>
+                <th>Context</th>
+                <th>Subs</th>
+                <th>Active</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (collection of subscriberCountsByContext | keyvalue; track collection.key) {
+                @for (doc of collection.value | keyvalue; track doc.key; let first = $first; let count = $count) {
+                  <tr>
+                    @if (first) {
+                      <th [attr.rowspan]="count">{{ collection.key }}</th>
+                    }
+                    <td>{{ doc.key }}</td>
+                    <td>{{ doc.value.all | l10nNumber }}</td>
+                    <td>{{ doc.value.active | l10nNumber }}</td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+
+          <h3>Realtime queries</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Collection</th>
+                <th>Queries</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (docType of queriesByCollection | keyvalue; track docType.key) {
+                <tr>
+                  <td>{{ docType.key }}</td>
+                  <td>{{ docType.value | l10nNumber }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <h3>Blank page</h3>
+
+          <a appRouterLink="/blank-page">Go to blank page</a> (for testing subscriber cleanup)
+        } @else if (tab === 1) {
+          <h3>Doc recreates</h3>
+          <p>Note: Monitoring is not started until the developer diagnostics is opened.</p>
+          <p>
+            <label>
+              Recreate threshold (ms):
+              <input type="number" [(ngModel)]="recreateTimeThreshold" value="250" style="width: 4em" />
+            </label>
+          </p>
+          <p>
+            <label>
+              Recreate count: <input type="number" [(ngModel)]="recreateCountThreshold" value="0" style="width: 4em" />
+            </label>
+          </p>
+          <p>
+            Docs that have been recreated with {{ recreateTimeThreshold | l10nNumber }}ms of being destroyed, at least
+            {{ recreateCountThreshold | l10nNumber }} times:
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Doc ID</th>
+                <th>Recreates</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (
+                doc of docLifecycleMonitor.getThrashingDocuments(recreateTimeThreshold, recreateCountThreshold)
+                  | keyvalue;
+                track doc.key
+              ) {
+                <tr>
+                  <td>{{ doc.key }}</td>
+                  <td>
+                    @for (recreate of doc.value; track $index) {
+                      <div>{{ recreate.creatorName }}: {{ recreate.recreateDuration | l10nNumber }}ms</div>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else if (tab === 2) {
+          <h3>Components affecting loading indicator</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (component of noticeService.loadingCountsByCallerId | keyvalue; track component.key) {
+                <tr [class.bold]="component.value > 0">
+                  <td>{{ component.key }}</td>
+                  <td>{{ component.value | l10nNumber }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else if (tab === 3) {
+          <h2>Digest cycles: <span id="digest-cycles"></span></h2>
+          <button type="button" (click)="digestCycles = 0">Reset counter</button>
         }
-      </tbody>
-    </table>
+      </div>
+    </div>
   }
 </div>
