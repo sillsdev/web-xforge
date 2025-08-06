@@ -246,6 +246,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
    */
   async dispose(): Promise<void> {
     this.isDisposing$.next(true);
+    await this.realtimeService.onLocalDocDispose(this);
     if (this.subscribePromise != null) {
       await this.subscribePromise;
     }
@@ -253,7 +254,6 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     this.onDeleteSub.unsubscribe();
     await this.adapter.destroy();
     this.subscribedState = false;
-    await this.realtimeService.onLocalDocDispose(this);
     this.isDisposing$.complete();
   }
 
