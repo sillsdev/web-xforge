@@ -13,6 +13,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -117,9 +118,9 @@ describe('LynxWorkspaceService', () => {
     init(): void {
       this.realtimeService = TestBed.inject<TestRealtimeService>(RealtimeService as any);
 
-      when(mockProjectService.getText(anything())).thenCall(textDocId => {
+      when(mockProjectService.getText(anything(), anything())).thenCall(textDocId => {
         const id = typeof textDocId === 'string' ? textDocId : textDocId.toString();
-        const existingDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id);
+        const existingDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id, new DocSubscription('spec'));
         return Promise.resolve(existingDoc || this.createTextDoc());
       });
 
@@ -151,7 +152,7 @@ describe('LynxWorkspaceService', () => {
         data: delta
       });
 
-      return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id);
+      return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, id, new DocSubscription('spec'));
     }
 
     createMockProjectDoc(id: string = PROJECT_ID): SFProjectProfileDoc {
@@ -174,7 +175,11 @@ describe('LynxWorkspaceService', () => {
         data: projectData
       });
 
-      return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, id);
+      return this.realtimeService.get<SFProjectProfileDoc>(
+        SFProjectProfileDoc.COLLECTION,
+        id,
+        new DocSubscription('spec')
+      );
     }
 
     createMockScriptureDeltaDoc(): any {

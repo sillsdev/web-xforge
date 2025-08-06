@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -212,16 +212,16 @@ describe('DraftSourcesService', () => {
           data: targetProject
         } as SFProjectProfileDoc)
       );
-      when(mockProjectService.getProfile('source_project')).thenResolve({
+      when(mockProjectService.getProfile('source_project', anything())).thenResolve({
         data: sourceProject
       } as SFProjectProfileDoc);
-      when(mockProjectService.getProfile('alternate_source_project')).thenResolve({
+      when(mockProjectService.getProfile('alternate_source_project', anything())).thenResolve({
         data: alternateSourceProject
       } as SFProjectProfileDoc);
-      when(mockProjectService.getProfile('alternate_training_source_project')).thenResolve({
+      when(mockProjectService.getProfile('alternate_training_source_project', anything())).thenResolve({
         data: alternateTrainingSourceProject
       } as SFProjectProfileDoc);
-      when(mockProjectService.getProfile('additional_training_source_project')).thenResolve({
+      when(mockProjectService.getProfile('additional_training_source_project', anything())).thenResolve({
         data: additionalTrainingSourceProject
       } as SFProjectProfileDoc);
       when(mockUserService.getCurrentUser()).thenResolve({
