@@ -20,6 +20,7 @@ import {
 } from 'rxjs';
 import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightDisplayState } from './lynx-insight';
 import { LynxInsightFilterService } from './lynx-insight-filter.service';
@@ -46,15 +47,17 @@ export class LynxInsightStateService {
     this.rawInsights$,
     this.filter$,
     this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish()),
-    this.dismissedInsightIds$
+    this.dismissedInsightIds$,
+    this.activatedProject.projectDoc$.pipe(filterNullish())
   ]).pipe(
-    map(([insights, filter, routeBookChapter, dismissedIds]) =>
+    map(([insights, filter, routeBookChapter, dismissedIds, projectDoc]) =>
       insights.filter(insight =>
         this.insightFilterService.matchesFilter(
           insight,
           { ...filter, scope: 'chapter' },
           routeBookChapter,
-          dismissedIds
+          dismissedIds,
+          projectDoc.data?.texts
         )
       )
     ),
@@ -66,11 +69,12 @@ export class LynxInsightStateService {
     this.rawInsights$,
     this.filter$,
     this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish()),
-    this.dismissedInsightIds$
+    this.dismissedInsightIds$,
+    this.activatedProject.projectDoc$.pipe(filterNullish())
   ]).pipe(
-    map(([insights, filter, routeBookChapter, dismissedIds]) =>
+    map(([insights, filter, routeBookChapter, dismissedIds, projectDoc]) =>
       insights.filter(insight =>
-        this.insightFilterService.matchesFilter(insight, filter, routeBookChapter, dismissedIds)
+        this.insightFilterService.matchesFilter(insight, filter, routeBookChapter, dismissedIds, projectDoc.data?.texts)
       )
     ),
     distinctUntilChanged(isEqual),
@@ -84,9 +88,10 @@ export class LynxInsightStateService {
     this.rawInsights$,
     this.filter$,
     this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish()),
-    this.dismissedInsightIds$
+    this.dismissedInsightIds$,
+    this.activatedProject.projectDoc$.pipe(filterNullish())
   ]).pipe(
-    map(([insights, filter, routeBookChapter, dismissedIds]) => {
+    map(([insights, filter, routeBookChapter, dismissedIds, projectDoc]) => {
       const result: Record<LynxInsightFilterScope, number> = { project: 0, book: 0, chapter: 0 };
       const filterTypes = new Set<LynxInsightType>(filter.types);
       const dismissedIdSet: Set<string> = new Set(dismissedIds);
@@ -97,6 +102,14 @@ export class LynxInsightStateService {
         }
 
         if (!filterTypes.has(insight.type)) {
+          continue;
+        }
+
+        // Apply permission filtering
+        if (
+          projectDoc.data?.texts != null &&
+          !this.insightFilterService.hasDisplayPermission(insight, projectDoc.data.texts)
+        ) {
           continue;
         }
 
@@ -152,6 +165,7 @@ export class LynxInsightStateService {
     @Inject(EDITOR_INSIGHT_DEFAULTS) private defaults: LynxInsightConfig,
     private readonly insightFilterService: LynxInsightFilterService,
     private readonly activatedBookChapter: ActivatedBookChapterService,
+    private readonly activatedProject: ActivatedProjectService,
     private readonly activatedProjectUserConfig: ActivatedProjectUserConfigService,
     private readonly lynxWorkspaceService: LynxWorkspaceService
   ) {

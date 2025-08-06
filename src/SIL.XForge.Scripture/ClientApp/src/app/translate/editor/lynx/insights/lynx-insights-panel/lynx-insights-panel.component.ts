@@ -166,15 +166,14 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
       });
   }
 
-  // Passed to mat-tree in the template.
+  // Passed to mat-tree in the template
   getChildrenAccessor = (node: InsightPanelNode): InsightPanelNode[] => {
-    // If paged loading is needed, only return a subset of children
-    if (this.needsPagedLoading(node)) {
-      const visibleChildren = this.getVisibleChildren(node);
-      return visibleChildren;
+    if (node.children == null) {
+      return [];
     }
 
-    return node.children ?? [];
+    // If paged loading is needed, only return a subset of children
+    return this.needsPagedLoading(node) ? this.getVisibleChildren(node) : node.children;
   };
 
   // 'when' predicate to determine if the group template should be used
@@ -235,7 +234,7 @@ export class LynxInsightsPanelComponent implements AfterViewInit {
    */
   needsPagedLoading(node: InsightPanelNode): boolean {
     // If node has no description or no children, it doesn't need paged loading
-    if (!node.description || !node.children) {
+    if (node.description == null || node.children == null) {
       return false;
     }
 
