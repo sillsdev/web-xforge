@@ -9,6 +9,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
@@ -71,11 +72,16 @@ export class DraftHistoryEntryComponent {
     // Get the user who requested the build
     this._buildRequestedByUserName = undefined;
     if (this._entry?.additionalInfo?.requestedByUserId != null) {
-      this.userService.getProfile(this._entry.additionalInfo.requestedByUserId).then(user => {
-        if (user.data != null) {
-          this._buildRequestedByUserName = user.data.displayName;
-        }
-      });
+      this.userService
+        .getProfile(
+          this._entry.additionalInfo.requestedByUserId,
+          new DocSubscription('DraftHistoryEntry', this.destroyRef)
+        )
+        .then(user => {
+          if (user.data != null) {
+            this._buildRequestedByUserName = user.data.displayName;
+          }
+        });
     }
 
     // Clear the data for the table
@@ -90,14 +96,23 @@ export class DraftHistoryEntryComponent {
         // The engine ID is the target project ID
         let target: SFProjectProfileDoc | undefined = undefined;
         if (this._entry?.engine.id != null) {
-          target = await this.projectService.getProfile(this._entry.engine.id);
+          target = await this.projectService.getProfile(
+            this._entry.engine.id,
+            new DocSubscription('DraftHistoryEntry', this.destroyRef)
+          );
         }
 
         // Get the target language, if it is not already set
         this._targetLanguage ??= target?.data?.writingSystem.tag;
 
         // Get the source project, if it is configured
-        const source = r.projectId === '' ? undefined : await this.projectService.getProfile(r.projectId);
+        const source =
+          r.projectId === ''
+            ? undefined
+            : await this.projectService.getProfile(
+                r.projectId,
+                new DocSubscription('DraftHistoryEntry', this.destroyRef)
+              );
 
         // Get the source language, if it is not already set
         this._sourceLanguage ??= source?.data?.writingSystem.tag;
@@ -130,7 +145,10 @@ export class DraftHistoryEntryComponent {
         const source =
           r.projectId === '' || r.projectId === value?.engine?.id
             ? undefined
-            : await this.projectService.getProfile(r.projectId);
+            : await this.projectService.getProfile(
+                r.projectId,
+                new DocSubscription('DraftHistoryEntry', this.destroyRef)
+              );
         const sourceShortName = source?.data?.shortName;
         if (sourceShortName != null) this._translationSources.push(sourceShortName);
       })

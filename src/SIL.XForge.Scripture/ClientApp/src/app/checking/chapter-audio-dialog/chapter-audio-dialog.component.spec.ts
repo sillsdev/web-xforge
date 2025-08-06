@@ -368,18 +368,18 @@ describe('ChapterAudioDialogComponent', () => {
     expect(result.timingData[1].to).toEqual(1.296);
   }));
 
-  it('will not save or upload if there is no audio', fakeAsync(() => {
+  it('will not save or upload if there is no audio', fakeAsync(async () => {
     env.component.prepareTimingFileUpload(env.timingFile);
-    env.component.save();
+    await env.component.save();
     env.fixture.detectChanges();
 
     expect(env.numberOfTimesDialogClosed).toEqual(0);
     expect(env.wrapperAudio.classList.contains('invalid')).toBe(true);
   }));
 
-  it('will not save or upload if there is no timing data', fakeAsync(() => {
+  it('will not save or upload if there is no timing data', fakeAsync(async () => {
     env.component.audioUpdate(env.audioFile);
-    env.component.save();
+    await env.component.save();
     env.fixture.detectChanges();
 
     expect(env.numberOfTimesDialogClosed).toEqual(0);
@@ -478,7 +478,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
   }));
 
-  it('will not try to save dialog if offline', fakeAsync(() => {
+  it('will not try to save dialog if offline', fakeAsync(async () => {
     env.onlineStatus = false;
     env.component.audioUpdate(env.audioFile);
     tick();
@@ -486,7 +486,7 @@ describe('ChapterAudioDialogComponent', () => {
     tick();
 
     // SUT
-    env.component.save();
+    await env.component.save();
     tick();
     env.fixture.detectChanges();
     flush();

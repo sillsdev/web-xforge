@@ -19,6 +19,7 @@ import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -119,13 +120,13 @@ describe('TranslateOverviewComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('should start training engine if not initially enabled', fakeAsync(() => {
+    it('should start training engine if not initially enabled', fakeAsync(async () => {
       const env = new TestEnvironment({ translationSuggestionsEnabled: false });
       env.wait();
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
       expect(env.retrainButton).toBeNull();
-      env.simulateTranslateSuggestionsEnabled();
+      await env.simulateTranslateSuggestionsEnabled();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       expect(env.retrainButton).toBeTruthy();
 
@@ -208,12 +209,12 @@ describe('TranslateOverviewComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('should not create engine if no source text docs', fakeAsync(() => {
+    it('should not create engine if no source text docs', fakeAsync(async () => {
       const env = new TestEnvironment({ translationSuggestionsEnabled: false });
       when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(false);
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect(env.translationSuggestionsInfoMessage).toBeFalsy();
-      env.simulateTranslateSuggestionsEnabled(true);
+      await env.simulateTranslateSuggestionsEnabled(true);
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect(env.translationSuggestionsInfoMessage).toBeTruthy();
       env.clickRetrainButton();
@@ -336,7 +337,9 @@ class TestEnvironment {
 
   setCurrentUser(userId: string = 'user01'): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedUserService.getCurrentUser()).thenCall(
+      async () => await this.realtimeService.subscribe(UserDoc.COLLECTION, userId, new DocSubscription('spec'))
+    );
   }
 
   wait(): void {
@@ -546,18 +549,26 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  addVerse(bookNum: number, chapter: number): void {
+  async addVerse(bookNum: number, chapter: number): Promise<void> {
     const delta = new Delta();
     delta.insert(`chapter ${chapter}, verse 22.`, { segment: `verse_${chapter}_22` });
 
-    const textDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, getTextDocId('project01', bookNum, chapter));
-    textDoc.submit({ ops: delta.ops });
+    const textDoc = await this.realtimeService.get<TextDoc>(
+      TextDoc.COLLECTION,
+      getTextDocId('project01', bookNum, chapter),
+      new DocSubscription('spec')
+    );
+    await textDoc.submit({ ops: delta.ops });
     this.waitForProjectDocChanges();
   }
 
-  simulateTranslateSuggestionsEnabled(enabled: boolean = true): void {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(
+  async simulateTranslateSuggestionsEnabled(enabled: boolean = true): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.realtimeService.get(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
+    await projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
       false
     );

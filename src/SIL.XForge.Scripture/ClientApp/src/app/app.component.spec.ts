@@ -25,6 +25,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -125,9 +126,10 @@ describe('AppComponent', () => {
     expect(1).toEqual(1);
   });
 
-  it('navigate to last project', fakeAsync(() => {
+  it('navigate to last project', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     expect(env.isDrawerVisible).toEqual(true);
@@ -150,9 +152,10 @@ describe('AppComponent', () => {
     tick();
   }));
 
-  it('navigate to different project', fakeAsync(() => {
+  it('navigate to different project', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project02']);
+    await env.navigate(['/projects', 'project02']);
+    flush();
     env.init();
 
     expect(env.isDrawerVisible).toEqual(true);
@@ -170,20 +173,21 @@ describe('AppComponent', () => {
     discardPeriodicTasks();
   }));
 
-  it('close menu when navigating to a non-project route', fakeAsync(() => {
+  it('close menu when navigating to a non-project route', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/my-account']);
+    await env.navigate(['/my-account']);
+    flush();
     env.init();
 
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.component.selectedProjectId).toBeUndefined();
   }));
 
-  it('drawer disappears as appropriate in small viewport', fakeAsync(() => {
+  it('drawer disappears as appropriate in small viewport', fakeAsync(async () => {
     // The user goes to a project. They are using an sm size viewport.
     const env = new TestEnvironment();
     env.breakpointObserver.emitObserveValue(false);
-    env.navigateFully(['/projects', 'project01']);
+    await env.navigateFully(['/projects', 'project01']);
     // (And we are not here calling env.init(), which would open the drawer.)
 
     // With a smaller viewport, at a project page, the drawer should not be visible. Although it is in the dom.
@@ -227,7 +231,7 @@ describe('AppComponent', () => {
     expect(env.hamburgerMenuButton).toBeNull();
     expect(env.component['isExpanded']).toBe(false);
     // The user clicks in the My projects component to open another project.
-    env.navigateFully(['projects', 'project02']);
+    await env.navigateFully(['projects', 'project02']);
     // The drawer should not be showing, but is in the dom.
     expect(env.isDrawerVisible).toBe(false);
     expect(env.component['isExpanded']).toBe(false);
@@ -238,9 +242,10 @@ describe('AppComponent', () => {
     flush();
   }));
 
-  it('does not set user locale when stored locale matches the browsing session', fakeAsync(() => {
+  it('does not set user locale when stored locale matches the browsing session', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     tick();
@@ -248,11 +253,12 @@ describe('AppComponent', () => {
     verify(mockedAuthService.updateInterfaceLanguage(anything())).never();
   }));
 
-  it('sets user locale when stored locale does not match the browsing session', fakeAsync(() => {
+  it('sets user locale when stored locale does not match the browsing session', fakeAsync(async () => {
     const env = new TestEnvironment();
     when(mockedAuthService.isNewlyLoggedIn).thenResolve(true);
     when(mockedI18nService.localeCode).thenReturn('es');
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     tick();
@@ -265,11 +271,12 @@ describe('AppComponent', () => {
     verify(mockedI18nService.setLocale('pt-BR')).once();
   }));
 
-  it('should not set user locale when not newly logged in and stored locale does not match the browsing session', fakeAsync(() => {
+  it('should not set user locale when not newly logged in and stored locale does not match the browsing session', fakeAsync(async () => {
     const env = new TestEnvironment();
     when(mockedAuthService.isNewlyLoggedIn).thenResolve(false);
     when(mockedI18nService.localeCode).thenReturn('es');
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     tick();
@@ -277,9 +284,10 @@ describe('AppComponent', () => {
     verify(mockedI18nService.setLocale('en')).never();
   }));
 
-  it('set interface language when specifically setting locale', fakeAsync(() => {
+  it('set interface language when specifically setting locale', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     tick();
@@ -290,15 +298,16 @@ describe('AppComponent', () => {
     verify(mockedAuthService.updateInterfaceLanguage('pt-BR')).once();
   }));
 
-  it('response to remote project deletion', fakeAsync(() => {
+  it('response to remote project deletion', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     // SUT
-    env.deleteProject('project01', false);
+    await env.deleteProject('project01', false);
     verify(mockedDialogService.message(anything())).once();
     verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
     // Get past setTimeout to navigation
@@ -309,88 +318,95 @@ describe('AppComponent', () => {
     expect(env.location.path()).toEqual('/projects');
   }));
 
-  it('response to remote project deletion when no project selected', fakeAsync(() => {
+  it('response to remote project deletion when no project selected', fakeAsync(async () => {
     // If we are at the My Projects list at /projects, and a project is deleted, we should still be at the /projects
     // page. Note that one difference between some other project being deleted, vs the _current_ project being deleted,
     // is that AppComponent listens to the current project for its deletion.
     const env = new TestEnvironment();
-    env.navigate(['/projects']);
+    await env.navigate(['/projects']);
+    flush();
     env.init();
 
-    env.deleteProject('project01', false);
+    await env.deleteProject('project01', false);
     // The drawer is not visible because we will be showing the project list.
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
   }));
 
-  it('response to removed from project', fakeAsync(() => {
+  it('response to removed from project', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     expect(env.selectedProjectId).toEqual('project01');
-    env.removeUserFromProject('project01');
+    await env.removeUserFromProject('project01');
     verify(mockedDialogService.message(anything())).once();
     // Get past setTimeout to navigation
     tick();
     expect(env.location.path()).toEqual('/projects');
   }));
 
-  it('response to remote project change for serval admin', fakeAsync(() => {
+  it('response to remote project change for serval admin', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setCurrentUser('user05');
-    env.navigate(['/serval-administration', 'project01']);
+    await env.navigate(['/serval-administration', 'project01']);
+    flush();
     when(mockedLocationService.pathname).thenReturn('/serval-administration/project01');
     env.init();
 
     expect(env.selectedProjectId).toEqual('project01');
-    env.updatePreTranslate('project01');
+    await env.updatePreTranslate('project01');
     verify(mockedDialogService.message(anything())).never();
   }));
 
-  it('response to remote project change for serval admin viewing event log', fakeAsync(() => {
+  it('response to remote project change for serval admin viewing event log', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setCurrentUser('user05');
-    env.navigate(['/serval-administration', 'project01']);
+    await env.navigate(['/serval-administration', 'project01']);
+    flush();
     when(mockedLocationService.pathname).thenReturn('/projects/project01/event-log');
     env.init();
 
     expect(env.selectedProjectId).toEqual('project01');
     // Simulate an op coming from another source
-    env.updatePreTranslate('project01');
+    await env.updatePreTranslate('project01');
     verify(mockedDialogService.message(anything())).never();
   }));
 
-  it('response to Commenter project role changed', fakeAsync(() => {
+  it('response to Commenter project role changed', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.setCurrentUser('user04');
     env.init();
 
     expect(env.selectedProjectId).toEqual('project01');
     when(mockedLocationService.pathname).thenReturn('/projects/project01/translate');
-    env.changeUserRole('project01', 'user04', SFProjectRole.CommunityChecker);
+    await env.changeUserRole('project01', 'user04', SFProjectRole.CommunityChecker);
     expect(env.location.path()).toEqual('/projects/project01');
     env.wait();
     discardPeriodicTasks();
   }));
 
-  it('response to Community Checker project role changed', fakeAsync(() => {
+  it('response to Community Checker project role changed', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.setCurrentUser('user02');
     env.init();
 
     expect(env.selectedProjectId).toEqual('project01');
     when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
-    env.changeUserRole('project01', 'user02', SFProjectRole.Viewer);
+    await env.changeUserRole('project01', 'user02', SFProjectRole.Viewer);
     expect(env.location.path()).toEqual('/projects/project01');
     discardPeriodicTasks();
   }));
 
-  it('shows banner when update is available', fakeAsync(() => {
+  it('shows banner when update is available', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     expect(env.refreshButton).toBeNull();
@@ -403,9 +419,10 @@ describe('AppComponent', () => {
     tick();
   }));
 
-  it('shows install badge and option when installing is available', fakeAsync(() => {
+  it('shows install badge and option when installing is available', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     expect(env.installBadge).toBeNull();
@@ -417,9 +434,10 @@ describe('AppComponent', () => {
     env.showHideUserMenu();
   }));
 
-  it('hide install badge after avatar menu click', fakeAsync(() => {
+  it('hide install badge after avatar menu click', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
+    await env.navigate(['/projects', 'project01']);
+    flush();
     env.init();
 
     env.canInstall$.next(true);
@@ -487,14 +505,14 @@ describe('AppComponent', () => {
   }));
 
   describe('Community Checking', () => {
-    it('ensure local storage is cleared when removed from project', fakeAsync(() => {
+    it('ensure local storage is cleared when removed from project', fakeAsync(async () => {
       const env = new TestEnvironment();
-      env.navigate(['/projects', 'project01']);
+      await env.navigate(['/projects', 'project01']);
+      flush();
       env.init();
-
       const projectId = 'project01';
       expect(env.selectedProjectId).toEqual(projectId);
-      env.removeUserFromProject(projectId);
+      await env.removeUserFromProject(projectId);
       verify(mockedSFProjectService.localDelete(projectId)).once();
     }));
 
@@ -699,19 +717,21 @@ class TestEnvironment {
     this.addProjectUserConfig('project01', 'user03');
     this.addProjectUserConfig('project01', 'user04');
 
-    when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    when(mockedSFProjectService.getProfile(anything(), anything())).thenCall(
+      async (projectId, subscription) =>
+        await this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId, subscription)
     );
-    when(mockedSFProjectService.getUserConfig(anything(), anything())).thenCall((projectId, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`)
+    when(mockedSFProjectService.getUserConfig(anything(), anything(), anything())).thenCall(
+      async (projectId, userId, subscriber) =>
+        await this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`, subscriber)
     );
     when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
 
     when(mockedAuthService.currentUserRoles).thenReturn([]);
     when(mockedAuthService.getAccessToken()).thenReturn(Promise.resolve('access_token'));
     when(mockedAuthService.isLoggedIn).thenCall(() => Promise.resolve(this.loggedInState$.getValue().loggedIn));
-    when(mockedAuthService.loggedIn).thenCall(() =>
-      firstValueFrom(this.loggedInState$.pipe(filter((state: any) => state.loggedIn)))
+    when(mockedAuthService.loggedIn).thenCall(
+      async () => await firstValueFrom(this.loggedInState$.pipe(filter((state: any) => state.loggedIn)))
     );
     when(mockedAuthService.loggedInState$).thenReturn(this.loggedInState$);
     if (isLoggedIn) {
@@ -813,13 +833,15 @@ class TestEnvironment {
     return this.getElement('#sf-logo-button');
   }
 
-  get currentUserDoc(): UserDoc {
-    return this.realtimeService.get(UserDoc.COLLECTION, 'user01');
+  async getCurrentUserDoc(): Promise<UserDoc> {
+    return await this.realtimeService.get(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'));
   }
 
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedUserService.getCurrentUser()).thenCall(
+      async () => await this.realtimeService.subscribe(UserDoc.COLLECTION, userId, new DocSubscription('spec'))
+    );
   }
 
   triggerLogin(): void {
@@ -851,12 +873,12 @@ class TestEnvironment {
     this.wait();
   }
 
-  navigate(commands: any[]): void {
-    this.ngZone.run(() => this.router.navigate(commands)).then();
+  async navigate(commands: any[]): Promise<void> {
+    await this.ngZone.run(async () => await this.router.navigate(commands));
   }
 
-  navigateFully(commands: any[]): void {
-    this.ngZone.run(() => this.router.navigate(commands)).then();
+  async navigateFully(commands: any[]): Promise<void> {
+    await this.ngZone.run(async () => await this.router.navigate(commands));
     flush();
     this.fixture.detectChanges();
     flush();
@@ -882,39 +904,64 @@ class TestEnvironment {
     flush(70);
   }
 
-  deleteProject(projectId: string, isLocal: boolean): void {
+  async deleteProject(projectId: string, isLocal: boolean): Promise<void> {
     if (isLocal) {
       when(mockedUserService.currentProjectId(anything())).thenReturn(undefined);
     }
-    this.ngZone.run(() => {
-      const projectDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, projectId);
-      projectDoc.delete();
+    await this.ngZone.run(async () => {
+      const projectDoc = await this.realtimeService.get(
+        SFProjectProfileDoc.COLLECTION,
+        projectId,
+        new DocSubscription('spec')
+      );
+      await projectDoc.delete();
     });
     this.wait();
   }
 
-  removeUserFromProject(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
-    projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
+  async removeUserFromProject(projectId: string): Promise<void> {
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      new DocSubscription('spec')
+    );
+    await projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
     this.wait();
   }
 
-  updatePreTranslate(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
-    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.translateConfig.preTranslate, true), false);
+  async updatePreTranslate(projectId: string): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      new DocSubscription('spec')
+    );
+    await projectDoc.submitJson0Op(op => op.set<boolean>(p => p.translateConfig.preTranslate, true), false);
     this.wait();
   }
 
-  addUserToProject(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
-    projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
-    this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
+  async addUserToProject(projectId: string): Promise<void> {
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      new DocSubscription('spec')
+    );
+    await projectDoc.submitJson0Op(
+      op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker),
+      false
+    );
+    await (
+      await this.getCurrentUserDoc()
+    ).submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
     this.wait();
   }
 
-  changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
-    projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles[userId], role), false);
+  async changeUserRole(projectId: string, userId: string, role: SFProjectRole): Promise<void> {
+    const projectDoc: SFProjectProfileDoc = await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId,
+      new DocSubscription('spec')
+    );
+    await projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles[userId], role), false);
     this.wait();
   }
 

@@ -284,8 +284,8 @@ describe('HistoryChooserComponent', () => {
         v: 1,
         isValid: this.isSnapshotValid
       });
-      when(mockedProjectService.getProfile('project01')).thenCall(() =>
-        this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
+      when(mockedProjectService.getProfile('project01', anything())).thenCall((id, subscriber) =>
+        this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id, subscriber)
       );
       when(mockedTextDocService.canRestore(anything(), 40, 1)).thenReturn(true);
     }

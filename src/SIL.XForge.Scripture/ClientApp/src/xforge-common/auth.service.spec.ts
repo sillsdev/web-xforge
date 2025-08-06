@@ -135,7 +135,7 @@ describe('AuthService', () => {
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
   }));
 
-  it('should log out and clear data', fakeAsync(() => {
+  it('should log out and clear data', fakeAsync(async () => {
     const env = new TestEnvironment({
       isOnline: true,
       isLoggedIn: true
@@ -150,7 +150,7 @@ describe('AuthService', () => {
       .withContext('logged in expiresAt')
       .toBeGreaterThan(env.auth0Response!.token.expires_in!);
 
-    env.logOut();
+    await env.logOut();
     tick();
     expect(env.service.idToken).withContext('logged out idToken').toBeUndefined();
     expect(env.service.currentUserRoles.length).withContext('logged out currentUserRoles').toBe(0);
@@ -303,11 +303,11 @@ describe('AuthService', () => {
     env.discardTokenExpiryTimer();
   }));
 
-  it('should attempt login via auth0', fakeAsync(() => {
+  it('should attempt login via auth0', fakeAsync(async () => {
     const env = new TestEnvironment();
     const returnUrl = 'test-returnUrl';
 
-    env.service.logIn({ returnUrl });
+    await env.service.logIn({ returnUrl });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -322,12 +322,12 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should login without signup', fakeAsync(() => {
+  it('should login without signup', fakeAsync(async () => {
     const env = new TestEnvironment();
     const returnUrl = 'test-returnUrl';
     const signUp = false;
 
-    env.service.logIn({ returnUrl, signUp });
+    await env.service.logIn({ returnUrl, signUp });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -341,12 +341,12 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should login with signup', fakeAsync(() => {
+  it('should login with signup', fakeAsync(async () => {
     const env = new TestEnvironment();
     const returnUrl = 'test-returnUrl';
     const signUp = true;
 
-    env.service.logIn({ returnUrl, signUp });
+    await env.service.logIn({ returnUrl, signUp });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -360,14 +360,14 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should login with signup and locale', fakeAsync(() => {
+  it('should login with signup and locale', fakeAsync(async () => {
     const env = new TestEnvironment();
     const returnUrl = 'test-returnUrl';
     const signUp = true;
     const locale = 'es';
     expect(locale).withContext('setup').not.toEqual(env.language);
 
-    env.service.logIn({ returnUrl, signUp, locale });
+    await env.service.logIn({ returnUrl, signUp, locale });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -381,12 +381,12 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should prompt for basic login', fakeAsync(() => {
+  it('should prompt for basic login', fakeAsync(async () => {
     const env = new TestEnvironment();
     const returnUrl = 'test-returnUrl';
     when(mockedLocationService.pathname).thenReturn('/join/sharekey');
 
-    env.service.logIn({ returnUrl });
+    await env.service.logIn({ returnUrl });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -398,12 +398,12 @@ describe('AuthService', () => {
     }
   }));
 
-  it('should login with appropriate logo', fakeAsync(() => {
+  it('should login with appropriate logo', fakeAsync(async () => {
     const env = new TestEnvironment();
     const sfLogoUrl = 'https://auth0.languagetechnology.org/assets/sf.svg';
     when(mockedLocationService.hostname).thenReturn('scriptureforge.org');
 
-    env.service.logIn({ returnUrl: 'test-returnUrl' });
+    await env.service.logIn({ returnUrl: 'test-returnUrl' });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     let authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -413,7 +413,7 @@ describe('AuthService', () => {
 
     // a different domain
     when(mockedLocationService.hostname).thenReturn('other.domain.org');
-    env.service.logIn({ returnUrl: 'test-returnUrl' });
+    await env.service.logIn({ returnUrl: 'test-returnUrl' });
     authOptions = capture<RedirectLoginOptions | undefined>(mockedWebAuth.loginWithRedirect).last()[0];
     expect(authOptions!.authorizationParams!.logo).not.toEqual(sfLogoUrl);
   }));
@@ -669,11 +669,11 @@ describe('AuthService', () => {
     env.discardTokenExpiryTimer();
   }));
 
-  it('prompt on log out if transparent authentication cookie is set', fakeAsync(() => {
+  it('prompt on log out if transparent authentication cookie is set', fakeAsync(async () => {
     const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, setTransparentAuthenticationCookie: true });
     expect(env.isAuthenticated).toBe(true);
     expect(env.isLoggedInUserAnonymous).toBe(true);
-    env.service.logOut();
+    await env.service.logOut();
     tick();
     verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
     env.discardTokenExpiryTimer();
@@ -967,8 +967,8 @@ class TestEnvironment {
     discardPeriodicTasks();
   }
 
-  logOut(): void {
-    this.service.logOut();
+  async logOut(): Promise<void> {
+    await this.service.logOut();
     this.setLoginRequiredResponse();
   }
 

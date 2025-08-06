@@ -18,6 +18,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -190,7 +191,8 @@ export class DraftGenerationStepsComponent implements OnInit {
           // TODO: When implementing multiple drafting sources, this will need to be updated to handle multiple sources
           const draftingSourceBooks = new Set<number>();
           const draftingSourceProfileDoc: SFProjectProfileDoc = await this.projectService.getProfile(
-            draftingSource.projectRef
+            draftingSource.projectRef,
+            new DocSubscription('DraftGenerationStepsComponent', this.destroyRef)
           );
           for (const text of draftingSource.texts) {
             draftingSourceBooks.add(text.bookNum);
