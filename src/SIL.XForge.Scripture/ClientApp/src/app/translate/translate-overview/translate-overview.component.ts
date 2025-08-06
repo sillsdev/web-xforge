@@ -31,6 +31,7 @@ import { DonutChartComponent } from 'xforge-common/donut-chart/donut-chart.compo
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
@@ -146,7 +147,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(async projectId => {
-        this.projectDoc = await this.projectService.getProfile(projectId);
+        this.projectDoc = await this.projectService.getProfile(
+          projectId,
+          new DocSubscription('TranslateOverviewComponent', this.destroyRef)
+        );
 
         // Update the overview now if we are online, or when we are next online
         void this.onlineStatusService.online.then(async () => {

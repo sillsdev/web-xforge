@@ -5,6 +5,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
@@ -54,9 +55,14 @@ export class PermissionsService {
   }
 
   async userHasParatextRoleOnProject(projectId: string): Promise<boolean> {
+    const docSubscription = new DocSubscription('PermissionsService.userHasParatextRoleOnProject');
     const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
-    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId);
-    return isParatextRole(projectDoc.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
+    try {
+      const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId, docSubscription);
+      return isParatextRole(projectDoc.data?.userRoles[currentUserDoc.id] ?? SFProjectRole.None);
+    } finally {
+      docSubscription.unsubscribe();
+    }
   }
 
   /**
@@ -93,15 +99,17 @@ export class PermissionsService {
    * @returns A promise for a boolean value.
    */
   async canAccessTextAsync(textDocId: TextDocId): Promise<boolean> {
-    // Get the project doc, if the user is on that project
-    let projectDoc: SFProjectProfileDoc | undefined;
-    if (textDocId.projectId != null) {
-      const isUserOnProject = await this.isUserOnProject(textDocId.projectId);
-      projectDoc = isUserOnProject ? await this.projectService.getProfile(textDocId.projectId) : undefined;
-      return this.canAccessText(textDocId, projectDoc?.data);
-    }
+    if (textDocId.projectId == null) return false;
+    const isUserOnProject = await this.isUserOnProject(textDocId.projectId);
+    if (!isUserOnProject) return false;
 
-    return false;
+    const docSubscription = new DocSubscription('PermissionsService.canAccessTextAsync');
+    try {
+      const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(textDocId.projectId, docSubscription);
+      return this.canAccessText(textDocId, projectDoc.data);
+    } finally {
+      docSubscription.unsubscribe();
+    }
   }
 
   canSync(projectDoc: SFProjectProfileDoc, userId?: string): boolean {

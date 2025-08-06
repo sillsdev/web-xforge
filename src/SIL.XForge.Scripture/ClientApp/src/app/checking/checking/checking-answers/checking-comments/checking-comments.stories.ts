@@ -3,7 +3,7 @@ import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/use
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { expect, within } from 'storybook/test';
-import { instance, mock, when } from 'ts-mockito';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
@@ -14,11 +14,11 @@ import { CheckingCommentsComponent } from './checking-comments.component';
 const mockedDialogService = mock(DialogService);
 const mockedUserService = mock(UserService);
 when(mockedUserService.currentUserId).thenReturn('user01');
-when(mockedUserService.getProfile('user01')).thenResolve({
+when(mockedUserService.getProfile('user01', anything())).thenResolve({
   id: 'user01',
   data: createTestUserProfile({}, 1)
 } as UserProfileDoc);
-when(mockedUserService.getProfile('user02')).thenResolve({
+when(mockedUserService.getProfile('user02', anything())).thenResolve({
   id: 'user02',
   data: createTestUserProfile({}, 2)
 } as UserProfileDoc);

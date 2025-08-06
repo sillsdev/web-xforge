@@ -6,7 +6,10 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { type } from 'rich-text';
 import { Observable, Subject } from 'rxjs';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
+import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { TextDoc, TextDocId, TextDocSource } from './models/text-doc';
 import { SFProjectService } from './sf-project.service';
@@ -19,7 +22,8 @@ export class TextDocService {
 
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly realtimeService: RealtimeService
   ) {}
 
   /**
@@ -29,20 +33,25 @@ export class TextDocService {
    * @param {TextDocSource} source The source of the op. This is sent to the server.
    */
   async overwrite(textDocId: TextDocId, newDelta: Delta, source: TextDocSource): Promise<void> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId);
+    const docSubscription = new DocSubscription('TextDocService');
+    try {
+      const textDoc: TextDoc = await this.projectService.getText(textDocId, docSubscription);
 
-    if (textDoc.data?.ops == null) {
-      throw new Error(`No TextDoc data for ${textDocId}`);
+      if (textDoc.data?.ops == null) {
+        throw new Error(`No TextDoc data for ${textDocId}`);
+      }
+
+      const origDelta: Delta = new Delta(textDoc.data.ops);
+      const diff: Delta = origDelta.diff(newDelta);
+
+      // Update text doc directly
+      await textDoc.submit(diff, source);
+
+      // Notify so that TextViewModels can update
+      this.getLocalSystemChangesInternal$(textDocId).next(diff);
+    } finally {
+      docSubscription.unsubscribe();
     }
-
-    const origDelta: Delta = new Delta(textDoc.data.ops);
-    const diff: Delta = origDelta.diff(newDelta);
-
-    // Update text doc directly
-    await textDoc.submit(diff, source);
-
-    // Notify so that TextViewModels can update
-    this.getLocalSystemChangesInternal$(textDocId).next(diff);
   }
 
   /**
@@ -75,6 +84,25 @@ export class TextDocService {
       this.hasChapterEditPermission(project, bookNum, chapterNum) &&
       this.isDataInSync(project) &&
       !this.isEditingDisabled(project)
+    );
+  }
+
+  async createTextDoc(textDocId: TextDocId, subscriber: DocSubscription, data?: TextData): Promise<TextDoc> {
+    const docSubscription = new DocSubscription('TextDocService.createTextDoc');
+    try {
+      const textDoc: TextDoc = await this.projectService.getText(textDocId, docSubscription);
+      if (textDoc?.data != null) throw new Error(`Text Doc already exists for ${textDocId}`);
+    } finally {
+      docSubscription.unsubscribe();
+    }
+
+    data ??= { ops: [] };
+    return await this.realtimeService.create<TextDoc>(
+      TextDoc.COLLECTION,
+      textDocId.toString(),
+      data,
+      subscriber,
+      type.uri
     );
   }
 

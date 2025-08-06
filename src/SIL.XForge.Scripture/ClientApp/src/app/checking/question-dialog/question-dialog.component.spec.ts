@@ -21,6 +21,7 @@ import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -93,22 +94,22 @@ describe('QuestionDialogComponent', () => {
     flush();
   }));
 
-  it('should allow user to cancel', fakeAsync(() => {
-    env = new TestEnvironment();
+  it('should allow user to cancel', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.clickElement(env.cancelButton);
     flush();
     expect(env.afterCloseCallback).toHaveBeenCalledWith('close');
   }));
 
-  it('should not allow Save without required fields', fakeAsync(() => {
-    env = new TestEnvironment();
+  it('should not allow Save without required fields', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.clickElement(env.saveButton);
     flush();
     expect(env.afterCloseCallback).not.toHaveBeenCalled();
   }));
 
-  it('should show error text for required fields', fakeAsync(() => {
-    env = new TestEnvironment();
+  it('should show error text for required fields', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     expect(env.errorText[0].classes['visible']).not.toBeDefined();
 
     env.component.scriptureStart.markAsTouched();
@@ -121,9 +122,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.errorText[0].classes['visible']).toBe(true);
   }));
 
-  it('does not accept just whitespace for a question', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('does not accept just whitespace for a question', fakeAsync(async () => {
+    env = await TestEnvironment.create();
 
     env.inputValue(env.questionInput, '');
     env.clickElement(env.saveButton);
@@ -141,9 +141,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.textAndAudio?.text.errors!.invalid).toBeDefined();
   }));
 
-  it('should validate verse fields', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('should validate verse fields', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     expect(env.component.versesForm.valid).toBe(false);
     expect(env.component.scriptureStart.valid).toBe(false);
     // scriptureEnd starts disabled, and therefore invalid
@@ -181,9 +180,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureEnd.errors!.verseRange).toBe(true);
   }));
 
-  it('should produce error', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('should produce error', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     const invalidVerses = [
       'MAT 1',
       'MAT a1',
@@ -208,17 +206,15 @@ describe('QuestionDialogComponent', () => {
     }
   }));
 
-  it('should set default verse and text direction when provided', fakeAsync(() => {
+  it('should set default verse and text direction when provided', fakeAsync(async () => {
     const verseRef: VerseRef = new VerseRef('LUK 1:1');
-    env = new TestEnvironment(undefined, verseRef, true);
-    flush();
+    env = await TestEnvironment.create({ defaultVerseRef: verseRef, isRtl: true });
     expect(env.component.scriptureStart.value).toBe('LUK 1:1');
     expect(env.component.isTextRightToLeft).toBe(true);
   }));
 
-  it('should validate matching book and chapter', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('should validate matching book and chapter', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('MAT 1:2');
     expect(env.component.scriptureStart.valid).toBe(true);
     expect(env.component.scriptureStart.errors).toBeNull();
@@ -236,9 +232,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.versesForm.errors).toBeNull();
   }));
 
-  it('should validate start verse is before or same as end verse', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('should validate start verse is before or same as end verse', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('MAT 1:2');
     expect(env.component.scriptureStart.valid).toBe(true);
     expect(env.component.scriptureStart.errors).toBeNull();
@@ -256,9 +251,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.versesForm.errors).toBeNull();
   }));
 
-  it('opens reference chooser, uses result', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('opens reference chooser, uses result', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('MAT 3:4');
     expect(env.component.scriptureStart.value).not.toEqual('LUK 1:2');
 
@@ -272,9 +266,8 @@ describe('QuestionDialogComponent', () => {
   }));
 
   // Needed for validation error messages to appear
-  it('control marked as touched+dirty after reference chooser', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('control marked as touched+dirty after reference chooser', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     // scriptureStart control starts off untouched+undirty and changes
     env.component.scriptureStart.setValue('MAT 3:4');
     expect(env.component.scriptureStart.touched).toBe(false);
@@ -296,8 +289,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureEnd.dirty).toBe(true);
   }));
 
-  it('control marked as touched after reference chooser closed', fakeAsync(() => {
-    env = new TestEnvironment();
+  it('control marked as touched after reference chooser closed', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     when(env.mockedScriptureChooserMatDialogRef.afterOpened()).thenReturn(of());
     when(env.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of('close'));
     flush();
@@ -312,9 +305,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureStart.dirty).toBe(false);
   }));
 
-  it('passes start reference to end-reference chooser', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('passes start reference to end-reference chooser', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     expect(env.component.scriptureEnd.enabled).toBe(false);
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('GEN 5:6');
@@ -335,9 +327,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureEnd.value).toEqual('LUK 1:2');
   }));
 
-  it('does not pass start reference as range start when opening start-reference chooser', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('does not pass start reference as range start when opening start-reference chooser', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('LUK 1:1');
 
     env.clickElement(env.scriptureStartInputIcon);
@@ -353,9 +344,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
   }));
 
-  it('disables end-reference if start-reference is invalid', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('disables end-reference if start-reference is invalid', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     tick(EDITOR_READY_TIMEOUT);
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
     expect(env.component.scriptureEnd.disabled).toBe(false);
@@ -366,17 +356,15 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureEnd.disabled).toBe(false);
   }));
 
-  it('does not enable end-reference until start-reference is changed', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('does not enable end-reference until start-reference is changed', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     expect(env.component.scriptureEnd.disabled).toBe(true);
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
     expect(env.component.scriptureEnd.disabled).toBe(false);
   }));
 
-  it('allows a question without text if audio is provided', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('allows a question without text if audio is provided', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.inputValue(env.questionInput, '');
     env.clickElement(env.saveButton);
     expect(env.component.textAndAudio?.text.valid).toBe(false);
@@ -392,9 +380,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
   }));
 
-  it('should not save with no text and audio permission is denied', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('should not save with no text and audio permission is denied', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.inputValue(env.questionInput, '');
     env.clickElement(env.saveButton);
     expect(env.component.textAndAudio?.text.valid).toBe(false);
@@ -405,9 +392,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
   }));
 
-  it('display quill editor', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('display quill editor', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     expect(env.quillEditor).not.toBeNull();
     expect(env.component.textDocId).toBeUndefined();
     env.component.scriptureStart.setValue('LUK 1:1');
@@ -416,22 +402,24 @@ describe('QuestionDialogComponent', () => {
     tick(500);
     const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
-    verify(mockedProjectService.getText(deepEqual(textDocId))).once();
+    verify(mockedProjectService.getText(deepEqual(textDocId), anything())).once();
     expect(env.isSegmentHighlighted('1')).toBe(true);
     expect(env.isSegmentHighlighted('2')).toBe(false);
   }));
 
-  it('retrieves scripture text on editing a question', fakeAsync(() => {
-    env = new TestEnvironment({
-      dataId: 'question01',
-      ownerRef: 'user01',
-      projectRef: 'project01',
-      verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
-      answers: [],
-      isArchived: false,
-      dateCreated: '',
-      dateModified: '',
-      audioUrl: 'test-audio-short.mp3'
+  it('retrieves scripture text on editing a question', fakeAsync(async () => {
+    env = await TestEnvironment.create({
+      question: {
+        dataId: 'question01',
+        ownerRef: 'user01',
+        projectRef: 'project01',
+        verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
+        answers: [],
+        isArchived: false,
+        dateCreated: '',
+        dateModified: '',
+        audioUrl: 'test-audio-short.mp3'
+      }
     });
     flush();
     const textDocId = new TextDocId('project01', 42, 1, 'target');
@@ -439,21 +427,23 @@ describe('QuestionDialogComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
     env.fixture.detectChanges();
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
-    verify(mockedProjectService.getText(deepEqual(textDocId))).once();
+    verify(mockedProjectService.getText(deepEqual(textDocId), anything())).once();
     expect(env.component.selection!.toString()).toEqual('LUK 1:3');
     expect(env.component.textAndAudio?.input?.audioUrl).toBeDefined();
   }));
 
-  it('displays error editing end reference to different book', fakeAsync(() => {
-    env = new TestEnvironment({
-      dataId: 'question01',
-      ownerRef: 'user01',
-      projectRef: 'project01',
-      verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
-      answers: [],
-      isArchived: false,
-      dateCreated: '',
-      dateModified: ''
+  it('displays error editing end reference to different book', fakeAsync(async () => {
+    env = await TestEnvironment.create({
+      question: {
+        dataId: 'question01',
+        ownerRef: 'user01',
+        projectRef: 'project01',
+        verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
+        answers: [],
+        isArchived: false,
+        dateCreated: '',
+        dateModified: ''
+      }
     });
     flush();
     tick(EDITOR_READY_TIMEOUT);
@@ -468,16 +458,18 @@ describe('QuestionDialogComponent', () => {
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
   }));
 
-  it('displays error editing start reference to a different book', fakeAsync(() => {
-    env = new TestEnvironment({
-      dataId: 'question01',
-      ownerRef: 'user01',
-      projectRef: 'project01',
-      verseRef: fromVerseRef(new VerseRef('LUK 1:3-4')),
-      answers: [],
-      isArchived: false,
-      dateCreated: '',
-      dateModified: ''
+  it('displays error editing start reference to a different book', fakeAsync(async () => {
+    env = await TestEnvironment.create({
+      question: {
+        dataId: 'question01',
+        ownerRef: 'user01',
+        projectRef: 'project01',
+        verseRef: fromVerseRef(new VerseRef('LUK 1:3-4')),
+        answers: [],
+        isArchived: false,
+        dateCreated: '',
+        dateModified: ''
+      }
     });
     flush();
     tick(EDITOR_READY_TIMEOUT);
@@ -489,9 +481,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
   }));
 
-  it('generate correct verse ref when start and end mismatch only by case or insignificant zero', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('generate correct verse ref when start and end mismatch only by case or insignificant zero', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('luk 1:1');
 
@@ -503,9 +494,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.selection!.toString()).toEqual('LUK 1:1');
   }));
 
-  it('should handle invalid start reference when end reference exists', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('should handle invalid start reference when end reference exists', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('nonsense');
     env.component.scriptureEnd.setValue('LUK 1:1');
     expect(() => {
@@ -513,9 +503,8 @@ describe('QuestionDialogComponent', () => {
     }).not.toThrow();
   }));
 
-  it('should not highlight range if chapter or book differ', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('should not highlight range if chapter or book differ', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('MAT 1:1');
     env.component.scriptureEnd.setValue('LUK 1:2');
     tick(500);
@@ -524,9 +513,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.isSegmentHighlighted('1')).toBe(false);
   }));
 
-  it('should clear highlight when starting ref is cleared', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('should clear highlight when starting ref is cleared', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('LUK 1:1');
     tick(500);
     env.fixture.detectChanges();
@@ -550,9 +538,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.isSegmentHighlighted('1')).toBe(true);
   }));
 
-  it('should clear highlight when end ref is invalid', fakeAsync(() => {
-    env = new TestEnvironment();
-    flush();
+  it('should clear highlight when end ref is invalid', fakeAsync(async () => {
+    env = await TestEnvironment.create();
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('LUK 1:2');
     tick(500);
@@ -579,18 +566,35 @@ describe('QuestionDialogComponent', () => {
 });
 
 class TestEnvironment {
-  readonly fixture: ComponentFixture<ChildViewContainerComponent>;
-  readonly component: QuestionDialogComponent;
-  readonly dialogRef: MatDialogRef<QuestionDialogComponent>;
-  readonly afterCloseCallback: jasmine.Spy;
-  readonly dialogServiceSpy: DialogService;
+  fixture: ComponentFixture<ChildViewContainerComponent>;
+  private _component: QuestionDialogComponent | undefined;
+  dialogRef: MatDialogRef<QuestionDialogComponent> | undefined;
+  afterCloseCallback: jasmine.Spy | undefined;
+  private _dialogServiceSpy: DialogService | undefined;
 
   readonly mockedScriptureChooserMatDialogRef = mock(MatDialogRef);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(question?: Question, defaultVerseRef?: VerseRef, isRtl: boolean = false) {
+  private constructor() {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
+  }
+
+  static async create({
+    question,
+    defaultVerseRef,
+    isRtl = false
+  }: { question?: Question; defaultVerseRef?: VerseRef; isRtl?: boolean } = {}): Promise<TestEnvironment> {
+    const env = new TestEnvironment();
+    await env.init({ question, defaultVerseRef, isRtl });
+    return env;
+  }
+
+  private async init({
+    question,
+    defaultVerseRef,
+    isRtl = false
+  }: { question?: Question; defaultVerseRef?: VerseRef; isRtl?: boolean } = {}): Promise<void> {
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     let questionDoc: QuestionDoc | undefined;
     if (question != null) {
@@ -599,7 +603,11 @@ class TestEnvironment {
         id: questionId,
         data: question
       });
-      questionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, questionId);
+      questionDoc = await this.realtimeService.get<QuestionDoc>(
+        QuestionDoc.COLLECTION,
+        questionId,
+        new DocSubscription('spec')
+      );
       questionDoc.onlineFetch();
     }
     const textsByBookId = {
@@ -629,7 +637,11 @@ class TestEnvironment {
       id: 'project01',
       data: createTestProjectProfile({ texts: Object.values(textsByBookId) })
     });
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc = await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      'project01',
+      new DocSubscription('spec')
+    );
     const config: MatDialogConfig<QuestionDialogData> = {
       data: {
         questionDoc,
@@ -655,10 +667,10 @@ class TestEnvironment {
     this.dialogRef = TestBed.inject(MatDialog).open(QuestionDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
-    this.component = this.dialogRef.componentInstance;
+    this._component = this.dialogRef.componentInstance;
 
     // Set up dialog mocking after it's already used above (without mocking) in creating the component.
-    this.dialogServiceSpy = spy(this.component.dialogService);
+    this._dialogServiceSpy = spy(this.component.dialogService);
     when(this.dialogServiceSpy.openMatDialog(anything(), anything())).thenReturn(
       instance(this.mockedScriptureChooserMatDialogRef)
     );
@@ -667,19 +679,33 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 40, 1));
     this.addTextDoc(new TextDocId('project01', 42, 1));
     this.addEmptyTextDoc(43);
-    when(mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockedProjectService.getText(anything(), anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), new DocSubscription('spec'))
     );
-    when(mockedProjectService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString())
+    when(mockedProjectService.getProfile(anything(), anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString(), new DocSubscription('spec'))
     );
     when(mockedFileService.findOrUpdateCache(FileType.Audio, anything(), 'question01', anything())).thenResolve(
       createStorageFileData(QuestionDoc.COLLECTION, 'question01', 'test-audio-short.mp3', getAudioBlob())
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01', new DocSubscription('spec'))
     );
     this.fixture.detectChanges();
+  }
+
+  get component(): QuestionDialogComponent {
+    if (this._component == null) {
+      throw new Error('Uninitialized');
+    }
+    return this._component;
+  }
+
+  get dialogServiceSpy(): DialogService {
+    if (this._dialogServiceSpy == null) {
+      throw new Error('Uninitialized');
+    }
+    return this._dialogServiceSpy;
   }
 
   get overlayContainerElement(): HTMLElement {

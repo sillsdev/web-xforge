@@ -6,7 +6,8 @@ import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -29,19 +30,19 @@ describe('TextDocService', () => {
     ]
   }));
 
-  it('should overwrite text doc', fakeAsync(() => {
+  it('should overwrite text doc', fakeAsync(async () => {
     const env = new TestEnvironment();
     const newDelta: Delta = getCombinedVerseTextDoc(env.textDocId) as Delta;
 
     env.textDocService.overwrite(env.textDocId, newDelta, 'Editor');
     tick();
 
-    expect(env.getTextDoc(env.textDocId).data?.ops).toEqual(newDelta.ops);
+    expect((await env.getTextDoc(env.textDocId)).data?.ops).toEqual(newDelta.ops);
   }));
 
-  it('should emit diff', fakeAsync(() => {
+  it('should emit diff', fakeAsync(async () => {
     const env = new TestEnvironment();
-    const origDelta: Delta = env.getTextDoc(env.textDocId).data as Delta;
+    const origDelta: Delta = (await env.getTextDoc(env.textDocId)).data as Delta;
     const newDelta: Delta = getPoetryVerseTextDoc(env.textDocId) as Delta;
     const diff: Delta = origDelta.diff(newDelta);
 
@@ -53,11 +54,11 @@ describe('TextDocService', () => {
     tick();
   }));
 
-  it('should submit the source', fakeAsync(() => {
+  it('should submit the source', fakeAsync(async () => {
     const env = new TestEnvironment();
     const newDelta: Delta = getPoetryVerseTextDoc(env.textDocId) as Delta;
 
-    const textDoc = env.getTextDoc(env.textDocId);
+    const textDoc = await env.getTextDoc(env.textDocId);
     textDoc.adapter.changes$.subscribe(() => {
       // overwrite() resets submitSource to false, so we check it when the op is submitted
       expect(textDoc.adapter.submitSource).toBe(true);
@@ -181,6 +182,29 @@ describe('TextDocService', () => {
       const actual: boolean = env.textDocService.canRestore(project, 1, 1);
       expect(actual).toBe(true);
     });
+  });
+
+  describe('createTextDoc', () => {
+    it('should throw error if text doc already exists', fakeAsync(() => {
+      const env = new TestEnvironment();
+      expect(() => {
+        env.textDocService.createTextDoc(env.textDocId, new DocSubscription('spec'), getTextDoc(env.textDocId));
+        tick();
+      }).toThrowError();
+    }));
+
+    it('creates the text doc if it does not already exist', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      const textDocId = new TextDocId('project01', 40, 2);
+      const textDoc = await env.textDocService.createTextDoc(
+        textDocId,
+        new DocSubscription('spec'),
+        getTextDoc(textDocId)
+      );
+      tick();
+
+      expect(textDoc.data).toBeDefined();
+    }));
   });
 
   describe('isDataInSync', () => {
@@ -453,13 +477,13 @@ class TestEnvironment {
       type: RichText.type.name
     });
 
-    when(mockProjectService.getText(this.textDocId)).thenCall(id =>
-      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    when(mockProjectService.getText(this.textDocId, anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString(), new DocSubscription('spec'))
     );
     when(mockUserService.currentUserId).thenReturn('user01');
   }
 
-  getTextDoc(textId: TextDocId): TextDoc {
-    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
+  async getTextDoc(textId: TextDocId): Promise<TextDoc> {
+    return await this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString(), new DocSubscription('spec'));
   }
 }

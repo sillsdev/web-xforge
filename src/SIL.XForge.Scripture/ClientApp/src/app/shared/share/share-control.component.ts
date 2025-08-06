@@ -19,6 +19,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { BehaviorSubject, combineLatest, startWith } from 'rxjs';
 import { CommandError } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -90,7 +91,7 @@ export class ShareControlComponent extends ShareBaseComponent {
         }
         if (this.projectDoc == null || projectId !== this._projectId) {
           [this.projectDoc, this.isProjectAdmin] = await Promise.all([
-            this.projectService.getProfile(projectId),
+            this.projectService.getProfile(projectId, new DocSubscription('ShareControlComponent', this.destroyRef)),
             this.projectService.isProjectAdmin(projectId, this.userService.currentUserId)
           ]);
           this.roleControl.setValue(this.defaultShareRole ?? null);
