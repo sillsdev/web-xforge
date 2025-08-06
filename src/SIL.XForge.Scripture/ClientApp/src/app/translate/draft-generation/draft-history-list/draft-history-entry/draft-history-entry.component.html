@@ -89,6 +89,20 @@
               <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
               <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
             </table>
+            @if (buildRequestedAtDate != null && buildRequestedByUserName != null) {
+              <p>
+                {{
+                  t("requested_by", {
+                    requestedAtDate: buildRequestedAtDate,
+                    requestedByUserName: buildRequestedByUserName
+                  })
+                }}
+              </p>
+            } @else if (buildRequestedAtDate != null) {
+              <p>
+                {{ t("requested_at", { requestedAtDate: buildRequestedAtDate }) }}
+              </p>
+            }
           }
         }
       </div>
