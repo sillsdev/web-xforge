@@ -6,6 +6,7 @@ import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { DeltaOperation } from 'rich-text';
 import { catchError, Observable, throwError } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { isString } from '../../../type-utils';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -31,7 +32,8 @@ export class DraftHandlingService {
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly errorReportingService: ErrorReportingService
+    private readonly errorReportingService: ErrorReportingService,
+    private readonly i18n: I18nService
   ) {}
 
   /**
@@ -227,19 +229,19 @@ export class DraftHandlingService {
     draftTextDocId: TextDocId,
     targetTextDocId: TextDocId,
     timestamp?: Date
-  ): Promise<boolean> {
+  ): Promise<string | undefined> {
     if (!this.textDocService.canEdit(project, draftTextDocId.bookNum, draftTextDocId.chapterNum)) {
-      return false;
+      return this.i18n.translateStatic('draft_apply_progress-dialog.fail_cannot_edit');
     }
 
-    return await new Promise<boolean>(resolve => {
+    return await new Promise<string | undefined>(resolve => {
       this.getDraft(draftTextDocId, { isDraftLegacy: false, timestamp }).subscribe({
         next: async draft => {
           let ops: DeltaOperation[] = [];
           if (this.isDraftSegmentMap(draft)) {
             // Do not support applying drafts for the legacy segment map format.
             // This can be applied chapter by chapter.
-            resolve(false);
+            resolve(this.i18n.translateStatic('draft_apply_progress-dialog.fail_legacy_format'));
             return;
           } else {
             ops = draft;
@@ -248,14 +250,14 @@ export class DraftHandlingService {
           await this.applyChapterDraftAsync(targetTextDocId, draftDelta).catch(err => {
             // report the error to bugsnag
             this.errorReportingService.silentError('Error applying a draft', ErrorReportingService.normalizeError(err));
-            resolve(false);
+            resolve(this.i18n.translateStatic('draft_apply_progress-dialog.fail_unknown'));
           });
-          resolve(true);
+          resolve(undefined);
         },
         error: err => {
           // report the error to bugsnag
           this.errorReportingService.silentError('Error applying a draft', ErrorReportingService.normalizeError(err));
-          resolve(false);
+          resolve(this.i18n.translateStatic('draft_apply_progress-dialog.fail_unknown'));
         }
       });
     });

@@ -14,9 +14,10 @@
                 <mat-icon>warning</mat-icon>
                 <span>{{ t("some_chapters_not_applied", { bookName }) }}</span>
               </h2>
-              <p>{{ t("go_to_chapter") }}</p>
               <span>{{ t("failed_to_apply_chapters") }}</span>
-              <span class="failed-chapters">{{ failedToApplyChapters }}</span>
+              @for (message of draftApplyProgress?.errorMessages; track $index) {
+                <span class="failed-chapters">{{ message }}</span>
+              }
             </div>
           } @else {
             <h2>
