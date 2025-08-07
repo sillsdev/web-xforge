@@ -111,8 +111,8 @@ describe('DraftPreviewBooks', () => {
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything()))
       .thenReject(new Error('Draft error'))
-      .thenResolve(true)
-      .thenResolve(false);
+      .thenResolve(undefined)
+      .thenResolve('error');
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
     tick();
@@ -129,7 +129,7 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      true
+      undefined
     );
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
@@ -146,7 +146,7 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      true
+      undefined
     );
     expect(env.getBookButtonAtIndex(1).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
@@ -166,7 +166,7 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      true
+      undefined
     );
     expect(env.getBookButtonAtIndex(1).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
@@ -276,7 +276,7 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     setupDialog('project01');
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything())).thenResolve(
-      false
+      'error: legacy format'
     );
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);
@@ -291,11 +291,11 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     setupDialog('project01');
     const resolveSubject$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    const promise: Promise<boolean> = new Promise<boolean>(resolve => {
-      resolveSubject$.pipe(filter(value => value)).subscribe(() => resolve(true));
+    const promise: Promise<string | undefined> = new Promise<string | undefined>(resolve => {
+      resolveSubject$.pipe(filter(value => value)).subscribe(() => resolve(undefined));
     });
     when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything(), anything()))
-      .thenReturn(Promise.resolve(true))
+      .thenResolve(undefined)
       .thenReturn(promise);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
     env.component.chooseProjectToAddDraft(bookWithDraft);

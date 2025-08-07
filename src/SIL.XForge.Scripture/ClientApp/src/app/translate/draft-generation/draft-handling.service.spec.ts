@@ -5,6 +5,7 @@ import { DeltaOperation } from 'rich-text';
 import { of, throwError } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -19,6 +20,7 @@ const mockedTextDocService = mock(TextDocService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedSFProject = mock(SFProjectProfileDoc);
 const mockedErrorReportingService = mock(ErrorReportingService);
+const mockedI18nService = mock(I18nService);
 
 describe('DraftHandlingService', () => {
   let service: DraftHandlingService;
@@ -28,7 +30,8 @@ describe('DraftHandlingService', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
-      { provide: ErrorReportingService, useMock: mockedErrorReportingService }
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService },
+      { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
 
@@ -417,13 +420,13 @@ describe('DraftHandlingService', () => {
         )
       ).thenReturn(of(draft));
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
-      const result: boolean = await service.getAndApplyDraftAsync(
+      const result: string | undefined = await service.getAndApplyDraftAsync(
         mockedSFProject.data!,
         textDocId,
         textDocId,
         undefined
       );
-      expect(result).toBe(true);
+      expect(result).toBe(undefined);
       verify(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined, undefined)
       ).once();
@@ -449,13 +452,13 @@ describe('DraftHandlingService', () => {
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything(), anything())
       ).thenReturn(of(draft));
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(false);
-      const result: boolean = await service.getAndApplyDraftAsync(
+      const result: string | undefined = await service.getAndApplyDraftAsync(
         mockedSFProject.data!,
         textDocId,
         textDocId,
         undefined
       );
-      expect(result).toBe(false);
+      expect(result).not.toBe(undefined);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined)).never();
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).never();
     });
@@ -474,13 +477,13 @@ describe('DraftHandlingService', () => {
       ).thenReturn(throwError(() => ({ status: 405 })));
       when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of(draft));
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
-      const result: boolean = await service.getAndApplyDraftAsync(
+      const result: string | undefined = await service.getAndApplyDraftAsync(
         mockedSFProject.data!,
         textDocId,
         textDocId,
         undefined
       );
-      expect(result).toBe(false);
+      expect(result).not.toBe(undefined);
       verify(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined, undefined)
       ).once();
@@ -507,13 +510,13 @@ describe('DraftHandlingService', () => {
       when(
         mockedProjectService.onlineSetDraftApplied(anything(), anything(), anything(), anything(), anything())
       ).thenReturn(Promise.reject(new Error('Failed')));
-      const result: boolean = await service.getAndApplyDraftAsync(
+      const result: string | undefined = await service.getAndApplyDraftAsync(
         mockedSFProject.data!,
         textDocId,
         textDocId,
         undefined
       );
-      expect(result).toBe(false);
+      expect(result).not.toBe(undefined);
       verify(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined, undefined)
       ).once();
@@ -542,13 +545,13 @@ describe('DraftHandlingService', () => {
           anything()
         )
       ).thenReturn(throwError(() => ({ message: 'Getting draft failed', status: 404 })));
-      const result: boolean = await service.getAndApplyDraftAsync(
+      const result: string | undefined = await service.getAndApplyDraftAsync(
         mockedSFProject.data!,
         textDocId,
         textDocId,
         undefined
       );
-      expect(result).toBe(false);
+      expect(result).not.toBe(undefined);
       verify(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined, undefined)
       ).once();
