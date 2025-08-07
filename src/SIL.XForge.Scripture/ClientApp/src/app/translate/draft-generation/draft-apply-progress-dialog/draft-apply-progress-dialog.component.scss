@@ -5,6 +5,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow: auto;
 
   .progress-container {
     width: 100%;
@@ -27,8 +28,6 @@
 
     .failed-chapters {
       text-indent: 1em;
-      font-weight: bold;
-      font-size: 2em;
       margin-top: 0.5em;
       line-height: 1em;
     }

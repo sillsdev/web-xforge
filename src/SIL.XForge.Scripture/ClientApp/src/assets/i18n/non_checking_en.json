@@ -160,8 +160,10 @@
   "draft_apply_progress-dialog": {
     "add_draft_to_book": "Adding draft to {{ bookName }}",
     "close": "Close",
-    "failed_to_apply_chapters": "Failed to apply chapters",
-    "go_to_chapter": "Go to the chapter to try again.",
+    "failed_to_apply_chapters": "Failed to apply these chapters:",
+    "fail_cannot_edit": "The target chapter is not editable. View that chapter for more information.",
+    "fail_legacy_format": "Legacy draft format detected. Please apply chapter by chapter.",
+    "fail_unknown": "Unknown error. Please try again later. If the error persists, please report an issue.",
     "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}",
     "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
   },
