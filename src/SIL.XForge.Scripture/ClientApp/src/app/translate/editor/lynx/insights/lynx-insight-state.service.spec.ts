@@ -1,11 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
+import { LynxInsightFilter, LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
+import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { BehaviorSubject, firstValueFrom, Subject } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { createTestProjectUserConfig } from '../../../../../../../../RealtimeServer/scriptureforge/models/sf-project-user-config-test-data';
+import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../../../core/models/text-doc';
 import { LynxInsight } from './lynx-insight';
@@ -33,6 +37,7 @@ describe('LynxInsightStateService', () => {
 
   const mockInsightFilterService = mock<LynxInsightFilterService>();
   const mockActivatedBookChapterService = mock<ActivatedBookChapterService>();
+  const mockActivatedProjectService = mock<ActivatedProjectService>();
   const mockActivatedProjectUserConfigService = mock<ActivatedProjectUserConfigService>();
   const mockLynxWorkspaceService = mock<LynxWorkspaceService>();
   const mockProjectUserConfigDoc = mock(SFProjectUserConfigDoc);
@@ -72,6 +77,7 @@ describe('LynxInsightStateService', () => {
       LynxInsightStateService,
       { provide: LynxInsightFilterService, useMock: mockInsightFilterService },
       { provide: ActivatedBookChapterService, useMock: mockActivatedBookChapterService },
+      { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedProjectUserConfigService, useMock: mockActivatedProjectUserConfigService },
       { provide: LynxWorkspaceService, useMock: mockLynxWorkspaceService }
     ]
@@ -101,14 +107,27 @@ describe('LynxInsightStateService', () => {
       instance(mockProjectUserConfigDoc)
     );
 
+    const projectDoc$ = new BehaviorSubject<SFProjectDoc | undefined>({
+      id: 'project1',
+      data: createTestProject()
+    } as SFProjectDoc);
+
     when(mockLynxWorkspaceService.rawInsightSource$).thenReturn(rawInsightSource);
     when(mockLynxWorkspaceService.currentInsights).thenReturn(testInsights);
     when(mockActivatedBookChapterService.activatedBookChapter$).thenReturn(activatedBookChapter);
+    when(mockActivatedProjectService.projectDoc$).thenReturn(projectDoc$);
     when(mockActivatedProjectUserConfigService.projectUserConfig$).thenReturn(projectUserConfig$);
     when(mockActivatedProjectUserConfigService.projectUserConfigDoc$).thenReturn(projectUserConfigDoc$);
 
-    when(mockInsightFilterService.matchesFilter(anything(), anything(), anything(), anything())).thenCall(
-      (insight: LynxInsight, filter: any, _bookChapter: RouteBookChapter, dismissedIds: string[]) => {
+    when(mockInsightFilterService.hasDisplayPermission(anything(), anything())).thenReturn(true);
+    when(mockInsightFilterService.matchesFilter(anything(), anything(), anything(), anything(), anything())).thenCall(
+      (
+        insight: LynxInsight,
+        filter: LynxInsightFilter,
+        _bookChapter: RouteBookChapter,
+        dismissedIds: string[],
+        _projectTexts?: TextInfo[]
+      ) => {
         if (!filter.types.includes(insight.type)) {
           return false;
         }
