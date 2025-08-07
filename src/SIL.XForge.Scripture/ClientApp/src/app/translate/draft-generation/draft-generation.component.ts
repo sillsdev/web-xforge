@@ -27,11 +27,13 @@ import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-
 import { issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { SelectableProject } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
 import { SharedModule } from '../../shared/shared.module';
+import { projectLabel } from '../../shared/utils';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
 import { DraftDownloadButtonComponent } from './draft-download-button/draft-download-button.component';
@@ -438,6 +440,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe((job?: BuildDto) => (this.draftJob = job));
+  }
+
+  projectLabel(project?: SelectableProject): string {
+    return project == null ? '' : projectLabel(project);
   }
 
   private pollBuild(): void {
