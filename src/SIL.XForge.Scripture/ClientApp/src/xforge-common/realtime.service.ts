@@ -1,5 +1,5 @@
 import { DestroyRef, Injectable, Optional } from '@angular/core';
-import { filter, race, take, timer } from 'rxjs';
+import { filter, lastValueFrom, race, Subject, take, timer } from 'rxjs';
 import { AppError } from 'xforge-common/exception-handling.service';
 import { FileService } from './file.service';
 import { DocSubscription, RealtimeDoc } from './models/realtime-doc';
@@ -36,6 +36,7 @@ export const noopDestroyRef: DestroyRef = {
 })
 export class RealtimeService {
   protected readonly docs = new Map<string, RealtimeDoc>();
+  protected readonly disposingDocIds = new Map<string, Subject<void>>();
   protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
 
   constructor(
@@ -106,9 +107,9 @@ export class RealtimeService {
     let doc = this.docs.get(key);
 
     // Handle documents that currently exist but are in the process of being disposed.
-    if (doc?.isDisposing) {
+    if (doc != null && this.disposingDocIds.has(doc.id)) {
       console.log(`Waiting for document ${key} to be disposed before recreating it.`);
-      await doc.disposeCompleted;
+      await lastValueFrom(this.disposingDocIds.get(doc.id)!);
       // Recursively call this method so if multiple callers are waiting for the same document to be disposed, they will
       // all get the same instance.
       return await this.get<T>(collection, id, subscriber);
@@ -127,7 +128,7 @@ export class RealtimeService {
         });
       }
       this.docs.set(key, doc);
-      this.docLifecycleMonitor.docCreated(`${collection}:${id}`, subscriber.callerContext);
+      this.docLifecycleMonitor.docCreated(getDocKey(collection, id), subscriber.callerContext);
     }
     doc.addSubscriber(subscriber);
 
@@ -249,10 +250,24 @@ export class RealtimeService {
     }
   }
 
+  onDocDisposeStarted(doc: RealtimeDoc): void {
+    this.disposingDocIds.set(doc.id, new Subject<void>());
+    this.docLifecycleMonitor.docDestroyed(getDocKey(doc.collection, doc.id));
+    this.docs.delete(getDocKey(doc.collection, doc.id));
+  }
+
   async onLocalDocDispose(doc: RealtimeDoc): Promise<void> {
     if (this.isSet(doc.collection, doc.id)) {
       await this.offlineStore.delete(doc.collection, doc.id);
-      this.docs.delete(getDocKey(doc.collection, doc.id));
+    }
+  }
+
+  onDocDisposeFinished(doc: RealtimeDoc): void {
+    const disposingDocId = this.disposingDocIds.get(doc.id);
+    if (disposingDocId != null) {
+      disposingDocId.next();
+      disposingDocId.complete();
+      this.disposingDocIds.delete(doc.id);
     }
   }
 
