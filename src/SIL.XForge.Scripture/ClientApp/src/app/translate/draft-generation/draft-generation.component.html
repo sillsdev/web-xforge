@@ -85,7 +85,7 @@
               key="draft_generation.info_alert_no_source_access"
               [params]="{
                 connectProjectUrl: { route: '/connect-project' },
-                name: source?.name
+                name: projectLabel(source)
               }"
             ></transloco>
           </app-notice>
@@ -96,7 +96,7 @@
               key="draft_generation.info_alert_no_training_source_access"
               [params]="{
                 connectProjectUrl: { route: '/connect-project' },
-                name: trainingSource?.name
+                name: projectLabel(trainingSource)
               }"
             ></transloco>
           </app-notice>
@@ -107,7 +107,7 @@
               key="draft_generation.info_alert_no_additional_training_source_access"
               [params]="{
                 connectProjectUrl: { route: '/connect-project' },
-                name: additionalTrainingSource?.name
+                name: projectLabel(additionalTrainingSource)
               }"
             ></transloco>
           </app-notice>
