@@ -67,7 +67,7 @@ describe('ResumeTranslateService', () => {
     when(mockedProjectDoc.data).thenReturn({
       texts: [{ bookNum: 40, chapters: [{ number: 1 } as Chapter, { number: 2 } as Chapter] } as TextInfo]
     } as SFProject);
-    when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
+    when(mockProjectService.getUserConfig(anything(), anything(), anything())).thenResolve({
       changes$: of([]) as Observable<OtJson0Op[]>,
       data: { selectedTask: 'checking', selectedBookNum: 40, selectedChapterNum: 2 } as SFProjectUserConfig
     } as SFProjectUserConfigDoc);
@@ -94,7 +94,7 @@ describe('ResumeTranslateService', () => {
   }));
 
   it('should create link using first book if last location is invalid', fakeAsync(async () => {
-    when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
+    when(mockProjectService.getUserConfig(anything(), anything(), anything())).thenResolve({
       changes$: of([]) as Observable<OtJson0Op[]>,
       data: { selectedTask: 'checking', selectedBookNum: 6, selectedChapterNum: 2 } as SFProjectUserConfig
     } as SFProjectUserConfigDoc);
@@ -114,7 +114,7 @@ describe('ResumeTranslateService', () => {
   }));
 
   it('should create link using first book if no user config exists', fakeAsync(async () => {
-    when(mockProjectService.getUserConfig(anything(), anything())).thenResolve({
+    when(mockProjectService.getUserConfig(anything(), anything(), anything())).thenResolve({
       changes$: of([]) as Observable<OtJson0Op[]>
     } as SFProjectUserConfigDoc);
 

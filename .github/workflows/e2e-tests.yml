@@ -3,8 +3,6 @@ permissions: {}
 
 on:
   pull_request:
-    branches:
-      - "e2e/**"
   merge_group:
   workflow_dispatch:
   schedule:
