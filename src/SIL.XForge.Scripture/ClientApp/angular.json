@@ -61,8 +61,8 @@
             "extractLicenses": true,
             "sourceMap": true,
             "optimization": false,
-            "namedChunks": true
-            "webWorkerTsConfig": "tsconfig.worker.json",
+            "namedChunks": true,
+            "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
             "production": {
