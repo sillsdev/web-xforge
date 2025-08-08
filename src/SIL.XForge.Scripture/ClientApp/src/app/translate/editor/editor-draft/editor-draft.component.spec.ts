@@ -466,7 +466,7 @@ const targetDelta = new Delta([
       segment: 'verse_1_3',
       'para-contents': true
     },
-    insert: { blank: true }
+    insert: { blank: false }
   },
   {
     insert: '\n',
