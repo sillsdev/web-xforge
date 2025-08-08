@@ -13,7 +13,8 @@ public interface IEventMetricService
         EventScope[]? scopes,
         string[]? eventTypes,
         int pageIndex = 0,
-        int pageSize = int.MaxValue
+        int pageSize = int.MaxValue,
+        DateTime? fromDate = null
     );
     Task SaveEventMetricAsync(
         string? projectId,

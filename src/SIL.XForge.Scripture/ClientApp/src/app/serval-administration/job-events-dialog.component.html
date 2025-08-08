@@ -1,0 +1,49 @@
+<div class="job-events-dialog">
+  <h2 mat-dialog-title>Draft Job Events - {{ data.projectId }}</h2>
+  <mat-dialog-content>
+    <div class="job-summary">
+      <p><strong>Job Status:</strong> {{ data.jobStatus }}</p>
+      <p><strong>Events Found:</strong> {{ data.events.length }}</p>
+    </div>
+
+    <div class="events-timeline">
+      @for (event of data.events; track event.id) {
+        <div class="event-item" [class]="'event-' + event.eventType">
+          <div class="event-header">
+            <mat-icon [color]="getEventStatusColor(event.eventType, event.exception != null)" class="event-icon">
+              {{ getEventStatusIcon(event.eventType, event.exception != null) }}
+            </mat-icon>
+            <div class="event-info">
+              <h4>{{ getEventTypeLabel(event.eventType) }}</h4>
+              <p class="event-timestamp">{{ formatDate(event.timeStamp) }}</p>
+            </div>
+          </div>
+
+          @if (event.exception != null) {
+            <div class="event-exception">
+              <strong>Exception:</strong>
+              <pre>{{ event.exception }}</pre>
+            </div>
+          }
+
+          @if (hasPayload(event.payload)) {
+            <div class="event-payload">
+              <strong>Parameters:</strong>
+              <pre>{{ event.payload | json }}</pre>
+            </div>
+          }
+
+          @if (event.result != null) {
+            <div class="event-result">
+              <strong>Result:</strong>
+              <pre>{{ event.result }}</pre>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button [mat-dialog-close]="'cancel'">Close</button>
+  </mat-dialog-actions>
+</div>

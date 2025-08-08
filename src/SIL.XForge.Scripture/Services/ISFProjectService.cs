@@ -42,11 +42,12 @@ public interface ISFProjectService : IProjectService
     Task<QueryResults<EventMetric>> GetEventMetricsAsync(
         string curUserId,
         string[] systemRoles,
-        string projectId,
+        string? projectId,
         EventScope[]? scopes,
         string[]? eventTypes,
         int pageIndex,
-        int pageSize
+        int pageSize,
+        DateTime? fromDate = null
     );
     Task<SFProject> GetProjectAsync(string projectId);
     SFProjectSecret GetProjectSecretByShareKey(string shareKey);

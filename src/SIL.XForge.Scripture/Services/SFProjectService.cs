@@ -1032,11 +1032,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public async Task<QueryResults<EventMetric>> GetEventMetricsAsync(
         string curUserId,
         string[] systemRoles,
-        string projectId,
+        string? projectId,
         EventScope[]? scopes,
         string[]? eventTypes,
         int pageIndex,
-        int pageSize
+        int pageSize,
+        DateTime? fromDate = null
     )
     {
         // Ensure that the page index is valid
@@ -1051,29 +1052,48 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new FormatException($"{nameof(pageSize)} is not a valid page size.");
         }
 
-        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-
-        // Ensure that the project exists
-        if (!projectDoc.IsLoaded)
+        if (projectId is not null)
         {
-            throw new DataNotFoundException("The project does not exist.");
-        }
+            // Project-specific query
+            await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
 
-        // The user must be an admin on the project, or have system admin or serval admin permissions
-        if (
-            !(
-                IsProjectAdmin(projectDoc.Data, curUserId)
-                || systemRoles.Contains(SystemRole.SystemAdmin)
-                || systemRoles.Contains(SystemRole.ServalAdmin)
+            // Ensure that the project exists
+            if (!projectDoc.IsLoaded)
+            {
+                throw new DataNotFoundException("The project does not exist.");
+            }
+
+            // The user must be an admin on the project, or have system admin or serval admin permissions
+            if (
+                !(
+                    IsProjectAdmin(projectDoc.Data, curUserId)
+                    || systemRoles.Contains(SystemRole.SystemAdmin)
+                    || systemRoles.Contains(SystemRole.ServalAdmin)
+                )
             )
-        )
+            {
+                throw new ForbiddenException();
+            }
+        }
+        else
         {
-            throw new ForbiddenException();
+            // Site-wide query - only allow SystemAdmin or ServalAdmin
+            if (!(systemRoles.Contains(SystemRole.SystemAdmin) || systemRoles.Contains(SystemRole.ServalAdmin)))
+            {
+                throw new ForbiddenException();
+            }
         }
 
         // Return the event metrics
-        return await _eventMetricService.GetEventMetricsAsync(projectId, scopes, eventTypes, pageIndex, pageSize);
+        return await _eventMetricService.GetEventMetricsAsync(
+            projectId,
+            scopes,
+            eventTypes,
+            pageIndex,
+            pageSize,
+            fromDate
+        );
     }
 
     public SFProjectSecret GetProjectSecretByShareKey(string shareKey)

@@ -1,0 +1,111 @@
+@use 'src/variables' as sfColors;
+
+.job-events-dialog {
+  min-width: 600px;
+  max-width: 800px;
+}
+
+.job-summary {
+  background: #f5f5f5;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+
+  p {
+    margin: 4px 0;
+  }
+}
+
+.events-timeline {
+  .event-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    padding: 16px;
+
+    &.event-StartPreTranslationBuildAsync {
+      border-left: 4px solid sfColors.$greenDark;
+    }
+
+    &.event-BuildProjectAsync {
+      border-left: 4px solid sfColors.$orange;
+    }
+
+    &.event-RetrievePreTranslationStatusAsync {
+      border-left: 4px solid sfColors.$greenDark;
+    }
+
+    &.event-CancelPreTranslationBuildAsync {
+      border-left: 4px solid sfColors.$greyLight;
+    }
+  }
+
+  .event-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+
+    .event-icon {
+      margin-right: 12px;
+      margin-top: 2px;
+    }
+
+    .event-info {
+      flex: 1;
+
+      h4 {
+        margin: 0 0 4px 0;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .event-timestamp {
+        margin: 0;
+        color: sfColors.$lighterTextColor;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .event-exception {
+    background: #ffebee;
+    border: 1px solid #ffcdd2;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 8px;
+
+    strong {
+      color: sfColors.$red;
+    }
+
+    pre {
+      margin: 8px 0 0 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 12px;
+    }
+  }
+
+  .event-payload,
+  .event-result {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 8px;
+
+    strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  }
+}

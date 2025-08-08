@@ -342,4 +342,21 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   ): Promise<QueryResults<EventMetric> | undefined> {
     return await this.onlineInvoke<QueryResults<EventMetric>>('eventMetrics', { projectId, pageIndex, pageSize });
   }
+
+  async onlineAllEventMetrics(projectId?: string, daysBack?: number): Promise<QueryResults<EventMetric> | undefined> {
+    const params: any = {
+      projectId: projectId ?? null,
+      pageIndex: 0,
+      pageSize: Math.pow(2, 31) - 1, // Max Int32 in C#
+      scopes: [3] // Drafting scope
+    };
+
+    if (daysBack != null) {
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - daysBack);
+      params.fromDate = fromDate.toISOString();
+    }
+
+    return await this.onlineInvoke<QueryResults<EventMetric>>('eventMetrics', params);
+  }
 }
