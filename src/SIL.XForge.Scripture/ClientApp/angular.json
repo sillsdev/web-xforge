@@ -26,6 +26,7 @@
             },
             "index": "src/index.html",
             "tsConfig": "src/tsconfig.app.json",
+            "browser": "src/main.ts",
             "progress": true,
             "polyfills": ["src/polyfills.ts"],
             "assets": [
@@ -62,9 +63,8 @@
             "extractLicenses": true,
             "sourceMap": true,
             "optimization": false,
-            "namedChunks": true,
+            "namedChunks": true
             "webWorkerTsConfig": "tsconfig.worker.json",
-            "browser": "src/main.ts"
           },
           "configurations": {
             "production": {
