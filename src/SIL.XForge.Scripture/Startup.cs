@@ -48,24 +48,17 @@ public class Startup
         "vendor.js.map",
         "main.js",
         "main.js.map",
-        "manifest.json",
+        "@vite",
+        "@fs",
         "sockjs-node",
         "3rdpartylicenses.txt",
     ];
 
     // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
-    private static readonly HashSet<string> ProductionSpaGetRoutes =
-    [
-        "polyfills-es2015",
-        "polyfills-es5",
-        "runtime-es2015",
-        "runtime-es5",
-        "main-es2015",
-        "main-es5",
-        "styles",
-    ];
+    private static readonly HashSet<string> ProductionSpaGetRoutes = ["polyfills", "main", "chunk", "styles"];
     private static readonly HashSet<string> SpaGetRoutes =
     [
+        "manifest.json",
         "callback",
         "connect-project",
         "login",
@@ -186,7 +179,7 @@ public class Startup
         if (SpaDevServerStartup == SpaDevServerStartup.None)
         {
             // In production, the Angular files will be served from this directory
-            services.AddSpaStaticFiles(configuration => configuration.RootPath = "ClientApp/dist");
+            services.AddSpaStaticFiles(configuration => configuration.RootPath = "ClientApp/dist/browser");
         }
 
         services.AddSFMachine(Configuration, Environment);
@@ -309,6 +302,9 @@ public class Startup
                             string npmScript = "start";
                             Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
                             spa.UseAngularCliServer(npmScript);
+                            // Note that dotnet will need to see and parse a line like
+                            // "open your browser on http://localhost:4200/ "
+                            // (https://stackoverflow.com/q/60189930).
                             break;
 
                         case SpaDevServerStartup.Listen:
@@ -343,7 +339,7 @@ public class Startup
             )
         )
         {
-            int periodIndex = path.IndexOf(".");
+            int periodIndex = path.IndexOf("-");
             prefix = prefix[..(periodIndex - 1)];
         }
 

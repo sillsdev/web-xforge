@@ -174,7 +174,6 @@ class Row {
   selector: 'app-biblical-terms',
   templateUrl: './biblical-terms.component.html',
   styleUrls: ['./biblical-terms.component.scss'],
-  standalone: true,
   imports: [CommonModule, TranslocoModule, UICommonModule]
 })
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {

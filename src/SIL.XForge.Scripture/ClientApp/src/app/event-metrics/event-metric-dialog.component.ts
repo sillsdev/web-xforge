@@ -10,7 +10,6 @@ import { EventMetric } from './event-metric';
   selector: 'app-event-metric-dialog',
   templateUrl: './event-metric-dialog.component.html',
   styleUrls: ['./event-metric-dialog.component.scss'],
-  standalone: true,
   imports: [CommonModule, MatDialogModule, TranslocoModule, UICommonModule]
 })
 export class EventMetricDialogComponent {

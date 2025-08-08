@@ -42,7 +42,8 @@ export interface InviteeStatus {
 @Component({
   selector: 'app-collaborators',
   templateUrl: './collaborators.component.html',
-  styleUrls: ['./collaborators.component.scss']
+  styleUrls: ['./collaborators.component.scss'],
+  standalone: false
 })
 export class CollaboratorsComponent extends DataLoadingComponent implements OnInit, AfterViewInit {
   userInviteForm = new UntypedFormGroup({

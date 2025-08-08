@@ -9,10 +9,10 @@ import { NoticeComponent } from '../notice/notice.component';
 
 @Component({
   selector: 'app-global-notices',
-  standalone: true,
   imports: [CommonModule, NoticeComponent, MatIconModule, MatButtonModule, MatTooltipModule, TranslocoModule],
   templateUrl: './global-notices.component.html',
-  styleUrl: './global-notices.component.scss'
+  styleUrl: './global-notices.component.scss',
+  standalone: true
 })
 export class GlobalNoticesComponent {
   // This is only an input so that the Storybook can turn this on even when it's off in the app

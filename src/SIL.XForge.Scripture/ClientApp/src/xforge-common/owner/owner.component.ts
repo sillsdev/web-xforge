@@ -11,8 +11,8 @@ import { UserService } from '../user.service';
   selector: 'app-owner',
   templateUrl: './owner.component.html',
   styleUrls: ['./owner.component.scss'],
-  standalone: true,
-  imports: [AvatarComponent, CommonModule]
+  imports: [AvatarComponent, CommonModule],
+  standalone: true
 })
 export class OwnerComponent implements OnInit {
   @Input() ownerRef?: string;
