@@ -724,7 +724,7 @@
     "phase_2_percent": "Biblische Begriffe aus Paratext werden aktualisiert {{progressPercent}}%",
     "phase_3": "Senden/Empfangen wird mit Paratext verbunden",
     "phase_3_percent": "Paratext Senden/Empfangen {{progressPercent}}%",
-    "phase_4": "Büchern und Berechtigungen aus Paratext werden aktualisiert {{progressPercent}}%",
+    "phase_4_percent": "Büchern und Berechtigungen aus Paratext werden aktualisiert {{progressPercent}}%",
     "phase_5_percent": "Ressourcentexte werden überprüft {{progressPercent}}%",
     "phase_6": "Texte aus Paratext werden aktualisiert",
     "phase_6_percent": "Texte aus Büchern in Paratext werden aktualisiert {{progressPercent}}%",

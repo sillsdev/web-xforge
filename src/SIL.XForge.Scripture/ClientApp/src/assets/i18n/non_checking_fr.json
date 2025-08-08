@@ -724,7 +724,7 @@
     "phase_2_percent": "Mise à jour des termes bibliques Paratext {{progressPercent}}%",
     "phase_3": "Connexion envoi/réception avec Paratext",
     "phase_3_percent": "Paratext envoi/recevoir {{progressPercent}}%",
-    "phase_4": "Mise à jour des livres et des permissions depuis Paratext {{progressPercent}}%",
+    "phase_4_percent": "Mise à jour des livres et des permissions depuis Paratext {{progressPercent}}%",
     "phase_5_percent": "Vérification des textes des ressources {{progressPercent}}%",
     "phase_6": "Mise à jour des textes depuis Paratext",
     "phase_6_percent": "Mise à jour des textes des livres Paratext {{progressPercent}}%",
