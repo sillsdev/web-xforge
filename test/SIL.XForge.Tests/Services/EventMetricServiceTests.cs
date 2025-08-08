@@ -52,9 +52,9 @@ public class EventMetricServiceTests
             pageSize: 10
         );
 
-        // Do not retrieve any projects, even the metric with no project identifier
-        Assert.IsEmpty(actual.Results);
-        Assert.Zero(actual.UnpagedCount);
+        // When no project is specified, only return events that have a project ID (excludes null project IDs)
+        Assert.AreEqual(3, actual.Results.Count());
+        Assert.AreEqual(3, actual.UnpagedCount);
     }
 
     [Test]
