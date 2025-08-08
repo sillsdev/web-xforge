@@ -21,12 +21,10 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": {
-              "base": "dist"
-            },
+            "outputPath": "dist",
             "index": "src/index.html",
-            "tsConfig": "src/tsconfig.app.json",
             "browser": "src/main.ts",
+            "tsConfig": "src/tsconfig.app.json",
             "progress": true,
             "polyfills": ["src/polyfills.ts"],
             "assets": [
