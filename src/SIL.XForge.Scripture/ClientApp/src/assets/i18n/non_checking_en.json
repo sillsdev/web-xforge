@@ -278,7 +278,8 @@
     "hide_model_training_configuration": "Hide model training configuration",
     "show_model_training_configuration": "Show model training configuration",
     "training_books": "Training books",
-    "training_model_description": "The language model was trained on this configuration:"
+    "training_model_description": "The language model was trained on this configuration:",
+    "translation_books": "Translation books"
   },
   "draft_history_list": {
     "draft_canceled": "The draft was canceled",
