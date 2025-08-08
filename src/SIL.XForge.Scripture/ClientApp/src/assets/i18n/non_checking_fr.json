@@ -191,7 +191,7 @@
     "draft_queued_detail_multiple": "La génération de l'ébauche de traduction est numéro {{ count }} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_detail": "La génération de l'ébauche de traduction est numéro {} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_header": "Ébauche en attente",
-    "draft_queued_multiple": "Ce projet porte le numéro {{ count }} dans la file d'attente",
+    "draft_queued_multiple": "Cette ébauche porte le numéro {{ count }} dans la file d'attente",
     "format_draft": "Formater l'ébauche",
     "generate_back_translation_drafts_header": "Générer des ébauches de rétro-traduction",
     "generate_draft_button": "Générer une ébauche",
@@ -277,7 +277,7 @@
     "format_draft": "Formater l'ébauche",
     "hide_model_training_configuration": "Masquer la configuration de l'apprentissage du modèle",
     "show_model_training_configuration": "Afficher la configuration de l'entraînement au modèle",
-    "training_books": "Guide vendeurs",
+    "training_books": "Livres de formation",
     "training_model_description": "Le modèle de langue a été formé sur cette configuration"
   },
   "draft_history_list": {
@@ -724,7 +724,9 @@
     "phase_2_percent": "Mise à jour des termes bibliques Paratext {{progressPercent}}%",
     "phase_3": "Connexion envoi/réception avec Paratext",
     "phase_3_percent": "Paratext envoi/recevoir {{progressPercent}}%",
-    "phase_4_percent": "Mise à jour des livres et des permissions depuis Paratext {{progressPercent}}%",
+    "phase_4": "Updating books and permissions from Paratext",
+    "phase_4_percent": "Updating books and permissions from Paratext {{progressPercent}}%",
+    "phase_5": "Checking the resource texts",
     "phase_5_percent": "Vérification des textes des ressources {{progressPercent}}%",
     "phase_6": "Mise à jour des textes depuis Paratext",
     "phase_6_percent": "Mise à jour des textes des livres Paratext {{progressPercent}}%",

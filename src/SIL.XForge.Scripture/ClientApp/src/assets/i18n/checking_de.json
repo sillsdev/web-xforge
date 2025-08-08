@@ -353,8 +353,7 @@
     "hour_range": "{{ min }} bis {{ max }} Stunden",
     "learn_more": "Mehr erfahren",
     "minute_range": "{{ min }} bis {{ max }} Minuten",
-    "upcoming_maintenance": "Scripture Forge wird wegen Wartungsarbeiten für etwa {{ duration }} ab {{ startTime }} nicht zur Verfügung stehen.",
-    "dbl_maintenance": "Die Digitale Bibelbibliothek wird wegen Wartungsarbeiten für etwa {{ duration }} ab {{ startTime }} nicht verfügbar sein. Während dieser Zeit kanns Du keine Ressourcen der Digitalen Bibelbibliothek mit Deinem Projekt verbinden."
+    "upcoming_maintenance": "Scripture Forge wird wegen Wartungsarbeiten für etwa {{ duration }} ab {{ startTime }} nicht zur Verfügung stehen."
   },
   "issue_email": {
     "heading": "Bitte beschreibe das Problem.",
