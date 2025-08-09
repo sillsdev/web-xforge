@@ -16,7 +16,8 @@ describe('DraftApplyProgressDialogComponent', () => {
     bookNum: 1,
     completed: false,
     chapters: [1, 2, 3],
-    chaptersApplied: []
+    chaptersApplied: [],
+    errorMessages: []
   });
 
   configureTestingModule(() => ({
@@ -33,7 +34,7 @@ describe('DraftApplyProgressDialogComponent', () => {
   });
 
   it('shows progress', () => {
-    progress$.next({ bookNum: 1, chapters: [1, 2], chaptersApplied: [1], completed: false });
+    progress$.next({ bookNum: 1, chapters: [1, 2], chaptersApplied: [1], completed: false, errorMessages: [] });
     env.fixture.detectChanges();
     expect(env.progressContainer).not.toBeNull();
     expect(env.resultContainer).toBeNull();
@@ -41,7 +42,7 @@ describe('DraftApplyProgressDialogComponent', () => {
   });
 
   it('shows apply draft completed', () => {
-    progress$.next({ bookNum: 1, chapters: [1, 2], chaptersApplied: [1, 2], completed: true });
+    progress$.next({ bookNum: 1, chapters: [1, 2], chaptersApplied: [1, 2], completed: true, errorMessages: [] });
     env.fixture.detectChanges();
     expect(env.progressContainer).toBeNull();
     expect(env.resultContainer).not.toBeNull();
@@ -50,12 +51,13 @@ describe('DraftApplyProgressDialogComponent', () => {
   });
 
   it('shows chapters that failed to be applied', () => {
-    progress$.next({ bookNum: 1, chapters: [1, 2], chaptersApplied: [1], completed: true });
+    progress$.next({ bookNum: 1, chapters: [1, 2], chaptersApplied: [1], completed: true, errorMessages: ['error'] });
     env.fixture.detectChanges();
     expect(env.progressContainer).toBeNull();
     expect(env.resultContainer).not.toBeNull();
     expect(env.component.failedToApplyChapters).toEqual('2');
     expect(env.resultContainer.textContent).toContain('warning');
+    expect(env.component.draftApplyProgress?.errorMessages).toContain('error');
   });
 });
 

@@ -97,6 +97,7 @@ export class DraftPreviewBooksComponent {
   private applyChapters: number[] = [];
   private draftApplyBookNum: number = 0;
   private chaptersApplied: number[] = [];
+  private errorMessages: string[] = [];
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -168,9 +169,10 @@ export class DraftPreviewBooksComponent {
     this.applyChapters = bookWithDraft.chaptersWithDrafts;
     this.draftApplyBookNum = bookWithDraft.bookNumber;
     this.chaptersApplied = [];
+    this.errorMessages = [];
     this.updateProgress();
 
-    const promises: Promise<boolean>[] = [];
+    const promises: Promise<string | undefined>[] = [];
     const project: SFProjectProfile = this.activatedProjectService.projectDoc!.data!;
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
       const draftTextDocId = new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter);
@@ -180,8 +182,8 @@ export class DraftPreviewBooksComponent {
 
     try {
       this.openProgressDialog();
-      const results: boolean[] = await Promise.all(promises);
-      if (results.some(result => !result)) {
+      const results: (string | undefined)[] = await Promise.all(promises);
+      if (results.some(result => result !== undefined)) {
         this.updateProgress(undefined, true);
         // The draft is in the legacy format. This can only be applied chapter by chapter.
         return;
@@ -213,7 +215,7 @@ export class DraftPreviewBooksComponent {
     project: SFProjectProfile,
     draftTextDocId: TextDocId,
     targetTextDocId: TextDocId
-  ): Promise<boolean> {
+  ): Promise<string | undefined> {
     let timestamp: Date | undefined = undefined;
     if (this.build?.additionalInfo?.dateGenerated != null) {
       timestamp = new Date(this.build.additionalInfo.dateGenerated);
@@ -221,20 +223,25 @@ export class DraftPreviewBooksComponent {
     return await this.draftHandlingService
       .getAndApplyDraftAsync(project, draftTextDocId, targetTextDocId, timestamp)
       .then(result => {
-        this.updateProgress(result ? targetTextDocId.chapterNum : undefined);
+        const errorMessage = result !== undefined ? targetTextDocId.chapterNum + ': ' + result : undefined;
+        this.updateProgress(result === undefined ? targetTextDocId.chapterNum : undefined, undefined, errorMessage);
         return result;
       });
   }
 
-  private updateProgress(bookCompleted?: number, completed?: boolean): void {
+  private updateProgress(bookCompleted?: number, completed?: boolean, errorMessage?: string): void {
     if (bookCompleted != null) {
       this.chaptersApplied.push(bookCompleted);
+    }
+    if (errorMessage != null) {
+      this.errorMessages.push(errorMessage);
     }
     this.draftApplyProgress$.next({
       bookNum: this.draftApplyBookNum,
       chapters: this.applyChapters,
       chaptersApplied: this.chaptersApplied,
-      completed: !!completed ? completed : this.chaptersApplied.length === this.applyChapters.length
+      completed: !!completed ? completed : this.chaptersApplied.length === this.applyChapters.length,
+      errorMessages: this.errorMessages
     });
   }
 }
