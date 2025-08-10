@@ -13,6 +13,7 @@ import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
+import { RIGHT_TO_LEFT_MARK } from '../../../../shared/utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
 
@@ -178,7 +179,7 @@ export class DraftHistoryEntryComponent {
 
   get buildRequestedAtDate(): string {
     if (this._entry?.additionalInfo?.dateRequested == null) return '';
-    return this.i18n.formatDate(new Date(this._entry?.additionalInfo?.dateRequested));
+    return this.formatDate(this._entry?.additionalInfo?.dateRequested);
   }
 
   get hasDetails(): boolean {
@@ -233,7 +234,8 @@ export class DraftHistoryEntryComponent {
   }
 
   formatDate(date?: string): string {
-    return date == null ? '' : this.i18n.formatDate(new Date(date));
+    const formattedDate = date == null ? '' : this.i18n.formatDate(new Date(date));
+    return formattedDate.indexOf(RIGHT_TO_LEFT_MARK) !== -1 ? RIGHT_TO_LEFT_MARK + formattedDate : formattedDate;
   }
 
   getStatus(state: BuildStates): { icons: string; text: string; color: string } {
