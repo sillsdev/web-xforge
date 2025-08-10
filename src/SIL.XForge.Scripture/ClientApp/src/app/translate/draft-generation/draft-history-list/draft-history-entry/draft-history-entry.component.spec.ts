@@ -95,13 +95,6 @@ describe('DraftHistoryEntryComponent', () => {
           target: 'tar'
         }
       ]);
-      expect(component.translationConfiguration).toEqual([
-        {
-          scriptureRange: 'Genesis',
-          source: 'src',
-          target: 'tar'
-        }
-      ]);
       expect(component.trainingConfigurationOpen).toBe(false);
     }));
 
@@ -141,7 +134,7 @@ describe('DraftHistoryEntryComponent', () => {
         },
         additionalInfo: {
           trainingScriptureRanges: [{ projectId: 'project02', scriptureRange: 'EXO' }],
-          translationScriptureRanges: [{ projectId: 'project02', scriptureRange: 'GEN' }]
+          translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN' }]
         }
       } as BuildDto;
 
@@ -168,13 +161,6 @@ describe('DraftHistoryEntryComponent', () => {
           target: 'Unknown'
         }
       ]);
-      expect(component.translationConfiguration).toEqual([
-        {
-          scriptureRange: 'Genesis',
-          source: 'Unknown',
-          target: 'Unknown'
-        }
-      ]);
       expect(component.trainingConfigurationOpen).toBe(true);
     }));
 
@@ -189,7 +175,7 @@ describe('DraftHistoryEntryComponent', () => {
           dateGenerated: new Date().toISOString(),
           dateRequested: new Date().toISOString(),
           requestedByUserId: 'sf-user-id',
-          translationScriptureRanges: [{ projectId: 'project02', scriptureRange: 'GEN' }]
+          translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN' }]
         }
       } as BuildDto;
 
@@ -333,7 +319,7 @@ describe('DraftHistoryEntryComponent', () => {
         dateRequested: new Date().toISOString(),
         requestedByUserId: 'sf-user-id',
         trainingScriptureRanges: [{ projectId: 'project02', scriptureRange: trainingBooks.join(';') }],
-        translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }]
+        translationScriptureRanges: [{ projectId: 'project01', scriptureRange: translateBooks.join(';') }]
       }
     } as BuildDto;
 

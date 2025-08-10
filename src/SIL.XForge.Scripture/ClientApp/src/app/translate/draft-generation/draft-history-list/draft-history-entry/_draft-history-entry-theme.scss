@@ -14,13 +14,3 @@
     @include color($theme);
   }
 }
-
-/* Keep the column widths for the training and translation books the same */
-.mat-column-scriptureRange {
-  width: 70%;
-}
-
-.mat-column-source,
-.mat-column-target {
-  width: 15%;
-}

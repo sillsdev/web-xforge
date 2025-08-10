@@ -6,8 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
-import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { forkJoin, from, Observable, of } from 'rxjs';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
@@ -33,7 +31,7 @@ interface BuildFaultedRow {
   details: string;
 }
 
-interface ConfigurationRow {
+interface TrainingConfigurationRow {
   scriptureRange: string;
   source: string;
   target: string;
@@ -57,38 +55,6 @@ interface ConfigurationRow {
   styleUrl: './draft-history-entry.component.scss'
 })
 export class DraftHistoryEntryComponent {
-  private buildConfigurationRows(scriptureRanges: ProjectScriptureRange[]): Observable<ConfigurationRow[]> {
-    if (scriptureRanges.length === 0) {
-      return of([]);
-    }
-
-    return forkJoin(scriptureRanges.map(r => from(this.resolveConfigurationRow(r))));
-  }
-
-  private async resolveConfigurationRow(r: ProjectScriptureRange): Promise<ConfigurationRow> {
-    // The engine ID is the target project ID
-    let target: SFProjectProfileDoc | undefined = undefined;
-    if (this._entry?.engine?.id != null) {
-      target = await this.projectService.getProfile(this._entry.engine.id);
-    }
-
-    // Get the target language, if it is not already set
-    this._targetLanguage ??= target?.data?.writingSystem.tag;
-
-    // Get the source project, if it is configured
-    const source =
-      r.projectId === '' || r.projectId === target?.id ? undefined : await this.projectService.getProfile(r.projectId);
-
-    // Get the source language, if it is not already set
-    this._sourceLanguage ??= source?.data?.writingSystem.tag;
-
-    // Return the data for this training range
-    return {
-      scriptureRange: this.i18n.formatAndLocalizeScriptureRange(r.scriptureRange),
-      source: source?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown'),
-      target: target?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown')
-    } as ConfigurationRow;
-  }
   private _entry?: BuildDto;
   @Input() set entry(value: BuildDto | undefined) {
     this._entry = value;
@@ -112,15 +78,36 @@ export class DraftHistoryEntryComponent {
     this._sourceLanguage = undefined;
     this._targetLanguage = undefined;
     this._trainingConfiguration = [];
-    this._translationConfiguration = [];
 
-    forkJoin([
-      this.buildConfigurationRows(this._entry?.additionalInfo?.trainingScriptureRanges ?? []),
-      this.buildConfigurationRows(this._entry?.additionalInfo?.translationScriptureRanges ?? [])
-    ]).subscribe(([trainingConfiguration, translationConfiguration]) => {
-      // Set the training and translation data for the tables
+    // Get the books used in the training configuration
+    const trainingScriptureRanges = this._entry?.additionalInfo?.trainingScriptureRanges ?? [];
+    Promise.all(
+      trainingScriptureRanges.map(async r => {
+        // The engine ID is the target project ID
+        let target: SFProjectProfileDoc | undefined = undefined;
+        if (this._entry?.engine.id != null) {
+          target = await this.projectService.getProfile(this._entry.engine.id);
+        }
+
+        // Get the target language, if it is not already set
+        this._targetLanguage ??= target?.data?.writingSystem.tag;
+
+        // Get the source project, if it is configured
+        const source = r.projectId === '' ? undefined : await this.projectService.getProfile(r.projectId);
+
+        // Get the source language, if it is not already set
+        this._sourceLanguage ??= source?.data?.writingSystem.tag;
+
+        // Return the data for this training range
+        return {
+          scriptureRange: this.i18n.formatAndLocalizeScriptureRange(r.scriptureRange),
+          source: source?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown'),
+          target: target?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown')
+        } as TrainingConfigurationRow;
+      })
+    ).then(trainingConfiguration => {
+      // Set the training data for the table
       this._trainingConfiguration = trainingConfiguration;
-      this._translationConfiguration = translationConfiguration;
 
       // If we can only show training data, expand the training configuration
       if (!this.canDownloadBuild && this.hasTrainingConfiguration) {
@@ -199,7 +186,7 @@ export class DraftHistoryEntryComponent {
   }
 
   get hasTrainingConfiguration(): boolean {
-    return this._trainingConfiguration.length > 0 || this._translationConfiguration.length > 0;
+    return this._trainingConfiguration.length > 0;
   }
 
   private _sourceLanguage?: string = undefined;
@@ -212,14 +199,9 @@ export class DraftHistoryEntryComponent {
     return this._targetLanguage ?? '';
   }
 
-  private _trainingConfiguration: ConfigurationRow[] = [];
-  get trainingConfiguration(): ConfigurationRow[] {
+  private _trainingConfiguration: TrainingConfigurationRow[] = [];
+  get trainingConfiguration(): TrainingConfigurationRow[] {
     return this._trainingConfiguration;
-  }
-
-  private _translationConfiguration: ConfigurationRow[] = [];
-  get translationConfiguration(): ConfigurationRow[] {
-    return this._translationConfiguration;
   }
 
   private _canDownloadBuild: boolean | undefined;
