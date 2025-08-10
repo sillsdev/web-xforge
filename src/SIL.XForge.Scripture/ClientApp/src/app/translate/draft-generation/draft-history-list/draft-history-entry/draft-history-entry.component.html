@@ -8,7 +8,7 @@
       <mat-expansion-panel-header [collapsedHeight]="'auto'" [expandedHeight]="'auto'">
         <mat-panel-title>
           <span class="title">{{ scriptureRange }}</span>
-          <span class="subtitle">{{ formatDate(entry.additionalInfo?.dateFinished) }}</span>
+          <span class="subtitle"> {{ translationSource }} {{ formatDate(entry.additionalInfo?.dateFinished) }} </span>
         </mat-panel-title>
         <mat-panel-description>
           <span class="status" [ngClass]="getStatus(entry.state).color">

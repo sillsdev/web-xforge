@@ -67,6 +67,7 @@ describe('DraftHistoryEntryComponent', () => {
     });
 
     it('should handle builds with additional info', fakeAsync(() => {
+      when(mockedI18nService.enumerateList(anything())).thenReturn('src');
       const user = 'user-display-name';
       const date = 'formatted-date';
       const trainingBooks = ['EXO'];
@@ -79,6 +80,7 @@ describe('DraftHistoryEntryComponent', () => {
       fixture.detectChanges();
 
       expect(component.scriptureRange).toEqual('Genesis');
+      expect(component.translationSource).toEqual('src \u2022');
       expect(component.buildRequestedByUserName).toBe(user);
       expect(component.buildRequestedByDate).toBe(date);
       expect(component.canDownloadBuild).toBe(true);
@@ -134,7 +136,7 @@ describe('DraftHistoryEntryComponent', () => {
         },
         additionalInfo: {
           trainingScriptureRanges: [{ projectId: 'project02', scriptureRange: 'EXO' }],
-          translationScriptureRanges: [{ projectId: 'project01', scriptureRange: 'GEN' }]
+          translationScriptureRanges: [{ projectId: 'project02', scriptureRange: 'GEN' }]
         }
       } as BuildDto;
 
@@ -145,6 +147,7 @@ describe('DraftHistoryEntryComponent', () => {
       fixture.detectChanges();
 
       expect(component.scriptureRange).toEqual('Genesis');
+      expect(component.translationSource).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
       expect(component.buildRequestedByDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
@@ -319,7 +322,7 @@ describe('DraftHistoryEntryComponent', () => {
         dateRequested: new Date().toISOString(),
         requestedByUserId: 'sf-user-id',
         trainingScriptureRanges: [{ projectId: 'project02', scriptureRange: trainingBooks.join(';') }],
-        translationScriptureRanges: [{ projectId: 'project01', scriptureRange: translateBooks.join(';') }]
+        translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }]
       }
     } as BuildDto;
 
