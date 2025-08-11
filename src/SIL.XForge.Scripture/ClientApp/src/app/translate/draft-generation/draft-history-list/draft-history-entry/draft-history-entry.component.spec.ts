@@ -60,7 +60,7 @@ describe('DraftHistoryEntryComponent', () => {
       component.entry = undefined;
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
-      expect(component.buildRequestedByDate).toBe('');
+      expect(component.buildRequestedAtDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
       expect(component.hasDetails).toBe(false);
       expect(component.entry).toBeUndefined();
@@ -82,7 +82,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('Genesis');
       expect(component.translationSource).toEqual('src \u2022');
       expect(component.buildRequestedByUserName).toBe(user);
-      expect(component.buildRequestedByDate).toBe(date);
+      expect(component.buildRequestedAtDate).toBe(date);
       expect(component.canDownloadBuild).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.columnsToDisplay).toEqual(['scriptureRange', 'source', 'target']);
@@ -149,7 +149,7 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.scriptureRange).toEqual('Genesis');
       expect(component.translationSource).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
-      expect(component.buildRequestedByDate).toBe('');
+      expect(component.buildRequestedAtDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.columnsToDisplay).toEqual(['scriptureRange', 'source', 'target']);
@@ -190,7 +190,7 @@ describe('DraftHistoryEntryComponent', () => {
 
       expect(component.scriptureRange).toEqual('Genesis');
       expect(component.buildRequestedByUserName).toBeUndefined();
-      expect(component.buildRequestedByDate).toBe('formatted-date');
+      expect(component.buildRequestedAtDate).toBe('formatted-date');
       expect(component.canDownloadBuild).toBe(true);
       expect(fixture.nativeElement.querySelector('.format-usfm')).not.toBeNull();
       expect(component.hasDetails).toBe(true);
@@ -203,7 +203,7 @@ describe('DraftHistoryEntryComponent', () => {
       component.isLatestBuild = true;
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
-      expect(component.buildRequestedByDate).toBe('');
+      expect(component.buildRequestedAtDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.hasDetails).toBe(false);
@@ -215,7 +215,7 @@ describe('DraftHistoryEntryComponent', () => {
       component.entry = entry;
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
-      expect(component.buildRequestedByDate).toBe('');
+      expect(component.buildRequestedAtDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
       expect(component.hasDetails).toBe(false);
       expect(component.entry).toBe(entry);
@@ -236,7 +236,7 @@ describe('DraftHistoryEntryComponent', () => {
       component.entry = entry;
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
-      expect(component.buildRequestedByDate).toBe('');
+      expect(component.buildRequestedAtDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
       expect(component.hasDetails).toBe(true);
       expect(component.entry).toBe(entry);
@@ -253,7 +253,7 @@ describe('DraftHistoryEntryComponent', () => {
       component.entry = entry;
       expect(component.scriptureRange).toEqual('');
       expect(component.buildRequestedByUserName).toBeUndefined();
-      expect(component.buildRequestedByDate).toBe('');
+      expect(component.buildRequestedAtDate).toBe('');
       expect(component.canDownloadBuild).toBe(false);
       expect(component.hasDetails).toBe(true);
       expect(component.entry).toBe(entry);
