@@ -116,6 +116,23 @@ export class DraftHistoryEntryComponent {
       }
     });
 
+    // Get the translation scripture range and project (usually one, but in the future will be multiple)
+    const translationScriptureRanges = this._entry?.additionalInfo?.translationScriptureRanges ?? [];
+    this._scriptureRange = this.i18n.formatAndLocalizeScriptureRange(
+      translationScriptureRanges.map(item => item.scriptureRange).join(';')
+    );
+    this._translationSources = [];
+    Promise.all(
+      translationScriptureRanges.map(async r => {
+        const source =
+          r.projectId === '' || r.projectId === value?.engine?.id
+            ? undefined
+            : await this.projectService.getProfile(r.projectId);
+        const sourceShortName = source?.data?.shortName;
+        if (sourceShortName != null) this._translationSources.push(sourceShortName);
+      })
+    );
+
     // Populate the exception details, if possible
     if (this._entry?.state === BuildStates.Faulted && this._entry.message != null) {
       this._buildFaulted = true;
@@ -213,6 +230,17 @@ export class DraftHistoryEntryComponent {
     return this._canDownloadBuild ?? false;
   }
 
+  private _scriptureRange?: string = undefined;
+  get scriptureRange(): string {
+    return this._scriptureRange ?? '';
+  }
+
+  private _translationSources: string[] = [];
+  get translationSource(): string {
+    if (this._translationSources.length === 0) return '';
+    return this.i18n.enumerateList(this._translationSources) + ' \u2022'; // &bull; •
+  }
+
   @Input() isLatestBuild = false;
 
   trainingConfigurationOpen = false;
@@ -225,13 +253,6 @@ export class DraftHistoryEntryComponent {
     private readonly userService: UserService,
     readonly featureFlags: FeatureFlagService
   ) {}
-
-  get scriptureRange(): string {
-    if (this.entry?.additionalInfo?.translationScriptureRanges == null) return '';
-    return this.i18n.formatAndLocalizeScriptureRange(
-      this.entry.additionalInfo.translationScriptureRanges.map(item => item.scriptureRange).join(';')
-    );
-  }
 
   formatDate(date?: string): string {
     const formattedDate = date == null ? '' : this.i18n.formatDate(new Date(date));
