@@ -294,7 +294,7 @@
     "draft_canceled": "The draft was canceled",
     "draft_completed": "The draft is ready",
     "draft_faulted": "The draft failed",
-    "older_drafts_not_available": "Older drafts generated before {{ date }} are not available.",
+    "older_drafts_not_available": "Older drafts requested before {{ date }} are not available.",
     "previously_generated_drafts": "Previously generated drafts"
   },
   "draft_preview_books": {

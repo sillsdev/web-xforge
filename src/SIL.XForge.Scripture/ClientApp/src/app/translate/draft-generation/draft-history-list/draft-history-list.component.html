@@ -14,9 +14,9 @@
       <app-draft-history-entry [entry]="entry" />
     }
   }
-  @if (nonActiveBuilds.length > 0) {
+  @if (showOlderDraftsNotSupportedWarning && nonActiveBuilds.length > 0) {
     <app-notice [icon]="'summarize'" class="older-drafts">{{
-      t("older_drafts_not_available", { date: draftHistoryCutoffDate })
+      t("older_drafts_not_available", { date: draftHistoryCutOffDateFormatted })
     }}</app-notice>
   }
 </ng-container>

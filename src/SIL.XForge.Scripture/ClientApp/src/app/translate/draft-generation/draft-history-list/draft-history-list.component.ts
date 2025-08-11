@@ -1,14 +1,15 @@
 import { Component, DestroyRef } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
+import ObjectID from 'bson-objectid';
 import { take } from 'rxjs';
-import { NoticeComponent } from 'src/app/shared/notice/notice.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { I18nService } from '../../../../xforge-common/i18n.service';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
+import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { activeBuildStates } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-entry.component';
@@ -21,8 +22,11 @@ import { DraftHistoryEntryComponent } from './draft-history-entry/draft-history-
   styleUrl: './draft-history-list.component.scss'
 })
 export class DraftHistoryListComponent {
+  showOlderDraftsNotSupportedWarning: boolean = false;
   history: BuildDto[] = [];
-  readonly draftHistoryCutoffDate: string = this.i18n.formatDate(new Date('2024-12-03T12:00:00.000Z'));
+  // This is just after SFv5.33.0 was released
+  readonly draftHistoryCutOffDate: Date = new Date('2025-06-03T21:00:00Z');
+  readonly draftHistoryCutOffDateFormatted: string = this.i18n.formatDate(this.draftHistoryCutOffDate);
 
   constructor(
     activatedProject: ActivatedProjectService,
@@ -35,6 +39,9 @@ export class DraftHistoryListComponent {
     activatedProject.projectId$
       .pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1))
       .subscribe(async projectId => {
+        // Determine whether to show or hide the older drafts warning
+        this.showOlderDraftsNotSupportedWarning =
+          ObjectID.isValid(projectId) && new ObjectID(projectId).getTimestamp() < this.draftHistoryCutOffDate;
         // Initially load the history
         this.loadHistory(projectId);
         // Start the connection to SignalR
@@ -84,9 +91,11 @@ export class DraftHistoryListComponent {
   }
 
   get savedHistoricalBuilds(): BuildDto[] {
-    // The date generated is available if the draft has been stored in the realtime database.
+    // The requested date, if not set for the build in MongoDB, will be set based on the build id in the Machine API
     return this.historicalBuilds.filter(
-      entry => entry.state !== BuildStates.Completed || entry.additionalInfo?.dateGenerated != null
+      entry =>
+        entry.additionalInfo?.dateRequested != null &&
+        new Date(entry.additionalInfo.dateRequested) > this.draftHistoryCutOffDate
     );
   }
 
