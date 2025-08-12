@@ -506,7 +506,8 @@ describe('DraftGenerationStepsComponent', () => {
         ],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
     }));
@@ -548,7 +549,8 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source2', scriptureRange: 'EXO;JOS' }],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'JDG' }],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
     });
@@ -649,7 +651,8 @@ describe('DraftGenerationStepsComponent', () => {
           translateConfig: {
             draftConfig: {
               fastTraining: true,
-              useEcho: true
+              useEcho: true,
+              sendEmailOnBuildFinished: true
             }
           }
         })
@@ -667,9 +670,10 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
     }));
 
-    it('should set fast training and echo engine correctly', fakeAsync(() => {
+    it('should set fast training, echo engine and email me correctly', fakeAsync(() => {
       expect(component.fastTraining).toBe(true);
       expect(component.useEcho).toBe(true);
+      expect(component.sendEmailOnBuildFinished).toBe(true);
     }));
 
     it('should emit the fast training value if checked', async () => {
@@ -692,6 +696,9 @@ describe('DraftGenerationStepsComponent', () => {
       const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
       await echoHarness.uncheck();
 
+      const sendEmailOnBuildFinished = await loader.getHarness(MatCheckboxHarness.with({ selector: '.email-me' }));
+      await sendEmailOnBuildFinished.uncheck();
+
       // Click next on the final step to generate the draft
       fixture.detectChanges();
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
@@ -704,7 +711,8 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: true,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
     });
@@ -729,6 +737,9 @@ describe('DraftGenerationStepsComponent', () => {
       const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
       await echoHarness.check();
 
+      const sendEmailOnBuildFinished = await loader.getHarness(MatCheckboxHarness.with({ selector: '.email-me' }));
+      await sendEmailOnBuildFinished.uncheck();
+
       // Click next on the final step to generate the draft
       fixture.detectChanges();
       const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
@@ -741,7 +752,49 @@ describe('DraftGenerationStepsComponent', () => {
         trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
         fastTraining: false,
-        useEcho: true
+        useEcho: true,
+        sendEmailOnBuildFinished: false
+      } as DraftGenerationStepsResult);
+      expect(generateDraftButton['disabled']).toBe(true);
+    });
+
+    it('should emit the email me value if checked', async () => {
+      component.onTranslateBookSelect([2], config.draftingSources[0]);
+      component.onTranslatedBookSelect([3, 9, 10]);
+      component.onSourceTrainingBookSelect([3, 9, 10], config.trainingSources[0]);
+
+      spyOn(component.done, 'emit');
+
+      fixture.detectChanges();
+      const step = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      step[3].nativeElement.click(); //click the next step
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+
+      // Tick the echo checkbox
+      const fastTrainingHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.fast-training' }));
+      await fastTrainingHarness.uncheck();
+
+      const echoHarness = await loader.getHarness(MatCheckboxHarness.with({ selector: '.use-echo' }));
+      await echoHarness.uncheck();
+
+      const sendEmailOnBuildFinished = await loader.getHarness(MatCheckboxHarness.with({ selector: '.email-me' }));
+      await sendEmailOnBuildFinished.check();
+
+      // Click next on the final step to generate the draft
+      fixture.detectChanges();
+      const generateDraftButton: HTMLElement = fixture.nativeElement.querySelector('.advance-button');
+      expect(generateDraftButton['disabled']).toBe(false);
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+
+      expect(component.done.emit).toHaveBeenCalledWith({
+        trainingDataFiles: [],
+        trainingScriptureRanges: [{ projectId: 'source1', scriptureRange: 'LEV;1SA;2SA' }],
+        translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'EXO' }],
+        fastTraining: false,
+        useEcho: false,
+        sendEmailOnBuildFinished: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
     });
@@ -913,7 +966,8 @@ describe('DraftGenerationStepsComponent', () => {
         translationScriptureRanges: [{ projectId: 'draftingSource', scriptureRange: 'LEV' }],
         trainingDataFiles: ['file1'],
         fastTraining: false,
-        useEcho: false
+        useEcho: false,
+        sendEmailOnBuildFinished: false
       });
     });
   });
