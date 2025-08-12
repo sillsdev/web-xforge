@@ -736,6 +736,7 @@
     "phase_7": "Finalizing send/receive with Paratext",
     "phase_7_percent": "Updating biblical terms from Paratext {{progressPercent}}%",
     "phase_8": "Finalizing project sync...",
+    "phase_8_percent": "Finalizing project sync {{progressPercent}}%",
     "something_went_wrong_synchronizing_this_project": "Something went wrong while synchronizing {{ projectName }} with Paratext. Please try again.",
     "successfully_synchronized_with_paratext": "Successfully synchronized {{ projectName }} with Paratext.",
     "synchronize": "Sync with Paratext",
