@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 
 @Component({
@@ -12,9 +12,9 @@ export class TextAndAudioComponent implements AfterViewInit, OnInit, OnDestroy {
   @Input() textLabel: string = '';
 
   suppressErrors: boolean = true;
-  form = new UntypedFormGroup({
-    text: new UntypedFormControl(''),
-    audio: new UntypedFormControl({})
+  form = new FormGroup({
+    text: new FormControl('', { nonNullable: true }),
+    audio: new FormControl({}, { nonNullable: true })
   });
 
   private _audioAttachment?: AudioAttachment;

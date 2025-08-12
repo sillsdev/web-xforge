@@ -14,7 +14,7 @@ import {
   ViewChild,
   ViewChildren
 } from '@angular/core';
-import { UntypedFormControl, Validators } from '@angular/forms';
+import { FormControl, Validators } from '@angular/forms';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -215,7 +215,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   chapters: number[] = [];
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
-  mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
+  mobileNoteControl: FormControl<string> = new FormControl('', { nonNullable: true });
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
   draftTimestamp?: Date;

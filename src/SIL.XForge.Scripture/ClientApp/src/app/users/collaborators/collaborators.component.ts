@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -45,10 +45,10 @@ export interface InviteeStatus {
   styleUrls: ['./collaborators.component.scss']
 })
 export class CollaboratorsComponent extends DataLoadingComponent implements OnInit, AfterViewInit {
-  userInviteForm = new UntypedFormGroup({
-    email: new UntypedFormControl('', [XFValidators.email])
+  userInviteForm = new FormGroup({
+    email: new FormControl('', { nonNullable: true, validators: [XFValidators.email] })
   });
-  filterForm: UntypedFormGroup = new UntypedFormGroup({ filter: new UntypedFormControl('') });
+  filterForm: FormGroup = new FormGroup({ filter: new FormControl('', { nonNullable: true }) });
   isAppOnline = true;
   currentTabIndex: number = 0;
 

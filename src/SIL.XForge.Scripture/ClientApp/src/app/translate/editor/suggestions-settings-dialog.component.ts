@@ -1,5 +1,5 @@
 import { Component, DestroyRef, Inject } from '@angular/core';
-import { UntypedFormControl } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
@@ -19,7 +19,10 @@ export interface SuggestionsSettingsDialogData {
   styleUrls: ['./suggestions-settings-dialog.component.scss']
 })
 export class SuggestionsSettingsDialogComponent {
-  suggestionsEnabledSwitch = new UntypedFormControl({ disabled: !this.onlineStatusService.isOnline });
+  suggestionsEnabledSwitch = new FormControl(
+    { value: false, disabled: !this.onlineStatusService.isOnline },
+    { nonNullable: true }
+  );
 
   private readonly projectDoc: SFProjectProfileDoc;
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;

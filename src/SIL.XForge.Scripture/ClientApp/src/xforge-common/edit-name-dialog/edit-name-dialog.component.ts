@@ -1,5 +1,5 @@
 import { Component, DestroyRef, Inject } from '@angular/core';
-import { UntypedFormControl, Validators } from '@angular/forms';
+import { FormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -17,7 +17,7 @@ export interface EditNameDialogResult {
 export class EditNameDialogComponent {
   static defaultMatDialogConfig: MatDialogConfig = { autoFocus: true };
 
-  name: UntypedFormControl = new UntypedFormControl('');
+  name: FormControl<string> = new FormControl('', { nonNullable: true });
   isOnline: boolean = true;
 
   constructor(

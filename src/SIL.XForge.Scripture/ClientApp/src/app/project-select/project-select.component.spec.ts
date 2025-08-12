@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -204,8 +204,8 @@ describe('ProjectSelectComponent', () => {
   </form>`
 })
 class HostComponent {
-  readonly sourceParatextId = new UntypedFormControl(undefined);
-  readonly connectProjectForm = new UntypedFormGroup({ sourceParatextId: this.sourceParatextId });
+  readonly sourceParatextId = new FormControl<string | undefined>(undefined);
+  readonly connectProjectForm = new FormGroup({ sourceParatextId: this.sourceParatextId });
 
   @ViewChild(ProjectSelectComponent) projectSelect!: ProjectSelectComponent;
   isDisabled: boolean = false;

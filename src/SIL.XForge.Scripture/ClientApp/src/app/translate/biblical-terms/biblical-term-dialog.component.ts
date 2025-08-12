@@ -22,8 +22,8 @@ export interface BiblicalTermDialogData {
 export class BiblicalTermDialogComponent {
   definition: string = '';
 
-  renderings = new FormControl('', [SFValidators.balancedParentheses]);
-  description = new FormControl();
+  renderings = new FormControl('', { nonNullable: true, validators: [SFValidators.balancedParentheses] });
+  description = new FormControl('', { nonNullable: true });
   form = new FormGroup({
     renderings: this.renderings,
     description: this.description
@@ -43,7 +43,7 @@ export class BiblicalTermDialogComponent {
     this.projectUserConfigDoc = data.projectUserConfigDoc;
     this.definition = this.getTermDefinition();
     this.renderings.setValue(this.biblicalTermDoc.data?.renderings.join('\n') ?? '');
-    this.description.setValue(this.biblicalTermDoc.data?.description);
+    this.description.setValue(this.biblicalTermDoc.data?.description ?? '');
   }
 
   canEdit(): boolean {

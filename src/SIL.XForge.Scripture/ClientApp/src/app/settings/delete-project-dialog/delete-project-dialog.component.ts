@@ -1,5 +1,5 @@
 import { Component, Inject } from '@angular/core';
-import { UntypedFormControl } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogConfig } from '@angular/material/dialog';
 import { I18nService } from 'xforge-common/i18n.service';
 
@@ -10,7 +10,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 export class DeleteProjectDialogComponent {
   static defaultMatDialogConfig: MatDialogConfig = { autoFocus: true };
 
-  projectNameEntry = new UntypedFormControl('');
+  projectNameEntry = new FormControl('', { nonNullable: true });
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { name: string },
