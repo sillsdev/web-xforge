@@ -263,6 +263,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private presenceActiveEditor$: Subject<boolean> = new Subject<boolean>();
   private onPresenceDocReceive = (_presenceId: string, _range: Range | null): void => {};
   private onPresenceChannelReceive = (_presenceId: string, _presenceData: PresenceData | null): void => {};
+  private isShiftDown = false;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -524,6 +525,24 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updateLocalCursor();
+      });
+
+    fromEvent<KeyboardEvent>(document, 'keydown')
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(event => {
+        this.isShiftDown = event.shiftKey;
+      });
+
+    fromEvent<KeyboardEvent>(document, 'keyup')
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(event => {
+        // Call 'update()' when shift key is released, as update is disabled while shift is down
+        // to prevent incorrect cursor position updates while selecting text.
+        if (this.isShiftDown && !event.shiftKey) {
+          this.update();
+        }
+
+        this.isShiftDown = event.shiftKey;
       });
   }
 
@@ -827,7 +846,13 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   }
 
   async onSelectionChanged(range: Range | null): Promise<void> {
-    this.update();
+    // During selection expansion (keyboard or mouse), avoid calling update()
+    // which can cause incorrect cursor position updates.
+    // Update will be called once the shift key is released.
+    if (!this.isShiftDown) {
+      this.update();
+    }
+
     this.submitLocalPresenceDoc(range);
   }
 
