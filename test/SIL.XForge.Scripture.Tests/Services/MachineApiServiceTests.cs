@@ -8,7 +8,9 @@ using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using Newtonsoft.Json;
@@ -21,6 +23,7 @@ using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.Scripture;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
@@ -30,6 +33,7 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using Options = Microsoft.Extensions.Options.Options;
 using ServalOptions = SIL.XForge.Configuration.ServalOptions;
 
 namespace SIL.XForge.Scripture.Services;
@@ -104,6 +108,175 @@ public class MachineApiServiceTests
         State = JobState.Completed,
         DateFinished = DateTimeOffset.UtcNow,
     };
+
+    [Test]
+    public async Task BuildCompletedAsync_EventMetricInvalid()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(
+                Task.FromResult(
+                    new QueryResults<EventMetric>
+                    {
+                        Results =
+                        [
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineProjectService.BuildProjectAsync),
+                                ProjectId = Project01,
+                                Result = new BsonString(Build01),
+                                Scope = EventScope.Drafting,
+                                UserId = null,
+                            },
+                        ],
+                        UnpagedCount = 1,
+                    }
+                )
+            );
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_EventMetricMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_Exception()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        ServalApiException ex = ServalApiExceptions.Forbidden;
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .ThrowsAsync(ex);
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
+        env.ExceptionHandler.Received().ReportException(ex);
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_InvalidEmail()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
+        env.EmailService.ValidateEmail(Arg.Any<string>()).Returns(false);
+        env.Users.Add(
+            new User
+            {
+                Id = User01,
+                Email = "test@example.com",
+                InterfaceLanguage = "en",
+            }
+        );
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        await env.EmailService.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Error);
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_OtherLanguage()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
+        env.Users.Add(
+            new User
+            {
+                Id = User01,
+                Email = "test@example.com",
+                InterfaceLanguage = "ar",
+            }
+        );
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [TestCase(nameof(JobState.Canceled))]
+    [TestCase(nameof(JobState.Completed))]
+    [TestCase(nameof(JobState.Faulted))]
+    public async Task BuildCompletedAsync_Success(string buildState)
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
+        env.Users.Add(
+            new User
+            {
+                Id = User01,
+                Email = "test@example.com",
+                InterfaceLanguage = "en",
+            }
+        );
+
+        // SUT
+        await env.Service.BuildCompletedAsync(Project01, Build01, buildState, env.HttpRequestAccessor.SiteRoot);
+        await env.EmailService.Received().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_UserDidNotRequestEmail()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(false)));
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            Build01,
+            nameof(JobState.Completed),
+            env.HttpRequestAccessor.SiteRoot
+        );
+        await env.EmailService.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
 
     [Test]
     public void CancelPreTranslationBuildAsync_NoPermission()
@@ -192,11 +365,23 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void CalculateSignature_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string expected = "sha256=8C8E8C11165F748AFC6621F1DB213F79CE52759757D9BD6382C94E92C5B31063";
+
+        // SUT
+        string actual = env.Service.CalculateSignature(JsonPayload);
+        Assert.AreEqual(expected, actual);
+    }
+
+    [Test]
     public void ExecuteWebhook_InvalidSignature()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string signature = "sha256=A7B193B79CE717541B3EF2A306FDD441F2CE0DEAA674404F212E35AECC4F3EA3";
+        string signature = env.Service.CalculateSignature("{}");
 
         // SUT
         Assert.ThrowsAsync<ArgumentException>(() => env.Service.ExecuteWebhookAsync(JsonPayload, signature));
@@ -207,9 +392,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string json =
-            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/65e66c70682bb17bc405e9ce/builds/65f0c455682bb17bc4066917"},"engine":{"id":"65e66c70682bb17bc405e9ce","url":"/api/v1/translation/engines/65e66c70682bb17bc405e9ce"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
-        const string signature = "sha256=24BBC1C61AEE03CEC0A100478A38FB16AAD7CCFDAC1D9B6170CB6AA2EFF82F81";
+
+        // Change payload.engine.id to "invalid_translation_id"
+        JObject payload = JObject.Parse(JsonPayload);
+        payload["payload"]!["engine"]!["id"] = "invalid_translation_id";
+        string json = payload.ToString();
+        string signature = env.Service.CalculateSignature(json);
 
         // SUT
         await env.Service.ExecuteWebhookAsync(json, signature);
@@ -221,9 +409,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string json =
-            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/65e66c70682bb17bc405e9ce/builds/65f0c455682bb17bc4066917"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
-        const string signature = "sha256=A45F54207BF128799A7EE803B3822A9956A24B41E5134A0E9663E64D3FC9D9A3";
+
+        // Remove payload.engine
+        JObject payload = JObject.Parse(JsonPayload);
+        ((JObject)payload["payload"])!.Remove("engine");
+        string json = payload.ToString();
+        string signature = env.Service.CalculateSignature(json);
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.ExecuteWebhookAsync(json, signature));
@@ -234,13 +425,17 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string json =
-            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"6668b63edb2383657780f934","url":"/api/v1/translation/engines/6657d17c593d597a09de8503/builds/6668b63edb2383657780f934"},"engine":{"id":"6657d17c593d597a09de8503","url":"/api/v1/translation/engines/6657d17c593d597a09de8503"},"buildState":"Faulted","dateFinished":"2024-06-11T21:47:05.295Z"}}""";
-        const string signature = "sha256=6B6D3E071C019D8012677EA9F5F9DA8E3DF9E870BFAFC3F8D2B8CA1B6CF517D7";
+
+        // Change payload.buildState to "Faulted"
+        JObject payload = JObject.Parse(JsonPayload);
+        payload["payload"]!["buildState"] = "Faulted";
+        string json = payload.ToString();
+        string signature = env.Service.CalculateSignature(json);
 
         // SUT
         await env.Service.ExecuteWebhookAsync(json, signature);
-        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+        // One job: BuildCompletedAsync
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -248,9 +443,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string json =
-            """{"event":"TranslationBuildStarted","payload":{"build":{"id":"65d65811352b5d93e8a2c02d","url":"/api/v1/translation/engines/65c94648352b5d93e8a24538/builds/65d65811352b5d93e8a2c02d"},"engine":{"id":"65c94648352b5d93e8a24538","url":"/api/v1/translation/engines/65c94648352b5d93e8a24538"}}}""";
-        const string signature = "sha256=27F96A1483806939905686D944B9753AB4C023F6EFB07A9F91E3E1A208DADF32";
+        JObject payload = JObject.Parse(JsonPayload);
+
+        // Change event to "TranslationBuildStarted"
+        payload["event"] = "TranslationBuildStarted";
+        string json = payload.ToString();
+        string signature = env.Service.CalculateSignature(json);
 
         // SUT
         await env.Service.ExecuteWebhookAsync(json, signature);
@@ -262,11 +460,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string signature = "sha256=8C8E8C11165F748AFC6621F1DB213F79CE52759757D9BD6382C94E92C5B31063";
+        string signature = env.Service.CalculateSignature(JsonPayload);
 
         // SUT
         await env.Service.ExecuteWebhookAsync(JsonPayload, signature);
-        env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
+        // Two jobs: BuildCompletedAsync & RetrievePreTranslationStatusAsync
+        env.BackgroundJobClient.Received(2).Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -3488,6 +3687,30 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_SavesSendEmailOnBuildFinished()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        SFProject project = env.Projects.Get(Project02);
+        Assert.IsNull(project.TranslateConfig.DraftConfig.SendEmailOnBuildFinished);
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02, SendEmailOnBuildFinished = true },
+            CancellationToken.None
+        );
+
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+
+        project = env.Projects.Get(Project02);
+        Assert.IsTrue(project.TranslateConfig.DraftConfig.SendEmailOnBuildFinished);
+    }
+
+    [Test]
     public async Task StartPreTranslationBuildAsync_OnlySyncsEachProjectOnce()
     {
         // Set up test environment
@@ -3950,9 +4173,16 @@ public class MachineApiServiceTests
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
+            EmailService = Substitute.For<IEmailService>();
+            EmailService.ValidateEmail(Arg.Any<string>()).Returns(true);
             EventMetricService = Substitute.For<IEventMetricService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
+            HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
+            HttpRequestAccessor.SiteRoot.Returns(new Uri("https://scriptureforge.org", UriKind.Absolute));
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
+            var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
+            var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
+            Localizer = new StringLocalizer<SharedResource>(factory);
             MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
@@ -3981,6 +4211,7 @@ public class MachineApiServiceTests
                     new SFProject
                     {
                         Id = Project01,
+                        ShortName = "PR1",
                         TranslateConfig = new TranslateConfig
                         {
                             DraftConfig = new DraftConfig
@@ -4034,6 +4265,7 @@ public class MachineApiServiceTests
                 ]
             );
             TextDocuments = new MemoryRepository<TextDocument>();
+            Users = new MemoryRepository<User>();
             ProjectRights = Substitute.For<ISFProjectRights>();
             ProjectRights
                 .HasRight(Arg.Any<SFProject>(), User01, SFProjectDomain.Drafts, Operation.Create)
@@ -4043,8 +4275,9 @@ public class MachineApiServiceTests
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
-
-            var servalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
+            RealtimeService.AddRepository("users", OTType.Json0, Users);
+            SiteOptions = Options.Create(new SiteOptions { Name = "Scripture Forge" });
+            ServalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(JobId));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
@@ -4073,9 +4306,12 @@ public class MachineApiServiceTests
             Service = Substitute.ForPartsOf<MachineApiService>(
                 BackgroundJobClient,
                 DeltaUsxMapper,
+                EmailService,
                 EventMetricService,
                 ExceptionHandler,
+                HttpRequestAccessor,
                 hubContext,
+                Localizer,
                 MockLogger,
                 ParatextService,
                 PreTranslationService,
@@ -4083,7 +4319,8 @@ public class MachineApiServiceTests
                 ProjectRights,
                 ProjectService,
                 RealtimeService,
-                servalOptions,
+                ServalOptions,
+                SiteOptions,
                 SyncService,
                 TranslationEnginesClient,
                 TranslationEngineTypesClient,
@@ -4093,8 +4330,11 @@ public class MachineApiServiceTests
 
         public IBackgroundJobClient BackgroundJobClient { get; }
         public IDeltaUsxMapper DeltaUsxMapper { get; }
+        public IEmailService EmailService { get; }
         public IEventMetricService EventMetricService { get; }
         public IExceptionHandler ExceptionHandler { get; }
+        public IHttpRequestAccessor HttpRequestAccessor { get; }
+        public IStringLocalizer<SharedResource> Localizer { get; }
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
         public IPreTranslationService PreTranslationService { get; }
@@ -4105,9 +4345,12 @@ public class MachineApiServiceTests
         public ISFProjectService ProjectService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
         public MachineApiService Service { get; }
+        public IOptions<ServalOptions> ServalOptions { get; }
+        public IOptions<SiteOptions> SiteOptions { get; }
         public ISyncService SyncService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public ITranslationEngineTypesClient TranslationEngineTypesClient { get; }
+        public MemoryRepository<User> Users { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
 
         public TranslationBuild ConfigureTranslationBuild(TranslationBuild? translationBuild = null)
@@ -4140,6 +4383,38 @@ public class MachineApiServiceTests
                 .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
             return translationBuild;
         }
+
+        public QueryResults<EventMetric> GetEventMetricsForBuildCompleted(bool sendEmailOnBuildFinished) =>
+            new QueryResults<EventMetric>
+            {
+                Results =
+                [
+                    new EventMetric
+                    {
+                        EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
+                        Payload =
+                        {
+                            {
+                                "buildConfig",
+                                BsonDocument.Parse(
+                                    JsonConvert.SerializeObject(
+                                        new BuildConfig
+                                        {
+                                            ProjectId = Project01,
+                                            SendEmailOnBuildFinished = sendEmailOnBuildFinished,
+                                        }
+                                    )
+                                )
+                            },
+                        },
+                        ProjectId = Project01,
+                        Result = new BsonString(Build01),
+                        Scope = EventScope.Drafting,
+                        UserId = User01,
+                    },
+                ],
+                UnpagedCount = 1,
+            };
 
         public async Task QueueBuildAsync(
             string sfProjectId,
