@@ -24,12 +24,14 @@ import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
+
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
   trainingScriptureRanges: ProjectScriptureRange[];
   translationScriptureRanges?: ProjectScriptureRange[];
   fastTraining: boolean;
   useEcho: boolean;
+  sendEmailOnBuildFinished: boolean;
 }
 
 export interface Book {
@@ -84,6 +86,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   fastTraining: boolean = false;
   useEcho: boolean = false;
+  sendEmailOnBuildFinished: boolean = false;
 
   expandUnusableTranslateBooks = false;
   expandUnusableTrainingBooks = false;
@@ -239,6 +242,8 @@ export class DraftGenerationStepsComponent implements OnInit {
             this.useEcho = this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.useEcho ?? false;
           }
 
+          this.sendEmailOnBuildFinished =
+            this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.sendEmailOnBuildFinished ?? false;
           this.hasLoaded = true;
         }
       );
@@ -483,7 +488,8 @@ export class DraftGenerationStepsComponent implements OnInit {
         trainingDataFiles: trainingFiles,
         translationScriptureRanges: translationData,
         fastTraining: this.fastTraining,
-        useEcho: this.useEcho
+        useEcho: this.useEcho,
+        sendEmailOnBuildFinished: this.sendEmailOnBuildFinished
       });
     }
   }
