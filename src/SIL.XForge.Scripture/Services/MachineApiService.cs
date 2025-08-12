@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,6 +10,7 @@ using System.Xml.Linq;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -26,6 +28,7 @@ using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using TextInfo = SIL.XForge.Scripture.Models.TextInfo;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -35,9 +38,12 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
     IDeltaUsxMapper deltaUsxMapper,
+    IEmailService emailService,
     IEventMetricService eventMetricService,
     IExceptionHandler exceptionHandler,
+    IHttpRequestAccessor httpRequestAccessor,
     IHubContext<NotificationHub, INotifier> hubContext,
+    IStringLocalizer<SharedResource> localizer,
     ILogger<MachineApiService> logger,
     IParatextService paratextService,
     IPreTranslationService preTranslationService,
@@ -46,6 +52,7 @@ public class MachineApiService(
     ISFProjectService projectService,
     IRealtimeService realtimeService,
     IOptions<ServalOptions> servalOptions,
+    IOptions<SiteOptions> siteOptions,
     ISyncService syncService,
     ITranslationEnginesClient translationEnginesClient,
     ITranslationEngineTypesClient translationEngineTypesClient,
@@ -84,6 +91,87 @@ public class MachineApiService(
     );
     private static readonly IEqualityComparer<IList<ProjectScriptureRange>> _listProjectScriptureRangeComparer =
         SequenceEqualityComparer.Create(EqualityComparer<ProjectScriptureRange>.Default);
+
+    public async Task BuildCompletedAsync(string sfProjectId, string buildId, string buildState, Uri websiteUrl)
+    {
+        try
+        {
+            // Retrieve the build started from the event metric. We do this as there may be multiple builds started,
+            // and this ensures that only builds that want to send an email will have one sent.
+            var eventMetrics = await eventMetricService.GetEventMetricsAsync(
+                sfProjectId,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync)]
+            );
+            EventMetric eventMetric = eventMetrics.Results.LastOrDefault(e => e.Result == buildId);
+            if (eventMetric is not null && !string.IsNullOrWhiteSpace(eventMetric.UserId))
+            {
+                // Get the build config from the event metric, by converting BSON to JSON, and then to the object type
+                BuildConfig buildConfig = JsonConvert.DeserializeObject<BuildConfig>(
+                    eventMetric.Payload["buildConfig"].ToJson()
+                );
+
+                // Send the email if requested
+                if (buildConfig.SendEmailOnBuildFinished)
+                {
+                    // Get the user when requested the build
+                    await using IConnection conn = await realtimeService.ConnectAsync(eventMetric.UserId);
+                    IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+                    IDocument<User> userDoc = await conn.FetchAsync<User>(eventMetric.UserId);
+                    if (projectDoc.IsLoaded && userDoc.IsLoaded && emailService.ValidateEmail(userDoc.Data.Email))
+                    {
+                        // Set the locale for the email
+                        CultureInfo.CurrentUICulture = new CultureInfo(userDoc.Data.InterfaceLanguage);
+
+                        // Build the email
+                        string resourceKeySubject =
+                            buildState == nameof(JobState.Completed)
+                                ? SharedResource.Keys.DraftGeneratedEmailSubject
+                                : SharedResource.Keys.DraftNotGeneratedEmailSubject;
+                        string subject = localizer[resourceKeySubject, siteOptions.Value.Name];
+                        string resourceKeyBody = buildState switch
+                        {
+                            nameof(JobState.Completed) => SharedResource.Keys.DraftGeneratedEmailBody,
+                            nameof(JobState.Canceled) => SharedResource.Keys.DraftCanceledEmailBody,
+                            _ => SharedResource.Keys.DraftFailedEmailBody,
+                        };
+                        string url = $"{websiteUrl.ToString().TrimEnd('/')}/{buildId}/draft-generation";
+                        string body =
+                            $"<p>{localizer[resourceKeyBody, projectDoc.Data.ShortName]}</p>"
+                            + $"<p>{localizer[SharedResource.Keys.DraftEmailMoreInformation, url]}</p>";
+                        await emailService.SendEmailAsync(userDoc.Data.Email, subject, body);
+                    }
+                    else
+                    {
+                        logger.LogError(
+                            "An email was requested for build {buildId} on project {projectId},"
+                                + " but the user {userId} was not found",
+                            buildId.Sanitize(),
+                            sfProjectId.Sanitize(),
+                            eventMetric.UserId.Sanitize()
+                        );
+                    }
+                }
+            }
+            else
+            {
+                logger.LogInformation(
+                    "The build event metric could not be retrieve for project {projectId} running in background job.",
+                    sfProjectId.Sanitize()
+                );
+            }
+        }
+        catch (Exception e)
+        {
+            // Log the error and report to bugsnag
+            logger.LogError(
+                e,
+                "Build exception occurred for project {projectId} running in background job.",
+                sfProjectId.Sanitize()
+            );
+            exceptionHandler.ReportException(e);
+        }
+    }
 
     public async Task<string?> CancelPreTranslationBuildAsync(
         string curUserId,
@@ -150,9 +238,7 @@ public class MachineApiService(
     public async Task ExecuteWebhookAsync(string json, string signature)
     {
         // Generate a signature for the JSON
-        using HMACSHA256 hmacHasher = new HMACSHA256(Encoding.UTF8.GetBytes(servalOptions.Value.WebhookSecret));
-        byte[] hash = hmacHasher.ComputeHash(Encoding.UTF8.GetBytes(json));
-        string calculatedSignature = $"sha256={Convert.ToHexString(hash)}";
+        string calculatedSignature = CalculateSignature(json);
 
         // Ensure that the signatures match
         if (signature != calculatedSignature)
@@ -204,8 +290,17 @@ public class MachineApiService(
         await hubContext.NotifyBuildProgress(projectId, new ServalBuildState { BuildId = buildId, State = buildState });
 
         // We only support translation build finished events for completed builds
-        if (delivery.Event != nameof(WebhookEvent.TranslationBuildFinished) || buildState != nameof(JobState.Completed))
+        if (delivery.Event != nameof(WebhookEvent.TranslationBuildFinished))
         {
+            return;
+        }
+
+        // Job was canceled or faulted
+        if (buildState != nameof(JobState.Completed))
+        {
+            backgroundJobClient.Enqueue<IMachineApiService>(r =>
+                r.BuildCompletedAsync(projectId, buildId, buildState, httpRequestAccessor.SiteRoot)
+            );
             return;
         }
 
@@ -228,8 +323,15 @@ public class MachineApiService(
         );
 
         // Run the background job
-        backgroundJobClient.Enqueue<IMachineApiService>(r =>
+        string jobId = backgroundJobClient.Enqueue<IMachineApiService>(r =>
             r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
+        );
+
+        // Run the build completed job afterward, which will notify the user if needed
+        backgroundJobClient.ContinueJobWith<IMachineApiService>(
+            jobId,
+            r => r.BuildCompletedAsync(projectId, buildId, buildState, httpRequestAccessor.SiteRoot),
+            JobContinuationOptions.OnAnyFinishedState
         );
     }
 
@@ -1330,6 +1432,7 @@ public class MachineApiService(
                 _listProjectScriptureRangeComparer
             );
             op.Set(p => p.TranslateConfig.DraftConfig.FastTraining, buildConfig.FastTraining);
+            op.Set(p => p.TranslateConfig.DraftConfig.SendEmailOnBuildFinished, buildConfig.SendEmailOnBuildFinished);
             op.Set(p => p.TranslateConfig.DraftConfig.UseEcho, buildConfig.UseEcho);
             if (!projectDoc.Data.TranslateConfig.PreTranslate)
             {
@@ -1500,6 +1603,19 @@ public class MachineApiService(
         }
 
         return [.. translationResults];
+    }
+
+    /// <summary>
+    /// Calculate the SHA256 HMAC signature for the given JSON payload using the webhook secret.
+    /// </summary>
+    /// <param name="json">The JSON payload.</param>
+    /// <returns>The SHA256 HMAC signature.</returns>
+    /// <remarks>This method is internal so unit tests can use it.</remarks>
+    internal string CalculateSignature(string json)
+    {
+        using HMACSHA256 hmacHasher = new HMACSHA256(Encoding.UTF8.GetBytes(servalOptions.Value.WebhookSecret));
+        byte[] hash = hmacHasher.ComputeHash(Encoding.UTF8.GetBytes(json));
+        return $"sha256={Convert.ToHexString(hash)}";
     }
 
     /// <summary>
