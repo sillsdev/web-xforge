@@ -21,6 +21,12 @@ public class SharedResource
         public const string AudioOnlyQuestion = "AudioOnlyQuestion";
         public const string AudioOnlyResponse = "AudioOnlyResponse";
         public const string CommunitySupport = "CommunitySupport";
+        public const string DraftCanceledEmailBody = "DraftCanceledEmailBody";
+        public const string DraftEmailMoreInformation = "DraftEmailMoreInformation";
+        public const string DraftFailedEmailBody = "DraftFailedEmailBody";
+        public const string DraftGeneratedEmailBody = "DraftGeneratedEmailBody";
+        public const string DraftGeneratedEmailSubject = "DraftGeneratedEmailSubject";
+        public const string DraftNotGeneratedEmailSubject = "DraftNotGeneratedEmailSubject";
         public const string EmailBad = "EmailBad";
         public const string EmailMissing = "EmailMissing";
         public const string Help = "Help";
