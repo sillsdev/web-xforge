@@ -14,6 +14,9 @@ namespace SIL.XForge.Scripture.Services;
 [Intercept(typeof(EventMetricLogger))]
 public interface IMachineApiService
 {
+    [LogEventMetric(EventScope.Drafting, nameof(sfProjectId))]
+    Task BuildCompletedAsync(string sfProjectId, string buildId, string buildState, Uri websiteUrl);
+
     [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId), captureReturnValue: true)]
     Task<string?> CancelPreTranslationBuildAsync(
         string curUserId,
