@@ -180,11 +180,13 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin: false, cancellationToken);
 
         // If we have pre-translation job information
         if (
-            (await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
+            (await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
             && (
                 projectSecret.ServalData?.PreTranslationJobId is not null
                 || projectSecret.ServalData?.PreTranslationQueuedAt is not null
@@ -204,7 +206,8 @@ public class MachineApiService(
                 {
                     u.Unset(p => p.ServalData.PreTranslationJobId);
                     u.Unset(p => p.ServalData.PreTranslationQueuedAt);
-                }
+                },
+                cancellationToken: cancellationToken
             );
         }
 
@@ -348,7 +351,12 @@ public class MachineApiService(
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -390,7 +398,7 @@ public class MachineApiService(
         List<ServalBuildDto> builds = [];
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -527,7 +535,12 @@ public class MachineApiService(
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
 
         // Get the translation engine
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
@@ -550,7 +563,7 @@ public class MachineApiService(
                 IList<PretranslateCorpus> pretranslateCorpus = translationBuild.Pretranslate ?? [];
 
                 // Retrieve the user secret
-                Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId);
+                Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
                 if (!attempt.TryResult(out UserSecret userSecret))
                 {
                     throw new DataNotFoundException("The user does not exist.");
@@ -660,7 +673,12 @@ public class MachineApiService(
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
 
         // Otherwise execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -713,7 +731,7 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin: false, cancellationToken);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
 
@@ -747,7 +765,7 @@ public class MachineApiService(
         PreTranslationDto preTranslation = new PreTranslationDto();
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin: false, cancellationToken);
 
         try
         {
@@ -829,12 +847,18 @@ public class MachineApiService(
         ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
 
         // If there is a job queued, return a build dto with a status showing it is queued
         if (
-            (await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
-            && projectSecret.ServalData is not null
+            (await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            ) && projectSecret.ServalData is not null
         )
         {
             // Get the values to use depending on whether this is a pre-translation job or not
@@ -945,7 +969,7 @@ public class MachineApiService(
         List<DocumentRevision> revisions = [];
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
 
         await using IConnection connection = await realtimeService.ConnectAsync(curUserId);
         string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
@@ -1011,13 +1035,18 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
 
         // If the user is a serval admin, get the highest ranked user on the project
         string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
 
         // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId, cancellationToken);
         if (!attempt.TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("The user does not exist.");
@@ -1054,7 +1083,12 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin);
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
 
         // If the user is a serval admin, get the highest ranked user on the project
         string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
@@ -1083,7 +1117,7 @@ public class MachineApiService(
         }
 
         // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId, cancellationToken);
         if (!attempt.TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("The user does not exist.");
@@ -1153,7 +1187,7 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin: false, cancellationToken);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
         try
@@ -1201,7 +1235,11 @@ public class MachineApiService(
             );
 
             // Get the project secret to see if this is being run from another process
-            if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+            if (
+                !(await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                    out SFProjectSecret projectSecret
+                )
+            )
             {
                 throw new DataNotFoundException("The project secret does not exist.");
             }
@@ -1221,7 +1259,8 @@ public class MachineApiService(
                 // Set the retrieved flag as in progress
                 await projectSecrets.UpdateAsync(
                     sfProjectId,
-                    u => u.Set(p => p.ServalData.PreTranslationsRetrieved, false)
+                    u => u.Set(p => p.ServalData.PreTranslationsRetrieved, false),
+                    cancellationToken: cancellationToken
                 );
 
                 // Get the pre-translations
@@ -1233,7 +1272,8 @@ public class MachineApiService(
                 // Set the retrieved flag as complete
                 await projectSecrets.UpdateAsync(
                     sfProjectId,
-                    u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true)
+                    u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true),
+                    cancellationToken: cancellationToken
                 );
 
                 // Notify any SignalR clients subscribed to the project
@@ -1256,7 +1296,11 @@ public class MachineApiService(
             // Exclude TaskCanceledException with an inner TimeoutException, as this generated by an HttpClient timeout
 
             // Ensure that the retrieved flag is cleared
-            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationsRetrieved));
+            await projectSecrets.UpdateAsync(
+                sfProjectId,
+                u => u.Unset(p => p.ServalData.PreTranslationsRetrieved),
+                cancellationToken: cancellationToken
+            );
         }
         catch (Exception e)
         {
@@ -1267,7 +1311,11 @@ public class MachineApiService(
             exceptionHandler.ReportException(e);
 
             // Ensure that the retrieved flag is cleared
-            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationsRetrieved));
+            await projectSecrets.UpdateAsync(
+                sfProjectId,
+                u => u.Unset(p => p.ServalData.PreTranslationsRetrieved),
+                cancellationToken: cancellationToken
+            );
         }
 
         return null;
@@ -1315,7 +1363,8 @@ public class MachineApiService(
                 u.Set(p => p.ServalData.TranslationJobId, buildJobId);
                 u.Set(p => p.ServalData.TranslationQueuedAt, DateTime.UtcNow);
                 u.Unset(p => p.ServalData.TranslationErrorMessage);
-            }
+            },
+            cancellationToken: cancellationToken
         );
     }
 
@@ -1524,7 +1573,8 @@ public class MachineApiService(
                 u.Set(p => p.ServalData.PreTranslationJobId, jobId);
                 u.Set(p => p.ServalData.PreTranslationQueuedAt, DateTime.UtcNow);
                 u.Unset(p => p.ServalData.PreTranslationErrorMessage);
-            }
+            },
+            cancellationToken: cancellationToken
         );
     }
 
@@ -1536,7 +1586,7 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin: false, cancellationToken);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
         try
@@ -1557,7 +1607,7 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin: false, cancellationToken);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
         try
@@ -1582,7 +1632,7 @@ public class MachineApiService(
         IEnumerable<TranslationResult> translationResults = [];
 
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin: false, cancellationToken);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
         if (!string.IsNullOrWhiteSpace(translationEngineId))
@@ -1643,14 +1693,18 @@ public class MachineApiService(
         string userId = GetHighestRankedUserId(projectDoc.Data);
 
         // Retrieve the user secret
-        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId);
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId, cancellationToken);
         if (!attempt.TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("The user does not exist.");
         }
 
         // Load the project secrets, so we can get the translation engine ID and corpus ID
-        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (
+            !(await projectSecrets.TryGetAsync(sfProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret projectSecret
+            )
+        )
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -1983,6 +2037,7 @@ public class MachineApiService(
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId"></param>
     /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="cancellationToken">The cancellatioon token.</param>
     /// <returns>The project.</returns>
     /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     /// <exception cref="ForbiddenException">
@@ -1991,11 +2046,15 @@ public class MachineApiService(
     private async Task<SFProject> EnsureProjectPermissionAsync(
         string curUserId,
         string sfProjectId,
-        bool isServalAdmin = false
+        bool isServalAdmin,
+        CancellationToken cancellationToken
     )
     {
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+            sfProjectId,
+            cancellationToken
+        );
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");

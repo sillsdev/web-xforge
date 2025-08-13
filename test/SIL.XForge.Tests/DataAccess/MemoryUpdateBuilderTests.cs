@@ -135,11 +135,7 @@ public class MemoryUpdateBuilderTests
             };
 
             // Set up the memory update builder for the test entity
-            MemoryUpdateBuilder = new MemoryUpdateBuilder<TestEntity>(
-                e => e.Id == TestEntity.Id,
-                TestEntity,
-                setOnInsert
-            );
+            MemoryUpdateBuilder = new MemoryUpdateBuilder<TestEntity>(TestEntity, setOnInsert);
         }
 
         public MemoryUpdateBuilder<TestEntity> MemoryUpdateBuilder { get; }

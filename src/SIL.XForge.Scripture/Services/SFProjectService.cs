@@ -1394,7 +1394,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         CancellationToken token = default
     )
     {
-        Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+        Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId, token);
         if (!userSecretAttempt.TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("No matching user secrets found.");
