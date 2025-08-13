@@ -17,8 +17,7 @@ export interface DraftApplyProgress {
   selector: 'app-draft-apply-progress',
   imports: [CommonModule, UICommonModule, TranslocoModule],
   templateUrl: './draft-apply-progress-dialog.component.html',
-  styleUrl: './draft-apply-progress-dialog.component.scss',
-  standalone: true
+  styleUrl: './draft-apply-progress-dialog.component.scss'
 })
 export class DraftApplyProgressDialogComponent {
   draftApplyProgress?: DraftApplyProgress;
