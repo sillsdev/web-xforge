@@ -339,8 +339,8 @@ public class Startup
             )
         )
         {
-            int periodIndex = path.IndexOf("-");
-            prefix = prefix[..(periodIndex - 1)];
+            int hashDelimiterIndex = path.IndexOf("-");
+            prefix = prefix[..(hashDelimiterIndex - 1)];
         }
 
         bool isLazyChunkRoute =
