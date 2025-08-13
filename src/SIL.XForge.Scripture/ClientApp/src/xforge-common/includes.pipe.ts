@@ -1,8 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'includes',
-  standalone: true
+  name: 'includes'
 })
 export class IncludesPipe implements PipeTransform {
   transform<T>(items: T[] | undefined, item: T): boolean {
