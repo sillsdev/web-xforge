@@ -15,6 +15,7 @@ import {
   merge,
   Observable,
   observeOn,
+  of,
   startWith,
   Subject,
   switchMap,
@@ -192,6 +193,22 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             // Convert legacy draft to draft ops if necessary
             draftOps: this.draftHandlingService.draftDataToOps(draft, targetOps)
           };
+        }),
+        switchMap(({ targetOps, draftOps }) => {
+          // Look for verses that contain text. If these are present, this is a non-empty draft
+          for (const op of draftOps) {
+            if (op.attributes != null && op.attributes.segment != null && typeof op.insert === 'string') {
+              const hasText: boolean = op.insert.trim().length > 0;
+              const segRef: string = op.attributes.segment as string;
+              if (hasText && segRef.startsWith('verse_')) {
+                return of({ targetOps, draftOps });
+              }
+            }
+          }
+
+          // No generated verse segments were found, return an empty draft
+          this.draftCheckState = 'draft-empty';
+          return EMPTY;
         })
       )
       .subscribe(({ targetOps, draftOps }) => {

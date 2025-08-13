@@ -237,6 +237,30 @@ describe('EditorDraftComponent', () => {
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
 
+  it('should show draft empty when history is enabled and the draft does not have verse content', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(emptyDraftDelta.ops!)));
+    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(emptyDraftDelta.ops!);
+    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
+
+    // SUT
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
+    expect(component.draftCheckState).toEqual('draft-empty');
+  }));
+
   it('should show draft empty if earlier draft exists but history is not enabled', fakeAsync(() => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
@@ -482,6 +506,47 @@ const draftDelta = new Delta([
       'para-contents': true
     },
     insert: 'Draft verse 3. '
+  },
+  {
+    insert: '\n',
+    attributes: {
+      para: {
+        style: 'p'
+      }
+    }
+  }
+]);
+
+const emptyDraftDelta = new Delta([
+  {
+    attributes: {
+      segment: 'id_1'
+    },
+    insert: 'Non-verse content from the template'
+  },
+  {
+    insert: '\n',
+    attributes: {
+      book: {
+        code: '2JN',
+        style: 'id'
+      }
+    }
+  },
+  {
+    attributes: {
+      segment: 'p_1',
+      'para-contents': true
+    },
+    insert: 'More non-verse content from the template'
+  },
+  {
+    insert: {
+      verse: {
+        number: '1',
+        style: 'v'
+      }
+    }
   },
   {
     insert: '\n',
