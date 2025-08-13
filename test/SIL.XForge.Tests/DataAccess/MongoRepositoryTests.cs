@@ -9,7 +9,6 @@ using MongoDB.Driver;
 using MongoDB.Driver.Core.Clusters;
 using MongoDB.Driver.Core.Connections;
 using MongoDB.Driver.Core.Servers;
-using MongoDB.Driver.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -295,7 +294,7 @@ public class MongoRepositoryTests
             // Mock the MongoDB client and database
             var mockClient = Substitute.For<IMongoClient>();
             var mockDatabase = Substitute.For<IMongoDatabase>();
-            var mockSettings = new MongoClientSettings { LinqProvider = LinqProvider.V3 };
+            var mockSettings = new MongoClientSettings();
             mockClient.Settings.Returns(mockSettings);
             mockDatabase.Client.Returns(mockClient);
             MongoCollection.Database.Returns(mockDatabase);
