@@ -53,8 +53,7 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     UICommonModule,
     DraftInformationComponent,
     MobileNotSupportedComponent
-  ],
-  standalone: true
+  ]
 })
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
   @Input() showProjectTitle = true;
