@@ -9,8 +9,7 @@ import { NoticeComponent } from '../notice/notice.component';
   selector: 'app-copyright-banner',
   imports: [NoticeComponent],
   templateUrl: './copyright-banner.component.html',
-  styleUrl: './copyright-banner.component.scss',
-  standalone: true
+  styleUrl: './copyright-banner.component.scss'
 })
 export class CopyrightBannerComponent {
   @Input() notice: string | undefined;

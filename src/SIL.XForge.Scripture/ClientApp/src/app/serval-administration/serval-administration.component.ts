@@ -14,8 +14,7 @@ import { ServalProjectsComponent } from './serval-projects.component';
   selector: 'app-serval-administration',
   templateUrl: './serval-administration.component.html',
   styleUrls: ['./serval-administration.component.scss'],
-  imports: [ServalProjectsComponent, MobileNotSupportedComponent, DraftJobsComponent, MatTabsModule, UICommonModule],
-  standalone: true
+  imports: [ServalProjectsComponent, MobileNotSupportedComponent, DraftJobsComponent, MatTabsModule, UICommonModule]
 })
 export class ServalAdministrationComponent implements OnInit {
   selectedTabIndex = 0;
