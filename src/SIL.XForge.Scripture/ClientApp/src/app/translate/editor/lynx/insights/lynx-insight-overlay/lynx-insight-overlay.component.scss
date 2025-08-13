@@ -18,6 +18,10 @@ $borderRadius: 0.3em;
   overflow: hidden;
 }
 
+:host-context([dir='rtl']) ::ng-deep .cdk-overlay-container {
+  direction: rtl;
+}
+
 mat-icon {
   width: auto;
   height: auto;
@@ -31,6 +35,7 @@ mat-icon {
 
 .main-section {
   background-color: $mainSectionBGColor;
+  position: relative;
 
   // When prompt is for single insight, or insight is selected from multi-picker
   &.focused {
@@ -79,6 +84,8 @@ mat-icon {
 
       h1 {
         font-size: 0.8em;
+        padding-inline-end: 1em;
+        margin-inline-end: auto;
       }
 
       &:not(:last-child) {
@@ -102,8 +109,6 @@ mat-icon {
 
       .ellipsis-icon {
         color: $secondaryTextColor;
-        margin-inline-start: auto;
-        padding-inline-start: 1em;
         flex-shrink: 0;
       }
     }
@@ -162,6 +167,7 @@ h1 {
       position: absolute;
       inset-inline-start: 0;
       font-size: 1.7em;
+      direction: inherit;
     }
 
     &:hover {
