@@ -46,7 +46,8 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
 
         if (fromDate.HasValue)
         {
-            query = query.Where(m => m.TimeStamp >= fromDate.Value);
+            DateTime from = fromDate.Value;
+            query = query.Where(m => m.TimeStamp >= from);
         }
 
         var orderedQuery = query.OrderByDescending(m => m.TimeStamp);
