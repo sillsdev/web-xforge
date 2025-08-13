@@ -68,13 +68,13 @@
       },
       "Hangfire": {
         "type": "Direct",
-        "requested": "[1.8.14, )",
-        "resolved": "1.8.14",
-        "contentHash": "8ve7Di0xvy0ZxCxibcDEzjVVx/H4mJiYSrc5A7Oj2Q62y5vB+Fq6k03zkFj96Xlgs5ivVSeEGfreF/NECJ7tlQ==",
+        "requested": "[1.8.21, )",
+        "resolved": "1.8.21",
+        "contentHash": "m3aTt4FGS1A4uCZ6rWvXrddPPBCvJNNsFvnve3gTwTct0UdY8xc+HRb4gKGSMgh30mxsEEb+1YIMrOXD9L/q0A==",
         "dependencies": {
-          "Hangfire.AspNetCore": "[1.8.14]",
-          "Hangfire.Core": "[1.8.14]",
-          "Hangfire.SqlServer": "[1.8.14]"
+          "Hangfire.AspNetCore": "[1.8.21]",
+          "Hangfire.Core": "[1.8.21]",
+          "Hangfire.SqlServer": "[1.8.21]"
         }
       },
       "Hangfire.Autofac": {
@@ -89,12 +89,12 @@
       },
       "Hangfire.Mongo": {
         "type": "Direct",
-        "requested": "[1.10.7, )",
-        "resolved": "1.10.7",
-        "contentHash": "ttYNvTU8Byp4/7WYvD6KJMJkNaLS1Hjq51kSrZQ0E2D0FBda4KUuKO9LFO04Ak11TDY+vvaD6UMwY8PgYbnGJA==",
+        "requested": "[1.11.7, )",
+        "resolved": "1.11.7",
+        "contentHash": "We1MZinM63aRYogYpJiDvUVbGTGxkG9/1dH4jM28omq88ol0DXfLiQTFdbPVgBYP1VHiOPv8KZzNoTGMN9f99Q==",
         "dependencies": {
-          "Hangfire.Core": "1.8.14",
-          "MongoDB.Driver": "2.26.0"
+          "Hangfire.Core": "1.8.20",
+          "MongoDB.Driver": "3.4.2"
         }
       },
       "idunno.Authentication.Basic": {
@@ -148,14 +148,17 @@
       },
       "MongoDB.Driver": {
         "type": "Direct",
-        "requested": "[2.27.0, )",
-        "resolved": "2.27.0",
-        "contentHash": "AP9z8FktHqKu/M3AOQ46fBTm7zLcJPOWvet8KY6NfwgXOqJwqHsedyjj0COceIvwAm2gdbRrR3bryfy0HzFuIw==",
+        "requested": "[3.4.2, )",
+        "resolved": "3.4.2",
+        "contentHash": "uB2VlLZO4kGvn499Xbdtu/BfAX6wMqpXlWhDonPGGzyCD+Cho+g0M5XIBjPh/8EFrWmBMKvRamW+AWFjgxx+pw==",
         "dependencies": {
+          "DnsClient": "1.6.1",
           "Microsoft.Extensions.Logging.Abstractions": "2.0.0",
-          "MongoDB.Bson": "2.27.0",
-          "MongoDB.Driver.Core": "2.27.0",
-          "MongoDB.Libmongocrypt": "1.10.0"
+          "MongoDB.Bson": "3.4.2",
+          "SharpCompress": "0.30.1",
+          "Snappier": "1.0.0",
+          "System.Buffers": "4.5.1",
+          "ZstdSharp.Port": "0.7.3"
         }
       },
       "SIL.Core": {
@@ -186,19 +189,6 @@
           "System.Runtime": "4.3.1"
         }
       },
-      "AWSSDK.Core": {
-        "type": "Transitive",
-        "resolved": "3.7.100.14",
-        "contentHash": "gnEgxBlk4PFEfdPE8Lkf4+D16MZFYSaW7/o6Wwe5e035QWUkTJX0Dn4LfTCdV5QSEL/fOFxu+yCAm55eIIBgog=="
-      },
-      "AWSSDK.SecurityToken": {
-        "type": "Transitive",
-        "resolved": "3.7.100.14",
-        "contentHash": "dGCVuVo0CFUKWW85W8YENO+aREf8sCBDjvGbnNvxJuNW4Ss+brEU9ltHhq2KfZze2VUNK1/wygbPG1bmbpyXEw==",
-        "dependencies": {
-          "AWSSDK.Core": "[3.7.100.14, 4.0.0)"
-        }
-      },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
         "resolved": "2.5.1",
@@ -227,26 +217,26 @@
       },
       "Hangfire.AspNetCore": {
         "type": "Transitive",
-        "resolved": "1.8.14",
-        "contentHash": "aTPzKN/g9SW30QB1SLTOMuckKqTVL1YAhtEpWll4LPbPTgyeBHJTChdRhrN127fj+mqJ6P4P7+HJBhNYUFTfNw==",
+        "resolved": "1.8.21",
+        "contentHash": "G3yP92rPC313zRA1DIaROmF6UYB9NRtMHy64CCq4StqWmyUuFQQsYgZxo+Kp6gd2CbjaSI8JN8canTMYSGfrMw==",
         "dependencies": {
-          "Hangfire.NetCore": "[1.8.14]"
+          "Hangfire.NetCore": "[1.8.21]"
         }
       },
       "Hangfire.Core": {
         "type": "Transitive",
-        "resolved": "1.8.14",
-        "contentHash": "tj/+J8/UdaxydFX6VQr5IEyBtVbAOvkQ8X8tIQKwY9zlpmK83hP4iHEQQQ26zzGUpcE1HlPc6PBUv0NgUDXS3A==",
+        "resolved": "1.8.21",
+        "contentHash": "UfIDfDKJTue82ShKV/HHEBScAIJMnuiS8c5jcLHThY8i8O0eibCcNjFkVqlvY9cnDiOBZ7EBGWJ8horH9Ykq+g==",
         "dependencies": {
           "Newtonsoft.Json": "11.0.1"
         }
       },
       "Hangfire.NetCore": {
         "type": "Transitive",
-        "resolved": "1.8.14",
-        "contentHash": "fBLdsxWYFdrQuenvVHEj/z8nOXoOTqpWIl4qYoinBAUCVmp4qlxfFsY3Aq3VVbwket0wBH472aG2LAmYm6hjxw==",
+        "resolved": "1.8.21",
+        "contentHash": "NR8BvQqgvVstgY/YZVisuV/XdkKSZGiD+5b+NABuGxu/xDEhycFHS1uIC9zhIYkPr1tThGoThRIH07JWxPZTvQ==",
         "dependencies": {
-          "Hangfire.Core": "[1.8.14]",
+          "Hangfire.Core": "[1.8.21]",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "3.0.0",
           "Microsoft.Extensions.Hosting.Abstractions": "3.0.0",
           "Microsoft.Extensions.Logging.Abstractions": "3.0.0"
@@ -254,10 +244,10 @@
       },
       "Hangfire.SqlServer": {
         "type": "Transitive",
-        "resolved": "1.8.14",
-        "contentHash": "OrsxbJD0UYanIk4E1oqwffZSWRfltYXJa89Icn+fcWmOLGyWTiAg9j5UX4MoS2RaS3WyZG8xbZzbhoRqnujo8g==",
+        "resolved": "1.8.21",
+        "contentHash": "uGz9yfyC9hrI4zGWQivpdOv4tLlueKRc1tYN/+/NcsAcW3ciN0fmG4OPpCb7je0+7z/SGBGDpzNrXUiF2x7rHQ==",
         "dependencies": {
-          "Hangfire.Core": "[1.8.14]"
+          "Hangfire.Core": "[1.8.21]"
         }
       },
       "Markdig.Signed": {
@@ -534,33 +524,12 @@
       },
       "MongoDB.Bson": {
         "type": "Transitive",
-        "resolved": "2.27.0",
-        "contentHash": "IZ0B3upRWzDkV9wWSJ4bO8BriYZ2ChjtBCHFGFglOVDZHjLz1D7Bmx2yAFQf/kWyieKD7s7xBLDywzezNX+NCw==",
+        "resolved": "3.4.2",
+        "contentHash": "FubVWPnefWjGa3aE0U/b3fn0p9S1KPIZwLAA4PguwYHNybzesaEPglscpY9YGVN72ggGeig1e88G9D5jCnY70w==",
         "dependencies": {
           "System.Memory": "4.5.5",
           "System.Runtime.CompilerServices.Unsafe": "5.0.0"
         }
-      },
-      "MongoDB.Driver.Core": {
-        "type": "Transitive",
-        "resolved": "2.27.0",
-        "contentHash": "VoihnTUynBPRfLHAlcgW1UBcR8XF67x/F79a6f/cmxIogLlYViICleARYqBytnrXjoqylp00xWo0BNaelENo7A==",
-        "dependencies": {
-          "AWSSDK.SecurityToken": "3.7.100.14",
-          "DnsClient": "1.6.1",
-          "Microsoft.Extensions.Logging.Abstractions": "2.0.0",
-          "MongoDB.Bson": "2.27.0",
-          "MongoDB.Libmongocrypt": "1.10.0",
-          "SharpCompress": "0.30.1",
-          "Snappier": "1.0.0",
-          "System.Buffers": "4.5.1",
-          "ZstdSharp.Port": "0.7.3"
-        }
-      },
-      "MongoDB.Libmongocrypt": {
-        "type": "Transitive",
-        "resolved": "1.10.0",
-        "contentHash": "2toxrngTVcb5PhQJMPlsxxnG97XJ+28WyBeW1Wfh2X+LOFbKabJDJJuWwipB9wLIb5VmqXEPWl6zYVvEW1cdAA=="
       },
       "Mono.Unix": {
         "type": "Transitive",
