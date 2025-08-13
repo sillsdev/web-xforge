@@ -395,7 +395,7 @@ describe('EditorDraftComponent', () => {
     });
 
     it('should return a localized book and chapter if both are not null', () => {
-      when(mockI18nService.localizeBook(1)).thenReturn('Localized Book');
+      when(mockI18nService.localizeBookChapter(1, 1)).thenReturn('Localized Book 1');
       component.bookNum = 1;
       component.chapter = 1;
       expect(component['getLocalizedBookChapter']()).toEqual('Localized Book 1');

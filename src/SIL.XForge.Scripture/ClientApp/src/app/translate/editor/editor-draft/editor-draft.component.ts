@@ -57,7 +57,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
   draftRevisions: Revision[] = [];
   selectedRevision: Revision | undefined;
-  bookChapterName = '';
   generateDraftUrl?: string;
   targetProject?: SFProjectProfile;
   textDocId?: TextDocId;
@@ -252,7 +251,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   private setInitialState(): void {
     this.draftCheckState = 'draft-unknown';
-    this.bookChapterName = this.getLocalizedBookChapter();
     this.isDraftReady = false;
     this.isDraftApplied = false;
     this.userAppliedDraft = false;
@@ -297,12 +295,12 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return hasContent ?? false;
   }
 
-  private getLocalizedBookChapter(): string {
+  protected getLocalizedBookChapter(): string {
     if (this.bookNum == null || this.chapter == null) {
       return '';
     }
 
-    return this.i18n.localizeBook(this.bookNum) + ' ' + this.chapter;
+    return this.i18n.localizeBookChapter(this.bookNum, this.chapter);
   }
 
   private getTargetOps(): Observable<DeltaOperation[]> {
