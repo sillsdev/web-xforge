@@ -4,7 +4,6 @@ import { NoticeComponent } from '../notice/notice.component';
 @Component({
   selector: 'app-mobile-not-supported',
   imports: [NoticeComponent],
-  templateUrl: './mobile-not-supported.component.html',
-  standalone: true
+  templateUrl: './mobile-not-supported.component.html'
 })
 export class MobileNotSupportedComponent {}
