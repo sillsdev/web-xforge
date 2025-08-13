@@ -1,9 +1,11 @@
+import { DOCUMENT } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
   DestroyRef,
   EventEmitter,
+  Inject,
   Input,
   OnDestroy,
   Output
@@ -21,6 +23,7 @@ import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
+import { WINDOW } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -275,7 +278,9 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     private readonly userService: UserService,
     readonly viewModel: TextViewModel,
     private readonly textDocService: TextDocService,
-    private readonly quillFormatRegistry: QuillFormatRegistryService
+    private readonly quillFormatRegistry: QuillFormatRegistryService,
+    @Inject(DOCUMENT) private document: Document,
+    @Inject(WINDOW) private window: Window
   ) {
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
     if (localCursorColor == null) {
@@ -521,19 +526,19 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
     // Listening to document 'selectionchange' event allows local cursor to change position on mousedown,
     // as opposed to quill 'onSelectionChange' event that doesn't fire until mouseup.
-    fromEvent<MouseEvent>(document, 'selectionchange')
+    fromEvent<MouseEvent>(this.document, 'selectionchange')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updateLocalCursor();
       });
 
-    fromEvent<KeyboardEvent>(document, 'keydown')
+    fromEvent<KeyboardEvent>(this.document, 'keydown')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(event => {
         this.isShiftDown = event.shiftKey;
       });
 
-    fromEvent<KeyboardEvent>(document, 'keyup')
+    fromEvent<KeyboardEvent>(this.document, 'keyup')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(event => {
         // Call 'update()' when shift key is released, as update is disabled while shift is down
@@ -543,6 +548,18 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         }
 
         this.isShiftDown = event.shiftKey;
+      });
+
+    fromEvent<FocusEvent>(this.window, 'blur')
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        // Treat window blur as releasing all modifiers
+        const wasShiftDown: boolean = this.isShiftDown === true;
+        if (wasShiftDown) {
+          this.update();
+        }
+
+        this.isShiftDown = false;
       });
   }
 
@@ -564,7 +581,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     fromEvent(this._editor.root, 'scroll')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateHighlightMarkerVisibility());
-    fromEvent(window, 'resize')
+    fromEvent(this.window, 'resize')
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.setHighlightMarkerPosition());
     this.viewModel.editor = editor;
@@ -1144,7 +1161,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       const cursors: QuillCursors = this.editor.getModule('cursors') as QuillCursors;
       cursors.createCursor(this.presenceId, '', '');
 
-      this.localCursorElement = document.querySelector(`#ql-cursor-${this.presenceId}`);
+      this.localCursorElement = this.document.querySelector(`#ql-cursor-${this.presenceId}`);
 
       // Add a specific class to the local cursor
       if (this.localCursorElement != null) {
@@ -1158,7 +1175,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const sel: Selection | null = window.getSelection();
+    const sel: Selection | null = this.window.getSelection();
     if (sel == null) {
       return;
     }
