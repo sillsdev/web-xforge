@@ -1035,9 +1035,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string? projectId,
         EventScope[]? scopes,
         string[]? eventTypes,
-        int pageIndex,
-        int pageSize,
-        DateTime? fromDate = null
+        DateTime? fromDate = null,
+        int pageIndex = 0,
+        int pageSize = int.MaxValue
     )
     {
         // Ensure that the page index is valid
@@ -1090,9 +1090,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             projectId,
             scopes,
             eventTypes,
+            fromDate,
             pageIndex,
-            pageSize,
-            fromDate
+            pageSize
         );
     }
 

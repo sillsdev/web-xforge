@@ -377,7 +377,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
   private async loadProjectNames(): Promise<void> {
     // Get unique project IDs from draft jobs
-    const projectIds = [...new Set(this.draftJobs.map(job => job.projectId))];
+    const projectIds = new Set(this.draftJobs.map(job => job.projectId));
 
     // Clear existing cache
     this.projectNames.clear();
@@ -443,7 +443,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       const displayText = books.join(', ');
       return { displayText };
     } else {
-      const displayText = books.slice(0, 3).join(', ') + '...';
+      const displayText = books.slice(0, 3).join(', ') + '…';
       const tooltipText = books.join(', ');
       return { displayText, tooltipText };
     }
