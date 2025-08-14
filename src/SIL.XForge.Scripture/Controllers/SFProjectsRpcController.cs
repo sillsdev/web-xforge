@@ -658,11 +658,11 @@ public class SFProjectsRpcController(
 
     public async Task<IRpcMethodResult> EventMetrics(
         string? projectId,
-        int pageIndex,
-        int pageSize,
         EventScope[]? scopes = null,
         string[]? eventTypes = null,
-        DateTime? fromDate = null
+        DateTime? fromDate = null,
+        int pageIndex = 0,
+        int pageSize = int.MaxValue
     )
     {
         try
@@ -674,9 +674,9 @@ public class SFProjectsRpcController(
                     projectId,
                     scopes,
                     eventTypes,
+                    fromDate,
                     pageIndex,
-                    pageSize,
-                    fromDate
+                    pageSize
                 )
             );
         }

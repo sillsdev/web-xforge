@@ -45,9 +45,9 @@ public interface ISFProjectService : IProjectService
         string? projectId,
         EventScope[]? scopes,
         string[]? eventTypes,
-        int pageIndex,
-        int pageSize,
-        DateTime? fromDate = null
+        DateTime? fromDate = null,
+        int pageIndex = 0,
+        int pageSize = int.MaxValue
     );
     Task<SFProject> GetProjectAsync(string projectId);
     SFProjectSecret GetProjectSecretByShareKey(string shareKey);
