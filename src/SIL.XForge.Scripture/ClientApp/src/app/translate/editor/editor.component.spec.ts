@@ -105,6 +105,7 @@ import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component
 import { XmlUtils } from '../../shared/utils';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
+import { DraftPreviewBooksComponent } from '../draft-generation/draft-preview-books/draft-preview-books.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 import { HistoryRevisionFormatPipe } from './editor-history/history-chooser/history-revision-format.pipe';
@@ -167,6 +168,7 @@ describe('EditorComponent', () => {
     imports: [
       BiblicalTermsComponent,
       CopyrightBannerComponent,
+      DraftPreviewBooksComponent,
       NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
       SharedModule.forRoot(),

@@ -15,6 +15,7 @@ import {
   merge,
   Observable,
   observeOn,
+  of,
   startWith,
   Subject,
   switchMap,
@@ -158,10 +159,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           ])
         ),
         switchMap(([timestamp, draftExists]) => {
-          // As getGeneratedDraftHistory() will always return a draft, we should not show a draft if the user does not
-          // have a timestamp in the query string. If a query string was specified, the user was sent from the draft
-          // history component.
-          if (!draftExists && (this.timestamp == null || timestamp == null)) {
+          const initialTimestamp: Date | undefined = timestamp ?? this.timestamp;
+          // If an earlier draft exists, hide it if the draft history feature is not enabled
+          if (!draftExists && (!this.featureFlags.newDraftHistory.enabled || initialTimestamp == null)) {
             this.draftCheckState = 'draft-empty';
             return EMPTY;
           }
@@ -173,7 +173,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
               this.targetProject = projectDoc.data;
             }),
             distinctUntilChanged(),
-            map(() => timestamp)
+            map(() => initialTimestamp)
           );
         }),
         switchMap((timestamp: Date | undefined) =>
@@ -193,6 +193,22 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             // Convert legacy draft to draft ops if necessary
             draftOps: this.draftHandlingService.draftDataToOps(draft, targetOps)
           };
+        }),
+        switchMap(({ targetOps, draftOps }) => {
+          // Look for verses that contain text. If these are present, this is a non-empty draft
+          for (const op of draftOps) {
+            if (op.attributes != null && op.attributes.segment != null && typeof op.insert === 'string') {
+              const hasText: boolean = op.insert.trim().length > 0;
+              const segRef: string = op.attributes.segment as string;
+              if (hasText && segRef.startsWith('verse_')) {
+                return of({ targetOps, draftOps });
+              }
+            }
+          }
+
+          // No generated verse segments were found, return an empty draft
+          this.draftCheckState = 'draft-empty';
+          return EMPTY;
         })
       )
       .subscribe(({ targetOps, draftOps }) => {
