@@ -12,6 +12,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -37,6 +38,7 @@ const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
 const mockNoticeService = mock(NoticeService);
 const mockErrorReportingService = mock(ErrorReportingService);
+const mockFeatureFlagService = mock(FeatureFlagService);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -63,7 +65,8 @@ describe('EditorDraftComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockDialogService },
       { provide: NoticeService, useMock: mockNoticeService },
-      { provide: ErrorReportingService, useMock: mockErrorReportingService }
+      { provide: ErrorReportingService, useMock: mockErrorReportingService },
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService }
     ]
   }));
 
@@ -92,6 +95,7 @@ describe('EditorDraftComponent', () => {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
 
+    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
     when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
@@ -153,6 +157,7 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
+    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
     when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
@@ -180,6 +185,7 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
+    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
     when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
@@ -204,6 +210,75 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+  }));
+
+  it('should show previous draft when history is enabled and not timestamp is provided', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(draftDelta.ops!)));
+    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
+
+    // SUT
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
+    expect(component.draftCheckState).toEqual('draft-present');
+    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+  }));
+
+  it('should show draft empty when history is enabled and the draft does not have verse content', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(true));
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(emptyDraftDelta.ops!)));
+    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(emptyDraftDelta.ops!);
+    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
+
+    // SUT
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
+    expect(component.draftCheckState).toEqual('draft-empty');
+  }));
+
+  it('should show draft empty if earlier draft exists but history is not enabled', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(false));
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftHandlingService.getDraft(anything(), anything())).never();
+    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).never();
+    expect(component.draftCheckState).toEqual('draft-empty');
   }));
 
   it('should return ops and update the editor when no revision', fakeAsync(() => {
@@ -233,6 +308,7 @@ describe('EditorDraftComponent', () => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
     } as SFProjectProfileDoc;
+    when(mockFeatureFlagService.newDraftHistory).thenReturn(createTestFeatureFlag(false));
     when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
@@ -430,6 +506,47 @@ const draftDelta = new Delta([
       'para-contents': true
     },
     insert: 'Draft verse 3. '
+  },
+  {
+    insert: '\n',
+    attributes: {
+      para: {
+        style: 'p'
+      }
+    }
+  }
+]);
+
+const emptyDraftDelta = new Delta([
+  {
+    attributes: {
+      segment: 'id_1'
+    },
+    insert: 'Non-verse content from the template'
+  },
+  {
+    insert: '\n',
+    attributes: {
+      book: {
+        code: '2JN',
+        style: 'id'
+      }
+    }
+  },
+  {
+    attributes: {
+      segment: 'p_1',
+      'para-contents': true
+    },
+    insert: 'More non-verse content from the template'
+  },
+  {
+    insert: {
+      verse: {
+        number: '1',
+        style: 'v'
+      }
+    }
   },
   {
     insert: '\n',
