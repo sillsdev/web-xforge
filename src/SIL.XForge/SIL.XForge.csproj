@@ -5,27 +5,27 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="8.2.1" />
+    <PackageReference Include="Autofac" Version="8.4.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Autofac.Extras.DynamicProxy" Version="7.1.0" />
-    <PackageReference Include="Bugsnag.AspNet.Core" Version="4.0.0" />
+    <PackageReference Include="Bugsnag.AspNet.Core" Version="4.1.0" />
     <PackageReference Include="EdjCase.JsonRpc.Router" Version="6.1.0" />
     <PackageReference Include="Hangfire" Version="1.8.14" />
     <PackageReference Include="Hangfire.Autofac" Version="2.7.0" />
     <PackageReference Include="Hangfire.Mongo" Version="1.10.7" />
-    <PackageReference Include="Duende.IdentityModel" Version="7.0.0" />
+    <PackageReference Include="Duende.IdentityModel" Version="7.1.0" />
     <PackageReference Include="Jering.Javascript.NodeJS" Version="6.3.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.14" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="8.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.19" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="8.0.19" />
     <PackageReference Include="MongoDB.Driver" Version="2.27.0" />
-    <PackageReference Include="MailKit" Version="4.11.0" />
+    <PackageReference Include="MailKit" Version="4.13.0" />
     <PackageReference Include="idunno.Authentication.Basic" Version="2.4.0" />
     <PackageReference Include="AbrarJahin.DiffMatchPatch" Version="0.1.0" />
-    <PackageReference Include="SIL.Core" Version="13.0.1" />
+    <PackageReference Include="SIL.Core" Version="16.1.0" />
   </ItemGroup>
   <!-- Override vulnerable versions of dependencies -->
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="System.Text.Json" Version="8.0.6" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
 </Project>

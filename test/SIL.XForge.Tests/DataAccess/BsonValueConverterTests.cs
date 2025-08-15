@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using Duende.IdentityModel;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using NUnit.Framework;
@@ -37,7 +36,7 @@ public class BsonValueConverterTests
         var env = new TestEnvironment();
 
         // BsonDateTime stores internally as the unix epoch, and so for the test we will just round to the epoch
-        DateTime value = DateTime.UnixEpoch.AddMilliseconds(DateTime.UtcNow.ToEpochTime());
+        DateTime value = DateTime.UnixEpoch.AddMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         BsonDateTime bsonValue = BsonDateTime.Create(value);
         string expected = $"\"{value:o}\"";
 

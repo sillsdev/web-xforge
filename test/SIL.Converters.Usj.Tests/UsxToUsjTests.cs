@@ -261,7 +261,8 @@ public class UsxToUsjTests
     [Test]
     public void ShouldConvertFromXDocumentToUsj()
     {
-        XDocument document = XDocument.Parse(TestData.UsxGen1V1, LoadOptions.PreserveWhitespace);
+        string usx = TestData.RemoveXmlWhiteSpace(TestData.UsxGen1V1);
+        XDocument document = XDocument.Parse(usx, LoadOptions.PreserveWhitespace);
         Usj usj = UsxToUsj.UsxXDocumentToUsj(document);
         Assert.That(usj, Is.EqualTo(TestData.UsjGen1V1).UsingPropertiesComparer());
     }
