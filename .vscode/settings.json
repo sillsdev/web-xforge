@@ -49,6 +49,8 @@
     "paginator",
     "paratext",
     "persistable",
+    "pgrep",
+    "pkill",
     "prefill",
     "pretranslation",
     "punct",
