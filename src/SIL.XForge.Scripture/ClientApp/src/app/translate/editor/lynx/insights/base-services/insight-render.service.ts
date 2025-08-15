@@ -4,7 +4,7 @@ import { LynxInsight } from '../lynx-insight';
 
 @Injectable()
 export abstract class InsightRenderService {
-  abstract render(insights: LynxInsight[], editor: LynxableEditor): void;
+  abstract render(insights: LynxInsight[], editor: LynxableEditor): Promise<void>;
   abstract removeAllInsightFormatting(editor: LynxableEditor): void;
   abstract renderActionOverlay(
     insights: LynxInsight[],
