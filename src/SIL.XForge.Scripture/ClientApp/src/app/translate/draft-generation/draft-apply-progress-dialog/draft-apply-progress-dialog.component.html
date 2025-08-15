@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'draft_apply_progress-dialog'">
-  <mat-dialog-content>
+  <mat-dialog-content class="hide-scroll">
     <div class="progress-content">
       @if (draftApplyProgress?.completed !== true) {
         <div class="progress-container">
@@ -14,9 +14,12 @@
                 <mat-icon>warning</mat-icon>
                 <span>{{ t("some_chapters_not_applied", { bookName }) }}</span>
               </h2>
-              <p>{{ t("go_to_chapter") }}</p>
-              <span>{{ t("failed_to_apply_chapters") }}</span>
-              <span class="failed-chapters">{{ failedToApplyChapters }}</span>
+              <div class="error-content">
+                <span>{{ t("failed_to_apply_chapters") }}</span>
+                @for (message of draftApplyProgress?.errorMessages; track $index) {
+                  <span class="failed-chapters">{{ message }}</span>
+                }
+              </div>
             </div>
           } @else {
             <h2>
