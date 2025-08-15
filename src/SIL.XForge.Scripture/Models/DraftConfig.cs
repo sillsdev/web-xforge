@@ -21,4 +21,5 @@ public class DraftConfig
     public bool? UseEcho { get; set; }
     public string? ServalConfig { get; set; }
     public DraftUsfmConfig? UsfmConfig { get; set; }
+    public bool? SendEmailOnBuildFinished { get; set; }
 }

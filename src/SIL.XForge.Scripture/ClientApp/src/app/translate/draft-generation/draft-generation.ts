@@ -12,6 +12,7 @@ export interface BuildConfig {
   translationScriptureRanges: ProjectScriptureRange[];
   fastTraining: boolean;
   useEcho: boolean;
+  sendEmailOnBuildFinished: boolean;
 }
 
 /**

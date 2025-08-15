@@ -75,6 +75,7 @@ export interface DraftConfig {
   useEcho?: boolean;
   servalConfig?: string;
   usfmConfig?: DraftUsfmConfig;
+  sendEmailOnBuildFinished?: boolean;
 }
 
 export interface TranslateConfig {

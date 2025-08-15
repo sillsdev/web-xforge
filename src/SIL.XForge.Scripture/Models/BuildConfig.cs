@@ -101,4 +101,10 @@ public class BuildConfig
     /// A build made using echo will just echo the source text. Only use this value if you are testing or debugging.
     /// </remarks>
     public bool UseEcho { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value that specifies whether to send an email when the build is finished.
+    /// </summary>
+    /// <value><c>true</c> if we are sending an email when the build finishes; otherwise, <c>false</c>.</value>
+    public bool SendEmailOnBuildFinished { get; set; }
 }

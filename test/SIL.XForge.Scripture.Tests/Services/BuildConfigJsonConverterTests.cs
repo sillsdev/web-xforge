@@ -23,6 +23,7 @@ public class BuildConfigJsonConverterTests
         var buildConfig = new BuildConfig
         {
             FastTraining = true,
+            SendEmailOnBuildFinished = true,
             UseEcho = true,
             TrainingBooks = [1, 2, 3],
             TranslationBooks = [4, 5, 6],
@@ -35,6 +36,8 @@ public class BuildConfigJsonConverterTests
         writer.Received().WriteStartObject();
         writer.Received().WritePropertyName(nameof(buildConfig.FastTraining));
         serializer.Received().Serialize(writer, buildConfig.FastTraining);
+        writer.Received().WritePropertyName(nameof(buildConfig.SendEmailOnBuildFinished));
+        serializer.Received().Serialize(writer, buildConfig.SendEmailOnBuildFinished);
         writer.Received().WritePropertyName(nameof(buildConfig.UseEcho));
         serializer.Received().Serialize(writer, buildConfig.UseEcho);
         writer.Received().WritePropertyName(nameof(buildConfig.TrainingBooks));
@@ -47,7 +50,7 @@ public class BuildConfigJsonConverterTests
     }
 
     [Test]
-    public void WriteJson_Serializes_BuildConfigWithoutFastTrainingOrEcho()
+    public void WriteJson_Serializes_BuildConfigWithoutBooleanValues()
     {
         var converter = new BuildConfigJsonConverter();
         var writer = Substitute.For<JsonWriter>();
@@ -64,6 +67,7 @@ public class BuildConfigJsonConverterTests
 
         writer.Received().WriteStartObject();
         writer.DidNotReceive().WritePropertyName(nameof(buildConfig.FastTraining));
+        writer.DidNotReceive().WritePropertyName(nameof(buildConfig.SendEmailOnBuildFinished));
         writer.DidNotReceive().WritePropertyName(nameof(buildConfig.UseEcho));
         writer.Received().WritePropertyName(nameof(buildConfig.TrainingBooks));
         serializer.Received().Serialize(writer, buildConfig.TrainingBooks);
@@ -266,6 +270,7 @@ public class BuildConfigJsonConverterTests
             "{{nameof(BuildConfig.TrainingBooks)}}":[1,2,3],
             "{{nameof(BuildConfig.TranslationBooks)}}":[4,5,6],
             "{{nameof(BuildConfig.FastTraining)}}":true,
+            "{{nameof(BuildConfig.SendEmailOnBuildFinished)}}":true,
             "{{nameof(BuildConfig.UseEcho)}}":true
             }
             """;
@@ -279,6 +284,7 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsTrue(buildConfig!.FastTraining);
+        Assert.IsTrue(buildConfig.SendEmailOnBuildFinished);
         Assert.IsTrue(buildConfig.UseEcho);
         CollectionAssert.AreEqual(new List<int> { 1, 2, 3 }, buildConfig.TrainingBooks);
         CollectionAssert.AreEqual(new List<int> { 4, 5, 6 }, buildConfig.TranslationBooks);
@@ -286,7 +292,7 @@ public class BuildConfigJsonConverterTests
     }
 
     [Test]
-    public void ReadJson_Deserializes_JSON_Object_WithoutFastTrainingOrEchoConfig()
+    public void ReadJson_Deserializes_JSON_Object_WithoutBooleanValues()
     {
         var converter = new BuildConfigJsonConverter();
         const string jsonString = $$"""
@@ -306,6 +312,7 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsFalse(buildConfig!.FastTraining);
+        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
         Assert.IsFalse(buildConfig.UseEcho);
         CollectionAssert.AreEqual(new List<int> { 1, 2, 3 }, buildConfig.TrainingBooks);
         CollectionAssert.AreEqual(new List<int> { 4, 5, 6 }, buildConfig.TranslationBooks);
@@ -332,6 +339,7 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsFalse(buildConfig!.FastTraining);
+        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
         Assert.IsFalse(buildConfig.UseEcho);
         CollectionAssert.AreEqual(new List<string> { Data01, Data02 }, buildConfig.TrainingDataFiles);
         Assert.AreEqual(Project01, buildConfig.ProjectId);
@@ -358,6 +366,7 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsFalse(buildConfig!.FastTraining);
+        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
         Assert.IsFalse(buildConfig.UseEcho);
         Assert.AreEqual(scriptureRange, buildConfig.TrainingScriptureRange);
         Assert.AreEqual(Project01, buildConfig.ProjectId);
@@ -384,6 +393,7 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsFalse(buildConfig!.FastTraining);
+        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
         Assert.IsFalse(buildConfig.UseEcho);
         Assert.AreEqual(scriptureRange, buildConfig.TranslationScriptureRange);
         Assert.AreEqual(Project01, buildConfig.ProjectId);
@@ -416,6 +426,7 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsFalse(buildConfig!.FastTraining);
+        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
         Assert.IsFalse(buildConfig.UseEcho);
         CollectionAssert.AreEqual(
             new List<ProjectScriptureRange>
@@ -454,6 +465,7 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsFalse(buildConfig!.FastTraining);
+        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
         Assert.IsFalse(buildConfig.UseEcho);
         CollectionAssert.AreEqual(
             new List<ProjectScriptureRange>
