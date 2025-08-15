@@ -233,7 +233,8 @@ interface BreadcrumbTests {
       <div class="mdc-button__ripple"></div>
       <span>Ripple text</span>
     </button>
-  `
+  `,
+  standalone: false
 })
 class HostComponent {}
 

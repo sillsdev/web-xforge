@@ -27,7 +27,8 @@ function getPercentages(data: number[]): number[] {
 @Component({
   selector: 'app-donut-chart',
   templateUrl: './donut-chart.component.html',
-  styleUrls: ['./donut-chart.component.scss']
+  styleUrls: ['./donut-chart.component.scss'],
+  standalone: false
 })
 export class DonutChartComponent implements AfterViewInit {
   @Input() animationDuration: number = 1000;

@@ -61,7 +61,8 @@ export interface QuestionChangedEvent {
   selector: 'app-checking-questions',
   templateUrl: './checking-questions.component.html',
   styleUrls: ['./checking-questions.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
 export class CheckingQuestionsComponent implements OnInit, OnChanges {
   @Output() update = new EventEmitter<QuestionDoc>();

@@ -5,7 +5,8 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 @Component({
   selector: 'app-tab-scroll-button',
   templateUrl: './tab-scroll-button.component.html',
-  styleUrls: ['./tab-scroll-button.component.scss']
+  styleUrls: ['./tab-scroll-button.component.scss'],
+  standalone: false
 })
 export class TabScrollButtonComponent implements OnInit {
   @Input() disabled = false;

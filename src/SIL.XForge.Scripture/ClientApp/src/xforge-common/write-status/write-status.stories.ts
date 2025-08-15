@@ -10,7 +10,8 @@ import { WriteStatusComponent } from './write-status.component';
   selector: 'app-write-status-test',
   template: `<form [formGroup]="formGroup">
     <app-write-status [state]="state" [formGroup]="formGroup"></app-write-status>
-  </form>`
+  </form>`,
+  standalone: false
 })
 class WriteStatusTestComponent {
   @Input() state?: ElementState;

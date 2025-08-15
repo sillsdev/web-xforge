@@ -8,7 +8,6 @@ type AvatarMode = 'image' | 'initials' | 'user_icon';
   selector: 'app-avatar',
   templateUrl: './avatar.component.html',
   styleUrls: ['./avatar.component.scss'],
-  standalone: true,
   imports: [MatIconModule]
 })
 export class AvatarComponent implements DoCheck, OnChanges {

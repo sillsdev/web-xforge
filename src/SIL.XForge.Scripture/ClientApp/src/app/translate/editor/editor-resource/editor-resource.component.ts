@@ -9,7 +9,8 @@ import { formatFontSizeToRems } from '../../../shared/utils';
 @Component({
   selector: 'app-editor-resource',
   templateUrl: './editor-resource.component.html',
-  styleUrl: '../editor.component.scss'
+  styleUrl: '../editor.component.scss',
+  standalone: false
 })
 export class EditorResourceComponent implements AfterViewInit, OnChanges {
   @Input() projectId?: string;

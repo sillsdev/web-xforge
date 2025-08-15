@@ -29,7 +29,6 @@ interface Row {
   selector: 'app-event-metrics-log',
   templateUrl: './event-metrics-log.component.html',
   styleUrls: ['./event-metrics-log.component.scss'],
-  standalone: true,
   imports: [OwnerComponent, TranslocoModule, UICommonModule]
 })
 export class EventMetricsLogComponent extends DataLoadingComponent implements OnInit {

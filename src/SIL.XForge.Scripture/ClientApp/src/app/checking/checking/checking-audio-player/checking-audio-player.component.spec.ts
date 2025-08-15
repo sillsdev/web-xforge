@@ -176,7 +176,11 @@ describe('CheckingAudioPlayerComponent', () => {
   });
 });
 
-@Component({ selector: 'app-host', template: '' })
+@Component({
+  selector: 'app-host',
+  template: '',
+  standalone: false
+})
 class HostComponent {
   @ViewChild(CheckingAudioPlayerComponent) player1!: CheckingAudioPlayerComponent;
   @ViewChild(CheckingAudioPlayerComponent) player2!: CheckingAudioPlayerComponent;

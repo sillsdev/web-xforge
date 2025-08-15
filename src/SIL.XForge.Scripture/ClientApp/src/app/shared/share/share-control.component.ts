@@ -27,7 +27,8 @@ import { ShareBaseComponent } from './share-base.component';
 @Component({
   selector: 'app-share-control',
   templateUrl: './share-control.component.html',
-  styleUrls: ['./share-control.component.scss']
+  styleUrls: ['./share-control.component.scss'],
+  standalone: false
 })
 export class ShareControlComponent extends ShareBaseComponent {
   /** Fires when an invitation is sent. */

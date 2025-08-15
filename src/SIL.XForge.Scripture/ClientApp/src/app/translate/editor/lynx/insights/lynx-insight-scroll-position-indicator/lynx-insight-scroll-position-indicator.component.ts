@@ -16,7 +16,8 @@ interface LynxInsightScrollPosition {
 @Component({
   selector: 'app-lynx-insight-scroll-position-indicator',
   templateUrl: './lynx-insight-scroll-position-indicator.component.html',
-  styleUrl: './lynx-insight-scroll-position-indicator.component.scss'
+  styleUrl: './lynx-insight-scroll-position-indicator.component.scss',
+  standalone: false
 })
 export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
   @Input() set editor(value: LynxableEditor | undefined) {
