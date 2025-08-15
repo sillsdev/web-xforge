@@ -2,7 +2,18 @@ import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, Inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { isEqual } from 'lodash-es';
 import { Delta } from 'quill';
-import { asapScheduler, combineLatest, EMPTY, filter, fromEvent, merge, switchMap, tap } from 'rxjs';
+import {
+  asapScheduler,
+  BehaviorSubject,
+  combineLatest,
+  EMPTY,
+  filter,
+  from,
+  fromEvent,
+  merge,
+  switchMap,
+  tap
+} from 'rxjs';
 import { map, observeOn, scan } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { EditorReadyService } from '../base-services/editor-ready.service';
@@ -90,48 +101,64 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
           // Close all action overlays, including those for insights from other books/chapters
           this.overlayService.close();
 
+          const chapterInsightsRendered$ = new BehaviorSubject<boolean>(false);
+
           // When editor is ready, subscribe to insights and display state
           return merge(
             // Render blots when insights change
             this.insightState.filteredChapterInsights$.pipe(
-              tap(insights =>
-                this.insightRenderService.render(
-                  insights.map(insight => this.adjustInsightRange(insight)),
-                  this.editor!
-                )
-              )
+              switchMap(insights => {
+                chapterInsightsRendered$.next(false);
+
+                return from(
+                  this.insightRenderService.render(
+                    insights.map(insight => this.adjustInsightRange(insight)),
+                    this.editor!
+                  )
+                ).pipe(tap(() => chapterInsightsRendered$.next(true)));
+              })
             ),
-            // Check display state to render action overlay or cursor active state
-            this.insightState.displayState$.pipe(
-              scan(
-                (prev, curr) => {
-                  // For first emission, always render
-                  const activeInsightsChanged = !prev || !isEqual(prev.activeInsightIds, curr.activeInsightIds);
-                  const actionOverlayActiveChanged = !prev || prev.actionOverlayActive !== curr.actionOverlayActive;
-                  const cursorActiveInsightIdsChanged =
-                    !prev || !isEqual(prev.cursorActiveInsightIds, curr.cursorActiveInsightIds);
+            // Ensure insights are rendered before responding to display state changes,
+            // as overlay needs to anchor to insight elements in the editor.
+            chapterInsightsRendered$.pipe(
+              switchMap(areInsightsRendered => {
+                if (!areInsightsRendered) {
+                  return EMPTY;
+                }
 
-                  if (activeInsightsChanged || actionOverlayActiveChanged) {
-                    const activeInsights = curr.activeInsightIds
-                      .map(id => this.insightState.getInsight(id))
-                      .filter(i => i != null);
+                // Check display state to render action overlay or cursor active state
+                return this.insightState.displayState$.pipe(
+                  scan(
+                    (prev, curr) => {
+                      // For first emission, always render
+                      const activeInsightsChanged = !prev || !isEqual(prev.activeInsightIds, curr.activeInsightIds);
+                      const actionOverlayActiveChanged = !prev || prev.actionOverlayActive !== curr.actionOverlayActive;
+                      const cursorActiveInsightIdsChanged =
+                        !prev || !isEqual(prev.cursorActiveInsightIds, curr.cursorActiveInsightIds);
 
-                    this.insightRenderService.renderActionOverlay(
-                      activeInsights,
-                      this.editor!,
-                      this.lynxTextModelConverter!,
-                      !!curr.actionOverlayActive
-                    );
-                  }
+                      if (activeInsightsChanged || actionOverlayActiveChanged) {
+                        const activeInsights = curr.activeInsightIds
+                          .map(id => this.insightState.getInsight(id))
+                          .filter(i => i != null);
 
-                  if (cursorActiveInsightIdsChanged) {
-                    this.insightRenderService.renderCursorActiveState(curr.cursorActiveInsightIds, this.editor!);
-                  }
+                        this.insightRenderService.renderActionOverlay(
+                          activeInsights,
+                          this.editor!,
+                          this.lynxTextModelConverter!,
+                          !!curr.actionOverlayActive
+                        );
+                      }
 
-                  return curr;
-                },
-                null as LynxInsightDisplayState | null
-              )
+                      if (cursorActiveInsightIdsChanged) {
+                        this.insightRenderService.renderCursorActiveState(curr.cursorActiveInsightIds, this.editor!);
+                      }
+
+                      return curr;
+                    },
+                    null as LynxInsightDisplayState | null
+                  )
+                );
+              })
             )
           );
         }),
@@ -147,7 +174,9 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   }
 
   private handleSelectionChange(selection: LynxInsightRange | undefined, insights: LynxInsight[]): void {
-    if (this.overlayService.isOpen) {
+    // Null selection happens when changing chapters,
+    // which could be due to lynx panel nav, so don't update display state.
+    if (selection == null || this.overlayService.isOpen) {
       return;
     }
 
