@@ -11,7 +11,6 @@ import { BehaviorSubject, firstValueFrom, map, Observable, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -34,6 +33,7 @@ import { DraftHandlingService } from '../draft-handling.service';
 
 export interface BookWithDraft {
   bookNumber: number;
+  bookId: string;
   canEdit: boolean;
   chaptersWithDrafts: number[];
   draftApplied: boolean;
@@ -61,6 +61,7 @@ export class DraftPreviewBooksComponent {
         draftBooks = projectDoc.data.texts
           .map(text => ({
             bookNumber: text.bookNum,
+            bookId: Canon.bookNumberToId(text.bookNum),
             canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
             chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
             draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
@@ -75,6 +76,7 @@ export class DraftPreviewBooksComponent {
             const text: TextInfo | undefined = projectDoc.data?.texts.find(t => t.bookNum === bookNum);
             return {
               bookNumber: bookNum,
+              bookId: Canon.bookNumberToId(bookNum),
               canEdit: text?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write,
               chaptersWithDrafts: text?.chapters?.map(ch => ch.number) ?? [],
               draftApplied: text?.chapters?.filter(ch => ch.hasDraft).every(ch => ch.draftApplied) ?? false
@@ -101,7 +103,6 @@ export class DraftPreviewBooksComponent {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly projectService: SFProjectService,
-    private readonly i18n: I18nService,
     private readonly userService: UserService,
     private readonly draftHandlingService: DraftHandlingService,
     private readonly dialogService: DialogService,
@@ -114,22 +115,8 @@ export class DraftPreviewBooksComponent {
     return this.chaptersApplied.length;
   }
 
-  linkForBookAndChapter(bookNumber: number, chapterNumber: number): string[] {
-    return [
-      '/projects',
-      this.activatedProjectService.projectId!,
-      'translate',
-      this.bookNumberToBookId(bookNumber),
-      chapterNumber.toString()
-    ];
-  }
-
-  bookNumberToBookId(bookNumber: number): string {
-    return Canon.bookNumberToId(bookNumber);
-  }
-
-  bookNumberToName(bookNumber: number): string {
-    return this.i18n.localizeBook(bookNumber);
+  linkForBookAndChapter(bookId: string, chapterNumber: number): string[] {
+    return ['/projects', this.activatedProjectService.projectId!, 'translate', bookId, chapterNumber.toString()];
   }
 
   async chooseProjectToAddDraft(bookWithDraft: BookWithDraft, paratextId?: string): Promise<void> {
@@ -197,7 +184,7 @@ export class DraftPreviewBooksComponent {
   }
 
   navigate(book: BookWithDraft): void {
-    this.router.navigate(this.linkForBookAndChapter(book.bookNumber, book.chaptersWithDrafts[0]), {
+    this.router.navigate(this.linkForBookAndChapter(book.bookId, book.chaptersWithDrafts[0]), {
       queryParams: { 'draft-active': true, 'draft-timestamp': this.build?.additionalInfo?.dateGenerated }
     });
   }

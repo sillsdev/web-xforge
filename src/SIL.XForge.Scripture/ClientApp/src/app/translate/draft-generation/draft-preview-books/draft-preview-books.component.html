@@ -1,12 +1,12 @@
 <ng-container *transloco="let t; read: 'draft_preview_books'">
-  @for (book of booksWithDrafts$ | async; track book.bookNumber) {
+  @for (book of booksWithDrafts$ | async; track book.bookId) {
     <mat-button-toggle-group
       class="draft-book-option"
       [disabled]="book.chaptersWithDrafts.length === 0"
       (change)="$event.source.checked = false"
     >
       <mat-button-toggle class="book-name" (click)="navigate(book)">
-        {{ bookNumberToName(book.bookNumber) }}
+        {{ "canon.book_names." + book.bookId | transloco }}
       </mat-button-toggle>
       <mat-button-toggle class="book-more" [mat-menu-trigger-for]="menu">
         <mat-icon>more_vert</mat-icon>
