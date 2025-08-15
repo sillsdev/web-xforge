@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -18,53 +17,58 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         string? projectId,
         EventScope[]? scopes,
         string[]? eventTypes,
+        DateTime? fromDate = null,
         int pageIndex = 0,
         int pageSize = int.MaxValue
     )
     {
-        // Do not allow querying of event metrics without a project identifier
-        if (projectId is null)
-        {
-            return new QueryResults<EventMetric> { Results = [], UnpagedCount = 0 };
-        }
+        // Build the query incrementally
+        var query = eventMetrics.Query();
 
-        // Build the filter expression for the query
-        Expression<Func<EventMetric, bool>> filter;
-        if (scopes is not null && eventTypes is not null)
+        if (projectId is not null)
         {
-            filter = m => m.ProjectId == projectId && scopes.Contains(m.Scope) && eventTypes.Contains(m.EventType);
-        }
-        else if (scopes is not null)
-        {
-            filter = m => m.ProjectId == projectId && scopes.Contains(m.Scope);
-        }
-        else if (eventTypes is not null)
-        {
-            filter = m => m.ProjectId == projectId && eventTypes.Contains(m.EventType);
+            query = query.Where(m => m.ProjectId == projectId);
         }
         else
         {
-            filter = m => m.ProjectId == projectId;
+            query = query.Where(m => m.ProjectId != null);
         }
+
+        if (scopes is not null)
+        {
+            query = query.Where(m => scopes.Contains(m.Scope));
+        }
+
+        if (eventTypes is not null)
+        {
+            query = query.Where(m => eventTypes.Contains(m.EventType));
+        }
+
+        if (fromDate.HasValue)
+        {
+            DateTime from = fromDate.Value;
+            query = query.Where(m => m.TimeStamp >= from);
+        }
+
+        var orderedQuery = query.OrderByDescending(m => m.TimeStamp);
 
         // See if we are paginating the results
         List<EventMetric> results;
         long unpagedCount;
         if (pageIndex == 0 && pageSize == int.MaxValue)
         {
-            results = await eventMetrics.Query().Where(filter).OrderByDescending(m => m.TimeStamp).ToListAsync();
+            results = await orderedQuery.ToListAsync();
             unpagedCount = results.Count;
         }
         else
         {
-            results = await eventMetrics
-                .Query()
-                .Where(filter)
-                .OrderByDescending(m => m.TimeStamp)
-                .Skip(pageIndex * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-            unpagedCount = await eventMetrics.CountDocumentsAsync(filter);
+            // Execute count and paged results
+            var countTask = query.CountAsync();
+            var resultsTask = orderedQuery.Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+
+            await Task.WhenAll(countTask, resultsTask);
+            unpagedCount = countTask.Result;
+            results = resultsTask.Result;
         }
 
         return new QueryResults<EventMetric> { Results = results, UnpagedCount = unpagedCount };

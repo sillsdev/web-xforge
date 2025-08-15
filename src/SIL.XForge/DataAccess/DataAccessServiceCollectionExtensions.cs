@@ -90,6 +90,12 @@ public static class DataAccessServiceCollectionExtensions
                         Builders<EventMetric>.IndexKeys.Ascending(em => em.EventType)
                     )
                 ),
+                new CreateIndexModel<EventMetric>(
+                    Builders<EventMetric>.IndexKeys.Combine(
+                        Builders<EventMetric>.IndexKeys.Ascending(em => em.Scope),
+                        Builders<EventMetric>.IndexKeys.Ascending(em => em.TimeStamp)
+                    )
+                ),
             ]
         );
     }

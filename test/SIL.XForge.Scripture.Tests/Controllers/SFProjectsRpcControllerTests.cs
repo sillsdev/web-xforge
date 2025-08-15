@@ -173,11 +173,27 @@ public class SFProjectsRpcControllerTests
         const int pageSize = 10;
 
         // SUT
-        var result = await env.Controller.EventMetrics(Project01, pageIndex, pageSize);
+        var result = await env.Controller.EventMetrics(
+            Project01,
+            scopes: null,
+            eventTypes: null,
+            fromDate: null,
+            pageIndex,
+            pageSize
+        );
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
         await env
             .SFProjectService.Received()
-            .GetEventMetricsAsync(User01, Roles, Project01, scopes: null, eventTypes: null, pageIndex, pageSize);
+            .GetEventMetricsAsync(
+                User01,
+                Roles,
+                Project01,
+                scopes: null,
+                eventTypes: null,
+                fromDate: null,
+                pageIndex,
+                pageSize
+            );
     }
 
     [Test]
@@ -192,13 +208,21 @@ public class SFProjectsRpcControllerTests
                 Project01,
                 scopes: null,
                 eventTypes: null,
+                fromDate: null,
                 pageIndex,
                 pageSize
             )
             .Throws(new ForbiddenException());
 
         // SUT
-        var result = await env.Controller.EventMetrics(Project01, pageIndex, pageSize);
+        var result = await env.Controller.EventMetrics(
+            Project01,
+            scopes: null,
+            eventTypes: null,
+            fromDate: null,
+            pageIndex,
+            pageSize
+        );
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
@@ -216,13 +240,21 @@ public class SFProjectsRpcControllerTests
                 Project01,
                 scopes: null,
                 eventTypes: null,
+                fromDate: null,
                 pageIndex,
                 pageSize
             )
             .Throws(new FormatException(errorMessage));
 
         // SUT
-        var result = await env.Controller.EventMetrics(Project01, pageIndex, pageSize);
+        var result = await env.Controller.EventMetrics(
+            Project01,
+            scopes: null,
+            eventTypes: null,
+            fromDate: null,
+            pageIndex,
+            pageSize
+        );
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
     }
@@ -240,13 +272,21 @@ public class SFProjectsRpcControllerTests
                 Project01,
                 scopes: null,
                 eventTypes: null,
+                fromDate: null,
                 pageIndex,
                 pageSize
             )
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
-        var result = await env.Controller.EventMetrics(Project01, pageIndex, pageSize);
+        var result = await env.Controller.EventMetrics(
+            Project01,
+            scopes: null,
+            eventTypes: null,
+            fromDate: null,
+            pageIndex,
+            pageSize
+        );
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
         Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
@@ -264,13 +304,16 @@ public class SFProjectsRpcControllerTests
                 Project01,
                 scopes: null,
                 eventTypes: null,
+                fromDate: null,
                 pageIndex,
                 pageSize
             )
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.EventMetrics(Project01, pageIndex, pageSize));
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.EventMetrics(Project01, scopes: null, eventTypes: null, fromDate: null, pageIndex, pageSize)
+        );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 

@@ -12,6 +12,7 @@ public interface IEventMetricService
         string? projectId,
         EventScope[]? scopes,
         string[]? eventTypes,
+        DateTime? fromDate = null,
         int pageIndex = 0,
         int pageSize = int.MaxValue
     );

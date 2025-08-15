@@ -5,3 +5,10 @@ mat-form-field {
 .no-projects-label {
   padding-top: 14px;
 }
+
+.draft-jobs-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}

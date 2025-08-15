@@ -1,0 +1,144 @@
+@if (isOnline) {
+  @if (!isLoading) {
+    <div class="filter-controls">
+      <mat-form-field>
+        <mat-label>Time Period</mat-label>
+        <mat-select [(value)]="daysBack">
+          @for (option of dayOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (currentProjectFilter) {
+      <app-notice icon="filter_alt" mode="fill-dark">
+        Showing draft jobs for project <strong>{{ filteredProjectName || currentProjectFilter }}</strong
+        >.
+      </app-notice>
+    }
+
+    @if (rows.length > 0) {
+      <div class="table-wrapper">
+        <table mat-table id="draft-jobs-table" [dataSource]="rows">
+          <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+          <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <div
+                class="status-cell"
+                matTooltip="Broken does not indicate failure, but that the sequence of events is not creating a coherent picture."
+                [matTooltipDisabled]="row.job.status !== 'broken'"
+              >
+                <mat-icon
+                  class="status-icon"
+                  [class.successful]="row.job.status === 'success'"
+                  [class.failed]="row.job.status === 'failed'"
+                  [class.running]="row.job.status === 'running'"
+                  [class.cancelled]="row.job.status === 'cancelled'"
+                  [class.broken]="row.job.status === 'broken'"
+                >
+                  @if (row.job.status === "success") {
+                    check_circle
+                  } @else if (row.job.status === "failed") {
+                    error
+                  } @else if (row.job.status === "running") {
+                    schedule
+                  } @else if (row.job.status === "cancelled") {
+                    cancel
+                  } @else if (row.job.status === "broken") {
+                    warning
+                  }
+                </mat-icon>
+                <span>{{ row.status }}</span>
+              </div>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="projectId">
+            <th mat-header-cell *matHeaderCellDef>Project</th>
+            <td mat-cell *matCellDef="let row">
+              @if (!row.projectDeleted) {
+                <a [routerLink]="['/serval-administration', row.projectId]">{{ row.projectName || "Unknown" }}</a>
+              } @else {
+                <div class="deleted-project">
+                  <mat-icon class="deleted-project-icon" matTooltip="Project has been deleted">delete</mat-icon>
+                  <span>{{ row.projectId }}</span>
+                </div>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="trainingBooks">
+            <th mat-header-cell *matHeaderCellDef>Training Books</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.trainingBooksTooltip) {
+                <span [matTooltip]="row.trainingBooksTooltip">{{ row.trainingBooks }}</span>
+              } @else {
+                {{ row.trainingBooks }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="translationBooks">
+            <th mat-header-cell *matHeaderCellDef>Translation Books</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.translationBooksTooltip) {
+                <span [matTooltip]="row.translationBooksTooltip">{{ row.translationBooks }}</span>
+              } @else {
+                {{ row.translationBooks }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="startTime">
+            <th mat-header-cell *matHeaderCellDef>Start Time</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.startTimeStamp }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="duration">
+            <th mat-header-cell *matHeaderCellDef>Duration</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.job.status === "running") {
+                <span class="running-text">In progress</span>
+              } @else if (row.durationTooltip) {
+                <span [matTooltip]="row.durationTooltip">{{ row.duration || "Not available" }}</span>
+              } @else {
+                {{ row.duration || "Not available" }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="author">
+            <th mat-header-cell *matHeaderCellDef>Author</th>
+            <td mat-cell *matCellDef="let row">
+              <app-owner
+                [ownerRef]="row.userId"
+                [includeAvatar]="true"
+                [dateTime]="row.startTimeStamp"
+                [showTimeZone]="true"
+              ></app-owner>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="buildId">
+            <th mat-header-cell *matHeaderCellDef>Build ID & ClearML link</th>
+            <td mat-cell *matCellDef="let row">
+              <a [href]="row.clearmlUrl" target="_blank" rel="noopener noreferrer" matTooltip="Open in ClearML">
+                {{ row.job.buildId }}
+              </a>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="details">
+            <th mat-header-cell *matHeaderCellDef>Events</th>
+            <td mat-cell *matCellDef="let row">
+              <button mat-stroked-button (click)="openDetailsDialog(row.job)" color="primary" class="details-button">
+                <mat-icon class="mirror-rtl">list</mat-icon> Events
+              </button>
+            </td>
+          </ng-container>
+        </table>
+      </div>
+    } @else if (rows.length === 0) {
+      <p>No draft jobs found for the selected time period.</p>
+    }
+  }
+} @else {
+  <p>You are offline.</p>
+}

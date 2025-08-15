@@ -1,4 +1,13 @@
 <app-mobile-not-supported></app-mobile-not-supported>
-<h1>Serval Administration</h1>
+<div class="body-content">
+  <h1>Serval Administration</h1>
 
-<app-serval-projects></app-serval-projects>
+  <mat-tab-group [selectedIndex]="selectedTabIndex" (selectedIndexChange)="onTabChange($event)">
+    <mat-tab label="Projects">
+      <app-serval-projects></app-serval-projects>
+    </mat-tab>
+    <mat-tab label="Draft Jobs">
+      <app-draft-jobs></app-draft-jobs>
+    </mat-tab>
+  </mat-tab-group>
+</div>

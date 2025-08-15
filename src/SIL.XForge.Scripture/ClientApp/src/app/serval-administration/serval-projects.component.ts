@@ -1,4 +1,5 @@
 import { Component, DestroyRef, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -68,7 +69,7 @@ class Row {
   imports: [UICommonModule]
 })
 export class ServalProjectsComponent extends DataLoadingComponent implements OnInit {
-  columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'draftingSource', 'trainingSource'];
+  columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'draftingSource', 'trainingSource', 'actions'];
   rows: Row[] = [];
 
   length: number = 0;
@@ -83,6 +84,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
+    private readonly router: Router,
     private readonly servalAdministrationService: ServalAdministrationService,
     private destroyRef: DestroyRef
   ) {
@@ -122,6 +124,15 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
     this.queryParameters$.next(this.getQueryParameters());
+  }
+
+  viewDraftJobs(projectId: string): void {
+    this.router.navigate(['/serval-administration'], {
+      queryParams: {
+        projectId,
+        tab: 'draft-jobs'
+      }
+    });
   }
 
   private generateRows(): void {

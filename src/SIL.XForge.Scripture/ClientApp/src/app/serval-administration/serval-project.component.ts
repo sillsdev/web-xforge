@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -83,6 +84,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
+    private readonly router: Router,
     private readonly servalAdministrationService: ServalAdministrationService,
     private destroyRef: DestroyRef
   ) {
@@ -259,6 +261,15 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   async retrievePreTranslationStatus(): Promise<void> {
     await this.servalAdministrationService.onlineRetrievePreTranslationStatus(this.activatedProjectService.projectId!);
     await this.noticeService.show('Webhook job started.');
+  }
+
+  navigateToDraftJobs(): void {
+    this.router.navigate(['/serval-administration'], {
+      queryParams: {
+        projectId: this.activatedProjectService.projectId!,
+        tab: 'draft-jobs'
+      }
+    });
   }
 
   keys(obj: Object): string[] {
