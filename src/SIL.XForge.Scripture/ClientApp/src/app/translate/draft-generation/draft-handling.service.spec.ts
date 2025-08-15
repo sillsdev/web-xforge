@@ -387,7 +387,7 @@ describe('DraftHandlingService', () => {
         { insert: { verse: { number: 1 } } },
         { insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }
       ];
-      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
+      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
       await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
       verify(
@@ -419,7 +419,7 @@ describe('DraftHandlingService', () => {
           anything()
         )
       ).thenReturn(of(draft));
-      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
+      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
       const result: string | undefined = await service.getAndApplyDraftAsync(
         mockedSFProject.data!,
         textDocId,
@@ -449,9 +449,15 @@ describe('DraftHandlingService', () => {
       const textDocId = new TextDocId('project01', 1, 1);
       const draft: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
       when(
-        mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything(), anything())
+        mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything()
+        )
       ).thenReturn(of(draft));
-      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(false);
+      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(false);
       const result: string | undefined = await service.getAndApplyDraftAsync(
         mockedSFProject.data!,
         textDocId,
@@ -459,7 +465,9 @@ describe('DraftHandlingService', () => {
         undefined
       );
       expect(result).not.toBe(undefined);
-      verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined)).never();
+      verify(
+        mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1, undefined, undefined)
+      ).never();
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).never();
     });
 
@@ -476,7 +484,7 @@ describe('DraftHandlingService', () => {
         )
       ).thenReturn(throwError(() => ({ status: 405 })));
       when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of(draft));
-      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
+      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
       const result: string | undefined = await service.getAndApplyDraftAsync(
         mockedSFProject.data!,
         textDocId,
@@ -506,7 +514,7 @@ describe('DraftHandlingService', () => {
           anything()
         )
       ).thenReturn(of(draft));
-      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
+      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
       when(
         mockedProjectService.onlineSetDraftApplied(anything(), anything(), anything(), anything(), anything())
       ).thenReturn(Promise.reject(new Error('Failed')));
@@ -535,7 +543,7 @@ describe('DraftHandlingService', () => {
 
     it('should return false if applying a draft fails at getting the draft', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
-      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
+      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
       when(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
           anything(),
