@@ -165,7 +165,7 @@ export class DraftPreviewBooksComponent {
     await this.applyBookDraftAsync(bookWithDraft, result.projectId);
   }
 
-  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, projectId: string): Promise<void> {
+  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, targetProjectId: string): Promise<void> {
     this.applyChapters = bookWithDraft.chaptersWithDrafts;
     this.draftApplyBookNum = bookWithDraft.bookNumber;
     this.chaptersApplied = [];
@@ -173,11 +173,11 @@ export class DraftPreviewBooksComponent {
     this.updateProgress();
 
     const promises: Promise<string | undefined>[] = [];
-    const project: SFProjectProfile = this.activatedProjectService.projectDoc!.data!;
+    const targetProject = (await this.projectService.getProfile(targetProjectId)).data!;
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
       const draftTextDocId = new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter);
-      const targetTextDocId = new TextDocId(projectId, bookWithDraft.bookNumber, chapter);
-      promises.push(this.applyAndReportChapter(project, draftTextDocId, targetTextDocId));
+      const targetTextDocId = new TextDocId(targetProjectId, bookWithDraft.bookNumber, chapter);
+      promises.push(this.applyAndReportChapter(targetProject, draftTextDocId, targetTextDocId));
     }
 
     try {
