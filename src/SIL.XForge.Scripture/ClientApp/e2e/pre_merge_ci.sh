@@ -39,11 +39,10 @@ function shutDownServer() {
   kill -KILL "${pid}" 2>/dev/null
 }
 
-DOTNET_LOG=""
-
 function startServer() {
   cd "${SCRIPT_DIR}/../.."
-  DOTNET_LOG="$(mktemp)"
+  mkdir -p ./ClientApp/e2e/test_output/ci_e2e_test_results
+  DOTNET_LOG="./ClientApp/e2e/test_output/ci_e2e_test_results/dotnet.txt"
   output "Logging dotnet output to ${DOTNET_LOG}"
   export ASPNETCORE_ENVIRONMENT="Development"
   nohup dotnet run &>"${DOTNET_LOG}" &
