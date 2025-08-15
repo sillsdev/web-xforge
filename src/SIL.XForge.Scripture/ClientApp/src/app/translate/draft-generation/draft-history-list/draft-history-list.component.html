@@ -8,10 +8,15 @@
     />
   }
 
-  @if (historicalBuilds.length > 0) {
+  @if (savedHistoricalBuilds.length > 0) {
     <h2>{{ t("previously_generated_drafts") }}</h2>
-    @for (entry of historicalBuilds; track entry.id) {
+    @for (entry of savedHistoricalBuilds; track entry.id) {
       <app-draft-history-entry [entry]="entry" />
     }
+  }
+  @if (showOlderDraftsNotSupportedWarning && nonActiveBuilds.length > 0) {
+    <app-notice [icon]="'summarize'" class="older-drafts">{{
+      t("older_drafts_not_available", { date: draftHistoryCutOffDateFormatted })
+    }}</app-notice>
   }
 </ng-container>
