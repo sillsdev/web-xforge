@@ -19,7 +19,7 @@
       },
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-builders/custom-webpack:browser",
           "options": {
             "outputPath": "dist",
             "index": "src/index.html",
@@ -64,7 +64,10 @@
             "sourceMap": true,
             "optimization": false,
             "namedChunks": true,
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            "webWorkerTsConfig": "tsconfig.worker.json",
+            "customWebpackConfig": {
+              "path": "./webpack.config.js"
+            }
           },
           "configurations": {
             "production": {
