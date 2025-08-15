@@ -218,19 +218,19 @@ export class DraftHandlingService {
 
   /**
    * Retrieves and applies the draft to the text document.
-   * @param project The project profile.
+   * @param targetProject The project profile.
    * @param draftTextDocId The text doc identifier of the draft of a chapter.
    * @param targetTextDocId The text doc identifier to apply the draft to.
    * @returns True if the draft was successfully applied, false if the draft was not applied i.e. the draft
    * was in the legacy USFM format.
    */
   async getAndApplyDraftAsync(
-    project: SFProjectProfile,
+    targetProject: SFProjectProfile,
     draftTextDocId: TextDocId,
     targetTextDocId: TextDocId,
     timestamp?: Date
   ): Promise<string | undefined> {
-    if (!this.textDocService.canEdit(project, draftTextDocId.bookNum, draftTextDocId.chapterNum)) {
+    if (!this.textDocService.canRestore(targetProject, targetTextDocId.bookNum, targetTextDocId.chapterNum)) {
       return this.i18n.translateStatic('draft_apply_progress-dialog.fail_cannot_edit');
     }
 
