@@ -37,20 +37,18 @@
         </mat-card>
         <mat-card class="options">
           <mat-card-header>
-            <mat-card-title>Quote style <small>[coming soon]</small></mat-card-title>
+            <mat-card-title>{{ t("quote_style_title") }} <small>[coming soon]</small></mat-card-title>
           </mat-card-header>
           <mat-card-content class="format-options">
-            Choose how quotes should appear in the draft.
+            <span>{{ t("quote_style_description") }}</span>
             <mat-radio-group formControlName="quoteFormat">
-              <mat-radio-button [value]="quoteStyleFormat.Automatic">
-                Automatic quote style <span class="new">{{ t("new") }}</span>
-                <span class="description">
-                  Use the same quote style as the rest of the project, if possible. Recommended for most projects.
-                </span>
+              <mat-radio-button [value]="quoteStyle.Automatic">
+                {{ t("quote_style_automatic") }} <span class="new">{{ t("new") }}</span>
+                <span class="description">{{ t("quote_style_automatic_description") }}</span>
               </mat-radio-button>
-              <mat-radio-button [value]="quoteStyleFormat.Straight">
-                Straight quotes
-                <span class="description"> Use only straight quotes in the draft.</span>
+              <mat-radio-button [value]="quoteStyle.Straight">
+                {{ t("quote_style_straight") }}
+                <span class="description">{{ t("quote_style_straight_description") }}</span>
               </mat-radio-button>
             </mat-radio-group>
           </mat-card-content>
