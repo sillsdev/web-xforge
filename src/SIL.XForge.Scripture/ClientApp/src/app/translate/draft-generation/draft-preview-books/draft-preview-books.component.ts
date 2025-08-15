@@ -97,7 +97,7 @@ export class DraftPreviewBooksComponent {
   private applyChapters: number[] = [];
   private draftApplyBookNum: number = 0;
   private chaptersApplied: number[] = [];
-  private errorMessages: string[] = [];
+  private errorMessages: { chapter: number; message: string }[] = [];
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -223,25 +223,67 @@ export class DraftPreviewBooksComponent {
     return await this.draftHandlingService
       .getAndApplyDraftAsync(project, draftTextDocId, targetTextDocId, timestamp)
       .then(result => {
-        const errorMessage = result !== undefined ? targetTextDocId.chapterNum + ': ' + result : undefined;
-        this.updateProgress(result === undefined ? targetTextDocId.chapterNum : undefined, undefined, errorMessage);
+        this.updateProgress(
+          result === undefined ? targetTextDocId.chapterNum : undefined,
+          undefined,
+          result === undefined ? undefined : { chapter: targetTextDocId.chapterNum, message: result }
+        );
         return result;
       });
   }
 
-  private updateProgress(bookCompleted?: number, completed?: boolean, errorMessage?: string): void {
+  private updateProgress(
+    bookCompleted?: number,
+    completed?: boolean,
+    error?: { chapter: number; message: string }
+  ): void {
     if (bookCompleted != null) {
       this.chaptersApplied.push(bookCompleted);
     }
-    if (errorMessage != null) {
-      this.errorMessages.push(errorMessage);
+    if (error != null) {
+      this.errorMessages.push(error);
+      this.errorMessages.sort((a, b) => a.chapter - b.chapter);
     }
+
     this.draftApplyProgress$.next({
       bookNum: this.draftApplyBookNum,
       chapters: this.applyChapters,
       chaptersApplied: this.chaptersApplied,
       completed: !!completed ? completed : this.chaptersApplied.length === this.applyChapters.length,
-      errorMessages: this.errorMessages
+      errorMessages: DraftPreviewBooksComponent.combineErrorMessages(this.errorMessages)
     });
+  }
+
+  private static combineErrorMessages(errorMessages: { chapter: number; message: string }[]): string[] {
+    const formattedErrors: string[] = [];
+    if (errorMessages.length > 0) {
+      let rangeStart = errorMessages[0].chapter;
+      let currentMessage = errorMessages[0].message;
+
+      for (let i = 1; i < errorMessages.length; i++) {
+        const prevChapter = errorMessages[i - 1].chapter;
+        const currentChapter = errorMessages[i].chapter;
+        const message = errorMessages[i].message;
+
+        if (message !== currentMessage || currentChapter !== prevChapter + 1) {
+          const rangeEnd = errorMessages[i - 1].chapter;
+          if (rangeStart === rangeEnd) {
+            formattedErrors.push(`${rangeStart}: ${currentMessage}`);
+          } else {
+            formattedErrors.push(`${rangeStart}-${rangeEnd}: ${currentMessage}`);
+          }
+          rangeStart = currentChapter;
+          currentMessage = message;
+        }
+      }
+
+      const lastError = errorMessages[errorMessages.length - 1];
+      if (rangeStart === lastError.chapter) {
+        formattedErrors.push(`${rangeStart}: ${currentMessage}`);
+      } else {
+        formattedErrors.push(`${rangeStart}-${lastError.chapter}: ${currentMessage}`);
+      }
+    }
+    return formattedErrors;
   }
 }
