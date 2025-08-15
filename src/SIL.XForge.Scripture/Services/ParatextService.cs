@@ -126,7 +126,9 @@ public class ParatextService : DisposableBase, IParatextService
         {
             _httpClientHandler.ServerCertificateCustomValidationCallback =
                 HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-            _dblServerUri = "https://pt-resources-adapter.staging.library.bible/";
+            // This should be paratext-qa.thedigitalbiblelibrary.org, but it's broken as of 2021-04 and
+            // qa.thedigitalbiblelibrary.org should be just as good, at least for the time being.
+            _dblServerUri = "https://qa.thedigitalbiblelibrary.org/";
             _registryServerUri = "https://registry-dev.paratext.org";
             _registryClient.BaseAddress = new Uri(_registryServerUri);
             _sendReceiveServerUri = InternetAccess.uriDevelopment;
