@@ -1,0 +1,72 @@
+@use 'src/variables' as sfColors;
+
+.table-wrapper {
+  overflow-x: auto;
+  display: block;
+}
+
+app-owner,
+.details-button {
+  white-space: nowrap;
+}
+
+.status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.status-icon.successful {
+  color: sfColors.$greenDark;
+}
+
+.status-icon.failed {
+  color: sfColors.$red;
+}
+
+.status-icon.running {
+  color: sfColors.$orange;
+}
+
+.status-icon.cancelled {
+  color: sfColors.$greyLight;
+}
+
+.status-icon.broken {
+  color: sfColors.$orange;
+}
+
+.running-text {
+  color: sfColors.$orange;
+  font-style: italic;
+}
+
+.deleted-project-icon {
+  color: sfColors.$greyLight;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.deleted-project {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-top: 8px; // Add top padding to prevent cutoff
+
+  mat-form-field {
+    min-width: 150px;
+  }
+}
