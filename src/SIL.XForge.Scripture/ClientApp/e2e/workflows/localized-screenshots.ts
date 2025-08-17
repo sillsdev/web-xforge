@@ -156,10 +156,12 @@ export async function localizedScreenshots(
   async function forEachLocale(callback: (localeCode: string) => Promise<void>): Promise<void> {
     for (let i = 0; i < preset.locales.length; i++) {
       const localeCode = preset.locales[i];
+      // Only switch the language if not already on the default
       if (i !== 0) await switchLanguage(page, localeCode);
       await callback(localeCode);
     }
-    await switchLanguage(page, 'en');
+    // Only switch back to the default language if there was another locale to switch to
+    if (preset.locales.length > 1) await switchLanguage(page, 'en');
   }
 
   await forEachLocale(async locale => {
@@ -395,9 +397,10 @@ export async function localizedScreenshots(
   await expect(page.getByText('Your draft is ready')).toBeVisible({ timeout: 180_000 });
   await page.reload();
   await installMouseFollower(page);
-  // Wait for the draft status to start updating
+  // When the page first loads it will say "Your draft is ready", but then switch to saying it's finishing. Wait for a
+  // few seconds for it to no longer say "Your draft is ready", and then wait for it to say it's ready again
   await page.waitForTimeout(5_000);
-  await expect(page.getByText('Your draft is ready')).toBeVisible();
+  await expect(page.getByText('Your draft is ready')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText('No books have any drafts')).not.toBeVisible();
   await expect(page.getByText('Draft is finishing')).not.toBeVisible();
 
