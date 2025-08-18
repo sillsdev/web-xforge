@@ -46,6 +46,7 @@ using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using StringUtils = SIL.XForge.Utils.StringUtils;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -2415,6 +2416,12 @@ public class ParatextService : DisposableBase, IParatextService
                 isDraftingEnabled
                 && correspondingSfProject?.Texts.Any(t => t.Chapters.Any(c => c.HasDraft == true)) == true;
 
+            // Determine if the project has an update pending
+            bool hasUpdate =
+                correspondingSfProject?.Sync.SyncedToRepositoryVersion != null
+                && StringUtils.ConvertToTipId(correspondingSfProject.Sync.SyncedToRepositoryVersion)
+                    != remotePtProject.TipId;
+
             paratextProjects.Add(
                 new ParatextProject
                 {
@@ -2430,6 +2437,7 @@ public class ParatextService : DisposableBase, IParatextService
                     IsDraftingEnabled = isDraftingEnabled,
                     HasDraft = hasDraft,
                     HasUserRoleChanged = hasUserRoleChanged,
+                    HasUpdate = hasUpdate,
                 }
             );
         }

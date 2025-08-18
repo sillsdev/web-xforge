@@ -18,6 +18,15 @@ public static class StringUtils
     }
 
     /// <summary>
+    /// Converts a revision id (usually from Mongo or Mercurial) to a tip id.
+    /// </summary>
+    /// <param name="revision">The revision version.</param>
+    /// <returns>
+    /// The revision in a format that can be compared with a tip id from the data access server.
+    /// </returns>
+    public static string ConvertToTipId(string revision) => $"{(revision.Length > 12 ? revision[..12] : revision)} tip";
+
+    /// <summary>
     /// Sanitizes a string for logging.
     /// </summary>
     /// <param name="value">The string value.</param>
