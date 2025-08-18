@@ -1324,26 +1324,26 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             await UpdatePermissionsAsync(userDoc.Id, projectDoc);
         }
 
-        // Add to the source project, if required
-        string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
-        string sourceParatextId = projectDoc.Data.TranslateConfig.Source?.ParatextId;
-        if (!string.IsNullOrWhiteSpace(sourceProjectId) && !string.IsNullOrWhiteSpace(sourceParatextId))
-        {
-            // Load the source project role from MongoDB
-            IDocument<SFProject> sourceProjectDoc = await TryGetProjectDocAsync(sourceProjectId, conn);
-            if (sourceProjectDoc == null)
-                return;
-            if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
-            {
-                // Not found in Mongo, so load the project role from Paratext
-                Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
-                if (attempt.TryResult(out string sourceProjectRole))
-                {
-                    // If they are in Paratext, add the user to the source project
-                    await AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole, shareKey);
-                }
-            }
-        }
+        // Add to the source projects, if required
+        await AddUserToSourceProjectAsync(conn, projectDoc.Data.TranslateConfig.Source, userDoc, shareKey);
+        await AddUserToSourceProjectAsync(
+            conn,
+            projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource,
+            userDoc,
+            shareKey
+        );
+        await AddUserToSourceProjectAsync(
+            conn,
+            projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource,
+            userDoc,
+            shareKey
+        );
+        await AddUserToSourceProjectAsync(
+            conn,
+            projectDoc.Data.TranslateConfig.DraftConfig.AdditionalTrainingSource,
+            userDoc,
+            shareKey
+        );
     }
 
     /// <summary>
@@ -1857,7 +1857,35 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         return Attempt.Failure(ProjectRole.None);
     }
 
-    private async Task<IDocument<SFProject>> TryGetProjectDocAsync(string projectId, IConnection conn)
+    private async Task AddUserToSourceProjectAsync(
+        IConnection conn,
+        TranslateSource? source,
+        IDocument<User> userDoc,
+        string? shareKey = null
+    )
+    {
+        if (!string.IsNullOrWhiteSpace(source?.ProjectRef) && !string.IsNullOrWhiteSpace(source?.ParatextId))
+        {
+            // Load the source project role from MongoDB
+            IDocument<SFProject> sourceProjectDoc = await TryGetProjectDocAsync(source.ProjectRef, conn);
+            if (
+                sourceProjectDoc is not null
+                && sourceProjectDoc.IsLoaded
+                && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id)
+            )
+            {
+                // Not found in Mongo, so load the project role from Paratext
+                Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
+                if (attempt.TryResult(out string sourceProjectRole))
+                {
+                    // If they are in Paratext, add the user to the source project
+                    await AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole, shareKey);
+                }
+            }
+        }
+    }
+
+    private async Task<IDocument<SFProject>?> TryGetProjectDocAsync(string projectId, IConnection conn)
     {
         try
         {
