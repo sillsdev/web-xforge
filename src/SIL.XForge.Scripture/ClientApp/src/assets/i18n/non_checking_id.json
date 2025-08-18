@@ -417,15 +417,25 @@
   },
   "event_metrics": {
     "author": "Penulis",
+    "duration": "Duration",
     "event": "Acara",
     "event_log": "Catatan acara",
     "failed": "Gagal",
+    "finish_time": "Finish Time",
+    "in_progress": "In progress",
+    "not_available": "N/A",
+    "not_finished": "Not finished",
     "not_found": "Tidak ditemukan entri catatan.",
     "offline": "Fitur ini tidak tersedia secara luring.",
+    "project": "Proyek",
     "scope": "Cakupan",
+    "site_wide_event_log": "Site-wide Draft Jobs",
+    "start_time": "Start Time",
     "status": "Status",
+    "still_running": "Still running",
     "successful": "Berhasil",
-    "technical_details": "Rincian teknis"
+    "technical_details": "Rincian teknis",
+    "unknown": "tidak diketahui"
   },
   "font_unsupported_message": {
     "change_font_or_contact_for_help": "Jika ini tidak memenuhi kebutuhan proyek ini, silakan pilih font yang berbeda dalam pengaturan proyek Paratext, atau { 1 }hubungi kami untuk mendapatkan bantuan.{ 2 }",

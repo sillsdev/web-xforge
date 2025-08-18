@@ -417,15 +417,25 @@
   },
   "event_metrics": {
     "author": "Auteur",
+    "duration": "Duration",
     "event": "Évènements",
     "event_log": "Journal des événements",
     "failed": "Échoué",
+    "finish_time": "Finish Time",
+    "in_progress": "In progress",
+    "not_available": "N/A",
+    "not_finished": "Not finished",
     "not_found": "Aucune entrée de journal trouvée.",
     "offline": "Cette fonction n'est pas disponible hors ligne.",
+    "project": "Projet",
     "scope": "Portée",
+    "site_wide_event_log": "Site-wide Draft Jobs",
+    "start_time": "Start Time",
     "status": "Statut",
+    "still_running": "Still running",
     "successful": "Opération réussie",
-    "technical_details": "Détails techniques"
+    "technical_details": "Détails techniques",
+    "unknown": "Inconnu"
   },
   "font_unsupported_message": {
     "change_font_or_contact_for_help": "Si cette police ne répond pas aux besoins de ce projet, veuillez sélectionner une autre police dans les paramètres du projet Paratext, ou { 1 }contactez-nous pour obtenir de l'aide.{ 2 }",

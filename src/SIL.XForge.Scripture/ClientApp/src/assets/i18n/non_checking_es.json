@@ -417,15 +417,25 @@
   },
   "event_metrics": {
     "author": "Autor",
+    "duration": "Duration",
     "event": "Evento",
     "event_log": "Registro de eventos",
     "failed": "Fallido",
+    "finish_time": "Finish Time",
+    "in_progress": "In progress",
+    "not_available": "N/A",
+    "not_finished": "Not finished",
     "not_found": "No se han encontrado entradas de registro.",
     "offline": "Esta función no está disponible sin conexión.",
+    "project": "Proyecto",
     "scope": "Ámbito",
+    "site_wide_event_log": "Site-wide Draft Jobs",
+    "start_time": "Start Time",
     "status": "Estado",
+    "still_running": "Still running",
     "successful": "Exitoso",
-    "technical_details": "Detalles técnicos"
+    "technical_details": "Detalles técnicos",
+    "unknown": "Desconocido"
   },
   "font_unsupported_message": {
     "change_font_or_contact_for_help": "Si esto no satisface las necesidades de este proyecto, seleccione un tipo de letra diferente en los ajustes del proyecto Paratext, o { 1 }póngase en contacto con nosotros para obtener ayuda.{ 2 }",
