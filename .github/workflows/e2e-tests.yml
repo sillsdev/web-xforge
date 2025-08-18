@@ -2,9 +2,6 @@ name: E2E Tests
 permissions: {}
 
 on:
-  pull_request:
-    branches:
-      - "e2e/**"
   merge_group:
   workflow_dispatch:
   schedule:
@@ -487,6 +484,8 @@ jobs:
         if: always()
         with:
           name: e2e-test-results
-          path: ./src/SIL.XForge.Scripture/ClientApp/e2e/test_output/ci_e2e_test_results/*.zip
-          # Don't fail if no zip files are found
+          path: |
+            ./src/SIL.XForge.Scripture/ClientApp/e2e/test_output/ci_e2e_test_results/*.zip
+            ./src/SIL.XForge.Scripture/ClientApp/e2e/test_output/ci_e2e_test_results/*.txt
+          # Don't fail if no files are found
           if-no-files-found: ignore
