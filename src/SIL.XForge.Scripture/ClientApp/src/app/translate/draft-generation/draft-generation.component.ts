@@ -158,7 +158,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get isGenerationSupported(): boolean {
-    return this.isPreviewSupported && this.canAccessDraftSourceIfAvailable(this.trainingSource);
+    return (
+      this.isPreviewSupported &&
+      this.canAccessDraftSourceIfAvailable(this.trainingSource) &&
+      this.canAccessDraftSourceIfAvailable(this.source) &&
+      this.canAccessDraftSourceIfAvailable(this.additionalTrainingSource)
+    );
   }
 
   get isPreviewSupported(): boolean {
