@@ -11,10 +11,12 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
@@ -28,12 +30,13 @@ describe('DraftGenerationStepsComponent', () => {
   let loader: HarnessLoader;
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
+  const mockDraftSourceService = mock(DraftSourcesService);
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockNllbLanguageService = mock(NllbLanguageService);
   const mockProgressService = mock(ProgressService);
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
-  const mockDraftSourceService = mock(DraftSourcesService);
+  const mockUserService = mock(UserService);
 
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
@@ -47,6 +50,7 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: ProgressService, useMock: mockProgressService },
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: NoticeService, useMock: mockNoticeService },
+      { provide: UserService, useMock: mockUserService },
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting()
     ]
@@ -657,11 +661,13 @@ describe('DraftGenerationStepsComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
+      const mockUserDoc: UserDoc = { data: { name: 'John', email: 'john@example.com' } } as UserDoc;
       when(mockDraftSourceService.getDraftProjectSources()).thenReturn(of(config));
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(mockTargetProjectDoc));
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(true));
+      when(mockUserService.getCurrentUser()).thenResolve(mockUserDoc);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       loader = TestbedHarnessEnvironment.loader(fixture);

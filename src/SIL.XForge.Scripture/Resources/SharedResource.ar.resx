@@ -201,16 +201,16 @@
     <value>المُستخدِم غير موجود.</value>
   </data>
   <data name="DraftCanceledEmailBody" xml:space="preserve">
-    <value>Your draft for project {0} was canceled.</value>
+    <value>Your draft for {0} was canceled.</value>
   </data>
   <data name="DraftEmailMoreInformation" xml:space="preserve">
     <value>For more information see {0}</value>
   </data>
   <data name="DraftFailedEmailBody" xml:space="preserve">
-    <value>Your draft for project {0} did not generate successfully.</value>
+    <value>Your draft for {0} did not generate successfully.</value>
   </data>
   <data name="DraftGeneratedEmailBody" xml:space="preserve">
-    <value>Your draft for project {0} was generated successfully.</value>
+    <value>Your draft for {0} was generated successfully.</value>
   </data>
   <data name="DraftGeneratedEmailSubject" xml:space="preserve">
     <value>{0} draft generated successfully</value>

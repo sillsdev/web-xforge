@@ -114,7 +114,7 @@ public class MachineApiService(
                 // Send the email if requested
                 if (buildConfig.SendEmailOnBuildFinished)
                 {
-                    // Get the user when requested the build
+                    // Get the user who requested the build
                     await using IConnection conn = await realtimeService.ConnectAsync(eventMetric.UserId);
                     IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
                     IDocument<User> userDoc = await conn.FetchAsync<User>(eventMetric.UserId);

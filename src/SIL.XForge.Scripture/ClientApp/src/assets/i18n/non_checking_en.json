@@ -237,7 +237,7 @@
     "configure_advanced_settings_header": "Advanced",
     "configure_advanced_settings_title": "Advanced settings",
     "confirm_codes_correct_to_continue": "Please confirm the language codes are correct before continuing",
-    "email_me": "Email me on {{ email }} when the draft is generated.",
+    "email_me": "Email me at {{ email }} when the draft is finished.",
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
     "generate_draft": "Generate draft",

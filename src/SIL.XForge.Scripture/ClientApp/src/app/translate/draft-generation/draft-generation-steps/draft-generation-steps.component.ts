@@ -11,9 +11,11 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
@@ -103,6 +105,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataQuerySubscription?: Subscription;
+  private currentUserDoc?: UserDoc;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -114,10 +117,11 @@ export class DraftGenerationStepsComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
     private readonly progressService: ProgressService,
-    private readonly trainingFileService: TrainingDataService
+    private readonly trainingFileService: TrainingDataService,
+    private readonly userService: UserService
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     combineLatest([this.draftSourcesService.getDraftProjectSources(), this.activatedProject.projectId$])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
@@ -247,6 +251,15 @@ export class DraftGenerationStepsComponent implements OnInit {
           this.hasLoaded = true;
         }
       );
+    this.currentUserDoc = await this.userService.getCurrentUser();
+  }
+
+  get currentUserEmail(): string | undefined {
+    return this.currentUserDoc?.data?.email;
+  }
+
+  get firstTrainingSource(): string {
+    return this.trainingSources[0]?.shortName ?? '';
   }
 
   get trainingSourceBooksSelected(): boolean {
@@ -268,10 +281,6 @@ export class DraftGenerationStepsComponent implements OnInit {
       new Set<number>([...selectedInSource1, ...selectedInSource2].map(b => b.number))
     );
     return translatedBooksSelected.every(b => selectedInSources.includes(b.number));
-  }
-
-  get firstTrainingSource(): string {
-    return this.trainingSources[0]?.shortName ?? '';
   }
 
   private _booksToTranslate?: Book[];
