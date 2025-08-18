@@ -3,6 +3,7 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { ScrollDispatcher } from '@angular/cdk/scrolling';
 import { Injectable, NgZone } from '@angular/core';
 import { asyncScheduler, observeOn, Subject, take, takeUntil } from 'rxjs';
+import { I18nService } from 'xforge-common/i18n.service';
 import { LynxEditor, LynxTextModelConverter } from './lynx-editor';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
@@ -23,7 +24,8 @@ export class LynxInsightOverlayService {
   constructor(
     private overlay: Overlay,
     private scrollDispatcher: ScrollDispatcher,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private i18n: I18nService
   ) {}
 
   get isOpen(): boolean {
@@ -125,7 +127,8 @@ export class LynxInsightOverlayService {
     return {
       positionStrategy: this.getPositionStrategy(origin),
       panelClass: 'lynx-insight-overlay-panel',
-      scrollStrategy: this.overlay.scrollStrategies.reposition()
+      scrollStrategy: this.overlay.scrollStrategies.reposition(),
+      direction: this.i18n.direction
     };
   }
 

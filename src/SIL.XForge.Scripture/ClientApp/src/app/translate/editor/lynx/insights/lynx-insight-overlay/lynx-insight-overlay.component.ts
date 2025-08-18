@@ -3,6 +3,7 @@ import { Component, DestroyRef, ElementRef, EventEmitter, Inject, Input, OnInit,
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { Delta } from 'quill';
 import { fromEvent } from 'rxjs';
+import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { LynxEditor, LynxTextModelConverter } from '../lynx-editor';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightAction, LynxInsightConfig } from '../lynx-insight';
@@ -58,6 +59,7 @@ export class LynxInsightOverlayComponent implements OnInit {
     private readonly insightState: LynxInsightStateService,
     private readonly overlayService: LynxInsightOverlayService,
     private readonly lynxWorkspaceService: LynxWorkspaceService,
+    readonly i18n: I18nService,
     @Inject(DOCUMENT) private readonly document: Document,
     @Inject(EDITOR_INSIGHT_DEFAULTS) private readonly config: LynxInsightConfig
   ) {}
