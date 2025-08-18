@@ -144,6 +144,33 @@ describe('BiblicalTermDialogComponent', () => {
     expect(biblicalTerm.data?.description).toBe('');
   }));
 
+  it('should not save renderings with unbalanced parentheses', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData('en');
+    env.wait();
+
+    env.openDialog('id01');
+    env.setTextFieldValue(env.renderings, '(');
+    env.click(env.submitButton);
+    env.wait();
+    const biblicalTerm = env.getBiblicalTermDoc('id01');
+    expect(biblicalTerm.data?.renderings).toEqual(['rendering01']);
+    env.closeDialog();
+  }));
+
+  it('should save renderings with balanced parentheses', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData('en');
+    env.wait();
+
+    env.openDialog('id01');
+    env.setTextFieldValue(env.renderings, '()');
+    env.click(env.submitButton);
+    env.wait();
+    const biblicalTerm = env.getBiblicalTermDoc('id01');
+    expect(biblicalTerm.data?.renderings).toEqual(['()']);
+  }));
+
   it('should be read only for users without write access', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setProjectUserConfig({ transliterateBiblicalTerms: true, ownerRef: 'user02' });
