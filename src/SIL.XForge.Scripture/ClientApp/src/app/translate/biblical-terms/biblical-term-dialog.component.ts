@@ -1,5 +1,5 @@
 import { Component, Inject } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -7,6 +7,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { SFValidators } from '../../shared/sfvalidators';
 
 export interface BiblicalTermDialogData {
   biblicalTermDoc: BiblicalTermDoc;
@@ -21,9 +22,9 @@ export interface BiblicalTermDialogData {
 export class BiblicalTermDialogComponent {
   definition: string = '';
 
-  renderings = new UntypedFormControl();
-  description = new UntypedFormControl();
-  form = new UntypedFormGroup({
+  renderings = new FormControl('', [SFValidators.balancedParentheses]);
+  description = new FormControl();
+  form = new FormGroup({
     renderings: this.renderings,
     description: this.description
   });
@@ -41,22 +42,21 @@ export class BiblicalTermDialogComponent {
     this.projectDoc = data.projectDoc;
     this.projectUserConfigDoc = data.projectUserConfigDoc;
     this.definition = this.getTermDefinition();
-    this.renderings.setValue(this.biblicalTermDoc.data?.renderings.join('\n'));
+    this.renderings.setValue(this.biblicalTermDoc.data?.renderings.join('\n') ?? '');
     this.description.setValue(this.biblicalTermDoc.data?.description);
   }
 
   canEdit(): boolean {
-    const userRole: string | undefined =
-      this.projectUserConfigDoc?.data?.ownerRef != null
-        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
-        : undefined;
-    return userRole == null
-      ? false
-      : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.Edit);
+    const project = this.projectDoc?.data;
+    const userId = this.projectUserConfigDoc?.data?.ownerRef;
+    return project != null && userId != null
+      ? SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.BiblicalTerms, Operation.Edit)
+      : false;
   }
 
   submit(): void {
-    const renderings: string[] = this.renderings.value
+    if (!this.form.valid) return;
+    const renderings: string[] = (this.renderings.value ?? '')
       .split(/\r?\n/)
       .map((rendering: string) => rendering.trim())
       .filter((rendering: string) => rendering !== '');
