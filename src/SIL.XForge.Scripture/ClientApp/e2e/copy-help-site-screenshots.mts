@@ -100,6 +100,8 @@ for (const pageName of new Set(screenshotEvents.map(event => event.context.pageN
   }
 }
 
+Deno.removeSync("diff", { recursive: true });
+
 /**
  * Copies a file from point A to point B if the files differ, or if there is no file at point B, or if
  * copyFilesEvenIfIdentical is set to true.
@@ -110,7 +112,21 @@ for (const pageName of new Set(screenshotEvents.map(event => event.context.pageN
  * @throws If the source file does not exist or if the copy fails.
  */
 async function copyScreenshotIfDiffers(source: string, destination: string): Promise<void> {
-  const imageDiffers = pngImagesDiffer(source, destination, "diff.png");
+  Deno.mkdirSync("diff", { recursive: true });
+  const imageDiffers = pngImagesDiffer(source, destination, "diff/diff.png");
+
+  const confirmWithUser = imageDiffers && !copyFilesEvenIfIdentical;
+
+  if (confirmWithUser) {
+    // copy original to a.png, and new version to b.png
+    Deno.copyFile(destination, "diff/a.png");
+    Deno.copyFile(source, "diff/b.png");
+
+    console.log("💡 Tip: source, target, and diff are in the diff directory.");
+    const update = confirm(`Image ${source} differs from ${destination}. See diff.png. Do you want to update it?`);
+    if (!update) return;
+  }
+
   if (imageDiffers || copyFilesEvenIfIdentical) {
     // zopflipng npm package must be installed globally for this to work
     console.log(`Copying ${source} to ${destination} using zopflipng...`);
