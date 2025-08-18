@@ -417,15 +417,25 @@
   },
   "event_metrics": {
     "author": "Author",
+    "duration": "Duration",
     "event": "Event",
     "event_log": "Event Log",
     "failed": "Failed",
+    "finish_time": "Finish Time",
+    "in_progress": "In progress",
+    "not_available": "N/A",
+    "not_finished": "Not finished",
     "not_found": "No log entries found.",
     "offline": "This feature is not available offline.",
+    "project": "Project",
     "scope": "Scope",
+    "site_wide_event_log": "Site-wide Draft Jobs",
+    "start_time": "Start Time",
     "status": "Status",
+    "still_running": "Still running",
     "successful": "Successful",
-    "technical_details": "Technical Details"
+    "technical_details": "Technical Details",
+    "unknown": "अज्ञात"
   },
   "font_unsupported_message": {
     "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or { 1 }contact us for help.{ 2 }",

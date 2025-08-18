@@ -417,15 +417,25 @@
   },
   "event_metrics": {
     "author": "Autor",
+    "duration": "Duration",
     "event": "Ereignis",
     "event_log": "Ereignisprotokoll",
     "failed": "Fehlgeschlagen",
+    "finish_time": "Finish Time",
+    "in_progress": "In progress",
+    "not_available": "N/A",
+    "not_finished": "Not finished",
     "not_found": "Keine Protokolleinträge gefunden.",
     "offline": "Diese Funktion ist offline nicht verfügbar.",
+    "project": "Projekt",
     "scope": "Umfang",
+    "site_wide_event_log": "Site-wide Draft Jobs",
+    "start_time": "Start Time",
     "status": "Status",
+    "still_running": "Still running",
     "successful": "Erfolgreich",
-    "technical_details": "Technische Details"
+    "technical_details": "Technische Details",
+    "unknown": "Unbekannt"
   },
   "font_unsupported_message": {
     "change_font_or_contact_for_help": "Falls dies nicht den Bedürfnissen dieses Projekts entspricht, wähle bitte eine andere Schriftart in den Paratext-Projekteinstellungen oder { 1 }kontaktiere uns für Hilfe.{ 2 }",
