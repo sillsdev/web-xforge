@@ -2,9 +2,9 @@ import { Component, DestroyRef, NO_ERRORS_SCHEMA, ViewChild } from '@angular/cor
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { Delta } from 'quill';
 import { BehaviorSubject } from 'rxjs';
-import { TextDocId } from 'src/app/core/models/text-doc';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { TextDocId } from '../../../../../core/models/text-doc';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxableEditor, LynxTextModelConverter } from '../lynx-editor';
