@@ -10,8 +10,10 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -37,6 +39,8 @@ describe('DraftGenerationStepsComponent', () => {
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
   const mockUserService = mock(UserService);
+  const mockDialogService = mock(DialogService);
+  const mockLocationService = mock(LocationService);
 
   when(mockActivatedProjectService.projectId).thenReturn('project01');
 
@@ -51,6 +55,8 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: UserService, useMock: mockUserService },
+      { provide: DialogService, useMock: mockDialogService },
+      { provide: LocationService, useMock: mockLocationService },
       provideHttpClient(withInterceptorsFromDi()),
       provideHttpClientTesting()
     ]
@@ -69,6 +75,115 @@ describe('DraftGenerationStepsComponent', () => {
     ]);
     when(mockOnlineStatusService.isOnline).thenReturn(true);
   }));
+
+  describe('ngOnInit', () => {
+    let draftSources$: BehaviorSubject<DraftSourcesAsArrays>;
+    const initialConfig: DraftSourcesAsArrays = {
+      trainingSources: [
+        {
+          projectRef: 'sourceProject',
+          paratextId: 'PT_SP',
+          name: 'Source Project',
+          shortName: 'sP',
+          writingSystem: { tag: 'eng' },
+          texts: [{ bookNum: 1 }]
+        }
+      ],
+      trainingTargets: [
+        {
+          projectRef: 'project01',
+          paratextId: 'PT_TT',
+          name: 'Target Project',
+          shortName: 'tT',
+          writingSystem: { tag: 'xyz' },
+          texts: [{ bookNum: 1 }]
+        }
+      ],
+      draftingSources: [
+        {
+          projectRef: 'sourceProject',
+          paratextId: 'PT_SP',
+          name: 'Source Project',
+          shortName: 'sP',
+          writingSystem: { tag: 'eng' },
+          texts: [{ bookNum: 1 }]
+        }
+      ]
+    };
+
+    beforeEach(() => {
+      draftSources$ = new BehaviorSubject<DraftSourcesAsArrays>(initialConfig);
+      when(mockDraftSourceService.getDraftProjectSources()).thenReturn(draftSources$);
+      when(mockDialogService.message(anything(), anything(), anything())).thenResolve();
+      when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(false);
+      when(mockFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
+      const mockTargetProjectDoc = {
+        id: 'project01',
+        data: createTestProjectProfile({
+          texts: [{ bookNum: 1 }],
+          translateConfig: {
+            source: { projectRef: 'sourceProject', shortName: 'sP', writingSystem: { tag: 'xyz' } }
+          },
+          writingSystem: { tag: 'eng' }
+        })
+      } as SFProjectProfileDoc;
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      when(mockActivatedProjectService.changes$).thenReturn(new BehaviorSubject(undefined));
+    });
+
+    it('should show dialog and reload if sources change', fakeAsync(() => {
+      when(mockDialogService.openDialogCount).thenReturn(0);
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const reload = new Error('RELOAD');
+      expect(component['draftingSources'].length).toBe(1);
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+      when(mockLocationService.reload()).thenCall(() => {
+        verify(mockDialogService.message(anything(), anything(), anything())).once();
+        verify(mockLocationService.reload()).once();
+        throw reload;
+      });
+
+      // Simulate a remote change
+      const newConfig: DraftSourcesAsArrays = {
+        ...initialConfig,
+        draftingSources: [{ ...initialConfig.draftingSources[0], texts: [{ bookNum: 2 }] }]
+      };
+      draftSources$.next(newConfig);
+
+      try {
+        tick();
+        fail('tick() did not throw');
+      } catch (e: any) {
+        expect(e.rejection).toBe(reload);
+      }
+    }));
+
+    it('should not show dialog or reload if a dialog is already open', fakeAsync(() => {
+      when(mockDialogService.openDialogCount).thenReturn(1);
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      expect(component['draftingSources'].length).toBe(1);
+
+      // Simulate a remote change
+      const newConfig = { ...initialConfig, draftingSources: [] };
+      draftSources$.next(newConfig);
+      tick();
+      fixture.detectChanges();
+
+      verify(mockDialogService.message(anything(), anything(), anything())).never();
+      verify(mockLocationService.reload()).never();
+    }));
+  });
 
   describe('one training source', async () => {
     const availableBooks = [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }];
