@@ -79,7 +79,7 @@ export async function editTranslation(
   await expect(deletedSegments[0]).toBe(initialSegmentText);
 
   await user.click(page.getByRole('button', { name: 'Restore this version' }));
-  await user.click(page.getByRole('button', { name: 'Restore' }));
+  await user.click(page.getByRole('button', { name: 'Restore', exact: true }));
 
   // Go back to the editor tab
   await goToProjectTab(page, user, 'target', DEFAULT_PROJECT_SHORTNAME);
