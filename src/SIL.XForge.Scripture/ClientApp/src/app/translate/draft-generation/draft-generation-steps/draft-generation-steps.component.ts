@@ -17,7 +17,9 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { ParatextProject } from '../../../core/models/paratext-project';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
+import { ParatextService } from '../../../core/paratext.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { SharedModule } from '../../../shared/shared.module';
@@ -51,6 +53,12 @@ interface TrainingPair {
   sourceName: string;
 }
 
+interface ProjectPendingUpdate {
+  projectId: string;
+  name: string;
+  syncUrl: string;
+}
+
 @Component({
   selector: 'app-draft-generation-steps',
   templateUrl: './draft-generation-steps.component.html',
@@ -69,6 +77,8 @@ export class DraftGenerationStepsComponent implements OnInit {
   @Output() readonly done = new EventEmitter<DraftGenerationStepsResult>();
   @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
+
+  projectsPendingUpdate: ProjectPendingUpdate[] = [];
 
   allAvailableTranslateBooks: Book[] = []; // A flattened instance of the values from availableTranslateBooks
   availableTranslateBooks: { [projectRef: string]: Book[] } = {};
@@ -114,8 +124,9 @@ export class DraftGenerationStepsComponent implements OnInit {
     protected readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
     protected readonly i18n: I18nService,
-    private readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly paratextService: ParatextService,
     private readonly progressService: ProgressService,
     private readonly trainingFileService: TrainingDataService,
     private readonly userService: UserService
@@ -248,6 +259,24 @@ export class DraftGenerationStepsComponent implements OnInit {
 
           this.sendEmailOnBuildFinished =
             this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.sendEmailOnBuildFinished ?? false;
+          
+          // See if the target and any of the sources need updating
+          const projectIds: string[] = [
+            ...trainingTargets.map(s => s.projectRef),
+            ...trainingSources.map(s => s.projectRef),
+            ...draftingSources.map(s => s.projectRef)
+          ];
+          const projects: ParatextProject[] | undefined = await this.paratextService.getProjects();
+
+          // NOTE: Non-connected projects will show a warning on the primary generate draft page
+          this.projectsPendingUpdate = (projects ?? [])
+            .filter(p => p.projectId != null && projectIds.includes(p.projectId) && p.isConnected && p.hasUpdate)
+            .map(p => ({
+              projectId: p.projectId!,
+              name: p.name == null || p.name.length === 0 ? p.shortName : p.name,
+              syncUrl: `/projects/${p.projectId}/sync`
+            }));
+
           this.hasLoaded = true;
         }
       );
